@@ -181,7 +181,7 @@ class Ui_BatchCreator_process_Dialog(object):
         self.toolButton.setObjectName(u"toolButton")
         self.toolButton.setEnabled(False)
         icon1 = QIcon()
-        icon1.addFile(u":/icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/arrow_forward_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.toolButton.setIcon(icon1)
         self.toolButton.setIconSize(QSize(16, 16))
 
@@ -463,7 +463,7 @@ class Ui_BatchCreator_process_Dialog(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/tab_move_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_button.setIcon(icon2)
         self.process_button.setIconSize(QSize(20, 20))
 

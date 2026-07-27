@@ -261,7 +261,7 @@ color: gray;
                       </property>
                       <property name="icon">
                        <iconset resource="../resources.qrc">
-                        <normaloff>:/icons/arrow_back_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/arrow_back_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                        <normaloff>:/icons/arrow_back_24dp.svg</normaloff>:/icons/arrow_back_24dp.svg</iconset>
                       </property>
                       <property name="iconSize">
                        <size>
@@ -318,7 +318,7 @@ color: gray;
                       </property>
                       <property name="icon">
                        <iconset resource="../resources.qrc">
-                        <normaloff>:/icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                        <normaloff>:/icons/arrow_forward_24dp.svg</normaloff>:/icons/arrow_forward_24dp.svg</iconset>
                       </property>
                       <property name="iconSize">
                        <size>
@@ -399,7 +399,7 @@ color: gray;
                      </property>
                      <property name="icon">
                       <iconset resource="../resources.qrc">
-                       <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                       <normaloff>:/icons/add_24dp.svg</normaloff>:/icons/add_24dp.svg</iconset>
                      </property>
                      <property name="iconSize">
                       <size>
@@ -653,7 +653,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+                  <normaloff>:/icons/file_open_16dp.svg</normaloff>:/icons/file_open_16dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -713,7 +713,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+                  <normaloff>:/icons/save_16dp.svg</normaloff>:/icons/save_16dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -776,7 +776,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                  <normaloff>:/icons/add_24dp.svg</normaloff>:/icons/add_24dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -887,7 +887,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+                  <normaloff>:/icons/settings_16dp.svg</normaloff>:/icons/settings_16dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -950,7 +950,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                  <normaloff>:/icons/undo_24dp.svg</normaloff>:/icons/undo_24dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1013,7 +1013,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                  <normaloff>:/icons/tab_move_24dp.svg</normaloff>:/icons/tab_move_24dp.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1131,7 +1131,7 @@ color: gray;
                 </property>
                 <property name="icon">
                  <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+                  <normaloff>:/icons/file_present_24dp.png</normaloff>:/icons/file_present_24dp.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>

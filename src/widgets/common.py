@@ -233,32 +233,32 @@ class Button(QPushButton):
         self.setText(text)
 
     def set_icon_delete(self):
-        self.set_icon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/delete_24dp.svg")
 
     def set_icon_paste(self):
-        self.set_icon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/content_paste_24dp.svg")
 
     def set_icon_search(self):
-        self.set_icon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/search_24dp.svg")
 
     def set_icon_add(self):
-        self.set_icon(":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/add_24dp.svg")
 
     def set_icon_polyline(self):
-        self.set_icon(":/icons/polyline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png")
+        self.set_icon(":/icons/polyline_24dp.png")
 
     def set_icon_question(self):
-        self.set_icon(":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/help_24dp.svg")
     def set_icon_bookmark_add(self):
-        self.set_icon(":/icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/bookmark_add_24dp.svg")
     def set_icon_bookmark_added(self):
-        self.set_icon(":/icons/bookmark_added_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/bookmark_added_24dp.svg")
     def set_icon_folder_open(self):
         self.set_icon(":/icons/folder_open.svg")
     def set_icon_sync(self):
-        self.set_icon(":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/sync_24dp.svg")
     def set_icon_info(self):
-        self.set_icon(":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.set_icon(":/icons/sync_24dp.svg")
 
 class DeleteButton(Button):
     def __init__(self, instance: QWidget = None):
@@ -307,11 +307,11 @@ if __name__ == "__main__":
             button_layout.addWidget(btn_text)
 
             # Button with icon (add)
-            btn_add = Button(text="Add", icon=":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+            btn_add = Button(text="Add", icon=":/icons/add_24dp.svg")
             button_layout.addWidget(btn_add)
 
             # Button with icon (search)
-            btn_search = Button(icon=":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", text="Search")
+            btn_search = Button(icon=":/icons/search_24dp.svg", text="Search")
             button_layout.addWidget(btn_search)
 
             # Button with custom size
@@ -319,7 +319,7 @@ if __name__ == "__main__":
             button_layout.addWidget(btn_large)
 
             # Button with only icon (delete)
-            btn_icon_only = Button(icon=":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", size=32)
+            btn_icon_only = Button(icon=":/icons/delete_24dp.svg", size=32)
             button_layout.addWidget(btn_icon_only)
 
             # DeleteButton (requires a QWidget instance, so we use self)

@@ -220,7 +220,7 @@ class CodeEditor(CompletingPlainTextEdit):
 class ExpressionEditor(QToolButton):
     def __init__(self, target_text_field, variables_scrollArea):
         super().__init__()
-        self.setIcon(QIcon(":/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.setIcon(QIcon(":/icons/edit_16dp.svg"))
         self.setToolTip("Open expression editor")
         self.setFixedSize(QSize(24, 24))
         self.clicked.connect(lambda: self.open_expression_editor(target_text_field))

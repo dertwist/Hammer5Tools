@@ -28,7 +28,7 @@ class Ui_preferences_dialog(object):
         preferences_dialog.setMinimumSize(QSize(600, 240))
         preferences_dialog.setMaximumSize(QSize(1300, 240))
         icon = QIcon()
-        icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/settings_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         preferences_dialog.setWindowIcon(icon)
         preferences_dialog.setModal(False)
         self.verticalLayout = QVBoxLayout(preferences_dialog)

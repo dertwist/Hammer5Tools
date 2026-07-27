@@ -421,11 +421,11 @@ QCheckBox {
 }
 
 QCheckBox::indicator:unchecked {
-    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+    image: url(://icons/check_box_outline_blank_16dp.svg);
 }
 
 QCheckBox::indicator:checked {
-    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+    image: url(://icons/select_check_box_16dp.svg);
 }
 
 /* ========================================================== */
@@ -613,7 +613,7 @@ QSpinBox::up-button {
 }
 
 QSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }
@@ -672,7 +672,7 @@ QDoubleSpinBox::up-button {
 }
 
 QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }
@@ -1113,7 +1113,7 @@ QTreeView::branch:has-siblings:adjoins-item {
 
 
 QTreeView::branch:closed:has-children {
-     image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+     image: url(:/icons/arrow_right_16dp.svg);
 }
 
 QTreeView::branch:open:has-children {

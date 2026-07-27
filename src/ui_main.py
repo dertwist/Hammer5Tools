@@ -165,7 +165,7 @@ class Ui_MainWindow(object):
         self.documentation_button.setMaximumSize(QSize(32, 16777210))
         self.documentation_button.setStyleSheet(u"padding: 5px;")
         icon8 = QIcon()
-        icon8.addFile(u":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon8.addFile(u":/icons/help_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.documentation_button.setIcon(icon8)
         self.documentation_button.setIconSize(QSize(20, 20))
 
@@ -177,7 +177,7 @@ class Ui_MainWindow(object):
         self.preferences_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
         icon9 = QIcon()
-        icon9.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon9.addFile(u":/icons/settings_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.preferences_button.setIcon(icon9)
         self.preferences_button.setIconSize(QSize(20, 20))
 
@@ -204,7 +204,7 @@ class Ui_MainWindow(object):
         self.utilities_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
         icon10 = QIcon()
-        icon10.addFile(u":/icons/apps_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon10.addFile(u":/icons/apps_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.utilities_button.setIcon(icon10)
         self.utilities_button.setIconSize(QSize(20, 20))
         self.utilities_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -215,7 +215,7 @@ class Ui_MainWindow(object):
         self.addon_actions_button = QToolButton(self.centralwidget)
         self.addon_actions_button.setObjectName(u"addon_actions_button")
         icon11 = QIcon()
-        icon11.addFile(u":/icons/menu_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon11.addFile(u":/icons/menu_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.addon_actions_button.setIcon(icon11)
         self.addon_actions_button.setIconSize(QSize(20, 20))
         self.addon_actions_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -246,7 +246,7 @@ class Ui_MainWindow(object):
         self.mapbuilder = QToolButton(self.centralwidget)
         self.mapbuilder.setObjectName(u"mapbuilder")
         icon13 = QIcon()
-        icon13.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon13.addFile(u":/icons/emoji_objects_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.mapbuilder.setIcon(icon13)
         self.mapbuilder.setIconSize(QSize(20, 20))
 

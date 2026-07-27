@@ -12,7 +12,8 @@ from src.widgets import HierarchyItemModel, ErrorInfo
 from src.editors.soundevent_editor.commands import *
 from src.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCommand
 from src.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.editors.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
+from src.editors.soundevent_editor.property_browser import PropertyBrowserWidget
+from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton
 from src.common import *
 from src.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from src.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
@@ -140,14 +141,53 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.soundevent_player_widget = SoundEventPlayerWidget(self)
         self.soundevent_player_widget.set_event_resolver(lambda: self.ui.hierarchy_widget.currentItem().text(0) if self.ui.hierarchy_widget.currentItem() else None)
         try:
-            layout = self.ui.verticalLayout_3
-            idx = layout.indexOf(self.ui.open_preset_manager_button)
-            if idx != -1:
-                layout.insertWidget(idx, self.soundevent_player_widget)
-            else:
-                layout.addWidget(self.soundevent_player_widget)
+            self.ui.verticalLayout_3.addWidget(self.soundevent_player_widget)
         except Exception:
             pass
+
+        # Init Property Browser Dock
+        self.property_browser_widget = PropertyBrowserWidget(self)
+        self.property_browser_dock = QDockWidget("Property Browser", self)
+        self.property_browser_dock.setObjectName("property_browser_dock")
+        self.property_browser_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea
+        )
+        self.property_browser_dock.setWidget(self.property_browser_widget)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
+        self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Vertical)
+
+        # Property Browser connections
+        self.property_browser_widget.add_property_requested.connect(self.on_property_added_from_browser)
+        self.property_browser_widget.create_event_from_template_requested.connect(self.on_create_event_from_template)
+
+        # Add "Save as Template" button to properties header
+        try:
+            header_layout = QHBoxLayout()
+            header_layout.setContentsMargins(4, 2, 4, 2)
+            self.ui.verticalLayout_5.removeWidget(self.ui.label)
+            header_layout.addWidget(self.ui.label)
+            header_layout.addStretch()
+            self.save_template_btn = QPushButton("Save as Template", self.ui.frame)
+            self.save_template_btn.setStyleSheet("""
+                QPushButton {
+                    font-size: 11px;
+                    padding: 2px 8px;
+                    border: 1px solid #444;
+                    border-radius: 2px;
+                    background-color: #262626;
+                    color: #DDD;
+                }
+                QPushButton:hover {
+                    background-color: #3E4B5E;
+                    color: white;
+                }
+            """)
+            self.save_template_btn.clicked.connect(self.save_current_soundevent_as_template)
+            header_layout.addWidget(self.save_template_btn)
+            self.ui.verticalLayout_5.insertLayout(0, header_layout)
+        except Exception as e:
+            debug(f"Failed to add Save as Template button: {e}")
 
         # Init LoadSoundEvents
         self.load_soundevents(self.filepath_vsndevts)
@@ -160,7 +200,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.hierarchy_search_bar_widget.textChanged.connect(lambda text:self.search_hierarchy(text, self.ui.hierarchy_widget.invisibleRootItem()))
 
         # Connections
-        self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
         self.ui.load_button.clicked.connect(self.load_soundevents)
         self.ui.save_file_button.clicked.connect(self.save_soundevents)
 
@@ -382,7 +421,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
                 if source.viewport().underMouse():
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                        self.call_soundevent_preset_menu()
+                        self.property_browser_widget.tmpl_filter_edit.setFocus()
                         return True
 
         return super().eventFilter(source, event)
@@ -418,31 +457,57 @@ class SoundEventEditorMainWindow(QMainWindow):
     def new_soundevent_blank(self):
         """Create empty soundevent using """
         self.new_soundevent(_data={})
-    def new_soundevent_preset(self, _preset: str = None, _preset_url: str = None):
-        """Call popup menu with all presets that are in the folder"""
-        _data = self.load_preset(_preset_url)
-        # Get clean name of preset file
-        _name = os.path.splitext(os.path.basename(_preset_url))[0]
-        self.new_soundevent(_data=_data, _soundevent_name=_name)
 
-    # Preset Popup menu
+    def on_property_added_from_browser(self, name: str, val_dict: dict):
+        """Add property selected from Property Browser to currently active soundevent."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            QMessageBox.information(self, "Property Browser", "Please select a sound event in the hierarchy to add this property.")
+            return
+        self.PropertiesWindow.new_property(name, val_dict)
 
-    def call_soundevent_preset_menu(self):
-        """Calls sound events preset menu"""
-        from src.common import get_all_presets, SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path
-        presets = get_all_presets(SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path)
+    def on_create_event_from_template(self, template_name: str, template_path: str):
+        """Create a new soundevent from selected template file."""
+        if not os.path.exists(template_path):
+            return
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                data = Kv3ToJson(f.read())
+            self.new_soundevent(_data=data, _soundevent_name=template_name)
+        except Exception as e:
+            debug(f"Failed to load template {template_path}: {e}")
 
-        self.soundevent_preset_menu = PopupMenu(properties=list(presets), window_name='soundevent_preset_menu')
-        self.soundevent_preset_menu.add_property_signal.connect(lambda name, value: self.new_soundevent_preset(name, value))
-        self.soundevent_preset_menu.show()
-
-    def load_preset(self, path: str = None):
-        """Load data from preset using url"""
-        debug(f"LoadPreset from {path}")
-        with open(path, 'r') as file:
-            __data = file.read()
-        __data = Kv3ToJson(__data)
-        return __data
+    def save_current_soundevent_as_template(self):
+        """Save selected soundevent as a template KV3 file."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            QMessageBox.information(self, "Save as Template", "Please select a sound event to save as a template.")
+            return
+        
+        event_name = item.text(0)
+        template_name, ok = QInputDialog.getText(
+            self, "Save as Template", "Enter Template Name:", QLineEdit.Normal, event_name
+        )
+        if not ok or not template_name.strip():
+            return
+        
+        template_name = template_name.strip()
+        data = item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            data = {}
+            
+        from src.common import SoundEventEditor_Preset_Path, JsonToKv3
+        os.makedirs(SoundEventEditor_Preset_Path, exist_ok=True)
+        file_path = os.path.join(SoundEventEditor_Preset_Path, f"{template_name}.kv3")
+        
+        try:
+            kv3_str = JsonToKv3(data)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(kv3_str)
+            self.property_browser_widget.load_templates()
+            QMessageBox.information(self, "Save as Template", f"Template '{template_name}' saved successfully.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save template: {e}")
 
     # Hierarchy
 
@@ -529,13 +594,11 @@ class SoundEventEditorMainWindow(QMainWindow):
     # [Tree widget hierarchy context menu]
     def open_hierarchy_menu(self, position):
         menu = QMenu()
-        # add_new_preset_lat_action = menu.addAction("(Last) - New from")
-        # menu.addSeparator()
-        add_new_preset_action = menu.addAction("New event (Preset)")
-        add_new_preset_action.triggered.connect(self.call_soundevent_preset_menu)
-        add_new_blank_action = menu.addAction("New event (Blank)")
-        add_new_blank_action.triggered.connect(self.new_soundevent_blank)
-        add_new_preset_action.setShortcut(QKeySequence(QKeySequence("Ctrl+F")))
+        add_new_action = menu.addAction("New")
+        add_new_action.triggered.connect(self.new_soundevent_blank)
+
+        save_template_action = menu.addAction("Save as Template...")
+        save_template_action.triggered.connect(self.save_current_soundevent_as_template)
 
         menu.addSeparator()
 
@@ -693,10 +756,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         return tree_items
 
 
-    # Preset Manager
-    def OpenPresetManager(self):
-        self.PresetManager = SoundEventEditorPresetManagerWindow()
-        self.PresetManager.show()
+
 
     # [Window State]
     def _restore_user_prefs(self):

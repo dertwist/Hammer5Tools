@@ -29,7 +29,7 @@ class Ui_mapbuilder_dialog(object):
         mapbuilder_dialog.setMinimumSize(QSize(0, 0))
         mapbuilder_dialog.setMaximumSize(QSize(16777215, 16777215))
         icon = QIcon()
-        icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/settings_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         mapbuilder_dialog.setWindowIcon(icon)
         self.centralwidget = QWidget(mapbuilder_dialog)
         self.centralwidget.setObjectName(u"centralwidget")

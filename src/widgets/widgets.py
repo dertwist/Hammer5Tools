@@ -741,35 +741,35 @@ class HierarchyItemModel(QTreeWidgetItem):
 
     def seticon_folder(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.setIcon(0, QIcon(":/icons/folder_16dp.svg"))
 
     def seticon_object(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/deployed_code_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
+        self.setIcon(0, QIcon(":/icons/deployed_code_24dp.png"))
 
     def seticon_polyline(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/polyline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
+        self.setIcon(0, QIcon(":/icons/polyline_24dp.png"))
 
     def seticon_vmdl(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/assettypes/model_sm.png"))
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/model_sm.png"))
 
     def seticon_vsmart(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/assettypes/vsmart_sm.png"))
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/vsmart_sm.png"))
 
     def seticon_abc(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/assettypes/abc_sm.png"))
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/abc_sm.png"))
 
     def seticon_generic(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/assettypes/generic_sm.png"))
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/generic_sm.png"))
 
     def seticon_group(self):
         from PySide6.QtGui import QIcon
-        self.setIcon(0, QIcon(":/icons/assettypes/animation_group_sm.png"))
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/animation_group_sm.png"))
 
 def on_three_hierarchyitem_clicked(item, column):
     """Set item as editable if clicked on the first column; otherwise, make it non-editable."""

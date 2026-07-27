@@ -57,7 +57,7 @@ class MaterialReplacementRow(QWidget):
 
         delete_btn = QToolButton()
         delete_btn.setStyleSheet("""QToolButton {
-    icon: url(:/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    icon: url(:/icons/delete_24dp.svg);
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 0px;
@@ -69,7 +69,7 @@ class MaterialReplacementRow(QWidget):
 }
 QToolButton:hover { background-color: #414956; color: white; }
 QToolButton:pressed { background-color: #1C1C1C; }""")
-        delete_btn.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        delete_btn.setIcon(QIcon(":/icons/delete_24dp.svg"))
         layout.addWidget(delete_btn)
 
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))

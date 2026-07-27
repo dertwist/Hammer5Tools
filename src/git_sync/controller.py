@@ -26,7 +26,7 @@ from src.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
 from src.git_sync.commit_msg import generate
 from src.git_sync.conflict_dialog import ConflictDialog
 
-_SYNC_ICON = ":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"
+_SYNC_ICON = ":/icons/sync_24dp.svg"
 
 _LFS_LIMIT = 100 * 1024 * 1024    # GitHub rejects blobs over 100 MiB
 _LARGE_COMMIT = 500 * 1024 * 1024  # warn about slow uploads over this

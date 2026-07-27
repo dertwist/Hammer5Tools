@@ -130,7 +130,7 @@ class Ui_Form(object):
 "    color: white;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/shapes_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/shapes_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.gf.setIcon(icon)
         self.gf.setIconSize(QSize(24, 24))
 
@@ -243,7 +243,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/delete_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.delete_button.setIcon(icon1)
 
         self.horizontalLayout.addWidget(self.delete_button)
@@ -291,7 +291,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/content_copy_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.copy_button.setIcon(icon2)
 
         self.horizontalLayout.addWidget(self.copy_button)

@@ -164,46 +164,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.tabWidget_2)
 
-        self.open_preset_manager_button = QPushButton(self.frame_2)
-        self.open_preset_manager_button.setObjectName(u"open_preset_manager_button")
-        self.open_preset_manager_button.setEnabled(True)
-        self.open_preset_manager_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_preset_manager_button.setIcon(icon7)
-        self.open_preset_manager_button.setIconSize(QSize(20, 20))
-
-        self.verticalLayout_3.addWidget(self.open_preset_manager_button)
-
 
         self.verticalLayout_8.addWidget(self.frame_2)
 
@@ -287,9 +247,9 @@ class Ui_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "    }")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_file_button.setIcon(icon8)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/save_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_file_button.setIcon(icon7)
         self.save_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.save_file_button)
@@ -320,9 +280,9 @@ class Ui_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.load_button.setIcon(icon9)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/description_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.load_button.setIcon(icon8)
         self.load_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.load_button)
@@ -362,13 +322,6 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.addon_soundevents_tab), QCoreApplication.translate("MainWindow", u"Addon", None))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.internal_soundevents_tab), QCoreApplication.translate("MainWindow", u"Internal", None))
-#if QT_CONFIG(tooltip)
-        self.open_preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Oopen Preset Manager Ctrl + P</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_preset_manager_button.setText(QCoreApplication.translate("MainWindow", u"Preset manager", None))
-#if QT_CONFIG(shortcut)
-        self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
-#endif // QT_CONFIG(shortcut)
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Audio Explorer", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.addon_sounds), QCoreApplication.translate("MainWindow", u"Addon", None))
         self.internal_explorer_search_bar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))

@@ -35,13 +35,13 @@ generic_extensions = ['vpost', 'vsndevts', 'rect', 'keybindings', 'kv3']
 model_extensions = ['obj', 'fbx', 'dmx']
 
 file_icons = {
-    '.vsmart': '://icons/assettypes/vsmart_sm.png',
-    '.vdata': '://icons/assettypes/vdata_sm.png',
-    '.vmat': '://icons/assettypes/material_sm.png',
-    '.vmap': '://icons/assettypes/map_sm.png',
-    '.hbat': '://icons/assettypes/vcompmat_sm.png',
-    '.vtex': '://icons/assettypes/texture_sm.png',
-    '.vmdl': '://icons/assettypes/model_sm.png'
+    '.vsmart': '://icons/tools/assettypes/vsmart_sm.png',
+    '.vdata': '://icons/tools/assettypes/vdata_sm.png',
+    '.vmat': '://icons/tools/assettypes/material_sm.png',
+    '.vmap': '://icons/tools/assettypes/map_sm.png',
+    '.hbat': '://icons/tools/assettypes/vcompmat_sm.png',
+    '.vtex': '://icons/tools/assettypes/texture_sm.png',
+    '.vmdl': '://icons/tools/assettypes/model_sm.png'
 }
 
 class CustomFileSystemModel(QFileSystemModel):
@@ -55,16 +55,16 @@ class CustomFileSystemModel(QFileSystemModel):
 
     def data(self, index, role):
         if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
-            return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')
+            return QIcon('://icons/folder_16dp.svg')
         elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             for ext, icon_path in file_icons.items():
                 if file_path.endswith(ext):
                     return QIcon(icon_path)
             if file_path.endswith(tuple(audio_extensions)):
-                return QIcon('://icons/assettypes/vmix_sm.png')
+                return QIcon('://icons/tools/assettypes/vmix_sm.png')
             if file_path.endswith(tuple(generic_extensions)):
-                return QIcon('://icons/assettypes/generic_sm.png')
+                return QIcon('://icons/tools/assettypes/generic_sm.png')
         elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path in self._cache:
@@ -290,7 +290,7 @@ class Explorer(QMainWindow):
         self.goto_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.top_layout.addWidget(self.goto_button)
         self.recent_button = QToolButton(self)
-        self.recent_button.setIcon(QIcon("://icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.recent_button.setIcon(QIcon("://icons/acute_24dp.svg"))
         self.recent_button.setToolTip("Show recent files")
         self.recent_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.recent_button.setMaximumHeight(26)
@@ -298,7 +298,7 @@ class Explorer(QMainWindow):
         self.recent_button.clicked.connect(lambda: self._toggle_panel("recent"))
         self.top_layout.addWidget(self.recent_button)
         self.favorites_button = QToolButton(self)
-        self.favorites_button.setIcon(QIcon("://icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.favorites_button.setIcon(QIcon("://icons/bookmark_24dp.svg"))
         self.favorites_button.setToolTip("Show favorites")
         self.favorites_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.favorites_button.setMaximumHeight(26)
@@ -502,16 +502,16 @@ class Explorer(QMainWindow):
             else:
                 self.add_file_actions(menu, source_index)
             favorite_action = QAction("Add to Favorites", self)
-            favorite_action.setIcon(QIcon(":/icons/bookmarks_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            favorite_action.setIcon(QIcon(":/icons/bookmarks_16dp.svg"))
             favorite_action.triggered.connect(lambda: self.add_favorite(self.model.filePath(source_index)))
             menu.addAction(favorite_action)
         else:
             create_folder_action = QAction("Create Folder", self)
-            create_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            create_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp.svg"))
             create_folder_action.triggered.connect(lambda: self.create_folder(self.model.index(self.tree_directory)))
             menu.addAction(create_folder_action)
             paste_action = QAction("Paste File", self)
-            paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+            paste_action.setIcon(QIcon(":/icons/content_paste_24dp.svg"))
             paste_action.triggered.connect(lambda: self.paste_file(self.model.index(self.tree_directory)))
             menu.addAction(paste_action)
         menu.adjustSize()
@@ -531,24 +531,24 @@ class Explorer(QMainWindow):
 
         menu.addSection("Create")
         new_folder_action = QAction("New Folder", self)
-        new_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        new_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp.svg"))
         new_folder_action.triggered.connect(lambda: self.create_folder(index))
         menu.addAction(new_folder_action)
 
         quick_batch_action = QAction("Quick AssetGroup file", self)
-        quick_batch_action.setIcon(QIcon(":/icons/assettypes/vcompmat_sm.png"))
+        quick_batch_action.setIcon(QIcon(":/icons/tools/assettypes/vcompmat_sm.png"))
         quick_batch_action.triggered.connect(lambda: QuickCreateDialog(folder_path, "hbat", self).exec_())
         menu.addAction(quick_batch_action)
 
         menu.addSection("Process")
         quick_process_action = QAction("Quick Process AssetGroup folder", self)
-        quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp.svg"))
         quick_process_action.triggered.connect(lambda: (run_compile(os.path.join(folder_path, "*.vmdl")), run_compile(os.path.join(folder_path, "*.vmat"))))
         menu.addAction(quick_process_action)
 
         menu.addSection("Organize")
         paste_action = QAction("Paste File", self)
-        paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        paste_action.setIcon(QIcon(":/icons/content_paste_24dp.svg"))
         paste_action.triggered.connect(lambda: self.paste_file(index))
         menu.addAction(paste_action)
 
@@ -558,17 +558,17 @@ class Explorer(QMainWindow):
         menu.addAction(asset_manager_action)
 
         rename_asset_action = QAction("Rename Asset", self)
-        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
         rename_asset_action.triggered.connect(lambda: self.open_asset_renamer(index))
         menu.addAction(rename_asset_action)
 
         export_action = QAction("Export Asset", self)
-        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        export_action.setIcon(QIcon(":/icons/file_open_16dp.svg"))
         export_action.triggered.connect(lambda: self.open_asset_exporter(index))
         menu.addAction(export_action)
 
         delete_folder_action = QAction("Delete Folder", self)
-        delete_folder_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        delete_folder_action.setIcon(QIcon(":/icons/delete_16dp.svg"))
         delete_folder_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_folder_action)
 
@@ -598,14 +598,14 @@ class Explorer(QMainWindow):
             open_action = QAction(f"Open with {app_name.replace('.exe', '')}", self)
         else:
             open_action = QAction("Open File", self)
-        open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        open_action.setIcon(QIcon(":/icons/file_open_16dp.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
 
         if default_app and 'hammer5tools' in default_app[0].lower():
             import subprocess
             open_notepad_action = QAction("Open with Notepad", self)
-            open_notepad_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            open_notepad_action.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
             open_notepad_action.triggered.connect(lambda checked=False, p=file_path: subprocess.Popen(['notepad.exe', p]))
             menu.addAction(open_notepad_action)
 
@@ -627,19 +627,19 @@ class Explorer(QMainWindow):
             if file_extension in model_extensions:
                 # Mesh files: only useful action is generating a .vmdl stub
                 quick_vmdl_action = QAction("Quick create vmdl", self)
-                quick_vmdl_action.setIcon(QIcon(":/icons/assettypes/model_sm.png"))
+                quick_vmdl_action.setIcon(QIcon(":/icons/tools/assettypes/model_sm.png"))
                 quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
                 menu.addAction(quick_vmdl_action)
 
             if file_extension == "vmdl":
                 quick_config_action = QAction("Quick AssetGroup file", self)
-                quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
                 quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
                 menu.addAction(quick_config_action)
 
             if file_extension in ("vmdl", "vmat") or file_extension in smartprop_extensions or file_extension == "vsndevts":
                 quick_process_action = QAction("Quick Process file", self)
-                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp.svg"))
                 quick_process_action.triggered.connect(lambda: run_compile(file_path))
                 menu.addAction(quick_process_action)
 
@@ -650,7 +650,7 @@ class Explorer(QMainWindow):
 
             if file_extension == "hbat":
                 quick_process_action = QAction("Quick Process AssetGroup", self)
-                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp.svg"))
                 quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
                 menu.addAction(quick_process_action)
 
@@ -658,7 +658,7 @@ class Explorer(QMainWindow):
         if file_extension in image_extensions:
             menu.addSection("Image Tools")
             fix_pbr_action = QAction("Fix PBR Range", self)
-            fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
+            fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp.png"))
             fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
             menu.addAction(fix_pbr_action)
 
@@ -667,7 +667,7 @@ class Explorer(QMainWindow):
             menu.addSection("Audio Tools")
             target = "wav" if file_extension == "mp3" else "mp3"
             convert_action = QAction(f"Convert to {target.upper()}", self)
-            convert_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            convert_action.setIcon(QIcon(":/icons/auto_towing_16dp.svg"))
             convert_action.triggered.connect(
                 lambda checked=False, p=file_path, t=target: self.convert_audio_file(p, t)
             )
@@ -680,32 +680,32 @@ class Explorer(QMainWindow):
         menu.addAction(asset_manager_action)
 
         rename_asset_action = QAction("Rename Asset", self)
-        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
         rename_asset_action.triggered.connect(lambda: self.open_asset_renamer(index))
         menu.addAction(rename_asset_action)
 
         export_action = QAction("Export Asset", self)
-        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        export_action.setIcon(QIcon(":/icons/file_open_16dp.svg"))
         export_action.triggered.connect(lambda: self.open_asset_exporter(index))
         menu.addAction(export_action)
 
         duplicate_action = QAction("Duplicate File", self)
-        duplicate_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        duplicate_action.setIcon(QIcon(":/icons/content_copy_24dp.svg"))
         duplicate_action.triggered.connect(lambda: self.duplicate_file(index))
         menu.addAction(duplicate_action)
 
         copy_action = QAction("Copy File", self)
-        copy_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        copy_action.setIcon(QIcon(":/icons/content_copy_24dp.svg"))
         copy_action.triggered.connect(lambda: self.copy_file(index))
         menu.addAction(copy_action)
 
         paste_action = QAction("Paste File", self)
-        paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        paste_action.setIcon(QIcon(":/icons/content_paste_24dp.svg"))
         paste_action.triggered.connect(lambda: self.paste_file(self.model.index(os.path.dirname(file_path))))
         menu.addAction(paste_action)
 
         delete_action = QAction("Delete File", self)
-        delete_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        delete_action.setIcon(QIcon(":/icons/delete_16dp.svg"))
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
@@ -1136,15 +1136,15 @@ class Explorer(QMainWindow):
                 item.setToolTip(path)
                 item.setData(Qt.UserRole, path)  # store absolute path
                 if os.path.isdir(path):
-                    item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                    item.setIcon(QIcon("://icons/folder_16dp.svg"))
                 else:
                     ext = os.path.splitext(path)[1].lower()
                     if ext in file_icons:
                         item.setIcon(QIcon(file_icons[ext]))
                     elif path.endswith(tuple(audio_extensions)):
-                        item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
+                        item.setIcon(QIcon("://icons/tools/assettypes/vmix_sm.png"))
                     elif path.endswith(tuple(generic_extensions)):
-                        item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
+                        item.setIcon(QIcon("://icons/tools/assettypes/generic_sm.png"))
                     else:
                         item.setIcon(QIcon("://icons/file.svg"))
                 self._panel_list.addItem(item)
@@ -1172,7 +1172,7 @@ class Explorer(QMainWindow):
         menu = ZebraMenu(self)
         if self._panel_mode == "favorites":
             remove_action = QAction("Remove Favorite", self)
-            remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            remove_action.setIcon(QIcon(":/icons/delete_16dp.svg"))
             def _remove():
                 full_path = item.data(Qt.UserRole)
                 if full_path and full_path in self.favorites:
@@ -1183,7 +1183,7 @@ class Explorer(QMainWindow):
             menu.addAction(remove_action)
         elif self._panel_mode == "recent":
             remove_action = QAction("Remove from Recent", self)
-            remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            remove_action.setIcon(QIcon(":/icons/delete_16dp.svg"))
             def _remove_recent():
                 full_path = item.data(Qt.UserRole)
                 recent = self.load_recent_files()

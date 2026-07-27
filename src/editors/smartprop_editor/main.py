@@ -86,28 +86,28 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         self.action_new = file_menu.addAction("New File")
         self.action_new.setShortcut(QKeySequence.New)
-        self.action_new.setIcon(QIcon(":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.action_new.setIcon(QIcon(":/icons/add_24dp.svg"))
         self.action_new.triggered.connect(self.create_new_file)
 
         self.action_open = file_menu.addAction("Open...")
         self.action_open.setShortcut(QKeySequence.Open)
-        self.action_open.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.action_open.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
         self.action_open.triggered.connect(lambda: self.open_file(external=True))
 
         self.action_open_selected = file_menu.addAction("Open Selected from Explorer")
-        self.action_open_selected.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.action_open_selected.setIcon(QIcon(":/icons/file_open_16dp.svg"))
         self.action_open_selected.triggered.connect(lambda: self.open_file(external=False))
 
         file_menu.addSeparator()
 
         self.action_save = file_menu.addAction("Save")
         self.action_save.setShortcut(QKeySequence.Save)
-        self.action_save.setIcon(QIcon(":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.action_save.setIcon(QIcon(":/icons/save_16dp.svg"))
         self.action_save.triggered.connect(lambda: self.save_file(external=False))
 
         self.action_save_as = file_menu.addAction("Save As...")
         self.action_save_as.setShortcut(QKeySequence.SaveAs)
-        self.action_save_as.setIcon(QIcon(":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.action_save_as.setIcon(QIcon(":/icons/save_as_16dp.svg"))
         self.action_save_as.triggered.connect(lambda: self.save_file(external=True))
 
         self.action_save_all = file_menu.addAction("Save All")

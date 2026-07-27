@@ -133,10 +133,10 @@ def label_qss(color=None, indent=0):
 CHECKBOX_QSS = """
 QCheckBox { background: transparent; border: 0px; padding: 0px; }
 QCheckBox::indicator:unchecked {
-    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+    image: url(://icons/check_box_outline_blank_16dp.svg);
 }
 QCheckBox::indicator:checked {
-    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+    image: url(://icons/select_check_box_16dp.svg);
 }
 QCheckBox:hover { background: transparent; }
 """

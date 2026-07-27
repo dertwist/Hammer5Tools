@@ -54,7 +54,7 @@ class PropertyColorMatch(QWidget):
         )
         delete_button = QToolButton()
         delete_button.setStyleSheet("""QToolButton {
-	icon: url(:/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+	icon: url(:/icons/delete_24dp.svg);
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 0px;
@@ -79,7 +79,7 @@ QToolButton:pressed {
     font: 580 9pt "Segoe UI";
 
 }""")
-        delete_icon_path = ":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"
+        delete_icon_path = ":/icons/delete_24dp.svg"
         delete_icon = QIcon(delete_icon_path)
         delete_button.setIcon(delete_icon)
         delete_button.clicked.connect(lambda: self.delete_action(ColorInstance))

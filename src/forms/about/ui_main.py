@@ -204,7 +204,7 @@ class Ui_documentation_dialog(object):
         self.open_documentation_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.open_documentation_button.setStyleSheet(self.btn_style)
         icon_doc = QIcon()
-        icon_doc.addFile(u":/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon_doc.addFile(u":/icons/developer_guide_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_documentation_button.setIcon(icon_doc)
         self.open_documentation_button.setIconSize(QSize(18, 18))
         self.guides_btn_layout.addWidget(self.open_documentation_button)
@@ -280,7 +280,7 @@ class Ui_documentation_dialog(object):
             }
         """)
         icon1 = QIcon()
-        icon1.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/emoji_objects_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.request_a_new_feature_button.setIcon(icon1)
         self.request_a_new_feature_button.setIconSize(QSize(18, 18))
         self.horizontalLayout_3.addWidget(self.request_a_new_feature_button)

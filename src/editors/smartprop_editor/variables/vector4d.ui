@@ -173,7 +173,7 @@ border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }
@@ -317,7 +317,7 @@ border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }
@@ -469,7 +469,7 @@ border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }
@@ -621,7 +621,7 @@ border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    image: url(://icons/arrow_drop_up_24dp.svg);
     width: 20px;
     height: 20px;
 }

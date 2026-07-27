@@ -251,7 +251,7 @@ class Ui_MainWindow(object):
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
         self.HierarchyDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
-        self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
+        self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Filter...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(3, QCoreApplication.translate("MainWindow", u"ID", None));
         ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Class", None));
