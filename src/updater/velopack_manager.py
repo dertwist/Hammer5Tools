@@ -2,7 +2,7 @@ import threading
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import QMessageBox, QProgressDialog
 from velopack import UpdateManager
-from src.common import get_update_url, get_update_options, app_version
+from src.common import get_update_source, get_update_options, app_version
 
 class VelopackManager:
     def __init__(self, parent_window):
@@ -14,7 +14,7 @@ class VelopackManager:
 
     def _update_thread(self, interactive):
         try:
-            mgr = UpdateManager(get_update_url(), options=get_update_options())
+            mgr = UpdateManager(get_update_source(), options=get_update_options())
             
             update = mgr.check_for_updates()
             

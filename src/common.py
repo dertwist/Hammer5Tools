@@ -47,19 +47,32 @@ from pathlib import Path
 
 app_version = '5.5.0'
 
-def get_build_channel() -> str:
-    """Channel this build was published on, from line 2 of version.txt (frozen builds only)."""
+def _version_txt() -> list[str]:
+    """[version, channel] from version.txt next to the frozen exe; [] when run from source.
+
+    utf-8-sig because CI writes it with PowerShell 5.1 Out-File -Encoding utf8,
+    which emits a BOM that would otherwise glue itself to the version string.
+    """
     try:
-        if not getattr(sys, 'frozen', False):
-            return 'stable'
-        vtxt = Path(sys.executable).parent / 'version.txt'
-        if vtxt.exists():
-            lines = vtxt.read_text(encoding='utf-8').splitlines()
-            if len(lines) >= 2 and lines[1].strip():
-                return lines[1].strip()
+        if getattr(sys, 'frozen', False):
+            vtxt = Path(sys.executable).parent / 'version.txt'
+            if vtxt.exists():
+                return [l.strip() for l in vtxt.read_text(encoding='utf-8-sig').splitlines()]
     except Exception:
         pass
-    return 'stable'
+    return []
+
+# Frozen builds report the packed version, so dev builds show 5.5.0-dev.226 rather
+# than a bare 5.5.0 that is indistinguishable from stable. Running from source
+# keeps the literal above, which is what CI reads to compute the pack version.
+_vlines = _version_txt()
+if _vlines and _vlines[0]:
+    app_version = _vlines[0]
+
+def get_build_channel() -> str:
+    """Channel this build was published on, from line 2 of version.txt (frozen builds only)."""
+    lines = _version_txt()
+    return lines[1] if len(lines) >= 2 and lines[1] else 'stable'
 
 def get_channel() -> str:
     """
@@ -97,13 +110,27 @@ def get_update_url() -> str:
     """
     Velopack feed URL for the current channel.
 
-    The dev release is a GitHub pre-release, and Velopack's GitHub source skips
-    pre-releases (the Python binding exposes no prerelease flag), so dev points
-    straight at the fixed 'dev' tag's asset directory as a plain HTTP feed.
+    The dev release is a GitHub pre-release, which Velopack's GitHub source
+    skips, so dev points straight at the fixed 'dev' tag's asset directory and
+    is read as a plain HTTP feed (see get_update_source).
     """
     if get_channel() == 'dev':
         return 'https://github.com/dertwist/Hammer5Tools/releases/download/dev'
     return 'https://github.com/dertwist/Hammer5Tools'
+
+def get_update_source():
+    """
+    Source object to hand UpdateManager.
+
+    Velopack host-sniffs a bare string: *any* github.com URL becomes a GitHub API
+    source. That silently turned the dev feed's asset-directory URL into a bogus
+    repo path, so the dev channel always reported "no updates". Dev must pass an
+    explicit HttpSource; stable stays a string so it keeps using the API source.
+    """
+    if get_channel() != 'dev':
+        return get_update_url()
+    from velopack import HttpSource
+    return HttpSource(get_update_url())
 
 # Title
 def enable_dark_title_bar(window):
