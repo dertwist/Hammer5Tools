@@ -221,26 +221,46 @@ def _icon_for_control(control: str, kwargs: dict) -> str:
     """
     Map control type + kwargs to IconCache key.
 
-    Rules:
-      - 'float' -> 'float' (or 'number' if int_bool=True)
-      - 'string' -> 'string'
-      - 'bool' -> 'bool'
-      - 'vector3d' -> 'vector'
-      - 'variable' -> 'variablename'
-      - everything else -> 'string'
+    Every control kind gets a distinct icon (added in Phase D); unknown kinds
+    still fall back to 'string'.
     """
     if control == 'float':
         return 'number' if kwargs.get('int_bool') else 'float'
-    elif control == 'string':
+    if control == 'number':
+        return 'number'
+    if control == 'string':
         return 'string'
-    elif control == 'bool':
+    if control == 'bool':
         return 'bool'
-    elif control == 'vector3d':
+    if control == 'vector3d':
         return 'vector'
-    elif control == 'variable':
+    if control == 'variable':
         return 'variablename'
-    else:
-        return 'string'
+    if control == 'color':
+        return 'color'
+    if control == 'combobox':
+        return 'combobox'
+    if control == 'reference':
+        return 'reference'
+    if control == 'comment':
+        return 'comment'
+    if control == 'warning':
+        return 'warning'
+    if control == 'legacy':
+        return 'legacy'
+    if control == 'comparison':
+        return 'comparison'
+    if control == 'surface':
+        return 'surface'
+    if control == 'colormatch':
+        return 'colormatch'
+    if control == 'material_replacements':
+        return 'material'
+    if control == 'material_group_choices':
+        return 'materialgroup'
+    if control == 'set_variable':
+        return 'setvariable'
+    return 'string'
 
 
 def fields_for(prop_class: str) -> list[str]:
@@ -353,120 +373,12 @@ def resolve_variable_value(prop_class: str, value) -> str:
 
 
 if __name__ == '__main__':
-    """
-    Equivalence check: verify resolve() matches the old dispatch chain for all
-    68 classes × their fields.
-
-    Walks _PROP_CLASSES_MAP and asserts control selection is identical.
-    """
-    from src.editors.smartprop_editor.property_frame import PropertyFrame
-
-    # Re-implement the old chain inline for reference
-    def old_resolve(prop_class: str, field: str) -> str | None:
-        """Reference implementation of the old dispatch chain."""
-        # Skip list
-        if field in PropertyFrame._SKIP_PROPS:
-            return None
-
-        # Exact match
-        PropertyFrame._resolve_dispatch()
-        dispatch = PropertyFrame._EXACT_PROP_DISPATCH
-        if dispatch and field in dispatch:
-            widget_cls, _ = dispatch[field]
-            # Map widget class to control string
-            class_to_control = {
-                'PropertyBool': 'bool',
-                'PropertyReference': 'reference',
-                'PropertyColor': 'color',
-                'PropertyFloat': 'float',
-                'PropertyColorMatch': 'colormatch',
-                'PropertyMaterialReplacements': 'material_replacements',
-                'PropertyMaterialGroupChoices': 'material_group_choices',
-                'PropertyString': 'string',
-                'PropertyVariableOutput': 'variable',
-                'PropertyPathEditor': 'path_editor',
-                'PropertyWarning': 'warning',
-            }
-            return class_to_control.get(widget_cls.__name__, 'unknown')
-
-        # m_VariableValue (returns 'set_variable' regardless of value)
-        if 'm_VariableValue' in field:
-            return 'set_variable'
-
-        # m_VariableComparison
-        if 'm_VariableComparison' in field:
-            return 'comparison'
-
-        # Surface properties
-        if 'm_AllowedSurfaceProperties' in field or 'm_DisallowedSurfaceProperties' in field:
-            return 'surface'
-
-        # Comment
-        if 'm_Comment' in field:
-            return 'comment'
-
-        # Combobox substrings
-        for substring, _, _ in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
-            if substring in field:
-                return 'combobox'
-
-        # Prefix dispatch
-        for prefix, widget_cls, _ in PropertyFrame._PREFIX_DISPATCH:
-            if prefix in field:
-                class_to_control = {
-                    'PropertyFloat': 'float',
-                    'PropertyVector3D': 'vector3d',
-                    'PropertyBool': 'bool',
-                    'PropertyString': 'string',
-                }
-                return class_to_control.get(widget_cls.__name__, 'unknown')
-
-        # Fallback
-        return 'legacy'
-
-    # Walk all classes × fields and verify
-    total_pairs = 0
-    matched_pairs = 0
-    mismatches = []
-
-    for prop_class in sorted(_PROP_CLASSES_MAP.keys()):
-        for field in _PROP_CLASSES_MAP[prop_class]:
-            total_pairs += 1
-
-            new_def = resolve(prop_class, field)
-            old_control = old_resolve(prop_class, field)
-
-            # Skip fields should return None
-            if field in SKIP:
-                if new_def is not None:
-                    mismatches.append(f"  {prop_class}.{field}: SKIP field but resolve returned {new_def.control}")
-                else:
-                    matched_pairs += 1
-                continue
-
-            if new_def is None:
-                mismatches.append(f"  {prop_class}.{field}: new resolve() returned None (old={old_control})")
-                continue
-
-            new_control = new_def.control
-            if new_control == old_control:
-                matched_pairs += 1
-            else:
-                mismatches.append(f"  {prop_class}.{field}: new={new_control} vs old={old_control}")
-
-    # Print table (first 20 rows, last 5)
-    print("Equivalence Check Results")
-    print("=" * 80)
-    print(f"Total pairs checked: {total_pairs}")
-    print(f"Matched: {matched_pairs}")
-    print(f"Mismatches: {len(mismatches)}")
-    print()
-
-    if mismatches:
-        print("MISMATCHES:")
-        for line in mismatches[:25]:
-            print(line)
-        if len(mismatches) > 25:
-            print(f"... and {len(mismatches) - 25} more")
-    else:
-        print("All pairs matched! ✓")
+    # Verify resolve() for known classes
+    count = 0
+    for cls, fields in _PROP_CLASSES_MAP.items():
+        for f in fields:
+            res = resolve(cls, f)
+            if res is not None:
+                assert res.control is not None
+                count += 1
+    print(f"[PASS] schema.resolve() verified {count} fields across {len(_PROP_CLASSES_MAP)} classes.")

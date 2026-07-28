@@ -610,12 +610,12 @@ class Viewport(QMainWindow):
     def zoomOut(self, mouse_pos=None):
         """
         Zoom out by 20%. Optionally keep the zoom focus around a specific mouse position.
-        Limited between 10% and 1000%.
+        Limited between 3% and 500%.
         """
         if self.current_pixmap:
             self.zoom_level /= 1.2
-            if self.zoom_level < 0.1:  # Minimum 10% zoom
-                self.zoom_level = 0.1
+            if self.zoom_level < 0.03:  # Minimum 3% zoom
+                self.zoom_level = 0.03
             self.updateImageDisplay(mouse_pos)
 
     def fitToWindow(self):
@@ -629,6 +629,8 @@ class Viewport(QMainWindow):
                 self.zoom_level = min(w_ratio, h_ratio)
                 # Slight offset to avoid accidental scrollbars.
                 self.zoom_level = self.zoom_level - 0.025 if self.zoom_level > 0.025 else self.zoom_level
+                if self.zoom_level < 0.03:
+                    self.zoom_level = 0.03
                 self.updateImageDisplay()
             except Exception as e:
                 debug(f"Error fitting image to window: {e}")

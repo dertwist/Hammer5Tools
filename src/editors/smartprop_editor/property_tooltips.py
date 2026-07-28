@@ -99,4 +99,67 @@ property_tooltips = {
     "m_LocatorName": "Unique identifier string for the locator.",
     "m_flDisplayScale": "Visual bounding size for the generated locator model.",
     "m_StateName": "The name of the state to save or restore. This allows for returning to a previously saved state at a later point in the evaluation.",
+
+    # Component Class Help
+    "CSmartPropElement_Model": {
+        "description": "Places a model as the child of an element.",
+        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+    },
+    "Element_Model": {
+        "description": "Places a model as the child of an element.",
+        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+    },
+    "Model": {
+        "description": "Places a model as the child of an element.",
+        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+    },
 }
+
+
+import os
+
+
+def resolve_image_path(path_str: str | None) -> str | None:
+    """Resolve image path to an absolute path if it exists."""
+    if not path_str:
+        return None
+    path_str = str(path_str).strip()
+    if not path_str:
+        return None
+    if os.path.isabs(path_str) and os.path.exists(path_str):
+        return path_str
+
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    candidate1 = os.path.join(base_dir, path_str)
+    if os.path.exists(candidate1):
+        return candidate1
+
+    src_dir = os.path.join(base_dir, "src")
+    candidate2 = os.path.join(src_dir, path_str)
+    if os.path.exists(candidate2):
+        return candidate2
+
+    return None
+
+
+def get_tooltip_info(key: str, default_desc: str = "") -> tuple[str, str | None]:
+    """Retrieve (description, image_path) for a given key from property_tooltips."""
+    val = property_tooltips.get(key)
+    if val is None:
+        return default_desc, None
+    if isinstance(val, dict):
+        desc = val.get("description", default_desc)
+        img = val.get("image")
+        return desc, img
+    return str(val), None
+
+
+def get_tooltip_info_multi(keys: list[str], default_desc: str = "") -> tuple[str, str | None]:
+    """Try a sequence of keys until a match is found in property_tooltips."""
+    for k in keys:
+        if not k:
+            continue
+        if k in property_tooltips:
+            return get_tooltip_info(k, default_desc)
+    return default_desc, None
+

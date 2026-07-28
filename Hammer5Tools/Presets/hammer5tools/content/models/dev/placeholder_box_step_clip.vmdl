@@ -1,39 +1,10 @@
-<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc35:version{b00eeed0-971d-4307-a91e-31e46956e894} -->
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0} -->
 {
 	rootNode = 
 	{
 		_class = "RootNode"
 		children = 
 		[
-			{
-				_class = "RenderMeshList"
-				children = 
-				[
-					{
-						_class = "RenderMeshFile"
-						children = 
-						[
-							{
-								_class = "ReplaceMeshMaterials"
-								remaps = 
-								[
-									{
-										from = "materials/models/props/de_nuke/hr_nuke/nuke_cars/nuke_cars_color.vmat"
-										to = "materials/tools/toolsclip.vmat"
-									},
-								]
-							},
-						]
-						filename = "models\\dev\\fbx\\mesh\\placeholder_box_step_clip.fbx"
-						import_scale = 1.0
-						import_filter = 
-						{
-							exclude_by_default = false
-							exception_list = [  ]
-						}
-					},
-				]
-			},
 			{
 				_class = "PhysicsShapeList"
 				children = 
@@ -44,13 +15,19 @@
 						parent_bone = ""
 						surface_prop = "default"
 						collision_prop = "clip"
+						tool_material = ""
 						recenter_on_parent_bone = false
 						offset_origin = [ 0.0, 0.0, 0.0 ]
 						offset_angles = [ 0.0, 0.0, 0.0 ]
 						filename = "models/dev/fbx/mesh/placeholder_box_step_clip.fbx"
 						import_scale = 1.0
-						maxMeshVertices = 0
-						qemError = 0.0
+						simplification_params = 
+						{
+							qemError = 0.0
+							maxMeshVertices = 0
+							small_element_threshold = 0.0
+							thin_element_threshold = 0.0
+						}
 						import_filter = 
 						{
 							exclude_by_default = false
@@ -59,10 +36,11 @@
 					},
 				]
 				leave_body_collision_unmodified = false
+				body_order = "default"
 			},
 		]
 		model_archetype = ""
 		primary_associated_entity = ""
-		anim_graph_name = ""
+		document_sub_type = "ModelDocSubType_None"
 	}
 }

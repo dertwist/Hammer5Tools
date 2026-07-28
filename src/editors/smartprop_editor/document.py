@@ -2,7 +2,6 @@ import os.path
 import re
 import ast
 from src.common import fast_deepcopy
-from collections import deque
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -18,9 +17,9 @@ from PySide6.QtWidgets import (
     QWidget,
     QDockWidget,
     QUndoView,
-    QScrollArea,
     QTabWidget,
     QPushButton,
+    QSizePolicy,
 )
 from PySide6.QtGui import (
     QAction,
@@ -52,9 +51,7 @@ from src.editors.smartprop_editor.vsmart import (
     VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
 )
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
-from src.editors.smartprop_editor.property_frame import PropertyFrame
-from src.editors.smartprop_editor.property_data_worker import BatchPropertyDataWorker
-from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
+from src.editors.smartprop_editor.props.panel import SmartPropPropertyPanel
 from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import (
@@ -134,16 +131,6 @@ class SmartPropDocument(QMainWindow):
         # when this is True so the panel is not double-rebuilt.
         self._undo_redo_rebuilding = False
 
-        # Progressive m_Modifiers loader (large Group nodes): session bumps invalidate QTimer chunks.
-        self._modifier_load_session = 0
-        self._modifier_batch_worker = None
-        self._modifier_batch_signal_ref = None
-        self._modifier_load_precomputed = None
-        self._prewarm_cache = {}
-        self._prewarm_order = deque()
-        self._prewarm_cache_max = 32
-        self._prewarm_signal_refs = {}
-
         # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
         self._choices_rename_old_state = None
 
@@ -180,7 +167,6 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
-        self.ui.tree_hierarchy_widget.itemExpanded.connect(self._prewarm_node_modifiers)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(3, QHeaderView.ResizeToContents)
@@ -212,17 +198,6 @@ class SmartPropDocument(QMainWindow):
 
         # Groups setup
         self.properties_groups_init()
-
-        # Modifiers panel scroll: cache once for batched repaint suppression (viewport).
-        self._modifiers_scroll_area = None
-        w = self.modifiers_group_instance.parentWidget()
-        for _ in range(8):
-            if w is None:
-                break
-            if isinstance(w, QScrollArea):
-                self._modifiers_scroll_area = w
-                break
-            w = w.parentWidget()
 
         BUTTON_H = 24
         self.ui.tree_hierarchy_search_bar_widget.setFixedHeight(BUTTON_H)
@@ -612,377 +587,59 @@ class SmartPropDocument(QMainWindow):
 
     # [Properties groups]
     def properties_groups_init(self):
-        self.modifiers_group_instance = PropertiesGroupFrame(
-            widget_list=self.ui.properties_layout,
-            name=str("Modifiers"),
-            group_type="modifier"
+        # 'property_list_backend' under [SmartPropEditor] selects the property
+        # editor: 'legacy' (default, form-based) or 'new' (experimental treeview).
+        # Toggled from the View menu ("New Property Editor (Experimental)").
+        backend = get_settings_value(
+            'SmartPropEditor', 'property_list_backend', default='legacy'
         )
-        self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
-        self.modifiers_group_instance.add_signal.connect(self.add_an_operator)
-        self.modifiers_group_instance.paste_signal.connect(self.paste_operator)
-
-        self.selection_criteria_group_instance = PropertiesGroupFrame(
-            widget_list=self.ui.properties_layout,
-            name=str("Section criteria"),
-            group_type="selection_criteria"
+        self.smartprop_property_panel = SmartPropPropertyPanel(
+            document=self, parent=self, backend=backend
         )
-        self.selection_criteria_group_instance.add_signal.connect(self.add_a_selection_criteria)
-        self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
-        self.selection_criteria_group_instance.paste_signal.connect(self.paste_selection_criteria)
+        self.ui.properties_layout.addWidget(self.smartprop_property_panel)
+        self.property_panel = self.smartprop_property_panel
 
-        self._selected_property_frame = None
+        # Slider scrub grouping: the property tree view forwards drag start/end
+        # so a single slider drag collapses to one undo entry (mirrors the
+        # legacy PropertyFrame.slider_pressed/committed connection).
+        # Only wire when the new backend is active (legacy backend uses direct
+        # PropertyFrame.slider_pressed/committed signals instead).
+        try:
+            from src.editors.smartprop_editor.props.view import PropertyPanel
+            tree_view = self.property_panel.property_panel.tree_view
+            tree_view.sliderStarted.connect(lambda _idx: self._on_slider_started())
+            tree_view.sliderCommitted.connect(lambda _idx: self._on_slider_committed())
+        except AttributeError:
+            # Legacy backend has no tree_view — slider signals wired per-frame.
+            pass
+        except Exception:
+            pass
+
+        self.ui.properties_placeholder.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.ui.properties_placeholder.setAlignment(Qt.AlignCenter)
+        if hasattr(self.ui, "properties_spacer"):
+            self.ui.properties_spacer.hide()
 
         self.properties_groups_hide()
 
     def properties_groups_hide(self):
-        self.ui.properties_spacer.hide()
         self.ui.properties_placeholder.show()
-        self.modifiers_group_instance.hide()
-        self.selection_criteria_group_instance.hide()
+        if hasattr(self.ui, "properties_spacer"):
+            self.ui.properties_spacer.hide()
+        if hasattr(self, "smartprop_property_panel"):
+            self.smartprop_property_panel.hide()
 
     def properties_groups_show(self):
         self.ui.properties_placeholder.hide()
-        self.ui.properties_spacer.show()
-        self.modifiers_group_instance.show()
-        self.selection_criteria_group_instance.show()
-
-    def _on_property_frame_selected(self, frame):
-        for layout in (self.modifiers_group_instance.layout, self.selection_criteria_group_instance.layout):
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame) and widget is not frame:
-                    widget.set_selected(False)
-        frame.set_selected(True)
-        self._selected_property_frame = frame
-
-    def _setup_property_frame_group(self, frame, group_type):
-        frame.set_group_type(group_type)
-        frame.selected_signal.connect(lambda f=frame: self._on_property_frame_selected(f))
-
-    # [Progressive modifier frames (large m_Modifiers)]
-    def _modifier_batch_scroll_target(self):
-        """Scroll area wrapping the modifiers group, or fallback to the group widget."""
-        return self._modifiers_scroll_area or self.modifiers_group_instance
-
-    def _modifier_batch_paint_suppress_widget(self):
-        """Widget whose repaints to suppress during chunked modifier load (scroll viewport)."""
-        t = self._modifier_batch_scroll_target()
-        if isinstance(t, QScrollArea):
-            return t.viewport()
-        return t
-
-    def _cancel_modifier_load(self):
-        """
-        Invalidate in-flight chunked modifier population (new tree selection / rebuild).
-        Bumps session so scheduled QTimer callbacks no-op.
-        """
-        self._modifier_load_session += 1
-        self._modifier_load_chunks = []
-        self._modifier_load_index = 0
-        self._modifier_load_precomputed = None
-        bw = getattr(self, "_modifier_batch_worker", None)
-        if bw is not None:
-            try:
-                bw.cancel()
-            except Exception:
-                pass
-        self._modifier_batch_worker = None
-        br = getattr(self, "_modifier_batch_signal_ref", None)
-        if br is not None:
-            QTimer.singleShot(0, br.deleteLater)
-        self._modifier_batch_signal_ref = None
-        sp = getattr(self, "_modifier_load_scroll_parent", None)
-        if sp is not None:
-            try:
-                sp.setUpdatesEnabled(True)
-                sp.update()
-            except Exception:
-                pass
-        self._modifier_load_scroll_parent = None
-
-    def _modifier_load_finish_suppress(self):
-        sp = getattr(self, "_modifier_load_scroll_parent", None)
-        if sp is not None:
-            try:
-                sp.setUpdatesEnabled(True)
-                sp.update()
-            except Exception:
-                pass
-        self._modifier_load_scroll_parent = None
-
-    def _prewarm_evict_if_full(self):
-        while len(self._prewarm_order) >= self._prewarm_cache_max:
-            old = self._prewarm_order.popleft()
-            self._prewarm_cache.pop(old, None)
-
-    def _prewarm_node_modifiers(self, item):
-        """On tree expand: batch-parse m_Modifiers in the background for faster later selection."""
-        if item is None:
-            return
-        node_key = id(item)
-        if node_key in self._prewarm_cache:
-            return
-        data = item.data(0, Qt.UserRole)
-        if not isinstance(data, dict):
-            return
-        modifiers = data.get("m_Modifiers", []) or []
-        if not modifiers:
-            return
-        self._prewarm_evict_if_full()
-        self._prewarm_order.append(node_key)
-        self._prewarm_cache[node_key] = None
-        ordered_mods = list(reversed(modifiers))
-        worker = BatchPropertyDataWorker(
-            raw_values=ordered_mods,
-            element_id_generator=self.element_id_generator,
-            prop_classes_map_cache=PropertyFrame._prop_classes_map_cache,
-            ordered_pairs_cache=PropertyFrame._ORDERED_PAIRS_CACHE,
-        )
-        self._prewarm_signal_refs[node_key] = worker.signals
-        worker.signals.finished.connect(
-            lambda results, k=node_key: self._on_modifier_prewarm_finished(k, results)
-        )
-        worker.signals.error.connect(
-            lambda _err, k=node_key: self._on_modifier_prewarm_failed(k)
-        )
-        PropertyFrame._get_worker_pool().start(worker)
-
-    def _on_modifier_prewarm_finished(self, node_key, results):
-        sigs = self._prewarm_signal_refs.pop(node_key, None)
-        if sigs is not None:
-            QTimer.singleShot(0, sigs.deleteLater)
-        if node_key not in self._prewarm_cache:
-            return
-        self._prewarm_cache[node_key] = results
-
-    def _on_modifier_prewarm_failed(self, node_key):
-        sigs = self._prewarm_signal_refs.pop(node_key, None)
-        if sigs is not None:
-            QTimer.singleShot(0, sigs.deleteLater)
-        self._prewarm_cache.pop(node_key, None)
-        try:
-            self._prewarm_order.remove(node_key)
-        except ValueError:
-            pass
-
-    def _take_prewarm_modifier_results(self, tree_item, ordered_len):
-        """If expand pre-computed the same modifier stack, consume the cache entry."""
-        if tree_item is None:
-            return None
-        node_key = id(tree_item)
-        entry = self._prewarm_cache.get(node_key)
-        if not isinstance(entry, list) or len(entry) != ordered_len:
-            return None
-        del self._prewarm_cache[node_key]
-        try:
-            self._prewarm_order.remove(node_key)
-        except ValueError:
-            pass
-        return entry
-
-    def _submit_modifier_batch_worker(self, session, ordered_modifiers):
-        worker = BatchPropertyDataWorker(
-            raw_values=ordered_modifiers,
-            element_id_generator=self.element_id_generator,
-            prop_classes_map_cache=PropertyFrame._prop_classes_map_cache,
-            ordered_pairs_cache=PropertyFrame._ORDERED_PAIRS_CACHE,
-        )
-        self._modifier_batch_worker = worker
-        self._modifier_batch_signal_ref = worker.signals
-
-        def _on_ready(results, sess=session):
-            self._on_modifier_batch_ready(sess, results)
-
-        def _on_err(msg, sess=session):
-            self._on_modifier_batch_error(sess, msg)
-
-        worker.signals.finished.connect(_on_ready)
-        worker.signals.error.connect(_on_err)
-        PropertyFrame._get_worker_pool().start(worker)
-
-    def _on_modifier_batch_ready(self, session, results):
-        self._modifier_batch_worker = None
-        br = getattr(self, "_modifier_batch_signal_ref", None)
-        if br is not None:
-            QTimer.singleShot(0, br.deleteLater)
-        self._modifier_batch_signal_ref = None
-        if session != self._modifier_load_session:
-            return
-        self._modifier_load_precomputed = results
-        self._load_next_modifier_chunk(session)
-
-    def _on_modifier_batch_error(self, session, _msg):
-        self._modifier_batch_worker = None
-        br = getattr(self, "_modifier_batch_signal_ref", None)
-        if br is not None:
-            QTimer.singleShot(0, br.deleteLater)
-        self._modifier_batch_signal_ref = None
-        if session != self._modifier_load_session:
-            return
-        self._modifier_load_precomputed = None
-        self._load_next_modifier_chunk(session)
-
-    def _wire_modifier_property_frame(self, frame, pending_init, inited_frame_ids):
-        frame.edited.connect(self.update_tree_item_value)
-        self._setup_property_frame_group(frame, "modifier")
-        pending_init["remaining"] += 1
-        frame_id = id(frame)
-
-        def _on_prop_frame_inited(fid=frame_id):
-            if fid in inited_frame_ids:
-                return
-            inited_frame_ids.add(fid)
-            pending_init["remaining"] -= 1
-            if pending_init["remaining"] <= 0:
-                self._dec_property_undo_guard()
-
-        frame.edited.connect(_on_prop_frame_inited)
-        frame.slider_pressed.connect(self._on_slider_started)
-        frame.committed.connect(self._on_slider_committed)
-
-    def _acquire_modifier_property_frame(self, modifier_value, precomputed=None):
-        """Pool acquire with fallback to direct PropertyFrame (same layout wiring as before)."""
-        val = fast_deepcopy(modifier_value)
-        if not PropertyFrame._is_complete_precomputed_payload(precomputed):
-            precomputed = None
-        if precomputed is not None:
-            prop_class = precomputed.get("prop_class") or ""
-        else:
-            wc = val.get("_class", "") if isinstance(val, dict) else ""
-            prop_class = wc.split("_", 1)[-1] if wc else ""
-        kwargs = dict(
-            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-            element_id_generator=self.element_id_generator,
-            tree_hierarchy=self.ui.tree_hierarchy_widget,
-        )
-        mod_layout = self.modifiers_group_instance.layout
-        try:
-            from src.editors.smartprop_editor.property_widget_pool import PropertyWidgetPool
-
-            return PropertyWidgetPool.instance().acquire(
-                prop_class=prop_class,
-                value=val,
-                widget_list=mod_layout,
-                precomputed=precomputed,
-                **kwargs,
-            )
-        except Exception:
-            if PropertyFrame._is_complete_precomputed_payload(precomputed):
-                return PropertyFrame(
-                    value=precomputed["value"],
-                    widget_list=mod_layout,
-                    precomputed=precomputed,
-                    parent=self,
-                    **kwargs,
-                )
-            return PropertyFrame(
-                value=val,
-                widget_list=mod_layout,
-                parent=self,
-                **kwargs,
-            )
-
-    def _load_next_modifier_chunk(self, session):
-        if session != self._modifier_load_session:
-            return
-        chunks = getattr(self, "_modifier_load_chunks", None) or []
-        idx = getattr(self, "_modifier_load_index", 0)
-        mod_layout = getattr(self, "_modifier_load_mod_layout", None)
-        pending_init = getattr(self, "_modifier_load_pending_init", None)
-        inited_frame_ids = getattr(self, "_modifier_load_inited_ids", None)
-        delay_ms = getattr(self, "_modifier_load_delay_ms", 16)
-
-        if not chunks or mod_layout is None or pending_init is None or inited_frame_ids is None:
-            self._modifier_load_finish_suppress()
-            return
-
-        if idx >= len(chunks):
-            self._modifier_load_finish_suppress()
-            return
-
-        chunk = chunks[idx]
-        self._modifier_load_index = idx + 1
-
-        offset = self._modifier_load_offsets[idx]
-        precomputed_list = getattr(self, "_modifier_load_precomputed", None)
-
-        for j, modifier_value in enumerate(chunk):
-            if session != self._modifier_load_session:
-                return
-            pc = None
-            if precomputed_list is not None:
-                try:
-                    pc = precomputed_list[offset + j]
-                except IndexError:
-                    pc = None
-            frame = self._acquire_modifier_property_frame(modifier_value, precomputed=pc)
-            self._wire_modifier_property_frame(frame, pending_init, inited_frame_ids)
-            mod_layout.insertWidget(0, frame)
-
-        if session != self._modifier_load_session:
-            return
-
-        if self._modifier_load_index < len(chunks):
-            QTimer.singleShot(delay_ms, lambda s=session: self._load_next_modifier_chunk(s))
-        else:
-            self._modifier_load_finish_suppress()
-
-    def _populate_modifiers_progressive(
-        self,
-        data_modif,
-        pending_init,
-        inited_frame_ids,
-        tree_item=None,
-        chunk_size=4,
-        delay_ms=16,
-    ):
-        """
-        Insert modifier PropertyFrames in chunks so 35 modifiers do not all start
-        workers/timers in one event-loop slice. Order matches reversed(insertWidget(0,...)).
-        One BatchPropertyDataWorker prepares all modifiers; optional prewarm skips the batch.
-        """
-        if not data_modif:
-            return
-
-        # Caller must _cancel_modifier_load() before this (selection / rebuild).
-        session = self._modifier_load_session
-
-        ordered = list(reversed(data_modif))
-        self._modifier_load_chunks = [
-            ordered[i : i + chunk_size] for i in range(0, len(ordered), chunk_size)
-        ]
-        offsets = [0]
-        for chunk in self._modifier_load_chunks:
-            offsets.append(offsets[-1] + len(chunk))
-        self._modifier_load_offsets = offsets
-        self._modifier_load_index = 0
-        self._modifier_load_mod_layout = self.modifiers_group_instance.layout
-        self._modifier_load_pending_init = pending_init
-        self._modifier_load_inited_ids = inited_frame_ids
-        self._modifier_load_delay_ms = delay_ms
-
-        precomputed_list = self._take_prewarm_modifier_results(tree_item, len(ordered))
-        self._modifier_load_precomputed = precomputed_list
-
-        paint_w = self._modifier_batch_paint_suppress_widget()
-        self._modifier_load_scroll_parent = paint_w
-        if paint_w is not None:
-            paint_w.setUpdatesEnabled(False)
-
-        if precomputed_list is not None:
-            self._load_next_modifier_chunk(session)
-        else:
-            self._submit_modifier_batch_worker(session, ordered)
+        if hasattr(self.ui, "properties_spacer"):
+            self.ui.properties_spacer.hide()
+        if hasattr(self, "smartprop_property_panel"):
+            self.smartprop_property_panel.show()
 
     # [Tree Hierarchy updating]
     def on_tree_current_item_changed(self, current_item, previous_item):
-        # When a PropertySnapshotCommand undo/redo calls setCurrentItem to sync
-        # the tree selection, we must not rebuild the panel here — the command
-        # handles that itself via _rebuild_properties_panel.
-        if self._undo_redo_rebuilding:
+        if getattr(self, "_undo_redo_rebuilding", False):
             return
-
-
 
         # Refresh the manual editor if its dock is currently visible.
         if (getattr(self, '_manual_dock', None) is not None
@@ -998,216 +655,16 @@ class SmartPropDocument(QMainWindow):
             eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
             self._viewport_3d.highlight_element(eid)
 
-        # Raise the guard BEFORE creating any PropertyFrame so the guard decrement
-        # is queued AFTER all _finish_init singleShot(0) callbacks.  The decrement
-        # is scheduled at the very end of this function, after all frames are
-        # instantiated, ensuring the queue order is:
-        #   [_finish_init callbacks …, _dec_property_undo_guard]
-        self._property_undo_guard += 1
-
-        # With PropertyFrame init moving off the main thread (QThreadPool),
-        # the old "decrement after QTimer(0)" timing can release the guard too
-        # early.  We keep it raised until all PropertyFrame instances created
-        # for this selection have emitted their initial `edited` (phase 2).
-        pending_init = {"remaining": 0}
-        inited_frame_ids = set()
-
-        self._cancel_modifier_load()
-
-        # Cancel any in-progress slider drag when the selection changes.
-        self._slider_dragging = 0
-        self._slider_pre_drag_data = None
-
-        item = current_item
         if current_item is not None:
             self.properties_groups_show()
         else:
             self.properties_groups_hide()
 
-        try:
-            # Remove any existing PropertyFrame widgets from their layouts immediately
-            # so that update_tree_item_value never sees both the old (pending deletion)
-            # and new frames at the same time.  removeWidget() detaches the widget from
-            # layout management right away; deleteLater() handles deferred memory cleanup.
-            for layout in (
-                self.ui.properties_layout,
-                self.modifiers_group_instance.layout,
-                self.selection_criteria_group_instance.layout,
-            ):
-                for i in reversed(range(layout.count())):
-                    widget = layout.itemAt(i).widget()
-                    if isinstance(widget, PropertyFrame):
-                        widget.cancel_worker()
-                        layout.removeWidget(widget)
-                        widget.hide()
-                        if layout is self.modifiers_group_instance.layout:
-                            from src.editors.smartprop_editor.property_widget_pool import (
-                                PropertyWidgetPool,
-                            )
+        if hasattr(self, "smartprop_property_panel"):
+            self.smartprop_property_panel.set_element(current_item)
 
-                            PropertyWidgetPool.instance().release(
-                                getattr(widget, "prop_class", None), widget
-                            )
-                        else:
-                            try:
-                                # Return pooled child widgets to their pools first.
-                                widget._clear_widgets()
-                            except Exception:
-                                pass
-                            widget.deleteLater()
-        except Exception as error:
-            print(error)
-
-        try:
-            # No tree selection: panel was cleared above; do not touch item.data.
-            if item is not None:
-                # deepcopy so we never mutate the data stored in the tree item
-                data = fast_deepcopy(item.data(0, Qt.UserRole))
-                data_modif = data.pop("m_Modifiers", None) or []
-                data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
-                property_instance = PropertyFrame(
-                    widget_list=self.ui.properties_layout,
-                    value=data,
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                    element=True,
-                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator,
-                    parent=self,
-                )
-                property_instance.edited.connect(self.update_tree_item_value)
-
-                pending_init["remaining"] += 1
-                frame_id = id(property_instance)
-
-                def _on_prop_frame_inited(fid=frame_id):
-                    if fid in inited_frame_ids:
-                        return
-                    inited_frame_ids.add(fid)
-                    pending_init["remaining"] -= 1
-                    if pending_init["remaining"] <= 0:
-                        self._dec_property_undo_guard()
-
-                property_instance.edited.connect(_on_prop_frame_inited)
-
-                property_instance.slider_pressed.connect(self._on_slider_started)
-                property_instance.committed.connect(self._on_slider_committed)
-                self.ui.properties_layout.insertWidget(0, property_instance)
-
-                if data_modif:
-                    self._populate_modifiers_progressive(
-                        data_modif,
-                        pending_init,
-                        inited_frame_ids,
-                        tree_item=item,
-                    )
-
-                if data_sel_criteria:
-                    for entry in reversed(data_sel_criteria):
-                        prop_instance = PropertyFrame(
-                            widget_list=self.selection_criteria_group_instance.layout,
-                            value=fast_deepcopy(entry),
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            tree_hierarchy=self.ui.tree_hierarchy_widget,
-                            element_id_generator=self.element_id_generator,
-                            parent=self,
-                        )
-                        prop_instance.edited.connect(self.update_tree_item_value)
-                        self._setup_property_frame_group(prop_instance, "selection_criteria")
-
-                        pending_init["remaining"] += 1
-                        frame_id = id(prop_instance)
-
-                        def _on_prop_frame_inited(fid=frame_id):
-                            if fid in inited_frame_ids:
-                                return
-                            inited_frame_ids.add(fid)
-                            pending_init["remaining"] -= 1
-                            if pending_init["remaining"] <= 0:
-                                self._dec_property_undo_guard()
-
-                        prop_instance.edited.connect(_on_prop_frame_inited)
-
-                        prop_instance.slider_pressed.connect(self._on_slider_started)
-                        prop_instance.committed.connect(self._on_slider_committed)
-                        self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
-        except Exception as error:
-            print(error)
-
-        # If no PropertyFrames were created, release the guard on the next tick.
-        # Otherwise, it will be released after the last frame emits its initial edited.
-        if pending_init["remaining"] <= 0:
-            QTimer.singleShot(0, self._dec_property_undo_guard)
-
-    def update_tree_item_value(self, item=None):
-        if item is None:
-            item = self.ui.tree_hierarchy_widget.currentItem()
-        if item:
-            # Capture old state BEFORE assembling the new value
-            old_data = fast_deepcopy(item.data(0, Qt.UserRole))
-
-            output_value = {}
-            modifiers = []
-            selection_criteria = []
-
-            # Collect modifiers
-            for i in range(self.modifiers_group_instance.layout.count()):
-                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        modifiers.append(value)
-
-            for i in range(self.selection_criteria_group_instance.layout.count()):
-                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        selection_criteria.append(value)
-
-            # Collect main properties
-            for i in range(self.ui.properties_layout.count()):
-                widget = self.ui.properties_layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        output_value.update(value)
-
-            try:
-                if modifiers[0] is None:
-                    modifiers = []
-            except IndexError:
-                pass
-            try:
-                if selection_criteria[0] is None:
-                    selection_criteria = []
-            except IndexError:
-                pass
-
-            output_value.update({"m_Modifiers": modifiers})
-            output_value.update({"m_SelectionCriteria": selection_criteria})
-
-            # Safety: if the main PropertyFrame hasn't emitted on_edited yet its value
-            # won't contain '_class', meaning the panel is still initializing.  Writing
-            # an incomplete dict would corrupt the stored data and cause a KeyError the
-            # next time _rebuild_properties_panel tries to recreate the PropertyFrame.
-            if '_class' not in output_value:
-                return
-
-            item.setData(0, Qt.UserRole, output_value)
-
-            # Mark document as modified
-            self._modified = True
-            self._edited.emit()
-
-            # Push undo command only when something actually changed, we are not
-            # inside a panel rebuild triggered by undo/redo, and no slider is
-            # currently being dragged.  During a slider drag the view is updated
-            # in real-time but only one command is pushed on release via
-            # _on_slider_committed, which preserves the true pre-drag state.
-            if not self._property_undo_guard and not self._slider_dragging and output_value != old_data:
-                new_data = fast_deepcopy(output_value)
-                cmd = PropertySnapshotCommand(self, item, old_data, new_data)
-                self.undo_stack.push(cmd)
+        # Legacy _get_property_frame() population removed (P7).
+        # Property panel is now handled entirely by SmartPropPropertyPanel above.
 
     # [Event Filter]
     def _schedule_layout_save(self, *args):
@@ -1488,19 +945,34 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.AddItem(new_element_item)
 
     # [Properties operator]
+    def _append_component(self, container_key, component_value, force_new_id=False):
+        """Append a modifier/selection-criteria dict to the current item and commit.
+
+        Mirrors ComponentList._add_component_dict (props/components.py) so both
+        the toolbar Add/Paste actions and the Section-1 "+" button produce
+        identically-shaped data + undo history.
+        """
+        item = self.ui.tree_hierarchy_widget.currentItem()
+        if item is None:
+            return
+        if not isinstance(component_value, dict):
+            component_value = ast.literal_eval(component_value)
+        component_value = dict(component_value)
+        component_value.setdefault('m_bEnabled', True)
+        self.element_id_generator.update_value(component_value, force=force_new_id)
+
+        old_data = fast_deepcopy(item.data(0, Qt.UserRole))
+        new_data = fast_deepcopy(old_data)
+        new_data.setdefault(container_key, []).append(component_value)
+        item.setData(0, Qt.UserRole, new_data)
+
+        self._modified = True
+        self._edited.emit()
+        self.undo_stack.push(PropertySnapshotCommand(self, item, old_data, new_data))
+        self.smartprop_property_panel.set_element(item)
+
     def new_operator(self, element_class, element_value):
-        operator_instance = PropertyFrame(
-            widget_list=self.modifiers_group_instance.layout,
-            value=element_value,
-            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-            tree_hierarchy=self.ui.tree_hierarchy_widget,
-            element_id_generator=self.element_id_generator,
-            parent=self,
-        )
-        operator_instance.edited.connect(self.update_tree_item_value)
-        self._setup_property_frame_group(operator_instance, "modifier")
-        self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
-        self.update_tree_item_value()
+        self._append_component("m_Modifiers", element_value)
 
     def add_an_operator(self):
         """
@@ -1517,10 +989,12 @@ class SmartPropDocument(QMainWindow):
             for key in item.keys():
                 if key in force_items_names:
                     force_items.append(item)
-        for i in range(self.modifiers_group_instance.layout.count()):
-            widget = self.modifiers_group_instance.layout.itemAt(i).widget()
-            if isinstance(widget, PropertyFrame):
-                exists_classes.append(widget.name)
+        current_item = self.ui.tree_hierarchy_widget.currentItem()
+        current_data = current_item.data(0, Qt.UserRole) if current_item is not None else None
+        if isinstance(current_data, dict):
+            for mod in current_data.get("m_Modifiers") or []:
+                if isinstance(mod, dict):
+                    exists_classes.append(mod.get("_class", "").split('_', 1)[-1])
         for class_name in force_items_names:
             if class_name in exists_classes:
                 exists_classes.remove(class_name)
@@ -1542,27 +1016,13 @@ class SmartPropDocument(QMainWindow):
         self.popup_menu.show()
 
     def paste_operator(self):
-        clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
+        clipboard_text = QApplication.clipboard().text()
         clipboard_data = clipboard_text.split(";;")
-
-        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
-            data = ast.literal_eval(clipboard_data[2])
-            data = self.element_id_generator.update_value(data, force=True)
-            operator_instance = PropertyFrame(
-                widget_list=self.modifiers_group_instance.layout,
-                value=data,
-                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator,
-                parent=self,
-            )
-            operator_instance.edited.connect(self.update_tree_item_value)
-            self._setup_property_frame_group(operator_instance, "modifier")
-            self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
-        else:
+        if clipboard_data[0] != "hammer5tools:smartprop_editor_property":
             print("Clipboard data format is not valid.")
-        self.update_tree_item_value()
+            return
+        data = ast.literal_eval(clipboard_data[2])
+        self._append_component("m_Modifiers", data, force_new_id=True)
 
     # [Properties Selection Criteria]
     def add_a_selection_criteria(self):
@@ -1570,31 +1030,33 @@ class SmartPropDocument(QMainWindow):
         exists_classes = []
         force_items_names = ['Comment']
         force_items = []
-        
+
         for item in selection_criteria_list:
             for key in item.keys():
                 if key in force_items_names:
                     force_items.append(item)
-                    
-        for i in range(self.selection_criteria_group_instance.layout.count()):
-            widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
-            if isinstance(widget, PropertyFrame):
-                exists_classes.append(widget.name)
-                
+
+        current_item = self.ui.tree_hierarchy_widget.currentItem()
+        current_data = current_item.data(0, Qt.UserRole) if current_item is not None else None
+        if isinstance(current_data, dict):
+            for crit in current_data.get("m_SelectionCriteria") or []:
+                if isinstance(crit, dict):
+                    exists_classes.append(crit.get("_class", "").split('_', 1)[-1])
+
         for class_name in force_items_names:
             if class_name in exists_classes:
                 exists_classes.remove(class_name)
-                
+
         for item in selection_criteria_list:
             for key, value in item.items():
                 if key not in exists_classes:
                     if item not in elements_in_popupmenu:
                         elements_in_popupmenu.append(item)
-                        
+
         for item in force_items:
             if item not in elements_in_popupmenu:
                 elements_in_popupmenu.append(item)
-                
+
         self.popup_menu = PopupMenu(
             elements_in_popupmenu,
             add_once=True,
@@ -1605,41 +1067,16 @@ class SmartPropDocument(QMainWindow):
         self.popup_menu.show()
 
     def new_selection_criteria(self, element_class, element_value):
-        operator_instance = PropertyFrame(
-            widget_list=self.selection_criteria_group_instance.layout,
-            value=element_value,
-            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-            tree_hierarchy=self.ui.tree_hierarchy_widget,
-            element_id_generator=self.element_id_generator,
-            parent=self,
-        )
-        operator_instance.edited.connect(self.update_tree_item_value)
-        self._setup_property_frame_group(operator_instance, "selection_criteria")
-        self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
-        self.update_tree_item_value()
+        self._append_component("m_SelectionCriteria", element_value)
 
     def paste_selection_criteria(self):
-        clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
+        clipboard_text = QApplication.clipboard().text()
         clipboard_data = clipboard_text.split(";;")
-
-        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
-            data = ast.literal_eval(clipboard_data[2])
-            data = self.element_id_generator.update_value(data, force=True)
-            operator_instance = PropertyFrame(
-                widget_list=self.selection_criteria_group_instance.layout,
-                value=data,
-                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator,
-                parent=self,
-            )
-            operator_instance.edited.connect(self.update_tree_item_value)
-            self._setup_property_frame_group(operator_instance, "selection_criteria")
-            self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
-        else:
+        if clipboard_data[0] != "hammer5tools:smartprop_editor_property":
             print("Clipboard data format is not valid.")
-        self.update_tree_item_value()
+            return
+        data = ast.literal_eval(clipboard_data[2])
+        self._append_component("m_SelectionCriteria", data, force_new_id=True)
 
     # [Open File]
     @exception_handler
@@ -2603,304 +2040,27 @@ class SmartPropDocument(QMainWindow):
 
     # [Properties Panel Undo]
     def _rebuild_properties_panel(self, item):
-        """Rebuild the properties panel from the current tree-item data.
-
-        Called by PropertySnapshotCommand during undo/redo.  The
-        _property_undo_guard counter is incremented here and decremented after
-        all QTimer.singleShot(0) deferred-init callbacks have fired, so that
-        the resulting update_tree_item_value() calls do NOT push new commands.
-        """
-        self._property_undo_guard += 1
-        pending_init = {"remaining": 0}
-        inited_frame_ids = set()
-        self._cancel_modifier_load()
-        # Cancel any in-progress slider drag so stale state is not committed.
-        self._slider_dragging = 0
-        self._slider_pre_drag_data = None
-        try:
-            # Clear existing PropertyFrame widgets.  hide() fires synchronously
-            # so the panel is cleared visually before the new content is built.
-            for layout in (
-                self.ui.properties_layout,
-                self.modifiers_group_instance.layout,
-                self.selection_criteria_group_instance.layout,
-            ):
-                for i in reversed(range(layout.count())):
-                    widget = layout.itemAt(i).widget()
-                    if isinstance(widget, PropertyFrame):
-                        widget.cancel_worker()
-                        layout.removeWidget(widget)
-                        widget.hide()
-                        if layout is self.modifiers_group_instance.layout:
-                            from src.editors.smartprop_editor.property_widget_pool import (
-                                PropertyWidgetPool,
-                            )
-
-                            PropertyWidgetPool.instance().release(
-                                getattr(widget, "prop_class", None), widget
-                            )
-                        else:
-                            try:
-                                # Return pooled child widgets to their pools first.
-                                widget._clear_widgets()
-                            except Exception:
-                                pass
-                            widget.deleteLater()
-
-            # Show/hide panel groups
-            if item is not None:
-                self.properties_groups_show()
-            else:
-                self.properties_groups_hide()
-                return
-
-            # Create new PropertyFrame widgets from the item's stored data
-            data = fast_deepcopy(item.data(0, Qt.UserRole))
-            if data is None:
-                return
-            data_modif = data.pop("m_Modifiers", None) or []
-            data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
-
-            prop = PropertyFrame(
-                widget_list=self.ui.properties_layout,
-                value=data,
-                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                element=True,
-                tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator,
-                parent=self,
-            )
-            prop.edited.connect(self.update_tree_item_value)
-
-            pending_init["remaining"] += 1
-            frame_id = id(prop)
-
-            def _on_prop_frame_inited(fid=frame_id):
-                if fid in inited_frame_ids:
-                    return
-                inited_frame_ids.add(fid)
-                pending_init["remaining"] -= 1
-                if pending_init["remaining"] <= 0:
-                    self._dec_property_undo_guard()
-
-            prop.edited.connect(_on_prop_frame_inited)
-
-            prop.slider_pressed.connect(self._on_slider_started)
-            prop.committed.connect(self._on_slider_committed)
-            self.ui.properties_layout.insertWidget(0, prop)
-
-            if data_modif:
-                self._populate_modifiers_progressive(
-                    data_modif,
-                    pending_init,
-                    inited_frame_ids,
-                    tree_item=item,
-                )
-
-            for entry in reversed(data_sel_criteria):
-                p = PropertyFrame(
-                    widget_list=self.selection_criteria_group_instance.layout,
-                    value=fast_deepcopy(entry),
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator,
-                    parent=self,
-                )
-                p.edited.connect(self.update_tree_item_value)
-                self._setup_property_frame_group(p, "selection_criteria")
-
-                pending_init["remaining"] += 1
-                frame_id = id(p)
-
-                def _on_prop_frame_inited(fid=frame_id):
-                    if fid in inited_frame_ids:
-                        return
-                    inited_frame_ids.add(fid)
-                    pending_init["remaining"] -= 1
-                    if pending_init["remaining"] <= 0:
-                        self._dec_property_undo_guard()
-
-                p.edited.connect(_on_prop_frame_inited)
-
-                p.slider_pressed.connect(self._on_slider_started)
-                p.committed.connect(self._on_slider_committed)
-                self.selection_criteria_group_instance.layout.insertWidget(0, p)
-
-        except Exception as e:
-            print(f"[SPE] _rebuild_properties_panel: ERROR — {e}")
-        finally:
-            # If no PropertyFrames were created, release the guard on the next tick.
-            # Otherwise it will be released after the last frame emits its initial edited.
-            if pending_init["remaining"] <= 0:
-                QTimer.singleShot(0, self._dec_property_undo_guard)
+        """Rebuild the properties panel from the current tree-item data."""
+        if hasattr(self, "smartprop_property_panel"):
+            self.smartprop_property_panel.set_element(item)
 
     def _dec_property_undo_guard(self):
         self._property_undo_guard = max(0, self._property_undo_guard - 1)
 
-    def _get_nth_property_frame(self, layout, n):
-        """Return the Nth PropertyFrame in *layout*, skipping non-PropertyFrame widgets."""
-        count = 0
-        for i in range(layout.count()):
-            w = layout.itemAt(i).widget()
-            if isinstance(w, PropertyFrame):
-                if count == n:
-                    return w
-                count += 1
-        return None
-
-    def _rebuild_group_section(self, key, new_data, item):
-        """Rebuild only the modifiers or selection criteria section (not the whole panel)."""
-        if key == 'm_Modifiers':
-            layout = self.modifiers_group_instance.layout
-            new_list = new_data.get('m_Modifiers', [])
-        else:
-            layout = self.selection_criteria_group_instance.layout
-            new_list = new_data.get('m_SelectionCriteria', [])
-
-        # Clear existing PropertyFrames in this section only
-        for i in reversed(range(layout.count())):
-            widget = layout.itemAt(i).widget()
-            if isinstance(widget, PropertyFrame):
-                widget.cancel_worker()
-                layout.removeWidget(widget)
-                widget.hide()
-                if key == 'm_Modifiers':
-                    from src.editors.smartprop_editor.property_widget_pool import (
-                        PropertyWidgetPool,
-                    )
-                    PropertyWidgetPool.instance().release(
-                        getattr(widget, "prop_class", None), widget
-                    )
-                else:
-                    try:
-                        widget._clear_widgets()
-                    except Exception:
-                        pass
-                    widget.deleteLater()
-
-        # Recreate for the new list
-        if key == 'm_Modifiers' and new_list:
-            self._cancel_modifier_load()
-            pending_init = {"remaining": 0}
-            inited_frame_ids = set()
-            self._populate_modifiers_progressive(
-                new_list, pending_init, inited_frame_ids, tree_item=item,
-            )
-        elif key == 'm_SelectionCriteria':
-            for entry in reversed(new_list):
-                p = PropertyFrame(
-                    widget_list=layout,
-                    value=fast_deepcopy(entry),
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator,
-                    parent=self,
-                )
-                p.edited.connect(self.update_tree_item_value)
-                self._setup_property_frame_group(p, "selection_criteria")
-                p.slider_pressed.connect(self._on_slider_started)
-                p.committed.connect(self._on_slider_committed)
-                layout.insertWidget(0, p)
-
-    def apply_property_data(self, item, new_data, changed_keys):
-        """Apply externally-produced element data to the item and refresh the property panel.
-
-        Single seam used by PropertySnapshotCommand.undo/redo. Today it forwards to the
-        legacy widget-panel updater; in P6 it switches to the new panel's
-        ``apply_external_data()`` (see docs/smartprop_property_rewrite.md). Keeping the
-        indirection here means commands.py never has to know which panel is live.
-        """
+    def apply_property_data(self, item, new_data, changed_keys=()):
+        """Apply externally-produced element data to the item and refresh the property panel."""
+        if item is not None:
+            item.setData(0, Qt.UserRole, fast_deepcopy(new_data))
         panel = getattr(self, "property_panel", None)
         if panel is not None and hasattr(panel, "apply_external_data"):
             panel.apply_external_data(item, new_data, changed_keys)
-            return
-        self._incremental_property_update(item, new_data, changed_keys)
 
-    def _incremental_property_update(self, item, new_data, changed_keys):
-        """Update only the changed property widgets instead of full rebuild.
-
-        Handles all diff key types: top-level properties, modifier/criteria
-        sub-properties, whole-element changes, and structural list changes.
-        """
-        item.setData(0, Qt.UserRole, fast_deepcopy(new_data))
-
-        self._property_undo_guard += 1
-        try:
-            main_frame = None
-            for i in range(self.ui.properties_layout.count()):
-                w = self.ui.properties_layout.itemAt(i).widget()
-                if isinstance(w, PropertyFrame):
-                    main_frame = w
-                    break
-
-            updated_frames = set()
-
-            for key in changed_keys:
-                if key in ('_class', 'm_nElementID'):
-                    continue
-
-                m = _DIFF_KEY_RE.match(key)
-                if m:
-                    # Modifier or criteria sub-property / whole-element change
-                    container = m.group(1)
-                    index = int(m.group(2))
-                    sub_key = m.group(3)  # None when whole element changed
-                    layout = (self.modifiers_group_instance.layout
-                             if container == 'm_Modifiers'
-                             else self.selection_criteria_group_instance.layout)
-                    frame = self._get_nth_property_frame(layout, index)
-                    if frame is not None:
-                        arr = new_data.get(container, [])
-                        if index < len(arr):
-                            if sub_key is not None:
-                                base_sub = sub_key.split('.')[0]
-                                frame.update_property_value(base_sub, arr[index].get(base_sub))
-                            else:
-                                frame._reconfigure(
-                                    value=fast_deepcopy(arr[index]),
-                                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                                    element_id_generator=self.element_id_generator,
-                                    widget_list=layout,
-                                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                                )
-                            updated_frames.add(id(frame))
-
-                elif key in ('m_Modifiers', 'm_SelectionCriteria'):
-                    # Structural change — rebuild just this section
-                    self._rebuild_group_section(key, new_data, item)
-
-                else:
-                    # Top-level property
-                    if main_frame is not None:
-                        base_key = key.split('.')[0]
-                        main_frame.update_property_value(base_key, new_data.get(base_key))
-                        updated_frames.add(id(main_frame))
-
-            # Silently update value dicts on affected frames (no signal emission)
-            if main_frame is not None and id(main_frame) in updated_frames:
-                main_frame.blockSignals(True)
-                main_frame.on_edited()
-                main_frame.blockSignals(False)
-
-            for layout in (self.modifiers_group_instance.layout,
-                           self.selection_criteria_group_instance.layout):
-                for i in range(layout.count()):
-                    w = layout.itemAt(i).widget()
-                    if isinstance(w, PropertyFrame) and id(w) in updated_frames:
-                        w.blockSignals(True)
-                        w.on_edited()
-                        w.blockSignals(False)
-
-        finally:
-            QTimer.singleShot(0, self._dec_property_undo_guard)
+    def _incremental_property_update(self, item, new_data, changed_keys=()):
+        """Update property values on item and forward to panel."""
+        self.apply_property_data(item, new_data, changed_keys)
 
     def _on_slider_started(self):
-        """Called when any FloatWidget slider begins a drag.
-
-        Captures the element's full data snapshot ONCE (before the first value
-        change) and increments the drag counter so update_tree_item_value skips
-        undo pushes for the duration of the drag.
-        """
+        """Called when a slider begins a drag."""
         if self._slider_dragging == 0:
             item = self.ui.tree_hierarchy_widget.currentItem()
             if item is not None:
@@ -2908,11 +2068,7 @@ class SmartPropDocument(QMainWindow):
         self._slider_dragging += 1
 
     def _on_slider_committed(self):
-        """Called when a FloatWidget slider is released.
-
-        Decrements the drag counter and, when the last active slider is released,
-        pushes a single PropertySnapshotCommand covering the full drag range.
-        """
+        """Called when a slider is released."""
         self._slider_dragging = max(0, self._slider_dragging - 1)
         if self._slider_dragging == 0 and self._slider_pre_drag_data is not None:
             item = self.ui.tree_hierarchy_widget.currentItem()
@@ -2924,9 +2080,7 @@ class SmartPropDocument(QMainWindow):
             self._slider_pre_drag_data = None
 
     def _gizmo_commit_drag(self):
-        """Called when transform gizmo drag is finished/released.
-        Pushes a single PropertySnapshotCommand covering the full drag range.
-        """
+        """Called when transform gizmo drag is finished/released."""
         if self._gizmo_pre_drag_data is not None:
             item = self.ui.tree_hierarchy_widget.currentItem()
             if item is not None and not self._property_undo_guard:
@@ -2934,44 +2088,15 @@ class SmartPropDocument(QMainWindow):
                 if new_data != self._gizmo_pre_drag_data:
                     cmd = PropertySnapshotCommand(self, item, self._gizmo_pre_drag_data, new_data)
                     self.undo_stack.push(cmd)
-                    # No rebuild needed: the property panel was already kept in sync
-                    # incrementally via update_property_frame_values during the drag.
             self._gizmo_pre_drag_data = None
 
     def update_property_frame_values(self, data, changed_keys=None):
-        """Live-update the Property panel to track a transform-gizmo drag.
-
-        Invoked on every mouse-move while a gizmo is being dragged so the
-        Translate / Rotate / Scale value fields follow the gizmo smoothly,
-        instead of only refreshing when the drag is released.  Only the widgets
-        named in ``changed_keys`` are reconfigured (a lightweight, signal-free
-        update) — never a full rebuild — except the single time a transform
-        modifier is *created* mid-drag, where the panel has no frame to target
-        yet and must be rebuilt once so the new frame appears.
-        """
+        """Live-update the Property panel to track a transform-gizmo drag."""
         if not changed_keys:
             return
         item = self.ui.tree_hierarchy_widget.currentItem()
-        if item is None:
-            return
-
-        # A transform modifier created on the first drag move has no
-        # PropertyFrame yet.  Rebuild the panel a single time so it appears;
-        # the guard stops the (async, progressive) rebuild from thrashing on the
-        # moves that follow before its frames have finished materialising.
-        n_mods = len(data.get("m_Modifiers") or [])
-        n_frames = sum(
-            1
-            for i in range(self.modifiers_group_instance.layout.count())
-            if isinstance(self.modifiers_group_instance.layout.itemAt(i).widget(), PropertyFrame)
-        )
-        if n_mods != n_frames and not self._gizmo_live_rebuilt:
-            self._gizmo_live_rebuilt = True
-            item.setData(0, Qt.UserRole, fast_deepcopy(data))
-            self._rebuild_properties_panel(item)
-            return
-
-        self._incremental_property_update(item, data, changed_keys)
+        if item is not None:
+            self.apply_property_data(item, data, changed_keys)
 
 
     # [Variables Panel Undo]

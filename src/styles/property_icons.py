@@ -24,6 +24,50 @@ class IconCache:
         return cls._cache[cache_key]
 
     @classmethod
+    def get_modifier_icon(cls) -> QIcon:
+        """Get cached icon for modifiers from modeldoc_editor icons."""
+        cache_key = "node_modifier"
+        if cache_key not in cls._cache:
+            import os
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "icons",
+                    "tools",
+                    "modeldoc_editor",
+                    "outliner_icon_model_modifier_decaluv.png",
+                )
+            )
+            if os.path.exists(path):
+                cls._cache[cache_key] = QIcon(path)
+            else:
+                cls._cache[cache_key] = cls.get_node_icon("operation")
+        return cls._cache[cache_key]
+
+    @classmethod
+    def get_selection_criteria_icon(cls) -> QIcon:
+        """Get cached icon for selection criteria from modeldoc_editor icons."""
+        cache_key = "node_selection_criteria"
+        if cache_key not in cls._cache:
+            import os
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "icons",
+                    "tools",
+                    "modeldoc_editor",
+                    "outliner_icon_lod_group_list.png",
+                )
+            )
+            if os.path.exists(path):
+                cls._cache[cache_key] = QIcon(path)
+            else:
+                cls._cache[cache_key] = cls.get_node_icon("selection criteria")
+        return cls._cache[cache_key]
+
+    @classmethod
     def get_property_icon(cls, type_str: str) -> QIcon:
         """Get cached property icon or create if not exists"""
         cache_key = f"property_{type_str}"
@@ -58,6 +102,18 @@ class IconCache:
             'variablename': ("vn", QColor("#adde75")),
             'displayname': ("dn", QColor("#75de7a")),
             'defaultvalue': ("def", QColor("#de75de")),
+            # Control-kind icons (Phase D) — distinct colour + 2-letter tag.
+            'color':     ("c",  QColor("#FF6AB0")),
+            'combobox':  ("cb", QColor("#56C7C7")),
+            'reference': ("rf", QColor("#8FB0FF")),
+            'comment':   ("//", QColor("#9AA0AA")),
+            'warning':   ("!",  QColor("#FFAA00")),
+            'legacy':    ("?",  QColor("#9AA0AA")),
+            'comparison':("cp", QColor("#C77FD6")),
+            'surface':   ("sf", QColor("#7AC7B0")),
+            'colormatch':("cm", QColor("#FF8AB0")),
+            'material':  ("mr", QColor("#5AA0DE")),
+            'setvariable':("sv", QColor("#B0DE75")),
         }
         label, color = type_map.get(type_str, ("?", QColor("#CCCCCC")))
         return cls._create_icon(label, color, 24)

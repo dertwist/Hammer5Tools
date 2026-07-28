@@ -43,7 +43,6 @@ class PropertyComment(QWidget):
         self.setFixedHeight(new_height)
         self.updateGeometry()
 
-        from src.editors.smartprop_editor.property_frame import PropertyFrame
         parent = self.parentWidget()
         while parent is not None:
             parent.updateGeometry()
@@ -51,8 +50,6 @@ class PropertyComment(QWidget):
             if parent_layout is not None:
                 parent_layout.activate()
             parent.adjustSize()
-            if isinstance(parent, PropertyFrame):
-                break
             parent = parent.parentWidget()
 
     def change_value(self):
