@@ -6,7 +6,7 @@ import threading
 import urllib.request
 import velopack
 from velopack import UpdateManager
-from src.common import get_channel, get_update_url, get_update_options
+from src.common import get_channel, get_update_source, get_update_options
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
@@ -41,7 +41,7 @@ class UpdateWorker(QObject):
             if is_frozen:
                 try:
                     print(f"Checking Velopack updates on channel: {get_channel()}")
-                    mgr = UpdateManager(get_update_url(), options=get_update_options())
+                    mgr = UpdateManager(get_update_source(), options=get_update_options())
                     update = mgr.check_for_updates()
                 except Exception as ve:
                     print(f"Velopack check failed: {ve}")
