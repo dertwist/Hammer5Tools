@@ -1,4 +1,4 @@
-"""
+﻿"""
 PropertyDataWorker: runs non-UI property data preparation on a QThreadPool worker.
 Emits finished(dict) on the main thread when complete; emits error(str) on failure.
 
@@ -6,7 +6,7 @@ BatchPropertyDataWorker: processes many modifier dicts in one runnable (one sign
 
 Thread safety:
   - Requires ElementIDGenerator._lock (RLock) to be present.
-Widget construction must NEVER happen inside run() — only on the main thread.
+Widget construction must NEVER happen inside run() ΓÇö only on the main thread.
 """
 
 from __future__ import annotations

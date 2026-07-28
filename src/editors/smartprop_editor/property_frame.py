@@ -127,7 +127,7 @@ class PropertyFrame(QWidget):
 
     @classmethod
     def _build_ordered_pairs_cache(cls):
-        """Build once at import — same order as reversed(_prop_classes_map_cache[key])."""
+        """Build once at import ΓÇö same order as reversed(_prop_classes_map_cache[key])."""
         cls._ORDERED_PAIRS_CACHE.clear()
         for prop_class, keys in cls._prop_classes_map_cache.items():
             cls._ORDERED_PAIRS_CACHE[prop_class] = [
@@ -148,7 +148,7 @@ class PropertyFrame(QWidget):
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
     _ONLY_VARIABLE_PROPERTIES = ()
 
-    # Combobox fields: (substring in value_class, items, filter_types) — order matters.
+    # Combobox fields: (substring in value_class, items, filter_types) ΓÇö order matters.
     _COMBOBOX_SUBSTRING_RULES = (
         ('m_SurfacePropertyOverride', [list(d.keys())[0] for d in surfaces_list], ['SurfaceProperty']),
         ('m_nPickMode', ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'], ['PickMode']),
@@ -183,11 +183,11 @@ class PropertyFrame(QWidget):
         ('m_EndPointSpaceB', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
     )
 
-    # Populated lazily in _resolve_dispatch() — ordered prefix fallthrough.
+    # Populated lazily in _resolve_dispatch() ΓÇö ordered prefix fallthrough.
     _PREFIX_DISPATCH: list = []
 
     # Exact-match dispatch: maps value_class -> (WidgetClass, extra_kwargs_dict)
-    # PropertyComment is NOT in this dict — handled separately (different signature)
+    # PropertyComment is NOT in this dict ΓÇö handled separately (different signature)
     _EXACT_PROP_DISPATCH = None  # populated lazily by _resolve_dispatch()
     _DISPATCH_RESOLVED = False
 
@@ -219,7 +219,7 @@ class PropertyFrame(QWidget):
             'm_nCountL':               (PropertyFloat,   {'int_bool': True, 'slider_range': [0, 256]}),
             'm_SpecificChildIndex':    (PropertyFloat,   {'int_bool': True}),
             'm_ColorSelection':        (PropertyFloat,   {'int_bool': True}),
-            'm_sModelName':            (PropertyString,  {'expression_bool': False, 'placeholder': 'Model path (models/…/example.vmdl)', 'model_browser': True, 'filter_types': ['String', 'Model']}),
+            'm_sModelName':            (PropertyString,  {'expression_bool': False, 'placeholder': 'Model path (models/ΓÇª/example.vmdl)', 'model_browser': True, 'filter_types': ['String', 'Model']}),
             'm_MaterialGroupName':     (PropertyString,  {'expression_bool': False, 'placeholder': 'Material group name'}),
             'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
             'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
@@ -291,7 +291,7 @@ class PropertyFrame(QWidget):
         super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # Mirrors insertWidget(0, ...) order — avoids O(n) layout scan in on_edited.
+        # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
         self._group_type = None
@@ -352,7 +352,7 @@ class PropertyFrame(QWidget):
             self.value = {'m_bEnabled': True}
             self.value.update(value)
 
-            # Element ID
+            #===========================================================<  Element ID  >========================================================
             self.element_id_generator.update_value(self.value)
             self.element_id = self.element_id_generator.get_key(self.value)
             debug(f'Property frame get_ElementID: {self.element_id}')
@@ -389,7 +389,7 @@ class PropertyFrame(QWidget):
         """
         Phase 1: populate the first 4 property widgets immediately for fast
         perceived response. The remaining properties are deferred one tick.
-        on_edited() is NOT called here — the value dict is incomplete until
+        on_edited() is NOT called here ΓÇö the value dict is incomplete until
         Phase 2 finishes.
         """
         self._add_properties_by_class(limit=4)
@@ -414,7 +414,7 @@ class PropertyFrame(QWidget):
         """
         Phase 2: populate remaining properties and finalize the value dict.
         _setup_layout2dgrid_suppression requires ALL widgets to be present.
-        on_edited() is called here for the first time — value dict is now complete.
+        on_edited() is called here for the first time ΓÇö value dict is now complete.
         """
         self._add_properties_by_class(offset=4)
         
@@ -452,7 +452,7 @@ class PropertyFrame(QWidget):
     def _add_widget_for_property(self, value_class, val, force=False):
         """Internal helper to create and initialize a property widget instance."""
         def add_instance():
-            # PropertyWarning is a static label — do NOT connect its edited
+            # PropertyWarning is a static label ΓÇö do NOT connect its edited
             # signal to on_edited, otherwise it triggers spurious undo actions.
             if not isinstance(property_instance, PropertyWarning):
                 property_instance.edited.connect(self.on_edited)
@@ -465,7 +465,8 @@ class PropertyFrame(QWidget):
 
             # Apply tooltips if available for this property.
             if hasattr(property_instance, 'ui') and hasattr(property_instance.ui, 'property_class'):
-                tip = property_tooltips.get(value_class, "")
+                tip_entry = property_tooltips.get(value_class, "")
+                tip = tip_entry.get("description", "") if isinstance(tip_entry, dict) else tip_entry
                 if tip:
                     property_instance.ui.property_class.setToolTip(tip)
 
@@ -724,7 +725,7 @@ class PropertyFrame(QWidget):
         """
         Remove and schedule destruction of all property child widgets.
         Calls setParent(None) before deleteLater() to immediately detach from
-        the layout — prevents a double-widget race if the frame is reused
+        the layout ΓÇö prevents a double-widget race if the frame is reused
         before the event loop processes deleteLater().
         """
         while self.ui.layout.count():
@@ -814,7 +815,7 @@ class PropertyFrame(QWidget):
     def _start_data_worker(self):
         """Dispatch data preparation to QThreadPool worker."""
         if not hasattr(self, "_worker_raw_value_with_class"):
-            # No raw payload available — fall back to synchronous init.
+            # No raw payload available ΓÇö fall back to synchronous init.
             self._ordered_pairs = None
             self._finish_init()
             return
@@ -881,7 +882,7 @@ class PropertyFrame(QWidget):
 
         self._active_worker = None
 
-        debug(f"PropertyDataWorker error — falling back to sync init: {error_msg}")
+        debug(f"PropertyDataWorker error ΓÇö falling back to sync init: {error_msg}")
         self._ordered_pairs = None
         self._finish_init()
 
@@ -890,7 +891,7 @@ class PropertyFrame(QWidget):
         if getattr(self, 'prop_class', None) != 'Layout2DGrid':
             return
 
-        # Cached list from _add_properties_by_class — avoids O(n) layout scan.
+        # Cached list from _add_properties_by_class ΓÇö avoids O(n) layout scan.
         def find_widget(value_class_name):
             for w in self._property_widgets:
                 if hasattr(w, 'value_class') and w.value_class == value_class_name:

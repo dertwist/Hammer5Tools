@@ -1,4 +1,4 @@
-"""
+﻿"""
 PropertyWidgetPool: caches PropertyFrame instances by prop_class for modifier reuse.
 
 Usage:
@@ -63,6 +63,7 @@ PREWARMED_CLASSES = [
     "LinearLength",
     "ChoiceWeight",
     "TraceInDirection",
+    # Comment
     "Comment",
 ]
 POOL_SIZE_PER_CLASS = 4
@@ -241,7 +242,7 @@ class PropertyWidgetPool(QObject):
         QTimer.singleShot(0, lambda f=frame, c=cls_name: self._store_prewarmed(c, f))
 
     def _store_prewarmed(self, cls_name, frame):
-        """Called one event-loop tick after frame construction — safe to clear widgets."""
+        """Called one event-loop tick after frame construction ΓÇö safe to clear widgets."""
         if self._total >= TOTAL_POOL_CAP:
             frame.deleteLater()
             return

@@ -88,6 +88,8 @@ class ComponentRef:
         return None
 
     def prop_class(self) -> str:
+        if self.item is None:
+            return ""
         data = self.item.data(0, Qt.UserRole)
         target = self.target(data) if isinstance(data, dict) else None
         raw = (target or {}).get("_class", "") or ""
