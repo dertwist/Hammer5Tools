@@ -233,12 +233,12 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     if channel == 'stable':
         generate_runtime_config(runtime_config_dir)
 
-    # H5T.UnrealBridge & SourcePorter.Cli — built under src/net_core.
+    # H5T.UnrealBridge & SourcePorter.Core — built under src/net_core.
     unreal_bridge_publish = os.path.join(cur_dir, 'src', 'net_core', 'UnrealBridge', 'publish')
     if not os.path.exists(unreal_bridge_publish):
         unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
 
-    source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Cli', 'publish')
+    source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'publish')
     bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
     import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
 

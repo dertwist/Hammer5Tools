@@ -69,20 +69,16 @@ class DotNetPaths:
         if env and Path(env).is_file():
             return Path(env)
 
-        # Prefer the copy sitting next to SourcePorter.Cli's build output: a class
-        # library project doesn't copy its own PackageReference dependencies
-        # (ValveKeyValue/ValvePak/Datamodel.NET) into its own bin/, only the exe
-        # that consumes it does. Loading SourcePorter.Core.dll from its own bin/
-        # leaves those dependencies unresolved at runtime.
+        # Search SourcePorter.Core publish output or local base directory
         net_core = Path(__file__).parent / 'net_core'
         candidates = [
-            net_core / 'SourcePorter.Cli' / 'publish' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Cli' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Cli' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
-            base_dir / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'publish' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net10.0' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net10.0' / 'SourcePorter.Core.dll',
+            base_dir / 'SourcePorter.Core.dll',
+            Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'SourcePorter.Core.dll',
         ]
         for c in candidates:
             if c.is_file():
@@ -266,9 +262,8 @@ class DotNetInterop:
         import System
 
         # Preload the dependency versions SourcePorter.Core.dll was actually built
-        # against, from whichever folder it was resolved from (see
-        # _find_source_porter_core — normally SourcePorter.Cli's output, the only
-        # place they're copied locally).
+        # against, from whichever folder it was resolved from (SourcePorter.Core publish
+        # folder or bundled source_porter directory).
         for dep_name in ("ValveKeyValue.dll", "ValvePak.dll", "Datamodel.NET.dll",
                          "System.IO.Hashing.dll", "Blake3.dll"):
             dep = sp_dll.parent / dep_name
