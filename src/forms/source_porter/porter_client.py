@@ -1,58 +1,13 @@
 """
 Python client & thread runner for SourcePorter.
-Supports direct .NET library invocation via `pythonnet` (in-process CLR interop)
-with fallback to headless subprocess execution (`SourcePorter.Cli`).
+Direct .NET library invocation via `pythonnet` using `SourcePorter.Core.dll`.
 """
 
 import os
 import sys
-import shutil
-import subprocess
 from pathlib import Path
-from typing import Optional, List, Callable
+from typing import Optional, List
 from PySide6.QtCore import QThread, Signal, QObject
-
-
-def candidate_cli_paths() -> List[Path]:
-    """Locations to search for SourcePorter.Cli executable or DLL."""
-    env = os.environ.get("H5T_SOURCE_PORTER_CLI")
-    candidates = []
-    if env:
-        candidates.append(Path(env))
-
-    root = Path(__file__).resolve().parents[3]  # repo root (src/forms/source_porter -> repo)
-
-    # 1. Published / build binaries in net_core
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "publish" / "SourcePorter.Cli.exe")
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "publish" / "SourcePorter.Cli.dll")
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "bin" / "Release" / "net9.0" / "SourcePorter.Cli.exe")
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "bin" / "Release" / "net9.0" / "SourcePorter.Cli.dll")
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "bin" / "Debug" / "net9.0" / "SourcePorter.Cli.exe")
-    candidates.append(root / "src" / "net_core" / "SourcePorter.Cli" / "bin" / "Debug" / "net9.0" / "SourcePorter.Cli.dll")
-
-    # 2. Frozen (PyInstaller) bundle
-    if getattr(sys, "frozen", False):
-        candidates.append(Path(sys._MEIPASS) / "source_porter" / "SourcePorter.Cli.exe")
-        candidates.append(Path(sys._MEIPASS) / "source_porter" / "SourcePorter.Cli.dll")
-
-    return candidates
-
-
-def find_cli_target() -> Optional[Path]:
-    """Returns the existing Path to SourcePorter.Cli.exe or SourcePorter.Cli.dll."""
-    for p in candidate_cli_paths():
-        if p and p.is_file():
-            return p
-    return None
-
-
-def find_dotnet() -> Optional[str]:
-    """Locate dotnet host."""
-    exe = shutil.which("dotnet")
-    if exe:
-        return exe
-    local = Path.home() / ".dotnet" / ("dotnet.exe" if os.name == "nt" else "dotnet")
-    return str(local) if local.is_file() else None
 
 
 def is_pythonnet_available() -> bool:
@@ -67,46 +22,22 @@ def is_pythonnet_available() -> bool:
 
 
 class SourcePorterClient:
-    """Wrapper verifying SourcePorter availability via pythonnet or subprocess CLI."""
+    """Wrapper verifying SourcePorter availability via pythonnet."""
 
     def __init__(self, cli_path: Optional[str] = None, dotnet_path: Optional[str] = None):
-        target = Path(cli_path) if cli_path else find_cli_target()
-        self.cli_target = target
-        self.dotnet = dotnet_path or find_dotnet()
+        pass
 
     def is_available(self) -> bool:
-        if is_pythonnet_available():
-            return True
-        if not self.cli_target:
-            return False
-        if self.cli_target.suffix.lower() == ".dll" and not self.dotnet:
-            return False
-        return True
+        return is_pythonnet_available()
 
     def why_unavailable(self) -> str:
-        if not is_pythonnet_available() and not self.cli_target:
-            return "SourcePorter.Core.dll assembly / CLI build not found. Build src/net_core/SourcePorter.Core."
-        if not is_pythonnet_available() and self.cli_target and self.cli_target.suffix.lower() == ".dll" and not self.dotnet:
-            return ".NET runtime ('dotnet') not found. Install .NET 9 or .NET 10."
+        if not is_pythonnet_available():
+            return "SourcePorter.Core.dll assembly not found. Build src/net_core/SourcePorter.Core."
         return ""
-
-    def build_cmd(self, sub_cmd: str, args: List[str]) -> List[str]:
-        if not self.cli_target:
-            raise RuntimeError(self.why_unavailable())
-
-        cmd = []
-        if self.cli_target.suffix.lower() == ".dll":
-            cmd = [self.dotnet, str(self.cli_target)]
-        else:
-            cmd = [str(self.cli_target)]
-
-        cmd.append(sub_cmd)
-        cmd.extend(args)
-        return cmd
 
 
 class PorterThread(QThread):
-    """QThread worker running SourcePorter via pythonnet direct CLR interop or process fallback."""
+    """QThread worker running SourcePorter via pythonnet direct CLR interop."""
 
     log_signal = Signal(str)
     finished_signal = Signal(int)  # return code (0 = success)
@@ -116,56 +47,21 @@ class PorterThread(QThread):
         self.client = client
         self.sub_cmd = sub_cmd
         self.cmd_args = cmd_args
-        self.process: Optional[subprocess.Popen] = None
         self._is_cancelled = False
 
     def cancel(self):
         self._is_cancelled = True
-        if self.process:
-            try:
-                self.process.terminate()
-            except Exception:
-                pass
 
     def run(self):
-        # Try direct pythonnet execution first if available
-        if is_pythonnet_available():
-            try:
-                self.log_signal.emit(f"[SourcePorter pythonnet] Direct .NET invocation ({self.sub_cmd})...")
-                code = self._run_pythonnet()
-                self.finished_signal.emit(code)
-                return
-            except Exception as ex:
-                self.log_signal.emit(f"[SourcePorter pythonnet Note] Direct call fallback to subprocess: {ex}")
+        if not is_pythonnet_available():
+            self.log_signal.emit("[SourcePorter Error] SourcePorter.Core.dll is not available. Please build src/net_core/SourcePorter.Core.")
+            self.finished_signal.emit(1)
+            return
 
-        # Subprocess fallback
         try:
-            full_cmd = self.client.build_cmd(self.sub_cmd, self.cmd_args)
-            self.log_signal.emit(f"[SourcePorter Process] Executing: {' '.join(full_cmd)}")
-
-            self.process = subprocess.Popen(
-                full_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-            )
-
-            if self.process.stdout:
-                for line in iter(self.process.stdout.readline, ''):
-                    if self._is_cancelled:
-                        break
-                    line_str = line.strip()
-                    if line_str:
-                        self.log_signal.emit(line_str)
-
-            self.process.wait()
-            ret_code = self.process.returncode if not self._is_cancelled else -1
-            self.finished_signal.emit(ret_code)
-
+            self.log_signal.emit(f"[SourcePorter] Running {self.sub_cmd} via pythonnet...")
+            code = self._run_pythonnet()
+            self.finished_signal.emit(code)
         except Exception as ex:
             self.log_signal.emit(f"[SourcePorter Error] {ex}")
             self.finished_signal.emit(1)
@@ -177,7 +73,8 @@ class PorterThread(QThread):
 
         import SourcePorter.Core.Domain as Domain
         import SourcePorter.Core.Validation as Validation
-        import System
+        import SourcePorter.Core.Toolchain as Toolchain
+        import SourcePorter.Core.Vmap as Vmap
         from System import Action, String
 
         def on_log(line):
@@ -192,36 +89,100 @@ class PorterThread(QThread):
             cs2 = Domain.Cs2Install(cs2_dir)
             validator = Validation.AssetValidator(cs2, addon)
             report = validator.Validate(cs_log)
-            # Validate() only logs progress/summary lines via cs_log — the individual
-            # findings live in report.Issues and were never surfaced here (the CLI's
-            # subprocess path prints them via Program.cs's PrintReport, but that code
-            # never runs for this in-process call). List every one, uncapped.
             for issue in report.Issues:
                 if self._is_cancelled:
                     break
                 self.log_signal.emit(f"  [{issue.Kind}] {issue.Source} -> {issue.Detail}")
             return 1 if report.HasIssues else 0
 
-        # Fall back to subprocess for non-validate subcommands or if full pipeline uses Cli
-        full_cmd = self.client.build_cmd(self.sub_cmd, self.cmd_args)
-        self.process = subprocess.Popen(
-            full_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-        )
+        elif self.sub_cmd == "port":
+            cs2_dir = self.cmd_args[0]
+            source_map = self.cmd_args[1]
+            addon = self.cmd_args[2]
+            flags = set(self.cmd_args[3:])
 
-        if self.process.stdout:
-            for line in iter(self.process.stdout.readline, ''):
+            no_bsp = "--no-bsp" in flags
+            no_unpack = "--no-unpack" in flags
+            compile_map = "--compile" in flags
+            no_compile_assets = "--no-compile-assets" in flags
+            collapse = "--collapse-prefabs" in flags
+            no_uv_fix = "--no-uv-fix" in flags
+            repair = "--repair" in flags
+            compact = "--verbose" not in flags
+
+            threads = 1
+            if "--threads" in self.cmd_args:
+                idx = self.cmd_args.index("--threads")
+                if idx + 1 < len(self.cmd_args):
+                    try:
+                        threads = int(self.cmd_args[idx + 1])
+                    except ValueError:
+                        pass
+
+            cs2 = Domain.Cs2Install(cs2_dir)
+            runner = Toolchain.ProcessRunner()
+            runner.OnOutput += Action[Toolchain.ProcessLine](lambda line: on_log(line.Text))
+
+            bsp_imported = False
+            no_merge = False
+            vmf = source_map
+
+            if source_map.lower().endswith(".bsp") and not no_bsp:
+                decompiler = Toolchain.BspDecompiler(runner)
+                decompiler.OnLog += cs_log
+                vmf = Toolchain.MapStaging.StageBspAsync(decompiler, source_map, not no_unpack).GetAwaiter().GetResult()
+                no_merge = True
+                bsp_imported = True
+            else:
+                vmf = Toolchain.MapStaging.StageVmf(source_map, cs_log)
+
+            import_options = Domain.ImportOptions()
+            import_options.UseBsp = not no_merge
+            import_options.UseBspNoMergeInstances = no_merge
+            import_options.MaxParallelism = threads
+            import_options.CompileAssets = not no_compile_assets
+            import_options.CompactLog = compact
+
+            project = cs2.BuildProject(vmf, addon, import_options)
+            import_scripts_dir = cs2.ImportScriptsDir if os.path.exists(cs2.ImportScriptsDir) else os.getcwd()
+            service = Toolchain.MapImportService(cs2.Tools, runner, import_scripts_dir)
+            service.OnLog += cs_log
+
+            on_log(f"=== IMPORT {project.MapName} -> {addon} ===")
+            service.ImportAsync(project).GetAwaiter().GetResult()
+
+            if bsp_imported and not no_uv_fix:
+                Vmap.PostImportVmapTools.FixBrushUvScale(cs2, addon, project.MapName, project.S1ContentDir, cs_log)
+
+            if collapse:
+                Vmap.PostImportVmapTools.CollapsePrefabs(cs2, addon, project.MapName, cs_log)
+                Vmap.PostImportVmapTools.FlattenSingleChildGroups(cs2, addon, cs_log)
+
+            if compile_map:
+                on_log(f"=== COMPILE {project.MapName} ===")
+                service.CompileMapAsync(project).GetAwaiter().GetResult()
+
+            stats = Validation.AddonStats.Collect(cs2.ContentAddonDir(addon), os.path.join(cs2.GameDir, "csgo_addons", addon))
+            for line in stats.Format():
+                on_log(line)
+
+            validator = Validation.AssetValidator(cs2, addon)
+            report = validator.Validate(cs_log)
+
+            if repair and report.MissingImportCount > 0:
+                importer = Toolchain.MissingAssetImporter(service, cs2)
+                importer.OnLog += cs_log
+                rr = importer.RepairAsync(project, report).GetAwaiter().GetResult()
+                on_log(f"=== REPAIR {addon}: imported {rr.ModelsImported} model(s)/{rr.MaterialsImported} material(s) in {rr.Rounds} round(s) ===")
+                report = rr.FinalReport
+
+            for issue in report.Issues:
                 if self._is_cancelled:
                     break
-                line_str = line.strip()
-                if line_str:
-                    self.log_signal.emit(line_str)
+                self.log_signal.emit(f"  [{issue.Kind}] {issue.Source} -> {issue.Detail}")
 
-        self.process.wait()
-        return self.process.returncode if not self._is_cancelled else -1
+            return 1 if report.HasIssues else 0
+
+        else:
+            on_log(f"[SourcePorter Error] Unknown subcommand: {self.sub_cmd}")
+            return 1
