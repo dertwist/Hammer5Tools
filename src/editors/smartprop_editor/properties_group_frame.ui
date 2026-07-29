@@ -292,11 +292,14 @@ border-right:0px;
    </item>
    <item>
     <widget class="QFrame" name="frame_layout">
+     <property name="styleSheet">
+      <string notr="true">QFrame#frame_layout { border: 0px; border-top: 2px solid rgba(80, 80, 80, 255); }</string>
+     </property>
      <property name="focusPolicy">
       <enum>Qt::FocusPolicy::StrongFocus</enum>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Shadow::Raised</enum>

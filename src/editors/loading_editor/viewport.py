@@ -594,18 +594,19 @@ class Viewport(QMainWindow):
         """
         Update the main window title bar with the base name of the displayed image.
         """
-        self.setWindowTitle(f"Advanced Image Viewer - {os.path.basename(image_path)}")
+        self.setWindowTitle(f"Image viewer - {os.path.basename(image_path)}")
 
     def zoomIn(self, mouse_pos=None):
         """
         Zoom in by 20%. Optionally keep the zoom focus around a specific mouse position.
-        Limited to 500% zoom.
+        Limited to 1000% zoom.
         """
         if self.current_pixmap:
             new_zoom = self.zoom_level * 1.2
-            if new_zoom <= 5:  # Limit to 1000%
-                self.zoom_level = new_zoom
-                self.updateImageDisplay(mouse_pos)
+            if new_zoom > 10.0:
+                new_zoom = 10.0
+            self.zoom_level = new_zoom
+            self.updateImageDisplay(mouse_pos)
 
     def zoomOut(self, mouse_pos=None):
         """
