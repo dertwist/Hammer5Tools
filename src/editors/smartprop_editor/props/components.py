@@ -266,6 +266,10 @@ class ComponentTree(HierarchyTreeWidget):
 
     reordered = Signal()
     deleteRequested = Signal(list)  # list[QTreeWidgetItem]
+    copyRequested = Signal()
+    cutRequested = Signal()
+    pasteRequested = Signal()
+    duplicateRequested = Signal()
 
     ROW_H = 26
 
@@ -282,6 +286,7 @@ class ComponentTree(HierarchyTreeWidget):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.setAlternatingRowColors(True)
         self.header().setStretchLastSection(False)
@@ -340,7 +345,24 @@ class ComponentTree(HierarchyTreeWidget):
         # synchronously crashes; let the drop fully finish first.
         QTimer.singleShot(0, self.reordered.emit)
 
+    def mousePressEvent(self, event):
+        self.setFocus()
+        super().mousePressEvent(event)
+
     def keyPressEvent(self, event):
+        from PySide6.QtGui import QKeySequence
+        if event.matches(QKeySequence.Copy):
+            self.copyRequested.emit()
+            return
+        if event.matches(QKeySequence.Cut):
+            self.cutRequested.emit()
+            return
+        if event.matches(QKeySequence.Paste):
+            self.pasteRequested.emit()
+            return
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
+            self.duplicateRequested.emit()
+            return
         if event.key() in (Qt.Key_Delete, Qt.Key_Backspace):
             items = self.selectedItems()
             if items:
@@ -426,6 +448,10 @@ class ComponentList(QWidget):
         self.modifiers_tree.itemSelectionChanged.connect(self._on_modifiers_selection_changed)
         self.modifiers_tree.reordered.connect(self._on_modifiers_reordered)
         self.modifiers_tree.deleteRequested.connect(self._on_modifiers_delete_requested)
+        self.modifiers_tree.copyRequested.connect(lambda: self._copy_selected_from_tree(self.modifiers_tree))
+        self.modifiers_tree.cutRequested.connect(lambda: self._cut_selected_from_tree(self.modifiers_tree))
+        self.modifiers_tree.pasteRequested.connect(lambda: self._paste_component_for_group("modifier"))
+        self.modifiers_tree.duplicateRequested.connect(lambda: self._duplicate_selected_from_tree(self.modifiers_tree))
         self.modifiers_tree.customContextMenuRequested.connect(
             lambda pos: self._tree_context_menu(self.modifiers_tree, pos)
         )
@@ -442,6 +468,10 @@ class ComponentList(QWidget):
         self.criteria_tree.itemSelectionChanged.connect(self._on_criteria_selection_changed)
         self.criteria_tree.reordered.connect(self._on_criteria_reordered)
         self.criteria_tree.deleteRequested.connect(self._on_criteria_delete_requested)
+        self.criteria_tree.copyRequested.connect(lambda: self._copy_selected_from_tree(self.criteria_tree))
+        self.criteria_tree.cutRequested.connect(lambda: self._cut_selected_from_tree(self.criteria_tree))
+        self.criteria_tree.pasteRequested.connect(lambda: self._paste_component_for_group("selection_criteria"))
+        self.criteria_tree.duplicateRequested.connect(lambda: self._duplicate_selected_from_tree(self.criteria_tree))
         self.criteria_tree.customContextMenuRequested.connect(
             lambda pos: self._tree_context_menu(self.criteria_tree, pos)
         )
@@ -645,7 +675,7 @@ class ComponentList(QWidget):
         if ref is not None:
             self.componentSelected.emit(ref)
 
-    # ── Add / Paste ──────────────────────────────────────────────────────────
+    # ── Add / Paste / Copy / Cut / Duplicate ───────────────────────────────
 
     def _on_add_modifier(self):
         if not self.tree_item:
@@ -663,8 +693,6 @@ class ComponentList(QWidget):
         menu.show()
 
     def _add_component_dict(self, group_type: str, item_dict: Any):
-        if not self.tree_item:
-            return
         if isinstance(item_dict, str):
             try:
                 item_dict = ast.literal_eval(item_dict)
@@ -672,23 +700,49 @@ class ComponentList(QWidget):
                 return
         if not isinstance(item_dict, dict):
             return
+        self._add_component_dicts("modifier" if group_type == "modifier" else "criterion", [item_dict])
 
-        new_comp = fast_deepcopy(item_dict)
-        if "m_bEnabled" not in new_comp:
-            new_comp["m_bEnabled"] = True
+    def _add_component_dicts(self, group_type: str, item_dicts: list[dict], insert_after_idx: int = -1):
+        if not self.tree_item or not item_dicts:
+            return
 
         old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
         new_data = fast_deepcopy(old_data)
         container_key = "m_Modifiers" if group_type == "modifier" else "m_SelectionCriteria"
         arr = new_data.setdefault(container_key, [])
-        arr.append(new_comp)
+
+        doc_gen = getattr(self.document, "element_id_generator", None) if self.document else None
+
+        if insert_after_idx < 0 or insert_after_idx >= len(arr):
+            target_idx = len(arr)
+        else:
+            target_idx = insert_after_idx + 1
+
+        added_refs = []
+        for offset, item_dict in enumerate(item_dicts):
+            new_comp = fast_deepcopy(item_dict)
+            if "m_bEnabled" not in new_comp:
+                new_comp["m_bEnabled"] = True
+
+            # Clear m_nElementID to force generation of a new unique ID
+            new_comp["m_nElementID"] = None
+            if doc_gen is not None:
+                eid = doc_gen.get_element_id(new_comp)
+            else:
+                from src.widgets.element_id import get_ElementID
+                eid = get_ElementID(new_comp)
+            new_comp["m_nElementID"] = eid
+
+            curr_insert = target_idx + offset
+            arr.insert(curr_insert, new_comp)
+            added_refs.append(ComponentRef(self.tree_item, group_type, curr_insert))
 
         self.tree_item.setData(0, Qt.UserRole, new_data)
         self._push_snapshot_command(old_data, new_data)
         self.rebuild()
 
-        new_ref = ComponentRef(self.tree_item, "modifier" if group_type == "modifier" else "criterion", len(arr) - 1)
-        self._select_ref(new_ref)
+        if added_refs:
+            self._select_ref(added_refs[-1])
 
     def _on_paste_modifier(self):
         self._paste_component_for_group("modifier")
@@ -696,52 +750,198 @@ class ComponentList(QWidget):
     def _on_paste_criterion(self):
         self._paste_component_for_group("selection_criteria")
 
-    def _paste_component_for_group(self, target_group: str):
+    def _paste_component_for_group(self, target_group: str, insert_after_idx: int = -1):
         if not self.tree_item:
             return
         clip_text = QApplication.clipboard().text()
-        parts = clip_text.split(";;")
-        if len(parts) < 4 or parts[0] != CLIPBOARD_PREFIX:
-            return
-        clip_group = parts[3]
-        if clip_group != target_group and not (target_group == "selection_criteria" and clip_group == "criterion"):
-            return
-        try:
-            val_dict = ast.literal_eval(parts[2])
-        except Exception:
-            return
+        pasted_dicts = []
 
-        group_type = "modifier" if target_group == "modifier" else "criterion"
-        self._add_component_dict(group_type, val_dict)
+        if clip_text.startswith(CLIPBOARD_PREFIX):
+            parts = clip_text.split(";;")
+            if len(parts) >= 4:
+                clip_group = parts[3]
+                if clip_group == target_group or (target_group in ("selection_criteria", "criterion") and clip_group in ("selection_criteria", "criterion")) or (target_group == "modifier" and clip_group == "modifier"):
+                    try:
+                        val_dict = ast.literal_eval(parts[2])
+                        if isinstance(val_dict, dict):
+                            pasted_dicts.append(val_dict)
+                    except Exception:
+                        pass
+        elif clip_text.startswith(CLIPBOARD_BATCH_PREFIX):
+            parts = clip_text.split(";;")
+            if len(parts) >= 4:
+                clip_group = parts[3]
+                if clip_group == target_group or (target_group in ("selection_criteria", "criterion") and clip_group in ("selection_criteria", "criterion")) or (target_group == "modifier" and clip_group == "modifier"):
+                    try:
+                        val_list = ast.literal_eval(parts[2])
+                        if isinstance(val_list, list):
+                            pasted_dicts.extend([d for d in val_list if isinstance(d, dict)])
+                    except Exception:
+                        pass
 
-    # ── Copy ─────────────────────────────────────────────────────────────────
+        if pasted_dicts:
+            group_type = "modifier" if target_group == "modifier" else "criterion"
+            self._add_component_dicts(group_type, pasted_dicts, insert_after_idx=insert_after_idx)
+
+    # ── Copy / Cut / Duplicate ───────────────────────────────────────────────
+
+    def _copy_selected_from_tree(self, tree: ComponentTree):
+        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        if refs:
+            self._copy_components(refs)
+
+    def _cut_selected_from_tree(self, tree: ComponentTree):
+        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        if refs:
+            self._copy_components(refs)
+            self._delete_components(refs)
+
+    def _duplicate_selected_from_tree(self, tree: ComponentTree):
+        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        if refs:
+            self._duplicate_components(refs)
 
     def _copy_component(self, ref: ComponentRef):
-        data = self.tree_item.data(0, Qt.UserRole) if self.tree_item else None
-        target = ref.target(data) if isinstance(data, dict) else None
-        if not target:
+        """Single-ref copy API for backward compatibility."""
+        self._copy_components([ref])
+
+    def _copy_components(self, refs: list[ComponentRef]):
+        if not self.tree_item or not refs:
             return
-        class_name = target.get("_class", "")
-        group_type = "modifier" if ref.kind == "modifier" else ("selection_criteria" if ref.kind == "criterion" else "element")
-        clip_str = f"{CLIPBOARD_PREFIX};;{class_name};;{repr(target)};;{group_type}"
+        data = self.tree_item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return
+
+        target_dicts = []
+        group_type = "modifier"
+        for ref in refs:
+            target = ref.target(data)
+            if target:
+                target_dicts.append(target)
+                group_type = "modifier" if ref.kind == "modifier" else ("selection_criteria" if ref.kind == "criterion" else "element")
+
+        if not target_dicts:
+            return
+
+        if len(target_dicts) == 1:
+            target = target_dicts[0]
+            class_name = target.get("_class", "")
+            clip_str = f"{CLIPBOARD_PREFIX};;{class_name};;{repr(target)};;{group_type}"
+        else:
+            clip_str = f"{CLIPBOARD_BATCH_PREFIX};;batch;;{repr(target_dicts)};;{group_type}"
+
         QApplication.clipboard().setText(clip_str)
 
+    def _duplicate_components(self, refs: list[ComponentRef]):
+        if not self.tree_item or not refs:
+            return
+        data = self.tree_item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return
+
+        valid_refs = [r for r in refs if r is not None and r.kind != "element"]
+        if not valid_refs:
+            return
+
+        group_type = "modifier" if valid_refs[0].kind == "modifier" else "criterion"
+        container_key = "m_Modifiers" if group_type == "modifier" else "m_SelectionCriteria"
+        live_arr = data.get(container_key) or []
+
+        dup_dicts = []
+        max_idx = -1
+        for r in sorted(valid_refs, key=lambda x: x.index):
+            if 0 <= r.index < len(live_arr):
+                dup_dicts.append(fast_deepcopy(live_arr[r.index]))
+                max_idx = max(max_idx, r.index)
+
+        if dup_dicts:
+            self._add_component_dicts(group_type, dup_dicts, insert_after_idx=max_idx)
+
+    # ── Focused Action Handlers (for window menu & hotkeys) ────────────────
+
+    def _get_active_tree(self) -> ComponentTree | None:
+        focused = QApplication.focusWidget()
+        if focused is not None:
+            if focused == self.modifiers_tree or self.modifiers_tree.isAncestorOf(focused):
+                return self.modifiers_tree
+            if focused == self.criteria_tree or self.criteria_tree.isAncestorOf(focused):
+                return self.criteria_tree
+        if self.modifiers_tree.selectedItems():
+            return self.modifiers_tree
+        if self.criteria_tree.selectedItems():
+            return self.criteria_tree
+        return self.modifiers_tree
+
+    def _copy_focused(self):
+        tree = self._get_active_tree()
+        if tree:
+            self._copy_selected_from_tree(tree)
+
+    def _cut_focused(self):
+        tree = self._get_active_tree()
+        if tree:
+            self._cut_selected_from_tree(tree)
+
+    def _paste_focused(self):
+        tree = self._get_active_tree()
+        group_type = "modifier" if tree is self.modifiers_tree else "selection_criteria"
+        sel = tree.selectedItems() if tree else []
+        ref = sel[-1].data(0, Qt.UserRole) if sel else None
+        idx = ref.index if ref else -1
+        self._paste_component_for_group(group_type, insert_after_idx=idx)
+
+    def _duplicate_focused(self):
+        tree = self._get_active_tree()
+        if tree:
+            self._duplicate_selected_from_tree(tree)
+
+    def _delete_focused(self):
+        tree = self._get_active_tree()
+        if tree:
+            items = tree.selectedItems()
+            if items:
+                self._delete_components([it.data(0, Qt.UserRole) for it in items if it.data(0, Qt.UserRole) is not None])
+
     def _tree_context_menu(self, tree: ComponentTree, pos):
+        tree.setFocus()
         item = tree.itemAt(pos)
-        if item is None:
-            return
-        ref = item.data(0, Qt.UserRole)
-        if ref is None:
-            return
-        if not item.isSelected():
+        if item is not None and not item.isSelected():
             tree.setCurrentItem(item)
             item.setSelected(True)
+
+        ref = item.data(0, Qt.UserRole) if item else None
+
         menu = QMenu(tree)
-        act_copy = menu.addAction("Copy Component")
-        act_delete = menu.addAction("Delete Component")
-        action = menu.exec_(tree.viewport().mapToGlobal(pos))
+        act_copy = menu.addAction("Copy (Ctrl+C)")
+        act_cut = menu.addAction("Cut (Ctrl+X)")
+
+        clip_text = QApplication.clipboard().text()
+        has_clip = clip_text.startswith(CLIPBOARD_PREFIX) or clip_text.startswith(CLIPBOARD_BATCH_PREFIX)
+        act_paste = menu.addAction("Paste (Ctrl+V)")
+        act_paste.setEnabled(has_clip)
+
+        act_dup = menu.addAction("Duplicate (Ctrl+D)")
+        menu.addSeparator()
+        act_delete = menu.addAction("Delete (Delete)")
+
+        has_selection = len(tree.selectedItems()) > 0
+        act_copy.setEnabled(has_selection)
+        act_cut.setEnabled(has_selection)
+        act_dup.setEnabled(has_selection)
+        act_delete.setEnabled(has_selection)
+
+        global_pos = tree.viewport().mapToGlobal(pos)
+        action = menu.exec_(global_pos)
         if action == act_copy:
-            self._copy_component(ref)
+            self._copy_selected_from_tree(tree)
+        elif action == act_cut:
+            self._cut_selected_from_tree(tree)
+        elif action == act_paste:
+            group_type = "modifier" if tree is self.modifiers_tree else "selection_criteria"
+            insert_idx = ref.index if ref else -1
+            self._paste_component_for_group(group_type, insert_after_idx=insert_idx)
+        elif action == act_dup:
+            self._duplicate_selected_from_tree(tree)
         elif action == act_delete:
             refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
             self._delete_components(refs)
