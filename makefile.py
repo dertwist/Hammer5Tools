@@ -233,10 +233,14 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     if channel == 'stable':
         generate_runtime_config(runtime_config_dir)
 
-    # H5T.UnrealBridge (CUE4Parse) — built separately (see tools/unreal_bridge/README.md).
-    # Bundle its publish output so bridge_client.py's frozen fallback (sys._MEIPASS/unreal_bridge)
-    # finds it. Optional: skipped if nobody built it locally.
-    unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
+    # H5T.UnrealBridge & SourcePorter.Cli — built under src/net_core.
+    unreal_bridge_publish = os.path.join(cur_dir, 'src', 'net_core', 'UnrealBridge', 'publish')
+    if not os.path.exists(unreal_bridge_publish):
+        unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
+
+    source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Cli', 'publish')
+    bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
+    import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
 
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
@@ -281,6 +285,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--exclude-module=tabulate',
         external,
         f'--add-data={unreal_bridge_publish};unreal_bridge' if os.path.exists(unreal_bridge_publish) else '',
+        f'--add-data={source_porter_publish};source_porter' if os.path.exists(source_porter_publish) else '',
+        f'--add-data={bspsrc_dir};tools/bspsrc' if os.path.exists(bspsrc_dir) else '',
+        f'--add-data={import_scripts_dir};tools/import_scripts' if os.path.exists(import_scripts_dir) else '',
         *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
         f'--add-data={runtime_config_path};dotnet' if channel == 'stable' and os.path.exists(runtime_config_path) else '',
