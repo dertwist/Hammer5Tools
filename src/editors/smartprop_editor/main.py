@@ -131,6 +131,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        self.action_export_scene_debug = file_menu.addAction("Export scene (debug)")
+        self.action_export_scene_debug.triggered.connect(self.export_scene_debug)
+
+        file_menu.addSeparator()
+
         self.action_exit = file_menu.addAction("Exit")
         self.action_exit.triggered.connect(self.close)
 
@@ -251,6 +256,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         if hasattr(self, 'action_save_as'): self.action_save_as.setEnabled(has_doc)
         if hasattr(self, 'action_save_all'): self.action_save_all.setEnabled(has_doc)
         if hasattr(self, 'action_close'): self.action_close.setEnabled(has_doc)
+        if hasattr(self, 'action_export_scene_debug'): self.action_export_scene_debug.setEnabled(has_doc)
 
         # Edit menu actions
         if hasattr(self, 'action_undo'): self.action_undo.setEnabled(has_doc)
@@ -307,6 +313,39 @@ class SmartPropEditorMainWindow(QMainWindow):
     def open_vmap_converter(self):
         dialog = VMapToVSmartConverterDialog(self)
         dialog.exec()
+
+    def export_scene_debug(self):
+        """Dump the active document's 3D viewport scene to a .glb, textures included."""
+        document = self.get_current_document()
+        if document is None:
+            QMessageBox.warning(self, "Export Scene", "No document is open.")
+            return
+
+        if getattr(document, "_viewport_3d", None) is None:
+            document._ensure_viewport_3d()
+        viewport = getattr(document, "_viewport_3d", None)
+        render_area = getattr(viewport, "render_area", None) if viewport else None
+        if render_area is None:
+            QMessageBox.warning(self, "Export Scene", "The 3D viewport isn't available.")
+            return
+
+        default_name = "scene.glb"
+        if document.opened_file:
+            default_name = os.path.splitext(os.path.basename(document.opened_file))[0] + ".glb"
+        path, _ = QFileDialog.getSaveFileName(self, "Export Scene (debug)", default_name, "glTF Binary (*.glb)")
+        if not path:
+            return
+        if not path.lower().endswith(".glb"):
+            path += ".glb"
+
+        from src.editors.smartprop_editor.viewport_3d.scene_export import export_scene_to_glb
+        try:
+            ok, message = export_scene_to_glb(render_area, path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Export Scene", f"Export failed: {exc}")
+            return
+
+        (QMessageBox.information if ok else QMessageBox.warning)(self, "Export Scene", message)
 
     def active_document_undo(self):
         doc = self.get_current_document()

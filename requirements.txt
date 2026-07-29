@@ -38,6 +38,7 @@ pycparser
 
 ply
 Pillow
+pygltflib
 
 matplotlib
 pynvml

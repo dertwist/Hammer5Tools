@@ -91,6 +91,10 @@ class GPUMaterial:
     double_sided: bool = False
     wrap_u: int = 0
     wrap_v: int = 0
+    uv_scale: tuple = (1.0, 1.0)
+    uv_offset: tuple = (0.0, 0.0)
+    uv_center: tuple = (0.5, 0.5)
+    uv_rotation: float = 0.0
 
     @property
     def is_transparent(self) -> bool:
@@ -363,6 +367,10 @@ class MeshCache(QObject):
                     double_sided=mat.double_sided,
                     wrap_u=mat.wrap_u,
                     wrap_v=mat.wrap_v,
+                    uv_scale=mat.uv_scale,
+                    uv_offset=mat.uv_offset,
+                    uv_center=mat.uv_center,
+                    uv_rotation=mat.uv_rotation,
                 )
                 for tex in (gpu_mat.base_tex, gpu_mat.normal_tex, gpu_mat.mr_tex,
                             gpu_mat.ao_tex, gpu_mat.emissive_tex):

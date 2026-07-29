@@ -233,8 +233,12 @@ def _attribute(vbib, vertex_buffer, semantic: str, components: int, semantic_ind
             field = candidate
             break
     if field is None and semantic_index > 0:
+        # A higher semantic index was requested (e.g. TEXCOORD1) but is absent.
+        # Fall back to index 0 specifically -- NOT "any field of this semantic"
+        # -- so a diffuse request never silently picks up an unrelated channel
+        # (e.g. a lightmap stored as TEXCOORD1 while TEXCOORD0 is the diffuse).
         for candidate in vertex_buffer.InputLayoutFields:
-            if str(candidate.SemanticName) == semantic:
+            if str(candidate.SemanticName) == semantic and int(candidate.SemanticIndex) == 0:
                 field = candidate
                 break
     if field is None:
@@ -348,7 +352,11 @@ def _decode_texture(loader, path, max_dim: Optional[int]) -> Optional[np.ndarray
         )
         pixels = np.frombuffer(bytes(bitmap.Bytes), dtype=np.uint8).reshape(
             bitmap.Height, bitmap.Width, 4)
-        # SKBitmap hands back BGRA; GL wants RGBA.
+        # GenerateBitmap's row 0 is the image top, the same origin PNG/glTF/VRF
+        # all assume, so no row reorientation happens here.  GL's glTexImage2D
+        # stores that top row at t=0 (image bottom), so the vertex shader
+        # applies the matching ``1.0 - uv.y`` V-flip (see
+        # shaders.MODEL_VERTEX_SHADER).  SKBitmap hands back BGRA; GL wants RGBA.
         return np.ascontiguousarray(pixels[:, :, [2, 1, 0, 3]])
     except Exception:
         return None
@@ -358,6 +366,147 @@ def _nearest_resize(img: np.ndarray, height: int, width: int) -> np.ndarray:
     rows = (np.arange(height) * (img.shape[0] / height)).astype(np.int32).clip(0, img.shape[0] - 1)
     cols = (np.arange(width) * (img.shape[1] / width)).astype(np.int32).clip(0, img.shape[1] - 1)
     return img[rows][:, cols]
+
+
+# csgo_environment / csgo_environment_blend
+#
+# Both compile to the same VRF shader (csgo_environment.frag.slang) and share a
+# channel layout that is NOT the generic g_tMetalness/g_tAmbientOcclusion one
+# used elsewhere in this file:
+#   g_tColor{N}.rgb   sRGB albedo, layer N
+#   g_tColor{N}.a     ambient occlusion (or, when F_ALPHA_TEST: the cutout mask
+#                     — AO then comes from g_tHeight{N}.b instead)
+#   g_tNormal{N}.rg   hemi-octahedron-encoded tangent normal (see
+#                     _decode_hemi_oct_normal), .b = roughness
+#   g_tHeight{N}.a    metalness (when g_bMetalness{N}, default true)
+#   g_tHeight{N}.r    per-pixel height, used to blend layer 2 over layer 1
+# A second layer (g_tColor2 present) is height-blended over the first.
+
+def _decode_hemi_oct_normal(rg: np.ndarray) -> np.ndarray:
+    """Decode a hemi-octahedron-encoded normal map's RG channels to a standard
+    tangent-space RGB normal map, so the existing shader's plain ``* 2 - 1``
+    decode reconstructs the same vector.
+
+    Formula: ValveResourceFormat's ``common/utils.slang::DecodeHemiOctahedronNormal``.
+    """
+    x = rg[..., 0].astype(np.float32) / 255.0
+    y = rg[..., 1].astype(np.float32) / 255.0
+    tx = x + y - 1.003922
+    ty = x - y
+    tz = 1.0 - np.abs(tx) - np.abs(ty)
+    length = np.sqrt(tx * tx + ty * ty + tz * tz)
+    length[length < 1e-8] = 1.0
+    out = np.empty(rg.shape[:2] + (3,), dtype=np.uint8)
+    out[..., 0] = np.clip((tx / length * 0.5 + 0.5) * 255.0, 0, 255).astype(np.uint8)
+    out[..., 1] = np.clip((-ty / length * 0.5 + 0.5) * 255.0, 0, 255).astype(np.uint8)
+    out[..., 2] = np.clip((tz / length * 0.5 + 0.5) * 255.0, 0, 255).astype(np.uint8)
+    return out
+
+
+def _height_blend_weight(height1: np.ndarray, height2: np.ndarray,
+                          zero1: float, zero2: float, scale1: float, scale2: float,
+                          softness: float = 0.5) -> np.ndarray:
+    """Per-pixel [0, 1] weight for layer 2, from the two raw (0-255) height maps.
+
+    ponytail: the real shader's weight also comes from a per-vertex painted
+    blend value and edge-band shaping we have no data for (no vertex attribute
+    carries it, and it isn't a material param) — this is just its base
+    crossfade term. Good enough for a preview; not a byte-exact match. Upgrade
+    path: read the vertex COLOR/blend attribute if VBIB reading ever needs to
+    match CS2 exactly.
+    """
+    h1 = (height1.astype(np.float32) / 255.0 - zero1) * scale1
+    h2 = (height2.astype(np.float32) / 255.0 - zero2) * scale2
+    return np.clip(0.5 + (h2 - h1) / (2.0 * max(softness, 1e-4)), 0.0, 1.0)
+
+
+def _load_environment_layer(loader, textures: dict, suffix: str, max_dim: Optional[int]):
+    """Read one numbered layer's raw decoded RGBA color/normal/height textures."""
+    color_path = textures.get(f"g_tColor{suffix}")
+    normal_path = textures.get(f"g_tNormal{suffix}")
+    height_path = textures.get(f"g_tHeight{suffix}")
+    color = _decode_texture(loader, color_path, max_dim) if color_path else None
+    normal = _decode_texture(loader, normal_path, max_dim) if normal_path else None
+    height = _decode_texture(loader, height_path, max_dim) if height_path else None
+    return color, normal, height
+
+
+def _composite_environment_material(loader, material, textures: dict, max_dim: Optional[int],
+                                     base_color_only: bool, alpha_tested: bool) -> Optional[dict]:
+    """Build base_color/normal/mr/ao images for a csgo_environment[_blend] material.
+
+    Returns None if this isn't an environment-family material (no g_tHeight1),
+    so the caller falls back to the generic texture-key reader.
+    """
+    if "g_tHeight1" not in textures:
+        return None
+
+    color1, normal1, height1 = _load_environment_layer(loader, textures, "1", max_dim)
+    if color1 is None:
+        return None
+    h, w = color1.shape[0], color1.shape[1]
+
+    def fit(img):
+        if img is None or img.shape[:2] == (h, w):
+            return img
+        return _nearest_resize(img, h, w)
+
+    color, normal, height = color1, fit(normal1), fit(height1)
+
+    if not base_color_only and "g_tColor2" in textures:
+        color2, normal2, height2 = _load_environment_layer(loader, textures, "2", max_dim)
+        color2 = fit(color2)
+        if color2 is not None:
+            zero1 = _float_param(material, "g_flHeightMapZeroPoint1", 0.5)
+            zero2 = _float_param(material, "g_flHeightMapZeroPoint2", 0.5)
+            scale1 = _float_param(material, "g_flHeightMapScale1", 1.0)
+            scale2 = _float_param(material, "g_flHeightMapScale2", 1.0)
+            normal2 = fit(normal2)
+            height2 = fit(height2)
+            h1_src = height[..., 0] if height is not None else np.zeros((h, w), np.uint8)
+            h2_src = height2[..., 0] if height2 is not None else np.zeros((h, w), np.uint8)
+            weight2 = _height_blend_weight(h1_src, h2_src, zero1, zero2, scale1, scale2)[..., None]
+
+            color = (color.astype(np.float32) * (1 - weight2) + color2.astype(np.float32) * weight2).astype(np.uint8)
+            if normal is not None and normal2 is not None:
+                normal = (normal.astype(np.float32) * (1 - weight2) + normal2.astype(np.float32) * weight2).astype(np.uint8)
+            if height is not None and height2 is not None:
+                height = (height.astype(np.float32) * (1 - weight2) + height2.astype(np.float32) * weight2).astype(np.uint8)
+
+    out = {"base_color_img": color}
+
+    if base_color_only:
+        return out
+
+    if normal is not None:
+        decoded = _decode_hemi_oct_normal(normal[..., :2])
+        normal_img = np.full((h, w, 4), 255, dtype=np.uint8)
+        normal_img[..., :3] = decoded
+        out["normal_img"] = normal_img
+
+    metal_on = bool(_int_param(material, "g_bMetalness1", 1))
+    mr = np.zeros((h, w, 4), dtype=np.uint8)
+    mr[..., 3] = 255
+    if normal is not None:
+        mr[..., 1] = normal[..., 2]                          # roughness from normal.b
+    if metal_on and height is not None:
+        mr[..., 2] = height[..., 3]                           # metalness from height.a
+    out["mr_img"] = mr
+
+    if alpha_tested:
+        # Alpha-test cutout owns color.a; AO comes from height.b instead.
+        if height is not None:
+            ao = np.full((h, w, 4), 255, dtype=np.uint8)
+            ao[..., 0] = height[..., 2]
+            out["ao_img"] = ao
+    else:
+        ao = np.full((h, w, 4), 255, dtype=np.uint8)
+        ao[..., 0] = color[..., 3]
+        out["ao_img"] = ao
+        out["base_color_img"] = color.copy()
+        out["base_color_img"][..., 3] = 255                  # alpha was AO, not opacity
+
+    return out
 
 
 def _vector_param(material, name, default):
@@ -417,6 +566,17 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
 
     textures = {str(e.Key): e.Value for e in material.TextureParams}
 
+    # F_ALPHA_TEST/F_TRANSLUCENT drive both which channel the environment-shader
+    # path reads AO from (see _composite_environment_material) and md.alpha_mode
+    # below, so read them once, up front.
+    is_translucent = bool(_int_param(material, "F_TRANSLUCENT"))
+    is_alpha_test = bool(_int_param(material, "F_ALPHA_TEST"))
+
+    env = _composite_environment_material(
+        loader, material, textures, max_dim, base_color_only,
+        alpha_tested=is_translucent or is_alpha_test,
+    )
+
     base_tex_name = None
     base_path = None
     for name in _TEX_BASE:
@@ -425,36 +585,44 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
             base_path = textures[name]
             break
 
-    if base_path is not None:
-        md.base_color_img = _decode_texture(loader, base_path, max_dim)
+    if env is not None:
+        md.base_color_img = env.get("base_color_img")
+        md.normal_img = env.get("normal_img")
+        md.mr_img = env.get("mr_img")
+        md.ao_img = env.get("ao_img")
+    else:
+        if base_path is not None:
+            md.base_color_img = _decode_texture(loader, base_path, max_dim)
+
+        if not base_color_only:
+            normal_path = _texture_path(textures, _TEX_NORMAL)
+            normal_rgba = _decode_texture(loader, normal_path, max_dim) if normal_path else None
+            if normal_rgba is not None:
+                md.normal_img = normal_rgba
+
+            metal_path = _texture_path(textures, _TEX_METAL)
+            metal_img = _decode_texture(loader, metal_path, max_dim) if metal_path else None
+            if normal_rgba is not None or metal_img is not None:
+                reference = normal_rgba if normal_rgba is not None else metal_img
+                h, w = reference.shape[0], reference.shape[1]
+                mr = np.zeros((h, w, 4), dtype=np.uint8)
+                mr[..., 3] = 255
+                if normal_rgba is not None:
+                    mr[..., 1] = normal_rgba[..., 3]          # roughness from normal alpha
+                else:
+                    mr[..., 1] = int(round(255 * _float_param(material, "g_flRoughness", 1.0)))
+                if metal_img is not None:
+                    metal = metal_img if metal_img.shape[:2] == (h, w) else _nearest_resize(metal_img, h, w)
+                    mr[..., 2] = metal[..., 0]
+                else:
+                    mr[..., 2] = int(round(255 * _float_param(material, "g_flMetalness", 0.0)))
+                md.mr_img = mr
+
+            ao_path = _texture_path(textures, _TEX_AO)
+            if ao_path is not None:
+                md.ao_img = _decode_texture(loader, ao_path, max_dim)
 
     if not base_color_only:
-        normal_path = _texture_path(textures, _TEX_NORMAL)
-        normal_rgba = _decode_texture(loader, normal_path, max_dim) if normal_path else None
-        if normal_rgba is not None:
-            md.normal_img = normal_rgba
-
-        metal_path = _texture_path(textures, _TEX_METAL)
-        metal_img = _decode_texture(loader, metal_path, max_dim) if metal_path else None
-        if normal_rgba is not None or metal_img is not None:
-            reference = normal_rgba if normal_rgba is not None else metal_img
-            h, w = reference.shape[0], reference.shape[1]
-            mr = np.zeros((h, w, 4), dtype=np.uint8)
-            mr[..., 3] = 255
-            if normal_rgba is not None:
-                mr[..., 1] = normal_rgba[..., 3]          # roughness from normal alpha
-            else:
-                mr[..., 1] = int(round(255 * _float_param(material, "g_flRoughness", 1.0)))
-            if metal_img is not None:
-                metal = metal_img if metal_img.shape[:2] == (h, w) else _nearest_resize(metal_img, h, w)
-                mr[..., 2] = metal[..., 0]
-            else:
-                mr[..., 2] = int(round(255 * _float_param(material, "g_flMetalness", 0.0)))
-            md.mr_img = mr
-
-        ao_path = _texture_path(textures, _TEX_AO)
-        if ao_path is not None:
-            md.ao_img = _decode_texture(loader, ao_path, max_dim)
         emissive_path = _texture_path(textures, _TEX_EMISSIVE)
         if emissive_path is not None:
             md.emissive_img = _decode_texture(loader, emissive_path, max_dim)
@@ -466,34 +634,40 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
     md.wrap_u = _int_param(material, "g_nTextureAddressModeU", 0)
     md.wrap_v = _int_param(material, "g_nTextureAddressModeV", 0)
 
-    # Determine UV set used by the selected base texture
-    uv_set = 0
-    if base_tex_name and base_tex_name.endswith("1"):
-        uv_set = _int_param(material, "g_nUVSet1", 1)
-    elif base_tex_name and base_tex_name.endswith("2"):
-        uv_set = _int_param(material, "g_nUVSet2", 2)
-    elif base_tex_name and base_tex_name.endswith("3"):
-        uv_set = _int_param(material, "g_nUVSet3", 3)
-    else:
-        uv_set = _int_param(material, "g_nUVSet0", _int_param(material, "g_nUVSet", 0))
+    # Diffuse/albedo textures always read from TEXCOORD0 in Source 2: the
+    # higher TEXCOORD indices (TEXCOORD1+) hold lightmaps or secondary unwraps.
+    # g_nUVSet{N}'s trailing digit is a *shader texture-layer* selector (the
+    # same N as in g_tColorN), NOT a TEXCOORD semantic index, so its value is
+    # never used to pick the vertex channel -- confirmed across shipped CS2
+    # models where every diffuse material carries g_nUVSet1=1 yet TEXCOORD0 is
+    # the diffuse UV.
+    md.uv_set = 0
 
-    md.uv_set = uv_set
+    # The per-layer UV *transform* params (g_vTexCoordScale{N} etc.) ARE named
+    # by the texture-layer suffix, so keep that suffix just for their lookup.
+    if base_tex_name and base_tex_name.endswith("1"):
+        layer_suffix = "1"
+    elif base_tex_name and base_tex_name.endswith("2"):
+        layer_suffix = "2"
+    elif base_tex_name and base_tex_name.endswith("3"):
+        layer_suffix = "3"
+    else:
+        layer_suffix = ""
 
     # Read UV transform parameters if specified
-    suffix = str(uv_set) if uv_set > 0 else ""
-    scale_key = f"g_vTexCoordScale{suffix}"
-    offset_key = f"g_vTexCoordOffset{suffix}"
-    center_key = f"g_vTexCoordCenter{suffix}"
-    rot_key = f"g_flTexCoordRotation{suffix}"
+    scale_key = f"g_vTexCoordScale{layer_suffix}"
+    offset_key = f"g_vTexCoordOffset{layer_suffix}"
+    center_key = f"g_vTexCoordCenter{layer_suffix}"
+    rot_key = f"g_flTexCoordRotation{layer_suffix}"
 
     md.uv_scale = _vector_param(material, scale_key, _vector_param(material, "g_vTexCoordScale", [1.0, 1.0]))[:2]
     md.uv_offset = _vector_param(material, offset_key, _vector_param(material, "g_vTexCoordOffset", [0.0, 0.0]))[:2]
     md.uv_center = _vector_param(material, center_key, _vector_param(material, "g_vTexCoordCenter", [0.5, 0.5]))[:2]
     md.uv_rotation = _float_param(material, rot_key, _float_param(material, "g_flTexCoordRotation", 0.0))
 
-    if _int_param(material, "F_TRANSLUCENT"):
+    if is_translucent:
         md.alpha_mode = "BLEND"
-    elif _int_param(material, "F_ALPHA_TEST"):
+    elif is_alpha_test:
         md.alpha_mode = "MASK"
         md.alpha_cutoff = _float_param(material, "g_flAlphaTestReference", 0.5)
     md.double_sided = bool(_int_param(material, "F_RENDER_BACKFACES"))
