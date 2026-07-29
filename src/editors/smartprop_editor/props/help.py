@@ -318,6 +318,12 @@ class HelpPanel(QFrame):
 
         keys_to_try = [
             prop_cls,
+            f"CSmartPropElement_{prop_cls}",
+            f"CSmartPropOperation_{prop_cls}",
+            f"CSmartPropFilter_{prop_cls}",
+            f"CSmartPropSelectionCriteria_{prop_cls}",
+            f"CSmartPropVariable_{prop_cls}",
+            f"CSmartPropPulse_{prop_cls}",
             f"CSmartProp{prop_cls}",
             f"CSmartProp_{prop_cls}",
             f"m_{prop_cls}",

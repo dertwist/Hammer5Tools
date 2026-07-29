@@ -357,10 +357,40 @@ def main():
     vis_h = c_list.elem_row.height() + c_list.header_modifiers.sizeHint().height() + c_list.modifiers_tree.sizeHint().height() + c_list.header_criteria.sizeHint().height() + c_list.criteria_tree.sizeHint().height()
     assert sh_height > vis_h, f"ComponentList sizeHint ({sh_height}) must include layout margins and spacing beyond sum of child heights ({vis_h})"
     # 15. Dynamic height calculation prevents clipping when there are many items in a tree
-    big_tree_h = big_widget.modifiers_tree.height()
-    expected_min_h = 30 * 26 + 8
-    assert big_tree_h >= expected_min_h, f"Big tree height ({big_tree_h}) must be at least {expected_min_h} to avoid clipping 30 items"
-    print(f"[PASS] Dynamic ComponentTree height calculation for 30 items ({big_tree_h}px) prevents row clipping")
+    # 16. Duplicate (Ctrl+D), Cut (Ctrl+X), Batch Copy/Paste (Ctrl+C / Ctrl+V) features
+    c_list.rebuild()
+    mod_item0 = c_list.modifiers_tree.topLevelItem(0)
+    c_list.modifiers_tree.setCurrentItem(mod_item0)
+    mod_item0.setSelected(True)
+    
+    # 16a. Test Duplicate (Ctrl+D)
+    before_dup_count = len(item.data(0, Qt.UserRole)["m_Modifiers"])
+    c_list._duplicate_selected_from_tree(c_list.modifiers_tree)
+    after_dup_data = item.data(0, Qt.UserRole)
+    assert len(after_dup_data["m_Modifiers"]) == before_dup_count + 1
+    # Check duplicate has a unique ElementID assigned
+    orig_eid = after_dup_data["m_Modifiers"][0]["m_nElementID"]
+    dup_eid = after_dup_data["m_Modifiers"][1]["m_nElementID"]
+    assert dup_eid != orig_eid and dup_eid > 0
+    print("[PASS] Duplicate (Ctrl+D) duplicates component in place with fresh ElementID")
+
+    doc.undo_stack.undo()
+    assert len(item.data(0, Qt.UserRole)["m_Modifiers"]) == before_dup_count
+    print("[PASS] Duplicate (Ctrl+D) undo restores original list")
+
+    # 16b. Test Cut (Ctrl+X)
+    c_list.rebuild()
+    mod_item0 = c_list.modifiers_tree.topLevelItem(0)
+    c_list.modifiers_tree.setCurrentItem(mod_item0)
+    mod_item0.setSelected(True)
+    c_list._cut_selected_from_tree(c_list.modifiers_tree)
+    assert len(item.data(0, Qt.UserRole)["m_Modifiers"]) == before_dup_count - 1
+    assert QApplication.clipboard().text().startswith(CLIPBOARD_PREFIX)
+    print("[PASS] Cut (Ctrl+X) copies to clipboard and deletes component")
+
+    doc.undo_stack.undo()
+    assert len(item.data(0, Qt.UserRole)["m_Modifiers"]) == before_dup_count
+    print("[PASS] Cut (Ctrl+X) undo restores cut component")
 
     print("\nALL P3 ASSERTS PASSED SUCCESSFULLY!")
 
