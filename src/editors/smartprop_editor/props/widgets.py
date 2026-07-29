@@ -796,7 +796,7 @@ class Vector3DEditor(QWidget):
     def _parse(self, v) -> list:
         if isinstance(v, (list, tuple)) and len(v) >= 3:
             return [float(x) for x in v[:3]]
-        return [0.0, 0.0, 0.0]
+        return [1.0, 1.0, 1.0]
 
     def _on_changed(self):
         self.commitValue.emit(self.value())
@@ -1474,6 +1474,7 @@ class Vector3DFieldEditor(QWidget):
             lbl.setStyleSheet(f"color:{col}; font:bold 8pt 'Segoe UI'; background:transparent; border:none;")
             rlay.addWidget(lbl)
             sub = FloatFieldEditor(f"{self.field}_{tag.lower()}", self.ctx)
+            sub.set_value(1.0)
             sub.commitValue.connect(lambda _v: self._emit())
             sub.sliderPressed.connect(self.sliderPressed)
             sub.sliderCommitted.connect(self.sliderCommitted)
@@ -1483,7 +1484,11 @@ class Vector3DFieldEditor(QWidget):
 
     def _on_header_mode(self, _idx: int):
         names = ("default", "value", "variable")
+        prev_mode = self._mode
         self._mode = names[self._header_switch.currentIndex()]
+        if self._mode == MODE_VALUE and prev_mode == MODE_DEFAULT:
+            for c in self._components:
+                c.set_value(1.0)
         self._refresh_mode()
         self._emit()
 
@@ -1956,6 +1961,7 @@ class SetVariableEditor(QWidget):
             self._value_editor = BoolFieldEditor(f"{self.field}_val", self.ctx)
         elif dtype == "Vector3D":
             self._value_editor = Vector3DFieldEditor(f"{self.field}_val", self.ctx)
+            self._value_editor.set_value([1.0, 1.0, 1.0])
             self._value_editor.heightChanged.connect(self.heightChanged)
         else:
             int_bool = (dtype == "Int")

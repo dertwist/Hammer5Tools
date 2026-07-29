@@ -29,7 +29,7 @@ import re
 from typing import Any
 
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QFont, QIcon, QMouseEvent, QUndoStack
+from PySide6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QMouseEvent, QUndoStack
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -47,6 +47,7 @@ from PySide6.QtWidgets import (
 from src.common import fast_deepcopy
 from src.editors.smartprop_editor._common import get_clean_class_name
 from src.editors.smartprop_editor.commands import PropertySnapshotCommand
+from src.widgets.widgets import make_composite_icon
 from src.editors.smartprop_editor.objects import (
     filters_list,
     operators_list,
@@ -168,6 +169,13 @@ class ElementRowWidget(QFrame):
         self.lbl_title.setStyleSheet("QLabel { background: transparent; border: none; }")
         layout.addWidget(self.lbl_title)
 
+        self.lbl_id = QLabel(self)
+        font_id = QFont()
+        font_id.setPixelSize(11)
+        self.lbl_id.setFont(font_id)
+        self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #606060; }")
+        layout.addWidget(self.lbl_id)
+
         self.lbl_hint = QLabel(self)
         font_hint = QFont()
         font_hint.setPixelSize(11)
@@ -184,11 +192,39 @@ class ElementRowWidget(QFrame):
         raw_class = data.get("_class", "")
         self.lbl_title.setText(prettify_class_name(raw_class))
         if self.ref.item and hasattr(self.ref.item, "icon") and not self.ref.item.icon(0).isNull():
-            icon = self.ref.item.icon(0)
+            base_icon = self.ref.item.icon(0)
         else:
-            icon = IconCache.get_node_icon("element")
-        self.lbl_icon.setPixmap(icon.pixmap(18, 18))
+            base_icon = IconCache.get_node_icon("element")
+        comp_icon = make_composite_icon(base_icon, data, size=18)
+        self.lbl_icon.setPixmap(comp_icon.pixmap(18, 18))
         self.lbl_hint.setText(get_summary_hint(data))
+
+        eid = data.get("m_nElementID")
+        if eid is None and self.ref.item:
+            try:
+                eid_str = self.ref.item.text(3)
+                if eid_str:
+                    eid = int(eid_str)
+            except (ValueError, TypeError, AttributeError):
+                pass
+        if eid is None:
+            parent_list = self.parent()
+            while parent_list and not hasattr(parent_list, "document"):
+                parent_list = parent_list.parent()
+            doc = getattr(parent_list, "document", None) if parent_list else None
+            if doc and hasattr(doc, "element_id_generator"):
+                eid = doc.element_id_generator.get_element_id(data)
+            else:
+                from src.widgets.element_id import get_ElementID
+                eid = get_ElementID(data)
+            data["m_nElementID"] = eid
+
+        if eid is not None:
+            self.lbl_id.setText(f"ID:{eid}")
+            self.lbl_id.show()
+        else:
+            self.lbl_id.setText("")
+            self.lbl_id.hide()
 
     def set_selected(self, selected: bool):
         if self._is_selected != selected:
@@ -238,7 +274,7 @@ class ComponentTree(HierarchyTreeWidget):
         if parent is not None:
             self.setParent(parent)
         self.setHeaderHidden(True)
-        self.setColumnCount(2)
+        self.setColumnCount(3)
         self.setRootIsDecorated(False)  # flat list — never has children to expand
         self.setIndentation(0)
         self.setIconSize(QSize(18, 18))
@@ -249,8 +285,9 @@ class ComponentTree(HierarchyTreeWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.setAlternatingRowColors(True)
         self.header().setStretchLastSection(False)
-        self.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.header().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setStyleSheet(f"""
             QTreeWidget {{ background: transparent; border: none; outline: none; }}
             QTreeWidget::item {{ height: {self.ROW_H - 2}px; border: none; background: transparent; }}
@@ -259,6 +296,40 @@ class ComponentTree(HierarchyTreeWidget):
             QTreeWidget::item:hover {{ background-color: #33363D; }}
             QTreeWidget::branch {{ background: transparent; border: none; }}
         """)
+        self.verticalScrollBar().valueChanged.connect(self._reset_scroll)
+        self.horizontalScrollBar().valueChanged.connect(self._reset_scroll)
+
+    def _reset_scroll(self, val):
+        if val != 0:
+            self.verticalScrollBar().setValue(0)
+            self.horizontalScrollBar().setValue(0)
+
+    def scrollTo(self, index, hint=0):
+        # Disable internal scrolling of tree viewport content completely so items never get scrolled off-screen.
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)
+
+    def calculate_content_height(self) -> int:
+        count = self.topLevelItemCount()
+        if count == 0:
+            return 4
+        items_h = 0
+        for i in range(count):
+            h_i = self.sizeHintForRow(i)
+            if h_i <= 0:
+                h_i = self.ROW_H
+            items_h += max(h_i, self.ROW_H)
+        return items_h + 8
+
+    def sizeHint(self):
+        return QSize(super().sizeHint().width(), self.calculate_content_height())
+
+    def minimumSizeHint(self):
+        return QSize(0, self.calculate_content_height())
+
+    def scrollContentsBy(self, dx, dy):
+        # Completely disable internal scrolling of tree viewport content.
+        pass
 
     def dropEvent(self, event):
         super().dropEvent(event)
@@ -276,14 +347,12 @@ class ComponentTree(HierarchyTreeWidget):
                 self.deleteRequested.emit(items)
                 return
         super().keyPressEvent(event)
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)
 
     def wheelEvent(self, event):
         # Always sized to fit its own content exactly (refresh_height), so
-        # there's never anything to scroll internally. Unlike mouse press,
-        # ignoring a QWheelEvent does *not* get retried on the parent widget —
-        # forward it explicitly to the nearest QScrollArea ancestor's viewport
-        # (the actual scroll target; the QScrollArea widget itself won't scroll
-        # from a forwarded event, only its viewport will).
+        # there's never anything to scroll internally. Forward wheel event to outer scroll area.
         w = self.parentWidget()
         while w is not None:
             if isinstance(w, QScrollArea):
@@ -293,16 +362,19 @@ class ComponentTree(HierarchyTreeWidget):
         event.ignore()
 
     def refresh_height(self):
-        self.setFixedHeight(max(self.topLevelItemCount(), 0) * self.ROW_H + 4)
-        # setFixedHeight() is a no-op (no resize event, no implicit repaint) when
-        # the item count — and therefore the computed height — didn't change,
-        # e.g. after a reorder. The item model is already correct at that point
-        # (geometry queries return the right rects), but the *paint* can stay
-        # stale until something else forces a repaint (moving/selecting another
-        # row), making the last row appear to vanish in the meantime. Force
-        # both explicitly rather than relying on an implicit resize.
         self.doItemsLayout()
+        height = self.calculate_content_height()
+        self.setFixedHeight(height)
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)
         self.viewport().update()
+        self.updateGeometry()
+        p = self.parentWidget()
+        while p is not None:
+            if isinstance(p, ComponentList):
+                p.updateGeometry()
+                break
+            p = p.parentWidget()
 
 
 class ComponentList(QWidget):
@@ -403,29 +475,36 @@ class ComponentList(QWidget):
         return refs
 
     def sizeHint(self):
-        """Report height based on actual content — uncapped, same treatment as
-        the property panel below it — so the layout expands this section to
-        fit however many components there are instead of truncating it at an
-        arbitrary row count. The internal scroll area (see __init__) is still
-        there as a fallback for whatever the window itself can't fit."""
-        MARGIN = 6
-        h = MARGIN
+        """Report height based on actual content plus layout margins and spacing,
+        so the layout expands this section to fit all components without showing
+        an unnecessary scrollbar in scroll_area."""
+        main_m = self.layout().contentsMargins()
+        h = main_m.top() + main_m.bottom()
+
+        c_m = self.container_layout.contentsMargins()
+        h += c_m.top() + c_m.bottom()
+
+        visible_widgets = []
         for i in range(self.container_layout.count()):
             item = self.container_layout.itemAt(i)
             w = item.widget() if item else None
-            if w is None:
-                continue
-            # ComponentTree.sizeHint() is QTreeWidget's default — unrelated to
-            # the fixed height refresh_height() actually sets — so it would
-            # silently reintroduce a cap-like mismatch here. Its current
-            # height() (and every other child's here) is authoritative once
-            # laid out; only fall back to sizeHint() before that's happened.
-            wh = w.height()
-            if wh <= 0:
-                sh = w.sizeHint()
-                wh = sh.height() if sh.isValid() else ComponentTree.ROW_H
-            h += wh
-        h = max(ComponentTree.ROW_H * 2 + MARGIN, h)
+            if w is not None and not w.isHidden():
+                visible_widgets.append(w)
+
+        if visible_widgets:
+            spacing = self.container_layout.spacing()
+            h += spacing * (len(visible_widgets) - 1)
+            for w in visible_widgets:
+                if isinstance(w, ComponentTree):
+                    wh = w.sizeHint().height()
+                else:
+                    sh = w.sizeHint()
+                    wh = sh.height() if sh.isValid() and sh.height() > 0 else w.height()
+                h += wh
+
+        # Add buffer (+6px) for scroll area viewport frames and borders
+        h += 6
+        h = max(ComponentTree.ROW_H * 2 + 12, h)
         s = super().sizeHint()
         return QSize(s.width(), h)
 
@@ -473,16 +552,39 @@ class ComponentList(QWidget):
     def _populate_tree(self, tree: ComponentTree, kind: str, values: list):
         tree.blockSignals(True)
         tree.clear()
+        doc_gen = getattr(self.document, "element_id_generator", None) if self.document else None
         for i, val in enumerate(values):
             if not isinstance(val, dict):
                 continue
             ref = ComponentRef(self.tree_item, kind, i)
             raw_class = val.get("_class", "")
+            title = prettify_class_name(raw_class)
+
+            # Ensure every modifier/criterion has a valid m_nElementID assigned
+            eid = val.get("m_nElementID")
+            if eid is None or not isinstance(eid, int):
+                if doc_gen is not None:
+                    eid = doc_gen.get_element_id(val)
+                else:
+                    from src.widgets.element_id import get_ElementID
+                    eid = get_ElementID(val)
+                val["m_nElementID"] = eid
+
             titem = QTreeWidgetItem()
-            titem.setText(0, prettify_class_name(raw_class))
-            titem.setText(1, get_summary_hint(val))
-            titem.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
-            titem.setIcon(0, _component_icon(kind, raw_class))
+            titem.setText(0, title)
+            titem.setText(1, f"ID:{eid}")
+            titem.setForeground(1, QBrush(QColor("#606060")))
+            titem.setTextAlignment(1, Qt.AlignLeft | Qt.AlignVCenter)
+            titem.setText(2, get_summary_hint(val))
+            titem.setTextAlignment(2, Qt.AlignRight | Qt.AlignVCenter)
+            base_icon = _component_icon(kind, raw_class)
+            comp_icon = make_composite_icon(base_icon, val, size=18)
+            titem.setIcon(0, comp_icon)
+
+            enabled_val = val.get("m_bEnabled", True)
+            if enabled_val is False or enabled_val == "false":
+                titem.setForeground(0, QBrush(QColor("#6B6B6B")))
+
             titem.setData(0, Qt.UserRole, ref)
             tree.addTopLevelItem(titem)
         tree.blockSignals(False)

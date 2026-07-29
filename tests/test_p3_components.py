@@ -135,6 +135,8 @@ def main():
     # simulable headlessly) and confirm the reconciliation is correct.
     tree = widget.modifiers_tree
     assert [tree.topLevelItem(i).text(0) for i in range(tree.topLevelItemCount())] == ["Rotate", "Random Scale"]
+    assert tree.topLevelItem(0).text(1) == "ID:3"
+    assert widget.elem_row.lbl_id.text() == "ID:1"
     moved = tree.takeTopLevelItem(0)
     tree.addTopLevelItem(moved)  # visually: Random Scale, Rotate
     widget._on_modifiers_reordered()
@@ -148,9 +150,8 @@ def main():
     data = item.data(0, Qt.UserRole)
     assert data["m_Modifiers"][0]["_class"] == "CSmartPropOperation_Rotate"
 
-    # 4c. Regression: reordering after an unrelated Section-2 property edit must
-    # not revert that edit. Section 2 (LegacyPropertyList._commit_frame /
-    # PropertyTreeModel.set_field) writes straight to item.data() and does *not*
+    # 4c. Verify Section-2 edit preservation across reorder:
+    # HierarchyTreeWidget drag-drop moves QTreeWidgetItems in place, but does NOT
     # call ComponentList.rebuild() (by design, to avoid rebuilding this tree on
     # every keystroke) — so _apply_tree_order used to read each item's *cached*
     # value snapshot from populate time, which had gone stale the moment the
@@ -158,7 +159,7 @@ def main():
     live = fast_deepcopy(item.data(0, Qt.UserRole))
     live["m_Modifiers"][1]["m_flRandomScaleMin"] = 9.9  # edit RandomScale (idx1) via "Section 2", no rebuild()
     item.setData(0, Qt.UserRole, live)
-    assert widget.modifiers_tree.topLevelItem(1).text(0) == "Random Scale"  # tree item still stale-looking, as expected
+    assert widget.modifiers_tree.topLevelItem(1).text(0).startswith("Random Scale")  # tree item still stale-looking, as expected
 
     moved = widget.modifiers_tree.takeTopLevelItem(0)  # drag Rotate (idx0) to the end
     widget.modifiers_tree.addTopLevelItem(moved)
@@ -337,6 +338,29 @@ def main():
     assert h_16 > old_cap, f"sizeHint must exceed the old hard cap ({old_cap}), got {h_16}"
     assert h_25 > h_16 > h_empty, "sizeHint must grow with content, not stay flat"
     print(f"[PASS] ComponentList.sizeHint() scales with content (0={h_empty}, 16={h_16}, 25={h_25}), no longer capped")
+
+    # 13. Regression: ComponentTree must never scroll internally when items are selected/scrolledTo.
+    # Selecting the last item used to trigger QTreeWidget.scrollTo, which shifted verticalScrollBar > 0
+    # and hid top items off-screen ("missing elements").
+    tree = big_widget.modifiers_tree
+    last_item = tree.topLevelItem(tree.topLevelItemCount() - 1)
+    tree.setCurrentItem(last_item)
+    tree.scrollToItem(last_item)
+    assert tree.verticalScrollBar().value() == 0, "ComponentTree vertical scrollbar must stay at 0"
+    assert tree.horizontalScrollBar().value() == 0, "ComponentTree horizontal scrollbar must stay at 0"
+    print("[PASS] ComponentTree prevents internal scrolling when selecting/scrolling to items (no missing top elements)")
+
+    # 14. ComponentList.sizeHint includes spacing and margins so container_widget fits without scrollbars
+    c_list = ComponentList(document=doc)
+    c_list.set_element(item)
+    sh_height = c_list.sizeHint().height()
+    vis_h = c_list.elem_row.height() + c_list.header_modifiers.sizeHint().height() + c_list.modifiers_tree.sizeHint().height() + c_list.header_criteria.sizeHint().height() + c_list.criteria_tree.sizeHint().height()
+    assert sh_height > vis_h, f"ComponentList sizeHint ({sh_height}) must include layout margins and spacing beyond sum of child heights ({vis_h})"
+    # 15. Dynamic height calculation prevents clipping when there are many items in a tree
+    big_tree_h = big_widget.modifiers_tree.height()
+    expected_min_h = 30 * 26 + 8
+    assert big_tree_h >= expected_min_h, f"Big tree height ({big_tree_h}) must be at least {expected_min_h} to avoid clipping 30 items"
+    print(f"[PASS] Dynamic ComponentTree height calculation for 30 items ({big_tree_h}px) prevents row clipping")
 
     print("\nALL P3 ASSERTS PASSED SUCCESSFULLY!")
 

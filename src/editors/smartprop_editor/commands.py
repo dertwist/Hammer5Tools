@@ -389,6 +389,14 @@ class PropertySnapshotCommand(QUndoCommand):
         if self._first_redo:
             self._first_redo = False
             print(f"[SPE][PropertyEdit] redo: (initial apply) '{self.item.text(0)}' — {self.text()}")
+            if hasattr(self.document, "property_panel"):
+                panel = self.document.property_panel
+                if hasattr(panel, "components_list") and panel.current_item is self.item:
+                    panel.components_list.rebuild()
+            if hasattr(self.document, "ui") and hasattr(self.document.ui, "tree_hierarchy_widget"):
+                tree = self.document.ui.tree_hierarchy_widget
+                if hasattr(tree, "viewport"):
+                    tree.viewport().update()
             return
         print(f"[SPE][PropertyEdit] redo: '{self.item.text(0)}' — {self.text()}")
         try:

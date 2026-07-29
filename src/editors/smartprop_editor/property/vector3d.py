@@ -164,6 +164,9 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
 
         # Default states
         self.value = None
+        self.float_widget_x.set_value(1.0)
+        self.float_widget_y.set_value(1.0)
+        self.float_widget_z.set_value(1.0)
         self.ui.logic_switch.setCurrentIndex(0)
 
         def add_value(layout_widget, in_value, combo, variable, float_widget):
@@ -473,9 +476,9 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
             self.ui.comboBox_y.setCurrentIndex(0)
             self.ui.comboBox_z.setCurrentIndex(0)
 
-            self.float_widget_x.set_value(0.0)
-            self.float_widget_y.set_value(0.0)
-            self.float_widget_z.set_value(0.0)
+            self.float_widget_x.set_value(1.0)
+            self.float_widget_y.set_value(1.0)
+            self.float_widget_z.set_value(1.0)
 
             self.text_line_x.completion_tail = ''
             self.text_line_y.completion_tail = ''
