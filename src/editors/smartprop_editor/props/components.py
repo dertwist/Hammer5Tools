@@ -176,14 +176,6 @@ class ElementRowWidget(QFrame):
         self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #606060; }")
         layout.addWidget(self.lbl_id)
 
-        self.lbl_hint = QLabel(self)
-        font_hint = QFont()
-        font_hint.setPixelSize(11)
-        self.lbl_hint.setFont(font_hint)
-        self.lbl_hint.setStyleSheet("QLabel { background: transparent; border: none; color: #888888; }")
-        self.lbl_hint.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        layout.addWidget(self.lbl_hint, 1)
-
         self._update_appearance()
 
     def update_data(self, data: dict):
@@ -197,7 +189,6 @@ class ElementRowWidget(QFrame):
             base_icon = IconCache.get_node_icon("element")
         comp_icon = make_composite_icon(base_icon, data, size=18)
         self.lbl_icon.setPixmap(comp_icon.pixmap(18, 18))
-        self.lbl_hint.setText(get_summary_hint(data))
 
         eid = data.get("m_nElementID")
         if eid is None and self.ref.item:
@@ -278,7 +269,7 @@ class ComponentTree(HierarchyTreeWidget):
         if parent is not None:
             self.setParent(parent)
         self.setHeaderHidden(True)
-        self.setColumnCount(3)
+        self.setColumnCount(2)
         self.setRootIsDecorated(False)  # flat list — never has children to expand
         self.setIndentation(0)
         self.setIconSize(QSize(18, 18))
@@ -289,10 +280,9 @@ class ComponentTree(HierarchyTreeWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.setAlternatingRowColors(True)
-        self.header().setStretchLastSection(False)
+        self.header().setStretchLastSection(True)
         self.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.header().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setStyleSheet(f"""
             QTreeWidget {{ background: transparent; border: none; outline: none; }}
             QTreeWidget::item {{ height: {self.ROW_H - 2}px; border: none; background: transparent; }}
@@ -605,8 +595,6 @@ class ComponentList(QWidget):
             titem.setText(1, f"ID:{eid}")
             titem.setForeground(1, QBrush(QColor("#606060")))
             titem.setTextAlignment(1, Qt.AlignLeft | Qt.AlignVCenter)
-            titem.setText(2, get_summary_hint(val))
-            titem.setTextAlignment(2, Qt.AlignRight | Qt.AlignVCenter)
             base_icon = _component_icon(kind, raw_class)
             comp_icon = make_composite_icon(base_icon, val, size=18)
             titem.setIcon(0, comp_icon)

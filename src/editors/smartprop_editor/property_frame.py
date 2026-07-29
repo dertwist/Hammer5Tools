@@ -741,7 +741,10 @@ class PropertyFrame(QWidget):
         """Update a single child property widget by key. Returns True if successful."""
         for w in self._property_widgets:
             if getattr(w, 'value_class', None) == key:
-                if hasattr(w, 'reconfigure'):
+                if hasattr(w, 'set_value'):
+                    w.set_value(new_value)
+                    return True
+                elif hasattr(w, 'reconfigure'):
                     # Collect widget-specific config stored from prior construction
                     extra_kw = {}
                     if hasattr(w, '_pool_items'):

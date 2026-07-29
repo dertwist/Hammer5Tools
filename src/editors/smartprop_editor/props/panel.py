@@ -247,7 +247,14 @@ class SmartPropPropertyPanel(QWidget):
     def apply_external_data(self, item, new_data, changed_keys=()):
         """Forward external updates (undo/redo) to component list and property list."""
         if item is self.current_item:
-            self.components_list.rebuild()
+            structural = not changed_keys or any(
+                k in ("m_Modifiers", "m_SelectionCriteria")
+                or (k.startswith("m_Modifiers[") and "." not in k)
+                or (k.startswith("m_SelectionCriteria[") and "." not in k)
+                for k in changed_keys
+            )
+            if structural:
+                self.components_list.rebuild()
         self.property_list.apply_external_data(item, new_data, changed_keys)
 
     # ── Internal slots ──────────────────────────────────────────────────────

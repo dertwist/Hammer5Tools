@@ -2096,6 +2096,12 @@ class SmartPropDocument(QMainWindow):
             return
         item = self.ui.tree_hierarchy_widget.currentItem()
         if item is not None:
+            panel = getattr(self, "property_panel", None)
+            if panel is not None and hasattr(panel, "selected_refs"):
+                refs = panel.selected_refs()
+                if not any(getattr(r, "kind", None) == "modifier" for r in refs):
+                    item.setData(0, Qt.UserRole, fast_deepcopy(data))
+                    return
             self.apply_property_data(item, data, changed_keys)
 
 

@@ -1,8 +1,8 @@
 import os
 import shutil
 import re
-from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF, QRect, QRectF
-from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent, QDragEnterEvent, QDropEvent, QColor, QPainter, QFont, QFontMetrics, QPen, QLinearGradient, QBrush, QFontDatabase
+from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF, QRect, QRectF, QUrl
+from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent, QDragEnterEvent, QDropEvent, QColor, QPainter, QFont, QFontMetrics, QPen, QLinearGradient, QBrush, QFontDatabase, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QAbstractItemView,
     QPushButton,
+    QToolButton,
     QFrame,
     QProgressBar,
     QGraphicsScene,
@@ -791,8 +792,9 @@ class SectionHeader(QWidget):
     ARROW_EXPANDED = "▾"   # ▾
     ARROW_COLLAPSED = "▸"  # ▸
 
-    def __init__(self, title: str, parent=None):
+    def __init__(self, title: str, parent=None, directory: str = ""):
         super().__init__(parent)
+        self.directory = directory
         self.setCursor(Qt.PointingHandCursor)
         self.setAutoFillBackground(True)
 
@@ -811,8 +813,46 @@ class SectionHeader(QWidget):
 
         layout.addWidget(self.arrow_label)
         layout.addWidget(self.title_label)
+
+        if self.directory:
+            self.folder_button = QToolButton(self)
+            icon = QIcon(":/valve_common/icons/tools/common/folder_sm.png")
+            if icon.isNull():
+                icon_path = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), "..", "..", "icons", "tools", "common", "folder_sm.png")
+                )
+                if os.path.exists(icon_path):
+                    icon = QIcon(icon_path)
+            self.folder_button.setIcon(icon)
+            self.folder_button.setIconSize(QSize(14, 14))
+            self.folder_button.setToolTip(f"Open {title} folder")
+            self.folder_button.setFixedSize(20, 20)
+            self.folder_button.setCursor(Qt.PointingHandCursor)
+            self.folder_button.setStyleSheet("""
+                QToolButton {
+                    border: none;
+                    background: transparent;
+                    padding: 0px;
+                    margin: 0px;
+                }
+                QToolButton:hover {
+                    background-color: rgba(255, 255, 255, 40);
+                    border-radius: 2px;
+                }
+            """)
+            self.folder_button.clicked.connect(self._open_folder)
+            layout.addWidget(self.folder_button)
+
         layout.addStretch(1)
         layout.addWidget(self.count_label)
+
+    def _open_folder(self):
+        if self.directory:
+            os.makedirs(self.directory, exist_ok=True)
+            if os.name == 'nt':
+                os.startfile(self.directory)
+            else:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(self.directory))
 
     def set_expanded(self, expanded: bool):
         self.arrow_label.setText(self.ARROW_EXPANDED if expanded else self.ARROW_COLLAPSED)
@@ -829,12 +869,12 @@ class SectionHeader(QWidget):
 class CollapsibleSection(QWidget):
     """A custom collapsible container: a SectionHeader stacked above a body
     widget whose visibility is toggled by clicking the header."""
-    def __init__(self, title: str, body: QWidget, expanded: bool = True, parent=None):
+    def __init__(self, title: str, body: QWidget, expanded: bool = True, parent=None, directory: str = ""):
         super().__init__(parent)
         self._body = body
         self._expanded = expanded
 
-        self.header = SectionHeader(title, self)
+        self.header = SectionHeader(title, self, directory=directory)
         self.header.clicked.connect(self.toggle)
 
         layout = QVBoxLayout(self)
@@ -989,7 +1029,7 @@ class ImageExplorer(QWidget):
             tree.file_activated.connect(self.image_viewer.showImage)
             tree.images_dropped.connect(self.on_images_dropped)
 
-            section = CollapsibleSection(title, tree, expanded=True, parent=panel)
+            section = CollapsibleSection(title, tree, expanded=True, parent=panel, directory=directory)
             panel_layout.addWidget(section)
             self.sections.append((section, tree))
 

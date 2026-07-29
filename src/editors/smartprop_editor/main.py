@@ -126,10 +126,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        self.action_recompile_all = file_menu.addAction("Recompile All in Addon")
-        self.action_recompile_all.triggered.connect(self.recompile_all_in_addon)
-
-        self.action_convert_vmap = file_menu.addAction("Convert VMAP Props to SmartProp...")
+        self.action_convert_vmap = file_menu.addAction("Load Vmap")
         self.action_convert_vmap.triggered.connect(self.open_vmap_converter)
 
         file_menu.addSeparator()
@@ -242,11 +239,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_reset_layout = view_menu.addAction("Reset Layout")
         self.action_reset_layout.triggered.connect(self.reset_layout_action)
 
-        tools_menu = menubar.addMenu("&Tools")
-
-        self.action_check_tools = tools_menu.addAction("Check VSmart Tooling Configuration")
-        self.action_check_tools.triggered.connect(check_vsmart_configuration)
-
         self.update_menu_states()
 
     def update_menu_states(self):
@@ -311,21 +303,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if doc.opened_file:
                     base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
                 self.update_document_tab_title(doc, base_name)
-
-    def recompile_all_in_addon(self):
-        check_vsmart_configuration()
-        addon_dir = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        recompiled_count = 0
-        if os.path.exists(addon_dir):
-            for root, dirs, files in os.walk(addon_dir):
-                for file in files:
-                    if file.endswith(".vsmart"):
-                        recompiled_count += 1
-        QMessageBox.information(
-            self,
-            "Recompile All",
-            f"Recompiled {recompiled_count} SmartProp file(s) in addon '{get_addon_name()}'."
-        )
 
     def open_vmap_converter(self):
         dialog = VMapToVSmartConverterDialog(self)

@@ -647,13 +647,15 @@ def load_model(resource_path: str, context_addon: str = None,
     all_vertices, all_normals, all_uvs, all_indices = [], [], [], []
     submeshes = []
     material_cache = {}
-    vertex_total = 0     # running vertex offset across every buffer appended
+    vertex_total = 0     # running vertex offset across every draw call appended
     index_cursor = 0     # running index (element) offset
 
     for mesh in _mesh_list(loader, model):
         vbib = mesh.VBIB
-        buffer_base = {}          # vertex buffer index -> offset in the flat array
-        buffer_uvs = {}           # vertex buffer index -> numpy array of UVs
+        positions_by_buf = {}
+        normals_by_buf = {}
+        uv_cache = {}  # (buf_index, uv_set) -> np.ndarray
+
         for buf_index, vertex_buffer in enumerate(vbib.VertexBuffers):
             positions = _attribute(vbib, vertex_buffer, "POSITION", 3)
             if positions is None:
@@ -662,17 +664,11 @@ def load_model(resource_path: str, context_addon: str = None,
             normals = _attribute(vbib, vertex_buffer, "NORMAL", 3)
             if normals is None or len(normals) != count:
                 normals = np.zeros((count, 3), dtype=np.float32)
-            default_uvs = _attribute(vbib, vertex_buffer, "TEXCOORD", 2, 0)
-            if default_uvs is None or len(default_uvs) != count:
-                default_uvs = np.zeros((count, 2), dtype=np.float32)
 
-            buffer_base[buf_index] = vertex_total
-            all_vertices.append(positions)
-            all_normals.append(normals)
-            buffer_uvs[buf_index] = default_uvs.copy()
-            vertex_total += count
+            positions_by_buf[buf_index] = positions
+            normals_by_buf[buf_index] = normals
 
-        if not buffer_base:
+        if not positions_by_buf:
             continue
 
         index_buffers = [_index_array(ib) for ib in vbib.IndexBuffers]
@@ -687,7 +683,7 @@ def load_model(resource_path: str, context_addon: str = None,
 
                 bound = vrf.kv_array(draw_call, "m_vertexBuffers")
                 buf_index = vrf.kv_int(bound[0], "m_hBuffer", 0) if len(bound) else 0
-                if buf_index not in buffer_base:
+                if buf_index not in positions_by_buf:
                     continue
 
                 ib_handle = 0
@@ -700,9 +696,20 @@ def load_model(resource_path: str, context_addon: str = None,
                 if ib_handle >= len(index_buffers):
                     continue
 
-                indices = index_buffers[ib_handle][start:start + count]
-                if indices.size == 0:
+                raw_indices = index_buffers[ib_handle][start:start + count]
+                if raw_indices.size == 0:
                     continue
+
+                real_indices = raw_indices + base_vertex
+                pos_buf = positions_by_buf[buf_index]
+                norm_buf = normals_by_buf[buf_index]
+                buf_len = len(pos_buf)
+
+                valid_mask = (real_indices >= 0) & (real_indices < buf_len)
+                if not np.all(valid_mask):
+                    real_indices = real_indices[valid_mask]
+                    if real_indices.size == 0:
+                        continue
 
                 material_path = vrf.kv_str(draw_call, "m_material", None)
                 material_path = str(material_path) if material_path else ""
@@ -715,19 +722,30 @@ def load_model(resource_path: str, context_addon: str = None,
                                 if material_path else MaterialData())
                     material_cache[material_path] = material
 
-                if buf_index < len(vbib.VertexBuffers):
+                uv_set = int(getattr(material, "uv_set", 0))
+                cache_key = (buf_index, uv_set)
+                if cache_key not in uv_cache:
                     vb = vbib.VertexBuffers[buf_index]
-                    raw_uvs = _attribute(vbib, vb, "TEXCOORD", 2, material.uv_set)
-                    if raw_uvs is not None and len(raw_uvs) == len(buffer_uvs[buf_index]):
-                        t_uvs = _transform_uvs(raw_uvs, material.uv_scale, material.uv_offset,
-                                               material.uv_center, material.uv_rotation)
-                        real_indices = indices + base_vertex
-                        unique_verts = np.unique(real_indices)
-                        valid_mask = (unique_verts >= 0) & (unique_verts < len(buffer_uvs[buf_index]))
-                        valid_verts = unique_verts[valid_mask]
-                        buffer_uvs[buf_index][valid_verts] = t_uvs[valid_verts]
+                    uv_data = _attribute(vbib, vb, "TEXCOORD", 2, uv_set)
+                    if uv_data is None or len(uv_data) != buf_len:
+                        if uv_set != 0:
+                            uv_data = _attribute(vbib, vb, "TEXCOORD", 2, 0)
+                        if uv_data is None or len(uv_data) != buf_len:
+                            uv_data = np.zeros((buf_len, 2), dtype=np.float32)
+                    uv_cache[cache_key] = uv_data
+                uv_buf = uv_cache[cache_key]
 
-                all_indices.append(indices + (buffer_base[buf_index] + base_vertex))
+                draw_pos = pos_buf[real_indices]
+                draw_norm = norm_buf[real_indices]
+                draw_uv = uv_buf[real_indices]
+
+                draw_indices = np.arange(len(real_indices), dtype=np.uint32) + vertex_total
+                vertex_total += len(real_indices)
+
+                all_vertices.append(draw_pos)
+                all_normals.append(draw_norm)
+                all_uvs.append(draw_uv)
+                all_indices.append(draw_indices)
 
                 tint_vec, draw_alpha = _draw_call_tint_alpha(vrf, draw_call)
                 if tint_vec != (1.0, 1.0, 1.0, 1.0) or draw_alpha != 1.0:
@@ -739,12 +757,9 @@ def load_model(resource_path: str, context_addon: str = None,
                     material.base_color_factor = (r, g, b, a)
 
                 submeshes.append(SubMeshData(index_offset=index_cursor,
-                                             index_count=int(indices.size),
+                                             index_count=int(real_indices.size),
                                              material=material))
-                index_cursor += int(indices.size)
-
-        for buf_index in sorted(buffer_uvs.keys()):
-            all_uvs.append(buffer_uvs[buf_index])
+                index_cursor += int(real_indices.size)
 
     if not all_vertices or not all_indices:
         return None
