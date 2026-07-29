@@ -309,3 +309,29 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
 
         # STEP 9: Sync display state and compute self.value without emitting edited.
         self._update_display_and_value()
+
+    def set_value(self, value):
+        """Fast update of float property value during live interactions."""
+        children_to_block = [
+            self.ui.logic_switch,
+            self.float_widget,
+            self.text_line,
+            self.variable.combobox,
+        ]
+        for c in children_to_block:
+            c.blockSignals(True)
+        try:
+            if isinstance(value, (float, int)):
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.float_widget.set_value(value)
+            elif isinstance(value, dict):
+                if 'm_Expression' in value:
+                    self.ui.logic_switch.setCurrentIndex(3)
+                    self.text_line.setPlainText(str(value['m_Expression']))
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    self.variable.combobox.set_variable(str(value['m_SourceName']))
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+        self._update_display_and_value()

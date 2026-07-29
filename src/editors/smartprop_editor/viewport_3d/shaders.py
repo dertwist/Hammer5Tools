@@ -16,6 +16,11 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 uniform mat3 uNormalMatrix;
 
+uniform vec2 uUvScale;
+uniform vec2 uUvOffset;
+uniform vec2 uUvCenter;
+uniform float uUvRotation;
+
 out vec3 vWorldPos;
 out vec3 vNormal;
 out vec2 vTexCoord;
@@ -24,7 +29,16 @@ void main() {
     vec4 worldPos = uModel * vec4(aPos, 1.0);
     vWorldPos = worldPos.xyz;
     vNormal = normalize(uNormalMatrix * aNormal);
-    vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
+    
+    vec2 uv = aTexCoord - uUvCenter;
+    if (uUvRotation != 0.0) {
+        float rad = radians(uUvRotation);
+        float c = cos(rad);
+        float s = sin(rad);
+        uv = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
+    }
+    uv = uv * uUvScale + uUvCenter + uUvOffset;
+    vTexCoord = vec2(uv.x, 1.0 - uv.y);
     gl_Position = uProjection * uView * worldPos;
 }
 """

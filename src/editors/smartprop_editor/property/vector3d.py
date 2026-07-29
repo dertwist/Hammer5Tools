@@ -532,3 +532,45 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
 
         # Sync display state and compute self.value without emitting edited.
         self._update_display_and_value()
+
+    def set_value(self, value):
+        """Fast update of vector components during live interactions (e.g. gizmo drag)."""
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.comboBox_x,
+            self.ui.comboBox_y,
+            self.ui.comboBox_z,
+            self.float_widget_x,
+            self.float_widget_y,
+            self.float_widget_z,
+            self.text_line_x,
+            self.text_line_y,
+            self.text_line_z,
+        ]
+        for c in children_to_block:
+            c.blockSignals(True)
+        try:
+            comps = None
+            if isinstance(value, dict) and "m_Components" in value:
+                comps = value.get("m_Components")
+            elif isinstance(value, (list, tuple)):
+                comps = value
+
+            if comps and len(comps) >= 3:
+                for i, (comp_val, float_w, line_w, combo_w) in enumerate([
+                    (comps[0], self.float_widget_x, self.text_line_x, self.ui.comboBox_x),
+                    (comps[1], self.float_widget_y, self.text_line_y, self.ui.comboBox_y),
+                    (comps[2], self.float_widget_z, self.text_line_z, self.ui.comboBox_z),
+                ]):
+                    if isinstance(comp_val, (int, float)):
+                        float_w.set_value(float(comp_val))
+                        combo_w.setCurrentIndex(0)
+                    elif isinstance(comp_val, str):
+                        line_w.setPlainText(comp_val)
+                    elif isinstance(comp_val, dict) and "m_Expression" in comp_val:
+                        line_w.setPlainText(str(comp_val["m_Expression"]))
+                        combo_w.setCurrentIndex(2)
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+        self._update_display_and_value()

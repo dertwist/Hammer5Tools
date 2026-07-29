@@ -16,7 +16,7 @@ class VMapToVSmartConverterDialog(QDialog):
     """
     def __init__(self, parent=None, initial_vmap=None):
         super().__init__(parent)
-        self.setWindowTitle("Convert VMAP Props to SmartProp")
+        self.setWindowTitle("Load Vmap")
         self.resize(800, 600)
         self.setMinimumSize(600, 450)
         

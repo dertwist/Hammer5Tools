@@ -738,6 +738,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glUniform3f(loc("uEmissiveFactor"), 0.0, 0.0, 0.0)
             GL.glUniform1i(loc("uAlphaMode"), 0)
             GL.glUniform1f(loc("uAlphaCutoff"), 0.5)
+            GL.glUniform2f(loc("uUvScale"), 1.0, 1.0)
+            GL.glUniform2f(loc("uUvOffset"), 0.0, 0.0)
+            GL.glUniform2f(loc("uUvCenter"), 0.5, 0.5)
+            GL.glUniform1f(loc("uUvRotation"), 0.0)
             for name in ("uHasBaseTex", "uHasNormalTex", "uHasMRTex", "uHasAO", "uHasEmissive"):
                 GL.glUniform1i(loc(name), 0)
             return
@@ -751,6 +755,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         alpha_mode = 0 if force_opaque else self._ALPHA_MODE_CODE.get(material.alpha_mode, 0)
         GL.glUniform1i(loc("uAlphaMode"), alpha_mode)
         GL.glUniform1f(loc("uAlphaCutoff"), float(material.alpha_cutoff))
+
+        uv_scale = getattr(material, "uv_scale", (1.0, 1.0))
+        uv_offset = getattr(material, "uv_offset", (0.0, 0.0))
+        uv_center = getattr(material, "uv_center", (0.5, 0.5))
+        uv_rot = float(getattr(material, "uv_rotation", 0.0))
+        GL.glUniform2f(loc("uUvScale"), float(uv_scale[0]), float(uv_scale[1]))
+        GL.glUniform2f(loc("uUvOffset"), float(uv_offset[0]), float(uv_offset[1]))
+        GL.glUniform2f(loc("uUvCenter"), float(uv_center[0]), float(uv_center[1]))
+        GL.glUniform1f(loc("uUvRotation"), uv_rot)
 
         def bind_tex(unit, tex, sampler_name, has_name):
             GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
@@ -1437,12 +1450,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             )
             return avail
 
-        if data.get("_class", "") in self._MODEL_LIKE_CLASSES:
+        has_model_scale = (
+            data.get("_class", "") in self._MODEL_LIKE_CLASSES
+            or "m_vModelScale" in data
+            or "m_flUniformModelScale" in data
+        )
+        if has_model_scale:
             model_scale = data.get("m_vModelScale")
             if model_scale is not None:
                 return with_center(self._vector_axis_availability(model_scale)), "vector"
-            if data.get("m_flUniformModelScale") is not None:
-                return with_center(all_on), "uniform"
+            return with_center(all_on), "uniform"
 
         scale_mod = self._find_modifier(data, "CSmartPropOperation_Scale")
         if scale_mod is not None:
@@ -1555,6 +1572,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         live drag update.
         """
         value = float(value)
+        has_model_scale = (
+            data.get("_class", "") in self._MODEL_LIKE_CLASSES
+            or "m_vModelScale" in data
+            or "m_flUniformModelScale" in data
+        )
+        if has_model_scale:
+            data["m_flUniformModelScale"] = value
+            return "m_flUniformModelScale"
         if data.get("m_flUniformModelScale") is not None:
             data["m_flUniformModelScale"] = value
             return "m_flUniformModelScale"
@@ -1658,6 +1683,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if data.get("m_vModelScale"):
                 comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0)
                 local_scale = [local_scale[i] * comp[i] for i in range(3)]
+            elif data.get("m_flUniformModelScale") is not None:
+                s = self._eval_context.resolve_scalar(data["m_flUniformModelScale"], 1.0)
+                local_scale = [local_scale[i] * s for i in range(3)]
 
         return local_pos, local_rot, local_scale
 
