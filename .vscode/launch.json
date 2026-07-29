@@ -24,27 +24,11 @@
             "python": "${workspaceFolder}/.venv/Scripts/python.exe",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/hammer5tools",
+            "preLaunchTask": "build-sourceporter",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}",
                 "PYTHONUNBUFFERED": "1"
             }
-        },
-        {
-            // PyCharm: main dev
-            "name": "main dev",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/hammer5tools",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}",
-                "PYTHONUNBUFFERED": "1"
-            },
-            "args": [
-                "--dev"
-            ]
         },
         {
             // PyCharm: makefile
@@ -100,15 +84,6 @@
             "configurations": [
                 "compile_ui",
                 "main"
-            ],
-            "stopAll": true
-        },
-        {
-            // PyCharm: Start dev  (compile_ui + main dev)
-            "name": "Start dev",
-            "configurations": [
-                "compile_ui",
-                "main dev"
             ],
             "stopAll": true
         }
