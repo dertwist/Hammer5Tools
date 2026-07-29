@@ -203,9 +203,26 @@ property_tooltips = {
     "CSmartPropElement_BendDeformer": "Creates a bend deformer that is applied to child elements. The deformation bends the local space x-axis around the local space z-axis. The Angles property can be used to rotate the local axis to change the direction of deformation.",
     "BendDeformer": "Creates a bend deformer that is applied to child elements. The deformation bends the local space x-axis around the local space z-axis. The Angles property can be used to rotate the local axis to change the direction of deformation.",
     "Element_BendDeformer": "Creates a bend deformer that is applied to child elements. The deformation bends the local space x-axis around the local space z-axis. The Angles property can be used to rotate the local axis to change the direction of deformation.",
-    "CSmartPropElement_FitOnLine": "An element which fits one or more instances of a set of choices on to a line.",
-    "FitOnLine": "An element which fits one or more instances of a set of choices on to a line.",
-    "Element_FitOnLine": "An element which fits one or more instances of a set of choices on to a line.",
+    "CSmartPropElement_FitOnLine": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
+    "FitOnLine": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
+    "Element_FitOnLine": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
+    "Fit On Line": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
+    "fitonline": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
     "CSmartPropElement_Group": "A group of elements that will all be evaulated.",
     "Group": "A group of elements that will all be evaulated.",
     "Element_Group": "A group of elements that will all be evaulated.",
@@ -296,9 +313,22 @@ property_tooltips = {
     "CSmartPropOperation_CreateRotator": "Create a rotator that will be displayed at the current location, allowing the user to manipulate a rotation around an axis. The rotation value can be applied to the current transform as well as saved to a variable.",
     "CreateRotator": "Create a rotator that will be displayed at the current location, allowing the user to manipulate a rotation around an axis. The rotation value can be applied to the current transform as well as saved to a variable.",
     "Operation_CreateRotator": "Create a rotator that will be displayed at the current location, allowing the user to manipulate a rotation around an axis. The rotation value can be applied to the current transform as well as saved to a variable.",
-    "CSmartPropOperation_CreateSizer": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
-    "CreateSizer": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
-    "Operation_CreateSizer": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+    "CSmartPropOperation_CreateSizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
+    "CreateSizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
+    "Operation_CreateSizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
+    "Create Sizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
     "CSmartPropOperation_MaterialOverride": "Specifies a table of material replacements to apply to all following models. Mapping goes from the material specified by the model (including material group selection) to the replacement material. Previous material overrides are not considered when determining the base material.",
     "MaterialOverride": "Specifies a table of material replacements to apply to all following models. Mapping goes from the material specified by the model (including material group selection) to the replacement material. Previous material overrides are not considered when determining the base material.",
     "Operation_MaterialOverride": "Specifies a table of material replacements to apply to all following models. Mapping goes from the material specified by the model (including material group selection) to the replacement material. Previous material overrides are not considered when determining the base material.",
@@ -387,10 +417,22 @@ property_tooltips = {
     "Pulse_CreateLocator": "Create a locator with the current transform. The locator may optionally be configurable, so that its transform can be modified in Hammer.",
     "CSmartPropPulse_CreateRotator": "Create a rotator that will be displayed at the current location, allowing the user to manipulate a rotation around an axis. The rotation value can be applied to the current transform as well as saved to a variable.",
     "Pulse_CreateRotator": "Create a rotator that will be displayed at the current location, allowing the user to manipulate a rotation around an axis. The rotation value can be applied to the current transform as well as saved to a variable.",
-    "CSmartPropPulse_CreateSizer": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
-    "Pulse_CreateSizer": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
-    "CSmartPropPulse_FitOnLine": "An element which fits one or more instances of a set of choices on to a line.",
-    "Pulse_FitOnLine": "An element which fits one or more instances of a set of choices on to a line.",
+    "CSmartPropPulse_CreateSizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
+    "Pulse_CreateSizer": {
+        "description": "Create a sizer that will be displayed at the current location, allowing the user to manipulate the specified set of size values.",
+        "image": r"src/images/help/create_sizer.png",
+    },
+    "CSmartPropPulse_FitOnLine": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
+    "Pulse_FitOnLine": {
+        "description": "An element which fits one or more instances of a set of choices on to a line.",
+        "image": r"src/images/help/fitonline.png",
+    },
     "CSmartPropPulse_PickOneSelector": "An element which selects a single choice from its set of child choices.",
     "PickOneSelector": "An element which selects a single choice from its set of child choices.",
     "Pulse_PickOneSelector": "An element which selects a single choice from its set of child choices.",
