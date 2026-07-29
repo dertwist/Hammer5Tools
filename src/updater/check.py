@@ -10,7 +10,7 @@ from src.common import get_channel, get_update_source, get_update_options
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
-    QProgressDialog, QApplication
+    QProgressDialog, QApplication, QProgressBar
 )
 from PySide6.QtCore import Qt, QUrl, QTimer, QObject, Signal
 from PySide6.QtGui import QIcon
@@ -206,6 +206,77 @@ def show_update_notification(update, releases, owner, repo, mgr):
     dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
     dialog.exec()
 
+class DownloadProgressDialog(QDialog):
+    """Custom modal dialog for update download progress using MapBuilder styling."""
+
+    progress_signal = Signal(int)
+    status_signal = Signal(str)
+
+    def __init__(self, parent=None, title="Updating Hammer 5 Tools"):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        try:
+            self.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
+        except Exception:
+            pass
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        self.setFixedWidth(420)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        self.status_label = QLabel("Downloading update package...")
+        self.status_label.setStyleSheet("color: #E3E3E3; font-size: 12px; font-weight: bold;")
+        layout.addWidget(self.status_label)
+
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Downloading... 0%")
+        self.progress_bar.setFixedHeight(18)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #505050;
+                border-radius: 2px;
+                text-align: center;
+                color: white;
+                font-size: 10px;
+                background-color: #1C1C1C;
+            }
+            QProgressBar::chunk {
+                background-color: #1a528a;
+                margin: 0px;
+                width: 1px;
+            }
+        """)
+        layout.addWidget(self.progress_bar)
+
+        self.details_label = QLabel("Please wait while the update is downloaded...")
+        self.details_label.setStyleSheet("color: #888888; font-size: 10px;")
+        layout.addWidget(self.details_label)
+
+        self.progress_signal.connect(self._set_progress)
+        self.status_signal.connect(self._set_status)
+
+    def update_progress(self, percent: int):
+        self.progress_signal.emit(percent)
+
+    def update_status(self, text: str):
+        self.status_signal.emit(text)
+
+    def _set_progress(self, percent: int):
+        self.progress_bar.setValue(percent)
+        self.progress_bar.setFormat(f"Downloading... {percent}%")
+
+    def _set_status(self, text: str):
+        self.status_label.setText(text)
+
+
+_active_download_dialog = None
+
 def show_install_dialog(update, mgr, parent_dialog):
     reply = QMessageBox.question(None, "Installation Confirmation",
                                  "During update installation, Hammer5Tools will be closed.\n"
@@ -215,12 +286,10 @@ def show_install_dialog(update, mgr, parent_dialog):
         handle_installation(update, mgr, parent_dialog)
 
 def handle_installation(update, mgr, parent_dialog=None):
+    global _active_download_dialog
     try:
-        progress = QProgressDialog("Downloading update...", None, 0, 100)
-        progress.setWindowTitle("Updating")
-        progress.setWindowModality(Qt.ApplicationModal)
-        progress.setCancelButton(None)
-        progress.setMinimumDuration(0)
+        progress = DownloadProgressDialog(parent=parent_dialog)
+        _active_download_dialog = progress
         progress.show()
         
         # Close the changelog dialog if it exists
@@ -228,10 +297,11 @@ def handle_installation(update, mgr, parent_dialog=None):
             parent_dialog.accept()
             
         def on_progress(percent: int):
-            # Velopack calls this from a native thread, must dispatch to main thread
-            QTimer.singleShot(0, lambda p=percent: progress.setValue(p))
+            # Velopack calls this from a native thread, emit signal to main thread
+            progress.update_progress(percent)
             
         def run_update():
+            global _active_download_dialog
             try:
                 # Disable IPC server
                 try:
@@ -249,7 +319,11 @@ def handle_installation(update, mgr, parent_dialog=None):
                     progress.close(),
                     QMessageBox.critical(None, "Update Error", f"Failed to apply update: {err}")
                 ))
+            finally:
+                _active_download_dialog = None
                 
         threading.Thread(target=run_update, daemon=True).start()
     except Exception as e:
+        _active_download_dialog = None
         QMessageBox.critical(None, "Update Error", f"Failed to start update: {e}")
+
