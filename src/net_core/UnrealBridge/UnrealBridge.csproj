@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    H5T.UnrealBridge — thin CLI over CUE4Parse used by the Unreal Converter.
+
+    Build prerequisites (see README.md):
+      * .NET 10 SDK
+      * A local clone of CUE4Parse (https://github.com/FabianFG/CUE4Parse).
+        Point the CUE4ParsePath property at it, e.g.:
+          dotnet build -c Release -p:CUE4ParsePath=C:/src/CUE4Parse
+        or set the CUE4ParsePath environment variable.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>H5T.UnrealBridge</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <CUE4ParsePath Condition="'$(CUE4ParsePath)' == ''">$(CUE4ParsePathEnv)</CUE4ParsePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj" />
+    <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse-Conversion\CUE4Parse-Conversion.csproj" />
+  </ItemGroup>
+
+</Project>

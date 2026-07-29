@@ -40,6 +40,32 @@ class DotNetPaths:
         self.system_io_hashing = base_dir / 'System.IO.Hashing.dll'
         self.tiny_bc_sharp = base_dir / 'TinyBCSharp.dll'
         self.tiny_exr_net = base_dir / 'TinyEXR.NET.dll'
+        self.source_porter_core = self._find_source_porter_core(base_dir)
+
+    def _find_source_porter_core(self, base_dir: Path) -> Path:
+        env = os.environ.get("H5T_SOURCE_PORTER_CORE")
+        if env and Path(env).is_file():
+            return Path(env)
+
+        # Prefer the copy sitting next to SourcePorter.Cli's build output: a class
+        # library project doesn't copy its own PackageReference dependencies
+        # (ValveKeyValue/ValvePak/Datamodel.NET) into its own bin/, only the exe
+        # that consumes it does. Loading SourcePorter.Core.dll from its own bin/
+        # leaves those dependencies unresolved at runtime.
+        net_core = Path(__file__).parent / 'net_core'
+        candidates = [
+            net_core / 'SourcePorter.Cli' / 'publish' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Cli' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Cli' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
+            base_dir / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'publish' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
+        ]
+        for c in candidates:
+            if c.is_file():
+                return c
+        return base_dir / 'SourcePorter.Core.dll'
 
 
 class DotNetInterop:
@@ -203,6 +229,42 @@ class DotNetInterop:
 
         # Fallback: find any type with 'Package' in name
         return self._find_type(assembly, "Package")
+
+    def setup_source_porter(self):
+        """Setup SourcePorter.Core .NET interop via pythonnet.
+
+        Deliberately does NOT call setup_vrf(): SourcePorter.Core never touches
+        ValveResourceFormat, and setup_vrf() would preload src/external's legacy
+        ValveKeyValue.dll (a much newer, binary-incompatible version) into the
+        default ALC first, so SourcePorter.Core.dll's calls into ValveKeyValue
+        would bind against the wrong version and throw MissingMethodException.
+        """
+        self._init_pythonnet()
+
+        sp_dll = self.paths.source_porter_core
+        if not sp_dll.exists():
+            raise FileNotFoundError(f"SourcePorter.Core.dll assembly not found: {sp_dll}")
+
+        import System
+        alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
+        default_prop = alc_type.GetProperty("Default")
+        default_context = default_prop.GetValue(None)
+        load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
+
+        # Preload the dependency versions SourcePorter.Core.dll was actually built
+        # against, from whichever folder it was resolved from (see
+        # _find_source_porter_core — normally SourcePorter.Cli's output, the only
+        # place they're copied locally).
+        for dep_name in ("ValveKeyValue.dll", "ValvePak.dll", "Datamodel.NET.dll",
+                         "System.IO.Hashing.dll", "Blake3.dll"):
+            dep = sp_dll.parent / dep_name
+            if dep.is_file():
+                load_method.Invoke(default_context, [str(dep)])
+
+        load_method.Invoke(default_context, [str(sp_dll)])
+
+        sp_assembly = System.Reflection.Assembly.LoadFrom(str(sp_dll))
+        return sp_assembly
 
 
 class VPKExtractor:

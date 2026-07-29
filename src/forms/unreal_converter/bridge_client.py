@@ -29,6 +29,8 @@ def _candidate_bridge_paths():
     if env:
         yield Path(env)
     root = Path(__file__).resolve().parents[3]  # repo root (src/forms/unreal_converter -> repo)
+    yield root / "src" / "net_core" / "UnrealBridge" / "publish" / "H5T.UnrealBridge.dll"
+    yield root / "src" / "net_core" / "UnrealBridge" / "bin" / "Release" / "net10.0" / "H5T.UnrealBridge.dll"
     yield root / "tools" / "unreal_bridge" / "publish" / "H5T.UnrealBridge.dll"
     yield root / "src" / "external" / "unreal_bridge" / "H5T.UnrealBridge.dll"
     # Frozen (PyInstaller) bundle
