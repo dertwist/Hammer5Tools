@@ -264,10 +264,6 @@ class DotNetInterop:
             raise FileNotFoundError(f"SourcePorter.Core.dll assembly not found: {sp_dll}")
 
         import System
-        alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
-        default_prop = alc_type.GetProperty("Default")
-        default_context = default_prop.GetValue(None)
-        load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
 
         # Preload the dependency versions SourcePorter.Core.dll was actually built
         # against, from whichever folder it was resolved from (see
@@ -277,9 +273,9 @@ class DotNetInterop:
                          "System.IO.Hashing.dll", "Blake3.dll"):
             dep = sp_dll.parent / dep_name
             if dep.is_file():
-                load_method.Invoke(default_context, [str(dep)])
+                _load_into_default_alc(dep)
 
-        load_method.Invoke(default_context, [str(sp_dll)])
+        _load_into_default_alc(sp_dll)
 
         sp_assembly = System.Reflection.Assembly.LoadFrom(str(sp_dll))
         return sp_assembly
