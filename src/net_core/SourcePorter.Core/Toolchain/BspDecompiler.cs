@@ -109,8 +109,31 @@ public sealed class BspDecompiler(ProcessRunner runner, string? bspsrcLocation =
                 return inDir;
         }
 
-        var bundled = Path.Combine(AppContext.BaseDirectory, "tools", "bspsrc", "bspsrc.exe");
-        return File.Exists(bundled) ? bundled : null;
+        var env = Environment.GetEnvironmentVariable("H5T_BSPSRC");
+        if (!string.IsNullOrWhiteSpace(env) && File.Exists(env))
+            return env;
+
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(Environment.CurrentDirectory, "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "tools", "bspsrc", "bspsrc.exe"),
+        };
+
+        foreach (var candidate in candidates)
+        {
+            try
+            {
+                var full = Path.GetFullPath(candidate);
+                if (File.Exists(full))
+                    return full;
+            }
+            catch { }
+        }
+
+        return null;
     }
 
     /// <summary>

@@ -123,12 +123,21 @@ class PorterThread(QThread):
             runner = Toolchain.ProcessRunner()
             runner.OnOutput += Action[Toolchain.ProcessLine](lambda line: on_log(line.Text))
 
-            bsp_imported = False
-            no_merge = False
-            vmf = source_map
+            # Locate bspsrc.exe
+            root = Path(__file__).resolve().parents[3]
+            bspsrc_candidates = [
+                root / "tools" / "bspsrc" / "bspsrc.exe",
+                Path(sys.executable).parent / "tools" / "bspsrc" / "bspsrc.exe",
+                Path(getattr(sys, "_MEIPASS", "")) / "tools" / "bspsrc" / "bspsrc.exe",
+            ]
+            bspsrc_location = None
+            for candidate in bspsrc_candidates:
+                if candidate.is_file():
+                    bspsrc_location = str(candidate)
+                    break
 
             if source_map.lower().endswith(".bsp") and not no_bsp:
-                decompiler = Toolchain.BspDecompiler(runner)
+                decompiler = Toolchain.BspDecompiler(runner, bspsrc_location)
                 decompiler.OnLog += cs_log
                 vmf = Toolchain.MapStaging.StageBspAsync(decompiler, source_map, not no_unpack).GetAwaiter().GetResult()
                 no_merge = True
