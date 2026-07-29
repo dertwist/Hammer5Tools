@@ -300,7 +300,8 @@ class Ui_Form(object):
 
         self.frame_layout = QFrame(Form)
         self.frame_layout.setObjectName(u"frame_layout")
-        self.frame_layout.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_layout.setStyleSheet(u"QFrame#frame_layout { border: 0px; border-top: 2px solid rgba(80, 80, 80, 255); }")
+        self.frame_layout.setFrameShape(QFrame.Shape.NoFrame)
         self.frame_layout.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_layout)
         self.verticalLayout_2.setSpacing(0)

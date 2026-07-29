@@ -617,7 +617,65 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 
         return data_out
 
-# Tree widgets
+def make_composite_icon(base_icon, item_data, overlay_path=r"D:\CG\Projects\Other\Hammer5Tools\src\icons\tools\pet\func_constraint.png", size: int = 18):
+    if base_icon is None or base_icon.isNull():
+        return base_icon
+    if not isinstance(item_data, dict):
+        return base_icon
+
+    enabled_val = item_data.get("m_bEnabled", True)
+    is_disabled = False
+    is_expression = False
+
+    if isinstance(enabled_val, bool):
+        is_disabled = not enabled_val
+    elif isinstance(enabled_val, dict):
+        is_expression = True
+        if "m_bEnabled" in enabled_val and isinstance(enabled_val["m_bEnabled"], bool):
+            is_disabled = not enabled_val["m_bEnabled"]
+    elif isinstance(enabled_val, str):
+        if enabled_val.lower() in ("false", "0"):
+            is_disabled = True
+        elif enabled_val.lower() not in ("true", "1"):
+            is_expression = True
+
+    if not is_disabled and not is_expression:
+        return base_icon
+
+    from PySide6.QtGui import QPixmap, QImage, QColor, QIcon, QPainter
+    from PySide6.QtCore import QSize, Qt
+
+    sizes = base_icon.availableSizes()
+    size_obj = sizes[0] if sizes else QSize(size, size)
+    icon_size = max(size_obj.width(), size_obj.height(), size)
+
+    pixmap = base_icon.pixmap(icon_size, icon_size)
+    if pixmap.isNull():
+        return base_icon
+
+    image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
+
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if color.alpha() > 0:
+                gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+                color.setRgb(gray, gray, gray, color.alpha())
+                image.setPixelColor(x, y, color)
+
+    res_pixmap = QPixmap.fromImage(image)
+
+    if is_expression:
+        overlay_pm = QPixmap(overlay_path)
+        if not overlay_pm.isNull():
+            painter = QPainter(res_pixmap)
+            overlay_size = max(int(icon_size * 0.65), 10)
+            scaled_overlay = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            painter.drawPixmap(icon_size - overlay_size, icon_size - overlay_size, scaled_overlay)
+            painter.end()
+
+    return QIcon(res_pixmap)
+
 
 class HierarchyItemModel(QTreeWidgetItem):
     def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None, show_id:bool=True, icon=None):
@@ -677,6 +735,7 @@ class HierarchyItemModel(QTreeWidgetItem):
             else:
                 self.seticon_generic()
 
+
     def _get_gray_icon(self, icon):
         if getattr(self, "_last_normal_icon", None) == icon:
             return self._last_gray_icon
@@ -713,6 +772,8 @@ class HierarchyItemModel(QTreeWidgetItem):
             val = item_data.get("m_bEnabled")
             if val is False or val == "false":
                 is_enabled = False
+            elif isinstance(val, dict) and val.get("m_bEnabled") is False:
+                is_enabled = False
 
         if role == Qt.ForegroundRole:
             if not is_enabled:
@@ -722,8 +783,8 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         if role == Qt.DecorationRole and column == 0:
             normal_icon = super().data(0, Qt.DecorationRole)
-            if not is_enabled and normal_icon is not None:
-                return self._get_gray_icon(normal_icon)
+            if normal_icon is not None and isinstance(item_data, dict):
+                return make_composite_icon(normal_icon, item_data)
             return normal_icon
 
         if role == Qt.BackgroundRole and column in self.background_colors:
