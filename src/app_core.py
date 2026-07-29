@@ -43,6 +43,7 @@ from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from src.forms.unreal_converter.main import UnrealConverterWidget
+from src.forms.source_porter.main import SourcePorterWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
 from src.common import app_version, default_commands, JsonToKv3, compile as run_compile
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -562,9 +563,10 @@ class Widget(QMainWindow):
 
     def _build_utilities_menu(self):
         menu = AlternatingMenu(self)
+        menu.addAction("SourcePorter", self._open_source_porter)
+        menu.addAction("Unreal Converter", self._open_unreal_converter)
         menu.addAction("Cleanup Content", lambda: CleanupDialog(self).show())
         menu.addAction("Cleanup _vrad3 cache", self.cleanup_vrad3_cache)
-        menu.addAction("Unreal Converter", self._open_unreal_converter)
         self.ui.utilities_button.setMenu(menu)
 
     def cleanup_vrad3_cache(self):
@@ -624,6 +626,10 @@ class Widget(QMainWindow):
                 self, "Cleanup _vrad3 cache",
                 f"Removed the _vrad3 cache from {removed} addon(s)."
             )
+
+    def _open_source_porter(self):
+        self.source_porter_dialog = SourcePorterWidget(parent=self)
+        self.source_porter_dialog.show()
 
     def _open_unreal_converter(self):
         self.unreal_converter_dialog = UnrealConverterWidget(parent=self)
