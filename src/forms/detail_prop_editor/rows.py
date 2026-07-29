@@ -154,7 +154,7 @@ class ModelRow(StringRow):
     browse_requested = Signal()
 
     def __init__(self, field, value, parent=None):
-        super().__init__(field, value, placeholder="models/…/example.vmdl", parent=parent)
+        super().__init__(field, value, placeholder="models/example.vmdl", parent=parent)
         self.browse_button = QPushButton()
         self.browse_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
         self.browse_button.setFixedSize(compact.FIELD_H, compact.FIELD_H)

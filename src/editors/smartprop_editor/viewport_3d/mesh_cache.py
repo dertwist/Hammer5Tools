@@ -20,7 +20,7 @@ class MaterialData:
     """CPU-side PBR material built from a Source 2 .vmat_c.
 
     Textures are kept as ready-to-upload RGBA uint8 arrays (already downscaled
-    and vertically flipped for OpenGL) so the GL thread only has to call
+    for OpenGL) so the GL thread only has to call
     glTexImage2D — no PIL decode on upload, and no wasteful PNG re-encode during
     load.  Channel conventions follow the glTF 2.0 metallic-roughness spec, which
     is what the viewport shader expects; :mod:`vmdl_reader` maps Source's own
@@ -410,8 +410,8 @@ class MeshCache(QObject):
 
             wrap_modes = {
                 0: GL.GL_REPEAT,
-                1: GL.GL_CLAMP_TO_EDGE,
-                2: GL.GL_MIRRORED_REPEAT,
+                1: GL.GL_MIRRORED_REPEAT,
+                2: GL.GL_CLAMP_TO_EDGE,
                 3: GL.GL_CLAMP_TO_BORDER,
             }
             gl_wrap_u = wrap_modes.get(wrap_u, GL.GL_REPEAT)

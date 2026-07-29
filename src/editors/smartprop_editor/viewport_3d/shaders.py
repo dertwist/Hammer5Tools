@@ -24,7 +24,7 @@ void main() {
     vec4 worldPos = uModel * vec4(aPos, 1.0);
     vWorldPos = worldPos.xyz;
     vNormal = normalize(uNormalMatrix * aNormal);
-    vTexCoord = aTexCoord;
+    vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
     gl_Position = uProjection * uView * worldPos;
 }
 """

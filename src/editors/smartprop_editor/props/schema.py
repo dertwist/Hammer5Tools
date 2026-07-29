@@ -137,7 +137,7 @@ _EXACT_PROP_DISPATCH = {
     'm_nCountL':               ('float', {'int_bool': True, 'slider_range': [0, 256]}),
     'm_SpecificChildIndex':    ('float', {'int_bool': True}),
     'm_ColorSelection':        ('float', {'int_bool': True}),
-    'm_sModelName':            ('string', {'expression_bool': False, 'placeholder': 'Model path (models/…/example.vmdl)', 'model_browser': True, 'filter_types': ['String', 'Model']}),
+    'm_sModelName':            ('string', {'expression_bool': False, 'placeholder': 'models/example.vmdl', 'model_browser': True, 'filter_types': ['String', 'Model']}),
     'm_MaterialGroupName':     ('string', {'expression_bool': False, 'placeholder': 'Material group name'}),
     'm_Expression':            ('string', {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
     'm_StateName':             ('string', {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
