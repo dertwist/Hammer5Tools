@@ -46,6 +46,11 @@ class MaterialData:
     double_sided: bool = False
     wrap_u: int = 0
     wrap_v: int = 0
+    uv_set: int = 0
+    uv_scale: tuple = (1.0, 1.0)
+    uv_offset: tuple = (0.0, 0.0)
+    uv_center: tuple = (0.5, 0.5)
+    uv_rotation: float = 0.0
 
 
 

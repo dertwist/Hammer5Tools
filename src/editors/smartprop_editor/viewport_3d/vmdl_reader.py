@@ -220,7 +220,7 @@ def _pinned_floats(array, components: int) -> Optional[np.ndarray]:
         handle.Free()
 
 
-def _attribute(vbib, vertex_buffer, semantic: str, components: int) -> Optional[np.ndarray]:
+def _attribute(vbib, vertex_buffer, semantic: str, components: int, semantic_index: int = 0) -> Optional[np.ndarray]:
     """Read one vertex attribute as (N, components) float32, or None if absent.
 
     Decoding is delegated to VRF, which already handles every DXGI format the
@@ -229,9 +229,14 @@ def _attribute(vbib, vertex_buffer, semantic: str, components: int) -> Optional[
     """
     field = None
     for candidate in vertex_buffer.InputLayoutFields:
-        if str(candidate.SemanticName) == semantic:
+        if str(candidate.SemanticName) == semantic and int(candidate.SemanticIndex) == semantic_index:
             field = candidate
             break
+    if field is None and semantic_index > 0:
+        for candidate in vertex_buffer.InputLayoutFields:
+            if str(candidate.SemanticName) == semantic:
+                field = candidate
+                break
     if field is None:
         return None
 
@@ -244,6 +249,32 @@ def _attribute(vbib, vertex_buffer, semantic: str, components: int) -> Optional[
         return _pinned_floats(vbib.GetVector3AttributeArray(vertex_buffer, field), 3)
     except Exception:
         return None
+
+
+def _transform_uvs(uvs: np.ndarray, scale: tuple, offset: tuple, center: tuple, rotation_deg: float) -> np.ndarray:
+    if uvs is None or len(uvs) == 0:
+        return uvs
+    sx, sy = float(scale[0]), float(scale[1])
+    ox, oy = float(offset[0]), float(offset[1])
+    cx, cy = float(center[0]), float(center[1])
+
+    if sx == 1.0 and sy == 1.0 and ox == 0.0 and oy == 0.0 and rotation_deg == 0.0:
+        return uvs
+
+    res = uvs.copy()
+    u = res[:, 0] - cx
+    v = res[:, 1] - cy
+
+    if rotation_deg != 0.0:
+        rad = np.radians(rotation_deg)
+        cos_r, sin_r = np.cos(rad), np.sin(rad)
+        u_rot = u * cos_r - v * sin_r
+        v_rot = u * sin_r + v * cos_r
+        u, v = u_rot, v_rot
+
+    res[:, 0] = u * sx + cx + ox
+    res[:, 1] = v * sy + cy + oy
+    return res
 
 
 def _index_array(index_buffer) -> np.ndarray:
@@ -429,6 +460,31 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
     md.wrap_u = _int_param(material, "g_nTextureAddressModeU", 0)
     md.wrap_v = _int_param(material, "g_nTextureAddressModeV", 0)
 
+    # Determine UV set used by material
+    uv_set = 0
+    if "g_tColor1" in textures or "g_tNormal1" in textures:
+        uv_set = _int_param(material, "g_nUVSet1", 1)
+    elif "g_tColor2" in textures or "g_tNormal2" in textures:
+        uv_set = _int_param(material, "g_nUVSet2", 2)
+    elif "g_tColor3" in textures or "g_tNormal3" in textures:
+        uv_set = _int_param(material, "g_nUVSet3", 3)
+    else:
+        uv_set = _int_param(material, "g_nUVSet0", _int_param(material, "g_nUVSet", 0))
+
+    md.uv_set = uv_set
+
+    # Read UV transform parameters if specified
+    suffix = str(uv_set) if uv_set > 0 else ""
+    scale_key = f"g_vTexCoordScale{suffix}"
+    offset_key = f"g_vTexCoordOffset{suffix}"
+    center_key = f"g_vTexCoordCenter{suffix}"
+    rot_key = f"g_flTexCoordRotation{suffix}"
+
+    md.uv_scale = _vector_param(material, scale_key, _vector_param(material, "g_vTexCoordScale", [1.0, 1.0]))[:2]
+    md.uv_offset = _vector_param(material, offset_key, _vector_param(material, "g_vTexCoordOffset", [0.0, 0.0]))[:2]
+    md.uv_center = _vector_param(material, center_key, _vector_param(material, "g_vTexCoordCenter", [0.5, 0.5]))[:2]
+    md.uv_rotation = _float_param(material, rot_key, _float_param(material, "g_flTexCoordRotation", 0.0))
+
     if _int_param(material, "F_TRANSLUCENT"):
         md.alpha_mode = "BLEND"
     elif _int_param(material, "F_ALPHA_TEST"):
@@ -505,9 +561,12 @@ def _mesh_list(loader, model):
 
     meshes = []
     for idx, entry in enumerate(model.GetEmbeddedMeshesAndLoD()):
-        # (Mesh, lodMask, name) — bit 0 is LoD0.
-        lod = int(entry.Item2)
-        if lod & 1 or lod == 0:
+        # Tuple: (Mesh mesh, int opt, string name, long lodMask)
+        try:
+            lod_mask = int(entry.Item4)
+        except Exception:
+            lod_mask = int(entry.Item2) if hasattr(entry, "Item2") else 1
+        if lod_mask & 1:  # Bit 0 is LoD0
             if default_mask and idx < len(masks):
                 mesh_mask = masks[idx]
                 if mesh_mask != 0 and not (mesh_mask & default_mask):
@@ -515,14 +574,13 @@ def _mesh_list(loader, model):
             meshes.append(entry.Item1)
 
     for entry in model.GetReferenceMeshNamesAndLoD():
-        # Reference meshes are rare for CS2 props, so the tuple shape is handled
-        # defensively rather than assumed.
-        name = getattr(entry, "Item1", None) or getattr(entry, "MeshName", None)
-        lod = getattr(entry, "Item2", 0)
-        if name is None:
+        # Tuple: (int groupIndex, string name, long lodMask)
+        name = getattr(entry, "Item2", None) or getattr(entry, "Item1", None) or getattr(entry, "MeshName", None)
+        lod_mask = getattr(entry, "Item3", getattr(entry, "Item2", 1))
+        if name is None or isinstance(name, int):
             continue
         try:
-            if int(lod) and not int(lod) & 1:
+            if int(lod_mask) and not (int(lod_mask) & 1):
                 continue
         except Exception:
             pass
@@ -589,6 +647,7 @@ def load_model(resource_path: str, context_addon: str = None,
     for mesh in _mesh_list(loader, model):
         vbib = mesh.VBIB
         buffer_base = {}          # vertex buffer index -> offset in the flat array
+        buffer_uvs = {}           # vertex buffer index -> numpy array of UVs
         for buf_index, vertex_buffer in enumerate(vbib.VertexBuffers):
             positions = _attribute(vbib, vertex_buffer, "POSITION", 3)
             if positions is None:
@@ -597,14 +656,14 @@ def load_model(resource_path: str, context_addon: str = None,
             normals = _attribute(vbib, vertex_buffer, "NORMAL", 3)
             if normals is None or len(normals) != count:
                 normals = np.zeros((count, 3), dtype=np.float32)
-            uvs = _attribute(vbib, vertex_buffer, "TEXCOORD", 2)
-            if uvs is None or len(uvs) != count:
-                uvs = np.zeros((count, 2), dtype=np.float32)
+            default_uvs = _attribute(vbib, vertex_buffer, "TEXCOORD", 2, 0)
+            if default_uvs is None or len(default_uvs) != count:
+                default_uvs = np.zeros((count, 2), dtype=np.float32)
 
             buffer_base[buf_index] = vertex_total
             all_vertices.append(positions)
             all_normals.append(normals)
-            all_uvs.append(uvs)
+            buffer_uvs[buf_index] = default_uvs.copy()
             vertex_total += count
 
         if not buffer_base:
@@ -638,7 +697,6 @@ def load_model(resource_path: str, context_addon: str = None,
                 indices = index_buffers[ib_handle][start:start + count]
                 if indices.size == 0:
                     continue
-                all_indices.append(indices + (buffer_base[buf_index] + base_vertex))
 
                 material_path = vrf.kv_str(draw_call, "m_material", None)
                 material_path = str(material_path) if material_path else ""
@@ -650,6 +708,18 @@ def load_model(resource_path: str, context_addon: str = None,
                     material = (_load_material(loader, material_path, max_texture_dim, base_color_only)
                                 if material_path else MaterialData())
                     material_cache[material_path] = material
+
+                if buf_index < len(vbib.VertexBuffers):
+                    vb = vbib.VertexBuffers[buf_index]
+                    raw_uvs = _attribute(vbib, vb, "TEXCOORD", 2, material.uv_set)
+                    if raw_uvs is not None and len(raw_uvs) == len(buffer_uvs[buf_index]):
+                        t_uvs = _transform_uvs(raw_uvs, material.uv_scale, material.uv_offset,
+                                               material.uv_center, material.uv_rotation)
+                        v_min = int(indices.min())
+                        v_max = int(indices.max()) + 1
+                        buffer_uvs[buf_index][v_min:v_max] = t_uvs[v_min:v_max]
+
+                all_indices.append(indices + (buffer_base[buf_index] + base_vertex))
 
                 tint_vec, draw_alpha = _draw_call_tint_alpha(vrf, draw_call)
                 if tint_vec != (1.0, 1.0, 1.0, 1.0) or draw_alpha != 1.0:
@@ -664,6 +734,9 @@ def load_model(resource_path: str, context_addon: str = None,
                                              index_count=int(indices.size),
                                              material=material))
                 index_cursor += int(indices.size)
+
+        for buf_index in sorted(buffer_uvs.keys()):
+            all_uvs.append(buffer_uvs[buf_index])
 
     if not all_vertices or not all_indices:
         return None

@@ -341,17 +341,45 @@ class SmartPropEditorMainWindow(QMainWindow):
         if doc and hasattr(doc, 'undo_stack'):
             doc.undo_stack.redo()
 
+    def _dispatch_focused_action(self, action_name: str) -> bool:
+        doc = self.get_current_document()
+        if not doc:
+            return False
+        focused = QApplication.focusWidget()
+        cl = None
+        if hasattr(doc, 'smartprop_property_panel') and doc.smartprop_property_panel:
+            cl = getattr(doc.smartprop_property_panel, 'components_list', None)
+        if cl and focused and (focused == cl or cl.isAncestorOf(focused)):
+            if action_name == 'cut':
+                cl._cut_focused()
+            elif action_name == 'copy':
+                cl._copy_focused()
+            elif action_name == 'paste':
+                cl._paste_focused()
+            elif action_name == 'duplicate':
+                cl._duplicate_focused()
+            elif action_name == 'delete':
+                cl._delete_focused()
+            return True
+        return False
+
     def active_document_cut(self):
+        if self._dispatch_focused_action('cut'):
+            return
         doc = self.get_current_document()
         if doc and hasattr(doc, 'cut_item'):
             doc.cut_item(doc.ui.tree_hierarchy_widget)
 
     def active_document_copy(self):
+        if self._dispatch_focused_action('copy'):
+            return
         doc = self.get_current_document()
         if doc and hasattr(doc, 'copy_item'):
             doc.copy_item(doc.ui.tree_hierarchy_widget)
 
     def active_document_paste(self):
+        if self._dispatch_focused_action('paste'):
+            return
         doc = self.get_current_document()
         if doc and hasattr(doc, 'paste_item'):
             doc.paste_item(doc.ui.tree_hierarchy_widget)
@@ -362,11 +390,15 @@ class SmartPropEditorMainWindow(QMainWindow):
             doc.new_item_with_replacement(QApplication.clipboard().text())
 
     def active_document_duplicate(self):
+        if self._dispatch_focused_action('duplicate'):
+            return
         doc = self.get_current_document()
         if doc and hasattr(doc, 'ui'):
             doc.ui.tree_hierarchy_widget.DuplicateSelectedItems(doc.element_id_generator)
 
     def active_document_delete(self):
+        if self._dispatch_focused_action('delete'):
+            return
         doc = self.get_current_document()
         if doc and hasattr(doc, 'ui'):
             doc.ui.tree_hierarchy_widget.DeleteSelectedItems()
