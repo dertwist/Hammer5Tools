@@ -41,7 +41,8 @@ SOURCE_CORE = "Core"
 #: Engine content mounts, in search-path precedence order (highest first).
 GAME_MOUNTS = ("csgo", "csgo_imported", "csgo_core", "core")
 
-_INDEX_VERSION = 2
+_INDEX_VERSION = 3  # bumped: pre-fix caches may have missing Core-mount VPK
+                     # entries from the setup_vrf() double-load bug (see dotnet.py)
 # Rebuild rather than trust the cache once it is a day old. A stale index is
 # only ever *missing* new models (paths are validated lazily at pick time), so
 # a coarse TTL is enough and avoids stat()ing thousands of files on open.

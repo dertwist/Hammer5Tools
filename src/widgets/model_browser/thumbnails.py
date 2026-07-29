@@ -45,7 +45,9 @@ out vec2 v_uv;
 
 void main() {
     v_normal = normalize(u_normal_matrix * a_normal);
-    v_uv = vec2(a_uv.x, 1.0 - a_uv.y);
+    // No V-flip: vmdl_reader._decode_texture() already rotates decoded
+    // images to standard top-left-origin orientation, matching raw UV.
+    v_uv = a_uv;
     gl_Position = u_mvp * vec4(a_position, 1.0);
 }
 """

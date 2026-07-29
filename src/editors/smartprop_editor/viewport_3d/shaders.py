@@ -38,7 +38,11 @@ void main() {
         uv = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
     }
     uv = uv * uUvScale + uUvCenter + uUvOffset;
-    vTexCoord = vec2(uv.x, 1.0 - uv.y);
+    // No V-flip: _decode_texture() returns textures in the orientation Source 2
+    // authored them (GenerateBitmap row 0 = image top), and glTexImage2D uploads
+    // that row at GL t=0.  Raw UV lands on the correct row, matching VRF's
+    // renderer (which does no flip anywhere -- raw VBIB UVs, raw shader UV).
+    vTexCoord = uv;
     gl_Position = uProjection * uView * worldPos;
 }
 """
