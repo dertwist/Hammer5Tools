@@ -45,7 +45,7 @@ out vec2 v_uv;
 
 void main() {
     v_normal = normalize(u_normal_matrix * a_normal);
-    v_uv = a_uv;
+    v_uv = vec2(a_uv.x, 1.0 - a_uv.y);
     gl_Position = u_mvp * vec4(a_position, 1.0);
 }
 """
@@ -525,8 +525,8 @@ def _upload_texture(image: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 
 
     wrap_modes = {
         0: GL.GL_REPEAT,
-        1: GL.GL_CLAMP_TO_EDGE,
-        2: GL.GL_MIRRORED_REPEAT,
+        1: GL.GL_MIRRORED_REPEAT,
+        2: GL.GL_CLAMP_TO_EDGE,
         3: GL.GL_CLAMP_TO_BORDER,
     }
     gl_wrap_u = wrap_modes.get(wrap_u, GL.GL_REPEAT)

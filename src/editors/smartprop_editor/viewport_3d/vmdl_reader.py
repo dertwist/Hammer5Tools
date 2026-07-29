@@ -348,8 +348,8 @@ def _decode_texture(loader, path, max_dim: Optional[int]) -> Optional[np.ndarray
         )
         pixels = np.frombuffer(bytes(bitmap.Bytes), dtype=np.uint8).reshape(
             bitmap.Height, bitmap.Width, 4)
-        # SKBitmap hands back BGRA; GL wants RGBA and bottom-up rows.
-        return np.ascontiguousarray(pixels[::-1, :, [2, 1, 0, 3]])
+        # SKBitmap hands back BGRA; GL wants RGBA.
+        return np.ascontiguousarray(pixels[:, :, [2, 1, 0, 3]])
     except Exception:
         return None
 
@@ -417,7 +417,14 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
 
     textures = {str(e.Key): e.Value for e in material.TextureParams}
 
-    base_path = _texture_path(textures, _TEX_BASE)
+    base_tex_name = None
+    base_path = None
+    for name in _TEX_BASE:
+        if name in textures:
+            base_tex_name = name
+            base_path = textures[name]
+            break
+
     if base_path is not None:
         md.base_color_img = _decode_texture(loader, base_path, max_dim)
 
@@ -429,7 +436,6 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
 
         metal_path = _texture_path(textures, _TEX_METAL)
         metal_img = _decode_texture(loader, metal_path, max_dim) if metal_path else None
-        # glTF layout expected by the viewport shader: G = roughness, B = metalness.
         if normal_rgba is not None or metal_img is not None:
             reference = normal_rgba if normal_rgba is not None else metal_img
             h, w = reference.shape[0], reference.shape[1]
@@ -460,13 +466,13 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
     md.wrap_u = _int_param(material, "g_nTextureAddressModeU", 0)
     md.wrap_v = _int_param(material, "g_nTextureAddressModeV", 0)
 
-    # Determine UV set used by material
+    # Determine UV set used by the selected base texture
     uv_set = 0
-    if "g_tColor1" in textures or "g_tNormal1" in textures:
+    if base_tex_name and base_tex_name.endswith("1"):
         uv_set = _int_param(material, "g_nUVSet1", 1)
-    elif "g_tColor2" in textures or "g_tNormal2" in textures:
+    elif base_tex_name and base_tex_name.endswith("2"):
         uv_set = _int_param(material, "g_nUVSet2", 2)
-    elif "g_tColor3" in textures or "g_tNormal3" in textures:
+    elif base_tex_name and base_tex_name.endswith("3"):
         uv_set = _int_param(material, "g_nUVSet3", 3)
     else:
         uv_set = _int_param(material, "g_nUVSet0", _int_param(material, "g_nUVSet", 0))
@@ -715,9 +721,11 @@ def load_model(resource_path: str, context_addon: str = None,
                     if raw_uvs is not None and len(raw_uvs) == len(buffer_uvs[buf_index]):
                         t_uvs = _transform_uvs(raw_uvs, material.uv_scale, material.uv_offset,
                                                material.uv_center, material.uv_rotation)
-                        v_min = int(indices.min())
-                        v_max = int(indices.max()) + 1
-                        buffer_uvs[buf_index][v_min:v_max] = t_uvs[v_min:v_max]
+                        real_indices = indices + base_vertex
+                        unique_verts = np.unique(real_indices)
+                        valid_mask = (unique_verts >= 0) & (unique_verts < len(buffer_uvs[buf_index]))
+                        valid_verts = unique_verts[valid_mask]
+                        buffer_uvs[buf_index][valid_verts] = t_uvs[valid_verts]
 
                 all_indices.append(indices + (buffer_base[buf_index] + base_vertex))
 

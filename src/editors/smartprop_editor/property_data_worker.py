@@ -50,10 +50,10 @@ def process_property_raw_value(
     elif prop_class in prop_classes_map_cache:
         classes = prop_classes_map_cache[prop_class]
         ordered_pairs = [
-            (item, normalized.get(item)) for item in reversed(classes)
+            (item, normalized.get(item)) for item in classes
         ]
     else:
-        ordered_pairs = list(reversed(list(normalized.items())))
+        ordered_pairs = list(normalized.items())
 
     return {
         "value": normalized,

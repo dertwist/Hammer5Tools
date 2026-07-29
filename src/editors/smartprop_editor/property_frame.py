@@ -6,7 +6,6 @@ from PySide6.QtCore import Signal, Qt, QTimer, QThreadPool, QSize
 from PySide6.QtGui import QAction
 from src.editors.smartprop_editor.property import compact
 
-from src.property.methods import PropertyMethods
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets.element_id import ElementIDGenerator
 
@@ -127,11 +126,18 @@ class PropertyFrame(QWidget):
 
     @classmethod
     def _build_ordered_pairs_cache(cls):
-        """Build once at import ΓÇö same order as reversed(_prop_classes_map_cache[key])."""
+        """Build once at import — forward schema order (m_bEnabled first).
+
+        Forward order lets _add_properties_by_class append widgets in O(1) each
+        instead of the old insertWidget(0, ...) which was O(n) per widget
+        (O(n²) to build a whole frame). The cache mirrors the visual top-to-bottom
+        order directly; the reversed-list + insert-at-0 dance it replaced existed
+        only to produce this same order.
+        """
         cls._ORDERED_PAIRS_CACHE.clear()
         for prop_class, keys in cls._prop_classes_map_cache.items():
             cls._ORDERED_PAIRS_CACHE[prop_class] = [
-                (k, None) for k in reversed(keys)
+                (k, None) for k in keys
             ]
 
     @classmethod
@@ -191,6 +197,13 @@ class PropertyFrame(QWidget):
     _EXACT_PROP_DISPATCH = None  # populated lazily by _resolve_dispatch()
     _DISPATCH_RESOLVED = False
 
+    # Memoized combobox substring lookup: value_class -> (items, filter_types) or None.
+    # _COMBOBOX_SUBSTRING_RULES (~30 entries) is otherwise scanned with
+    # ``sub in value_class`` for every non-exact field on every frame build; the
+    # set of distinct field names is tiny and stable, so caching turns each hit
+    # after the first into an O(1) dict lookup.
+    _COMBOBOX_MEMO: dict = {}
+
     @classmethod
     def _resolve_dispatch(cls):
         if cls._DISPATCH_RESOLVED:
@@ -219,7 +232,7 @@ class PropertyFrame(QWidget):
             'm_nCountL':               (PropertyFloat,   {'int_bool': True, 'slider_range': [0, 256]}),
             'm_SpecificChildIndex':    (PropertyFloat,   {'int_bool': True}),
             'm_ColorSelection':        (PropertyFloat,   {'int_bool': True}),
-            'm_sModelName':            (PropertyString,  {'expression_bool': False, 'placeholder': 'Model path (models/ΓÇª/example.vmdl)', 'model_browser': True, 'filter_types': ['String', 'Model']}),
+            'm_sModelName':            (PropertyString,  {'expression_bool': False, 'placeholder': 'models/example.vmdl', 'model_browser': True, 'filter_types': ['String', 'Model']}),
             'm_MaterialGroupName':     (PropertyString,  {'expression_bool': False, 'placeholder': 'Material group name'}),
             'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
             'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
@@ -295,7 +308,12 @@ class PropertyFrame(QWidget):
         self._property_widgets: list = []
         self._is_selected = False
         self._group_type = None
-        self.setAcceptDrops(True)
+        # Drag-and-drop reordering of property rows is disabled in the property
+        # list: field order is schema-driven (forward order in _add_properties_by_class),
+        # and per-row drag handlers intercepted mouse events / did layout work on
+        # every move for no benefit here. Reordering is owned by Section 1
+        # (ComponentTree), not by these value rows.
+        self.setAcceptDrops(False)
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
         self.element = element
@@ -418,10 +436,10 @@ class PropertyFrame(QWidget):
         """
         self._add_properties_by_class(offset=4)
         
-        # Add unverified warning at the VERY END of both phases so that 
-        # insertWidget(0,...) puts it at the absolute top of the layout.
+        # Add unverified warning at the VERY END of both phases; prepend=True
+        # forces it to the absolute top of the layout regardless of build order.
         if "_WARN_NOT_VERIFIED" in self.value:
-            self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True)
+            self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True, prepend=True)
 
         self._setup_layout2dgrid_suppression()
         self._apply_zebra()
@@ -449,16 +467,26 @@ class PropertyFrame(QWidget):
                 idx += 1
 
     @exception_handler
-    def _add_widget_for_property(self, value_class, val, force=False):
-        """Internal helper to create and initialize a property widget instance."""
+    def _add_widget_for_property(self, value_class, val, force=False, prepend=False):
+        """Internal helper to create and initialize a property widget instance.
+
+        By default the widget is appended to the layout and to
+        ``_property_widgets`` (O(1)) so a whole frame builds in O(n). Pass
+        ``prepend=True`` to force the widget to the top instead — used only by
+        the unverified-warning row, which must sit above everything else.
+        """
         def add_instance():
             # PropertyWarning is a static label ΓÇö do NOT connect its edited
             # signal to on_edited, otherwise it triggers spurious undo actions.
             if not isinstance(property_instance, PropertyWarning):
                 property_instance.edited.connect(self.on_edited)
             property_instance.setAcceptDrops(False)
-            self.ui.layout.insertWidget(0, property_instance)
-            self._property_widgets.insert(0, property_instance)
+            if prepend:
+                self.ui.layout.insertWidget(0, property_instance)
+                self._property_widgets.insert(0, property_instance)
+            else:
+                self.ui.layout.addWidget(property_instance)
+                self._property_widgets.append(property_instance)
             # Pooled widgets return from acquire() hidden (never shown in
             # acquire to avoid top-level flash); show after reparenting.
             property_instance.show()
@@ -587,18 +615,28 @@ class PropertyFrame(QWidget):
             add_instance()
             return
 
-        for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
-            if sub in value_class:
-                property_instance = PropertyCombobox.acquire(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    items=list(items),
-                    filter_types=list(fts),
-                    element_id_generator=self.element_id_generator,
-                )
-                add_instance()
-                return
+        # Combobox substring dispatch — memoized per distinct field name so the
+        # ~30-entry rule list is scanned at most once per field name, ever.
+        combo = PropertyFrame._COMBOBOX_MEMO.get(value_class, False)
+        if combo is False:
+            combo = None
+            for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
+                if sub in value_class:
+                    combo = (items, fts)
+                    break
+            PropertyFrame._COMBOBOX_MEMO[value_class] = combo
+        if combo is not None:
+            items, fts = combo
+            property_instance = PropertyCombobox.acquire(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+                items=list(items),
+                filter_types=list(fts),
+                element_id_generator=self.element_id_generator,
+            )
+            add_instance()
+            return
 
         for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
             if prefix in value_class:
@@ -647,10 +685,10 @@ class PropertyFrame(QWidget):
                 classes = self._prop_classes_map_cache[self.prop_class]
                 ordered_pairs = [
                     (item, self.value.get(item, None))
-                    for item in reversed(classes)
+                    for item in classes
                 ]
             else:
-                ordered_pairs = list(reversed(list(self.value.items())))
+                ordered_pairs = list(self.value.items())
 
             end = (offset + limit) if limit is not None else None
             sliced = ordered_pairs[offset:end]
@@ -980,21 +1018,37 @@ class PropertyFrame(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self._drag_start_position = event.pos()
+            # Drag-start bookkeeping removed: property rows are no longer draggable.
             self.selected_signal.emit()
             prefix = getattr(self, 'name_prefix', None)
             name = getattr(self, 'prop_class', None)
             if prefix and name:
                 self.clicked.emit(f"{prefix}_{name}")
 
-    mousePressEvent = PropertyMethods.mousePressEvent
-    mouseMoveEvent = PropertyMethods.mouseMoveEvent
-    dragEnterEvent = PropertyMethods.dragEnterEvent
-    dragMoveEvent = PropertyMethods.dragMoveEvent
-    dragLeaveEvent = PropertyMethods.dragLeaveEvent
+    # ── Drag-and-drop disabled for property-list rows ───────────────────────
+    # Property rows are not reorderable here (order is schema-driven, and the
+    # old dropEvent reordered the layout + emitted spurious edits). The shared
+    # PropertyMethods drag handlers are NOT assigned, and setAcceptDrops(False)
+    # is set in __init__, so these no-op overrides reject any inbound drag and
+    # never start one. PropertyMethods itself is left intact for the other
+    # editors that depend on it (assetgroup_maker, variable_frame, etc.).
+    # NOTE: mousePressEvent above is kept (it drives selection/click signaling);
+    # only its drag-start bookkeeping line was removed.
+    def mouseMoveEvent(self, event):
+        # Dragging of this frame is disabled — just defer to the default handler.
+        super().mouseMoveEvent(event)
+
+    def dragEnterEvent(self, event):
+        event.ignore()
+
+    def dragMoveEvent(self, event):
+        event.ignore()
+
+    def dragLeaveEvent(self, event):
+        event.ignore()
 
     def dropEvent(self, event):
-        PropertyMethods.dropEvent(self, event)
+        event.ignore()
 
     def show_context_menu(self):
         context_menu = QMenu()
