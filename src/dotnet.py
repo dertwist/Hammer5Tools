@@ -18,6 +18,28 @@ from PySide6.QtWidgets import QMessageBox
 tests_path = Path(__file__).parent.parent / 'tests'
 RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
 
+# Paths already handed to AssemblyLoadContext.Default.LoadFromAssemblyPath this
+# process. That call throws FileLoadException ("Assembly with same name is
+# already loaded") the second time it sees the same assembly identity, even
+# for the exact same file — and setup_vrf()/setup_source_porter() are each
+# called from a fresh DotNetInterop() per call site (viewport, model browser,
+# thumbnails, ...), so without this cache the second call site to run in a
+# given process always fails.
+_alc_loaded_paths: set = set()
+
+
+def _load_into_default_alc(path: Path) -> None:
+    """Load ``path`` into the default AssemblyLoadContext, once per process."""
+    key = str(path)
+    if key in _alc_loaded_paths:
+        return
+    import System
+    alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
+    default_context = alc_type.GetProperty("Default").GetValue(None)
+    load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
+    load_method.Invoke(default_context, [key])
+    _alc_loaded_paths.add(key)
+
 
 class DotNetPaths:
     """Centralized path management for .NET assemblies."""
@@ -160,10 +182,6 @@ class DotNetInterop:
         os.environ["PATH"] = str(dll_dir) + os.pathsep + os.environ.get("PATH", "")
 
         import System
-        alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
-        default_prop = alc_type.GetProperty("Default")
-        default_context = default_prop.GetValue(None)
-        load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
 
         # Load dependencies first.
         dependencies = [
@@ -177,7 +195,7 @@ class DotNetInterop:
         for dep in dependencies:
             if not dep.exists():
                 raise FileNotFoundError(f"Assembly not found: {dep}")
-            load_method.Invoke(default_context, [str(dep)])
+            _load_into_default_alc(dep)
 
 
         # Get required types
