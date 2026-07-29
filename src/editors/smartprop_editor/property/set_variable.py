@@ -16,6 +16,7 @@ class Vector3DInlineWidget(QWidget):
         self.widgets = []
         for i in range(3):
             w = FloatWidget(slider_range=[0,0], int_output=False, spacer_enable=False)
+            w.set_value(1.0)
             w.edited.connect(self.edited.emit)
             layout.addWidget(w)
             self.widgets.append(w)
@@ -265,6 +266,9 @@ class PropertyVariableValue(QWidget):
                 self.variable.combobox.filter_types = ['Bool']
                 
             elif current_type == 'Vector3D':
+                if self.m_DataType != 'VECTOR3D':
+                    if not isinstance(self.m_Value, list) or len(self.m_Value) != 3:
+                        self.vector_widget.set_value([1.0, 1.0, 1.0])
                 if self.ui.logic_switch_value.currentText() == 'Value':
                     self.float_widget.hide()
                     self.bool_widget.hide()

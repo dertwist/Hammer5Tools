@@ -323,6 +323,14 @@ class PropertyTreeModel(QAbstractItemModel):
                 # Mutate first — PropertySnapshotCommand.redo() skips its first call.
                 item.setData(0, Qt.UserRole, new_data)
                 self._push_command(item, old_data, new_data)
+                if self._document and hasattr(self._document, "property_panel"):
+                    panel = self._document.property_panel
+                    if hasattr(panel, "components_list") and panel.current_item is item:
+                        panel.components_list.rebuild()
+                if self._document and hasattr(self._document, "ui") and hasattr(self._document.ui, "tree_hierarchy_widget"):
+                    tree = self._document.ui.tree_hierarchy_widget
+                    if hasattr(tree, "viewport"):
+                        tree.viewport().update()
         finally:
             if macro:
                 stack.endMacro()

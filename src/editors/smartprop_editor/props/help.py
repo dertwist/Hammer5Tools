@@ -60,9 +60,9 @@ class HelpImageDialog(Viewport):
     """Image preview window inheriting loading_editor's Viewport directly for full zoom/pan support."""
 
     MIN_ZOOM = 0.03  # 3% minimum zoom limit
-    MAX_ZOOM = 5.0   # 500% maximum zoom limit
+    MAX_ZOOM = 10.0  # 1000% maximum zoom limit
 
-    def __init__(self, image_path: str, title: str = "Image Viewer", parent=None):
+    def __init__(self, image_path: str, title: str = "Image viewer", parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.resize(960, 640)
@@ -71,10 +71,16 @@ class HelpImageDialog(Viewport):
         self.set_loadingshots_dir("C:/nonexistent_dummy_dir")
         self._is_preview_active = False
         self._image_path = image_path
+        self._title_override = title
+
+    def updateWindowTitle(self, image_path):
+        title = self._title_override or (f"Image viewer — {os.path.basename(image_path)}" if image_path else "Image viewer")
+        self.setWindowTitle(title)
 
     def show_image(self, image_path: str, title: str | None = None):
         self._image_path = image_path
         if title:
+            self._title_override = title
             self.setWindowTitle(title)
         self._apply_image()
 
@@ -99,6 +105,17 @@ class HelpImageDialog(Viewport):
         if self.zoom_level < self.MIN_ZOOM:
             self.zoom_level = self.MIN_ZOOM
             self.updateImageDisplay()
+        elif self.zoom_level > self.MAX_ZOOM:
+            self.zoom_level = self.MAX_ZOOM
+            self.updateImageDisplay()
+
+    def zoomIn(self, mouse_pos=None):
+        if self.current_pixmap:
+            new_zoom = self.zoom_level * 1.2
+            if new_zoom > self.MAX_ZOOM:
+                new_zoom = self.MAX_ZOOM
+            self.zoom_level = new_zoom
+            self.updateImageDisplay(mouse_pos)
 
     def zoomOut(self, mouse_pos=None):
         if self.current_pixmap:
@@ -234,7 +251,7 @@ class HelpPanel(QFrame):
         if not self._current_image_path or not os.path.exists(self._current_image_path):
             return
 
-        title_str = f"Image Viewer — {self._current_title}" if self._current_title else "Image Viewer"
+        title_str = f"Image viewer — {self._current_title}" if self._current_title else "Image viewer"
         if self._image_dialog is None or not self._image_dialog.isVisible():
             self._image_dialog = HelpImageDialog(
                 image_path=self._current_image_path,

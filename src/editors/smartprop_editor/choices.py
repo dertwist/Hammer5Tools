@@ -140,7 +140,7 @@ class VariableVector3d(QWidget):
     def __init__(self, value=None, type=None):
         super().__init__()
         if value is None or not isinstance(value, list) or len(value) < 3:
-            value = [0.0, 0.0, 0.0]
+            value = [1.0, 1.0, 1.0]
         self.data = {'m_DataType': type, 'm_Value': list(value)}
         self.setupUI()
 
@@ -156,7 +156,7 @@ class VariableVector3d(QWidget):
             try:
                 edit.setText(str(self.data['m_Value'][idx]))
             except:
-                edit.setText("0.0")
+                edit.setText("1.0")
             edit.setFocusPolicy(Qt.StrongFocus)
             edit.textChanged.connect(self.set_value)
             self.layout.addWidget(edit)

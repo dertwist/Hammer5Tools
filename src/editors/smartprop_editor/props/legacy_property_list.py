@@ -188,6 +188,14 @@ class LegacyPropertyList(AbstractPropertyList):
             return
 
         item.setData(0, Qt.UserRole, new_data)
+        if hasattr(self.document, "property_panel"):
+            panel = self.document.property_panel
+            if hasattr(panel, "components_list") and panel.current_item is item:
+                panel.components_list.rebuild()
+        if hasattr(self.document, "ui") and hasattr(self.document.ui, "tree_hierarchy_widget"):
+            tree = self.document.ui.tree_hierarchy_widget
+            if hasattr(tree, "viewport"):
+                tree.viewport().update()
         self.document._modified = True
         self.document._edited.emit()
 

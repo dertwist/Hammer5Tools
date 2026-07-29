@@ -19,7 +19,10 @@ class Var_class_vector3d(QWidget):
         self.min = None
         self.max = None
         if default == None:
-            self.default = [0, 0, 0]
+            self.default = [1, 1, 1]
+            self.ui.vector_x.setValue(1.0)
+            self.ui.vector_y.setValue(1.0)
+            self.ui.vector_z.setValue(1.0)
         else:
             try:
                 self.default = list(default)
