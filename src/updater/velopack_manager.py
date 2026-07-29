@@ -1,8 +1,9 @@
 import threading
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtWidgets import QMessageBox, QProgressDialog
+from PySide6.QtWidgets import QMessageBox
 from velopack import UpdateManager
 from src.common import get_update_source, get_update_options, app_version
+from src.updater.check import DownloadProgressDialog
 
 class VelopackManager:
     def __init__(self, parent_window):
@@ -40,18 +41,14 @@ class VelopackManager:
                                    QMessageBox.Yes | QMessageBox.No)
         
         if reply == QMessageBox.Yes:
-            self._progress = QProgressDialog("Downloading update...", None, 0, 100, self.parent)
-            self._progress.setWindowTitle("Updating")
-            self._progress.setWindowModality(Qt.ApplicationModal)
-            self._progress.setCancelButton(None)
-            self._progress.setMinimumDuration(0)
+            self._progress = DownloadProgressDialog(parent=self.parent)
             self._progress.show()
             threading.Thread(target=self._apply_update_thread, args=(mgr, update), daemon=True).start()
 
     def _apply_update_thread(self, mgr, update):
         def on_progress(percent: int):
-            # Velopack calls this from a native thread, must dispatch to main thread
-            QTimer.singleShot(0, lambda p=percent: self._progress.setValue(p))
+            # Velopack calls this from a native thread, emit signal to main thread
+            self._progress.update_progress(percent)
 
         try:
             mgr.download_updates(update, on_progress)
@@ -65,3 +62,4 @@ class VelopackManager:
                     f"Failed to apply update:\n{err}"
                 )
             ))
+
