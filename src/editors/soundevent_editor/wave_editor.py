@@ -2,7 +2,7 @@
 
 A lightweight WAV/MP3 editor built on pyqtgraph: waveform view with mouse
 zoom/pan, a drag-select region, movable markers, a playhead, and a toolbar of
-numpy DSP operations (cut/copy/paste, smooth, sharpen, volume, fade ramps).
+numpy DSP operations (volume, fade ramps).
 
 Editing works on a float32 sample buffer of shape (N, channels). MP3 (and other
 non-WAV) inputs are decoded to WAV via the bundled ffmpeg on load; saving writes
@@ -54,10 +54,8 @@ _IC = {
     "zoom_in": ":/icons/zoom_in_24dp.svg",
     "zoom_out": ":/icons/remove_24dp.svg",
     "fit": ":/icons/open_in_full_24dp.svg",
-    "smooth": ":/icons/gradient_24dp.png",
-    "sharpen": ":/icons/tune_24dp.png",
     "vol_up": ":/icons/volume_up.png",
-    "vol_down": ":/icons/remove_24dp.svg",
+    "vol_down": ":/icons/volume_up.png",
     "marker": ":/icons/new_label_24dp.svg",
     "clear": ":/icons/clear_all_16dp.svg",
 }
@@ -151,19 +149,6 @@ def save_wav(path, samples, sr, cue_positions=None):
 
 
 # ─────────────────────────────── DSP ops ────────────────────────────────
-
-def _smooth(block):
-    """Moving-average low-pass (softens transients)."""
-    k = np.ones(5, dtype=np.float32) / 5.0
-    out = np.empty_like(block)
-    for c in range(block.shape[1]):
-        out[:, c] = np.convolve(block[:, c], k, mode="same")
-    return out
-
-
-def _sharpen(block):
-    """High-boost: original + (original - smoothed)."""
-    return np.clip(block + (block - _smooth(block)), -1.0, 1.0)
 
 
 # ─────────────────────────────── Editor ─────────────────────────────────
@@ -328,10 +313,6 @@ class AudioDocument(QWidget):
         self.act_zoom_out = mk("Zoom Out", lambda: self._zoom(2.0), _IC["zoom_out"])
         self.act_fit = mk("Fit", self.zoom_fit, _IC["fit"])
         self.act_select_all = mk("Select All", self.select_all, None, QKeySequence.SelectAll)
-        self.act_smooth = mk("Smooth", lambda: self._apply(_smooth), _IC["smooth"],
-                             None, "Low-pass smooth selection")
-        self.act_sharpen = mk("Sharpen", lambda: self._apply(_sharpen), _IC["sharpen"],
-                              None, "High-boost selection")
         self.act_vol_up = mk("Vol +", lambda: self._gain(1.25), _IC["vol_up"],
                              None, "Increase volume +25%")
         self.act_vol_down = mk("Vol −", lambda: self._gain(0.8), _IC["vol_down"],
@@ -353,8 +334,7 @@ class AudioDocument(QWidget):
                       self.act_select_all]),
             ("View", [self.act_zoom_in, self.act_zoom_out, self.act_fit]),
             ("Playback", [self.act_play, self.act_stop]),
-            ("Effects", [self.act_smooth, self.act_sharpen, None,
-                         self.act_vol_up, self.act_vol_down, None,
+            ("Effects", [self.act_vol_up, self.act_vol_down, None,
                          self.act_ramp_up, self.act_ramp_down]),
             ("Markers", [self.act_marker, self.act_clear]),
         ]
@@ -402,9 +382,13 @@ class AudioDocument(QWidget):
             "QToolButton:hover { background-color:#414956; color:#FFFFFF; }"
             "QToolButton:pressed { background-color:#1C1C1C; }"
             "QToolButton:checked { background-color:#414956; }")
-        # File ops + undo/redo live in the menus only, not the toolbar
-        toolbar_excluded = {self.act_open, self.act_save, self.act_save_as,
-                            self.act_undo, self.act_redo}
+        # Actions excluded from the toolbar (stay accessible via menus/hotkeys)
+        toolbar_excluded = {
+            self.act_open, self.act_save, self.act_save_as,
+            self.act_undo, self.act_redo,
+            self.act_cut, self.act_copy, self.act_paste, self.act_select_all,
+            self.act_zoom_in, self.act_zoom_out,
+        }
         first = True
         for name, acts in self._menus:
             items = [a for a in acts if a is not None and a not in toolbar_excluded]
