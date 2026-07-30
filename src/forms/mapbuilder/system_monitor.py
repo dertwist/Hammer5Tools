@@ -1,6 +1,8 @@
 import sys
 import re
 import subprocess
+import os
+import ctypes
 from collections import deque
 
 import psutil
@@ -73,6 +75,8 @@ class GPUStatsWorker(QObject):
     def __init__(self):
         super().__init__()
         self._running = True
+        self._intel_prev_active = None
+        self._intel_prev_timestamp = None
 
     @Slot()
     def fetch_gpu_stats(self):
@@ -87,7 +91,7 @@ class GPUStatsWorker(QObject):
         self.finished.emit()
 
     def _get_gpu_stats(self):
-        """Try NVIDIA first, then AMD, then GPUtil fallback"""
+        """Try NVIDIA first, then AMD, then Intel, then GPUtil fallback"""
         n = self._get_nvidia_stats()
         if n:
             return n[0], n[1], n[2], "NVIDIA"
@@ -95,6 +99,10 @@ class GPUStatsWorker(QObject):
         a = self._get_amd_stats()
         if a:
             return a[0], a[1], a[2], "AMD"
+
+        i = self._get_intel_stats()
+        if i:
+            return i[0], i[1], i[2], "Intel"
 
         try:
             gpus = GPUtil.getGPUs()
@@ -108,6 +116,198 @@ class GPUStatsWorker(QObject):
             pass
 
         return None, None, None, None
+
+    def _get_intel_stats(self):
+        """Try to get Intel ARC/Xe GPU stats using oneAPI Level-Zero Sysman"""
+        try:
+            # Set the environment variable required for Sysman
+            os.environ["ZES_ENABLE_SYSMAN"] = "1"
+
+            # Try to load Level-Zero library
+            lib_names = []
+            if sys.platform == "win32":
+                lib_names = ["ze_loader.dll"]
+            else:
+                lib_names = ["libze_loader.so.1", "libze_loader.so"]
+
+            ze = None
+            for name in lib_names:
+                try:
+                    ze = ctypes.CDLL(name)
+                    break
+                except Exception:
+                    continue
+
+            if ze is None:
+                return None
+
+            # Declare structures
+            class ZesEngineStats(ctypes.Structure):
+                _fields_ = [
+                    ("activeTime", ctypes.c_uint64),
+                    ("timestamp", ctypes.c_uint64),
+                ]
+
+            class ZesEngineProperties(ctypes.Structure):
+                _fields_ = [
+                    ("stype", ctypes.c_int),
+                    ("pNext", ctypes.c_void_p),
+                    ("type", ctypes.c_int),
+                    ("onSubdevice", ctypes.c_uint32),
+                    ("subdeviceId", ctypes.c_uint32),
+                ]
+
+            class ZesMemProperties(ctypes.Structure):
+                _fields_ = [
+                    ("stype", ctypes.c_int),
+                    ("pNext", ctypes.c_void_p),
+                    ("type", ctypes.c_int),
+                    ("onSubdevice", ctypes.c_uint32),
+                    ("subdeviceId", ctypes.c_uint32),
+                    ("location", ctypes.c_int),
+                    ("physicalSize", ctypes.c_uint64),
+                    ("busWidth", ctypes.c_int32),
+                    ("numChannels", ctypes.c_int32),
+                ]
+
+            class ZesMemState(ctypes.Structure):
+                _fields_ = [
+                    ("stype", ctypes.c_int),
+                    ("pNext", ctypes.c_void_p),
+                    ("health", ctypes.c_int),
+                    ("free", ctypes.c_uint64),
+                    ("size", ctypes.c_uint64),
+                ]
+
+            # Set function argtypes & restypes
+            ze.zesInit.argtypes = [ctypes.c_uint32]
+            ze.zesInit.restype = ctypes.c_int
+
+            ze.zesDriverGet.argtypes = [ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_void_p)]
+            ze.zesDriverGet.restype = ctypes.c_int
+
+            ze.zesDeviceGet.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_void_p)]
+            ze.zesDeviceGet.restype = ctypes.c_int
+
+            ze.zesDeviceEnumEngineGroups.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_void_p)]
+            ze.zesDeviceEnumEngineGroups.restype = ctypes.c_int
+
+            ze.zesEngineGetProperties.argtypes = [ctypes.c_void_p, ctypes.POINTER(ZesEngineProperties)]
+            ze.zesEngineGetProperties.restype = ctypes.c_int
+
+            ze.zesEngineGetActivity.argtypes = [ctypes.c_void_p, ctypes.POINTER(ZesEngineStats)]
+            ze.zesEngineGetActivity.restype = ctypes.c_int
+
+            ze.zesDeviceEnumMemoryModules.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_void_p)]
+            ze.zesDeviceEnumMemoryModules.restype = ctypes.c_int
+
+            ze.zesMemoryGetProperties.argtypes = [ctypes.c_void_p, ctypes.POINTER(ZesMemProperties)]
+            ze.zesMemoryGetProperties.restype = ctypes.c_int
+
+            ze.zesMemoryGetState.argtypes = [ctypes.c_void_p, ctypes.POINTER(ZesMemState)]
+            ze.zesMemoryGetState.restype = ctypes.c_int
+
+            # Initialize Sysman
+            if ze.zesInit(0) != 0:
+                # Also try zeInit(0) / zeInit(1) as backup just in case
+                if hasattr(ze, "zeInit"):
+                    ze.zeInit.argtypes = [ctypes.c_uint32]
+                    ze.zeInit.restype = ctypes.c_int
+                    ze.zeInit(1)
+                else:
+                    return None
+
+            # Get drivers
+            drivers_count = ctypes.c_uint32(0)
+            if ze.zesDriverGet(ctypes.byref(drivers_count), None) != 0 or drivers_count.value == 0:
+                return None
+
+            drivers = (ctypes.c_void_p * drivers_count.value)()
+            if ze.zesDriverGet(ctypes.byref(drivers_count), drivers) != 0:
+                return None
+
+            # Find the first device of the first driver
+            hDevice = None
+            for hDriver in drivers:
+                devices_count = ctypes.c_uint32(0)
+                if ze.zesDeviceGet(hDriver, ctypes.byref(devices_count), None) == 0 and devices_count.value > 0:
+                    devices = (ctypes.c_void_p * devices_count.value)()
+                    if ze.zesDeviceGet(hDriver, ctypes.byref(devices_count), devices) == 0:
+                        hDevice = devices[0]
+                        break
+
+            if hDevice is None:
+                return None
+
+            # 1. Query VRAM usage
+            used_gb, total_gb = None, None
+            mem_count = ctypes.c_uint32(0)
+            if ze.zesDeviceEnumMemoryModules(hDevice, ctypes.byref(mem_count), None) == 0 and mem_count.value > 0:
+                mem_modules = (ctypes.c_void_p * mem_count.value)()
+                if ze.zesDeviceEnumMemoryModules(hDevice, ctypes.byref(mem_count), mem_modules) == 0:
+                    total_size = 0
+                    total_free = 0
+                    for hMem in mem_modules:
+                        mem_props = ZesMemProperties()
+                        mem_props.stype = 11  # ZES_STRUCTURE_TYPE_MEM_PROPERTIES
+                        mem_props.pNext = None
+                        if ze.zesMemoryGetProperties(hMem, ctypes.byref(mem_props)) == 0:
+                            # Only local VRAM on-board the device
+                            if mem_props.location == 1:  # ZES_MEM_LOC_DEVICE
+                                mem_state = ZesMemState()
+                                mem_state.stype = 30  # ZES_STRUCTURE_TYPE_MEM_STATE
+                                mem_state.pNext = None
+                                if ze.zesMemoryGetState(hMem, ctypes.byref(mem_state)) == 0:
+                                    total_free += mem_state.free
+                                    total_size += mem_state.size if mem_state.size > 0 else mem_props.physicalSize
+                    if total_size > 0:
+                        total_gb = total_size / (1024.0 * 1024.0 * 1024.0)
+                        used_gb = (total_size - total_free) / (1024.0 * 1024.0 * 1024.0)
+
+            # 2. Query GPU Usage (Engine Activity)
+            usage_pct = None
+            engines_count = ctypes.c_uint32(0)
+            if ze.zesDeviceEnumEngineGroups(hDevice, ctypes.byref(engines_count), None) == 0 and engines_count.value > 0:
+                engines = (ctypes.c_void_p * engines_count.value)()
+                if ze.zesDeviceEnumEngineGroups(hDevice, ctypes.byref(engines_count), engines) == 0:
+                    selected_engine = None
+                    for hEngine in engines:
+                        props = ZesEngineProperties()
+                        props.stype = 5  # ZES_STRUCTURE_TYPE_ENGINE_PROPERTIES
+                        props.pNext = None
+                        if ze.zesEngineGetProperties(hEngine, ctypes.byref(props)) == 0:
+                            if props.type == 0:  # ZES_ENGINE_GROUP_ALL
+                                selected_engine = hEngine
+                                break
+                    if selected_engine is None and len(engines) > 0:
+                        selected_engine = engines[0]
+
+                    if selected_engine is not None:
+                        stats = ZesEngineStats()
+                        if ze.zesEngineGetActivity(selected_engine, ctypes.byref(stats)) == 0:
+                            if self._intel_prev_active is not None and self._intel_prev_timestamp is not None:
+                                delta_active = stats.activeTime - self._intel_prev_active
+                                delta_timestamp = stats.timestamp - self._intel_prev_timestamp
+                                if delta_timestamp > 0 and delta_active >= 0:
+                                    usage_pct = _clamp_percent((delta_active / delta_timestamp) * 100.0)
+                                else:
+                                    usage_pct = 0.0
+                            else:
+                                usage_pct = 0.0
+                            self._intel_prev_active = stats.activeTime
+                            self._intel_prev_timestamp = stats.timestamp
+
+            if usage_pct is not None or used_gb is not None:
+                # Return tuple
+                return usage_pct if usage_pct is not None else 0.0, used_gb, total_gb
+
+        except Exception as e:
+            if os.environ.get("DEBUG_SYSTEM_MONITOR"):
+                import traceback
+                traceback.print_exc()
+            pass
+
+        return None
 
     def _get_nvidia_stats(self):
         """Use nvidia-smi CSV query for robust GPU stats"""
