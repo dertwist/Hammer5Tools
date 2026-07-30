@@ -240,6 +240,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
     source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'publish')
     bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
+    bspsrc_exe = os.path.join(bspsrc_dir, 'bspsrc.exe')
+    if not os.path.exists(bspsrc_exe):
+        print(f"WARNING: bspsrc.exe not found at {bspsrc_exe}! SourcePorter BSP decompiler will be missing in build.")
     import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
 
     pyinstaller_cmd = [

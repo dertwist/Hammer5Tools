@@ -116,8 +116,11 @@ public sealed class BspDecompiler(ProcessRunner runner, string? bspsrcLocation =
         var candidates = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(AppContext.BaseDirectory, "app", "tools", "bspsrc", "bspsrc.exe"),
             Path.Combine(Environment.CurrentDirectory, "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(Environment.CurrentDirectory, "app", "tools", "bspsrc", "bspsrc.exe"),
             Path.Combine(AppContext.BaseDirectory, "..", "tools", "bspsrc", "bspsrc.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "app", "tools", "bspsrc", "bspsrc.exe"),
             Path.Combine(AppContext.BaseDirectory, "..", "..", "tools", "bspsrc", "bspsrc.exe"),
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "tools", "bspsrc", "bspsrc.exe"),
         };
