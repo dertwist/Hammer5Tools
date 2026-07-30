@@ -64,6 +64,18 @@ def _clamp_percent(v):
     return fv
 
 
+def _find_col(headers, names):
+    """Return the index of the first CSV header containing any of the given
+    substrings (case-insensitive), or -1 if none match. Makes parsing robust
+    against vendor tools that reorder columns or add timestamp/device prefixes.
+    """
+    for i, h in enumerate(headers):
+        for n in names:
+            if n in h:
+                return i
+    return -1
+
+
 # Worker for GPU stats (runs in separate thread)
 class GPUStatsWorker(QObject):
     """Worker object for fetching GPU stats in a separate thread"""
@@ -87,10 +99,20 @@ class GPUStatsWorker(QObject):
         self.finished.emit()
 
     def _get_gpu_stats(self):
-        """Try NVIDIA first, then AMD, then GPUtil fallback"""
+        """Try NVIDIA first, then Intel, then AMD, then GPUtil fallback.
+
+        Order rationale: NVIDIA (nvidia-smi) and Intel (xpu-smi, oneAPI/Level
+        Zero) are the most reliable cross-platform CLIs. AMD's rocm-smi is
+        Linux/data-center oriented, so it is tried last. GPUtil is a final
+        NVIDIA-only fallback.
+        """
         n = self._get_nvidia_stats()
         if n:
             return n[0], n[1], n[2], "NVIDIA"
+
+        i = self._get_intel_stats()
+        if i:
+            return i[0], i[1], i[2], "Intel"
 
         a = self._get_amd_stats()
         if a:
@@ -153,6 +175,124 @@ class GPUStatsWorker(QObject):
             return usage_pct, used_gb, total_gb
         except Exception:
             return None
+
+    def _get_intel_stats(self):
+        """Query Intel GPU (oneAPI / Level Zero) via xpu-smi.
+
+        Uses xpu-smi dump with --number 1 for a single snapshot (the command
+        loops continuously by default) and metric IDs 0 (GPU Utilization %),
+        7 (Memory Used, MiB) and 8 (Memory Free, MiB). Output is parsed
+        position-independently by matching column headers so it survives
+        timestamp/device prefixes and column reordering across versions.
+        """
+        try:
+            cmd = [
+                "xpu-smi",
+                "dump",
+                "-d", "0",
+                "-m", "0,7,8",
+                "-n", "1",  # single snapshot; otherwise it loops forever
+                "--format", "csv,noheader,nounits",
+            ]
+            # To also support the common "GPU Utilization" + "Memory Used"
+            # only flavor, fall back to metrics 0,7 if 8 is unsupported.
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=3,
+                shell=False,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            out = (proc.stdout or "").strip()
+            if not out:
+                return None
+
+            # First non-empty line is the data row for the single device.
+            first_line = None
+            for line in out.splitlines():
+                s = line.strip()
+                if s:
+                    first_line = s
+                    break
+            if not first_line:
+                return None
+
+            parts = [p.strip() for p in first_line.split(",")]
+
+            # With --noheader we have no header to key off; the metric order is
+            # whatever we requested, optionally prefixed by timestamp/device
+            # columns. Determine how many leading columns precede the metrics.
+            # Timestamps look like a date/time; device ids are small integers.
+            # We scan from the right and take the last three numeric-looking
+            # values as utilization, mem_used, mem_free.
+            numeric = []
+            for p in parts:
+                try:
+                    numeric.append(float(p))
+                except Exception:
+                    numeric.append(None)
+
+            # Walk from the right collecting the three metric values.
+            tail = [x for x in numeric if x is not None][-3:]
+
+            if len(tail) < 2:
+                # Output without --noheader (header + data): re-run the parse
+                # by locating columns via header names.
+                return self._parse_intel_headered(out)
+
+            usage_pct = _clamp_percent(tail[0])
+            mem_used_mb = tail[1]
+            if len(tail) >= 3:
+                mem_free_mb = tail[2]
+                total_mb = mem_used_mb + mem_free_mb
+            else:
+                total_mb = None
+
+            if total_mb is None:
+                # Only utilization + memory used available; cannot report total.
+                return usage_pct, (mem_used_mb / 1024.0), None
+
+            used_gb = mem_used_mb / 1024.0
+            total_gb = total_mb / 1024.0
+            if total_gb <= 0:
+                return None
+            return usage_pct, used_gb, total_gb
+        except Exception:
+            return None
+
+    def _parse_intel_headered(self, out):
+        """Fallback parser for xpu-smi output that still includes headers.
+        Matches columns by name so reordering/timestamps don't break it.
+        """
+        lines = [ln.strip() for ln in out.splitlines() if ln.strip()]
+        if len(lines) < 2:
+            return None
+        headers = [h.strip().lower() for h in lines[0].split(",")]
+        values = [v.strip() for v in lines[1].split(",")]
+
+        u_idx = _find_col(headers, ["gpu utilization", "utilization"])
+        m_idx = _find_col(headers, ["memory used", "mem used"])
+        f_idx = _find_col(headers, ["memory free", "mem free"])
+
+        usage_pct = None
+        used_mb = None
+        total_mb = None
+
+        if 0 <= u_idx < len(values):
+            usage_pct = _clamp_percent(_safe_float(values[u_idx]))
+        if 0 <= m_idx < len(values):
+            used_mb = _safe_float(values[m_idx])
+        if 0 <= f_idx < len(values):
+            free_mb = _safe_float(values[f_idx])
+            if used_mb is not None:
+                total_mb = used_mb + free_mb
+
+        if usage_pct is None or used_mb is None or total_mb is None:
+            return None
+        if total_mb <= 0:
+            return None
+        return usage_pct, (used_mb / 1024.0), (total_mb / 1024.0)
 
     def _get_amd_stats(self):
         """Try to parse rocm-smi output for AMD GPU stats"""
