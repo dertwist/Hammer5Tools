@@ -153,3 +153,4 @@ src/net_core/**/bin/
 src/net_core/**/obj/
 src/net_core/**/publish/
 src/net_core/**/TestResults/
+/SoundEventEditor/*
