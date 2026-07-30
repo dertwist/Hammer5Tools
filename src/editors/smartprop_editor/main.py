@@ -22,7 +22,6 @@ from src.settings.main import (
 from src.widgets.explorer.main import Explorer
 from src.editors.smartprop_editor.document import SmartPropDocument
 from src.editors.smartprop_editor.choices import AddChoice
-from src.editors.smartprop_editor.converter_dialog import VMapToVSmartConverterDialog
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.other.assettypes import check_vsmart_configuration
 from src.widgets import ErrorInfo, exception_handler
@@ -126,8 +125,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        self.action_convert_vmap = file_menu.addAction("Load Vmap")
-        self.action_convert_vmap.triggered.connect(self.open_vmap_converter)
+        self.action_convert_vmap = file_menu.addAction("Load Vmap...")
+        self.action_convert_vmap.triggered.connect(self.active_document_load_vmap)
 
         file_menu.addSeparator()
 
@@ -276,6 +275,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         if hasattr(self, 'action_add_choice'): self.action_add_choice.setEnabled(has_doc)
         if hasattr(self, 'action_add_variable'): self.action_add_variable.setEnabled(has_doc)
         if hasattr(self, 'action_bulk_import'): self.action_bulk_import.setEnabled(has_doc)
+        if hasattr(self, 'action_convert_vmap'): self.action_convert_vmap.setEnabled(has_doc)
         if hasattr(self, 'action_load_vmap'): self.action_load_vmap.setEnabled(has_doc)
 
         # View menu actions
@@ -309,10 +309,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if doc.opened_file:
                     base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
                 self.update_document_tab_title(doc, base_name)
-
-    def open_vmap_converter(self):
-        dialog = VMapToVSmartConverterDialog(self)
-        dialog.exec()
 
     def export_scene_debug(self):
         """Dump the active document's 3D viewport scene to a .glb, textures included."""
@@ -463,6 +459,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         doc = self.get_current_document()
         if doc and hasattr(doc, 'load_vmap_into_hierarchy'):
             doc.load_vmap_into_hierarchy()
+        else:
+            QMessageBox.warning(self, "No Document Open", "Please open or create a SmartProp document before loading a VMAP file.")
 
     def active_document_toggle_isolation(self):
         doc = self.get_current_document()
