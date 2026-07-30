@@ -102,6 +102,7 @@ class PorterThread(QThread):
             flags = set(self.cmd_args[3:])
 
             no_bsp = "--no-bsp" in flags
+            no_merge = "--no-merge" in flags
             no_unpack = "--no-unpack" in flags
             compile_map = "--compile" in flags
             no_compile_assets = "--no-compile-assets" in flags
@@ -109,6 +110,7 @@ class PorterThread(QThread):
             no_uv_fix = "--no-uv-fix" in flags
             repair = "--repair" in flags
             compact = "--verbose" not in flags
+            bsp_imported = False
 
             threads = 1
             if "--threads" in self.cmd_args:
@@ -128,6 +130,7 @@ class PorterThread(QThread):
             bspsrc_candidates = [
                 root / "tools" / "bspsrc" / "bspsrc.exe",
                 Path(sys.executable).parent / "tools" / "bspsrc" / "bspsrc.exe",
+                Path(sys.executable).parent / "app" / "tools" / "bspsrc" / "bspsrc.exe",
                 Path(getattr(sys, "_MEIPASS", "")) / "tools" / "bspsrc" / "bspsrc.exe",
             ]
             bspsrc_location = None

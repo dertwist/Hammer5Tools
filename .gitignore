@@ -128,6 +128,7 @@ out_hammer5tools
 build_cpp_fileedit
 dist_hammer5tools
 *.exe
+!tools/bspsrc/bspsrc.exe
 userdata_dev
 /src/external/dotnet/
 scratch
