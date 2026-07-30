@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QProgressBar,
     QPushButton,
-    QToolButton,
     QLabel,
     QWidget,
     QHBoxLayout,
@@ -20,8 +19,8 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QComboBox
 )
-from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer, QUrl, QSize
-from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QDesktopServices, QIcon
+from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer, QSize
+from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir
@@ -447,36 +446,6 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.refresh.clicked.connect(self.refresh_timeline)
         self.ui.generate_gifs.clicked.connect(self.export_all_animations)
 
-        # Folder buttons next to Take History / Loading Screen Shots
-        icon_folder = QIcon(":/valve_common/icons/tools/common/folder_sm.png")
-        if icon_folder.isNull():
-            icon_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "..", "..", "icons", "tools", "common", "folder_sm.png")
-            )
-            if os.path.exists(icon_path):
-                icon_folder = QIcon(icon_path)
-
-        self.btn_open_history = QToolButton(self)
-        self.btn_open_history.setIcon(icon_folder)
-        self.btn_open_history.setIconSize(QSize(16, 16))
-        self.btn_open_history.setToolTip("Open History Folder")
-        self.btn_open_history.setFixedSize(32, 32)
-        self.btn_open_history.setCursor(Qt.PointingHandCursor)
-        self.btn_open_history.setStyleSheet(self.ui.take_history_shots.styleSheet())
-        self.btn_open_history.clicked.connect(self.open_history_folder)
-
-        self.btn_open_loadingscreen = QToolButton(self)
-        self.btn_open_loadingscreen.setIcon(icon_folder)
-        self.btn_open_loadingscreen.setIconSize(QSize(16, 16))
-        self.btn_open_loadingscreen.setToolTip("Open Loading Shots Folder")
-        self.btn_open_loadingscreen.setFixedSize(32, 32)
-        self.btn_open_loadingscreen.setCursor(Qt.PointingHandCursor)
-        self.btn_open_loadingscreen.setStyleSheet(self.ui.take_loading_screen_shots.styleSheet())
-        self.btn_open_loadingscreen.clicked.connect(self.open_loadingscreen_folder)
-
-        self.ui.horizontalLayout_4.insertWidget(1, self.btn_open_history)
-        self.ui.horizontalLayout_4.addWidget(self.btn_open_loadingscreen)
-
         # Animation export settings (format + quality), inserted next to the
         # Refresh / Create animation buttons in the timeline tab
         self.animation_format_combo = QComboBox()
@@ -738,24 +707,6 @@ class Loading_editorMainWindow(QMainWindow):
 
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
-
-    def open_history_folder(self):
-        folder = self.content_history_path or self.history_path
-        if folder:
-            os.makedirs(folder, exist_ok=True)
-            if os.name == 'nt':
-                os.startfile(folder)
-            else:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
-
-    def open_loadingscreen_folder(self):
-        folder = self.loadingscreen_path
-        if folder:
-            os.makedirs(folder, exist_ok=True)
-            if os.name == 'nt':
-                os.startfile(folder)
-            else:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
 
     def keyPressEvent(self, event: QKeyEvent):
         """
