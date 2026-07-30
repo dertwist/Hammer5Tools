@@ -12,12 +12,69 @@ namespace SourcePorter.Core.Toolchain;
 public static class RefsFile
 {
     /// <summary>
+    /// Safely reads all lines from a file using <see cref="FileShare.ReadWrite"/> and transient
+    /// <see cref="IOException"/> retries to prevent crashes when external processes/tools
+    /// (e.g. <c>source1import</c> or <c>cs_mdl_import</c>) hold open file handles.
+    /// </summary>
+    public static string[] ReadAllLinesShared(string path)
+    {
+        if (!File.Exists(path))
+            return Array.Empty<string>();
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var sr = new StreamReader(fs, Encoding.UTF8);
+                var lines = new List<string>();
+                string? line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    lines.Add(line);
+                }
+                return lines.ToArray();
+            }
+            catch (IOException) when (attempt < 9)
+            {
+                Thread.Sleep(50);
+            }
+        }
+        return File.ReadAllLines(path);
+    }
+
+    /// <summary>
+    /// Safely reads all text from a file using <see cref="FileShare.ReadWrite"/> and transient
+    /// <see cref="IOException"/> retries.
+    /// </summary>
+    public static string ReadAllTextShared(string path)
+    {
+        if (!File.Exists(path))
+            return string.Empty;
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var sr = new StreamReader(fs, Encoding.UTF8);
+                return sr.ReadToEnd();
+            }
+            catch (IOException) when (attempt < 9)
+            {
+                Thread.Sleep(50);
+            }
+        }
+        return File.ReadAllText(path);
+    }
+
+    /// <summary>
     /// <c>ReadTextFile</c>: read lines, trim each, drop blanks and <c>//</c> comments.
     /// </summary>
     public static List<string> ReadTextFile(string path)
     {
         var result = new List<string>();
-        foreach (var raw in File.ReadAllLines(path))
+        foreach (var raw in ReadAllLinesShared(path))
         {
             var line = raw.Trim();
             if (line.Length == 0)
@@ -27,6 +84,21 @@ public static class RefsFile
             result.Add(line);
         }
         return result;
+    }
+
+    private static string SanitizeS1RefPath(string raw)
+    {
+        var path = raw.Trim().Replace("\"", "").Replace('\\', '/');
+        if (path.EndsWith("_c", StringComparison.OrdinalIgnoreCase))
+            path = path[..^2];
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        return ext switch
+        {
+            ".vmat" => path[..^5] + ".vmt",
+            ".vmdl" => path[..^5] + ".mdl",
+            ".vtex" => path[..^5] + ".vtf",
+            _ => path
+        };
     }
 
     /// <summary>
@@ -39,9 +111,31 @@ public static class RefsFile
         sb.Append("importfilelist\n{\n");
         foreach (var entry in list)
         {
-            var line = entry.Trim().Replace("\"", "");
+            var line = SanitizeS1RefPath(entry);
             if (line.Length != 0)
                 sb.Append("\t\"file\" \"").Append(line).Append("\"\n");
+        }
+        sb.Append("}\n");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Wrap a list of file paths into an <c>importfilelist { "file" "…" }</c> block,
+    /// ensuring each path is normalized with an explicit root directory prefix (e.g. <c>materials/</c> or <c>models/</c>).
+    /// </summary>
+    public static string RefsStringFromListWithPrefixes(IEnumerable<string> list, string prefix = "")
+    {
+        var sb = new StringBuilder();
+        sb.Append("importfilelist\n{\n");
+        foreach (var entry in list)
+        {
+            var line = SanitizeS1RefPath(entry);
+            if (line.Length != 0)
+            {
+                if (!string.IsNullOrEmpty(prefix) && !line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    line = prefix.TrimEnd('/') + "/" + line;
+                sb.Append("\t\"file\" \"").Append(line).Append("\"\n");
+            }
         }
         sb.Append("}\n");
         return sb.ToString();

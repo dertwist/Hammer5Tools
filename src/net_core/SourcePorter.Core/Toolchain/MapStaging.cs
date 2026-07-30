@@ -140,4 +140,31 @@ public static class MapStaging
         Directory.CreateDirectory(root);
         return root;
     }
+
+    /// <summary>
+    /// Reuses the existing unpacked BSP content cache under <see cref="StagingRoot"/> if present;
+    /// otherwise extracts <paramref name="bspPath"/>'s embedded pakfile into a fresh staging root.
+    /// Returns the path to the content root.
+    /// </summary>
+    public static string GetOrStageBspContentRoot(string bspPath, Action<string>? log = null)
+    {
+        if (string.IsNullOrWhiteSpace(bspPath) || !File.Exists(bspPath))
+            return string.Empty;
+
+        var mapName = Path.GetFileNameWithoutExtension(bspPath);
+        var root = Path.Combine(StagingRoot, mapName);
+
+        if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
+        {
+            log?.Invoke($"Reusing existing unpacked BSP cache for {mapName}: {root}");
+            return root;
+        }
+
+        Directory.CreateDirectory(root);
+        log?.Invoke($"Unpacking embedded BSP assets for {mapName} into cache: {root}");
+        using var bspPak = BspPakfile.Open(bspPath);
+        var count = bspPak.ExtractAll(root, log);
+        log?.Invoke($"Unpacked {count} embedded file(s) from {Path.GetFileName(bspPath)}.");
+        return root;
+    }
 }

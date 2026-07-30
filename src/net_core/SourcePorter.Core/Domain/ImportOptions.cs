@@ -45,6 +45,12 @@ public sealed class ImportOptions
     public bool CompactLog { get; set; } = true;
 
     /// <summary>
+    /// Import dependencies using a Valve KeyValues filelist manifest (-usefilelist),
+    /// formatting entries with explicit materials/ and models/ prefixes.
+    /// </summary>
+    public bool UseFilelist { get; set; }
+
+    /// <summary>
     /// Max concurrent tool processes for the dependency phase (model import +
     /// material compile run in parallel). 1 = sequential (matches the Python).
     /// Defaults to all available logical processors minus one (min 1).

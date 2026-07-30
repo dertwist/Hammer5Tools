@@ -117,8 +117,9 @@ public sealed partial class MapImportService
         if ((project.Import.UseBsp || project.Import.UseBspNoMergeInstances) && s1Content.Contains(' '))
             s1Content = ResolveSpaceFreeContentDir(s1Content);
 
-        // Make the staged content root a game search path so custom (BSP-unpacked)
-        // materials/models import, not just stock CS:GO assets (see ImportGameInfo).
+        // Sync custom unpacked assets into the CS:GO game directory so source1import
+        // resolves texture dimensions natively during the map import pass.
+        SyncStagedContentToCsgoDir(s1Content, s1Game);
         var depsGameDir = PrepareDepsGameDir(s1Game, s1Content);
 
         // --- import vmf -> vmap (built once with the ORIGINAL map name, reused for the re-import) ---
@@ -164,10 +165,10 @@ public sealed partial class MapImportService
                 var newRefs = refsFile.Replace("_refs.txt", "_new_refs.txt");
 
                 // now import mdls (as modeldoc), and their materials
-                await ImportAndCompileMapMdlsAsync(mdlList, paths, s1Game, s1Content, depsGameDir, addon, env, ct);
+                await ImportAndCompileMapMdlsAsync(mdlList, paths, s1Game, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
 
                 // import refs (excluding mdls)
-                await ImportAndCompileMapRefsAsync(newRefs, paths, s1Content, depsGameDir, addon, env, ct);
+                await ImportAndCompileMapRefsAsync(newRefs, paths, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
 
                 // quick import vmf again, now that dependencies (materials especially) are compiled
                 await RunAsync(_tools.Source1Import, "source1import.exe", importArgs, env, ct,
@@ -237,6 +238,47 @@ public sealed partial class MapImportService
              "available (terrain would import as vmf-only geometry). Move the install to a space-free " +
              "path, or enable 8.3 names on the volume (fsutil 8dot3name).");
         return contentDir;
+    }
+
+    private void SyncStagedContentToCsgoDir(string s1Content, string s1Game)
+    {
+        if (string.IsNullOrEmpty(s1Content) || string.IsNullOrEmpty(s1Game) ||
+            string.Equals(s1Content, s1Game, StringComparison.OrdinalIgnoreCase) ||
+            !Directory.Exists(s1Content) || !Directory.Exists(s1Game))
+            return;
+
+        int filesCopied = 0;
+        var subDirs = new[] { "materials", "models", "sound", "scripts", "resource" };
+        foreach (var sub in subDirs)
+        {
+            var srcSub = Path.Combine(s1Content, sub);
+            if (!Directory.Exists(srcSub))
+                continue;
+
+            var dstSub = Path.Combine(s1Game, sub);
+            foreach (var file in Directory.EnumerateFiles(srcSub, "*.*", SearchOption.AllDirectories))
+            {
+                var rel = Path.GetRelativePath(srcSub, file);
+                var destFile = Path.Combine(dstSub, rel);
+                var dir = Path.GetDirectoryName(destFile);
+                if (!string.IsNullOrEmpty(dir))
+                    Directory.CreateDirectory(dir);
+
+                if (!File.Exists(destFile) || File.GetLastWriteTimeUtc(file) > File.GetLastWriteTimeUtc(destFile))
+                {
+                    try
+                    {
+                        File.Copy(file, destFile, overwrite: true);
+                        filesCopied++;
+                    }
+                    catch { /* best-effort copy */ }
+                }
+            }
+        }
+        if (filesCopied > 0)
+        {
+            Emit($"Staged {filesCopied} custom unpacked asset(s) into CS:GO game directory ({s1Game}) for native Valve UV scale conversion.");
+        }
     }
 
     /// <summary>
@@ -323,7 +365,7 @@ public sealed partial class MapImportService
                 var mdlListPath = Path.Combine(mapsDir, "repair_mdl_lst.txt");
                 RefsFile.EnsureFileWritable(mdlListPath);
                 File.WriteAllLines(mdlListPath, modelMdls.Select(m => m.Replace('/', '\\')));
-                await ImportAndCompileMapMdlsAsync(mdlListPath, paths, s1Game, s1Content, depsGameDir, project.AddonName, env, ct);
+                await ImportAndCompileMapMdlsAsync(mdlListPath, paths, s1Game, s1Content, depsGameDir, project.AddonName, env, ct, project.Import.UseFilelist);
             }
 
             // Materials: wrapped in the importfilelist format and reused by the refs importer
@@ -332,8 +374,11 @@ public sealed partial class MapImportService
             {
                 var refsPath = Path.Combine(mapsDir, "repair_new_refs.txt");
                 RefsFile.EnsureFileWritable(refsPath);
-                File.WriteAllText(refsPath, RefsFile.RefsStringFromList(materialVmts));
-                await ImportAndCompileMapRefsAsync(refsPath, paths, s1Content, depsGameDir, project.AddonName, env, ct);
+                var refsContent = project.Import.UseFilelist
+                    ? RefsFile.RefsStringFromListWithPrefixes(materialVmts, "materials/")
+                    : RefsFile.RefsStringFromList(materialVmts);
+                File.WriteAllText(refsPath, refsContent);
+                await ImportAndCompileMapRefsAsync(refsPath, paths, s1Content, depsGameDir, project.AddonName, env, ct, project.Import.UseFilelist);
             }
         }
         finally
@@ -489,7 +534,7 @@ public sealed partial class MapImportService
     // ---- ImportAndCompileMapMDLs ----
     private async Task ImportAndCompileMapMdlsAsync(
         string mdlListPath, ImportPaths paths, string s1Game, string s1Content, string depsGameDir, string addon,
-        IReadOnlyDictionary<string, string> env, CancellationToken ct)
+        IReadOnlyDictionary<string, string> env, CancellationToken ct, bool useFilelist = false)
     {
         if (!File.Exists(mdlListPath))
             return;
@@ -600,7 +645,7 @@ public sealed partial class MapImportService
     // ---- ImportAndCompileMapRefs ----
     private async Task ImportAndCompileMapRefsAsync(
         string refsFile, ImportPaths paths, string s1Content, string depsGameDir, string addon,
-        IReadOnlyDictionary<string, string> env, CancellationToken ct)
+        IReadOnlyDictionary<string, string> env, CancellationToken ct, bool useFilelist = false)
     {
         if (!File.Exists(refsFile))
             return;
@@ -642,7 +687,7 @@ public sealed partial class MapImportService
         if (!File.Exists(vmat))
             return;
 
-        var lines = File.ReadAllLines(vmat).ToList();
+        var lines = RefsFile.ReadAllLinesShared(vmat).ToList();
         RefsFile.EnsureFileWritable(vmat);
 
         for (var i = 0; i < lines.Count; i++)
@@ -668,7 +713,7 @@ public sealed partial class MapImportService
         if (!File.Exists(meshInfoPath) || !File.Exists(refsName))
             return false;
 
-        var numUvs = ParseNumUvs(File.ReadAllText(meshInfoPath));
+        var numUvs = ParseNumUvs(RefsFile.ReadAllTextShared(meshInfoPath));
         var b2Uv = false;
         var updated = new HashSet<string>(StringComparer.Ordinal);
 

@@ -59,7 +59,6 @@ class PorterThread(QThread):
             return
 
         try:
-            self.log_signal.emit(f"[SourcePorter] Running {self.sub_cmd} via pythonnet...")
             code = self._run_pythonnet()
             self.finished_signal.emit(code)
         except Exception as ex:
@@ -76,6 +75,7 @@ class PorterThread(QThread):
         import SourcePorter.Core.Toolchain as Toolchain
         import SourcePorter.Core.Vmap as Vmap
         from System import Action, String
+        from System.Collections.Generic import List as CsList
 
         def on_log(line):
             if not self._is_cancelled:
@@ -95,6 +95,93 @@ class PorterThread(QThread):
                 self.log_signal.emit(f"  [{issue.Kind}] {issue.Source} -> {issue.Detail}")
             return 1 if report.HasIssues else 0
 
+        elif self.sub_cmd == "force-import":
+            cs2_dir = self.cmd_args[0]
+            addon = self.cmd_args[1]
+            paths_and_flags = self.cmd_args[2:]
+            no_compile_assets = "--no-compile-assets" in paths_and_flags
+            asset_paths = [p for p in paths_and_flags if not p.startswith("--")]
+
+            cs2 = Domain.Cs2Install(cs2_dir)
+            runner = Toolchain.ProcessRunner()
+            runner.OnOutput += Action[Toolchain.ProcessLine](lambda line: on_log(line.Text))
+
+            import_options = Domain.ImportOptions()
+            import_options.CompileAssets = not no_compile_assets
+            dummy_vmf = os.path.join(cs2.ContentAddonDir(addon), "maps", "import.vmf")
+            project = cs2.BuildProject(dummy_vmf, addon, import_options)
+
+            import_scripts_dir = cs2.ImportScriptsDir if os.path.exists(cs2.ImportScriptsDir) else os.getcwd()
+            service = Toolchain.MapImportService(cs2.Tools, runner, import_scripts_dir)
+            service.OnLog += cs_log
+
+            importer = Toolchain.MissingAssetImporter(service, cs2)
+            importer.OnLog += cs_log
+
+            cs_paths = CsList[String]()
+            for p in asset_paths:
+                cs_paths.Add(p)
+
+            extra_roots = CsList[String]()
+            staging_root = Toolchain.MapStaging.StagingRoot
+            if os.path.isdir(staging_root):
+                for entry in os.listdir(staging_root):
+                    cand = os.path.join(staging_root, entry)
+                    if os.path.isdir(cand):
+                        extra_roots.Add(cand)
+                        cand_sub = os.path.join(cand, entry)
+                        if os.path.isdir(cand_sub):
+                            extra_roots.Add(cand_sub)
+
+            res = importer.ForceImportAsync(project, cs_paths, extraContentRoots=extra_roots).GetAwaiter().GetResult()
+            on_log(f"=== FORCE IMPORT {addon}: imported {res.ModelsImported} model(s), {res.MaterialsImported} material(s) ===")
+            return 0
+
+        elif self.sub_cmd == "repair":
+            cs2_dir = self.cmd_args[0]
+            addon = self.cmd_args[1]
+
+            cs2 = Domain.Cs2Install(cs2_dir)
+            runner = Toolchain.ProcessRunner()
+            runner.OnOutput += Action[Toolchain.ProcessLine](lambda line: on_log(line.Text))
+
+            validator = Validation.AssetValidator(cs2, addon)
+            report = validator.Validate(cs_log)
+
+            if report.MissingImportCount > 0:
+                import_scripts_dir = cs2.ImportScriptsDir if os.path.exists(cs2.ImportScriptsDir) else os.getcwd()
+                service = Toolchain.MapImportService(cs2.Tools, runner, import_scripts_dir)
+                service.OnLog += cs_log
+
+                import_options = Domain.ImportOptions()
+                dummy_vmf = os.path.join(cs2.ContentAddonDir(addon), "maps", "repair.vmf")
+                project = cs2.BuildProject(dummy_vmf, addon, import_options)
+
+                importer = Toolchain.MissingAssetImporter(service, cs2)
+                importer.OnLog += cs_log
+
+                extra_roots = CsList[String]()
+                staging_root = Toolchain.MapStaging.StagingRoot
+                if os.path.isdir(staging_root):
+                    for entry in os.listdir(staging_root):
+                        cand = os.path.join(staging_root, entry)
+                        if os.path.isdir(cand):
+                            extra_roots.Add(cand)
+                            cand_sub = os.path.join(cand, entry)
+                            if os.path.isdir(cand_sub):
+                                extra_roots.Add(cand_sub)
+
+                rr = importer.RepairAsync(project, report, extraContentRoots=extra_roots).GetAwaiter().GetResult()
+                on_log(f"=== REPAIR {addon}: imported {rr.ModelsImported} model(s)/{rr.MaterialsImported} material(s) in {rr.Rounds} round(s) ===")
+                report = rr.FinalReport
+
+            for issue in report.Issues:
+                if self._is_cancelled:
+                    break
+                self.log_signal.emit(f"  [{issue.Kind}] {issue.Source} -> {issue.Detail}")
+
+            return 1 if report.HasIssues else 0
+
         elif self.sub_cmd == "port":
             cs2_dir = self.cmd_args[0]
             source_map = self.cmd_args[1]
@@ -103,12 +190,14 @@ class PorterThread(QThread):
 
             no_bsp = "--no-bsp" in flags
             no_merge = "--no-merge" in flags
+            no_deps = "--nodeps" in flags or "--no-deps" in flags
             no_unpack = "--no-unpack" in flags
             compile_map = "--compile" in flags
             no_compile_assets = "--no-compile-assets" in flags
             collapse = "--collapse-prefabs" in flags
             no_uv_fix = "--no-uv-fix" in flags
             repair = "--repair" in flags
+            use_filelist = "--use-filelist" in flags
             compact = "--verbose" not in flags
             bsp_imported = False
 
@@ -149,11 +238,13 @@ class PorterThread(QThread):
                 vmf = Toolchain.MapStaging.StageVmf(source_map, cs_log)
 
             import_options = Domain.ImportOptions()
-            import_options.UseBsp = not no_merge
-            import_options.UseBspNoMergeInstances = no_merge
+            import_options.UseBsp = not no_bsp and not no_merge
+            import_options.UseBspNoMergeInstances = no_merge and not no_bsp
+            import_options.SkipDeps = no_deps
             import_options.MaxParallelism = threads
             import_options.CompileAssets = not no_compile_assets
             import_options.CompactLog = compact
+            import_options.UseFilelist = use_filelist
 
             project = cs2.BuildProject(vmf, addon, import_options)
             import_scripts_dir = cs2.ImportScriptsDir if os.path.exists(cs2.ImportScriptsDir) else os.getcwd()
@@ -162,9 +253,6 @@ class PorterThread(QThread):
 
             on_log(f"=== IMPORT {project.MapName} -> {addon} ===")
             service.ImportAsync(project).GetAwaiter().GetResult()
-
-            if bsp_imported and not no_uv_fix:
-                Vmap.PostImportVmapTools.FixBrushUvScale(cs2, addon, project.MapName, project.S1ContentDir, cs_log)
 
             if collapse:
                 Vmap.PostImportVmapTools.CollapsePrefabs(cs2, addon, project.MapName, cs_log)
