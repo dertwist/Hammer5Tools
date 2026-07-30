@@ -58,4 +58,86 @@ public class VmapBrushUvFixerTests
             Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public void ResolveDim_strips_materials_prefix_and_falls_back_to_basetexture2()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dimtest_" + Guid.NewGuid().ToString("N"));
+        var matDir = Path.Combine(root, "materials", "custom");
+        Directory.CreateDirectory(matDir);
+        try
+        {
+            // VMT referencing $basetexture with leading "materials/" prefix
+            var vmt1 = Path.Combine(matDir, "wall.vmt");
+            File.WriteAllText(vmt1, "\"LightmappedGeneric\"\n{\n\t\"$basetexture\"\t\"materials/custom/wall_diffuse\"\n}");
+
+            // Create valid minimal 512x512 VTF file header
+            var vtf1 = Path.Combine(matDir, "wall_diffuse.vtf");
+            byte[] vtfHeader = new byte[64];
+            vtfHeader[0] = (byte)'V'; vtfHeader[1] = (byte)'T'; vtfHeader[2] = (byte)'F'; vtfHeader[3] = 0; // VTF\0
+            BitConverter.GetBytes(7u).CopyTo(vtfHeader, 4); // version major 7
+            BitConverter.GetBytes(4u).CopyTo(vtfHeader, 8); // version minor 4
+            BitConverter.GetBytes((ushort)512).CopyTo(vtfHeader, 16); // width
+            BitConverter.GetBytes((ushort)512).CopyTo(vtfHeader, 18); // height
+            File.WriteAllBytes(vtf1, vtfHeader);
+
+            var cache = new Dictionary<string, (float W, float H)?>();
+            var res1 = VmapBrushUvFixer.ResolveDim("materials/custom/wall.vmat", root, cache);
+
+            Assert.NotNull(res1);
+            Assert.Equal(512f, res1.Value.W);
+            Assert.Equal(512f, res1.Value.H);
+
+            // VMT with only $basetexture2
+            var vmt2 = Path.Combine(matDir, "blend.vmt");
+            File.WriteAllText(vmt2, "\"WorldVertexTransition\"\n{\n\t\"$basetexture2\"\t\"custom/wall_diffuse\"\n}");
+            var res2 = VmapBrushUvFixer.ResolveDim("materials/custom/blend.vmat", root, cache);
+
+            Assert.NotNull(res2);
+            Assert.Equal(512f, res2.Value.W);
+            Assert.Equal(512f, res2.Value.H);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void TextureHeaderReader_reads_tga_and_png_dimensions()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "texhdrtest_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            // TGA 1024x512
+            var tgaPath = Path.Combine(dir, "test.tga");
+            byte[] tgaHeader = new byte[18];
+            BitConverter.GetBytes((ushort)1024).CopyTo(tgaHeader, 12);
+            BitConverter.GetBytes((ushort)512).CopyTo(tgaHeader, 14);
+            File.WriteAllBytes(tgaPath, tgaHeader);
+
+            var tgaDim = SourcePorter.Core.Materials.TextureHeaderReader.TryReadDimensions(tgaPath);
+            Assert.NotNull(tgaDim);
+            Assert.Equal(1024, tgaDim.Value.Width);
+            Assert.Equal(512, tgaDim.Value.Height);
+
+            // PNG 2048x1024
+            var pngPath = Path.Combine(dir, "test.png");
+            byte[] pngHeader = new byte[24];
+            pngHeader[0] = 0x89; pngHeader[1] = (byte)'P'; pngHeader[2] = (byte)'N'; pngHeader[3] = (byte)'G';
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(pngHeader.AsSpan(16), 2048);
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(pngHeader.AsSpan(20), 1024);
+            File.WriteAllBytes(pngPath, pngHeader);
+
+            var pngDim = SourcePorter.Core.Materials.TextureHeaderReader.TryReadDimensions(pngPath);
+            Assert.NotNull(pngDim);
+            Assert.Equal(2048, pngDim.Value.Width);
+            Assert.Equal(1024, pngDim.Value.Height);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }

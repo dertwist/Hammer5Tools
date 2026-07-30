@@ -53,8 +53,9 @@ public static class PostImportVmapTools
         Cs2Install cs2, string addon, string mapName, string? stagedContentRoot,
         Action<string>? log = null, CancellationToken ct = default)
     {
-        var mapsDir = Path.Combine(cs2.ContentAddonDir(addon), "maps");
-        return VmapBrushUvFixer.FixAddon(mapsDir, mapName, stagedContentRoot, log, ct);
+        var addonContentDir = cs2.ContentAddonDir(addon);
+        var mapsDir = Path.Combine(addonContentDir, "maps");
+        return VmapBrushUvFixer.FixAddon(mapsDir, mapName, stagedContentRoot, addonContentDir, log, ct);
     }
 
     /// <summary>

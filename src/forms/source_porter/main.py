@@ -406,9 +406,6 @@ class SourcePorterWidget(QDialog):
         self.cb_collapse = QCheckBox("Collapse prefabs & flatten empty group wrappers")
         layout.addWidget(self.cb_collapse)
 
-        self.cb_uv_fix = QCheckBox("Fix brush UV scale for decompiled BSP custom materials")
-        layout.addWidget(self.cb_uv_fix)
-
         layout.addStretch()
         return w
 
@@ -426,6 +423,9 @@ class SourcePorterWidget(QDialog):
 
         self.cb_nodeps = QCheckBox("Skip dependency importing (-nodeps)")
         layout.addWidget(self.cb_nodeps)
+
+        self.cb_use_filelist = QCheckBox("Use KV Filelist import mode (-usefilelist with materials/ & models/ prefixes)")
+        layout.addWidget(self.cb_use_filelist)
 
         self.cb_repair = QCheckBox("Auto-repair missing materials & models (re-import loop)")
         layout.addWidget(self.cb_repair)
@@ -493,12 +493,12 @@ class SourcePorterWidget(QDialog):
         self.cb_use_bsp.setChecked(get_settings_bool("SourcePorter", "use_bsp", True))
         self.cb_nomerge.setChecked(get_settings_bool("SourcePorter", "nomerge", False))
         self.cb_collapse.setChecked(get_settings_bool("SourcePorter", "collapse", True))
-        self.cb_uv_fix.setChecked(get_settings_bool("SourcePorter", "uv_fix", True))
 
         self.cb_unpack.setChecked(get_settings_bool("SourcePorter", "unpack", True))
         self.cb_compile_assets.setChecked(get_settings_bool("SourcePorter", "compile_assets", True))
         self.cb_nodeps.setChecked(get_settings_bool("SourcePorter", "nodeps", False))
-        self.cb_repair.setChecked(get_settings_bool("SourcePorter", "repair", True))
+        self.cb_use_filelist.setChecked(get_settings_bool("SourcePorter", "use_filelist", False))
+        self.cb_repair.setChecked(get_settings_bool("SourcePorter", "repair", False))
 
         self.cb_compile_map.setChecked(get_settings_bool("SourcePorter", "compile_map", False))
         self.cb_compact.setChecked(get_settings_bool("SourcePorter", "compact", True))
@@ -534,9 +534,6 @@ class SourcePorterWidget(QDialog):
         self.cb_collapse.toggled.connect(
             lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "collapse", s)
         )
-        self.cb_uv_fix.toggled.connect(
-            lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "uv_fix", s)
-        )
 
         self.cb_unpack.toggled.connect(
             lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "unpack", s)
@@ -546,6 +543,9 @@ class SourcePorterWidget(QDialog):
         )
         self.cb_nodeps.toggled.connect(
             lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "nodeps", s)
+        )
+        self.cb_use_filelist.toggled.connect(
+            lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "use_filelist", s)
         )
         self.cb_repair.toggled.connect(
             lambda s: not self._restoring_settings and set_settings_bool("SourcePorter", "repair", s)
@@ -724,16 +724,20 @@ class SourcePorterWidget(QDialog):
         args = [cs2, map_file, addon]
         if not self.cb_use_bsp.isChecked():
             args.append("--no-bsp")
+        if self.cb_nomerge.isChecked():
+            args.append("--no-merge")
         if not self.cb_unpack.isChecked():
             args.append("--no-unpack")
         if self.cb_compile_map.isChecked():
             args.append("--compile")
         if not self.cb_compile_assets.isChecked():
             args.append("--no-compile-assets")
+        if self.cb_nodeps.isChecked():
+            args.append("--nodeps")
         if self.cb_collapse.isChecked():
             args.append("--collapse-prefabs")
-        if not self.cb_uv_fix.isChecked():
-            args.append("--no-uv-fix")
+        if self.cb_use_filelist.isChecked():
+            args.append("--use-filelist")
         if self.cb_repair.isChecked():
             args.append("--repair")
         if not self.cb_compact.isChecked():

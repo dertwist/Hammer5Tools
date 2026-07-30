@@ -80,9 +80,9 @@ class DotNetPaths:
             base_dir / 'SourcePorter.Core.dll',
             Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'SourcePorter.Core.dll',
         ]
-        for c in candidates:
-            if c.is_file():
-                return c
+        existing = [c for c in candidates if c.is_file()]
+        if existing:
+            return max(existing, key=lambda p: p.stat().st_mtime)
         return base_dir / 'SourcePorter.Core.dll'
 
 
@@ -264,9 +264,13 @@ class DotNetInterop:
         # Preload the dependency versions SourcePorter.Core.dll was actually built
         # against, from whichever folder it was resolved from (SourcePorter.Core publish
         # folder or bundled source_porter directory).
+        net_core = Path(__file__).parent / 'net_core'
+        pub_folder = net_core / 'SourcePorter.Core' / 'publish'
         for dep_name in ("ValveKeyValue.dll", "ValvePak.dll", "Datamodel.NET.dll",
-                         "System.IO.Hashing.dll", "Blake3.dll"):
+                         "System.IO.Hashing.dll", "Blake3.dll", "KeyValues2.dll"):
             dep = sp_dll.parent / dep_name
+            if not dep.is_file() and pub_folder.exists():
+                dep = pub_folder / dep_name
             if dep.is_file():
                 _load_into_default_alc(dep)
 

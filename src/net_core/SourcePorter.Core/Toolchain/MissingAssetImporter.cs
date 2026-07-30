@@ -97,10 +97,18 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
         var unsourced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var report = initialReport;
 
+        var mergedExtra = new List<string>(extraContentRoots ?? []);
+        if (!string.IsNullOrWhiteSpace(bspPath) && File.Exists(bspPath))
+        {
+            var stagedRoot = MapStaging.GetOrStageBspContentRoot(bspPath, OnLog);
+            if (!string.IsNullOrEmpty(stagedRoot) && !mergedExtra.Contains(stagedRoot, StringComparer.OrdinalIgnoreCase))
+                mergedExtra.Add(stagedRoot);
+        }
+
         // Search both the stock CS:GO VPKs and the map's custom content for each missing asset's
         // Source 1 source, so we only fire the toolchain at files that actually exist.
         using var locator = new S1SourceLocator(
-            project.S1GameInfoDir, project.S1ContentDir, extraContentRoots, bspPath);
+            project.S1GameInfoDir, project.S1ContentDir, mergedExtra, bspPath);
         OnLog?.Invoke(
             $"Searching {locator.CsgoVpkCount} CS:GO VPK archive(s), custom content, and " +
             $"{locator.BspEmbeddedCount} BSP-embedded file(s) for missing sources…");
@@ -134,13 +142,29 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
             // source1import miss the stock ones — see ImportSpecificAssetsAsync.
             if (models.Stock.Count > 0 || materials.Stock.Count > 0)
                 await service.ImportSpecificAssetsAsync(project, models.Stock, materials.Stock, ct, stockOnly: true);
+            var customDir = mergedExtra.FirstOrDefault(dir => Directory.Exists(dir) && !PathsEqual(dir, project.S1GameInfoDir)) 
+                            ?? project.S1ContentDir;
+            var customProject = project;
+            if (!string.IsNullOrEmpty(customDir) && !PathsEqual(customDir, project.S1GameInfoDir) && !PathsEqual(customDir, project.S1ContentDir))
+            {
+                customProject = new PortProject
+                {
+                    S2GameInfoDir = project.S2GameInfoDir,
+                    S1GameInfoDir = project.S1GameInfoDir,
+                    S1ContentDir = customDir,
+                    AddonName = project.AddonName,
+                    MapName = project.MapName,
+                    Import = project.Import
+                };
+            }
+
             // Custom assets the locator found only in the BSP's embedded pakfile aren't on disk, so
             // source1import/cs_mdl_import can't read them — extract them (and a material's textures)
             // into the staged content root first.
-            ExtractBspEmbeddedToDisk(project, locator, materials.Custom, models.Custom);
+            ExtractBspEmbeddedToDisk(customProject, locator, materials.Custom, models.Custom);
 
             if (models.Custom.Count > 0 || materials.Custom.Count > 0)
-                await service.ImportSpecificAssetsAsync(project, models.Custom, materials.Custom, ct);
+                await service.ImportSpecificAssetsAsync(customProject, models.Custom, materials.Custom, ct);
 
             var converted = ConvertToolMaterials(project, locator, toolMaterials);
             result.MaterialsConvertedNonBinary += converted;
@@ -215,15 +239,24 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
     {
         var result = new MissingAssetRepairReport { Rounds = 1 };
 
-        // .mdl goes through the model pass (which pulls in each model's own materials); everything
-        // else (.vmt, .vtf, …) through the refs filelist source1import resolves by extension.
+        // Parse free-text asset paths into normalized S1 source paths (.vmdl -> .mdl, .vmat -> .vmt, .vtex -> .vtf, drop _c)
+        var parsedSources = ParseAssetList(string.Join("\n", assetPaths));
+
         var models = new List<string>();
         var refs = new List<string>();
-        foreach (var path in assetPaths)
+        foreach (var path in parsedSources)
             (path.EndsWith(".mdl", StringComparison.OrdinalIgnoreCase) ? models : refs).Add(path);
 
+        var mergedExtra = new List<string>(extraContentRoots ?? []);
+        if (!string.IsNullOrWhiteSpace(bspPath) && File.Exists(bspPath))
+        {
+            var stagedRoot = MapStaging.GetOrStageBspContentRoot(bspPath, OnLog);
+            if (!string.IsNullOrEmpty(stagedRoot) && !mergedExtra.Contains(stagedRoot, StringComparer.OrdinalIgnoreCase))
+                mergedExtra.Add(stagedRoot);
+        }
+
         using var locator = new S1SourceLocator(
-            project.S1GameInfoDir, project.S1ContentDir, extraContentRoots, bspPath);
+            project.S1GameInfoDir, project.S1ContentDir, mergedExtra, bspPath);
         var attempted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var unsourced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -239,9 +272,25 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
         if (m.Stock.Count > 0 || t.Stock.Count > 0)
             await service.ImportSpecificAssetsAsync(project, m.Stock, t.Stock, ct, stockOnly: true);
 
-        ExtractBspEmbeddedToDisk(project, locator, t.Custom, m.Custom);
+        var customDir = mergedExtra.FirstOrDefault(dir => Directory.Exists(dir) && !PathsEqual(dir, project.S1GameInfoDir)) 
+                        ?? project.S1ContentDir;
+        var customProject = project;
+        if (!string.IsNullOrEmpty(customDir) && !PathsEqual(customDir, project.S1GameInfoDir) && !PathsEqual(customDir, project.S1ContentDir))
+        {
+            customProject = new PortProject
+            {
+                S2GameInfoDir = project.S2GameInfoDir,
+                S1GameInfoDir = project.S1GameInfoDir,
+                S1ContentDir = customDir,
+                AddonName = project.AddonName,
+                MapName = project.MapName,
+                Import = project.Import
+            };
+        }
+
+        ExtractBspEmbeddedToDisk(customProject, locator, t.Custom, m.Custom);
         if (m.Custom.Count > 0 || t.Custom.Count > 0)
-            await service.ImportSpecificAssetsAsync(project, m.Custom, t.Custom, ct);
+            await service.ImportSpecificAssetsAsync(customProject, m.Custom, t.Custom, ct);
 
         result.MaterialsConvertedNonBinary = ConvertToolMaterials(project, locator, toolMaterials);
         result.ModelsImported = m.Stock.Count + m.Custom.Count;
@@ -492,4 +541,18 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
         && (path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
             || path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
             || path.EndsWith(".psd", StringComparison.OrdinalIgnoreCase));
+
+    private static bool PathsEqual(string a, string b)
+    {
+        static string Norm(string p) => Path.TrimEndingDirectorySeparator(
+            Path.GetFullPath(p)).Replace('/', '\\');
+        try
+        {
+            return string.Equals(Norm(a), Norm(b), StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }
