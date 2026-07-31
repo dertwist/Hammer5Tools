@@ -42,6 +42,7 @@ from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
+from src.editors.source2plugin_loader import Source2PluginLoaderWidget
 from src.forms.unreal_converter.main import UnrealConverterWidget
 from src.forms.source_porter.main import SourcePorterWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
@@ -447,6 +448,23 @@ class Widget(QMainWindow):
         ae_icon = QIcon(":/valve_common/icons/tools/common/control_play.png")
         sound_idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
         self.ui.MainWindowTools_tabs.insertTab(sound_idx + 1, self.audio_editor_tab, ae_icon, "Audio Editor")
+
+        # Programmatically create Source2PluginLoader tab
+        self.source2pluginloader_tab = QWidget()
+        self.source2pluginloader_tab.setObjectName("source2pluginloader_tab")
+        s2pl_layout = QVBoxLayout(self.source2pluginloader_tab)
+        s2pl_layout.setContentsMargins(0, 0, 0, 0)
+        self.Source2PluginLoader_instance = Source2PluginLoaderWidget(update_title=self.update_title, parent=self)
+        s2pl_layout.addWidget(self.Source2PluginLoader_instance)
+
+        s2pl_icon = QIcon(":/icons/s2pl_icon.svg")
+        if s2pl_icon.isNull():
+            import src.common as common
+            icon_path = os.path.join(common.get_app_dir(), "src", "icons", "s2pl_icon.svg")
+            s2pl_icon = QIcon(icon_path)
+
+        last_idx = self.ui.MainWindowTools_tabs.count()
+        self.ui.MainWindowTools_tabs.insertTab(last_idx, self.source2pluginloader_tab, s2pl_icon, "Source2PluginLoader")
 
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
