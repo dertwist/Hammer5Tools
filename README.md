@@ -28,37 +28,24 @@ Whether it's managing sound events, working with Smart Props, or compiling proje
 [**Check out Website**](https://hammer5tools.github.io/)
 
 <p align="center">
-  <video src="https://hammer5tools.github.io/videos/hero.mp4" controls="controls" width="100%" muted="true" loop="true" autoplay="true"></video>
+  <img width="2560" height="1392" alt="image" src="https://github.com/user-attachments/assets/b273ff75-72e9-4569-b659-f2817ef7b401" />
 </p>
 
 ### SmartProp Editor
 Editing `.vsmart` files manually is no longer necessary. The editor provides a visual way to manage position, rotation, and scaling in real-time. It is fully compatible with Valve's formats and includes presets to help build complex scenes efficiently.
 
-![SmartProp Editor](https://hammer5tools.github.io/static/smartprop_editor.png)
-
 ### SoundEvent Editor
 Managing sounds is simplified. Explore, preview, and configure `.vsnd` files directly. The tool modifies the `soundevents_addon.vsndevts` file safely, allowing focus on the atmosphere rather than the syntax.
-
-![SoundEvent Editor](https://hammer5tools.github.io/static/soundevent_editor.png)
 
 ### Map Builder
 A streamlined interface for the compilation process. Whether it's a quick preview or a final bake with high-quality lighting, you can monitor your system's performance (CPU/RAM/GPU) in real-time while it works.
 
-![Map Builder](https://hammer5tools.github.io/static/map_builder.png)
-
 ### Cleanup Tool
 Is your addon folder getting messy? This tool scans your `.vmap` and sweeps away unused assets, keeping your project lean and professional.
 
-![Cleanup Tool](https://hammer5tools.github.io/static/cleanup_tool.png)
-
-### Addon Porter (Export/Import)
-Easily package your addon for release or collaboration. Filter out junk files, include compiled maps, and share your work with a single click.
-
-![Export / Import Addon](https://hammer5tools.github.io/static/export_import_addon.png)
-
 ---
-
-# For Developers
+<details>
+<summary>For Developers</summary>
 
 Want to contribute or build your own version? Here's the lowdown on the project structure.
 
@@ -85,4 +72,17 @@ The app is modular. Each editor lives in its own folder under `src/` and can run
 ### Distribution & Updates
 The project utilizes **Velopack** for delta-based updates. The GitHub Actions pipeline handles packaging automatically whenever a new tag (e.g., `v5.0.0`) is pushed to the repository.
 
+</details>
+
+### Third-Party Libraries & Dependencies
+Hammer 5 Tools builds upon several open-source libraries, tools, and frameworks:
+*   **[PySide6](https://pypi.org/project/PySide6/)**: Official Python bindings for Qt 6, serving as the UI framework for the application.
+*   **[PyOpenGL](https://pyopengl.sourceforge.net/) & [PyQtGraph](https://www.pyqtgraph.org/)**: 3D viewport rendering for models and real-time hardware performance telemetry visualization.
+*   **[Velopack](https://velopack.io/)**: Installer and dynamic auto-update framework for desktop applications.
+*   **[keyvalues3](https://github.com/kristiker/keyvalues3)**: Python library for reading and writing Valve's KeyValues3 (KV3) format.
+*   **[pythonnet](https://pythonnet.github.io/)**: Managed .NET CLR interop layer enabling Python to directly call C# assemblies.
+*   **[SkiaSharp](https://github.com/mono/SkiaSharp)**: Cross-platform 2D graphics API for asset texture rendering and image processing.
+*   **[ValveResourceFormat (VRF / Source2Viewer)](https://github.com/ValveResourceFormat/ValveResourceFormat)**: C# library for parsing, decompiling, and inspecting Valve Source 2 resources, VPK archives (`ValvePak`), and KeyValues formats (`ValveKeyValue`).
+*   **[CUE4Parse](https://github.com/FabianFG/CUE4Parse)**: C# parser library for Unreal Engine packages.
+*   **[Datamodel.NET](https://github.com/ValveResourceFormat/Datamodel.NET)**: C# library for reading and writing Valve DMX (Datamodel) asset files.
 ---
