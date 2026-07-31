@@ -234,15 +234,15 @@ property_tooltips = {
     "Element_MidpointDeformer": "Soft deform the center of a volume defined by two endpoints.",
     "CSmartPropElement_Model": {
         "description": "Places a model as the child of an element.",
-        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+        "image": r"src/images/help/img_placeholder.png",
     },
     "Model": {
         "description": "Places a model as the child of an element.",
-        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+        "image": r"src/images/help/img_placeholder.png",
     },
     "Element_Model": {
         "description": "Places a model as the child of an element.",
-        "image": r"D:\CG\Projects\Other\Hammer5Tools\src\images\help\img_placeholder.png",
+        "image": r"src/images/help/img_placeholder.png",
     },
     "CSmartPropElement_ModifyState": "An element which is used to apply a set of modifiers to the state of its parent.",
     "ModifyState": "An element which is used to apply a set of modifiers to the state of its parent.",
@@ -528,14 +528,25 @@ def resolve_image_path(path_str: str | None) -> str | None:
         return path_str
 
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-    candidate1 = os.path.join(base_dir, path_str)
+    candidate1 = os.path.normpath(os.path.join(base_dir, path_str))
     if os.path.exists(candidate1):
         return candidate1
 
     src_dir = os.path.join(base_dir, "src")
-    candidate2 = os.path.join(src_dir, path_str)
+    candidate2 = os.path.normpath(os.path.join(src_dir, path_str))
     if os.path.exists(candidate2):
         return candidate2
+
+    try:
+        from src.common import app_dir
+        cand3 = os.path.normpath(os.path.join(app_dir, path_str))
+        if os.path.exists(cand3):
+            return cand3
+        cand4 = os.path.normpath(os.path.join(app_dir, "src", path_str))
+        if os.path.exists(cand4):
+            return cand4
+    except Exception:
+        pass
 
     return None
 
