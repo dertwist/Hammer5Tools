@@ -617,7 +617,7 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 
         return data_out
 
-def make_composite_icon(base_icon, item_data, overlay_path=r"D:\CG\Projects\Other\Hammer5Tools\src\icons\tools\pet\func_constraint.png", size: int = 18):
+def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18):
     if base_icon is None or base_icon.isNull():
         return base_icon
     if not isinstance(item_data, dict):
@@ -666,13 +666,33 @@ def make_composite_icon(base_icon, item_data, overlay_path=r"D:\CG\Projects\Othe
     res_pixmap = QPixmap.fromImage(image)
 
     if is_expression:
-        overlay_pm = QPixmap(overlay_path)
-        if not overlay_pm.isNull():
-            painter = QPainter(res_pixmap)
-            overlay_size = max(int(icon_size * 0.65), 10)
-            scaled_overlay = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            painter.drawPixmap(icon_size - overlay_size, icon_size - overlay_size, scaled_overlay)
-            painter.end()
+        import os
+        if overlay_path is None or not os.path.exists(str(overlay_path)):
+            default_overlay = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "icons", "tools", "pet", "func_constraint.png")
+            )
+            if os.path.exists(default_overlay):
+                overlay_path = default_overlay
+            else:
+                try:
+                    from src.common import app_dir
+                    cand1 = os.path.normpath(os.path.join(app_dir, "src", "icons", "tools", "pet", "func_constraint.png"))
+                    cand2 = os.path.normpath(os.path.join(app_dir, "icons", "tools", "pet", "func_constraint.png"))
+                    if os.path.exists(cand1):
+                        overlay_path = cand1
+                    elif os.path.exists(cand2):
+                        overlay_path = cand2
+                except Exception:
+                    pass
+
+        if overlay_path and os.path.exists(str(overlay_path)):
+            overlay_pm = QPixmap(str(overlay_path))
+            if not overlay_pm.isNull():
+                painter = QPainter(res_pixmap)
+                overlay_size = max(int(icon_size * 0.65), 10)
+                scaled_overlay = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                painter.drawPixmap(icon_size - overlay_size, icon_size - overlay_size, scaled_overlay)
+                painter.end()
 
     return QIcon(res_pixmap)
 
