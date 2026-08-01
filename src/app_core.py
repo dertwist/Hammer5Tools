@@ -466,6 +466,29 @@ class Widget(QMainWindow):
         last_idx = self.ui.MainWindowTools_tabs.count()
         self.ui.MainWindowTools_tabs.insertTab(last_idx, self.source2pluginloader_tab, s2pl_icon, "Source2PluginLoader")
 
+        # Programmatically create Source2AssetLibrary tab
+        from src.editors.source2asset_library import Source2AssetLibraryWidget
+        self.source2assetlibrary_tab = QWidget()
+        self.source2assetlibrary_tab.setObjectName("source2assetlibrary_tab")
+        s2al_layout = QVBoxLayout(self.source2assetlibrary_tab)
+        s2al_layout.setContentsMargins(0, 0, 0, 0)
+        self.Source2AssetLibrary_instance = Source2AssetLibraryWidget(parent=self)
+        s2al_layout.addWidget(self.Source2AssetLibrary_instance)
+
+        s2al_icon = QIcon(":/icons/smartprop_editor.png")
+        last_idx = self.ui.MainWindowTools_tabs.count()
+        self.ui.MainWindowTools_tabs.insertTab(last_idx, self.source2assetlibrary_tab, s2al_icon, "AssetLibrary")
+
+        # Lazy loading tab change connection
+        self.ui.MainWindowTools_tabs.currentChanged.connect(self.on_tab_changed_lazy_loader)
+
+    def on_tab_changed_lazy_loader(self, index):
+        widget = self.ui.MainWindowTools_tabs.widget(index)
+        if hasattr(self, "source2pluginloader_tab") and widget == self.source2pluginloader_tab and hasattr(self, "Source2PluginLoader_instance"):
+            self.Source2PluginLoader_instance.ensure_loaded()
+        elif hasattr(self, "source2assetlibrary_tab") and widget == self.source2assetlibrary_tab and hasattr(self, "Source2AssetLibrary_instance"):
+            self.Source2AssetLibrary_instance.ensure_loaded()
+
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         if cs2_path is None:

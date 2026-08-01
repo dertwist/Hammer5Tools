@@ -80,6 +80,7 @@ class Source2PluginLoaderWidget(QWidget):
     """
     Main Source2PluginLoader marketplace tab widget.
     Enforces a strict fixed height (26px) across all toolbar inputs, buttons, and combo boxes for pixel alignment.
+    Connects author hyperlinks to embedded dark web browser.
     """
     def __init__(self, update_title=None, parent=None):
         super().__init__(parent)
@@ -428,6 +429,7 @@ class Source2PluginLoaderWidget(QWidget):
         for item in items:
             card = PluginCardWidget(item, self.grid_container)
             card.card_clicked.connect(self.on_card_clicked)
+            card.author_clicked.connect(self.on_author_clicked)
             card.install_requested.connect(self.install_plugin_action)
             card.open_folder_requested.connect(self.open_folder)
             self.cards.append(card)
@@ -478,10 +480,20 @@ class Source2PluginLoaderWidget(QWidget):
         if url:
             if not self.browser_panel.isVisible():
                 self.browser_panel.show()
-                # Restore splitter size
                 w = self.width()
                 self.main_splitter.setSizes([int(w * 0.55), int(w * 0.45)])
             self.browser_panel.load_url(url)
+
+    def on_author_clicked(self, author_url: str):
+        """
+        Clicking the author hyperlink opens their GitHub profile in the embedded web browser.
+        """
+        if author_url:
+            if not self.browser_panel.isVisible():
+                self.browser_panel.show()
+                w = self.width()
+                self.main_splitter.setSizes([int(w * 0.55), int(w * 0.45)])
+            self.browser_panel.load_url(author_url)
 
     def show_installed_plugins(self):
         self.clear_cards()

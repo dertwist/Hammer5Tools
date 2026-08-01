@@ -173,7 +173,11 @@ qt_stylesheet_button = """
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
-
+    }
+    QPushButton:disabled {
+        background-color: #161616;
+        color: #71717a;
+        border-color: #2e2e32;
     }"""
 qt_stylesheet_toolbutton = """
     /* QPushButton default and hover styles */

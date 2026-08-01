@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import time
 import zipfile
 import tempfile
 import urllib.request
@@ -22,6 +23,11 @@ def get_metadata_file() -> Path:
     meta_dir.mkdir(parents=True, exist_ok=True)
     return meta_dir / "installed.json"
 
+def get_index_file() -> Path:
+    meta_dir = Path(user_data_dir) / "source2pluginloader"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    return meta_dir / "index.json"
+
 def get_installed_plugins_db() -> dict:
     meta_file = get_metadata_file()
     if meta_file.exists():
@@ -40,13 +46,92 @@ def save_installed_plugins_db(db: dict):
     except Exception as e:
         print(f"Failed to save installed plugins db: {e}")
 
+def get_index_db() -> dict:
+    index_file = get_index_file()
+    if index_file.exists():
+        try:
+            with open(index_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {"version": "1.0", "updated_at": time.time(), "plugins": {}}
+
+def save_index_db(index_data: dict):
+    index_file = get_index_file()
+    try:
+        index_data["updated_at"] = time.time()
+        with open(index_file, 'w', encoding='utf-8') as f:
+            json.dump(index_data, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save index.json: {e}")
+
+def index_plugin_directory(repo_full_name: str, target_dir: Path) -> dict:
+    """
+    Indexes all files inside the installed plugin directory.
+    Returns file structure metadata.
+    """
+    indexed_files = []
+    total_bytes = 0
+
+    if target_dir.exists() and target_dir.is_dir():
+        for root, _, files in os.walk(target_dir):
+            for file_name in files:
+                file_path = Path(root) / file_name
+                try:
+                    rel_path = str(file_path.relative_to(target_dir)).replace('\\', '/')
+                    file_size = file_path.stat().st_size
+                    total_bytes += file_size
+                    indexed_files.append({
+                        "path": rel_path,
+                        "size": file_size
+                    })
+                except Exception:
+                    pass
+
+    return {
+        "file_count": len(indexed_files),
+        "total_size_bytes": total_bytes,
+        "files": indexed_files
+    }
+
+def update_index_for_plugin(repo_full_name: str, repo_info: dict, target_dir: Path):
+    """
+    Updates userdata/source2pluginloader/index.json with the indexed file contents of the plugin.
+    """
+    index_db = get_index_db()
+    if "plugins" not in index_db:
+        index_db["plugins"] = {}
+
+    file_index_data = index_plugin_directory(repo_full_name, target_dir)
+
+    index_db["plugins"][repo_full_name] = {
+        "full_name": repo_full_name,
+        "owner": repo_info.get("owner", ""),
+        "name": repo_info.get("name", ""),
+        "path": str(target_dir),
+        "html_url": repo_info.get("html_url", ""),
+        "author_url": f"https://github.com/{repo_info.get('owner', '')}",
+        "stargazers_count": repo_info.get("stargazers_count", 0),
+        "description": repo_info.get("description", ""),
+        "file_count": file_index_data["file_count"],
+        "total_size_bytes": file_index_data["total_size_bytes"],
+        "files": file_index_data["files"]
+    }
+
+    save_index_db(index_db)
+
+def remove_from_index(repo_full_name: str):
+    index_db = get_index_db()
+    if "plugins" in index_db and repo_full_name in index_db["plugins"]:
+        del index_db["plugins"][repo_full_name]
+        save_index_db(index_db)
+
 def is_plugin_installed(repo_full_name: str) -> bool:
     db = get_installed_plugins_db()
     if repo_full_name in db:
         install_path = Path(db[repo_full_name].get("path", ""))
         if install_path.exists():
             return True
-    # Fallback directory check
     safe_name = repo_full_name.replace("/", "_")
     target_dir = get_plugins_dir() / safe_name
     return target_dir.exists() and any(target_dir.iterdir())
@@ -74,7 +159,8 @@ def uninstall_plugin(repo_full_name: str) -> bool:
     if repo_full_name in db:
         del db[repo_full_name]
         save_installed_plugins_db(db)
-        
+
+    remove_from_index(repo_full_name)
     return success
 
 
@@ -82,6 +168,7 @@ class PluginDownloadWorker(QThread):
     """
     Background worker thread to download a repository ZIP and extract it to
     userdata/source2pluginloader/plugins/<owner_repo>/
+    Also indexes all extracted files into userdata/source2pluginloader/index.json.
     """
     progress = Signal(int, str)  # (percent, status_message)
     finished = Signal(str, str)  # (repo_full_name, target_dir_path)
@@ -163,18 +250,23 @@ class PluginDownloadWorker(QThread):
                 else:
                     zip_ref.extractall(target_dir)
 
-            self.progress.emit(95, "Updating installed plugins registry...")
-            db = get_installed_plugins_db()
-            db[self.full_name] = {
+            self.progress.emit(90, "Indexing package files into index.json...")
+            repo_info = {
                 "full_name": self.full_name,
                 "owner": self.owner,
                 "name": self.repo_name,
                 "path": str(target_dir),
                 "stargazers_count": self.repo_data.get("stargazers_count", 0),
                 "description": self.repo_data.get("description", ""),
-                "html_url": self.repo_data.get("html_url", ""),
-                "installed_at": urllib.parse.quote(self.default_branch)
+                "html_url": self.repo_data.get("html_url", "")
             }
+
+            # Update index.json with indexed package files
+            update_index_for_plugin(self.full_name, repo_info, target_dir)
+
+            self.progress.emit(95, "Updating installed plugins registry...")
+            db = get_installed_plugins_db()
+            db[self.full_name] = repo_info
             save_installed_plugins_db(db)
 
             self.progress.emit(100, f"Successfully installed {self.repo_name}!")
