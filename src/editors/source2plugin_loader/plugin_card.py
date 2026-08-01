@@ -11,9 +11,10 @@ import src.resources_rc
 class PluginCardWidget(QFrame):
     """
     Compact card widget representing a single plugin repository.
-    Uses sharp stylesheet borders and clean SVG icons matching Valve dark theme.
+    Includes clickable author hyperlink and sharp Valve dark UI styling.
     """
     card_clicked = Signal(dict)
+    author_clicked = Signal(str)
     install_requested = Signal(dict)
     open_folder_requested = Signal(str)
 
@@ -28,6 +29,7 @@ class PluginCardWidget(QFrame):
         self.html_url = repo_data.get("html_url", "")
         self.avatar_url = repo_data.get("owner", {}).get("avatar_url", "")
         self.topics = repo_data.get("topics", [])
+        self.author_url = f"https://github.com/{self.owner}" if self.owner else ""
 
         self._image_worker = None
         self.init_ui()
@@ -80,8 +82,12 @@ class PluginCardWidget(QFrame):
         self.title_label.setStyleSheet("font: 700 10.5pt 'Segoe UI'; color: #FFFFFF;")
         title_v.addWidget(self.title_label)
 
-        self.author_label = QLabel(f"by {self.owner}", self)
+        # Author Hyperlink
+        self.author_label = QLabel(f"by <a href='{self.author_url}' style='color: #3A78C4; text-decoration: none;'><b>{self.owner}</b></a>", self)
+        self.author_label.setTextFormat(Qt.RichText)
+        self.author_label.setOpenExternalLinks(False)
         self.author_label.setStyleSheet("font: 600 8.5pt 'Segoe UI'; color: #9D9D9D;")
+        self.author_label.linkActivated.connect(self.on_author_link_clicked)
         title_v.addWidget(self.author_label)
 
         top_layout.addLayout(title_v, 1)
@@ -150,6 +156,9 @@ class PluginCardWidget(QFrame):
         bottom_layout.addWidget(self.install_btn)
 
         layout.addLayout(bottom_layout)
+
+    def on_author_link_clicked(self, url):
+        self.author_clicked.emit(url)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
