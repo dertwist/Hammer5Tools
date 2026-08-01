@@ -1,5 +1,6 @@
 import os
 import sys
+import html
 import json
 import shutil
 import hashlib
@@ -19,6 +20,8 @@ from src.settings.main import get_addon_dir, get_addon_name, debug
 from src.forms.asset_manager.move_worker import MoveWorker
 from src.styles.common import apply_stylesheets, qt_stylesheet_button
 from src.widgets.tree import HierarchyTreeWidget
+from src.editors.smartprop_editor.property_tooltips import resolve_image_path
+from src.forms.cleanup.common import format_size
 import src.common as common
 
 # Storage constants
@@ -72,6 +75,24 @@ def get_valve_asset_icon(ext_or_category: str) -> QIcon:
     if os.path.isfile(icon_path):
         return QIcon(icon_path)
     return QIcon(":/icons/description_16dp.svg")
+
+
+def placeholder_pixmap(width: int, height: int) -> QPixmap:
+    """Stand-in thumbnail shown until the asset's own thumb.png arrives."""
+    pix = QPixmap(resolve_image_path("images/placeholder.png") or "")
+    if pix.isNull():
+        return pix
+    return pix.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+
+def author_html(asset: dict) -> str:
+    """'By <name>', hyperlinked when the index entry carries an author url."""
+    author = asset.get("author") or {}
+    name = html.escape(author.get("name") or "Community")
+    url = author.get("url") or ""
+    if url.startswith("http"):
+        return f"By <a href='{html.escape(url, quote=True)}' style='color: #4f98a3; text-decoration: none;'>{name}</a>"
+    return f"By {name}"
 
 
 def http_fetch_bytes(url: str, timeout: int = 15) -> bytes:
@@ -306,9 +327,10 @@ class AssetCardWidget(QFrame):
         card_layout.addWidget(title_label)
 
         # 3. Author Subtitle
-        author_name = self.asset.get('author', {}).get('name', 'Community')
-        author_label = QLabel(f"By {author_name}")
+        author_label = QLabel(author_html(self.asset))
         author_label.setFont(QFont("Segoe UI", 8))
+        author_label.setTextFormat(Qt.RichText)
+        author_label.setOpenExternalLinks(True)
         author_label.setStyleSheet("color: #8E8E93; border: none; background: transparent;")
         card_layout.addWidget(author_label)
 
@@ -370,6 +392,7 @@ class AssetCardWidget(QFrame):
             pixmap = QPixmap(dest_path)
             self.thumb_label.setPixmap(pixmap.scaled(214, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
+            self.thumb_label.setPixmap(placeholder_pixmap(214, 120))
             thumb_url = self.asset.get("thumb_url", "")
             cat = self.asset.get("category", "smartprops")
 
@@ -566,6 +589,8 @@ class ImportOptionsPanel(QFrame):
         info_col.addWidget(self.asset_name_label)
 
         self.author_meta_label = QLabel("")
+        self.author_meta_label.setTextFormat(Qt.RichText)
+        self.author_meta_label.setOpenExternalLinks(True)
         self.author_meta_label.setStyleSheet("color: #94a3b8; background: transparent; font-size: 8.5pt;")
         info_col.addWidget(self.author_meta_label)
 
@@ -577,6 +602,10 @@ class ImportOptionsPanel(QFrame):
         self.license_meta_label = QLabel("")
         self.license_meta_label.setStyleSheet("color: #4f98a3; background: transparent; font-weight: bold; font-size: 8.5pt;")
         info_col.addWidget(self.license_meta_label)
+
+        self.size_meta_label = QLabel("")
+        self.size_meta_label.setStyleSheet("color: #a1a1aa; background: transparent; font-size: 8.5pt;")
+        info_col.addWidget(self.size_meta_label)
 
         self.tags_meta_label = QLabel("")
         self.tags_meta_label.setStyleSheet("color: #71717a; background: transparent; font-style: italic; font-size: 8pt;")
@@ -670,6 +699,7 @@ class ImportOptionsPanel(QFrame):
             self.author_meta_label.setText("")
             self.cat_meta_label.setText("")
             self.license_meta_label.setText("")
+            self.size_meta_label.setText("")
             self.tags_meta_label.setText("")
             self.asset_desc_label.setText("")
             self.thumb_preview_label.clear()
@@ -681,9 +711,12 @@ class ImportOptionsPanel(QFrame):
 
         aid = asset["id"]
         self.asset_name_label.setText(f"{asset.get('name', aid)}")
-        self.author_meta_label.setText(f"By {asset.get('author', {}).get('name', 'Community')}")
+        self.author_meta_label.setText(author_html(asset))
         self.cat_meta_label.setText(f"Category: {asset.get('category', 'asset').lower()}")
         self.license_meta_label.setText(f"License: {asset.get('license', 'CC BY')}")
+
+        total_bytes = asset.get("download", {}).get("total_size_bytes", 0)
+        self.size_meta_label.setText(f"Size: {format_size(total_bytes)}" if total_bytes else "")
 
         tags_list = asset.get("tags", [])
         if tags_list:
@@ -700,8 +733,7 @@ class ImportOptionsPanel(QFrame):
             pix = QPixmap(dest_path)
             self.thumb_preview_label.setPixmap(pix.scaled(125, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
-            self.thumb_preview_label.clear()
-            self.thumb_preview_label.setText("Loading...")
+            self.thumb_preview_label.setPixmap(placeholder_pixmap(125, 90))
             thumb_url = asset.get("thumb_url", "")
             cat = asset.get("category", "smartprops")
 
