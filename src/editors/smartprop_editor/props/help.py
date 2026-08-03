@@ -184,7 +184,7 @@ class HelpPanel(QFrame):
             }}
             QScrollBar::handle:vertical {{
                 background: #444;
-                border-radius: 3px;
+                border-radius: 0px;
             }}
         """)
         layout.addWidget(self.browser, 1)
