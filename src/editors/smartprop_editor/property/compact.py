@@ -63,8 +63,10 @@ HOVER = "#414956"
 ACCENT = "#accc8d"
 
 # Alternating row backgrounds (zebra striping replaces the separator line).
-ROW_BG_EVEN = "#1C1C1C"
-ROW_BG_ODD = "#212121"
+# Straddle the #1C1C1C panel base: one row a little brighter, the next a little
+# darker. The old pair (#1C1C1C / #212121) was a 5-value step and read as flat.
+ROW_BG_EVEN = "#232323"
+ROW_BG_ODD = "#181818"
 # Background of the property row the user has selected (copy/paste + help target).
 ROW_BG_SELECTED = "#2A2E38"
 
@@ -80,19 +82,42 @@ VEC_PYR = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # P / Y / R  (pitch / yaw / roll)
 # Every setStyleSheet call re-parses the sheet and re-polishes the whole widget
 # subtree; the old per-row zebra pass touched ~60 widgets per property-frame
 # rebuild and measured ~180 ms of that rebuild on its own.
+# Object name stamped on every compact row container so the transparency rule
+# below can target it. A plain ``.QWidget`` selector will not do: it matches
+# exact QWidget instances only, and every row is a QWidget *subclass*
+# (PropertyFloat, PropertyBool, ...).
+ROW_OBJECT_NAME = "compactPropertyRow"
+
+
 def widget_qss():
-    """Flat container: no padding, no border. Background is painted by the parent."""
+    """Flat container: no padding, no border. Background is painted by the parent.
+
+    ``background: transparent`` is load-bearing, not cosmetic. The application
+    stylesheet carries an unqualified ``QWidget { background-color: #151515; }``
+    rule that matches every widget in the app, and QStyleSheetStyle paints it
+    over anything drawn in a parent's paintEvent — which silently flattened the
+    zebra stripes and the selection highlight to one colour. A rule in the
+    widget's own sheet wins over the application sheet, so the rows opt out
+    here and let PropertyFrame.paintEvent show through.
+    """
     return (
-        ".QWidget { color:%s; border:0px; padding:0px;"
+        "QWidget#%s { background: transparent; }"
+        # Reaches every QFrame nested in the row, including the plain grouping
+        # frames the .ui files add (vector3d's frame_4, say) which declare no
+        # sheet of their own and would otherwise take the application's opaque
+        # background. Controls that need a real background — comboboxes, text
+        # fields, buttons — set it in their own sheet, which wins over this one.
+        "QFrame { background: transparent; }"
+        ".QWidget { color:%s; border:0px; padding:0px; background: transparent;"
         " font: 8pt \"Segoe UI\"; }"
-        ".QWidget::selected { background-color:%s; }" % (FG, HOVER)
+        ".QWidget::selected { background-color:%s; }" % (ROW_OBJECT_NAME, FG, HOVER)
     )
 
 
 def frame_qss():
-    """Flat row frame — no separator line; the alternating bg divides rows."""
+    """Flat row frame — transparent so the parent's stripe shows through."""
     return (
-        ".QFrame { color:%s; border:0px;"
+        ".QFrame { color:%s; border:0px; background: transparent;"
         " font: 8pt \"Segoe UI\"; }" % FG
     )
 
@@ -335,6 +360,7 @@ def apply_single_row(prop, label_color=None):
     """
     prop.setMinimumHeight(0)
     prop.setMaximumHeight(ROW_MAX)
+    prop.setObjectName(ROW_OBJECT_NAME)
     prop.setStyleSheet(widget_qss())
 
     compact_frame(prop.ui.frame)
@@ -355,6 +381,7 @@ def apply_row_no_switch(prop, label_color=None):
     (e.g. PropertyReference): frame/label only, keeping any right-edge buttons."""
     prop.setMinimumHeight(0)
     prop.setMaximumHeight(ROW_MAX)
+    prop.setObjectName(ROW_OBJECT_NAME)
     prop.setStyleSheet(widget_qss())
 
     compact_frame(prop.ui.frame)
