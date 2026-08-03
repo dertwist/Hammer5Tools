@@ -175,6 +175,7 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.setAcceptDrops(True)
         self.ui.tree_hierarchy_widget.setDropIndicatorShown(True)
         self.ui.tree_hierarchy_widget.setDragDropMode(QTreeWidget.InternalMove)
+        self.ui.tree_hierarchy_widget.external_drop_handler = self.drop_files_into_hierarchy
         self.ui.tree_hierarchy_widget.itemDoubleClicked.connect(self._on_hierarchy_item_about_to_edit)
         self.ui.tree_hierarchy_widget.itemChanged.connect(self._on_hierarchy_item_changed)
 
@@ -1397,6 +1398,54 @@ class SmartPropDocument(QMainWindow):
             item.setExpanded(True)
 
         return item_visible or any_child_visible
+
+    def drop_files_into_hierarchy(self, paths, target_item):
+        """Create elements for .vmdl / .vsmart files dropped onto the hierarchy from the explorer."""
+        from src.settings.main import debug
+        addon_path = get_addon_dir()
+        items = []
+        for path in paths:
+            ext = os.path.splitext(path)[1].lower()
+            if ext not in ('.vmdl', '.vsmart'):
+                continue
+            try:
+                rel_path = os.path.relpath(path, addon_path).replace(os.path.sep, '/')
+            except ValueError:
+                continue
+            if rel_path.startswith('..'):
+                debug(f'Dropped file is outside the addon, skipping: {path}')
+                continue
+            base_name = os.path.splitext(os.path.basename(path))[0]
+            if ext == '.vsmart':
+                element = {
+                    '_class': 'CSmartPropElement_SmartProp',
+                    'm_sSmartProp': rel_path,
+                    'm_Modifiers': [],
+                    'm_SelectionCriteria': []
+                }
+            else:
+                element = {
+                    '_class': 'CSmartPropElement_Model',
+                    'm_sModelName': rel_path,
+                    'm_Modifiers': [],
+                    'm_SelectionCriteria': []
+                }
+            element['m_sLabel'] = base_name
+            self.element_id_generator.update_value(element)
+            items.append(HierarchyItemModel(
+                _name=base_name,
+                _data=element,
+                _class=get_clean_class_name_value(element),
+                _id=self.element_id_generator.get_key(element)
+            ))
+        if not items:
+            return
+        parent_item = target_item or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        command = BulkModelImportCommand(self, parent_item, items)
+        command.setText("Drop Files")
+        self.undo_stack.push(command)
+        self._modified = True
+        self._edited.emit()
 
     def open_bulk_model_importer(self):
         from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
