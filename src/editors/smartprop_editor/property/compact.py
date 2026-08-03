@@ -16,8 +16,8 @@ Dark palette kept: #1C1C1C bg, #E3E3E3 text, #414956 hover, accent #accc8d.
 """
 
 import os
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QRect, QSize
+from PySide6.QtGui import QColor, QIcon, QPainter
 from PySide6.QtWidgets import QSizePolicy, QLayout
 
 # src/icons (compact.py lives at src/editors/smartprop_editor/property/).
@@ -72,20 +72,26 @@ VEC_PYR = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # P / Y / R  (pitch / yaw / roll)
 
 
 # stylesheets
-def widget_qss(bg=BG):
-    """Flat container: no padding, no border."""
+#
+# Row backgrounds are deliberately NOT set here — rows are transparent and the
+# alternating stripe is painted once by the containing frame (see paint_zebra).
+# Every setStyleSheet call re-parses the sheet and re-polishes the whole widget
+# subtree; the old per-row zebra pass touched ~60 widgets per property-frame
+# rebuild and measured ~180 ms of that rebuild on its own.
+def widget_qss():
+    """Flat container: no padding, no border. Background is painted by the parent."""
     return (
-        ".QWidget { background-color:%s; color:%s; border:0px; padding:0px;"
+        ".QWidget { color:%s; border:0px; padding:0px;"
         " font: 8pt \"Segoe UI\"; }"
-        ".QWidget::selected { background-color:%s; }" % (bg, FG, HOVER)
+        ".QWidget::selected { background-color:%s; }" % (FG, HOVER)
     )
 
 
-def frame_qss(bg=BG):
+def frame_qss():
     """Flat row frame — no separator line; the alternating bg divides rows."""
     return (
-        ".QFrame { background-color:%s; color:%s; border:0px;"
-        " font: 8pt \"Segoe UI\"; }" % (bg, FG)
+        ".QFrame { color:%s; border:0px;"
+        " font: 8pt \"Segoe UI\"; }" % FG
     )
 
 
@@ -220,28 +226,77 @@ def style_slider(float_widget):
         pass
 
 
-def compact_frame(frame, bg=BG):
-    """Row frame: min ROW_H, allowed to grow to ROW_MAX (expression mode)."""
+def compact_frame(frame):
+    """Row frame: min ROW_H, allowed to grow to ROW_MAX (expression mode).
+
+    Leaves the frame transparent — the stripe behind it is painted by the
+    containing property frame (paint_zebra).
+    """
     frame.setMinimumHeight(ROW_H)
     frame.setMaximumHeight(ROW_MAX)
-    frame.setStyleSheet(frame_qss(bg))
-
-
-def set_widget_bg(prop, color):
-    """Set the container widget's own background (shows only in any gaps)."""
-    prop.setStyleSheet(widget_qss(color))
-
-
-def set_frame_bg(frame, color):
-    """Set a single row-frame's background."""
-    try:
-        frame.setStyleSheet(frame_qss(color))
-    except Exception:
-        pass
+    frame.setStyleSheet(frame_qss())
 
 
 def zebra_color(idx):
     return ROW_BG_ODD if (idx % 2) else ROW_BG_EVEN
+
+
+def paint_zebra(container, layout, base=BG):
+    """Paint ``container``'s background and the alternating row stripes.
+
+    Call from the container's paintEvent, and make sure the container itself
+    carries no ``background-color`` stylesheet — QStyleSheetStyle paints that
+    over anything drawn here. Multi-row editors (Vector3D: header + X/Y/Z)
+    advance the stripe per sub-row so their components alternate too.
+
+    This replaces a per-row setStyleSheet pass that cost ~180 ms per rebuild.
+    A palette is not an option: QStyleSheetStyle overwrites the palette of any
+    widget it polishes, and every row here carries a stylesheet.
+    """
+    painter = QPainter(container)
+    painter.fillRect(container.rect(), QColor(base))
+    idx = 0
+    for i in range(layout.count()):
+        item = layout.itemAt(i)
+        w = item.widget() if item is not None else None
+        frames = getattr(w, "_compact_frames", None)
+        if w is None or not frames or w.isHidden():
+            continue
+        for f in frames:
+            if f.isHidden():
+                continue
+            painter.fillRect(
+                QRect(f.mapTo(container, f.rect().topLeft()), f.size()),
+                QColor(zebra_color(idx)),
+            )
+            idx += 1
+    painter.end()
+
+
+def _paint_bg(widget, qss, selector, color):
+    """Opaque ``color`` background for a widget nothing else paints behind.
+
+    For standalone containers only (the detail-prop editor). Property rows are
+    transparent and get their stripe from paint_zebra. The ``_bg`` guard keeps
+    a repeated call with an unchanged colour free.
+    """
+    try:
+        if getattr(widget, "_bg", None) == color:
+            return
+        widget.setStyleSheet("%s %s { background-color:%s; }" % (qss, selector, color))
+        widget._bg = color
+    except Exception:
+        pass
+
+
+def set_widget_bg(prop, color):
+    """Set a standalone container's own background."""
+    _paint_bg(prop, widget_qss(), ".QWidget", color)
+
+
+def set_frame_bg(frame, color):
+    """Set a single row-frame's background."""
+    _paint_bg(frame, frame_qss(), ".QFrame", color)
 
 
 def set_row_bg(prop, color):
