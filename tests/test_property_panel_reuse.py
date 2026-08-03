@@ -11,9 +11,15 @@ Regressions this guards against:
 3. Row backgrounds were applied with one ``setStyleSheet`` per row on every
    rebuild (~180 ms per element). They are now painted once by
    ``PropertyFrame.paintEvent`` via ``compact.paint_zebra``, which only works
-   while nothing between the frame and its rows carries an *unqualified*
-   ``background-color`` rule — such a rule is inherited by every descendant and
-   paints over the stripes.
+   while nothing *anywhere above the rows* carries an unqualified
+   ``background-color`` rule — such a rule is inherited by every descendant,
+   makes it opaque, and hides the painting underneath.
+
+That last point is why the panel is built inside the real document window here
+rather than on its own. Three separate ancestors broke it in turn — the row
+frames, ``frame_layout`` in property_frame.ui, and finally
+``QMainWindow#MainWindow`` in document.ui — and a check that stops at the panel
+sees none of them.
 """
 
 import os
@@ -30,13 +36,16 @@ if src_dir not in sys.path:
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QUndoStack
-from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+)
 
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 
 from src.editors.smartprop_editor.property import compact
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
-from src.editors.smartprop_editor.props.legacy_property_list import LegacyPropertyList
+from src.editors.smartprop_editor.props.panel import SmartPropPropertyPanel
+from src.editors.smartprop_editor.ui_document import Ui_MainWindow
 from src.editors.smartprop_editor.props.model import ComponentRef
 from src.widgets.element_id import ElementIDGenerator
 
@@ -113,9 +122,16 @@ def main():
         items.append(it)
 
     doc = DummyDocument(tree)
-    plist = LegacyPropertyList(document=doc)
-    plist.resize(420, 900)
-    plist.show()
+    # The real document window, not a bare panel: its own stylesheet is part of
+    # what the row painting has to survive.
+    window = QMainWindow()
+    doc_ui = Ui_MainWindow()
+    doc_ui.setupUi(window)
+    panel = SmartPropPropertyPanel(document=doc, backend="legacy")
+    doc_ui.properties_layout.addWidget(panel)
+    plist = panel.property_list
+    window.resize(900, 900)
+    window.show()
 
     ref_a = ComponentRef(items[0], "element", -1)
     ref_b = ComponentRef(items[1], "element", -1)
