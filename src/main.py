@@ -1,8 +1,16 @@
 import sys
 import os
 import argparse
+import faulthandler
 import time
 import ctypes
+
+# A Qt-level abort (a slot touching a deleted C++ object, a bad paint) kills the
+# process with no Python traceback at all, which makes those reports impossible
+# to act on. This prints the native stack instead. Guarded: under pythonw and
+# some frozen builds stderr is None.
+if sys.stderr is not None:
+    faulthandler.enable()
 
 # Configure PySide6 DLL directory and library paths for Windows
 if sys.platform == 'win32':
