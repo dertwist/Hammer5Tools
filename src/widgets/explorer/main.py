@@ -1146,7 +1146,7 @@ class Explorer(QMainWindow):
                     elif path.endswith(tuple(generic_extensions)):
                         item.setIcon(QIcon("://icons/tools/assettypes/generic_sm.png"))
                     else:
-                        item.setIcon(QIcon("://icons/file.svg"))
+                        item.setIcon(QIcon("://icons/file_present_24dp.png"))
                 self._panel_list.addItem(item)
             except Exception as e:
                 debug(f"Skipping invalid panel path: {path} ({e})")

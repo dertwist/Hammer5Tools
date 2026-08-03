@@ -150,7 +150,7 @@ class Ui_documentation_dialog(object):
             }
         """)
         icon_play = QIcon()
-        icon_play.addFile(u":/icons/play_arrow_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon_play.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.watch_video_button.setIcon(icon_play)
         self.watch_video_button.setIconSize(QSize(18, 18))
         self.video_info_layout.addWidget(self.watch_video_button)
