@@ -16,15 +16,35 @@ one flat, header-less PropertyFrame per selected ComponentRef:
     LegacyPropertyList (QScrollArea)
     └── _container (QWidget)
         └── _container_layout (QVBoxLayout)
-            └── PropertyFrame per selected ref (header hidden)
+            └── PropertyFrame per component (header hidden)
+            └── stretch (permanent tail)
 
 Edits are written straight back into the tree item's full data dict via
 the ref (read old, mutate a deep copy, setData, push PropertySnapshotCommand)
 rather than through document.update_tree_item_value, which relied on
 scanning three separate layouts that no longer coexist under this design.
+
+Frame lifetime
+--------------
+Building a PropertyFrame is expensive — a 15-field element is ~580 QWidgets,
+and each row costs 18-67 ms to construct from scratch. Two caches keep that
+off the selection path:
+
+  * The frame cache here keeps the last ``_FRAME_CACHE_MAX`` frames alive,
+    parented and laid out but hidden. Reselecting a component it still holds
+    is a show()/hide() pair instead of a rebuild.
+  * When a frame is finally dropped it goes through ``PropertyFrame.dispose()``,
+    which returns its rows to the per-class PooledPropertyMixin pools so the
+    next build reconfigures them (~0.4 ms/row) rather than constructing them.
+
+Both are keyed on a content fingerprint, so a frame is only ever reused for
+data it still matches.
 """
 
 from __future__ import annotations
+
+from collections import OrderedDict
+from dataclasses import dataclass
 
 from src.common import fast_deepcopy
 from src.editors.smartprop_editor.props.property_list_base import AbstractPropertyList
@@ -38,6 +58,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+# How many built frames to keep alive for instant reselection. Each frame is
+# ~580 QWidgets, so this trades a few MB for a ~0 ms selection change.
+_FRAME_CACHE_MAX = 6
+
 
 def _content_hash(target: dict) -> int:
     """Stable content fingerprint of a property dict.
@@ -48,6 +72,24 @@ def _content_hash(target: dict) -> int:
     around equal contents).
     """
     return hash(tuple(sorted((k, repr(v)) for k, v in target.items())))
+
+
+def _frame_key(ref: ComponentRef) -> tuple:
+    """Cache key identifying the component a frame was built for.
+
+    ponytail: keyed on id(ref.item) — CPython can recycle an id after a tree
+    item is freed. A collision only matters if the recycled item's contents
+    also hash identically, in which case the cached frame renders the same
+    fields anyway; the ref it commits through is re-bound on every reuse
+    (see ``frame._ref``), so it can never write to the dead item.
+    """
+    return (id(ref.item), ref.kind, ref.index)
+
+
+@dataclass
+class _CachedFrame:
+    frame: object
+    content: int
 
 
 class LegacyPropertyList(AbstractPropertyList):
@@ -73,55 +115,66 @@ class LegacyPropertyList(AbstractPropertyList):
         """)
 
         self._container = QWidget()
-        self._container.setStyleSheet("background-color: #1C1C1C;")
+        # ID-qualified on purpose: an unqualified "background-color" rule is
+        # inherited by every descendant and would paint over the row stripes
+        # that PropertyFrame.paintEvent draws.
+        self._container.setObjectName("propertyListContainer")
+        self._container.setStyleSheet(
+            "QWidget#propertyListContainer { background-color: #1C1C1C; }"
+        )
         self._container_layout = QVBoxLayout(self._container)
         self._container_layout.setContentsMargins(0, 0, 0, 0)
         self._container_layout.setSpacing(0)
+        # Permanent tail — frames are always inserted above it, so it never has
+        # to be added or removed as the selection changes.
+        self._container_layout.addStretch(1)
 
         self._scroll.setWidget(self._container)
         layout.addWidget(self._scroll)
 
-        # Active PropertyFrame widgets, one per currently-selected ref
+        # Frames currently on screen, in display order.
         self._frames: list = []
         self._refs: list[ComponentRef] = []
-        # Identity signature of the last set_components() build, so reselecting
-        # the exact same component(s) can short-circuit a needless rebuild.
-        # None = "no previous build" / "invalidate".
-        self._last_build_sig: tuple | None = None
+        # key -> _CachedFrame, oldest first. Hidden frames stay parented and in
+        # the layout; only visibility distinguishes them from the live ones.
+        self._cache: OrderedDict = OrderedDict()
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def _clear_frames(self):
-        # Frames are returned to PropertyWidgetPool when the backend supports it;
-        # here we always owned them directly, so deleteLater is correct. Cancel
-        # any in-flight data worker first so it can't populate a dead frame.
-        while self._container_layout.count():
-            item = self._container_layout.takeAt(0)
-            w = item.widget() if item else None
-            if w is not None:
-                try:
-                    if hasattr(w, "cancel_worker"):
-                        w.cancel_worker()
-                    w.hide()
-                    w.deleteLater()
-                except Exception:
-                    pass
-        self._frames.clear()
-        self._last_build_sig = None
+    def _resolve(self, ref) -> dict | None:
+        """The dict a frame for ``ref`` is built from, or None if unresolvable.
 
-    def _make_frame(self, value: dict, group_layout):
+        Shallow copy: enough to strip the sibling component lists and to
+        fingerprint, without paying a deep copy on the cache-hit path.
+        """
+        if ref.item is None:
+            return None
+        data = ref.item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return None
+        target = ref.target(data)
+        if not isinstance(target, dict):
+            return None
+        value = dict(target)
+        if ref.kind == "element":
+            # Modifiers/criteria are separate components, not fields.
+            value.pop("m_Modifiers", None)
+            value.pop("m_SelectionCriteria", None)
+        return value
+
+    def _make_frame(self, value: dict):
         """Create a single header-less PropertyFrame with all required dependencies.
 
         ``value`` is expected to already be an owned deep copy produced by the
-        caller (set_components), so it is passed straight through — PropertyFrame
-        treats its ``value`` as owned and mutates it in place.
+        caller, so it is passed straight through — PropertyFrame treats its
+        ``value`` as owned and mutates it in place.
         """
         try:
             from src.editors.smartprop_editor.property_frame import PropertyFrame
 
             frame = PropertyFrame(
                 value=value,
-                widget_list=group_layout,
+                widget_list=self._container_layout,
                 variables_scrollArea=(
                     self.document.variable_viewport.ui.variables_scrollArea
                     if self.document
@@ -145,86 +198,124 @@ class LegacyPropertyList(AbstractPropertyList):
             print(f"[LegacyPropertyList] Could not create PropertyFrame: {exc}")
             return None
 
+    def _build(self, key, ref, value: dict, digest: int):
+        """Construct a frame for ``ref`` and register it in the cache."""
+        frame = self._make_frame(fast_deepcopy(value))
+        if frame is None:
+            return None
+
+        # The ref is read off the frame rather than captured, so reusing a
+        # cached frame for a different ref only needs the attribute rebound.
+        frame._ref = ref
+        frame.edited.connect(lambda f=frame: self._commit_frame(f._ref, f))
+        if self.document:
+            try:
+                frame.slider_pressed.connect(self.document._on_slider_started)
+                frame.committed.connect(self.document._on_slider_committed)
+            except Exception:
+                pass
+
+        self._cache[key] = _CachedFrame(frame, digest)
+        return frame
+
+    def _reuse(self, key, digest: int):
+        """Cached frame for ``key`` if it still matches ``digest``, else None."""
+        entry = self._cache.get(key)
+        if entry is None:
+            return None
+        if entry.content != digest:
+            self._retire(key)
+            return None
+        self._cache.move_to_end(key)
+        return entry.frame
+
+    def _retire(self, key):
+        entry = self._cache.pop(key, None)
+        if entry is None:
+            return
+        try:
+            self._frames.remove(entry.frame)
+        except ValueError:
+            pass
+        try:
+            entry.frame.dispose()
+        except Exception:
+            pass
+
+    def _evict(self, protected: set):
+        """Drop the oldest cached frames that are not currently on screen."""
+        for key in list(self._cache):
+            if len(self._cache) <= _FRAME_CACHE_MAX:
+                return
+            if key not in protected:
+                self._retire(key)
+
+    def _place(self, frame, position: int):
+        """Ensure ``frame`` sits at ``position`` in the container layout."""
+        layout = self._container_layout
+        if layout.indexOf(frame) != position:
+            layout.removeWidget(frame)
+            layout.insertWidget(position, frame)
+
+    def _is_current(self, wanted: list) -> bool:
+        """True when exactly these frames, with this content, are already shown."""
+        if len(wanted) != len(self._frames):
+            return False
+        for (key, _ref, _value, digest), frame in zip(wanted, self._frames):
+            entry = self._cache.get(key)
+            if entry is None or entry.frame is not frame or entry.content != digest:
+                return False
+        return True
+
+    def _refresh_digest(self, ref) -> None:
+        """Re-fingerprint a cached frame after its backing data was replaced."""
+        entry = self._cache.get(_frame_key(ref))
+        if entry is None:
+            return
+        value = self._resolve(ref)
+        if value is None:
+            self._retire(_frame_key(ref))
+            return
+        entry.content = _content_hash(value)
+
     # ── AbstractPropertyList interface ─────────────────────────────────────────
 
     def set_components(self, refs: list) -> None:
-        """Rebuild the flat PropertyFrame list from the given (selected) ComponentRefs.
+        """Show a PropertyFrame per selected ComponentRef.
 
-        Short-circuits when the selection resolves to the same component identity
-        as the last build *and* the underlying tree-item data dicts have not been
-        replaced — reselecting the same element then costs ~nothing instead of a
-        full teardown + worker + widget reconstruction.
+        Reselecting components whose frames are still cached and whose backing
+        data is unchanged costs a show()/hide(); anything else is built once and
+        then cached.
         """
         self._refs = list(refs)
 
-        # ── Identity short-circuit ───────────────────────────────────────
-        # Build a signature keyed on (item, kind, index, id(target_dict)). The
-        # id() check catches the case where undo/redo swapped in a fresh dict
-        # under the same item: the signature changes and we rebuild as before.
-        sig = self._build_signature(self._refs)
-        if sig is not None and sig == self._last_build_sig and self._frames:
-            return  # nothing to do — same selection, same backing data
-
-        self._clear_frames()
-        self._last_build_sig = sig
-
+        wanted = []
         for ref in self._refs:
-            data = ref.item.data(0, Qt.UserRole) if ref.item is not None else None
-            if not isinstance(data, dict):
+            value = self._resolve(ref)
+            if value is None:
                 continue
-            target = ref.target(data)
-            if not isinstance(target, dict):
-                continue
+            wanted.append((_frame_key(ref), ref, value, _content_hash(value)))
 
-            value = fast_deepcopy(target)
-            if ref.kind == "element":
-                # Modifiers/criteria are separate components, not fields.
-                value.pop("m_Modifiers", None)
-                value.pop("m_SelectionCriteria", None)
+        if self._is_current(wanted):
+            return
 
-            frame = self._make_frame(value, group_layout=self._container_layout)
+        for frame in self._frames:
+            frame.hide()
+        self._frames = []
+
+        for position, (key, ref, value, digest) in enumerate(wanted):
+            frame = self._reuse(key, digest)
             if frame is None:
-                continue
-            frame.edited.connect(lambda r=ref, f=frame: self._commit_frame(r, f))
-            if self.document:
-                try:
-                    frame.slider_pressed.connect(self.document._on_slider_started)
-                    frame.committed.connect(self.document._on_slider_committed)
-                except Exception:
-                    pass
-            self._container_layout.addWidget(frame)
+                frame = self._build(key, ref, value, digest)
+                if frame is None:
+                    continue
+            else:
+                frame._ref = ref
+            self._place(frame, position)
+            frame.show()
             self._frames.append(frame)
 
-        if self._frames:
-            self._container_layout.addStretch(1)
-
-    def _build_signature(self, refs: list) -> tuple | None:
-        """Cheap identity tuple for the current selection.
-
-        Returns None if the selection can't be resolved (so the caller rebuilds).
-
-        We cannot use id() of the target dict: PySide6 returns a fresh Python
-        wrapper around the QVariant on every QTreeWidgetItem.data() call, so the
-        id() differs even when the stored dict is unchanged. Instead we hash the
-        target dict's contents. The fingerprint costs ~tens of microseconds —
-        roughly one deep copy — but lets us skip an entire teardown+worker+widget
-        rebuild when the selection is genuinely unchanged, which is the common
-        case for reselecting the same element or hopping selection back and forth.
-        """
-        if not refs:
-            return ()
-        sig = []
-        for ref in refs:
-            if ref.item is None:
-                return None
-            data = ref.item.data(0, Qt.UserRole)
-            if not isinstance(data, dict):
-                return None
-            target = ref.target(data)
-            if not isinstance(target, dict):
-                return None
-            sig.append((id(ref.item), ref.kind, ref.index, _content_hash(target)))
-        return tuple(sig)
+        self._evict(protected={key for key, _, _, _ in wanted})
 
     def _commit_frame(self, ref: ComponentRef, frame) -> None:
         """Write frame.value back into the item's full data dict and push undo."""
@@ -266,8 +357,9 @@ class LegacyPropertyList(AbstractPropertyList):
             return
 
         item.setData(0, Qt.UserRole, new_data)
-        # setData replaced the backing dict, so the identity signature is stale.
-        self._last_build_sig = None
+        # setData replaced the backing dict — re-fingerprint so the next
+        # set_components() recognises this frame as still current.
+        self._refresh_digest(ref)
         if hasattr(self.document, "property_panel"):
             panel = self.document.property_panel
             if hasattr(panel, "components_list") and panel.current_item is item:
@@ -367,9 +459,8 @@ class LegacyPropertyList(AbstractPropertyList):
             return
 
         # The backing dict was replaced upstream (item.setData already happened
-        # in document.apply_property_data); invalidate our identity signature so
-        # the next set_components() rebuilds rather than short-circuiting.
-        self._last_build_sig = None
+        # in document.apply_property_data), so re-fingerprint this frame.
+        self._refresh_digest(ref)
 
     @staticmethod
     def _field_for_diff_key(key: str, ref: ComponentRef) -> str | None:
