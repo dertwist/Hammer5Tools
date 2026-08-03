@@ -145,6 +145,18 @@ class PreferencesDialog(QDialog):
         row_app.addStretch()
         layout_other.addLayout(row_app)
 
+        row_git = QHBoxLayout()
+        self.checkBox_git_generate_commit_messages = QCheckBox(
+            "Git sync: Generate commit messages", self.frame_other)
+        self.checkBox_git_generate_commit_messages.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_git_generate_commit_messages.setToolTip(
+            "Write the commit message automatically from the changed files. "
+            "Turn off to be asked for a message each time you press Git Sync."
+        )
+        row_git.addWidget(self.checkBox_git_generate_commit_messages)
+        row_git.addStretch()
+        layout_other.addLayout(row_git)
+
         layout.addWidget(self.frame_other)
         layout.addStretch()
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
@@ -383,6 +395,8 @@ class PreferencesDialog(QDialog):
             else:
                 self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
+        self.checkBox_git_generate_commit_messages.setChecked(
+            get_settings_bool('GitSync', 'generate_commit_messages', True))
         # Same default as get_channel(), so a dev build shows the box already ticked
         self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
         # The label describes the running build, not the channel being followed
@@ -465,6 +479,9 @@ class PreferencesDialog(QDialog):
         )
         self.action_buttons_panel.checkBox_dev_channel.toggled.connect(
             lambda checked: set_settings_bool('APP', 'dev_channel', checked)
+        )
+        self.checkBox_git_generate_commit_messages.toggled.connect(
+            lambda checked: set_settings_bool('GitSync', 'generate_commit_messages', checked)
         )
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())

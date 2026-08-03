@@ -18,10 +18,10 @@ from time import monotonic
 
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QRectF, Qt
 from PySide6.QtGui import QIcon, QPainter, QColor, QFont
-from PySide6.QtWidgets import QPushButton, QMessageBox
+from PySide6.QtWidgets import QPushButton, QMessageBox, QInputDialog, QLineEdit
 from shiboken6 import isValid
 
-from src.settings.common import get_addon_dir
+from src.settings.common import get_addon_dir, get_settings_bool
 from src.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
 from src.git_sync.commit_msg import generate
 from src.git_sync.conflict_dialog import ConflictDialog
@@ -228,6 +228,7 @@ class GitController:
         self._fetch_proc = None
         self._status_proc = None
         self._is_repo = True   # assumed until the first status says otherwise
+        self._has_origin = False   # set by refresh(); no origin -> commit only
         self._msg = ""         # pending commit message, mid-sync
         self._busy = False
         self._prog = None      # (when, bytes, rate) sample, for _tick_progress
@@ -262,9 +263,45 @@ class GitController:
 
     # state / refresh
     def refresh(self):
-        """Re-point at the current addon and kick a badge refresh."""
+        """Re-point at the current addon and kick a badge refresh.
+
+        `git remote` is read here rather than per-sync so the 15s fetch timer has
+        an answer without spawning git on the UI thread. Addons switch and syncs
+        finish rarely; one blocking spawn at each is cheap.
+        """
+        # Anything still in flight was started against the previous addon. Its
+        # answer would paint this addon's badges with the old addon's counts, and
+        # letting it run on means the QProcess outlives the reason it exists —
+        # which is where "QProcess: Destroyed while process is still running"
+        # came from on every switch.
+        self._discard(self._status_proc)
+        self._status_proc = None
+        self._discard(self._fetch_proc)
+        self._fetch_proc = None
+
         self.repo = GitRepo(get_addon_dir())
+        self._has_origin = self.repo.has_origin()
         self._tick_badges()
+
+    @staticmethod
+    def _discard(proc):
+        """Drop a poll we no longer want the answer to, without leaving it running.
+
+        Disconnect first: kill() makes finished/errorOccurred fire, and those
+        callbacks would otherwise walk into state that has already moved on.
+        deleteLater only after the process is actually gone — deleting a live
+        QProcess is what Qt warns about.
+        """
+        if proc is None or not isValid(proc):
+            return
+        try:
+            proc.disconnect()
+        except (RuntimeError, TypeError):
+            pass    # nothing was connected
+        if proc.state() != QProcess.NotRunning:
+            proc.kill()
+            proc.waitForFinished(2000)
+        proc.deleteLater()
 
     def _tick_badges(self):
         """One async `git status` (no network) driven by the fast timer.
@@ -291,7 +328,9 @@ class GitController:
             return
         self._status_proc = None
         out = _read(proc)
-        proc.deleteLater()
+        # errorOccurred can fire while git is still alive (a read error mid-run,
+        # not just FailedToStart); deleting it here would destroy a live process.
+        self._discard(proc)
         self._is_repo = code == 0
         local, ahead, behind = parse_status_v2(out) if self._is_repo else (0, 0, 0)
         self.button.set_counts(local, behind + ahead)
@@ -299,7 +338,8 @@ class GitController:
 
     def _auto_fetch(self):
         """Background `git fetch origin` every 15s; refresh the pull badge after."""
-        if self._busy or self._fetch_proc is not None or not self._is_repo:
+        if (self._busy or self._fetch_proc is not None or not self._is_repo
+                or not self._has_origin):
             return
         proc = QProcess(self.main)
         proc.setWorkingDirectory(self.repo.dir)
@@ -308,6 +348,8 @@ class GitController:
         proc.start("git", ["fetch", "origin"])
 
     def _fetch_done(self, proc):
+        if not isValid(proc):   # window closed mid-fetch; see _status_done
+            return
         proc.deleteLater()
         if self._fetch_proc is proc:
             self._fetch_proc = None
@@ -347,8 +389,26 @@ class GitController:
                 return False
         return True
 
+    def _commit_message(self, porcelain):
+        """The message to commit with, or None if the user cancelled.
+
+        Generated from the changed paths unless the user turned that off, in
+        which case the generated text seeds an editable prompt.
+        """
+        suggested = generate(porcelain)
+        if get_settings_bool('GitSync', 'generate_commit_messages', True):
+            return suggested
+        msg, ok = QInputDialog.getText(
+            self.main, "Commit message", "Describe what changed:",
+            QLineEdit.Normal, suggested)
+        if not ok:
+            return None
+        # An empty box means "just use the suggestion", not an empty commit.
+        return msg.strip() or suggested
+
     # the one-button sync flow
     # commit existing changes -> fetch -> pull (merge) -> resolve -> push
+    # With no origin there is nowhere to fetch from, so it stops after the commit.
     def sync(self):
         if self._busy:
             return
@@ -357,6 +417,10 @@ class GitController:
                                 "Git repository not found, cannot sync changes.")
             return
 
+        # Cheap to re-read and the repo may have gained a remote since the last
+        # refresh, so the sync path never runs on a stale answer.
+        self._has_origin = self.repo.has_origin()
+
         # The one blocking git call left: it gates a modal dialog, so it has to
         # answer before we go on. Its output feeds the size checks *and* the
         # commit message instead of running `git status` twice.
@@ -364,11 +428,19 @@ class GitController:
         if not self._precommit_size_checks(self.repo.changed_files(porcelain)):
             return  # user cancelled
 
-        self._set_busy(True)
         if not porcelain.strip():
+            if not self._has_origin:
+                self._log("Nothing to commit")
+                return
+            self._set_busy(True)
             self._start_fetch()
             return
-        self._msg = generate(porcelain)
+
+        msg = self._commit_message(porcelain)
+        if msg is None:
+            return  # user cancelled the prompt
+        self._msg = msg
+        self._set_busy(True)
         self._stream(["add", "-A"], self._after_add)
 
     def _after_add(self, _code):
@@ -379,6 +451,12 @@ class GitController:
         # touched-but-identical). Nothing to report, carry on with the sync.
         if code == 0:
             self._log(f"Committed: {self._msg}")
+        if not self._has_origin:
+            # Local-only repo. Committing is the whole sync; fetch/pull/push
+            # would just fail on a missing remote.
+            self._set_busy(False)
+            self.refresh()
+            return
         self._start_fetch()
 
     def _start_fetch(self):
@@ -487,11 +565,20 @@ class GitController:
         proc.deleteLater()
         if self.proc is proc:
             self.proc = None
-        on_done(exit_code)
+        # Off the signal, not inside it. deleteLater() above only *posts* the
+        # delete; a step that opens a modal dialog (the conflict resolver) spins
+        # a nested event loop, which delivers that event and destroys the
+        # QProcess while Qt is still emitting its finished signal — a hard crash,
+        # and the reason sync only ever died on merges. singleShot(0) runs the
+        # rest of the chain from the event loop, once the emit has unwound.
+        # Bound to the window so a close in that gap drops the callback instead
+        # of running it against freed widgets.
+        QTimer.singleShot(0, self.main, lambda: on_done(exit_code))
 
     def _set_busy(self, busy):
         self._busy = busy
-        self.button.setEnabled(not busy and self._is_repo)
+        if isValid(self.button):
+            self.button.setEnabled(not busy and self._is_repo)
 
 
 if __name__ == "__main__":   # python -m src.git_sync.controller
