@@ -225,11 +225,14 @@ class SmartPropPropertyPanel(QWidget):
 
         # ── Wire signals ───────────────────────────────────────────────────
         self.components_list.componentSelected.connect(self._on_component_selected)
-        # tree_view selection → help panel: only available in the new backend
+        # Property → help panel. The new backend reports the focused tree row;
+        # the legacy backend reports the selected PropertyFrame row.
         if backend == "new" and isinstance(self.property_list, PropertyPanel):
             self.property_list.tree_view.selectionModel().currentChanged.connect(
                 self._on_property_focused
             )
+        elif isinstance(self.property_list, LegacyPropertyList):
+            self.property_list.propertySelected.connect(self.help_panel.set_property_help)
 
     # ── Public API ──────────────────────────────────────────────────────────
 

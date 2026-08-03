@@ -50,8 +50,9 @@ from src.common import fast_deepcopy
 from src.editors.smartprop_editor.props.property_list_base import AbstractPropertyList
 from src.editors.smartprop_editor.props.model import ComponentRef
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QScrollArea,
     QVBoxLayout,
@@ -94,6 +95,9 @@ class _CachedFrame:
 
 class LegacyPropertyList(AbstractPropertyList):
     """Section 2 backend — old PropertyFrame-based property list."""
+
+    # A property row was selected: (value_class, label). Drives the help panel.
+    propertySelected = Signal(str, str)
 
     def __init__(self, document=None, parent=None):
         super().__init__(parent)
@@ -138,6 +142,29 @@ class LegacyPropertyList(AbstractPropertyList):
         # key -> _CachedFrame, oldest first. Hidden frames stay parented and in
         # the layout; only visibility distinguishes them from the live ones.
         self._cache: OrderedDict = OrderedDict()
+
+        # Clicking or tabbing into any control inside a row selects that row.
+        # One application-wide connection instead of an event filter per row:
+        # rows are rebuilt constantly and their controls swallow mouse presses
+        # before the row itself ever sees them.
+        app = QApplication.instance()
+        if app is not None:
+            app.focusChanged.connect(self._on_focus_changed)
+
+    # ── Property row selection ────────────────────────────────────────────────
+
+    def _on_focus_changed(self, _old, new):
+        if new is None:
+            return
+        for frame in self._frames:
+            row = frame.row_for_widget(new)
+            if row is not None:
+                frame.select_row(row)
+                # Only one row can be selected across the panel.
+                for other in self._frames:
+                    if other is not frame:
+                        other.select_row(None)
+                return
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
@@ -208,6 +235,7 @@ class LegacyPropertyList(AbstractPropertyList):
         # cached frame for a different ref only needs the attribute rebound.
         frame._ref = ref
         frame.edited.connect(lambda f=frame: self._commit_frame(f._ref, f))
+        frame.property_selected.connect(self.propertySelected)
         if self.document:
             try:
                 frame.slider_pressed.connect(self.document._on_slider_started)

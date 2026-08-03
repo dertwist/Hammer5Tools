@@ -307,6 +307,19 @@ class HelpPanel(QFrame):
         desc, img = get_tooltip_info(fd.field, f"Property '{fd.field}' ({fd.control}).")
         self.set_help(fd.label, desc, img)
 
+    def set_property_help(self, value_class: str, label: str = ""):
+        """Set help text for a property selected in the legacy (form) backend.
+
+        These descriptions used to be hover tooltips on each row's label; they
+        live here instead so they are readable without hunting for the hover,
+        and so building a row costs one lookup less.
+        """
+        if not value_class:
+            self.clear_help()
+            return
+        desc, img = get_tooltip_info(value_class, f"Property '{value_class}'.")
+        self.set_help(label or value_class, desc, img)
+
     def set_component_help(self, ref: ComponentRef | None):
         """Set help text for selected component ref (no focused property)."""
         if not ref:
