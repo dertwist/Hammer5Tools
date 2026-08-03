@@ -48,7 +48,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             self.completer.setCompletionPrefix(selected_text)
 
             popup = self.completer.popup()
-            popup.setStyleSheet('padding: 0px;, padding-right: 16px;')
+            popup.setStyleSheet('padding: 0px; padding-right: 16px;')
             popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
             cr = self.cursorRect()
             cr.setWidth(popup.sizeHintForColumn(0) + popup.verticalScrollBar().sizeHint().width() * 2)

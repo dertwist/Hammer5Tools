@@ -48,6 +48,7 @@ qt_stylesheet_classes = {
         padding: 2px;
         color: #6D6D6D;
         background-color: #9D9D9D;
+        }
         """,
     'label_second':
         """
@@ -62,6 +63,7 @@ qt_stylesheet_classes = {
         padding: 2px;
         color: #6D6D6D;
         background-color: #242424;
+        }
         """,
     'tree':
         """QTreeView {
