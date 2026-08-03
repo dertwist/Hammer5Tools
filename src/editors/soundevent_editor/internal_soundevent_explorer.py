@@ -21,6 +21,7 @@ from src.common import Kv3ToJson, SoundEventEditor_path
 from src.dotnet import DotNetInterop, VPKExtractor
 from src.settings.main import get_cs2_path, debug
 from src.styles.common import qt_stylesheet_widgetlist2
+from src.editors.soundevent_editor.thread_parking import park
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -373,7 +374,10 @@ class InternalSoundEventExplorer(QWidget):
             p for p in [os.path.join(get_cs2_path(), 'game', 'csgo', 'soundevents')]
             if os.path.isdir(p)
         ]
-        self.loader = SoundEventLoaderThread(disk_roots, self)
+        # Unparented and parked: an addon switch deletes this widget while the
+        # scan is still decompiling vsndevts, and a running QThread destroyed
+        # with its parent aborts the process. See thread_parking.
+        self.loader = park(SoundEventLoaderThread(disk_roots))
         self.loader.events_loaded.connect(self._on_events_loaded)
         self.loader.start()
 

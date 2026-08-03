@@ -22,20 +22,22 @@ from src.editors.soundevent_editor.audio_player import AudioPlayer
 from src.widgets.common import exception_handler
 
 def _quiesce_thread(thr):
-    """Fully stop a background VPK scanner before its editor is destroyed.
+    """Ask a background VPK scanner to stop, without waiting for it.
 
     Destroying a running QThread aborts the whole process
-    ("QThread: Destroyed while thread is still running"). On an addon switch the
-    old SoundEvent editor is torn down while its scanners may still be walking
-    the ~130k-entry pak01_dir.vpk, so we signal a stop and block until the OS
-    thread has actually exited. The scan loops poll the stop flag between entries,
-    so this returns quickly.
+    ("QThread: Destroyed while thread is still running"), which is what an addon
+    switch used to do while the scanners were still walking the ~130k-entry
+    pak01_dir.vpk. That is now handled by thread_parking: the scanners outlive
+    the editor instead of dying with it, and are waited on once at app exit.
+
+    So there is nothing to block on here — and blocking was its own bug. This
+    ran on the UI thread, so a scanner busy inside a .NET decompile froze the
+    whole switch until it came back up for air.
     """
     if thr is None or not thr.isRunning():
         return
     if hasattr(thr, 'stop'):
         thr.stop()
-    thr.wait()
 
 
 class CopyDefaultSoundFolders:
