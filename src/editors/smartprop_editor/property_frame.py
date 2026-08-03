@@ -1225,27 +1225,6 @@ class PropertyFrame(QWidget):
             copy_action = QAction("Copy", context_menu)
             context_menu.addActions([delete_action, copy_action])
 
-        asset_action = None
-        asset_path = None
-        if isinstance(self.value, dict):
-            for k, v in self.value.items():
-                if isinstance(v, str) and v.endswith(('.vmdl', '.vmat', '.vtex', '.vpcf', '.vsnd', '.vsmart')):
-                    asset_path = v
-                    break
-        elif isinstance(self.value, str) and self.value.endswith(('.vmdl', '.vmat', '.vtex', '.vpcf', '.vsnd', '.vsmart')):
-            asset_path = self.value
-            
-        if asset_path:
-            import os
-            from src.settings.main import get_addon_name, get_cs2_path
-            cs2_path = get_cs2_path()
-            addon = get_addon_name()
-            if cs2_path and addon:
-                full_asset_path = os.path.normpath(os.path.join(cs2_path, 'content', 'csgo_addons', addon, asset_path.replace('//', '/').replace('\\', '/')))
-                if os.path.exists(full_asset_path):
-                    context_menu.addSeparator()
-                    asset_action = context_menu.addAction(f"Export {os.path.basename(asset_path)}...")
-
         if context_menu.isEmpty():
             return
         action = context_menu.exec(QCursor.pos())
@@ -1259,12 +1238,6 @@ class PropertyFrame(QWidget):
             self.delete_action()
         elif copy_action is not None and action == copy_action:
             self.copy_action()
-        elif asset_action and action == asset_action:
-            main_window = self.window()
-            if hasattr(main_window, 'open_asset_exporter'):
-                main_window.open_asset_exporter()
-                if hasattr(main_window, 'asset_exporter_window'):
-                    main_window.asset_exporter_window.select_file(full_asset_path)
 
     def copy_action(self):
         clipboard = QApplication.clipboard()
