@@ -783,6 +783,16 @@ QWidget {
     outline: none;
 }
 
+/* Opt-out for children that must not hide a parent's custom painting.
+   The blanket rule above gives every widget in the application an opaque
+   background, so a widget that draws in its paintEvent has its work covered up
+   by its own children. Those children are marked with
+   styles.common.mark_paint_through(). The attribute selector outranks the
+   plain type selector above, so this wins without changing anything else. */
+QWidget[paintThrough="true"] {
+    background: transparent;
+}
+
 QWidget:item:checked {
     background-color: #151515;
     color: white;

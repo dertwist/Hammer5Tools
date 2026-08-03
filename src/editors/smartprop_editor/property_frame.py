@@ -35,6 +35,7 @@ import uuid
 import ast
 
 from src.widgets import exception_handler
+from src.styles.common import mark_paint_through
 from src.editors.smartprop_editor.property_data_worker import (
     PropertyDataWorker,
 )
@@ -319,15 +320,12 @@ class PropertyFrame(QWidget):
         # first with an explicit transparent rule, which also beats the second
         # (a widget's own sheet wins over the application sheet). paintEvent
         # then supplies the base colour, the zebra stripes and the highlight.
-        self.setObjectName("propertyFrameRoot")
-        self.setStyleSheet("QWidget#propertyFrameRoot { background: transparent; }")
-        # frame_layout sits between this frame and the rows and would paint over
-        # them too. Append rather than replace so the .ui keeps owning its
-        # border-top and margins.
-        self.ui.frame_layout.setStyleSheet(
-            self.ui.frame_layout.styleSheet()
-            + "\nQFrame#frame_layout { background: transparent; }"
-        )
+        self.setStyleSheet("")
+        # frame_layout sits between this frame and the rows, and an opaque child
+        # covers whatever paintEvent draws. Marking it beats editing its
+        # stylesheet: the .ui keeps owning its border-top and margins, and a
+        # dynamic property costs nothing next to restyling a whole subtree.
+        mark_paint_through(self.ui.frame_layout)
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
