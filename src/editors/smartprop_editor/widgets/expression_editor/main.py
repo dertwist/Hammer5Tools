@@ -298,15 +298,10 @@ class ExpressionEditor(QToolButton):
         # Variables section
         variables_label = QLabel("Available Variables:")
         variables_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        variables_label.setStyleSheet("""
-            QLabel {
-                color: #E3E3E3;
-                # padding: 4px;
-                # background-color: #2D2D2D;
-                # border: 1px solid #404040;
-                # border-radius: 3px;
-            }
-        """)
+        # QSS has no '#' line comment — '#' starts an ID selector, so the
+        # commented-out declarations that used to sit here made Qt reject the
+        # whole sheet ("Could not parse stylesheet of object QLabel").
+        variables_label.setStyleSheet("QLabel { color: #E3E3E3; }")
         left_layout.addWidget(variables_label)
 
         variables_list = QListWidget()
