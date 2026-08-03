@@ -65,6 +65,8 @@ ACCENT = "#accc8d"
 # Alternating row backgrounds (zebra striping replaces the separator line).
 ROW_BG_EVEN = "#1C1C1C"
 ROW_BG_ODD = "#212121"
+# Background of the property row the user has selected (copy/paste + help target).
+ROW_BG_SELECTED = "#2A2E38"
 
 # Vector component tag colours (kept close to the existing H5T hues).
 VEC_XYZ = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # X / Y / Z  (red / green / blue)
@@ -241,8 +243,9 @@ def zebra_color(idx):
     return ROW_BG_ODD if (idx % 2) else ROW_BG_EVEN
 
 
-def paint_zebra(container, layout, base=BG):
-    """Paint ``container``'s background and the alternating row stripes.
+def paint_zebra(container, layout, base=BG, selected=None):
+    """Paint ``container``'s background, the alternating row stripes, and the
+    highlight for the ``selected`` row widget (if any).
 
     Call from the container's paintEvent, and make sure the container itself
     carries no ``background-color`` stylesheet — QStyleSheetStyle paints that
@@ -262,12 +265,13 @@ def paint_zebra(container, layout, base=BG):
         frames = getattr(w, "_compact_frames", None)
         if w is None or not frames or w.isHidden():
             continue
+        row_color = QColor(ROW_BG_SELECTED) if w is selected else None
         for f in frames:
             if f.isHidden():
                 continue
             painter.fillRect(
                 QRect(f.mapTo(container, f.rect().topLeft()), f.size()),
-                QColor(zebra_color(idx)),
+                row_color or QColor(zebra_color(idx)),
             )
             idx += 1
     painter.end()

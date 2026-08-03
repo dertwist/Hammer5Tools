@@ -2,7 +2,7 @@ from src.settings.main import debug
 from src.editors.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Signal, Qt, QTimer, QThreadPool, QSize
+from PySide6.QtCore import Signal, Qt, QEvent, QTimer, QThreadPool, QSize
 from PySide6.QtGui import QAction
 from src.editors.smartprop_editor.property import compact
 
@@ -28,7 +28,6 @@ from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
 from src.editors.smartprop_editor.property.path_editor import PropertyPathEditor
-from src.editors.smartprop_editor.property_tooltips import property_tooltips
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
 import uuid
@@ -46,6 +45,9 @@ class PropertyFrame(QWidget):
     committed = Signal()
     selected_signal = Signal()
     clicked = Signal(str)
+    # A single property row was selected: (value_class, label). Empty strings
+    # mean the selection was cleared.
+    property_selected = Signal(str, str)
 
     # A lookup dictionary to avoid multiple if/elif checks; cached at class level
     _prop_classes_map_cache = {
@@ -150,6 +152,13 @@ class PropertyFrame(QWidget):
         return cls._PROPERTY_WORKER_POOL
 
     _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED'})
+
+    # Rows built per event-loop tick. Small enough that a tick stays well under
+    # a frame, large enough that a typical element finishes in a handful of them.
+    _BUILD_CHUNK = 4
+
+    # Clipboard tag for a single copied property value.
+    _FIELD_CLIP_TAG = "hammer5tools:smartprop_editor_field"
 
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
     _ONLY_VARIABLE_PROPERTIES = ()
@@ -346,6 +355,12 @@ class PropertyFrame(QWidget):
 
         self.only_variable_properties = list(self._ONLY_VARIABLE_PROPERTIES)
 
+        # Chunked build state (see _finish_init).
+        self._build_offset = 0
+        self._build_generation = 0
+        # Currently selected property row, for help / copy / paste.
+        self._selected_row = None
+
         # Worker result storage
         self._ordered_pairs = None
         self._worker_signals = None
@@ -403,18 +418,26 @@ class PropertyFrame(QWidget):
         self._worker_raw_value_with_class["_class"] = f"{self.name_prefix}_{self.name}"
 
     def _finish_init(self):
+        """Build the first chunk of rows, then hand the rest to the event loop.
+
+        Rows cost 18-67 ms each to construct, so a 15-field element takes most
+        of a second to build in one go and the panel stays blank for all of it.
+        Building _BUILD_CHUNK rows per event-loop tick lets the first rows paint
+        almost immediately and the rest stream in; total work is unchanged, but
+        the panel stops looking frozen.
+
+        on_edited() is NOT called here — the value dict stays incomplete until
+        _finalize_build() runs after the last chunk.
+        """
         try:
             self.parent()
         except RuntimeError:
             return  # underlying C/C++ object has been deleted
 
-        """
-        Phase 1: populate the first 4 property widgets immediately for fast
-        perceived response. The remaining properties are deferred one tick.
-        on_edited() is NOT called here ΓÇö the value dict is incomplete until
-        Phase 2 finishes.
-        """
-        self._add_properties_by_class(limit=4)
+        self._build_offset = 0
+        self._build_generation += 1
+        # `or 0` — exception_handler swallows errors and returns None.
+        self._build_offset += self._add_properties_by_class(limit=self._BUILD_CHUNK) or 0
         self.show_child()
 
         # Connect once per PropertyFrame lifetime (pool reuse / repeated _finish_init).
@@ -424,23 +447,38 @@ class PropertyFrame(QWidget):
 
         self.init_ui()
 
-        # Defer Phase 2 one event-loop tick (no artificial ms delay)
-        QTimer.singleShot(0, self._finish_init_phase2)
+        self._schedule_next_chunk()
 
-    def _finish_init_phase2(self):
+    def _schedule_next_chunk(self):
+        generation = self._build_generation
+        QTimer.singleShot(0, lambda g=generation: self._build_next_chunk(g))
+
+    def _build_next_chunk(self, generation: int):
+        """Build one more chunk of rows; finalize once none are left."""
+        if generation != self._build_generation:
+            return  # frame was reconfigured out from under this build
         try:
             self.parent()
         except RuntimeError:
             return  # underlying C/C++ object has been deleted
 
-        """
-        Phase 2: populate remaining properties and finalize the value dict.
-        _setup_layout2dgrid_suppression requires ALL widgets to be present.
-        on_edited() is called here for the first time ΓÇö value dict is now complete.
-        """
-        self._add_properties_by_class(offset=4)
+        added = self._add_properties_by_class(
+            offset=self._build_offset, limit=self._BUILD_CHUNK
+        ) or 0
+        self._build_offset += added
+        if added == self._BUILD_CHUNK:
+            self._schedule_next_chunk()
+        else:
+            self._finalize_build()
 
-        # Add unverified warning at the VERY END of both phases; prepend=True
+    def _finalize_build(self):
+        """Run once every row exists: warning row, field suppression, first commit.
+
+        _setup_layout2dgrid_suppression requires ALL widgets to be present, and
+        on_edited() is called here for the first time — the value dict is only
+        complete now.
+        """
+        # Add unverified warning at the VERY END of the build; prepend=True
         # forces it to the absolute top of the layout regardless of build order.
         if "_WARN_NOT_VERIFIED" in self.value:
             self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True, prepend=True)
@@ -449,17 +487,115 @@ class PropertyFrame(QWidget):
         self.on_edited()
 
     def paintEvent(self, event):
-        """Paint the frame background and the Source2-style alternating row
-        stripes in one pass.
+        """Paint the frame background, the Source2-style alternating row
+        stripes, and the selected row's highlight in one pass.
 
         The rows themselves are transparent. Colouring them individually meant
         a setStyleSheet per row on every (re)build — ~180 ms for a 15-field
         element, because Qt re-parses the sheet and re-polishes the subtree
         each time. Painting here is free at build time and costs one fillRect
-        per row only when the frame actually repaints.
+        per row only when the frame actually repaints, which is also what makes
+        the selection highlight free.
         """
         super().paintEvent(event)
-        compact.paint_zebra(self, self.ui.layout)
+        compact.paint_zebra(self, self.ui.layout, selected=self._selected_row)
+
+    # ── Per-property selection ──────────────────────────────────────────────
+
+    def eventFilter(self, obj, event):
+        """Select the property row the user pressed on.
+
+        Only clicks landing on the row's own inert area reach here; clicks that
+        land on a child control are handled by the focus route in
+        LegacyPropertyList, which covers keyboard navigation too.
+        """
+        if event.type() == QEvent.MouseButtonPress and obj in self._property_widgets:
+            self.select_row(obj)
+        return super().eventFilter(obj, event)
+
+    def select_row(self, widget) -> None:
+        """Mark ``widget`` as the selected property row and announce it."""
+        if widget is not None and widget not in self._property_widgets:
+            return
+        if widget is self._selected_row:
+            return
+        self._selected_row = widget
+        self.update()
+        value_class = getattr(widget, 'value_class', '') or ''
+        self.property_selected.emit(value_class, self._row_label(widget))
+
+    def row_for_widget(self, widget):
+        """Walk up from ``widget`` to the property row containing it, if any."""
+        while widget is not None:
+            if widget in self._property_widgets:
+                return widget
+            if widget is self:
+                return None
+            widget = widget.parentWidget()
+        return None
+
+    @staticmethod
+    def _row_label(widget) -> str:
+        """The row's on-screen label, for the help panel title."""
+        ui = getattr(widget, 'ui', None)
+        field = getattr(ui, 'property_class', None) if ui is not None else None
+        if field is not None:
+            try:
+                return field.text()
+            except RuntimeError:
+                pass
+        return getattr(widget, 'value_class', '') or ''
+
+    # ── Per-property copy / paste ───────────────────────────────────────────
+
+    def copy_property(self) -> bool:
+        """Put the selected row's value on the clipboard. False if nothing to copy."""
+        row = self._selected_row
+        if row is None:
+            return False
+        value_class = getattr(row, 'value_class', None)
+        if not value_class:
+            return False
+        # Row values are {value_class: payload}; None means "Default" mode.
+        payload = getattr(row, 'value', None)
+        if isinstance(payload, dict):
+            payload = payload.get(value_class)
+        QApplication.clipboard().setText(
+            f"{self._FIELD_CLIP_TAG};;{value_class};;{payload!r}"
+        )
+        return True
+
+    @classmethod
+    def _clipboard_has_property(cls) -> bool:
+        return QApplication.clipboard().text().startswith(cls._FIELD_CLIP_TAG + ";;")
+
+    def paste_property(self) -> bool:
+        """Apply a copied value to the selected row. False if it can't be applied.
+
+        The value is applied to whichever row is selected, not to the field it
+        was copied from — copying a spacing onto a length is the useful case.
+        Commits through on_edited(), so the change lands on the undo stack like
+        any other edit.
+        """
+        row = self._selected_row
+        if row is None:
+            return False
+        value_class = getattr(row, 'value_class', None)
+        if not value_class:
+            return False
+
+        parts = QApplication.clipboard().text().split(";;")
+        if len(parts) < 3 or parts[0] != self._FIELD_CLIP_TAG:
+            return False
+        try:
+            payload = ast.literal_eval(parts[2])
+        except (ValueError, SyntaxError):
+            return False
+
+        if not self.update_property_value(value_class, payload):
+            return False
+        self.on_edited()
+        return True
 
     @exception_handler
     def _add_widget_for_property(self, value_class, val, force=False, prepend=False):
@@ -486,12 +622,9 @@ class PropertyFrame(QWidget):
             # acquire to avoid top-level flash); show after reparenting.
             property_instance.show()
 
-            # Apply tooltips if available for this property.
-            if hasattr(property_instance, 'ui') and hasattr(property_instance.ui, 'property_class'):
-                tip_entry = property_tooltips.get(value_class, "")
-                tip = tip_entry.get("description", "") if isinstance(tip_entry, dict) else tip_entry
-                if tip:
-                    property_instance.ui.property_class.setToolTip(tip)
+            # Descriptions are shown in the help panel (Section 3) on selection
+            # rather than as a hover tooltip — see _select_row.
+            property_instance.installEventFilter(self)
 
             if hasattr(property_instance, 'slider_pressed'):
                 property_instance.slider_pressed.connect(self.slider_pressed)
@@ -663,14 +796,15 @@ class PropertyFrame(QWidget):
 
     @exception_handler
     def _add_properties_by_class(self, limit=None, offset=0):
-        # This function adds property widgets when needed
+        """Add up to ``limit`` rows starting at ``offset``. Returns how many
+        entries were consumed, so the chunked builder knows when it is done."""
         try:
             parent_widget = self.ui.layout.parentWidget()
             if parent_widget is not None:
                 parent_widget.setUpdatesEnabled(False)
         except RuntimeError:
             # Widget or layout was destroyed before this scheduled update ran
-            return
+            return 0
 
         try:
             # Prefer worker-prepared ordered pairs (Plan 5).
@@ -689,6 +823,7 @@ class PropertyFrame(QWidget):
             sliced = ordered_pairs[offset:end]
             for value_class, val_data in sliced:
                 self._add_widget_for_property(value_class, val_data)
+            return len(sliced)
         finally:
             if parent_widget is not None:
                 parent_widget.setUpdatesEnabled(True)
@@ -780,6 +915,7 @@ class PropertyFrame(QWidget):
                     w.setParent(None)
                     w.deleteLater()
         self._property_widgets.clear()
+        self._selected_row = None
 
     def dispose(self):
         """Tear this frame down, returning its rows to the per-class pools.
@@ -1024,13 +1160,13 @@ class PropertyFrame(QWidget):
             set_list_visible([self._w_count_w, self._w_count_l, self._w_alt, self._w_shift_w, self._w_shift_l], False)
 
     def init_ui(self):
-        if self.element:
-            pass
-        else:
-            self.setContextMenuPolicy(Qt.CustomContextMenu)
-            if not self._context_menu_signal_connected:
-                self.customContextMenuRequested.connect(self.show_context_menu)
-                self._context_menu_signal_connected = True
+        # The context menu carries the per-property Copy/Paste entries, so it is
+        # wired up in element mode too (where the component-level entries, owned
+        # by Section 1, are left out).
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        if not self._context_menu_signal_connected:
+            self.customContextMenuRequested.connect(self.show_context_menu)
+            self._context_menu_signal_connected = True
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -1068,10 +1204,27 @@ class PropertyFrame(QWidget):
 
     def show_context_menu(self):
         context_menu = QMenu()
-        delete_action = QAction("Delete", context_menu)
-        copy_action = QAction("Copy", context_menu)
-        context_menu.addActions([delete_action, copy_action])
-        
+
+        # ── Selected property row ───────────────────────────────────────────
+        copy_property_action = paste_property_action = None
+        row = self._selected_row
+        if row is not None:
+            label = self._row_label(row)
+            copy_property_action = QAction(f"Copy '{label}'", context_menu)
+            paste_property_action = QAction(f"Paste into '{label}'", context_menu)
+            paste_property_action.setEnabled(self._clipboard_has_property())
+            context_menu.addActions([copy_property_action, paste_property_action])
+
+        # ── Whole component ─────────────────────────────────────────────────
+        # In element mode Section 1 owns delete/copy of the component itself.
+        delete_action = copy_action = None
+        if not self.element:
+            if not context_menu.isEmpty():
+                context_menu.addSeparator()
+            delete_action = QAction("Delete", context_menu)
+            copy_action = QAction("Copy", context_menu)
+            context_menu.addActions([delete_action, copy_action])
+
         asset_action = None
         asset_path = None
         if isinstance(self.value, dict):
@@ -1093,10 +1246,18 @@ class PropertyFrame(QWidget):
                     context_menu.addSeparator()
                     asset_action = context_menu.addAction(f"Export {os.path.basename(asset_path)}...")
 
+        if context_menu.isEmpty():
+            return
         action = context_menu.exec(QCursor.pos())
-        if action == delete_action:
+        if action is None:
+            return
+        if action == copy_property_action:
+            self.copy_property()
+        elif action == paste_property_action:
+            self.paste_property()
+        elif delete_action is not None and action == delete_action:
             self.delete_action()
-        elif action == copy_action:
+        elif copy_action is not None and action == copy_action:
             self.copy_action()
         elif asset_action and action == asset_action:
             main_window = self.window()
@@ -1145,6 +1306,13 @@ class PropertyFrame(QWidget):
 
     def keyPressEvent(self, event):
         from PySide6.QtGui import QKeySequence
+        # A selected property row takes precedence: Ctrl+C/Ctrl+V then act on
+        # that one field rather than on the whole component.
+        if self._selected_row is not None:
+            if event.matches(QKeySequence.Copy) and self.copy_property():
+                return
+            if event.matches(QKeySequence.Paste) and self.paste_property():
+                return
         if event.matches(QKeySequence.Copy) and self._is_selected:
             self.copy_action()
             return
