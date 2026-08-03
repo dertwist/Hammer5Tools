@@ -24,6 +24,9 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setAcceptDrops(False)
         self.setDropIndicatorShown(True)
         self._ignore_next_drop = False
+        # Optional hook for file drops coming from outside the tree (e.g. the explorer).
+        # Signature: handler(paths: list[str], target_item: QTreeWidgetItem | None)
+        self.external_drop_handler = None
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -108,7 +111,39 @@ class HierarchyTreeWidget(QTreeWidget):
 
         painter.restore()
 
+    def _external_drop_paths(self, event):
+        """Local file paths of an external drop, or None if this is a normal internal drag."""
+        if self.external_drop_handler is None or event.source() is self:
+            return None
+        mime = event.mimeData()
+        if not mime.hasUrls():
+            return None
+        paths = [url.toLocalFile() for url in mime.urls() if url.isLocalFile()]
+        return paths or None
+
+    def dragEnterEvent(self, event):
+        if self._external_drop_paths(event):
+            # Copy, never move: a MoveAction would make the source view delete the files.
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            return
+        super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if self._external_drop_paths(event):
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            return
+        super().dragMoveEvent(event)
+
     def dropEvent(self, event):
+        paths = self._external_drop_paths(event)
+        if paths:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            self.external_drop_handler(paths, self.itemAt(event.position().toPoint()))
+            return
+
         if self._ignore_next_drop:
             self._ignore_next_drop = False
             super().dropEvent(event)

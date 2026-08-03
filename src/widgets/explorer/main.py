@@ -84,12 +84,20 @@ class CustomFileSystemModel(QFileSystemModel):
     def supportedDropActions(self):
         return Qt.MoveAction
 
+    def supportedDragActions(self):
+        # CopyAction must be offered so external drop targets (e.g. the SmartProp
+        # hierarchy) can accept as a copy — accepting as Move makes the source view
+        # removeRows() the dragged files off disk.
+        return Qt.CopyAction | Qt.MoveAction
+
     def mimeTypes(self):
         return ['text/uri-list']
 
     def mimeData(self, indexes):
+        # One index per visible column is selected for each row, so only the name
+        # column is taken — otherwise every dragged file is listed once per column.
         mime_data = QMimeData()
-        urls = [self.filePath(index) for index in indexes]
+        urls = [self.filePath(index) for index in indexes if index.column() == self.NAME_COLUMN]
         mime_data.setUrls([QUrl.fromLocalFile(url) for url in urls])
         return mime_data
 
