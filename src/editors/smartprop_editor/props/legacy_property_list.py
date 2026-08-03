@@ -115,7 +115,7 @@ class LegacyPropertyList(AbstractPropertyList):
         self._scroll.setStyleSheet("""
             QScrollArea { background-color: #1C1C1C; border: none; }
             QScrollBar:vertical { width: 8px; background: #1C1C1C; }
-            QScrollBar::handle:vertical { background: #444; border-radius: 3px; }
+            QScrollBar::handle:vertical { background: #444; border-radius: 0px; }
         """)
 
         self._container = QWidget()
