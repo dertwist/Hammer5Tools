@@ -31,6 +31,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QUndoStack
 from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
+from src.styles.qt_global_stylesheet import QT_Stylesheet_global
+
 from src.editors.smartprop_editor.property import compact
 from src.editors.smartprop_editor.property_frame import PropertyFrame
 from src.editors.smartprop_editor.props.legacy_property_list import LegacyPropertyList
@@ -96,6 +98,12 @@ def _row_for(frame, field):
 
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
+    # main.py applies this to the whole app. Without it these checks do not model
+    # the real thing: the sheet carries an unqualified
+    # "QWidget { background-color: #151515; }" that paints over anything drawn in
+    # a paintEvent, which is exactly how the zebra stripes and the selection
+    # highlight shipped invisible while the offscreen checks passed.
+    app.setStyleSheet(QT_Stylesheet_global)
 
     tree = QTreeWidget()
     item = QTreeWidgetItem(tree)
