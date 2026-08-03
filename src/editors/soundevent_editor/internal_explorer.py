@@ -13,6 +13,7 @@ from src.settings.main import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_path
 from src.widgets import exception_handler
 from src.dotnet import extract_vsnd_file, decode_vsnd
+from src.editors.soundevent_editor.thread_parking import park
 
 # pak01_dir.vpk is global CS2 content, identical for every addon. Scan it once
 # and reuse the result so switching addons neither re-walks ~130k VPK entries
@@ -89,7 +90,10 @@ class InternalSoundFileExplorer(QTreeWidget):
         if _VSND_FOLDERS_CACHE is not None:
             self.populate_tree(_VSND_FOLDERS_CACHE)
         else:
-            self.vpk_loader_thread = VPKLoaderThread(self)
+            # Unparented and parked: an addon switch deletes this tree while the
+            # scan is still walking the VPK, and a running QThread destroyed with
+            # its parent aborts the process. See thread_parking.
+            self.vpk_loader_thread = park(VPKLoaderThread())
             self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
             self.vpk_loader_thread.start()
 
@@ -153,7 +157,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             'sounds', path.replace('vsnd', 'vsnd_c')
         ).replace('/', '\\')
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-        self._decode_thread = VSNDDecodeThread(pak1, internal_audiopath, self)
+        self._decode_thread = park(VSNDDecodeThread(pak1, internal_audiopath))
         self._decode_thread.decoded.connect(self.play_audio_data.emit)
         self._decode_thread.start()
 
