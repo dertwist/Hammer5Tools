@@ -313,10 +313,21 @@ class PropertyFrame(QWidget):
         super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # The .ui sets a flat "background-color: #1C1C1C" on the form, which
-        # QStyleSheetStyle paints over anything drawn in paintEvent. Drop it;
-        # paintEvent fills the same base colour and adds the row stripes.
-        self.setStyleSheet("")
+        # Two stylesheets would otherwise paint over everything paintEvent draws:
+        # the .ui's flat "background-color: #1C1C1C" on the form, and the
+        # application-wide "QWidget { background-color: #151515; }". Replace the
+        # first with an explicit transparent rule, which also beats the second
+        # (a widget's own sheet wins over the application sheet). paintEvent
+        # then supplies the base colour, the zebra stripes and the highlight.
+        self.setObjectName("propertyFrameRoot")
+        self.setStyleSheet("QWidget#propertyFrameRoot { background: transparent; }")
+        # frame_layout sits between this frame and the rows and would paint over
+        # them too. Append rather than replace so the .ui keeps owning its
+        # border-top and margins.
+        self.ui.frame_layout.setStyleSheet(
+            self.ui.frame_layout.styleSheet()
+            + "\nQFrame#frame_layout { background: transparent; }"
+        )
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
