@@ -206,6 +206,7 @@ class DetailPropEditorWidget(QMainWindow):
 
         self.property_host = QWidget()
         self.property_host.setStyleSheet(compact.widget_qss())
+        compact.set_widget_bg(self.property_host, compact.BG)
         self.property_layout = QVBoxLayout(self.property_host)
         self.property_layout.setContentsMargins(0, 0, 0, 8)
         self.property_layout.setSpacing(0)

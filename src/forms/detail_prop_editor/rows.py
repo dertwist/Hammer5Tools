@@ -208,6 +208,7 @@ class SectionHeader(QWidget):
         layout.addWidget(label)
         layout.addStretch(1)
         self.setStyleSheet(compact.widget_qss())
+        compact.set_widget_bg(self, compact.BG)
 
 
 def build_row(field, value):

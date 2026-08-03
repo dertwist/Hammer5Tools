@@ -304,6 +304,10 @@ class PropertyFrame(QWidget):
         super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        # The .ui sets a flat "background-color: #1C1C1C" on the form, which
+        # QStyleSheetStyle paints over anything drawn in paintEvent. Drop it;
+        # paintEvent fills the same base colour and adds the row stripes.
+        self.setStyleSheet("")
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
@@ -435,36 +439,27 @@ class PropertyFrame(QWidget):
         on_edited() is called here for the first time ΓÇö value dict is now complete.
         """
         self._add_properties_by_class(offset=4)
-        
+
         # Add unverified warning at the VERY END of both phases; prepend=True
         # forces it to the absolute top of the layout regardless of build order.
         if "_WARN_NOT_VERIFIED" in self.value:
             self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True, prepend=True)
 
         self._setup_layout2dgrid_suppression()
-        self._apply_zebra()
         self.on_edited()
 
-    def _apply_zebra(self):
-        """Paint alternating row backgrounds (Source2-style) over the child
-        property rows in visual (top-to-bottom) order. Multi-row editors (e.g.
-        Vector3D: header + X/Y/Z) advance the stripe per sub-row so their
-        components alternate too. Re-applied on every (re)build so pooled rows
-        never keep a stale stripe colour."""
-        from src.editors.smartprop_editor.property import compact
-        idx = 0
-        layout = self.ui.layout
-        for i in range(layout.count()):
-            item = layout.itemAt(i)
-            w = item.widget() if item is not None else None
-            frames = getattr(w, "_compact_frames", None)
-            if w is None or not frames:
-                continue
-            # Container bg = the first sub-row's colour (only shows in gaps).
-            compact.set_widget_bg(w, compact.zebra_color(idx))
-            for f in frames:
-                compact.set_frame_bg(f, compact.zebra_color(idx))
-                idx += 1
+    def paintEvent(self, event):
+        """Paint the frame background and the Source2-style alternating row
+        stripes in one pass.
+
+        The rows themselves are transparent. Colouring them individually meant
+        a setStyleSheet per row on every (re)build — ~180 ms for a 15-field
+        element, because Qt re-parses the sheet and re-polishes the subtree
+        each time. Painting here is free at build time and costs one fillRect
+        per row only when the frame actually repaints.
+        """
+        super().paintEvent(event)
+        compact.paint_zebra(self, self.ui.layout)
 
     @exception_handler
     def _add_widget_for_property(self, value_class, val, force=False, prepend=False):
@@ -785,6 +780,24 @@ class PropertyFrame(QWidget):
                     w.setParent(None)
                     w.deleteLater()
         self._property_widgets.clear()
+
+    def dispose(self):
+        """Tear this frame down, returning its rows to the per-class pools.
+
+        The only supported way for an owner to drop a PropertyFrame. Going
+        straight to deleteLater() destroys the child rows along with the frame,
+        so PooledPropertyMixin's pools never refill and every subsequent build
+        pays cold construction (18-67 ms per row, against 0.4 ms for a pooled
+        reconfigure).
+        """
+        self.cancel_worker()
+        # Invalidate any in-flight worker results (race safety).
+        self._worker_generation = getattr(self, "_worker_generation", 0) + 1
+        self._ordered_pairs = None
+        self._clear_widgets()
+        self.hide()
+        self.setParent(None)
+        self.deleteLater()
 
     def _reconfigure(
         self,
@@ -1140,17 +1153,7 @@ class PropertyFrame(QWidget):
     def delete_action(self):
         self.value = None
         self.edited.emit()
-        self.cancel_worker()
-        # Invalidate any in-flight worker results (race safety).
-        self._worker_generation = getattr(self, "_worker_generation", 0) + 1
-        self._ordered_pairs = None
-
-        # Deferred import to avoid circular import at module load time.
-        try:
-            from src.editors.smartprop_editor.property_widget_pool import PropertyWidgetPool
-            PropertyWidgetPool.instance().release(self.prop_class, self)
-        except Exception:
-            self.deleteLater()
+        self.dispose()
 
 
 PropertyFrame._build_ordered_pairs_cache()
