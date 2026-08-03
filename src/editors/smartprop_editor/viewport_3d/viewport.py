@@ -93,6 +93,16 @@ class SmartProp3DViewport(QWidget):
         self.widgets_check.toggled.connect(self._on_show_widgets_changed)
         tb_layout.addWidget(self.widgets_check)
 
+        # Dynamic isolation toggle — while on, the viewport keeps showing only
+        # the selected element's subtree, re-isolating as the selection changes.
+        self.isolate_check = self._make_toggle_button(
+            tooltip="Dynamic Isolation — always show only the selected element",
+            icon_off=_hammer_tool_icon_path("toggle_show_cordons.png"),
+            icon_on=_hammer_tool_icon_path("toggle_show_cordons_activated.png"),
+        )
+        self.isolate_check.toggled.connect(self._on_dynamic_isolation_changed)
+        tb_layout.addWidget(self.isolate_check)
+
         # View dropdown (Textured, Solid, Wireframe)
         tb_layout.addWidget(QLabel("View:"))
         self.view_combo = QComboBox()
@@ -208,6 +218,9 @@ class SmartProp3DViewport(QWidget):
     def _on_display_groups_changed(self, checked):
         self.render_area.display_groups = bool(checked)
         self.render_area.update_viewport()
+
+    def _on_dynamic_isolation_changed(self, checked):
+        self.render_area.set_dynamic_isolation(bool(checked))
 
     def _on_show_widgets_changed(self, checked):
         self.render_area.show_widgets = bool(checked)
