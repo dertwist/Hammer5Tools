@@ -18,9 +18,16 @@ _NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
 # First line of every Git LFS pointer file; see show_stage.
 _LFS_POINTER = b"version https://git-lfs.github.com/spec/v1"
 
+# Read-only git commands still take .git/index.lock to write back a refreshed
+# index, so a poll every 2s regularly collides with whatever else has the addon
+# open — Hammer, the Steam tools, a shell — and both sides see "Unable to create
+# index.lock". --no-optional-locks drops that write; it is exactly what git ships
+# for background pollers. Must sit before the subcommand.
+NO_LOCKS = "--no-optional-locks"
+
 # -uall lists untracked files individually; the default collapses whole dirs to
 # "dir/", which both undercounts the badge and hides per-file sizes.
-STATUS_V2_ARGS = ["status", "--porcelain=v2", "--branch", "-uall"]
+STATUS_V2_ARGS = [NO_LOCKS, "status", "--porcelain=v2", "--branch", "-uall"]
 
 
 def parse_status_v2(out):
@@ -52,12 +59,22 @@ class GitRepo:
                 ["git", *args],
                 cwd=self.dir,
                 capture_output=True,
-                text=True,
+                # git emits UTF-8 regardless of the console codepage. text=True
+                # alone decodes with the locale codec — cp1252 on a western
+                # Windows — so one accented character in a branch name, author or
+                # commit subject killed subprocess' reader thread and run() then
+                # handed back an empty string: no error, just a repo that looked
+                # clean when it was not. errors="replace" keeps a genuinely
+                # mis-encoded byte cosmetic instead of silently emptying output.
+                encoding="utf-8",
+                errors="replace",
                 creationflags=_NO_WINDOW,
             )
             return p.returncode, (p.stdout or ""), (p.stderr or "")
-        except (OSError, ValueError):
-            # git not installed / bad cwd
+        except Exception:
+            # git missing, bad cwd, or output this could not be read. A status
+            # poll must never be able to take the app down, so the caller just
+            # sees "no repo".
             return 1, "", ""
 
     def is_repo(self):
@@ -65,9 +82,14 @@ class GitRepo:
         return code == 0 and out.strip() == "true"
 
     def status_porcelain(self):
-        # -uall: see STATUS_V2_ARGS.
-        code, out, _ = self._run("status", "--porcelain", "-uall")
+        # -uall and --no-optional-locks: see STATUS_V2_ARGS.
+        code, out, _ = self._run(NO_LOCKS, "status", "--porcelain", "-uall")
         return out if code == 0 else ""
+
+    def has_origin(self):
+        """True if a remote named origin exists — i.e. there is anywhere to sync to."""
+        code, out, _ = self._run(NO_LOCKS, "remote")
+        return code == 0 and "origin" in out.split()
 
     def changed_files(self, porcelain=None):
         """(path, size_bytes) for added/modified/untracked files present on disk.
