@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1280, 720)
-        MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
+        MainWindow.setStyleSheet(u"QMainWindow#MainWindow { background-color: #1C1C1C; }")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
         icon = QIcon()
