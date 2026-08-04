@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
+from shiboken6 import isValid
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets.common import ErrorInfo
@@ -449,8 +450,12 @@ class Explorer(QMainWindow):
         selection_model.select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
         self.tree.setCurrentIndex(proxy_index)
         
-        # Use singleShot to allow the UI to process expansion before scrolling
-        QTimer.singleShot(50, lambda: self.tree.scrollTo(proxy_index, QTreeView.PositionAtCenter))
+        # Use singleShot to allow the UI to process expansion before scrolling.
+        # tree is captured by value and re-checked at fire time: an addon/editor
+        # switch can deleteLater() this Explorer's frame (and its tree) before the
+        # 50ms elapses, and calling into the deleted C++ object crashes the process.
+        tree = self.tree
+        QTimer.singleShot(50, lambda: isValid(tree) and tree.scrollTo(proxy_index, QTreeView.PositionAtCenter))
         self.tree.setFocus()
 
     def select_last_opened_path(self):
