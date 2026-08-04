@@ -66,7 +66,7 @@ ACCENT = "#accc8d"
 # Straddle the #1C1C1C panel base: one row a little brighter, the next a little
 # darker. The old pair (#1C1C1C / #212121) was a 5-value step and read as flat.
 ROW_BG_EVEN = "#232323"
-ROW_BG_ODD = "#181818"
+ROW_BG_ODD = "#1D1D1F"
 # Background of the property row the user has selected (copy/paste + help target).
 ROW_BG_SELECTED = "#2A2E38"
 
