@@ -369,6 +369,8 @@ class PropertyFrame(QWidget):
         self._build_generation = 0
         # Currently selected property row, for help / copy / paste.
         self._selected_row = None
+        # One deferred restripe in flight at a time (see paintEvent).
+        self._zebra_pending = False
 
         # Worker result storage
         self._ordered_pairs = None
@@ -496,18 +498,27 @@ class PropertyFrame(QWidget):
         self.on_edited()
 
     def paintEvent(self, event):
-        """Paint the frame background, the Source2-style alternating row
-        stripes, and the selected row's highlight in one pass.
+        """Keep the row stripes in step with whatever is currently visible.
 
-        The rows themselves are transparent. Colouring them individually meant
-        a setStyleSheet per row on every (re)build — ~180 ms for a 15-field
-        element, because Qt re-parses the sheet and re-polishes the subtree
-        each time. Painting here is free at build time and costs one fillRect
-        per row only when the frame actually repaints, which is also what makes
-        the selection highlight free.
+        Rows appear and disappear from a lot of places — chunked building, the
+        2D-grid field suppression, and every logic_switch that swaps a row
+        between value/variable/expression mode — so rather than hunting down
+        each of those call sites, the parity is checked against what is on
+        screen right here and corrected when it has drifted. zebra_plan() is a
+        walk over ~20 frames returning nothing in the steady state, so the check
+        is not worth avoiding; the repolish is deferred out of the paint because
+        restyling a widget mid-paint is not allowed.
         """
         super().paintEvent(event)
-        compact.paint_zebra(self, self.ui.layout, selected=self._selected_row)
+        if not self._zebra_pending and compact.zebra_plan(
+            self.ui.layout, self._selected_row
+        ):
+            self._zebra_pending = True
+            QTimer.singleShot(0, self._apply_zebra)
+
+    def _apply_zebra(self):
+        self._zebra_pending = False
+        compact.assign_zebra(self.ui.layout, selected=self._selected_row)
 
     # ── Per-property selection ──────────────────────────────────────────────
 
@@ -529,7 +540,7 @@ class PropertyFrame(QWidget):
         if widget is self._selected_row:
             return
         self._selected_row = widget
-        self.update()
+        self._apply_zebra()
         value_class = getattr(widget, 'value_class', '') or ''
         self.property_selected.emit(value_class, self._row_label(widget))
 
