@@ -9,16 +9,16 @@ Regressions this guards against:
 2. There was no frame cache, so reselecting a component already shown rebuilt
    every widget from scratch.
 3. Row backgrounds were applied with one ``setStyleSheet`` per row on every
-   rebuild (~180 ms per element). They are now painted once by
-   ``PropertyFrame.paintEvent`` via ``compact.paint_zebra``, which only works
-   while nothing *anywhere above the rows* carries an unqualified
-   ``background-color`` rule — such a rule is inherited by every descendant,
-   makes it opaque, and hides the painting underneath.
+   rebuild (~180 ms per element). The stripe now lives in the row frame's own
+   sheet, keyed on the ``zebraRow`` dynamic property, so restriping is a
+   setProperty plus a repolish of that one frame.
 
-That last point is why the panel is built inside the real document window here
-rather than on its own. Three separate ancestors broke it in turn — the row
-frames, ``frame_layout`` in property_frame.ui, and finally
-``QMainWindow#MainWindow`` in document.ui — and a check that stops at the panel
+The panel is still built inside the real document window here. The stripe was
+first drawn *behind* the rows from ``PropertyFrame.paintEvent``, and that only
+worked while nothing anywhere above the rows carried an unqualified
+``background-color`` — four ancestors broke it in turn (the row frames,
+vector3d's ``frame_4``, ``frame_layout`` in property_frame.ui, and
+``QMainWindow#MainWindow`` in document.ui), and a check that stops at the panel
 sees none of them.
 """
 
@@ -187,25 +187,58 @@ def main():
     plist.set_components([ref_a])
     _drain(app, 30)
     frame = plist._frames[0]
-    image = frame.grab().toImage()
 
-    seen = []
-    layout = frame.ui.layout
-    for i in range(layout.count()):
-        item = layout.itemAt(i)
-        widget = item.widget() if item is not None else None
-        for sub in getattr(widget, "_compact_frames", None) or ():
-            if sub.isHidden():
+    def _stripes():
+        """Top-left pixel of every visible row frame, sampled from its own grab.
+
+        Grabbing each frame rather than the whole panel is what makes this a
+        check of the stripe and not of the layout: a frame scrolled out of the
+        viewport still reports the colour it would paint.
+        """
+        out = []
+        layout = frame.ui.layout
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            widget = item.widget() if item is not None else None
+            if widget is not None and widget.isHidden():
                 continue
-            top_left = sub.mapTo(frame, sub.rect().topLeft())
-            seen.append(image.pixelColor(top_left.x() + 4, top_left.y() + 4).name().upper())
+            for sub in getattr(widget, "_compact_frames", None) or ():
+                if sub.isHidden():
+                    continue
+                out.append(sub.grab().toImage().pixelColor(4, 4).name().upper())
+        return out
 
     even = compact.ROW_BG_EVEN.upper()
     odd = compact.ROW_BG_ODD.upper()
+    seen = _stripes()
     assert seen, "no compact rows found — the zebra sampling itself is broken"
     expected = [even if i % 2 == 0 else odd for i in range(len(seen))]
     assert seen == expected, f"rows are not alternating: {seen}"
     print(f"[PASS] {len(seen)} rows alternate {even}/{odd}")
+
+    # ── 6. Selecting a row repaints just that row ───────────────────────────
+    target = frame._property_widgets[1]
+    frame.select_row(target)
+    _drain(app)
+    seen = _stripes()
+    selected = compact.ROW_BG_SELECTED.upper()
+    assert seen.count(selected) == len(target._compact_frames), (
+        f"selected row is not highlighted: {seen}"
+    )
+    print(f"[PASS] the selected row is painted {selected}")
+
+    # ── 7. An opaque ancestor no longer flattens the rows ───────────────────
+    # The exact shape that broke this four times over, applied deliberately.
+    # A rule in the frame's own sheet outranks any ancestor's, so the stripe
+    # survives; when it was painted behind the rows this hid it completely.
+    window.setStyleSheet("QWidget { background-color: #FF0000; }")
+    _drain(app)
+    seen = _stripes()
+    assert "#FF0000" not in seen, (
+        f"an ancestor's unqualified background painted over the rows: {seen}"
+    )
+    print("[PASS] rows keep their stripe under an opaque ancestor")
+    window.setStyleSheet("")
 
     print("\nAll checks passed.")
 
