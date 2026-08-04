@@ -500,11 +500,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def _render_scene_models(self, view, proj, cam_pos, picking=False, mask_id=None):
         from OpenGL import GL
 
-        # ``mask_id`` renders a selection silhouette: every element is drawn with
-        # the flat picking shader, but the element whose id == mask_id is painted
-        # solid white and all others black, so the resulting buffer is that one
-        # element's depth-occluded silhouette.  It shares the picking shader/geometry
-        # path, hence the combined ``use_pick`` flag below.
+        # ``mask_id`` renders a selection silhouette: only the element whose id ==
+        # mask_id is drawn (flat white, via the picking shader), everything else is
+        # skipped so it stays the FBO's cleared black -- giving an x-ray silhouette
+        # that ignores any other mesh occluding it.  It shares the picking
+        # shader/geometry path, hence the combined ``use_pick`` flag below.
         use_pick = picking or (mask_id is not None)
 
         # Resolve context addon from opened file
@@ -553,6 +553,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         transparent_items = []
 
         for eid, info in self._model_infos.items():
+            if mask_id is not None and eid != mask_id:
+                continue
+
             pos = info.get("position", [0.0, 0.0, 0.0])
             rot = info.get("rotation", [0.0, 0.0, 0.0])
             scale = info.get("scale", [1.0, 1.0, 1.0])
@@ -894,7 +897,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """Create (or resize) the single-sample selection-mask framebuffer.
 
         Colour is a sampleable texture (the outline pass reads it); depth is a
-        renderbuffer so the silhouette is correctly occluded by nearer geometry.
+        renderbuffer required for FBO completeness (the mask pass renders with
+        depth testing off, for the x-ray silhouette -- see _render_selection_outline).
         """
         from OpenGL import GL
 
@@ -934,11 +938,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
 
     def _render_selection_outline(self, view, proj, cam_pos):
-        """Draw a silhouette outline around the currently selected mesh.
+        """Draw an x-ray silhouette outline around the currently selected mesh.
 
-        Two passes: (1) render the selected element's depth-occluded silhouette as
-        white-on-black into the mask FBO; (2) a fullscreen pass dilates that mask
-        and paints the ring just outside the silhouette over the visible scene.
+        Two passes: (1) render the selected element's full silhouette (depth test
+        off, so nearer geometry can't hide any of it) as white-on-black into the
+        mask FBO; (2) a fullscreen pass dilates that mask and paints the ring just
+        outside the silhouette over the visible scene -- visible through occluders.
 
         Only loaded meshes are outlined here — group dots and not-yet-loaded model
         placeholders keep their own wireframe-box selection markers.
@@ -963,8 +968,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         GL.glDisable(GL.GL_BLEND)
-        GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glDepthMask(GL.GL_TRUE)
+        # Depth test off: the mask should capture the selected mesh's full
+        # silhouette, not just the parts visible past whatever else is in front
+        # of it -- that's what makes the outline read as x-ray.
+        GL.glDisable(GL.GL_DEPTH_TEST)
+        GL.glDepthMask(GL.GL_FALSE)
         self._render_scene_models(view, proj, cam_pos, mask_id=self._selected_id)
 
         # ---- Pass 2: composite outline over the visible framebuffer ----------
