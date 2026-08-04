@@ -40,32 +40,34 @@ class FieldDef:
     group: str | None = None
 
 
-# Field lists per property class (64 classes, 366 fields; order matches the source).
+# Field lists per property class (69 classes, 393 fields; order matches the source).
 _PROP_CLASSES_MAP = {
     'ModifyState': ['m_nReferenceID', 'm_bEnabled'],
     'Group': ['m_nReferenceID', 'm_bEnabled'],
-    'SmartProp': ['m_nReferenceID', 'm_bEnabled', 'm_sSmartProp'],
+    'SmartProp': ['m_nReferenceID', 'm_bEnabled', 'm_sSmartProp', 'm_bLocalEvaluationState'],
     'PlaceInSphere': ['m_nReferenceID', 'm_bEnabled', 'm_flRandomness', 'm_nCountMin', 'm_nCountMax', 'm_flPositionRadiusInner', 'm_flPositionRadiusOuter', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'],
-    'PlaceMultiple': ['m_nReferenceID', 'm_bEnabled', 'm_nCount'],
-    'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_SpacingSpace', 'm_bContinuousSpline', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPath'],
+    'PlaceMultiple': ['m_nReferenceID', 'm_bEnabled', 'm_nCount', 'm_Expression'],
+    'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPathInWorldSpace', 'm_DefaultPath'],
     'FitOnLine': ['m_nReferenceID', 'm_bEnabled', 'm_vStart', 'm_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'],
     'PickOne': ['m_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'],
-    'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_bForceStatic', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
+    'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_bDisableDynamicDeformable', 'm_nLodLevel', 'm_nDetailObjectFadeLevel', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
     'ModelEntity': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
     'BendDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vOrigin', 'm_vAngles', 'm_vSize', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'],
-    'PropPhysics': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_flMass', 'm_bStartAsleep', 'm_nHealth', 'm_bEnableMotion', 'm_sPhysicsType'],
-    'PropDynamic': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_sAnimationSequence', 'm_sDefaultAnimation', 'm_vModelScale', 'm_MaterialGroupName'],
+    'PropPhysics': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_MaterialGroupName', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode', 'm_bStartAsleep'],
+    'PropDynamic': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_MaterialGroupName', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
     'MidpointDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vStart', 'm_vEnd', 'm_fRadius', 'm_bContinuousSpline', 'm_vOffset', 'm_vAngles', 'm_vScale', 'm_fFalloff', 'm_OutputVariable'],
+    'PlaceOnMesh': ['m_nReferenceID', 'm_bEnabled', 'm_nPickMode', 'm_MeshName'],
     'Layout2DGrid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
     'Grid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
     'Rotate': ['m_bEnabled', 'm_vRotation'],
     'Scale': ['m_bEnabled', 'm_flScale'],
-    'Translate': ['m_bEnabled', 'm_vPosition'],
-    'SetTintColor': ['m_bEnabled', 'm_Mode', 'm_ColorChoices'],
+    'Translate': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
+    'SetTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_ColorSelection', 'm_Mode', 'm_ColorChoices'],
     'MaterialOverride': ['m_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'],
     'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
     'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
     'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
+    'RigidDeformation': ['m_bEnabled'],
     'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel',
                     'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX', 'm_OutputVariableMinX', 'm_OutputVariableMaxX',
                     'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
@@ -73,7 +75,7 @@ _PROP_CLASSES_MAP = {
     'CreateRotator': ['m_bEnabled', 'm_Name', 'm_vOffset', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_DisplayColor', 'm_bApplyToCurrentTransform', 'm_flSnappingIncrement', 'm_flInitialAngle', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle', 'm_OutputVariable'],
     'CreateLocator': ['m_bEnabled', 'm_LocatorName', 'm_vOffset', 'm_flDisplayScale', 'm_bConfigurable', 'm_bAllowTranslation', 'm_bAllowRotation', 'm_bAllowScale'],
     'RestoreState': ['m_bEnabled', 'm_StateName', 'm_bDiscardIfUknown'],
-    'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
+    'TraceInDirection': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_vTraceDirection', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
     'SaveState': ['m_bEnabled', 'm_StateName'],
     'SetVariable': ['m_bEnabled', 'm_VariableValue'],
     'SetVariableBool': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
@@ -100,9 +102,13 @@ _PROP_CLASSES_MAP = {
     'VariableValue': ['m_bEnabled', 'm_VariableComparison'],
     'EndCap': ['m_bEnabled', 'm_bStart', 'm_bEnd'],
     'ChoiceWeight': ['m_bEnabled', 'm_flWeight'],
-    'IsValid': ['m_bEnabled'],
+    'IsValid': ['m_bEnabled', 'm_Expression'],
     'LinearLength': ['m_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'],
     'PathPosition': ['m_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart', 'm_bAllowAtEnd'],
+    'EdgeAngleCriteria': ['m_bEnabled', 'm_flMinAngle', 'm_flMaxAngle', 'm_bInvert'],
+    'TopoEdgeCountCriteria': ['m_bEnabled', 'm_nTargetOpenEdgeCount', 'm_bInvert', 'm_bSharedVert'],
+    'VertexCountCriteria': ['m_bEnabled', 'm_nTargetVertexCount'],
+    'MaterialCriteria': ['m_bEnabled', 'm_material', 'm_bInvert'],
     'ComputeDistance3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_InputPositionA', 'm_CoordinateSpaceA', 'm_InputPositionB', 'm_CoordinateSpaceB'],
     'ComputeDotProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
     'ComputeCrossProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
@@ -142,6 +148,7 @@ _EXACT_PROP_DISPATCH = {
     'm_Expression':            ('string', {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
     'm_StateName':             ('string', {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
     'm_LocatorName':           ('string', {'expression_bool': False, 'placeholder': 'Locator name'}),
+    'm_MeshName':              ('string', {'expression_bool': False, 'placeholder': 'Mesh name'}),
     'm_VariableName':          ('variable', {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D', 'Color']}),
     'm_OutputVariableName':    ('variable', {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D']}),
     'm_OutputVariableMaxZ':    ('variable', {}),
@@ -153,6 +160,7 @@ _EXACT_PROP_DISPATCH = {
     'm_OutputVariable':        ('variable', {}),
     'm_OutputChoiceVariableName': ('variable', {}),
     'm_DefaultPath':           ('path_editor', {}),
+    'm_DefaultPathInWorldSpace': ('bool', {}),
     '_WARN_NOT_VERIFIED':      ('warning', {}),
 }
 
@@ -172,7 +180,7 @@ _COMBOBOX_SUBSTRING_RULES = (
     ('m_DistributionMode', ['RANDOM', 'UNIFORM'], ['DistributionMode']),
     ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
     ('m_sPhysicsType', ['normal', 'multiplayer'], ['String']),
-    ('m_DetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
+    ('m_nDetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
     ('m_RotationAxes', ['X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'], ['Axes']),
     ('m_HandleShape', ['SQUARE', 'DIAMOND', 'CIRCLE'], ['HandleShape']),
     ('m_nDeformableAttachmentMode', ['RELATIVE', 'SNAP', 'STIFFEN'], ['SmartPropDeformableAttachMode_t']),
@@ -190,6 +198,15 @@ _COMBOBOX_SUBSTRING_RULES = (
     ('m_EndPointSpaceA', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
     ('m_EndPointSpaceB', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
 )
+
+# Per-(prop_class, field) combobox overrides — checked before _COMBOBOX_SUBSTRING_RULES.
+# Needed when the same field name means a different enum on different classes: e.g.
+# PlaceOnMesh's m_nPickMode (FIRST_OPEN_EDGE/FIRST_CLOSED_EDGE/UVMAP1/UVMAP2, real enum
+# SmartPropPlaceMeshOrientationMode_t) vs FitOnLine's m_nPickMode (LARGEST_FIRST/RANDOM/
+# ALL_IN_ORDER) — the generic substring rule can only encode one of them.
+_CLASS_FIELD_COMBOBOX_OVERRIDES = {
+    ('PlaceOnMesh', 'm_nPickMode'): (['FIRST_OPEN_EDGE', 'FIRST_CLOSED_EDGE', 'UVMAP1', 'UVMAP2'], ['OrientationMode']),
+}
 
 # Prefix dispatch: (prefix, control, kwargs) — order matters (most frequent first).
 _PREFIX_DISPATCH = [
@@ -284,6 +301,7 @@ def resolve(prop_class: str, field: str) -> FieldDef | None:
       4. 'm_VariableComparison' in field -> 'comparison'
       5. 'm_AllowedSurfaceProperties' or 'm_DisallowedSurfaceProperties' in field -> 'surface'
       6. 'm_Comment' in field -> 'comment'
+      6.5. (prop_class, field) in _CLASS_FIELD_COMBOBOX_OVERRIDES -> 'combobox'
       7. first matching substring in _COMBOBOX_SUBSTRING_RULES -> 'combobox'
       8. first matching substring in _PREFIX_DISPATCH -> that control
       9. fallback -> 'legacy'
@@ -326,6 +344,14 @@ def resolve(prop_class: str, field: str) -> FieldDef | None:
         label = _prettify_label(field)
         icon = _icon_for_control('comment', kwargs)
         return FieldDef(field=field, control='comment', kwargs=kwargs, label=label, icon=icon)
+
+    # 6.5. Per-class combobox override (same field name, different enum per class)
+    if (prop_class, field) in _CLASS_FIELD_COMBOBOX_OVERRIDES:
+        items, filter_types = _CLASS_FIELD_COMBOBOX_OVERRIDES[(prop_class, field)]
+        kwargs = {'items': list(items), 'filter_types': list(filter_types)}
+        label = _prettify_label(field)
+        icon = _icon_for_control('combobox', kwargs)
+        return FieldDef(field=field, control='combobox', kwargs=kwargs, label=label, icon=icon)
 
     # 7. Combobox substring rules (order matters)
     for substring, items, filter_types in _COMBOBOX_SUBSTRING_RULES:

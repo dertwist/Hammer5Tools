@@ -12,7 +12,7 @@ class PropertyWarning(QWidget, PooledPropertyMixin):
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(8, 4, 8, 4)
         
-        self.label = QLabel("This property is might not working in Cs2.")
+        self.label = QLabel("This property might not work in CS2.")
         self.label.setStyleSheet("""
             color: #ffaa00;
             font-weight: bold;

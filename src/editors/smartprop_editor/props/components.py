@@ -59,6 +59,7 @@ from src.editors.smartprop_editor.props.model import ComponentRef
 from src.styles.property_icons import IconCache
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets.tree import HierarchyTreeWidget
+from src.settings.main import get_settings_bool
 
 
 # Clipboard string pattern for SmartProp property items
@@ -669,6 +670,12 @@ class ComponentList(QWidget):
         if not self.tree_item:
             return
         items = operators_list + filters_list
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        if hide_experimental:
+            items = [
+                item for item in items
+                if not any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict))
+            ]
         menu = PopupMenu(items, add_once=False, window_name="SPE_add_modifier")
         menu.add_property_signal.connect(lambda name, value: self._add_component_dict("modifier", value))
         menu.show()
@@ -676,7 +683,14 @@ class ComponentList(QWidget):
     def _on_add_criterion(self):
         if not self.tree_item:
             return
-        menu = PopupMenu(selection_criteria_list, add_once=False, window_name="SPE_add_criterion")
+        items = list(selection_criteria_list)
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        if hide_experimental:
+            items = [
+                item for item in items
+                if not any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict))
+            ]
+        menu = PopupMenu(items, add_once=False, window_name="SPE_add_criterion")
         menu.add_property_signal.connect(lambda name, value: self._add_component_dict("criterion", value))
         menu.show()
 

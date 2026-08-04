@@ -919,7 +919,12 @@ class SmartPropDocument(QMainWindow):
                         )
 
     def add_an_element(self):
-        self.popup_menu = PopupMenu(elements_list, add_once=False, window_name="SPE_elements")
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        visible_list = [
+            item for item in elements_list
+            if not (hide_experimental and any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict)))
+        ]
+        self.popup_menu = PopupMenu(visible_list, add_once=False, window_name="SPE_elements")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
 
@@ -932,9 +937,18 @@ class SmartPropDocument(QMainWindow):
             item for item in elements_list
             if any(k in bookmarked_items for k in item.keys())
         ]
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        if hide_experimental:
+            fav_elements = [
+                item for item in fav_elements
+                if not any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict))
+            ]
 
         if not fav_elements:
-            fav_elements = elements_list
+            fav_elements = [
+                item for item in elements_list
+                if not (hide_experimental and any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict)))
+            ]
 
         self.popup_menu = PopupMenu(fav_elements, add_once=False, window_name="SPE_elements")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
@@ -1013,6 +1027,12 @@ class SmartPropDocument(QMainWindow):
         for item in force_items:
             if item not in elements_in_popupmenu:
                 elements_in_popupmenu.append(item)
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        if hide_experimental:
+            elements_in_popupmenu = [
+                item for item in elements_in_popupmenu
+                if not any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict))
+            ]
         self.popup_menu = PopupMenu(
             elements_in_popupmenu,
             add_once=True,
@@ -1063,6 +1083,13 @@ class SmartPropDocument(QMainWindow):
         for item in force_items:
             if item not in elements_in_popupmenu:
                 elements_in_popupmenu.append(item)
+
+        hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
+        if hide_experimental:
+            elements_in_popupmenu = [
+                item for item in elements_in_popupmenu
+                if not any(v.get('_WARN_NOT_VERIFIED') for v in item.values() if isinstance(v, dict))
+            ]
 
         self.popup_menu = PopupMenu(
             elements_in_popupmenu,
