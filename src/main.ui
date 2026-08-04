@@ -339,7 +339,7 @@ font: 580 9pt &quot;Segoe UI&quot;;</string>
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Utilities&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Open a utility tool (Cleanup, Unreal Converter).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Utilities&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Open a utility tool (Cleanup, UnrealPorter).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
          <string notr="true">padding: 5px;

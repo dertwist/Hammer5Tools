@@ -100,11 +100,44 @@ def _tokens(name: str) -> set:
     return {t for t in re.split(r"[^A-Za-z0-9]+", s.lower()) if t}
 
 
+# Channel layout of a packed mask, keyed by the token that names it. Maps an
+# image channel -> vmat slot; channels left out are dropped, which is how SRM/
+# SRMH's specular channel disappears (csgo_environment has no specular slot).
+# Longer keys are probed first so "srmh" wins over "srm".
+_PACKED_LAYOUTS = {
+    "orm":  {"r": "ao",    "g": "rough", "b": "metal"},
+    "ormh": {"r": "ao",    "g": "rough", "b": "metal", "a": "height"},
+    "orh":  {"r": "ao",    "g": "rough", "b": "height"},
+    "rma":  {"r": "rough", "g": "metal", "b": "ao"},
+    "rmah": {"r": "rough", "g": "metal", "b": "ao",    "a": "height"},
+    "mrao": {"r": "metal", "g": "rough", "b": "ao"},
+    "arm":  {"r": "ao",    "g": "rough", "b": "metal"},
+    "srm":  {                "g": "rough", "b": "metal"},
+    "srmh": {                "g": "rough", "b": "metal", "a": "height"},
+}
+
+CHANNELS = ("r", "g", "b", "a")
+
+# Slots a packed channel can legally feed — all single-channel greyscale maps.
+CHANNEL_SLOTS = ("rough", "metal", "ao", "height", "opacity")
+
+
+def packed_layout(param_name: str, tex_path: str = ""):
+    """(token, {channel: slot}) if this parameter names a packed mask, else
+    (None, None). The texture filename is considered too, since authors often
+    name the param "Mask" but the file "Foo_SRM"."""
+    toks = _tokens(param_name) | _tokens(os.path.basename(tex_path or ""))
+    for key in sorted(_PACKED_LAYOUTS, key=len, reverse=True):
+        if key in toks:
+            return key, dict(_PACKED_LAYOUTS[key])
+    return None, None
+
+
 # Slot -> matching token set. Order = priority (first match wins per param).
 # Whole-token matching avoids false hits like "rma" inside "noRMAl".
 _SLOT_TOKENS = [
     ("opacity",  {"opacity", "opac", "alpha"}),
-    ("orm",      {"orm", "rma", "rmah", "mrao", "arm", "packed", "orh"}),
+    ("orm",      set(_PACKED_LAYOUTS) | {"packed"}),
     ("normal",   {"normal", "nrm", "n", "norm"}),
     ("rough",    {"rough", "roughness", "r"}),
     ("metal",    {"metal", "metallic", "metalness", "m"}),
@@ -118,29 +151,39 @@ _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
 def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
     """
-    Map {ue_param_name: ue_tex_path} -> {slot: (param, path)} choosing the best
-    primary texture per slot. A layer index token ("Diffuse 1") is penalised so
-    the base layer ("M_Diffuse") wins.
+    Map {ue_param_name: ue_tex_path} -> {slot: (param, path, channel)} choosing
+    the best primary texture per slot. `channel` is None for a whole-texture
+    binding, or one of "r"/"g"/"b"/"a" to take a single channel out of a packed
+    mask. A layer index token ("Diffuse 1") is penalised so the base layer
+    ("M_Diffuse") wins.
 
-    slot_overrides: optional {param_name (case-insensitive): slot_name or None}
-    — explicit user choices from the slot-mapping dialog. These always win
-    over heuristic scoring. None excludes the parameter.
+    slot_overrides: optional {param_name (case-insensitive): override} from the
+    slot-mapping dialog; these always beat the heuristic. An override is either
+      * None                        — exclude the parameter,
+      * "rough"                     — bind the whole texture to that slot, or
+      * {"rough": "g", "ao": "r"}   — route individual channels to slots.
     """
     if not textures or not isinstance(textures, dict):
         return {}
 
     overrides = {k.lower(): v for k, v in (slot_overrides or {}).items()}
+    valid_slots = dict(_SLOT_TOKENS)
     out = {}
     used_params = set()
 
     # Apply explicit overrides first
     for param_name, tex_path in textures.items():
         key = param_name.lower()
-        if key in overrides:
-            forced_slot = overrides[key]
-            used_params.add(param_name)
-            if forced_slot and forced_slot in dict(_SLOT_TOKENS):
-                out[forced_slot] = (param_name, tex_path)
+        if key not in overrides:
+            continue
+        forced = overrides[key]
+        used_params.add(param_name)
+        if isinstance(forced, dict):
+            for slot, channel in forced.items():
+                if slot in CHANNEL_SLOTS and channel in CHANNELS:
+                    out[slot] = (param_name, tex_path, channel)
+        elif forced and forced in valid_slots:
+            out[forced] = (param_name, tex_path, None)
 
     # Heuristic matching for remaining parameters
     for slot, tokens in _SLOT_TOKENS:
@@ -154,33 +197,105 @@ def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
             if slot == "color" and p_toks & _COLOR_EXCLUDE:
                 continue
             matching = p_toks & tokens
+            if slot == "orm" and not matching:
+                # The param may be named neutrally ("Mask") while the texture
+                # file carries the layout token ("Foo_SRM") — check both.
+                matching = _tokens(os.path.basename(tex_path or "")) & tokens
             if matching:
-                score = len(matching) * 10
+                # Extra unmatched tokens mean a less specific name, so a plain
+                # "Normal" beats a secondary "Dirt Normal" / "Detail Normal"
+                # for the base slot instead of losing on dict order.
+                score = len(matching) * 10 - (len(p_toks) - len(matching))
                 if re.search(r"\b(layer|uv|v|mask|sub)\d*\b", param_name, re.I):
                     score -= 5
                 candidates.append((score, param_name, tex_path))
         if candidates:
             candidates.sort(key=lambda c: c[0], reverse=True)
             top_param, top_path = candidates[0][1], candidates[0][2]
-            out[slot] = (top_param, top_path)
             used_params.add(top_param)
+            if slot == "orm":
+                # Expand a packed mask straight into its per-channel slots so
+                # everything downstream sees uniform single-channel bindings.
+                _tok, layout = packed_layout(top_param, top_path)
+                for channel, mapped in (layout or {}).items():
+                    out.setdefault(mapped, (top_param, top_path, channel))
+            else:
+                out[slot] = (top_param, top_path, None)
 
     return out
 
 
+# Master Materials expose many tints and scalars beside the base one — a dirt
+# overlay colour, a metal tint, a fresnel rim, a detail roughness. These tokens
+# mark a parameter as one of those secondary effects, which have no
+# csgo_environment equivalent and must never be mistaken for the base value.
+_SECONDARY_TOKENS = {
+    "dirt", "metal", "metall", "metallic", "fresnel", "emissive", "emmisive",
+    "spec", "specular", "rim", "subsurface", "sss", "detail", "snow", "moss",
+    "wear", "edge", "overlay", "secondary", "layer2", "top",
+}
+# What names the *base* colour: a qualifier ("diffuse") and/or a noun ("color").
+_TINT_QUALIFIERS = {"base", "basecolor", "diffuse", "albedo", "main"}
+_TINT_NOUNS = {"color", "colour", "tint"}
+
+
 def _pick_tint(vectors: dict):
+    """The base colour tint declared by the material or its master.
+
+    Matches on whole tokens rather than substrings: the old substring list only
+    knew "base color"/"diffuse tint", so a master declaring "diffuse color"
+    (very common) silently produced an untinted white material.
+    """
+    best, best_score = None, 0
     for name, v in (vectors or {}).items():
-        n = name.lower()
-        if any(k in n for k in ("base color", "basecolor", "diffuse tint", "base tint")):
-            return (v.get("r", 1.0), v.get("g", 1.0), v.get("b", 1.0))
-    return None
+        toks = _tokens(name)
+        if toks & _SECONDARY_TOKENS:
+            continue
+        score = 0
+        if toks & _TINT_QUALIFIERS:
+            score += 2
+        if toks & _TINT_NOUNS:
+            score += 1
+        if not score:
+            continue
+        # Prefer the least-qualified name when several remain.
+        score = score * 10 - len(toks)
+        if score > best_score:
+            best, best_score = v, score
+    if best is None:
+        return None
+    return (best.get("r", 1.0), best.get("g", 1.0), best.get("b", 1.0))
 
 
 def _pick_scalar(scalars: dict, *keys, default=1.0):
+    """A scalar by name, from the instance or inherited from its master.
+
+    Exact matches win; otherwise the least-qualified name containing all of a
+    key's tokens is used, so "Roughness" is picked over "Dirt Roughness" and a
+    master's "Roughness Multiplier" is still found.
+    """
+    lowered = {name.lower(): v for name, v in (scalars or {}).items()}
+    for key in keys:
+        if key in lowered:
+            return float(lowered[key])
+
+    best, best_extra = None, None
     for name, v in (scalars or {}).items():
-        if name.lower() in keys:
-            return float(v)
-    return default
+        toks = _tokens(name)
+        for key in keys:
+            key_toks = _tokens(key)
+            if not key_toks or not key_toks <= toks:
+                continue
+            # Only tokens *beyond* the requested key can mark this as a
+            # secondary effect — asking for "metallic" must not be blocked by
+            # "metal" being a secondary token in its own right.
+            extra_toks = toks - key_toks
+            if extra_toks & _SECONDARY_TOKENS:
+                continue
+            if best_extra is None or len(extra_toks) < best_extra:
+                best, best_extra = v, len(extra_toks)
+            break
+    return float(best) if best is not None else default
 
 
 # --- shader selection from material domain/blend --------------------------
@@ -246,22 +361,24 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     missing = []
 
     def load(slot):
-        param_path = picks.get(slot)
-        if not param_path:
-            return None, None
-        src = find_bulk_texture(bulk_dir, param_path[1], tex_index=tex_index)
+        """(source file, stem, channel) for a slot — channel is None when the
+        whole texture binds, or "r"/"g"/"b"/"a" for one band of a packed mask."""
+        pick = picks.get(slot)
+        if not pick:
+            return None, None, None
+        src = find_bulk_texture(bulk_dir, pick[1], tex_index=tex_index)
         if not src:
             missing.append(slot)
-            return None, None
-        return src, os.path.splitext(os.path.basename(src))[0].lower()
+            return None, None, None
+        return src, os.path.splitext(os.path.basename(src))[0].lower(), pick[2]
 
     if decal:
         # csgo_static_overlay's default Hammer template only exposes TextureColor
         # (no separate normal/AO/metalness slot) — the decal's shape comes from
         # that texture's alpha channel, so UE's separate Opacity mask is
         # composited into it.
-        src, stem = load("color")
-        opacity_src, _ = load("opacity")
+        src, stem, _ch = load("color")
+        opacity_src, _stem, _ch = load("opacity")
         if src:
             color_img = Image.open(src).convert("RGBA")
             if opacity_src:
@@ -280,32 +397,31 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
 
     # color / normal — straight convert to TGA
     for slot in ("color", "normal"):
-        src, stem = load(slot)
+        src, stem, _ch = load(slot)
         if src:
             slots[slot] = save(Image.open(src).convert("RGBA"), stem)
             written += 1
 
-    # ORM packed -> split (UE convention: R=Occlusion, G=Roughness, B=Metallic)
-    src, stem = load("orm")
-    if src:
-        param_name = picks["orm"][0].lower()
-        is_orh_texture = "orh" in param_name or "orh" in stem
-        r, g, b, _a = Image.open(src).convert("RGBA").split()
-        slots["ao"] = save(r.convert("L"), f"{stem}_ao")
-        slots["rough"] = save(g.convert("L"), f"{stem}_rough")
-        if is_orh_texture:
-            slots["height"] = save(b.convert("L"), f"{stem}_height")
-            written += 3
+    # Greyscale slots. _classify_textures has already expanded any packed mask
+    # into per-channel bindings, so a packed source and a dedicated one-off map
+    # are handled the same way here.
+    for slot in ("rough", "metal", "ao", "height"):
+        src, stem, channel = load(slot)
+        if not src:
+            continue
+        img = Image.open(src)
+        if channel:
+            if channel == "a" and "A" not in img.getbands():
+                # Param says the mask carries height in alpha (…_SRMH) but the
+                # exported file is 3-channel — convert("RGBA") would invent an
+                # opaque alpha and write a solid-white height map.
+                missing.append(slot)
+                continue
+            band = img.convert("RGBA").split()[CHANNELS.index(channel)]
+            slots[slot] = save(band.convert("L"), f"{stem}_{slot}")
         else:
-            slots["metal"] = save(b.convert("L"), f"{stem}_metal")
-            written += 3
-    else:
-        # unpacked rough/metal/ao if the material provides them separately
-        for slot in ("rough", "metal", "ao", "height"):
-            s, st = load(slot)
-            if s:
-                slots[slot] = save(Image.open(s).convert("L"), st)
-                written += 1
+            slots[slot] = save(img.convert("L"), stem)
+        written += 1
 
     color_tint = _pick_tint(mat_data.get("vectors"))
     rough_scale = _pick_scalar(mat_data.get("scalars"), "roughness", "tileable 1 roughness")

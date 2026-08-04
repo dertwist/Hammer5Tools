@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel,
     QLineEdit, QPushButton, QListWidget, QProgressBar, QTabWidget, QComboBox,
     QCheckBox, QSplitter, QSpacerItem, QSizePolicy, QMenu, QInputDialog,
-    QTableWidget, QTableWidgetItem, QHeaderView,
 )
 
 from src.common import enable_dark_title_bar
@@ -20,7 +19,7 @@ from src.settings.main import (
 )
 
 from src.widgets.console import ConsoleWidget
-from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, UNSUPPORTED, scan_unsupported
+from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, scan_unsupported
 from .converter import scan_and_group, MaterialConvertWorker
 from .transform import UnitScale
 
@@ -92,7 +91,7 @@ class ScanWorker(QThread):
             self.done.emit({})
 
 
-class UnrealConverterWidget(QDialog):
+class UnrealPorterWidget(QDialog):
     """
     Unreal Engine -> Source 2 content migration helper.
 
@@ -105,7 +104,7 @@ class UnrealConverterWidget(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Unreal Converter (UE → Source 2)")
+        self.setWindowTitle("UnrealPorter (UE → Source 2)")
         self.resize(1280, 850)
         self.setMinimumSize(960, 600)
         enable_dark_title_bar(self)
@@ -118,11 +117,7 @@ class UnrealConverterWidget(QDialog):
         self._build_ui()
         apply_stylesheets(self)
         self._setup_progress_bar_style()
-        self.console.info("Unreal Converter ready. Set input/output folders and Scan.")
-        self.console.warn(
-            "This is a migration helper, not a full auto-exporter. Some Unreal "
-            "content cannot be converted — see the General tab."
-        )
+        self.console.info("UnrealPorter ready. Set input/output folders and Scan.")
 
     def _setup_progress_bar_style(self):
         self.progress_bar.setStyleSheet("""
@@ -215,10 +210,10 @@ class UnrealConverterWidget(QDialog):
 
         root.addWidget(splitter, 1)
 
-        # Initial auto-scan of bulk export folder if saved path exists
-        saved_bulk = self.bulk_folder_edit.text().strip()
-        if saved_bulk and os.path.isdir(saved_bulk):
-            self._scan_bulk(saved_bulk)
+        # Initial auto-scan of the UE export folder if a saved path exists
+        saved_export = self.cache_folder_edit.text().strip()
+        if saved_export and os.path.isdir(saved_export):
+            self._scan_bulk(saved_export)
 
     def _build_paths_group(self):
         box = QGroupBox("Conversion settings — paths")
@@ -237,61 +232,54 @@ class UnrealConverterWidget(QDialog):
         proj_btn.clicked.connect(self.browse_project)
         grid.addWidget(proj_btn, 0, 2)
 
-        # Row 1 — UE "Bulk Export" folder (meshes .fbx / textures .tga|.png).
-        lbl_bulk = QLabel("UE Bulk Export folder:")
-        lbl_bulk.setToolTip("meshes/textures")
-        grid.addWidget(lbl_bulk, 1, 0)
-        self.bulk_folder_edit = QLineEdit()
-        self.bulk_folder_edit.setPlaceholderText("folder chosen in UE → Asset Actions → Bulk Export")
-        grid.addWidget(self.bulk_folder_edit, 1, 1)
-        bulk_btn = QPushButton("Browse")
-        bulk_btn.clicked.connect(self.browse_bulk)
-        grid.addWidget(bulk_btn, 1, 2)
-
-        # Row 2 — output (addon content).
+        # Row 1 — output (addon content).
         lbl_out = QLabel("Output folder:")
         lbl_out.setToolTip("addon content")
-        grid.addWidget(lbl_out, 2, 0)
+        grid.addWidget(lbl_out, 1, 0)
         self.output_folder_edit = QLineEdit()
-        grid.addWidget(self.output_folder_edit, 2, 1)
+        grid.addWidget(self.output_folder_edit, 1, 1)
         out_btn = QPushButton("Browse")
         out_btn.clicked.connect(self.browse_output)
-        grid.addWidget(out_btn, 2, 2)
+        grid.addWidget(out_btn, 1, 2)
 
-        # Row 3 — UE export cache folder: destination for tools/ue_scripts/
-        # export_assets.py, run inside the UE Editor to batch-export
-        # meshes/textures without a manual Bulk Export multi-select. Point
-        # "UE Bulk Export folder" above at the same folder once it's populated.
-        lbl_cache = QLabel("UE Export cache folder:")
+        # Row 2 — the exported mesh/texture folder. This is both where "Run UE
+        # Export" writes and where the converter reads FBX/TGA back from; they
+        # were once two separate fields, which only ever created a way to point
+        # them at different folders and silently find nothing.
+        lbl_cache = QLabel("UE Export folder:")
         lbl_cache.setToolTip(
-            "Output folder for tools/ue_scripts/export_assets.py (run inside the "
-            "UE Editor's Python console) — automates the manual Bulk Export step."
+            "Meshes (.fbx) and textures (.tga/.png) exported out of Unreal — "
+            "written by 'Run UE Export', or by a manual Asset Actions → Bulk Export."
         )
-        grid.addWidget(lbl_cache, 3, 0)
+        grid.addWidget(lbl_cache, 2, 0)
         self.cache_folder_edit = QLineEdit()
-        self.cache_folder_edit.setPlaceholderText("folder passed as output_dir to export_assets.run(...)")
-        grid.addWidget(self.cache_folder_edit, 3, 1)
+        self.cache_folder_edit.setPlaceholderText("…/UnrealExport  (receives .fbx / .tga from Unreal)")
+        grid.addWidget(self.cache_folder_edit, 2, 1)
         cache_btn = QPushButton("Browse")
         cache_btn.clicked.connect(self.browse_cache)
-        grid.addWidget(cache_btn, 3, 2)
+        grid.addWidget(cache_btn, 2, 2)
 
-        # Row 4 — local Unreal Engine install (assumes UE is installed), used
+        # Row 3 — local Unreal Engine install (assumes UE is installed), used
         # to launch UnrealEditor-Cmd.exe / UE4Editor-Cmd.exe for the "Run UE Export" button.
         lbl_engine = QLabel("Unreal Engine install:")
         lbl_engine.setToolTip("Folder containing Engine/Binaries/Win64 (e.g. …/UE_4.27 or …/UE_5.7)")
-        grid.addWidget(lbl_engine, 4, 0)
+        grid.addWidget(lbl_engine, 3, 0)
         self.engine_root_edit = QLineEdit()
         self.engine_root_edit.setPlaceholderText("…/UE_4.27 or …/UE_5.7  (contains Engine/Binaries/Win64)")
-        grid.addWidget(self.engine_root_edit, 4, 1)
+        grid.addWidget(self.engine_root_edit, 3, 1)
         engine_btn = QPushButton("Browse")
         engine_btn.clicked.connect(self.browse_engine)
-        grid.addWidget(engine_btn, 4, 2)
+        grid.addWidget(engine_btn, 3, 2)
 
-        # Back-compat: material worker still reads `input_folder_edit`; alias it
-        # to the bulk-export folder (that's where exported textures live).
-        self.input_folder_edit = self.bulk_folder_edit
+        # The export folder is the single source for exported assets; these two
+        # names are what the rest of the form and the material worker read.
+        self.bulk_folder_edit = self.cache_folder_edit
+        self.input_folder_edit = self.cache_folder_edit
 
-        # Restore previously saved folder paths from userdata settings
+        # Restore previously saved folder paths from userdata settings.
+        # The settings section is still "UnrealConverter" after the rename to
+        # UnrealPorter — it is an on-disk key, never shown to the user, and
+        # renaming it would silently orphan everyone's saved paths.
         saved_project = get_settings_value("UnrealConverter", "project_folder", "")
         saved_bulk = get_settings_value("UnrealConverter", "bulk_folder", "")
         saved_output = get_settings_value("UnrealConverter", "output_folder", "")
@@ -300,10 +288,11 @@ class UnrealConverterWidget(QDialog):
 
         if saved_project:
             self.project_folder_edit.setText(saved_project)
-        if saved_bulk:
-            self.bulk_folder_edit.setText(saved_bulk)
-        if saved_cache:
-            self.cache_folder_edit.setText(saved_cache)
+        # The old build had a separate "UE Bulk Export folder"; carry whichever
+        # of the two the user had filled in over to the merged field rather than
+        # making them re-browse for it.
+        if saved_cache or saved_bulk:
+            self.cache_folder_edit.setText(saved_cache or saved_bulk)
         if saved_engine:
             self.engine_root_edit.setText(saved_engine)
 
@@ -318,9 +307,6 @@ class UnrealConverterWidget(QDialog):
         # Save to userdata whenever fields change
         self.project_folder_edit.textChanged.connect(
             lambda text: set_settings_value("UnrealConverter", "project_folder", text.strip())
-        )
-        self.bulk_folder_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "bulk_folder", text.strip())
         )
         self.output_folder_edit.textChanged.connect(
             lambda text: set_settings_value("UnrealConverter", "output_folder", text.strip())
@@ -362,24 +348,8 @@ class UnrealConverterWidget(QDialog):
         sv.addWidget(self.strip_prefixes_check)
         layout.addWidget(settings_box)
 
-        warn_box = QGroupBox("Cannot be converted (will be skipped with a warning)")
-        wv = QVBoxLayout(warn_box)
-        banner = QLabel(self._unsupported_html())
-        banner.setWordWrap(True)
-        banner.setTextFormat(Qt.RichText)
-        wv.addWidget(banner)
-        layout.addWidget(warn_box)
-
         layout.addStretch(1)
         return tab
-
-    def _unsupported_html(self):
-        rows = "".join(
-            f'<li><b style="color:#e0a030">{c.label}</b> — '
-            f'<span style="color:#a8a8a8">{c.reason}</span></li>'
-            for c in UNSUPPORTED
-        )
-        return f'<ul style="margin-left:-18px">{rows}</ul>'
 
     def _build_scenes_tab(self):
         tab = QWidget()
@@ -444,15 +414,10 @@ class UnrealConverterWidget(QDialog):
 
         layout.addWidget(QLabel("Master Material CS2 Shader & Texture Slot Swap:"))
 
-        self.master_mat_table = QTableWidget(0, 5)
-        self.master_mat_table.setHorizontalHeaderLabels(["Convert", "Master Material", "Instances", "Target CS2 Shader", "Texture Slots"])
-        self.master_mat_table.horizontalHeader().setStretchLastSection(False)
-        self.master_mat_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.master_mat_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.master_mat_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.master_mat_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.master_mat_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        layout.addWidget(self.master_mat_table, 1)
+        from .master_material_list import MasterMaterialList
+        self.master_mat_list = MasterMaterialList()
+        self.master_mat_list.map_slots_requested.connect(self._on_map_master_slots)
+        layout.addWidget(self.master_mat_list, 1)
 
         note = QLabel(
             "Groups Material Instances by their parent Master Material. Select the target "
@@ -465,55 +430,23 @@ class UnrealConverterWidget(QDialog):
 
     def _populate_master_materials_table(self, master_groups: dict):
         self.master_groups = master_groups
-        self.master_mat_table.setRowCount(0)
-        self.master_shader_combos = {}
-        self.master_checkboxes = {}
+        self.master_mat_list.populate(master_groups)
+        self.master_checkboxes = self.master_mat_list.checkboxes()
+        self.master_shader_combos = self.master_mat_list.shader_combos()
 
-        shaders = [
-            "csgo_environment.vfx",
-            "csgo_static_overlay.vfx",
-            "csgo_foliage.vfx",
-            "csgo_glass.vfx",
-            "csgo_character.vfx",
-            "complex.vfx",
-        ]
+    def master_shader_selection(self) -> dict:
+        """{master material name: chosen CS2 shader} as picked in the Materials
+        tab. Empty until a Scan has run, in which case converters fall back to
+        their name heuristic."""
+        return {name: combo.currentText()
+                for name, combo in getattr(self, "master_shader_combos", {}).items()}
 
-        for row, (master_name, info) in enumerate(sorted(master_groups.items())):
-            self.master_mat_table.insertRow(row)
+    def master_slot_overrides(self) -> dict:
+        """{master material name: texture slot overrides} from the Materials tab."""
+        return {name: info.get("slot_overrides") or {}
+                for name, info in getattr(self, "master_groups", {}).items()}
 
-            chk = QCheckBox()
-            chk.setChecked(True)
-            self.master_checkboxes[master_name] = chk
-            chk_cell = QWidget()
-            chk_layout = QHBoxLayout(chk_cell)
-            chk_layout.addWidget(chk)
-            chk_layout.setAlignment(Qt.AlignCenter)
-            chk_layout.setContentsMargins(0, 0, 0, 0)
-            self.master_mat_table.setCellWidget(row, 0, chk_cell)
-
-            name_item = QTableWidgetItem(master_name)
-            name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
-            self.master_mat_table.setItem(row, 1, name_item)
-
-            count = info.get("count", len(info.get("instances", [])))
-            count_item = QTableWidgetItem(f"{count} instance{'s' if count != 1 else ''}")
-            count_item.setFlags(count_item.flags() & ~Qt.ItemIsEditable)
-            self.master_mat_table.setItem(row, 2, count_item)
-
-            combo = QComboBox()
-            combo.addItems(shaders)
-            pred_shader = info.get("shader", "csgo_environment.vfx")
-            idx = combo.findText(pred_shader)
-            if idx >= 0:
-                combo.setCurrentIndex(idx)
-            self.master_shader_combos[master_name] = combo
-            self.master_mat_table.setCellWidget(row, 3, combo)
-
-            map_btn = QPushButton("Map Slots…")
-            map_btn.setToolTip(f"Configure texture parameter slot assignments for {master_name}")
-            map_btn.clicked.connect(lambda _checked=False, name=master_name: self._on_map_master_slots(name))
-            self.master_mat_table.setCellWidget(row, 4, map_btn)
-
+    @Slot(str)
     def _on_map_master_slots(self, master_name: str):
         if not hasattr(self, "master_groups") or master_name not in self.master_groups:
             return
@@ -525,6 +458,7 @@ class UnrealConverterWidget(QDialog):
         dlg = SlotMappingDialog(master_name, textures, initial_overrides, parent=self)
         if dlg.exec() == QDialog.Accepted:
             info["slot_overrides"] = dlg.result_overrides
+            self.master_mat_list.refresh(master_name, info)
             count = len(dlg.result_overrides)
             self.console.info(f"Updated texture slot mapping for {master_name} ({count} override(s) set).")
 
@@ -580,21 +514,16 @@ class UnrealConverterWidget(QDialog):
         if folder:
             self.project_folder_edit.setText(folder)
 
-    def browse_bulk(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select UE Bulk Export Folder")
-        if folder:
-            self.bulk_folder_edit.setText(folder)
-            self._scan_bulk(folder)
-
     def browse_output(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Output Folder")
         if folder:
             self.output_folder_edit.setText(folder)
 
     def browse_cache(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select UE Export Cache Folder")
+        folder = QFileDialog.getExistingDirectory(self, "Select UE Export Folder")
         if folder:
             self.cache_folder_edit.setText(folder)
+            self._scan_bulk(folder)
 
     def browse_engine(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Unreal Engine Install Folder")
@@ -617,7 +546,7 @@ class UnrealConverterWidget(QDialog):
     def save_console_log(self):
         try:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            default_name = f"unreal_converter_{timestamp}.txt"
+            default_name = f"unreal_porter_{timestamp}.txt"
             text = self.console.toPlainText()
 
             filename, _ = QFileDialog.getSaveFileName(
@@ -637,6 +566,38 @@ class UnrealConverterWidget(QDialog):
 
     # UE export
 
+    _WORKER_ATTRS = ("worker", "scan_worker", "scene_worker", "ue_export_worker")
+
+    def closeEvent(self, event):
+        """Closing while a worker runs frees the widgets it's still emitting
+        into — the same access violation _start_worker guards against.
+
+        ponytail: refuses the close instead of cancelling; give the workers a
+        cooperative stop flag if users need to bail out of a long conversion.
+        """
+        for attr in self._WORKER_ATTRS:
+            w = getattr(self, attr, None)
+            if w is not None and w.isRunning():
+                QMessageBox.warning(self, "Busy", "A job is still running — wait for it to finish before closing.")
+                event.ignore()
+                return
+        super().closeEvent(event)
+
+    def _start_worker(self, attr, worker):
+        """Start a QThread, refusing to overwrite one that's still running.
+
+        `self.<attr>` is the only Python reference to the thread; rebinding it
+        mid-run lets GC destroy a live QThread, which on Windows shows up as an
+        RPC_E_WRONG_THREAD flood and then an access violation.
+        """
+        running = getattr(self, attr, None)
+        if running is not None and running.isRunning():
+            self.console.warn("A job is already running — wait for it to finish.")
+            return False
+        setattr(self, attr, worker)
+        worker.start()
+        return True
+
     def on_run_ue_export(self):
         engine_root = self.engine_root_edit.text().strip()
         project_dir = self.project_folder_edit.text().strip()
@@ -651,12 +612,13 @@ class UnrealConverterWidget(QDialog):
             QMessageBox.warning(self, "Error", "Set a UE Export cache folder first.")
             return
 
+        worker = UeExportWorker(engine_root, project_dir, output_dir)
+        worker.log.connect(self._on_worker_log)
+        worker.done.connect(self._on_ue_export_done)
         self.console.header("UE Export")
         self.ue_export_button.setEnabled(False)
-        self.ue_export_worker = UeExportWorker(engine_root, project_dir, output_dir)
-        self.ue_export_worker.log.connect(self._on_worker_log)
-        self.ue_export_worker.done.connect(self._on_ue_export_done)
-        self.ue_export_worker.start()
+        if not self._start_worker("ue_export_worker", worker):
+            self.ue_export_button.setEnabled(True)
 
     @Slot(bool)
     def _on_ue_export_done(self, success):
@@ -671,7 +633,7 @@ class UnrealConverterWidget(QDialog):
         bulk_dir = self.bulk_folder_edit.text().strip()
         output_dir = self.output_folder_edit.text().strip()
         if not project_dir and not bulk_dir:
-            QMessageBox.warning(self, "Error", "Set a UE project Content folder and/or a bulk-export folder.")
+            QMessageBox.warning(self, "Error", "Set a UE Project Content folder and/or a UE Export folder.")
             return
 
         self.console.header("Scanning")
@@ -680,11 +642,13 @@ class UnrealConverterWidget(QDialog):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Scanning…")
 
-        self.scan_worker = ScanWorker(project_dir, bulk_dir, output_dir)
-        self.scan_worker.log.connect(self._on_worker_log)
-        self.scan_worker.progress.connect(self._on_progress)
-        self.scan_worker.done.connect(self._on_scan_done)
-        self.scan_worker.start()
+        worker = ScanWorker(project_dir, bulk_dir, output_dir)
+        worker.log.connect(self._on_worker_log)
+        worker.progress.connect(self._on_progress)
+        worker.done.connect(self._on_scan_done)
+        if not self._start_worker("scan_worker", worker):
+            self.scan_button.setEnabled(True)
+            self.convert_button.setEnabled(True)
 
     @Slot(dict)
     def _on_scan_done(self, master_groups):
@@ -799,7 +763,7 @@ class UnrealConverterWidget(QDialog):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Starting…")
 
-        self.scene_worker = SceneModelsWorker(
+        worker = SceneModelsWorker(
             project_dir=project_dir,
             bulk_dir=self.bulk_folder_edit.text().strip(),
             output_dir=output_dir,
@@ -810,11 +774,16 @@ class UnrealConverterWidget(QDialog):
             strip_prefix=self.strip_prefixes_check.isChecked(),
             unit_scale=self.get_unit_scale(),
             use_graybox_fallback=self.model_graybox_check.isChecked(),
+            master_shaders=self.master_shader_selection(),
+            master_slot_overrides=self.master_slot_overrides(),
         )
-        self.scene_worker.log.connect(self._on_worker_log)
-        self.scene_worker.progress.connect(self._on_progress)
-        self.scene_worker.done.connect(self._on_scenes_done)
-        self.scene_worker.start()
+        worker.log.connect(self._on_worker_log)
+        worker.progress.connect(self._on_progress)
+        worker.done.connect(self._on_scenes_done)
+        if not self._start_worker("scene_worker", worker):
+            self.scan_button.setEnabled(True)
+            self.convert_button.setEnabled(True)
+            return False
         return True
 
     @Slot(str, str)
@@ -861,13 +830,16 @@ class UnrealConverterWidget(QDialog):
 
         from .converter import MasterMaterialConvertWorker
 
-        self.worker = MasterMaterialConvertWorker(
+        worker = MasterMaterialConvertWorker(
             output_dir, self.bulk_folder_edit.text().strip(), active_master_groups
         )
-        self.worker.progress.connect(self._on_progress)
-        self.worker.file_done.connect(self._on_file_done)
-        self.worker.finished.connect(self._on_mat_finished)
-        self.worker.start()
+        worker.progress.connect(self._on_progress)
+        worker.file_done.connect(self._on_file_done)
+        worker.finished.connect(self._on_mat_finished)
+        if not self._start_worker("worker", worker):
+            self.scan_button.setEnabled(True)
+            self.convert_button.setEnabled(True)
+            return False
         return True
 
     @Slot(int, int)
@@ -897,5 +869,5 @@ class UnrealConverterWidget(QDialog):
         self.convert_button.setEnabled(True)
 
 
-# Backward-compatible alias (old name before the Unreal Converter rename).
-UE2SourceMaterialsWidget = UnrealConverterWidget
+# Backward-compatible alias (old name before the UnrealPorter rename).
+UE2SourceMaterialsWidget = UnrealPorterWidget

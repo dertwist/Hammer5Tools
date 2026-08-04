@@ -1,7 +1,7 @@
 """
 PySide6 UI for SourcePorter map converter and asset validator.
 Conforms strictly to STYLESHEET.md design principles & color tokens.
-Uses exact layout architecture from Unreal Converter (paths, QTabWidget, buttons row, QSplitter, ConsoleWidget).
+Uses exact layout architecture from UnrealPorter (paths, QTabWidget, buttons row, QSplitter, ConsoleWidget).
 Automatically handles CS2 installation path via Hammer5Tools environment settings.
 """
 
@@ -105,7 +105,7 @@ class AssetImportDialog(QDialog):
 
 
 class SourcePorterWidget(QDialog):
-    """SourcePorter dialog using identical layout architecture to Unreal Converter."""
+    """SourcePorter dialog using identical layout architecture to UnrealPorter."""
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)

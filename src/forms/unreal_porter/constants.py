@@ -1,5 +1,5 @@
 """
-Static metadata for the Unreal Converter.
+Static metadata for the UnrealPorter.
 
 This tool is a *content migration helper / entity converter*, not a full
 automated exporter. A lot of Unreal features have no meaningful Source 2
