@@ -316,7 +316,7 @@ class Explorer(QMainWindow):
         self.top_layout.addWidget(self.favorites_button)
         self._panel_mode = None  # "recent" or "favorites"
         self._panel_frame = self._build_panel()
-        self.layout = QVBoxLayout(self)
+        self.layout = QVBoxLayout()
         self.layout.addLayout(self.top_layout)
         self.layout.addWidget(self.tree)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -398,35 +398,29 @@ class Explorer(QMainWindow):
         normalized_path = os.path.normpath(path)
         favs = self.load_favorites()
         normalized_favs = [os.path.normpath(p) for p in favs if p]
-        if normalized_path in normalized_favs:
-            index = normalized_favs.index(normalized_path)
-            favs.pop(index)
-        favs.insert(0, normalized_path)
-        if len(favs) > 30:
-            favs = favs[:30]
-        set_settings_value(self.editor_name + '_favorites', self.addon, favs)
-        self.favorites = favs
+        if normalized_path not in normalized_favs:
+            favs.append(normalized_path)
+            set_settings_value(self.editor_name + '_favorites', self.addon, favs)
+            self.favorites = favs
 
     def load_favorites(self):
-        fav = get_settings_value(self.editor_name + '_favorites', self.addon)
-        if fav is None:
+        favs = get_settings_value(self.editor_name + '_favorites', self.addon)
+        if favs is None:
             return []
-        return fav if isinstance(fav, list) else []
+        return favs if isinstance(favs, list) else []
 
     def save_favorites(self):
         set_settings_value(self.editor_name + '_favorites', self.addon, self.favorites)
 
     def select_tree_item(self, path):
-        if not path:
+        target_path = self._normalize_path(path)
+        if not target_path:
             return
-        
-        # Normalize and check if absolute path exists
-        target_path = os.path.normpath(path)
+
         if not os.path.exists(target_path):
-            # Try relative to rootpath (addon folder)
-            rel_path = os.path.normpath(os.path.join(self.rootpath, path))
-            if os.path.exists(rel_path):
-                target_path = rel_path
+            norm_path = target_path.replace('/', '\\')
+            if os.path.exists(norm_path):
+                target_path = norm_path
             else:
                 debug("select_tree_item: path does not exist - %s" % path)
                 return
@@ -451,12 +445,22 @@ class Explorer(QMainWindow):
         self.tree.setCurrentIndex(proxy_index)
         
         # Use singleShot to allow the UI to process expansion before scrolling.
-        # tree is captured by value and re-checked at fire time: an addon/editor
-        # switch can deleteLater() this Explorer's frame (and its tree) before the
-        # 50ms elapses, and calling into the deleted C++ object crashes the process.
-        tree = self.tree
-        QTimer.singleShot(50, lambda: isValid(tree) and tree.scrollTo(proxy_index, QTreeView.PositionAtCenter))
+        # Re-resolve indices by target_path at callback time to avoid dangling QModelIndex pointers.
+        QTimer.singleShot(50, lambda: self._safe_scroll_to_path(target_path))
         self.tree.setFocus()
+
+    def _safe_scroll_to_path(self, target_path: str):
+        if not isValid(self) or not hasattr(self, 'tree') or not isValid(self.tree):
+            return
+        if not hasattr(self, 'model') or not isValid(self.model):
+            return
+        if not hasattr(self, 'filter_proxy_model') or not isValid(self.filter_proxy_model):
+            return
+        source_index = self.model.index(target_path)
+        if source_index.isValid():
+            proxy_index = self.filter_proxy_model.mapFromSource(source_index)
+            if proxy_index.isValid():
+                self.tree.scrollTo(proxy_index, QTreeView.PositionAtCenter)
 
     def select_last_opened_path(self):
         try:
