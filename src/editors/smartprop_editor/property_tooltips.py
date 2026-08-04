@@ -171,6 +171,7 @@ property_tooltips = {
     "m_nNthPositionIndexOffset": "Specifies an offset to use when determining the Nth position to place an element at. For example if placing at every third position with an offset of 0, an element will appear at positions 1, 4, 7, and so on. But if an offset of 2 is set instead of 0, then an element will appear at positions 3, 6, and 9 and so on.",
     "m_nPickMode": "Specifies how scale is applied to each of the selected element in order to fit them to the line.",
     "m_nPlaceEveryNthPosition": "Specifies the spacing between positions. For example, a value of 1 will place the element at very position, 2 every other position, 3 every third position",
+    "m_nReferenceID": "This property can be used only in Hammer5Tools for elements. This property is used to copy modifiers and properties from the selected element, respecting overrides. Important: it cannot be visible in the viewport — you have to save the file.",
     "m_nScaleMode": "Specifies how scale is applied to each of the selected element in order to fit them to the line.",
     "m_nTargetOpenEdgeCount": "Iterate through faces with 'n' open edges (edges with only one neighboring face).",
     "m_nTargetVertexCount": "Iterate through faces with target vertex count.",
