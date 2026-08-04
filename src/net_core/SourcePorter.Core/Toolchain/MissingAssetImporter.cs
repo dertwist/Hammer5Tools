@@ -142,21 +142,7 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
             // source1import miss the stock ones — see ImportSpecificAssetsAsync.
             if (models.Stock.Count > 0 || materials.Stock.Count > 0)
                 await service.ImportSpecificAssetsAsync(project, models.Stock, materials.Stock, ct, stockOnly: true);
-            var customDir = mergedExtra.FirstOrDefault(dir => Directory.Exists(dir) && !PathsEqual(dir, project.S1GameInfoDir)) 
-                            ?? project.S1ContentDir;
-            var customProject = project;
-            if (!string.IsNullOrEmpty(customDir) && !PathsEqual(customDir, project.S1GameInfoDir) && !PathsEqual(customDir, project.S1ContentDir))
-            {
-                customProject = new PortProject
-                {
-                    S2GameInfoDir = project.S2GameInfoDir,
-                    S1GameInfoDir = project.S1GameInfoDir,
-                    S1ContentDir = customDir,
-                    AddonName = project.AddonName,
-                    MapName = project.MapName,
-                    Import = project.Import
-                };
-            }
+            var customProject = CustomContentProject(project, locator, mergedExtra, materials.Custom, models.Custom);
 
             // Custom assets the locator found only in the BSP's embedded pakfile aren't on disk, so
             // source1import/cs_mdl_import can't read them — extract them (and a material's textures)
@@ -272,21 +258,7 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
         if (m.Stock.Count > 0 || t.Stock.Count > 0)
             await service.ImportSpecificAssetsAsync(project, m.Stock, t.Stock, ct, stockOnly: true);
 
-        var customDir = mergedExtra.FirstOrDefault(dir => Directory.Exists(dir) && !PathsEqual(dir, project.S1GameInfoDir)) 
-                        ?? project.S1ContentDir;
-        var customProject = project;
-        if (!string.IsNullOrEmpty(customDir) && !PathsEqual(customDir, project.S1GameInfoDir) && !PathsEqual(customDir, project.S1ContentDir))
-        {
-            customProject = new PortProject
-            {
-                S2GameInfoDir = project.S2GameInfoDir,
-                S1GameInfoDir = project.S1GameInfoDir,
-                S1ContentDir = customDir,
-                AddonName = project.AddonName,
-                MapName = project.MapName,
-                Import = project.Import
-            };
-        }
+        var customProject = CustomContentProject(project, locator, mergedExtra, t.Custom, m.Custom);
 
         ExtractBspEmbeddedToDisk(customProject, locator, t.Custom, m.Custom);
         if (m.Custom.Count > 0 || t.Custom.Count > 0)
@@ -332,6 +304,46 @@ public sealed class MissingAssetImporter(MapImportService service, Cs2Install cs
                 paths.Add(path);
         }
         return paths;
+    }
+
+    /// <summary>
+    /// The project to run the custom-content dependency import against: <paramref name="project"/>
+    /// with <c>S1ContentDir</c> pointed at the root that actually holds
+    /// <paramref name="materials"/>/<paramref name="models"/>.
+    /// <para>
+    /// <c>source1import</c> mounts a single <c>-src1contentdir</c>, while the staging area keeps one
+    /// folder per previously-ported map and the caller hands us all of them. Taking the first of
+    /// those ran a <c>de_swamp</c> import against a leftover <c>cs_climb_a71</c> unpack, so every
+    /// material came back <c>*** Found no files matching specification</c>. The locator already knows
+    /// which root each source was found in — ask it, and only fall back to "first root that exists"
+    /// when nothing is loose on disk (e.g. everything is still inside the BSP pakfile).
+    /// </para>
+    /// </summary>
+    private static PortProject CustomContentProject(
+        PortProject project, S1SourceLocator locator, IEnumerable<string> extraRoots,
+        IEnumerable<string> materials, IEnumerable<string> models)
+    {
+        var customDir =
+            materials.Concat(models)
+                .Select(locator.TryGetCustomRoot)
+                .FirstOrDefault(root => !string.IsNullOrEmpty(root))
+            ?? extraRoots.FirstOrDefault(dir => Directory.Exists(dir) && !PathsEqual(dir, project.S1GameInfoDir))
+            ?? project.S1ContentDir;
+
+        if (string.IsNullOrEmpty(customDir)
+            || PathsEqual(customDir, project.S1GameInfoDir)
+            || PathsEqual(customDir, project.S1ContentDir))
+            return project;
+
+        return new PortProject
+        {
+            S2GameInfoDir = project.S2GameInfoDir,
+            S1GameInfoDir = project.S1GameInfoDir,
+            S1ContentDir = customDir,
+            AddonName = project.AddonName,
+            MapName = project.MapName,
+            Import = project.Import
+        };
     }
 
     /// <summary>

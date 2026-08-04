@@ -90,6 +90,15 @@ public sealed class S1SourceLocator : IDisposable
     public bool Has(string sourcePath) => Locate(sourcePath) != S1Source.NotFound;
 
     /// <summary>
+    /// Which custom-content root actually holds <paramref name="sourcePath"/> on disk, or null
+    /// (stock-only, BSP-pakfile-only, or absent). <c>source1import</c> takes a single
+    /// <c>-src1contentdir</c>, so the dependency import has to pick the root the files are really
+    /// in — not just the first root it was handed.
+    /// </summary>
+    public string? TryGetCustomRoot(string sourcePath)
+        => _custom.TryGetLooseRoot(sourcePath.Replace('\\', '/'));
+
+    /// <summary>
     /// Reads a source file's text (custom content first, then CS:GO VPKs), or null if absent.
     /// Lets the non-binary <c>MaterialConverter</c> fallback convert a <c>.vmt</c> straight from the
     /// VPK — used for tool materials that <c>source1import</c> blacklists and refuses to import.
