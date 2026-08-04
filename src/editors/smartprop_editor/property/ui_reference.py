@@ -117,7 +117,7 @@ class Ui_Widget(object):
 "    padding: 2px;\n"
 "    color: #E3E3E3;\n"
 "    border-bottom: 0px solid rgba(80, 80, 80, 255);\n"
-"    background-color: #1C1C1C;\n"
+"    background-color: transparent;\n"
 "}\n"
 "\n"
 "QLineEdit:focus {\n"
