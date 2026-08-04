@@ -202,10 +202,13 @@ class HierarchyTreeWidget(QTreeWidget):
         if self.list_mode:
             parent = self.invisibleRootItem()
         else:
-            if self.currentItem == None:
+            parent = self.currentItem()
+            if parent is None:
                 parent = self.invisibleRootItem()
-            else:
-                parent = self.currentItem()
+            elif not (parent.flags() & Qt.ItemIsDropEnabled):
+                # Leaf-only item types (e.g. Model/SmartProp) refuse ItemIsDropEnabled;
+                # add beside them instead of inside them.
+                parent = parent.parent() or self.invisibleRootItem()
         cmd = AddItemCommand(self, parent, item=item)
         self.undo_stack.push(cmd)
         if self.currentItem() is not None:

@@ -723,6 +723,12 @@ class SmartPropDocument(QMainWindow):
         return super().eventFilter(source, event)
 
     # [Tree Widget Hierarchy New Element]
+    def _safe_parent_item(self, candidate):
+        """Model/SmartProp elements are leaf-only; redirect to beside them, not inside them."""
+        if candidate is not None and not (candidate.flags() & Qt.ItemIsDropEnabled):
+            return candidate.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        return candidate
+
     def add_preset(self):
         from src.common import get_all_presets, SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path
         presets = get_all_presets(SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path)
@@ -1440,7 +1446,7 @@ class SmartPropDocument(QMainWindow):
             ))
         if not items:
             return
-        parent_item = target_item or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        parent_item = self._safe_parent_item(target_item) or self.ui.tree_hierarchy_widget.invisibleRootItem()
         command = BulkModelImportCommand(self, parent_item, items)
         command.setText("Drop Files")
         self.undo_stack.push(command)
@@ -1459,6 +1465,8 @@ class SmartPropDocument(QMainWindow):
             parent_item = self.ui.tree_hierarchy_widget.currentItem()
             if parent_item is None:
                 parent_item = self.ui.tree_hierarchy_widget.invisibleRootItem()
+            else:
+                parent_item = self._safe_parent_item(parent_item)
             items = []
             for index, file_path in enumerate(files):
                 rel_path = os.path.relpath(file_path, addon_path).replace(os.path.sep, '/')
