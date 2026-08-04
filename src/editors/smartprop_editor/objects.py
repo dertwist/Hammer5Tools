@@ -7,6 +7,8 @@ variables_list = [
     'DistributionMode',
     'RadiusPlacementMode',
     'ChoiceSelectionMode',
+    'ColorSelectionMode',
+    'OrientationMode',
     'String',
     'Bool',
     'Int',
@@ -25,14 +27,15 @@ variables_list = [
     'PickMode',
     'GridPlacementMode',
     'GridOriginMode',
-    'PathPositions'
+    'PathPositions',
+    'SurfaceProperty'
 ]
 
 element_prefix = 'CSmartPropElement_'
 elements_list = [
     {'ModifyState': {'_class': 'CSmartPropElement_ModifyState', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Group': {'_class': 'CSmartPropElement_Group', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': '', 'm_bLocalEvaluationState': False, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceInSphere': {
         '_class': 'CSmartPropElement_PlaceInSphere',
         'm_flRandomness': None,
@@ -48,7 +51,7 @@ elements_list = [
         'm_Modifiers': [],
         'm_SelectionCriteria': []
     }},
-    {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': None, 'm_Expression': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceOnPath': {
         '_class': 'CSmartPropElement_PlaceOnPath',
         'm_PathName': 'path',
@@ -56,14 +59,13 @@ elements_list = [
         'm_flOffsetAlongPath': None,
         'm_PathSpace': None,
         'm_flSpacing': 128.0,
-        'm_SpacingSpace': 'WORLD',
-        'm_bContinuousSpline': True,
         'm_Modifiers': [],
         'm_SelectionCriteria': [],
         'm_bUseFixedUpDirection': True,
         'm_bUseProjectedDistance': True,
         'm_vUpDirection': None,
         'm_UpDirectionSpace': 'WORLD',
+        'm_DefaultPathInWorldSpace': False,
         'm_DefaultPath': [[-400.0, 0.0, 0.0], [-200.0, 32, 0.0], [200.0, -32, 0.0], [400.0, 0.0, 0.0]]
     }},
     {'FitOnLine': {
@@ -96,33 +98,16 @@ elements_list = [
     {'Model': {
         '_class': 'CSmartPropElement_Model',
         'm_sModelName': '',
-        'm_bForceStatic': True,
         'm_vModelScale': None,
         'm_MaterialGroupName': None,
         'm_bDetailObject': False,
         'm_bRigidDeformation': False,
+        'm_bDisableDynamicDeformable': False,
         'm_nLodLevel': -1,
-        'm_DetailObjectFadeLevel': None,
-        'm_nDeformableAttachmentMode': None,
-        'm_nDeformableOrientationMode': None,
+        'm_nDetailObjectFadeLevel': None,
         'm_bCastShadows': True,
         'm_flUniformModelScale': None,
         'm_SurfacePropertyOverride': None,
-        'm_Modifiers': [],
-        'm_SelectionCriteria': []
-    }},
-    {'ModelEntity': {
-        '_class': 'CSmartPropElement_ModelEntity',
-        'm_sModelName': '',
-        'm_vModelScale': None,
-        'm_MaterialGroupName': None,
-        'm_bDetailObject': False,
-        'm_bRigidDeformation': False,
-        'm_nLodLevel': -1,
-        'm_bCastShadows': True,
-        'm_bForceStatic': False,
-        'm_nDeformableAttachmentMode': None,
-        'm_nDeformableOrientationMode': None,
         'm_Modifiers': [],
         'm_SelectionCriteria': []
     }},
@@ -141,23 +126,23 @@ elements_list = [
     {'PropPhysics': {
         '_class': 'CSmartPropElement_PropPhysics',
         'm_sModelName': '',
-        'm_vModelScale': None,
         'm_MaterialGroupName': None,
-        'm_flMass': 50.0,
+        'm_bCastShadows': True,
+        'm_bForceStatic': False,
+        'm_nDeformableAttachmentMode': None,
+        'm_nDeformableOrientationMode': None,
         'm_bStartAsleep': False,
-        'm_nHealth': 100,
-        'm_bEnableMotion': True,
-        'm_sPhysicsType': 'normal',
         'm_Modifiers': [],
         'm_SelectionCriteria': []
     }},
     {'PropDynamic': {
         '_class': 'CSmartPropElement_PropDynamic',
         'm_sModelName': '',
-        'm_sAnimationSequence': '',
-        'm_sDefaultAnimation': '',
-        'm_vModelScale': None,
         'm_MaterialGroupName': None,
+        'm_bCastShadows': True,
+        'm_bForceStatic': False,
+        'm_nDeformableAttachmentMode': None,
+        'm_nDeformableOrientationMode': None,
         'm_Modifiers': [],
         'm_SelectionCriteria': []
     }},
@@ -173,6 +158,14 @@ elements_list = [
         'm_vScale': None,
         'm_fFalloff': 0.5,
         'm_OutputVariable': '',
+        'm_Modifiers': [],
+        'm_SelectionCriteria': []
+    }},
+    {'PlaceOnMesh': {
+        '_WARN_NOT_VERIFIED': True,
+        '_class': 'CSmartPropElement_PlaceOnMesh',
+        'm_nPickMode': 'FIRST_OPEN_EDGE',
+        'm_MeshName': '',
         'm_Modifiers': [],
         'm_SelectionCriteria': []
     }},
@@ -208,13 +201,14 @@ operator_prefix = 'CSmartPropOperation_'
 operators_list = [
     {'Rotate': {'_class': "CSmartPropOperation_Rotate", "m_vRotation": {"m_Components":[0,0,0]}}},
     {'Scale': {'_class': "CSmartPropOperation_Scale", "m_flScale": 1}},
-    {'Translate': {'_class': "CSmartPropOperation_Translate", "m_vPosition": {"m_Components":[0,0,0]}}},
-    {'SetTintColor': {'_class': "CSmartPropOperation_SetTintColor", "m_Mode": "MULTIPLY_OBJECT", "m_ColorChoices": []}},
+    {'Translate': {'_class': "CSmartPropOperation_Translate", "m_vPosition": {"m_Components":[0,0,0]}, "m_CoordinateSpace": "ELEMENT"}},
+    {'SetTintColor': {'_class': "CSmartPropOperation_SetTintColor", "m_SelectionMode": "RANDOM", "m_ColorSelection": 0, "m_Mode": "MULTIPLY_OBJECT", "m_ColorChoices": []}},
     {'MaterialOverride': {'_class': "CSmartPropOperation_MaterialOverride", "m_bClearCurrentOverrides": False, "m_MaterialReplacements": []}},
     {'MaterialTint': {'_class': "CSmartPropOperation_MaterialTint", "m_Material": "", "m_SelectionMode": "SPECIFIC_COLOR", "m_Color": [255, 255, 255], "m_ColorPosition": 0.0}},
     {'RandomOffset': {'_class': "CSmartPropOperation_RandomOffset", "m_vRandomPositionMin": None, "m_vRandomPositionMax": None, "m_vSnapIncrement": None}},
     {'RandomScale': {'_class': "CSmartPropOperation_RandomScale", "m_flRandomScaleMin": 1.0, "m_flRandomScaleMax": 1.0, "m_flSnapIncrement": 0.0}},
     {'RandomRotation': {'_class': "CSmartPropOperation_RandomRotation", "m_vRandomRotationMin": None, "m_vRandomRotationMax": None, "m_vSnapIncrement": None}},
+    {'RigidDeformation': {'_class': "CSmartPropOperation_RigidDeformation"}},
     {'CreateSizer': {
         '_class': "CSmartPropOperation_CreateSizer",
         "m_Name": "",
@@ -226,7 +220,7 @@ operators_list = [
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator", "m_Name": "", "m_vOffset": None, "m_vRotationAxis": None, "m_CoordinateSpace": "WORLD", "m_flDisplayRadius": 16.0, "m_DisplayColor": None, "m_bApplyToCurrentTransform": True, "m_flSnappingIncrement": 0.0, "m_flInitialAngle": 0.0, "m_bEnforceLimits": False, "m_flMinAngle": 0.0, "m_flMaxAngle": 0.0, "m_OutputVariable": ""}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator", "m_LocatorName": "", "m_vOffset": None, "m_flDisplayScale": 1.0, "m_bConfigurable": True, "m_bAllowTranslation": True, "m_bAllowRotation": True, "m_bAllowScale": True}},
     {'RestoreState': {'_class': "CSmartPropOperation_RestoreState", 'm_StateName': 'State', 'm_bDiscardIfUknown': True}},
-    {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500}},
+    {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_vTraceDirection': None, 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500, 'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False}},
     {'SaveState': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
     {'SetVariable': {'_class': 'CSmartPropOperation_SetVariable', 'm_VariableValue': {'m_TargetName': None, 'm_DataType': None, 'm_Value':None}}},
     {'RandomRotationSnapped': {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropOperation_RandomRotationSnapped', 'm_vMinAngles': None, 'm_vMaxAngles': None, 'm_flSnapIncrement': 45.0, 'm_RotationAxes': 'Z'}},
@@ -257,9 +251,13 @@ selection_criteria_prefix = "CSmartPropSelectionCriteria_"
 selection_criteria_list = [
     {"EndCap": {'_class': 'CSmartPropSelectionCriteria_EndCap', 'm_bStart':False, 'm_bEnd': False}},
     {"ChoiceWeight": {'_class': 'CSmartPropSelectionCriteria_ChoiceWeight', 'm_flWeight': 0}},
-    {"IsValid": {'_class': 'CSmartPropSelectionCriteria_IsValid'}},
+    {"IsValid": {'_class': 'CSmartPropSelectionCriteria_IsValid', 'm_Expression': ''}},
     {"LinearLength": {'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flLength': 0, 'm_bAllowScale': False, 'm_flMinLength': 0, 'm_flMaxLength': 0}},
     {"PathPosition": {'_class': 'CSmartPropSelectionCriteria_PathPosition', 'm_PlaceAtPositions': 'ALL', 'm_nPlaceEveryNthPosition': 0, 'm_nNthPositionIndexOffset': 0, 'm_bAllowAtStart': False, 'm_bAllowAtEnd': False}},
+    {"EdgeAngleCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_EdgeAngleCriteria', 'm_flMinAngle': 0, 'm_flMaxAngle': 0, 'm_bInvert': False}},
+    {"TopoEdgeCountCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_TopoEdgeCountCriteria', 'm_nTargetOpenEdgeCount': 0, 'm_bInvert': False, 'm_bSharedVert': False}},
+    {"VertexCountCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_VertexCountCriteria', 'm_nTargetVertexCount': 0}},
+    {"MaterialCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_MaterialCriteria', 'm_material': '', 'm_bInvert': False}},
     {'Comment': {'_class': 'Hammer5Tools_Comment', 'm_Comment': None}}
 ]
 

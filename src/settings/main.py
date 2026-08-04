@@ -174,6 +174,14 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", frame_interface)
         self.spe_display_id_with_variable_class.setStyleSheet(qt_stylesheet_checkbox)
         layout_interface.addWidget(self.spe_display_id_with_variable_class)
+        self.spe_hide_experimental = QCheckBox("Hide experimental properties and elements", frame_interface)
+        self.spe_hide_experimental.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_hide_experimental.setToolTip(
+            "When enabled, elements and criteria marked as experimental (not verified to work in CS2)\n"
+            "are hidden from the Add Element / Add Operator / Add Criteria menus.\n"
+            "Existing experimental nodes in an open file are still visible and editable."
+        )
+        layout_interface.addWidget(self.spe_hide_experimental)
         layout.addWidget(frame_interface)
         # Divider between subcategories
         layout.addWidget(self.create_divider(smartprop_content))
@@ -406,6 +414,7 @@ class PreferencesDialog(QDialog):
         self.action_buttons_panel.version_label.setText(version_text)
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
+        self.spe_hide_experimental.setChecked(get_settings_bool('SmartPropEditor', 'hide_experimental', True))
         # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
         # Populate Default File Subcategory fields
@@ -485,6 +494,9 @@ class PreferencesDialog(QDialog):
         )
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
+        )
+        self.spe_hide_experimental.toggled.connect(
+            lambda: set_settings_bool('SmartPropEditor', 'hide_experimental', self.spe_hide_experimental.isChecked())
         )
         self.spe_export_properties.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())

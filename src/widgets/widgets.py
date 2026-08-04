@@ -698,7 +698,7 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
 
 
 #: Element classes that are leaf-only in the CS2 SmartProp format — m_Children must stay empty.
-NO_CHILDREN_CLASSES = ("Model", "SmartProp")
+NO_CHILDREN_CLASSES = ("Model", "SmartProp", "ModifyState", "PropPhysics", "PropDynamic")
 
 
 def add_error_badge(icon, size: int = 18):
