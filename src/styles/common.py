@@ -40,14 +40,11 @@ qt_stylesheet_classes = {
         QLabel {
         font-size: 8pt;
         font-family: "Segoe UI";
-        border-top: 0px;
-        border-left: 0px;
-        border-right: 0px;
-        border-bottom: 2px solid rgba(80, 80, 80, 255);
+        border: none;
         border-radius: 0px;
         padding: 2px;
-        color: #6D6D6D;
-        background-color: #9D9D9D;
+        color: #E3E3E3;
+        background-color: transparent;
         }
         """,
     'label_second':
