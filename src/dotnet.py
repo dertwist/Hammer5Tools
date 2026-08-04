@@ -18,27 +18,54 @@ from PySide6.QtWidgets import QMessageBox
 tests_path = Path(__file__).parent.parent / 'tests'
 RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
 
-# Paths already handed to AssemblyLoadContext.Default.LoadFromAssemblyPath this
-# process. That call throws FileLoadException ("Assembly with same name is
-# already loaded") the second time it sees the same assembly identity, even
-# for the exact same file — and setup_vrf()/setup_source_porter() are each
-# called from a fresh DotNetInterop() per call site (viewport, model browser,
-# thumbnails, ...), so without this cache the second call site to run in a
-# given process always fails.
-_alc_loaded_paths: set = set()
+#: Private AssemblyLoadContext for the ValveResourceFormat assembly set.
+#
+# VRF (src/external) and SourcePorter.Core (src/net_core/.../publish) are built
+# against *different, incompatible* versions of the same dependencies —
+# ValveKeyValue 0.70 vs 0.20, System.IO.Hashing 10 vs 9 — and ValvePak /
+# Datamodel.NET ship in both folders. A load context resolves by simple name,
+# so both sets cannot share one: LoadFromAssemblyPath throws FileLoadException
+# ("Assembly with same name is already loaded") for the second folder, and even
+# if it didn't, whichever loaded first would win and the other would bind
+# against the wrong version (MissingMethodException). Giving VRF its own
+# context keeps them apart. SourcePorter.Core stays in the default context
+# because porter_client imports its namespaces through pythonnet.
+VRF_ALC = "Hammer5Tools.Vrf"
+
+# (context, path) -> Assembly, so a repeat load is a dict hit. setup_vrf() /
+# setup_source_porter() are each called from a fresh DotNetInterop() per call
+# site (viewport, model browser, thumbnails, ...); without this the second call
+# site to run in a given process hits the same FileLoadException.
+_alc_loaded: dict = {}
+_alc_contexts: dict = {}
+
+
+def _get_alc(context: Optional[str]):
+    """Return ``(AssemblyLoadContext type, instance)``; ``None`` = the default one."""
+    import System
+    alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
+    if context is None:
+        return alc_type, alc_type.GetProperty("Default").GetValue(None)
+    if context not in _alc_contexts:
+        ctor = alc_type.GetConstructor([System.String, System.Boolean])
+        _alc_contexts[context] = ctor.Invoke([context, False])
+    return alc_type, _alc_contexts[context]
+
+
+def _load_assembly_into(path: Path, context: Optional[str] = None):
+    """Load ``path`` into ``context`` (the default one when None), once per process."""
+    import System
+    key = (context, str(path))
+    if key not in _alc_loaded:
+        alc_type, alc = _get_alc(context)
+        load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
+        _alc_loaded[key] = load_method.Invoke(alc, [str(path)])
+    return _alc_loaded[key]
 
 
 def _load_into_default_alc(path: Path) -> None:
     """Load ``path`` into the default AssemblyLoadContext, once per process."""
-    key = str(path)
-    if key in _alc_loaded_paths:
-        return
-    import System
-    alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
-    default_context = alc_type.GetProperty("Default").GetValue(None)
-    load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
-    load_method.Invoke(default_context, [key])
-    _alc_loaded_paths.add(key)
+    _load_assembly_into(path, None)
 
 
 class DotNetPaths:
@@ -191,12 +218,26 @@ class DotNetInterop:
         for dep in dependencies:
             if not dep.exists():
                 raise FileNotFoundError(f"Assembly not found: {dep}")
-            _load_into_default_alc(dep)
 
+        # A private context does no probing of its own (unlike Assembly.LoadFrom,
+        # which probed the loaded file's folder), so preload every managed .dll
+        # sitting next to VRF — SkiaSharp, TinyBCSharp, TinyEXR.NET, ... — into it.
+        # Native DLLs in the same folder throw BadImageFormatException; they are
+        # found through PATH above, not the load context.
+        for dll in sorted(dll_dir.glob("*.dll")):
+            if dll.name == "SourcePorter.Core.dll":
+                continue  # belongs to the other, incompatible dependency set
+            try:
+                _load_assembly_into(dll, VRF_ALC)
+            except Exception:
+                pass
+
+        for dep in dependencies:
+            _load_assembly_into(dep, VRF_ALC)
 
         # Get required types
-        vrf_assembly = System.Reflection.Assembly.LoadFrom(str(self.paths.vrf))
-        valvepak_assembly = System.Reflection.Assembly.LoadFrom(str(self.paths.valve_pak))
+        vrf_assembly = _load_assembly_into(self.paths.vrf, VRF_ALC)
+        valvepak_assembly = _load_assembly_into(self.paths.valve_pak, VRF_ALC)
 
         # Find required types
         Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
@@ -248,10 +289,9 @@ class DotNetInterop:
         """Setup SourcePorter.Core .NET interop via pythonnet.
 
         Deliberately does NOT call setup_vrf(): SourcePorter.Core never touches
-        ValveResourceFormat, and setup_vrf() would preload src/external's legacy
-        ValveKeyValue.dll (a much newer, binary-incompatible version) into the
-        default ALC first, so SourcePorter.Core.dll's calls into ValveKeyValue
-        would bind against the wrong version and throw MissingMethodException.
+        ValveResourceFormat, and the two are built against binary-incompatible
+        versions of ValveKeyValue/System.IO.Hashing — see :data:`VRF_ALC`, which
+        is what keeps the two sets in separate load contexts.
         """
         self._init_pythonnet()
 
@@ -796,23 +836,19 @@ def _suppress_dotnet_console():
 
 if __name__ == "__main__":
     from src.settings.main import get_cs2_path
-    cs2_path = get_cs2_path()
-    vpk_path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk') if cs2_path else None
-    if vpk_path and os.path.exists(vpk_path):
-        vpk_file = r'sounds\items\healthshot_thud_01.vsnd_c'
-        data, ext = decode_vsnd(vpk_path, vpk_file)
-        if data:
-            assert len(data) > 0, "Decoded data is empty"
-            assert data.startswith(b'RIFF') or data.startswith(b'ID3') or data.startswith(b'\xff\xfb') or data.startswith(b'\xff\xf3') or data.startswith(b'\xff\xf2'), f"Unexpected header: {data[:4]}"
-            print(f"Self-check passed: decoded {vpk_file} -> {len(data)} bytes ({ext})")
-        else:
-            print(f"Self-check skipped: file {vpk_file} not found in VPK")
-    else:
-        print("Self-check skipped: CS2 or pak01_dir.vpk not found")
 
+    # VRF and SourcePorter.Core must both load in one process, in either order.
+    # They share dependency names at incompatible versions, so a regression here
+    # (both back in one load context) breaks whichever tool the user opens second.
+    for first, second in (("vrf", "porter"), ("porter", "vrf")):
+        interop = DotNetInterop()
+        for which in (first, second):
+            if which == "vrf":
+                assert interop.setup_vrf()[0] is not None
+            else:
+                assert interop.setup_source_porter() is not None
+        print(f"Self-check passed: {first} then {second}")
 
-if __name__ == "__main__":
-    from src.settings.main import get_cs2_path
     cs2_path = get_cs2_path()
     vpk_path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk') if cs2_path else None
     if vpk_path and os.path.exists(vpk_path):

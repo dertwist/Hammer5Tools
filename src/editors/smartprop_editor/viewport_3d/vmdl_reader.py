@@ -55,11 +55,13 @@ class _Vrf:
 
     def __init__(self):
         from src.dotnet import setup_vrf
-        setup_vrf()
+        Resource = setup_vrf()[0]
 
         import System
         self.System = System
-        asm = System.Reflection.Assembly.Load("ValveResourceFormat")
+        # VRF lives in its own AssemblyLoadContext (dotnet.py VRF_ALC), so
+        # Assembly.Load by name — which only searches the default one — misses it.
+        asm = Resource.Assembly
         self.asm = asm
         self.GameFileLoader = asm.GetType("ValveResourceFormat.IO.GameFileLoader")
         self.CubemapFace = asm.GetType("ValveResourceFormat.ResourceTypes.Texture+CubemapFace")
