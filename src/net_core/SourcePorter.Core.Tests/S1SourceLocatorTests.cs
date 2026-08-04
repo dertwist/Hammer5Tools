@@ -70,6 +70,24 @@ public class S1SourceLocatorTests : IDisposable
         Assert.Equal(S1Source.CsgoVpk, locator.Locate("materials/x.vmt"));
     }
 
+    // The staging area keeps one folder per previously-ported map and they are all handed in as
+    // extra roots, but source1import mounts only one -src1contentdir. Picking the first root
+    // (alphabetical: a stale "cs_climb_a71") instead of the one holding the files made every
+    // material fail with "*** Found no files matching specification".
+    [Fact]
+    public void Custom_root_is_the_one_actually_holding_the_source()
+    {
+        var stale = Path.Combine(_root, "staging", "cs_climb_a71");
+        var real = Path.Combine(_root, "staging", "de_swamp");
+        Directory.CreateDirectory(stale);
+        WriteFile(real, "materials/de_swamp/wood/hr_wood_planks_a.vmt");
+
+        using var locator = new S1SourceLocator(Csgo, null, [stale, real]);
+
+        Assert.Equal(real, locator.TryGetCustomRoot("materials/de_swamp/wood/hr_wood_planks_a.vmt"));
+        Assert.Null(locator.TryGetCustomRoot("materials/de_swamp/wood/nope.vmt"));
+    }
+
     [Fact]
     public void Handles_backslash_paths()
     {

@@ -40,16 +40,22 @@ public sealed class VpkIndex : IDisposable
         => ExistsLoose(compiledPath) || ExistsInVpk(compiledPath);
 
     /// <summary>True if <paramref name="path"/> exists as a loose file under any added root.</summary>
-    public bool ExistsLoose(string path)
+    public bool ExistsLoose(string path) => TryGetLooseRoot(path) is not null;
+
+    /// <summary>
+    /// The loose root that holds <paramref name="path"/> (in add order), or null if no root does.
+    /// Callers that can only mount <i>one</i> root need to know which one actually has the files.
+    /// </summary>
+    public string? TryGetLooseRoot(string path)
     {
         var forward = path.Replace('\\', '/');
         foreach (var root in _looseRoots)
         {
             var onDisk = Path.Combine(root, forward.Replace('/', Path.DirectorySeparatorChar));
             if (File.Exists(onDisk))
-                return true;
+                return root;
         }
-        return false;
+        return null;
     }
 
     /// <summary>True if <paramref name="path"/> exists inside any mounted VPK archive.</summary>
