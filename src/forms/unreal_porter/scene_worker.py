@@ -31,8 +31,14 @@ class SceneModelsWorker(QThread):
 
     def __init__(self, project_dir, bulk_dir, output_dir,
                  do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=False, unit_scale=1.0,
-                 use_graybox_fallback=False, parent=None):
+                 use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None, parent=None):
         super().__init__(parent)
+        # {master material name: chosen CS2 shader / slot overrides} straight
+        # from the Materials tab. The shader is a property of the Master
+        # Material, so every instance under it converts with the same one
+        # instead of each re-guessing from its own name.
+        self.master_shaders = master_shaders or {}
+        self.master_slot_overrides = master_slot_overrides or {}
         self.project_dir = project_dir
         self.bulk_dir = bulk_dir
         self.output_dir = output_dir
@@ -344,8 +350,12 @@ class SceneModelsWorker(QThread):
             try:
                 data = self.bridge.dump_material(path)
                 master_name = get_master_material_name(data, path)
-                shader = predict_cs2_shader(master_name, data.get("flags"))
-                res = convert_material(data, self.bulk_dir, self.output_dir, shader=shader, slot_overrides=slot_overrides)
+                # The Materials tab's choice for this Master Material wins; the
+                # name heuristic is only a fallback for masters the scan never
+                # saw (e.g. Convert run without a preceding Scan).
+                shader = self.master_shaders.get(master_name) or predict_cs2_shader(master_name, data.get("flags"))
+                overrides = self.master_slot_overrides.get(master_name) or slot_overrides
+                res = convert_material(data, self.bulk_dir, self.output_dir, shader=shader, slot_overrides=overrides)
                 done += 1
                 msg = f"  material {stem}: Success ({shader})"
                 if res.missing:

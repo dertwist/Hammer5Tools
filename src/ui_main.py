@@ -290,7 +290,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.console_label.setText("")
 #if QT_CONFIG(tooltip)
-        self.utilities_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Utilities</span></p><p>Open a utility tool (Cleanup, Unreal Converter).</p></body></html>", None))
+        self.utilities_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Utilities</span></p><p>Open a utility tool (Cleanup, UnrealPorter).</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.utilities_button.setText(QCoreApplication.translate("MainWindow", u"Utilities", None))
 #if QT_CONFIG(tooltip)

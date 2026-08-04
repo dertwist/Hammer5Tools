@@ -58,14 +58,25 @@ def find_editor_cmd(engine_root: str) -> str:
     )
 
 
+# Kept in sync with tools/ue_scripts/export_assets.py DEFAULT_CONTENT_PATHS —
+# duplicated rather than imported because that module only loads inside the UE
+# Editor process (it imports `unreal` at call time, but lives outside src/).
+DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
+
+
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
-                content_path: str = "/Game", timeout: int = 1800,
+                content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
                 on_line=None) -> str:
     """Runs the Editor commandlet synchronously and returns its combined
     stdout/stderr. Raises UeExportError on a non-zero exit or missing paths.
     If on_line callback is provided, streams output line by line in real time."""
     if not output_dir:
         raise UeExportError("An output folder is required.")
+
+    if not _EXPORT_SCRIPT.is_file():
+        raise UeExportError(
+            f"Export script missing: {_EXPORT_SCRIPT}\nThe build is incomplete — reinstall Hammer5Tools."
+        )
 
     editor_cmd = find_editor_cmd(engine_root)
     uproject = find_uproject(project_content_dir)

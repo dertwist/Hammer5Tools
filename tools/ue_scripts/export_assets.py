@@ -23,6 +23,29 @@ import os
 
 _EXPORTABLE_CLASSES = ("StaticMesh", "Texture2D")
 
+# Maps routinely place engine content that lives outside /Game — the default
+# template floor (/Engine/MapTemplates/SM_Template_Map_Floor) is in every map
+# made from a UE template, and BasicShapes are common greyboxing props. Without
+# these roots the converter writes a vmdl pointing at a mesh nobody exported.
+# /Engine as a whole is thousands of assets, so only the roots that actually
+# get placed in levels are included.
+DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
+
+
+def _split_paths(content_path: str) -> list:
+    """'/Game;/Engine/MapTemplates' -> ['/Game', '/Engine/MapTemplates'].
+    Accepts ';' or ',' so the env var is forgiving about separators."""
+    if not content_path:
+        return []
+    parts = content_path.replace(",", ";").split(";")
+    seen, out = set(), []
+    for p in parts:
+        p = p.strip().rstrip("/")
+        if p and p.lower() not in seen:
+            seen.add(p.lower())
+            out.append(p)
+    return out
+
 
 def _select_export_paths(asset_infos, classes=_EXPORTABLE_CLASSES):
     """asset_infos: iterable of (object_path, class_name). Returns the object
@@ -82,12 +105,24 @@ def _list_assets(unreal, content_path: str):
     raise RuntimeError("Neither EditorAssetLibrary nor AssetRegistryHelpers is available in Unreal Python.")
 
 
-def run(content_path: str = "/Game", output_dir: str = None):
+def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
+    """content_path may name several roots, ';'-separated — see
+    DEFAULT_CONTENT_PATHS. Roots that don't exist in this project are skipped
+    with a warning rather than failing the whole export."""
     if not output_dir:
         raise ValueError("output_dir is required")
     import unreal  # only importable inside the UE Editor process
 
-    infos = list(_list_assets(unreal, content_path))
+    infos = []
+    for root in _split_paths(content_path):
+        try:
+            found = list(_list_assets(unreal, root))
+        except Exception as e:
+            unreal.log_warning(f"Skipping content path {root}: {e}")
+            continue
+        if not found:
+            unreal.log_warning(f"No assets found under {root}")
+        infos.extend(found)
 
     export_paths = _select_export_paths(infos)
     if not export_paths:
@@ -130,6 +165,16 @@ def demo():
         ("/Game/B", "Texture2D"),
         ("/Game/C", "MaterialInstanceConstant"),
     ]) == ["/Game/A", "/Game/B"]
+
+    assert _split_paths("/Game") == ["/Game"]
+    assert _split_paths(DEFAULT_CONTENT_PATHS) == [
+        "/Game", "/Engine/MapTemplates", "/Engine/BasicShapes"]
+    # Engine content must survive: a map built from a UE template places
+    # /Engine/MapTemplates/SM_Template_Map_Floor and nothing else exports it.
+    assert "/Engine/MapTemplates" in _split_paths(DEFAULT_CONTENT_PATHS)
+    assert _split_paths("/Game, /Engine/MapTemplates/") == ["/Game", "/Engine/MapTemplates"]
+    assert _split_paths("/Game;/game") == ["/Game"], "duplicate roots collapse"
+    assert _split_paths("") == []
     print("ok")
 
 
@@ -143,4 +188,5 @@ if __name__ == "__main__":
     except ImportError:
         demo()
     else:
-        run(os.environ.get("H5T_UE_CONTENT_PATH", "/Game"), os.environ.get("H5T_UE_OUTPUT_DIR"))
+        run(os.environ.get("H5T_UE_CONTENT_PATH") or DEFAULT_CONTENT_PATHS,
+            os.environ.get("H5T_UE_OUTPUT_DIR"))

@@ -639,6 +639,17 @@ static class Program
     // Extract a UE Material's OWN instance-level overrides (TextureParameterValues
     // / ScalarParameterValues / VectorParameterValues) from a single export — used
     // at every level while walking a MaterialInstance parent chain.
+    // UE 4.19+ nests a parameter's name inside FMaterialParameterInfo
+    // ("ParameterInfo": { "Name": ... }); assets saved by 4.18 and earlier carry
+    // a flat FName "ParameterName" instead. Reading only the modern shape makes
+    // every override on old content resolve to null, so the instance contributes
+    // nothing and DumpMaterial falls through to the base Material's expression
+    // defaults — which is why whole marketplace packs converted to one flat
+    // placeholder colour.
+    static string? ParamName(FStructFallback p) =>
+        p.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text
+        ?? p.GetOrDefault<FName?>("ParameterName", null)?.Text;
+
     static void CollectInstanceParams(
         CUE4Parse.UE4.Assets.Exports.UObject export,
         Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors,
@@ -648,7 +659,7 @@ static class Program
         if (texParams != null)
             foreach (var tp in texParams)
             {
-                var name = tp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var name = ParamName(tp);
                 var texPath = tp.GetOrDefault<FPackageIndex?>("ParameterValue", null)?.ResolvedObject?.GetPathName();
                 if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(texPath) && !textures.ContainsKey(name))
                     textures[name] = texPath;
@@ -658,7 +669,7 @@ static class Program
         if (scalarParams != null)
             foreach (var sp in scalarParams)
             {
-                var name = sp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var name = ParamName(sp);
                 if (!string.IsNullOrEmpty(name) && !scalars.ContainsKey(name))
                     scalars[name] = sp.GetOrDefault<float>("ParameterValue", 0f);
             }
@@ -667,7 +678,7 @@ static class Program
         if (vectorParams != null)
             foreach (var vp in vectorParams)
             {
-                var name = vp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var name = ParamName(vp);
                 var val = vp.GetOrDefault<FLinearColor?>("ParameterValue", null);
                 if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
                     vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
@@ -682,7 +693,7 @@ static class Program
         if (switchParams != null)
             foreach (var swp in switchParams)
             {
-                var name = swp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var name = ParamName(swp);
                 if (!string.IsNullOrEmpty(name) && !switches.ContainsKey(name))
                     switches[name] = swp.GetOrDefault<bool>("Value", false);
             }

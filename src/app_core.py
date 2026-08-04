@@ -43,7 +43,7 @@ from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
-from src.forms.unreal_converter.main import UnrealConverterWidget
+from src.forms.unreal_porter.main import UnrealPorterWidget
 from src.forms.source_porter.main import SourcePorterWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
 from src.common import app_version, default_commands, JsonToKv3, compile as run_compile
@@ -565,7 +565,7 @@ class Widget(QMainWindow):
     def _build_utilities_menu(self):
         menu = AlternatingMenu(self)
         menu.addAction("SourcePorter", self._open_source_porter)
-        menu.addAction("Unreal Converter", self._open_unreal_converter)
+        menu.addAction("UnrealPorter", self._open_unreal_porter)
         menu.addAction("Cleanup Content", lambda: CleanupDialog(self).show())
         menu.addAction("Cleanup _vrad3 cache", self.cleanup_vrad3_cache)
         self.ui.utilities_button.setMenu(menu)
@@ -632,9 +632,9 @@ class Widget(QMainWindow):
         self.source_porter_dialog = SourcePorterWidget(parent=self)
         self.source_porter_dialog.show()
 
-    def _open_unreal_converter(self):
-        self.unreal_converter_dialog = UnrealConverterWidget(parent=self)
-        self.unreal_converter_dialog.show()
+    def _open_unreal_porter(self):
+        self.unreal_porter_dialog = UnrealPorterWidget(parent=self)
+        self.unreal_porter_dialog.show()
 
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)

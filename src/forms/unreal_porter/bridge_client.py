@@ -28,7 +28,7 @@ def _candidate_bridge_paths():
     env = os.environ.get("H5T_UNREAL_BRIDGE")
     if env:
         yield Path(env)
-    root = Path(__file__).resolve().parents[3]  # repo root (src/forms/unreal_converter -> repo)
+    root = Path(__file__).resolve().parents[3]  # repo root (src/forms/unreal_porter -> repo)
     yield root / "src" / "net_core" / "UnrealBridge" / "publish" / "H5T.UnrealBridge.dll"
     yield root / "src" / "net_core" / "UnrealBridge" / "bin" / "Release" / "net10.0" / "H5T.UnrealBridge.dll"
     yield root / "tools" / "unreal_bridge" / "publish" / "H5T.UnrealBridge.dll"
@@ -302,6 +302,17 @@ class UnrealBridge:
                 return self._parse_dump_as_material(mat_path)
             raise
 
+    @staticmethod
+    def _param_name(p: dict):
+        """UE 4.19+ nests the name in FMaterialParameterInfo ('ParameterInfo':
+        {'Name': ...}); older assets (4.16 and down) serialise a flat
+        'ParameterName'. Reading only the former drops every override on
+        pre-4.19 content, which then silently inherits the master's defaults."""
+        info = p.get("ParameterInfo")
+        if isinstance(info, dict) and info.get("Name"):
+            return info["Name"]
+        return p.get("ParameterName")
+
     def _parse_dump_as_material(self, mat_path: str) -> dict:
         exports = self.dump(mat_path)
         if not isinstance(exports, list):
@@ -323,7 +334,7 @@ class UnrealBridge:
 
             for tp in props.get("TextureParameterValues", []):
                 if isinstance(tp, dict):
-                    name = tp.get("ParameterInfo", {}).get("Name")
+                    name = self._param_name(tp)
                     val = tp.get("ParameterValue")
                     tex = val.get("ObjectPath") or val.get("ObjectName") if isinstance(val, dict) else str(val) if val else None
                     if name and tex:
@@ -331,14 +342,14 @@ class UnrealBridge:
 
             for sp in props.get("ScalarParameterValues", []):
                 if isinstance(sp, dict):
-                    name = sp.get("ParameterInfo", {}).get("Name")
+                    name = self._param_name(sp)
                     val = sp.get("ParameterValue")
                     if name and val is not None:
                         scalars[name] = float(val)
 
             for vp in props.get("VectorParameterValues", []):
                 if isinstance(vp, dict):
-                    name = vp.get("ParameterInfo", {}).get("Name")
+                    name = self._param_name(vp)
                     val = vp.get("ParameterValue", {})
                     if name and isinstance(val, dict):
                         vectors[name] = {
@@ -351,7 +362,7 @@ class UnrealBridge:
             static_params = props.get("StaticParameters") or {}
             for swp in (static_params.get("StaticSwitchParameters") or []):
                 if isinstance(swp, dict):
-                    name = swp.get("ParameterInfo", {}).get("Name")
+                    name = self._param_name(swp)
                     val = swp.get("Value")
                     if name and val is not None:
                         switches[name] = bool(val)
