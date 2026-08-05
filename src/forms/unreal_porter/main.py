@@ -24,10 +24,20 @@ from src.widgets.console import ConsoleWidget
 from .constants import scan_unsupported
 from .transform import UnitScale
 from .ue_install import find_installs, install_for_project
+from .ue_export_runner import DEFAULT_CONTENT_PATHS
 
 # Exports land inside the target addon so everything one port produces lives
 # under one folder and "Clean cache" is a single rmtree.
 TMP_SUBDIR = "_tmp/UnrealPorter"
+
+# Where the non-project roots land in the export cache — "/Engine/BasicShapes"
+# exports to "<cache>/Engine/BasicShapes". Derived from the export runner's own
+# list so adding a root there is enough.
+ENGINE_EXPORT_ROOTS = [
+    p.strip().strip("/").replace("/", os.sep)
+    for p in DEFAULT_CONTENT_PATHS.split(";")
+    if p.strip() and not p.strip().lower().startswith("/game")
+]
 
 
 class PrepareWorker(QThread):
@@ -1006,6 +1016,15 @@ class UnrealPorterWidget(QDialog):
                 stem = asset_stem(key)
                 if stem not in exported_stems:
                     missing.append(key)
+
+        # The engine roots are never in scope_assets — the scope is a listing of
+        # the project — so nothing above can ask for them. They export whenever
+        # the Editor runs at all, but a cache from before they were exported
+        # would otherwise satisfy this check and skip the run entirely.
+        missing.extend(
+            root for root in ENGINE_EXPORT_ROOTS
+            if not os.path.isdir(os.path.join(tmp_dir, root))
+        )
         return missing
 
     @Slot()

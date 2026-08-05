@@ -493,3 +493,35 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
         f.write(content)
     return output_path
 
+
+def demo():
+    import tempfile
+
+    # Engine content keeps its mount in the output path — this is the exact
+    # string a converted UE template map places in its vmap.
+    assert ue_mesh_to_model_path(
+        "/Engine/MapTemplates/SM_Template_Map_Floor.SM_Template_Map_Floor", strip_prefix=True
+    ) == "models/engine/maptemplates/template_map_floor.vmdl"
+
+    # The bundled BasicShapes really do carry WorldGridMaterial (the engine
+    # meshes carry DefaultMaterial), and neither will ever have a vmat.
+    cube = os.path.join(os.path.dirname(__file__), "assets", "basicshapes", "cube.fbx")
+    remaps = resolve_material_remaps(fbx_path=cube, model_rel_path="models/engine/basicshapes/cube.vmdl")
+    assert remaps == [{"from": "WorldGridMaterial.vmat", "to": GRAYBOX_VMAT}], remaps
+
+    # ...but a converted material of the same name still wins over the stand-in.
+    with tempfile.TemporaryDirectory() as out:
+        mats = os.path.join(out, "materials", "proj")
+        os.makedirs(mats)
+        open(os.path.join(mats, "worldgridmaterial.vmat"), "w").close()
+        remaps = resolve_material_remaps(
+            fbx_path=cube, output_dir=out, model_rel_path="models/engine/basicshapes/cube.vmdl")
+        assert remaps == [{"from": "WorldGridMaterial.vmat",
+                           "to": "materials/proj/worldgridmaterial.vmat"}], remaps
+
+    print("ok")
+
+
+if __name__ == "__main__":
+    demo()
+

@@ -12,7 +12,7 @@ from .asset_selection import asset_stem, ref_stem, key_to_object_path
 from .bridge_client import UnrealBridge, BridgeError
 from .vmap_writer import write_vmap
 from .vsmart_writer import write_vsmart
-from .vmdl_writer import write_vmdl, ue_mesh_to_model_path, find_bulk_export_mesh
+from .vmdl_writer import write_vmdl, ue_mesh_to_model_path, find_bulk_export_mesh, GRAYBOX_VMAT
 from .engine_meshes import is_engine_mesh, generate_engine_mesh_obj, bundled_fbx_for
 
 _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
@@ -326,18 +326,22 @@ class SceneModelsWorker(QThread):
 
                 # UE engine defaults (BasicShapes) have no project bulk-export —
                 # use the real bundled engine FBX (falling back to a generated OBJ).
+                # Their only material is an engine one, which never converts, so
+                # the slot goes straight to the graybox rather than to a vmat
+                # under materials/engine/ that nothing writes.
                 if is_engine_mesh(mesh):
+                    engine_mat = GRAYBOX_VMAT if self.do_materials else None
                     src = bundled_fbx_for(mesh)
                     if src:
                         fbx_rel = os.path.splitext(model_rel)[0] + ".fbx"
                         dst = os.path.join(self.output_dir, fbx_rel)
                         os.makedirs(os.path.dirname(dst), exist_ok=True)
                         shutil.copy2(src, dst)
-                        self._write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
+                        self._write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=engine_mat, use_graybox_fallback=self.use_graybox_fallback)
                     else:
                         obj_rel = os.path.splitext(model_rel)[0] + ".obj"
                         generate_engine_mesh_obj(mesh, os.path.join(self.output_dir, obj_rel))
-                        self._write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
+                        self._write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=engine_mat, use_graybox_fallback=self.use_graybox_fallback)
                     engine += 1
                     made += 1
                     continue
@@ -491,3 +495,33 @@ class SceneModelsWorker(QThread):
         self._write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel,
                    use_graybox_fallback=self.use_graybox_fallback)
         return True
+
+
+def demo():
+    # The port scope is built from the project's asset listing, so these can
+    # never appear in it — treating them as out-of-scope is what dropped every
+    # engine mesh and every landscape before the vmdl stage.
+    assert _is_external_ref("/Engine/MapTemplates/SM_Template_Map_Floor.SM_Template_Map_Floor")
+    assert _is_external_ref("StaticMesh'/Engine/BasicShapes/Cube.Cube'")
+    assert _is_external_ref(_LANDSCAPE_MESH_PREFIX + "Arena_Landscape.Arena_Landscape")
+    # Project content is scoped normally, whether given as an object path or as
+    # the bridge's relative asset key.
+    assert not _is_external_ref("/Game/Meshes/SM_Chair.SM_Chair")
+    assert not _is_external_ref("StaticMesh'/Game/Meshes/SM_Chair.SM_Chair'")
+    assert not _is_external_ref("MyProj/Content/Meshes/SM_Chair.uasset")
+
+    scoped = SceneModelsWorker.__new__(SceneModelsWorker)
+    scoped.selected_stems = {"sm_chair"}
+    assert scoped._wanted("/Game/Meshes/SM_Chair.SM_Chair")
+    assert not scoped._wanted("/Game/Meshes/SM_Table.SM_Table")
+    assert scoped._wanted("/Engine/MapTemplates/SM_Template_Map_Floor.SM_Template_Map_Floor")
+
+    unscoped = SceneModelsWorker.__new__(SceneModelsWorker)
+    unscoped.selected_stems = None
+    assert unscoped._wanted("/Game/Meshes/SM_Table.SM_Table")
+
+    print("ok")
+
+
+if __name__ == "__main__":
+    demo()
