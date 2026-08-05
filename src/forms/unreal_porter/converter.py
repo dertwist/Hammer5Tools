@@ -240,10 +240,11 @@ def get_master_material_name(mat_data: dict, mat_key: str = "") -> str:
 def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = None,
                             param_mappings: dict = None):
     """Saves Master Material -> CS2 Shader swaps, slot mappings, and param
-    mappings into hammer5tools_ue_converter_material_swaps.kv3 in output_dir."""
+    mappings into hammer5tools/unrealporter/shader_swap.kv3 in output_dir."""
     if not output_dir or not os.path.isdir(output_dir):
         return
-    file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
+    file_path = os.path.join(output_dir, "hammer5tools", "unrealporter", "shader_swap.kv3")
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     lines = [
         "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->",
         "{",
@@ -293,15 +294,19 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
 
 def load_material_swaps_kv3(output_dir: str) -> tuple:
     """Reads Master Material -> CS2 Shader swaps, slot mappings, and param
-    mappings from hammer5tools_ue_converter_material_swaps.kv3 if it exists.
+    mappings from hammer5tools/unrealporter/shader_swap.kv3 if it exists.
     Returns: (swaps_dict, slot_mappings_dict, param_mappings_dict)
     """
     swaps, slot_mappings, param_mappings = {}, {}, {}
     if not output_dir:
         return swaps, slot_mappings, param_mappings
-    file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
+    file_path = os.path.join(output_dir, "hammer5tools", "unrealporter", "shader_swap.kv3")
     if not os.path.isfile(file_path):
-        return swaps, slot_mappings, param_mappings
+        legacy_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
+        if os.path.isfile(legacy_path):
+            file_path = legacy_path
+        else:
+            return swaps, slot_mappings, param_mappings
 
     try:
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
