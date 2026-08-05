@@ -30,6 +30,7 @@ from src.settings.main import get_settings_value, set_settings_value
 from src.styles.common import apply_stylesheets
 from .material_converter import (
     _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout, find_bulk_texture,
+    get_slots_for_shader, get_channel_slots_for_shader,
 )
 
 _SLOTS = [
@@ -163,10 +164,13 @@ def _tex_name(ue_path: str) -> str:
 class _ParamRow(QFrame):
     """One UE texture parameter: thumbnail preview, name, and vmat slot mapping."""
 
-    def __init__(self, param: str, tex_path: str, override, bulk_dir: str = None, parent=None):
+    def __init__(self, param: str, tex_path: str, override, bulk_dir: str = None, shader: str = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.param = param
+        self.shader = shader
+        self.slots = get_slots_for_shader(shader)
+        self.channel_slots = get_channel_slots_for_shader(shader)
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(8, 6, 8, 6)
@@ -194,7 +198,7 @@ class _ParamRow(QFrame):
         head.addLayout(info_box, 1)
 
         self.target = QComboBox()
-        self.target.addItems([_AUTO, _SKIP] + _SLOTS + [_SPLIT])
+        self.target.addItems([_AUTO, _SKIP] + self.slots + [_SPLIT])
         self.target.setToolTip(
             "Where this texture's pixels go in the .vmat.\n"
             "Auto uses the name-matching heuristic; Split channels routes each\n"
@@ -214,7 +218,7 @@ class _ParamRow(QFrame):
             label.setAlignment(Qt.AlignCenter)
             combo = QComboBox()
             combo.addItem(_UNUSED)
-            combo.addItems(CHANNEL_SLOTS)
+            combo.addItems(self.channel_slots)
             grid.addWidget(label, 0, col)
             grid.addWidget(combo, 1, col)
             self.channel_combos[ch] = combo
@@ -243,19 +247,19 @@ class _ParamRow(QFrame):
         if isinstance(override, dict):
             self.target.setCurrentText(_SPLIT)
             for slot, ch in override.items():
-                if ch in self.channel_combos and slot in CHANNEL_SLOTS:
+                if ch in self.channel_combos and slot in self.channel_slots:
                     self.channel_combos[ch].setCurrentText(slot)
             return
         if override is _EXPLICIT_SKIP:
             self.target.setCurrentText(_SKIP)
             return
-        if isinstance(override, str) and override in _SLOTS:
+        if isinstance(override, str) and override in self.slots:
             self.target.setCurrentText(override)
             return
         self.target.setCurrentText(_AUTO)
         _tok, layout = packed_layout(self.param)
         for ch, slot in (layout or {}).items():
-            if ch in self.channel_combos and slot in CHANNEL_SLOTS:
+            if ch in self.channel_combos and slot in self.channel_slots:
                 self.channel_combos[ch].setCurrentText(slot)
 
     def _sync_channel_box(self, text):
@@ -457,7 +461,7 @@ class SlotMappingDialog(QDialog):
     """
 
     def __init__(self, master_name: str, textures: dict, initial_overrides: dict = None,
-                 scalars: dict = None, vectors: dict = None, switches: dict = None,
+                 shader: str = None, scalars: dict = None, vectors: dict = None, switches: dict = None,
                  initial_param_overrides: dict = None, bulk_dir: str = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Texture slots — {master_name}")
@@ -465,6 +469,7 @@ class SlotMappingDialog(QDialog):
 
         self.master_name = master_name
         self.textures = textures or {}
+        self.shader = shader
         self.bulk_dir = bulk_dir
         self.result_overrides = {}
         self.result_param_overrides = {}
@@ -492,7 +497,7 @@ class SlotMappingDialog(QDialog):
                 override = existing[param] if param in existing else _NO_OVERRIDE
                 if param in existing and existing[param] is None:
                     override = _EXPLICIT_SKIP
-                row = _ParamRow(param, path, override, bulk_dir=self.bulk_dir)
+                row = _ParamRow(param, path, override, bulk_dir=self.bulk_dir, shader=self.shader)
                 self._rows.append(row)
                 body_layout.addWidget(row)
             body_layout.addStretch(1)
