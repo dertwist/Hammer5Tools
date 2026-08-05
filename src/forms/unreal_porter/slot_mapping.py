@@ -121,9 +121,10 @@ _SCALAR_TARGETS = [
 
 _VECTOR_TARGETS = [
     ("(don't map)", ""),
-    ("Color tint (Layer 1)", "g_vColorTint"),
-    ("Color tint (Layer 2)", "g_vTextureColorTint2"),
-    ("Color tint (Layer 3)", "g_vTextureColorTint3"),
+    ("Color tint / Model tint (g_vColorTint)", "g_vColorTint"),
+    ("Texture color tint (Layer 1)", "g_vTextureColorTint1"),
+    ("Texture color tint (Layer 2)", "g_vTextureColorTint2"),
+    ("Texture color tint (Layer 3)", "g_vTextureColorTint3"),
     ("Border tint (Layer 2)", "g_vBorderTint2"),
     ("Border tint (Layer 3)", "g_vBorderTint3"),
     ("Bevel layer amount (Layer 2)", "g_vBevelLayerAmount2"),

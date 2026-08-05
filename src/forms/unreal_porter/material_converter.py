@@ -302,7 +302,7 @@ _SECONDARY_TOKENS = {
     "wear", "edge", "overlay", "secondary", "layer2", "top",
 }
 # What names the *base* colour: a qualifier ("diffuse") and/or a noun ("color").
-_TINT_QUALIFIERS = {"base", "basecolor", "diffuse", "albedo", "main"}
+_TINT_QUALIFIERS = {"base", "basecolor", "diffuse", "albedo", "main", "model"}
 _TINT_NOUNS = {"color", "colour", "tint"}
 
 
