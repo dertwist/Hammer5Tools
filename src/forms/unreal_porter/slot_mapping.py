@@ -32,7 +32,12 @@ from .material_converter import (
     _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout, find_bulk_texture,
 )
 
-_SLOTS = [slot for slot, _keys in _SLOT_TOKENS if slot != "orm"]
+_SLOTS = [
+    "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
+    "color2", "normal2", "rough2", "metal2", "ao2", "height2",
+    "color3", "normal3", "rough3", "metal3", "ao3", "height3",
+    "color4", "normal4", "rough4", "metal4", "ao4", "height4",
+]
 _AUTO = "Auto"
 _SKIP = "Don't use"
 _SPLIT = "Split channels…"
