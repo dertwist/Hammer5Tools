@@ -11,8 +11,10 @@ that Hammer5Tools already requires, invoked as `dotnet H5T.UnrealBridge.dll`.
 """
 
 import os
+import re
 import sys
 import json
+import time
 import shutil
 import subprocess
 from pathlib import Path
@@ -21,6 +23,11 @@ from typing import Any, Optional
 
 class BridgeError(RuntimeError):
     pass
+
+
+# How CUE4Parse writes an object reference in a dump — always a string property
+# under one of these names.
+_REF_FIELD = re.compile(r'"(?:ObjectPath|ObjectName|AssetPathName)"\s*:\s*"([^"]+)"')
 
 
 def _candidate_bridge_paths():
@@ -120,8 +127,46 @@ class UnrealBridge:
         return mat_keys
 
     def dump(self, object_path: str) -> Any:
-        # Raw export tree can be huge; allow more time.
+        # Raw export tree can be huge; allow more time. Only call this for assets
+        # whose whole tree is actually needed — see iter_refs for the cheap path.
         return self._run_json("dump", self.content_dir, object_path, timeout=600)
+
+    def iter_refs(self, object_path: str, timeout: int = 600) -> set:
+        """Every object reference in an asset, read as a stream.
+
+        `dump` serialises the entire export tree: for a StaticMesh that includes
+        the render data, which runs to hundreds of megabytes of indented JSON.
+        Buffering that and then json.loads-ing it costs several GB of Python
+        objects per asset, and a reference scan walks every selected asset in
+        turn — enough to exhaust the process and abort it mid-scan. References
+        are plain string properties, so read line by line and keep only matches.
+
+        ponytail: the deadline is only checked between lines, so a bridge that
+        hangs before printing anything still blocks; give it a reader thread if
+        that ever shows up.
+        """
+        if not self.is_available():
+            raise BridgeError(self.why_unavailable())
+        proc = subprocess.Popen(
+            [self.dotnet, self.dll, "dump", self.content_dir, object_path],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, encoding="utf-8", errors="replace",
+        )
+        deadline = time.monotonic() + timeout
+        refs = set()
+        try:
+            for line in proc.stdout:
+                refs.update(_REF_FIELD.findall(line))
+                if time.monotonic() > deadline:
+                    raise BridgeError(f"bridge 'dump' timed out after {timeout}s")
+        finally:
+            proc.stdout.close()
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait()
+        if proc.returncode != 0:
+            raise BridgeError(f"bridge 'dump' failed (exit {proc.returncode})")
+        return refs
 
     def dump_scene(self, map_path: str) -> dict:
         """Normalized actor list: {map, count, actors:[{actor, componentType,

@@ -17,6 +17,9 @@ H5T_UE_CONTENT_PATH / H5T_UE_OUTPUT_DIR env vars instead of call arguments:
 
 Point Hammer5Tools' Unreal Converter "UE Export cache folder" field at the
 same output_dir afterwards (see src/forms/unreal_converter/main.py).
+
+Meshes export with FbxExportOption.force_front_x_axis so the FBX declares +X as
+its front axis instead of UE's default -Y, matching Source 2's forward vector.
 """
 
 import os
@@ -122,6 +125,69 @@ def _list_assets(unreal, content_path: str):
             yield (obj_path, cls_name)
 
 
+def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> str:
+    """'/Game/Meshes/SM_Chair.SM_Chair' -> '<output_dir>/Game/Meshes/SM_Chair.fbx'.
+
+    Reproduces the layout AssetTools.export_assets writes, which the converter's
+    cache scan depends on (ENGINE_EXPORT_ROOTS in src/forms/unreal_porter/main.py
+    looks for '<cache>/Engine/BasicShapes' by name)."""
+    package = object_path.rsplit(".", 1)[0]
+    return os.path.join(output_dir, package.lstrip("/").replace("/", os.sep)) + ext
+
+
+def _export_assets(unreal, export_paths, output_dir) -> int:
+    """Export every path, returning how many succeeded.
+
+    StaticMeshes go one at a time through AssetExportTask because that is the
+    only way to pass FbxExportOption.force_front_x_axis — UE's default FBX front
+    axis is -Y, Source 2's forward is +X, and letting UE emit front-X directly is
+    what saves the converter from rotating every model by 90 degrees afterwards.
+
+    Everything else stays on the bulk call: it is one round trip instead of N,
+    and it lets UE choose each texture's own image format, which a task-supplied
+    filename would override with a single hardcoded extension.
+    """
+    meshes, others = [], []
+    can_set_options = hasattr(unreal, "AssetExportTask") and hasattr(unreal, "FbxExportOption")
+    for path in export_paths:
+        asset = unreal.load_asset(path) if can_set_options else None
+        if asset is not None and isinstance(asset, unreal.StaticMesh):
+            meshes.append((path, asset))
+        else:
+            others.append(path)
+
+    if not can_set_options:
+        unreal.log_warning(
+            "This Unreal build has no FbxExportOption — meshes export with UE's default "
+            "-Y front axis and will come into Hammer yawed 90 degrees. Nothing downstream "
+            "corrects for it; rotate them in Hammer or export from a newer Editor."
+        )
+
+    exported = 0
+    if meshes:
+        options = unreal.FbxExportOption()
+        options.set_editor_property("force_front_x_axis", True)
+        for path, asset in meshes:
+            filename = _export_filename(path, output_dir)
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            task = unreal.AssetExportTask()
+            task.set_editor_property("object", asset)
+            task.set_editor_property("filename", filename)
+            task.set_editor_property("automated", True)
+            task.set_editor_property("prompt", False)
+            task.set_editor_property("replace_identical", True)
+            task.set_editor_property("options", options)
+            if unreal.Exporter.run_asset_export_task(task):
+                exported += 1
+            else:
+                unreal.log_warning(f"Export failed for {path}")
+
+    if others:
+        unreal.AssetToolsHelpers.get_asset_tools().export_assets(others, output_dir)
+        exported += len(others)
+    return exported
+
+
 def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
     """content_path may name several roots, ';'-separated — see
     DEFAULT_CONTENT_PATHS. Roots that don't exist in this project are skipped
@@ -149,9 +215,8 @@ def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
         unreal.log_warning(f"No StaticMesh/Texture2D assets found matching criteria under {content_path}")
         return
 
-    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-    asset_tools.export_assets(export_paths, output_dir)
-    unreal.log(f"Exported {len(export_paths)} asset(s) to {output_dir}")
+    ok = _export_assets(unreal, export_paths, output_dir)
+    unreal.log(f"Exported {ok}/{len(export_paths)} asset(s) to {output_dir}")
 
 
 class DummyAssetDataUE4:
@@ -210,6 +275,14 @@ def demo():
     assert _split_paths("/Game, /Engine/MapTemplates/") == ["/Game", "/Engine/MapTemplates"]
     assert _split_paths("/Game;/game") == ["/Game"], "duplicate roots collapse"
     assert _split_paths("") == []
+
+    # The export path has to land where the converter's cache scan looks —
+    # '<cache>/Engine/BasicShapes' is matched by directory name, not by search.
+    out = os.path.join("D:", os.sep, "cache")
+    assert _export_filename("/Game/Meshes/SM_Chair.SM_Chair", out) == os.path.join(
+        out, "Game", "Meshes", "SM_Chair.fbx")
+    assert _export_filename("/Engine/BasicShapes/Cube.Cube", out) == os.path.join(
+        out, "Engine", "BasicShapes", "Cube.fbx")
     print("ok")
 
 

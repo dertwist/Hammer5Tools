@@ -11,14 +11,14 @@ display the slot bindings its instances will inherit.
 import os
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QComboBox,
     QToolButton, QScrollArea,
 )
 
 from src.styles.common import apply_stylesheets
-from .material_converter import _classify_textures
+from .material_converter import _classify_textures, find_bulk_texture
 
 # material_remap_arrow.png is not in resources.qrc, so it is loaded from disk —
 # same approach as src/widgets/model_browser/main.py. Resolves to src/icons/...
@@ -28,6 +28,7 @@ _REMAP_ICON = os.path.join(_SRC_DIR, "icons", "tools", "modeldoc_editor",
 
 SHADERS = [
     "csgo_environment.vfx",
+    "csgo_environment_blend.vfx",
     "csgo_static_overlay.vfx",
     "csgo_foliage.vfx",
     "csgo_glass.vfx",
@@ -63,10 +64,11 @@ class MasterMaterialCard(QFrame):
 
     map_slots_requested = Signal(str)
 
-    def __init__(self, master_name: str, info: dict, parity: bool = False, parent=None):
+    def __init__(self, master_name: str, info: dict, parity: bool = False, bulk_dir: str = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.master_name = master_name
+        self.bulk_dir = bulk_dir
         # Zebra stripe — alternate-background-color the card itself. Scoped to
         # MasterMaterialCard so it does not repaint its child widgets.
         bg = "#1D1D1F" if parity else "#1C1C1C"
@@ -103,22 +105,70 @@ class MasterMaterialCard(QFrame):
         head.addWidget(self.map_button)
         outer.addLayout(head)
 
+        b_row = QHBoxLayout()
+        b_row.setSpacing(6)
+
+        self.thumbs_container = QWidget()
+        self.thumbs_layout = QHBoxLayout(self.thumbs_container)
+        self.thumbs_layout.setContentsMargins(0, 0, 0, 0)
+        self.thumbs_layout.setSpacing(3)
+        b_row.addWidget(self.thumbs_container)
+
         self.bindings = QLabel()
         self.bindings.setWordWrap(True)
         self.bindings.setEnabled(False)
         self.bindings.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        outer.addWidget(self.bindings)
+        b_row.addWidget(self.bindings, 1)
 
-        # Cards are built at populate-time, after the dialog's one-shot
-        # apply_stylesheets, so each one styles its own children or they stay
-        # with whatever the global sheet gave them.
+        outer.addLayout(b_row)
+
         apply_stylesheets(self)
-        self.refresh(info)
+        self.refresh(info, bulk_dir=self.bulk_dir)
 
-    def refresh(self, info: dict):
+    def refresh(self, info: dict, bulk_dir: str = None):
+        if bulk_dir:
+            self.bulk_dir = bulk_dir
         self.bindings.setText(
             describe_bindings(info.get("textures", {}), info.get("slot_overrides", {}))
         )
+        self._update_thumbnails(info.get("textures", {}), info.get("slot_overrides", {}))
+
+    def _update_thumbnails(self, textures: dict, slot_overrides: dict = None):
+        while self.thumbs_layout.count():
+            item = self.thumbs_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        if not self.bulk_dir or not textures:
+            self.thumbs_container.setVisible(False)
+            return
+
+        picks = _classify_textures(textures, slot_overrides)
+        if not picks:
+            self.thumbs_container.setVisible(False)
+            return
+
+        shown_paths = set()
+        count = 0
+        for slot, (param, tex_path, _channel) in sorted(picks.items()):
+            if count >= 4:
+                break
+            if tex_path in shown_paths:
+                continue
+            shown_paths.add(tex_path)
+            img_path = find_bulk_texture(self.bulk_dir, tex_path)
+            if img_path and os.path.exists(img_path):
+                pm = QPixmap(img_path)
+                if not pm.isNull():
+                    lbl = QLabel()
+                    lbl.setFixedSize(24, 24)
+                    lbl.setPixmap(pm.scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                    lbl.setStyleSheet("border: 1px solid #3A3A3C; border-radius: 3px; background-color: #111;")
+                    lbl.setToolTip(f"{slot}: {param}")
+                    self.thumbs_layout.addWidget(lbl)
+                    count += 1
+
+        self.thumbs_container.setVisible(count > 0)
 
 
 class MasterMaterialList(QScrollArea):
@@ -130,6 +180,7 @@ class MasterMaterialList(QScrollArea):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.cards = {}
+        self.bulk_dir = None
 
         self._body = QWidget()
         self._layout = QVBoxLayout(self._body)
@@ -141,7 +192,8 @@ class MasterMaterialList(QScrollArea):
         self._layout.addStretch(1)
         self.setWidget(self._body)
 
-    def populate(self, master_groups: dict):
+    def populate(self, master_groups: dict, bulk_dir: str = None):
+        self.bulk_dir = bulk_dir
         for card in self.cards.values():
             card.setParent(None)
             card.deleteLater()
@@ -149,7 +201,7 @@ class MasterMaterialList(QScrollArea):
 
         self._empty.setVisible(not master_groups)
         for i, (name, info) in enumerate(sorted(master_groups.items())):
-            card = MasterMaterialCard(name, info, parity=(i % 2 == 1))
+            card = MasterMaterialCard(name, info, parity=(i % 2 == 1), bulk_dir=self.bulk_dir)
             card.map_slots_requested.connect(self.map_slots_requested)
             self._layout.insertWidget(i + 1, card)   # after the empty label
             self.cards[name] = card
@@ -157,7 +209,7 @@ class MasterMaterialList(QScrollArea):
     def refresh(self, master_name: str, info: dict):
         card = self.cards.get(master_name)
         if card:
-            card.refresh(info)
+            card.refresh(info, bulk_dir=self.bulk_dir)
 
     # The Materials tab reads selection/shader back out of these at convert time.
     def checkboxes(self) -> dict:
@@ -198,8 +250,22 @@ def demo():
     assert "metal←SRMH.B" in summary, summary
     assert "color←Diffuse" in summary, summary
     # Repopulating must not leave the previous cards behind.
+    stale_combo = widget.shader_combos()["Decal"]
     widget.populate({"only": {"count": 1, "textures": {}}})
     assert set(widget.cards) == {"only"}
+
+    # The accessors must track the repopulate, not outlive it. Callers read these
+    # live for exactly this reason: a dict held across a populate() points at
+    # deleted C++ objects, which is what crashed the convert pipeline.
+    assert set(widget.shader_combos()) == {"only"}
+    assert set(widget.checkboxes()) == {"only"}
+    app.processEvents()          # let deleteLater() actually reap the old cards
+    try:
+        stale_combo.currentText()
+    except RuntimeError:
+        pass                     # expected: the underlying widget is gone
+    widget.populate({})
+    assert widget.shader_combos() == {} and widget.checkboxes() == {}
 
     if "--show" in sys.argv:
         widget.populate({"bese_material": {"count": 22, "textures": {
