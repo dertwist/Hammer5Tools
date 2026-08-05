@@ -1,5 +1,3 @@
-from win32comext.shell.shellcon import NSTCS_NOEDITLABELS
-
 variable_prefix = 'CSmartPropVariable_'
 variables_list = [
     'CoordinateSpace',

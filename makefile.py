@@ -1,6 +1,7 @@
 import time
 from datetime import datetime, timezone
 import os
+import shutil
 import zipfile
 import subprocess
 import argparse
@@ -327,7 +328,6 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Flatten the PyInstaller output: move contents from out_hammer5tools/Hammer5Tools_Core/ up to Hammer5Tools/
     pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools_Core')
     if os.path.exists(pyi_output):
-        import shutil
         for item in os.listdir(pyi_output):
             src = os.path.join(pyi_output, item)
             dst = os.path.join(bundle_root, item)
@@ -398,7 +398,6 @@ def main() -> None:
             # Phase 0: Cleanup
             bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
             if os.path.exists(bundle_root):
-                import shutil
                 for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal']:
                     path = os.path.join(bundle_root, item)
                     if os.path.exists(path):
