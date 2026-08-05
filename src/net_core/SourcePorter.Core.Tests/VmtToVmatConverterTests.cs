@@ -171,4 +171,75 @@ public class VmtToVmatConverterTests
         var vmat = Convert("\"SomeWeirdShader\"\n{\n\"$basetexture\" \"x\"\n}");
         Assert.Equal("csgo_black_unlit.vfx", vmat.Shader);
     }
+
+    // Equivalent to the shipped materials/concrete/hr_c/hr_conc_d_blend fixture from
+    // docs/blend_material_porting.md §2 (decompiled verbatim from pak01_dir.vpk). Exercises the
+    // csgo_lightmappedgeneric.vfx per-shader override: F_LAYERS, the Layer1/2-prefixed names, the
+    // $blendmodulatetexture → TextureBlendModulation mapping, and the vec4 detail transforms.
+    [Fact]
+    public void WorldVertexTransition_blend_emits_two_layers_and_blend_modulation()
+    {
+        var vmat = Convert("""
+            "WorldVertexTransition"
+            {
+                "$basetexture"    "concrete/hr_c/hr_conc_d_color"
+                "$bumpmap"        "concrete/hr_c/hr_conc_d_normals_normal"
+                "$basetexture2"   "brick/hr_brick/inferno/brick_f_color"
+                "$bumpmap2"       "brick/hr_brick/inferno/brick_f_normals_normal"
+                "$blendmodulatetexture" "brick/hr_brick/inferno/flagstone_d_blend"
+                "$detail"         "detail/noise_detail_01_color"
+                "$detailscale"    "12"
+                "$detailblendfactor" "0.25"
+                "$surfaceprop"    "concrete"
+            }
+            """);
+
+        Assert.Equal("csgo_lightmappedgeneric.vfx", vmat.Shader);
+
+        // Blending is enabled by the F_LAYERS combo — without it the layer-2 samplers are dead code.
+        Assert.Equal("1", vmat.Get("F_LAYERS"));
+
+        // Layer 1: albedo is TextureColor (asymmetric), normal/detail are Layer1-prefixed.
+        Assert.Equal("materials/concrete/hr_c/hr_conc_d_color.tga", vmat.Get("TextureColor"));
+        Assert.Equal("materials/concrete/hr_c/hr_conc_d_normals_normal.tga", vmat.Get("TextureLayer1NormalRoughness"));
+        Assert.Equal("materials/detail/noise_detail_01_color.tga", vmat.Get("TextureLayer1Detail"));
+
+        // Layer 2 is fully prefixed.
+        Assert.Equal("materials/brick/hr_brick/inferno/brick_f_color.tga", vmat.Get("TextureLayer2Color"));
+        Assert.Equal("materials/brick/hr_brick/inferno/brick_f_normals_normal.tga", vmat.Get("TextureLayer2NormalRoughness"));
+
+        // $blendmodulatetexture (dropped before this change) maps to TextureBlendModulation + F_FANCY_BLENDING.
+        Assert.Equal("materials/brick/hr_brick/inferno/flagstone_d_blend.tga", vmat.Get("TextureBlendModulation"));
+        Assert.Equal("1", vmat.Get("F_FANCY_BLENDING"));
+
+        // Detail flag uses the no-underscore spelling shipped in every decompiled material.
+        Assert.Equal("1", vmat.Get("F_DETAILTEXTURE"));
+
+        // vec4 detail transforms: $detailscale pads to [s s 0 0]; $detailblendfactor is the w component.
+        Assert.Equal("[12.000000 12.000000 0.000000 0.000000]", vmat.Get("g_vLayer1DetailScale"));
+        Assert.Equal("[1.000000 1.000000 1.000000 0.250000]", vmat.Get("g_vLayer1DetailTintAndBlend"));
+
+        // The wrong flat-table names must NOT be emitted for this shader.
+        Assert.Null(vmat.Get("TextureColorB"));
+        Assert.Null(vmat.Get("TextureNormalB"));
+        Assert.Null(vmat.Get("F_DETAIL_TEXTURE")); // underscore spelling — zero shipped occurrences
+    }
+
+    // The override must not leak into the default/single-layer path: a plain lightmappedgeneric with
+    // only $basetexture stays single-layer (no F_LAYERS) and its albedo is still TextureColor.
+    [Fact]
+    public void Plain_single_layer_lightmappedgeneric_does_not_leak_blend_override()
+    {
+        var vmat = Convert("""
+            "LightmappedGeneric"
+            {
+                "$basetexture" "de_coastal/sand_dirt"
+                "$surfaceprop" "sand"
+            }
+            """);
+
+        Assert.Equal("csgo_lightmappedgeneric.vfx", vmat.Shader);
+        Assert.Equal("materials/de_coastal/sand_dirt.tga", vmat.Get("TextureColor"));
+        Assert.Null(vmat.Get("F_LAYERS")); // single-layer: the combo is gated on worldvertextransition
+    }
 }

@@ -66,10 +66,11 @@ DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
-                on_line=None) -> str:
+                on_line=None, assets: list = None) -> str:
     """Runs the Editor commandlet synchronously and returns its combined
     stdout/stderr. Raises UeExportError on a non-zero exit or missing paths.
-    If on_line callback is provided, streams output line by line in real time."""
+    If on_line callback is provided, streams output line by line in real time.
+    If assets list is provided, only those assets will be exported."""
     if not output_dir:
         raise UeExportError("An output folder is required.")
 
@@ -84,6 +85,10 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     env = dict(os.environ)
     env["H5T_UE_CONTENT_PATH"] = content_path
     env["H5T_UE_OUTPUT_DIR"] = output_dir
+    if assets:
+        env["H5T_UE_ASSET_LIST"] = ";".join(str(a) for a in assets)
+    else:
+        env.pop("H5T_UE_ASSET_LIST", None)
 
     cmd = [
         editor_cmd, uproject,

@@ -1,16 +1,22 @@
 """
-Flatten an FBX mesh hierarchy in place.
+Post-process UE-exported FBX files for Source 2 import.
 
-UE exports LOD meshes nested under an FbxLODGroup Model, and Source 2's ModelDoc
-import_filter can only select *top-level* meshes — so nested LOD/UCX meshes are
-unreachable. This module reparents every mesh Model that hangs off another Model
-(the LOD group) to the scene root, so all meshes (LOD0..N, UCX_*) become
-top-level siblings that import_filter can pick.
+Performs three in-place transformations on binary FBX (7.x) files:
 
-The edit only overwrites existing 64-bit parent IDs in the "Connections" section
-with 0 (the root). That is byte-size-preserving, so no offsets need
-recomputation — a low-risk in-place patch. Binary FBX only (7.x); ASCII/other
-inputs are returned untouched.
+1. **Flag patching** — UE 5.7+ writes C-type (char/bool) properties at P-record
+   position 3 inside Properties70, which Blender 3.6's importer crashes on.
+   These are rewritten as S-type (string) so all importers can read the file.
+
+2. **Hierarchy flattening** — UE exports LOD meshes nested under an FbxLODGroup
+   Model, but Source 2's ModelDoc import_filter can only select *top-level*
+   meshes.  Child mesh Models are reparented to the scene root ( Connections OO
+   parent IDs overwritten with 0).
+
+3. **Geometry sync** — Geometry node names are aligned with their parent Model
+   names, and a 90-degree roll rotation is applied for UE→Source 2 coordinate
+   conversion.
+
+ASCII/other inputs are returned untouched.
 """
 
 import os
@@ -154,6 +160,99 @@ def patch_fbx_string(d: bytearray, voff: int, old_full: str, new_full: str, targ
                 struct.pack_into("<I", d, new_off + 8, new_pl)
 
     return d
+
+
+def _patch_p70_bool_flags(d: bytearray) -> bool:
+    """Replace 'C' (char/bool) type properties at P-record position 3 with 'S'
+    (string) equivalents inside every Properties70 node.
+
+    UE 5.7's FBX exporter writes the animated/override flag (e.g. 'A') as a 'C'
+    type (single byte) instead of the standard 'S' type (length-prefixed string).
+    Blender 3.6's importer decodes 'C' with ``struct.unpack('?', ...)`` which
+    yields a Python ``bool``; it then crashes on ``b'U' in <bool>`` in
+    ``blen_read_custom_properties``.  Newer Blender versions handle this
+    correctly, but patching the binary at the source keeps the output compatible
+    with all importers.
+
+    A 'C' property encodes as:  0x43 <byte>   (2 bytes)
+    An 'S' replacement encodes: 0x53 <uint32 len> <bytes>  (5 + len bytes)
+
+    When the byte value is a printable ASCII char the replacement is a 1-char
+    string, growing the record by 4 bytes.  All node EndOffsets past the splice
+    point are adjusted.
+    """
+    if d[:len(_MAGIC)] != _MAGIC:
+        return False
+
+    fbx = _Fbx(d)
+    tops = fbx.top_nodes()
+    if "Objects" not in tops:
+        return False
+
+    # Collect (prop_voff, char_byte) for every C-type prop at position 3 in
+    # any P-record under any Properties70 node.
+    targets = []
+    for _nm, obj_node in fbx.child_nodes(tops["Objects"]):
+        for cnm, cnode in fbx.child_nodes(obj_node):
+            if cnm != "Properties70":
+                continue
+            for pnm, pnode in fbx.child_nodes(cnode):
+                if pnm != "P":
+                    continue
+                pprops, _ = _parse_props(d, pnode[4], pnode[2])
+                if len(pprops) >= 4 and pprops[3][0] == "C":
+                    # voff points to the value byte; type code is at voff - 1.
+                    targets.append((pprops[3][2], pprops[3][1]))
+
+    if not targets:
+        return False
+
+    # Process targets from highest offset to lowest so earlier offsets stay valid.
+    targets.sort(reverse=True)
+
+    # Collect all (header_offset, EndOffset) pairs before any splicing.
+    # We store both values upfront because the bytearray shifts under us
+    # after each splice — we cannot re-read from d[off] later.
+    node_records = []
+
+    def collect_nodes(start_off, limit_end):
+        off = start_off
+        while off < limit_end - fbx.null_len:
+            e, _npr, _pl = struct.unpack(fbx.hdr_fmt, d[off:off + fbx.hdr_size])
+            if e == 0:
+                break
+            node_records.append((off, e))
+            nlen = d[off + fbx.hdr_size]
+            children_start = off + fbx.hdr_size + 1 + nlen + _pl
+            if children_start < e - fbx.null_len:
+                collect_nodes(children_start, e)
+            off = e
+
+    collect_nodes(27, len(d))
+
+    end_fmt = "<Q" if fbx.hdr_fmt == "<QQQ" else "<I"
+
+    for prop_voff, char_byte in targets:
+        # Replace 'C' <byte>  with  'S' <uint32 len=1> <byte>
+        type_code_off = prop_voff - 1
+        replacement = b"S" + struct.pack("<I", 1) + bytes([char_byte])
+        old_len = 2  # C-type: 1 type code + 1 value byte
+        delta = len(replacement) - old_len  # always +4 for single-char strings
+
+        d[type_code_off:type_code_off + old_len] = replacement
+
+        # Patch every node's EndOffset, writing at the (possibly shifted)
+        # header position.
+        patched = []
+        for hoff, end in node_records:
+            new_hoff = hoff + delta if hoff >= type_code_off else hoff
+            new_end = end + delta if end > type_code_off else end
+            struct.pack_into(end_fmt, d, new_hoff, new_end)
+            patched.append((new_hoff, new_end))
+
+        node_records = patched
+
+    return True
 
 
 def _find_properties70(fbx: "_Fbx", model_node):
@@ -328,6 +427,15 @@ def flatten_fbx(path) -> dict:
     if "Objects" not in tops or "Connections" not in tops:
         return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "no Objects/Connections"}
 
+    # UE 5.7+ writes C-type (char/bool) properties at P-record position 3
+    # inside Properties70, which Blender 3.6's importer crashes on.
+    # Convert them to S-type (string) so all importers can read the file.
+    patched_flags = _patch_p70_bool_flags(d)
+
+    # Re-parse after flag patching (offsets may have shifted).
+    fbx = _Fbx(d)
+    tops = fbx.top_nodes()
+
     # Map Model id -> (clean_name, subtype)
     models = {}
     for nm, node in fbx.child_nodes(tops["Objects"]):
@@ -399,7 +507,7 @@ def flatten_fbx(path) -> dict:
     # may itself insert bytes, growing the file further.
     rotated = rotate_fbx_models(d, pitch=0.0, yaw=0.0, roll=90.0)
 
-    if not reparent_patches and not renamed_list and not rotated:
+    if not reparent_patches and not renamed_list and not rotated and not patched_flags:
         return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "already flat, synced, and rotated"}
 
     with open(path, "wb") as f:

@@ -47,10 +47,35 @@ def _split_paths(content_path: str) -> list:
     return out
 
 
-def _select_export_paths(asset_infos, classes=_EXPORTABLE_CLASSES):
+def _asset_stem(path: str) -> str:
+    """'/Game/Meshes/SM_Chair.SM_Chair' or 'Meshes/SM_Chair.uasset' -> 'sm_chair'"""
+    filename = os.path.basename(path).replace("\\", "/")
+    return filename.split(".", 1)[0].lower()
+
+
+def _select_export_paths(asset_infos, classes=_EXPORTABLE_CLASSES, asset_filter=None):
     """asset_infos: iterable of (object_path, class_name). Returns the object
-    paths whose class is exportable — split out so it's testable without the
-    `unreal` module, which only exists inside the Editor process."""
+    paths whose class is exportable. If asset_filter set is provided, only
+    returns paths whose lowercased stem or object path matches the filter.
+
+    The filter comes from the user's port scope, which is a listing of the
+    *project* — engine content can never appear in it. So engine roots are
+    exempt from it; they are a couple of dozen assets in total, and filtering
+    them is indistinguishable from not exporting them at all."""
+    if asset_filter:
+        allowed = {str(item).replace("\\", "/").lower() for item in asset_filter if item}
+        allowed_stems = {_asset_stem(item) for item in allowed}
+        res = []
+        for path, cls in asset_infos:
+            if cls not in classes:
+                continue
+            path_low = path.replace("\\", "/").lower()
+            stem_low = _asset_stem(path)
+            if (not path_low.startswith("/game/")
+                    or stem_low in allowed_stems or path_low in allowed
+                    or any(path_low.endswith(x) for x in allowed)):
+                res.append(path)
+        return res
     return [path for path, cls in asset_infos if cls in classes]
 
 
@@ -78,31 +103,23 @@ def _get_asset_object_path(data) -> str:
 
 def _list_assets(unreal, content_path: str):
     """Yields (object_path, class_name) for assets under content_path.
-    Tries EditorAssetLibrary first, falling back to AssetRegistryHelpers."""
-    # Method 1: EditorAssetLibrary (requires EditorScriptingUtilities plugin)
-    if hasattr(unreal, "EditorAssetLibrary"):
-        try:
-            for object_path in unreal.EditorAssetLibrary.list_assets(content_path, recursive=True, include_folder=False):
-                data = unreal.EditorAssetLibrary.find_asset_data(object_path)
-                if data:
-                    yield (str(object_path), _get_asset_class_name(data))
-            return
-        except Exception as e:
-            if hasattr(unreal, "log_warning"):
-                unreal.log_warning(f"EditorAssetLibrary failed ({e}), falling back to AssetRegistryHelpers")
 
-    # Method 2: AssetRegistryHelpers (built-in to PythonScriptPlugin in UE4/UE5)
-    if hasattr(unreal, "AssetRegistryHelpers"):
-        registry = unreal.AssetRegistryHelpers.get_asset_registry()
-        assets = registry.get_assets_by_path(content_path, recursive=True)
-        for data in assets:
-            obj_path = _get_asset_object_path(data)
-            cls_name = _get_asset_class_name(data)
-            if obj_path and cls_name:
-                yield (obj_path, cls_name)
-        return
+    The scan is not optional. A commandlet's asset registry comes up holding
+    /Game and the handful of engine folders the editor always scans (BasicShapes
+    is one, MapTemplates is not), so listing /Engine/MapTemplates without asking
+    for it first returns zero assets and the map's template floor silently never
+    exports. scan_paths_synchronous is a no-op for a path already scanned.
+    """
+    if not hasattr(unreal, "AssetRegistryHelpers"):
+        raise RuntimeError("AssetRegistryHelpers is not available in Unreal Python.")
 
-    raise RuntimeError("Neither EditorAssetLibrary nor AssetRegistryHelpers is available in Unreal Python.")
+    registry = unreal.AssetRegistryHelpers.get_asset_registry()
+    registry.scan_paths_synchronous([content_path], force_rescan=True)
+    for data in registry.get_assets_by_path(content_path, recursive=True):
+        obj_path = _get_asset_object_path(data)
+        cls_name = _get_asset_class_name(data)
+        if obj_path and cls_name:
+            yield (obj_path, cls_name)
 
 
 def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
@@ -124,9 +141,12 @@ def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
             unreal.log_warning(f"No assets found under {root}")
         infos.extend(found)
 
-    export_paths = _select_export_paths(infos)
+    asset_list_raw = os.environ.get("H5T_UE_ASSET_LIST")
+    asset_filter = set(asset_list_raw.replace(",", ";").split(";")) if asset_list_raw else None
+
+    export_paths = _select_export_paths(infos, asset_filter=asset_filter)
     if not export_paths:
-        unreal.log_warning(f"No StaticMesh/Texture2D assets found under {content_path}")
+        unreal.log_warning(f"No StaticMesh/Texture2D assets found matching criteria under {content_path}")
         return
 
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
@@ -165,6 +185,21 @@ def demo():
         ("/Game/B", "Texture2D"),
         ("/Game/C", "MaterialInstanceConstant"),
     ]) == ["/Game/A", "/Game/B"]
+
+    # A port scope narrows /Game but must never narrow engine content: the scope
+    # is a listing of the project, so no engine asset can ever match it.
+    scoped = _select_export_paths([
+        ("/Game/Meshes/SM_Chair.SM_Chair", "StaticMesh"),
+        ("/Game/Meshes/SM_Table.SM_Table", "StaticMesh"),
+        ("/Engine/MapTemplates/SM_Template_Map_Floor.SM_Template_Map_Floor", "StaticMesh"),
+        ("/Engine/BasicShapes/Cube.Cube", "StaticMesh"),
+        ("/Engine/MapTemplates/M_Thing.M_Thing", "MaterialInstanceConstant"),
+    ], asset_filter={"P/Content/Meshes/SM_Chair.uasset"})
+    assert scoped == [
+        "/Game/Meshes/SM_Chair.SM_Chair",
+        "/Engine/MapTemplates/SM_Template_Map_Floor.SM_Template_Map_Floor",
+        "/Engine/BasicShapes/Cube.Cube",
+    ], scoped
 
     assert _split_paths("/Game") == ["/Game"]
     assert _split_paths(DEFAULT_CONTENT_PATHS) == [

@@ -20,12 +20,13 @@ import json
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox, QLabel,
-    QDialogButtonBox, QWidget, QScrollArea, QFrame, QPushButton,
+    QDialogButtonBox, QWidget, QScrollArea, QFrame, QPushButton, QTabWidget,
 )
 
 from src.settings.main import get_settings_value, set_settings_value
+from src.styles.common import apply_stylesheets
 from .material_converter import (
-    _classify_textures, _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout,
+    _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout,
 )
 
 _SLOTS = [slot for slot, _keys in _SLOT_TOKENS if slot != "orm"]
@@ -53,6 +54,49 @@ def save_overrides(overrides: dict):
     set_settings_value("UnrealConverter", "slot_overrides_json", json.dumps(overrides))
 
 
+def load_param_overrides() -> dict:
+    """{ue_param_name: vmat_param_name} for scalar/vector/switch mapping."""
+    raw = get_settings_value("UnrealConverter", "param_overrides_json", "")
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def save_param_overrides(overrides: dict):
+    set_settings_value("UnrealConverter", "param_overrides_json", json.dumps(overrides))
+
+
+# Curated Source 2 (csgo_environment.vfx) param targets, grouped by UE value
+# type. The first entry (empty value) means "leave to auto / don't map". A wrong
+# pick is harmless — Source 2 ignores unknown params.
+_SCALAR_TARGETS = [
+    ("(don't map)", ""),
+    ("Roughness scale", "g_flRoughnessScale"),
+    ("Metalness scale", "g_flMetalnessScale"),
+    ("Model tint amount", "g_flModelTintAmount"),
+    ("Alpha test reference", "g_flAlphaTestReference"),
+    ("Texcoord rotation", "g_flTexCoordRotation1"),
+    ("Wetness darkening", "g_flWetnessDarkeningStrength1"),
+]
+_VECTOR_TARGETS = [
+    ("(don't map)", ""),
+    ("Color tint", "g_vColorTint"),
+    ("Texcoord scale", "g_vTexCoordScale1"),
+    ("Texcoord offset", "g_vTexCoordOffset1"),
+    ("Texcoord center", "g_vTexCoordCenter1"),
+]
+_SWITCH_TARGETS = [
+    ("(don't map)", ""),
+    ("Alpha test", "F_ALPHA_TEST"),
+    ("Render backfaces", "F_RENDER_BACKFACES"),
+    ("Fog enabled", "g_bFogEnabled"),
+]
+
+
 def _tex_name(ue_path: str) -> str:
     """'/Game/T/Box_SRM.Box_SRM' -> 'Box_SRM'."""
     return str(ue_path or "").split("/")[-1].split(".")[0]
@@ -61,7 +105,7 @@ def _tex_name(ue_path: str) -> str:
 class _ParamRow(QFrame):
     """One UE texture parameter: what it is, and where its pixels should go."""
 
-    def __init__(self, param: str, tex_path: str, auto_slot: str, override, parent=None):
+    def __init__(self, param: str, tex_path: str, override, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.param = param
@@ -104,16 +148,11 @@ class _ParamRow(QFrame):
             self.channel_combos[ch] = combo
         outer.addWidget(self.channel_box)
 
-        hint = auto_slot or "not used"
-        self.hint = QLabel(f"Auto would pick: {hint}")
-        self.hint.setEnabled(False)
-        outer.addWidget(self.hint)
-
-        self._apply_initial(auto_slot, override)
+        self._apply_initial(override)
         self.target.currentTextChanged.connect(self._sync_channel_box)
         self._sync_channel_box(self.target.currentText())
 
-    def _apply_initial(self, auto_slot, override):
+    def _apply_initial(self, override):
         if isinstance(override, dict):
             self.target.setCurrentText(_SPLIT)
             for slot, ch in override.items():
@@ -137,7 +176,6 @@ class _ParamRow(QFrame):
 
     def _sync_channel_box(self, text):
         self.channel_box.setVisible(text == _SPLIT)
-        self.hint.setVisible(text == _AUTO)
 
     def value(self):
         """The stored override for this parameter, or _NO_OVERRIDE."""
@@ -162,11 +200,91 @@ _NO_OVERRIDE = object()
 _EXPLICIT_SKIP = object()
 
 
+class _ParamMappingTab(QWidget):
+    """Migrate UE scalar/vector/switch params to Source 2 vmat params.
+
+    One row per declared parameter, grouped by value type. Each row's combo
+    picks a csgo_environment.vfx target (or "(don't map)"). The dialog reads
+    the result via :meth:`value` at save time.
+    """
+
+    def __init__(self, scalars: dict, vectors: dict, switches: dict,
+                 initial: dict = None, parent=None):
+        super().__init__(parent)
+        self._rows = {}   # ue_param_name -> QComboBox (so value() can read them)
+        initial = initial or {}
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        body = QWidget()
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(8)
+
+        self._add_section(body_layout, "Scalars (float)", sorted((scalars or {}).items()), _SCALAR_TARGETS, initial, lambda v: f"{v:.4f}")
+        self._add_section(body_layout, "Vectors (color)", sorted((vectors or {}).items()), _VECTOR_TARGETS, initial,
+                          lambda v: f"{v.get('r', 0):.2f}, {v.get('g', 0):.2f}, {v.get('b', 0):.2f}")
+        self._add_section(body_layout, "Switches (bool)", sorted((switches or {}).items()), _SWITCH_TARGETS, initial,
+                          lambda v: "on" if v else "off")
+
+        body_layout.addStretch(1)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(body)
+        outer.addWidget(scroll, 1)
+
+    def _add_section(self, parent_layout, title, items, targets, initial, fmt):
+        """One labelled group of param rows. `targets` is the (label, value)
+        list for that value type's combo."""
+        if not items:
+            return
+        group = QFrame()
+        group.setFrameShape(QFrame.StyledPanel)
+        gl = QVBoxLayout(group)
+        gl.setContentsMargins(8, 6, 8, 6)
+        gl.setSpacing(4)
+        header = QLabel(f"<b>{title}</b>")
+        gl.addWidget(header)
+        for name, val in items:
+            row = QHBoxLayout()
+            label = QLabel(f"{name}  ({fmt(val)})")
+            label.setEnabled(False)
+            combo = QComboBox()
+            for label_text, data in targets:
+                combo.addItem(label_text, data)
+            # Pre-select the stored override if any; else the first "(don't map)".
+            stored = initial.get(name, "")
+            idx = combo.findData(stored)
+            combo.setCurrentIndex(idx if idx >= 0 else 0)
+            row.addWidget(label, 1)
+            row.addWidget(combo)
+            gl.addLayout(row)
+            self._rows[name] = combo
+        parent_layout.addWidget(group)
+
+    def value(self) -> dict:
+        """{ue_param_name: vmat_param_name}, dropping unmapped entries."""
+        out = {}
+        for name, combo in self._rows.items():
+            target = combo.currentData()
+            if target:
+                out[name] = target
+        return out
+
+
 class SlotMappingDialog(QDialog):
     """Configures texture parameter -> vmat slot overrides for a Master Material.
-    All Material Instances inheriting from this Master Material use these mappings."""
+    All Material Instances inheriting from this Master Material use these mappings.
 
-    def __init__(self, master_name: str, textures: dict, initial_overrides: dict = None, parent=None):
+    Two tabs: "Texture Slots" (texture param -> vmat slot) and "Params"
+    (scalar/vector/switch -> vmat param). Both apply to every instance under the
+    master material.
+    """
+
+    def __init__(self, master_name: str, textures: dict, initial_overrides: dict = None,
+                 scalars: dict = None, vectors: dict = None, switches: dict = None,
+                 initial_param_overrides: dict = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Texture slots — {master_name}")
         self.resize(680, 560)
@@ -174,26 +292,22 @@ class SlotMappingDialog(QDialog):
         self.master_name = master_name
         self.textures = textures or {}
         self.result_overrides = {}
+        self.result_param_overrides = {}
 
         existing = initial_overrides or {}
-        auto_picks = _classify_textures(self.textures)   # {slot: (param, path, channel)}
-        param_to_auto = {}
-        for slot, (param, _path, channel) in auto_picks.items():
-            label = f"{slot} ({_CHANNEL_LABELS[channel]})" if channel else slot
-            param_to_auto.setdefault(param, []).append(label)
 
         layout = QVBoxLayout(self)
-        info = QLabel(
-            f"<b>{master_name}</b> — every Material Instance under this master uses these "
-            f"assignments.<br>Packed masks (SRMH, ORM, RMA…) are detected automatically; use "
-            f"<i>{_SPLIT}</i> to route channels yourself."
-        )
-        info.setWordWrap(True)
-        layout.addWidget(info)
 
+        tabs = QTabWidget()
+        layout.addWidget(tabs, 1)
+
+        # --- Tab 1: Texture Slots (the original dialog body) ---
+        tex_tab = QWidget()
+        tex_layout = QVBoxLayout(tex_tab)
+        tex_layout.setContentsMargins(0, 0, 0, 0)
         self._rows = []
         if not self.textures:
-            layout.addWidget(QLabel("No texture parameters found on this Master Material."))
+            tex_layout.addWidget(QLabel("No texture parameters found on this Master Material."))
         else:
             body = QWidget()
             body_layout = QVBoxLayout(body)
@@ -203,7 +317,7 @@ class SlotMappingDialog(QDialog):
                 override = existing[param] if param in existing else _NO_OVERRIDE
                 if param in existing and existing[param] is None:
                     override = _EXPLICIT_SKIP
-                row = _ParamRow(param, path, ", ".join(param_to_auto.get(param, [])), override)
+                row = _ParamRow(param, path, override)
                 self._rows.append(row)
                 body_layout.addWidget(row)
             body_layout.addStretch(1)
@@ -211,7 +325,12 @@ class SlotMappingDialog(QDialog):
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
             scroll.setWidget(body)
-            layout.addWidget(scroll, 1)
+            tex_layout.addWidget(scroll, 1)
+        tabs.addTab(tex_tab, "Texture Slots")
+
+        # --- Tab 2: Params (scalar/vector/switch -> vmat param) ---
+        self._params_tab = _ParamMappingTab(scalars, vectors, switches, initial_param_overrides)
+        tabs.addTab(self._params_tab, "Params")
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
         reset = QPushButton("Reset to auto")
@@ -220,6 +339,10 @@ class SlotMappingDialog(QDialog):
         buttons.accepted.connect(self._on_save)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+        # The dialog inherits the app-wide global sheet; this picks up the
+        # shared per-widget sheets for the rows and the button box.
+        apply_stylesheets(self)
 
     def _on_reset(self):
         for row in self._rows:
@@ -232,4 +355,5 @@ class SlotMappingDialog(QDialog):
             if value is not _NO_OVERRIDE:
                 overrides[row.param] = value
         self.result_overrides = overrides
+        self.result_param_overrides = self._params_tab.value()
         self.accept()
