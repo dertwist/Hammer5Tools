@@ -43,6 +43,10 @@ def describe_bindings(textures: dict, slot_overrides: dict = None) -> str:
     """One-line summary of what the current mapping resolves to, e.g.
     'color←Diffuse  normal←Normal  rough←SRMH.G  metal←SRMH.B'."""
     picks = _classify_textures(textures or {}, slot_overrides)
+    return format_picks_summary(picks)
+
+
+def format_picks_summary(picks: dict) -> str:
     if not picks:
         return "No texture slots resolved — this material will convert flat."
     parts = []
@@ -51,6 +55,25 @@ def describe_bindings(textures: dict, slot_overrides: dict = None) -> str:
         suffix = f".{_CHANNEL_LABELS[channel]}" if channel else ""
         parts.append(f"{slot}←{param}{suffix}")
     return "   ".join(parts)
+
+
+_THUMBNAIL_CACHE = {}
+
+
+def get_cached_pixmap(img_path: str, size: int = 24) -> QPixmap:
+    if not img_path:
+        return None
+    key = (img_path, size)
+    if key in _THUMBNAIL_CACHE:
+        return _THUMBNAIL_CACHE[key]
+    if os.path.exists(img_path):
+        pm = QPixmap(img_path)
+        if not pm.isNull():
+            scaled = pm.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            _THUMBNAIL_CACHE[key] = scaled
+            return scaled
+    _THUMBNAIL_CACHE[key] = None
+    return None
 
 
 class MasterMaterialCard(QFrame):
@@ -64,7 +87,7 @@ class MasterMaterialCard(QFrame):
 
     map_slots_requested = Signal(str)
 
-    def __init__(self, master_name: str, info: dict, parity: bool = False, bulk_dir: str = None, parent=None):
+    def __init__(self, master_name: str, info: dict, parity: bool = False, bulk_dir: str = None, tex_index: dict = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.master_name = master_name
@@ -122,29 +145,24 @@ class MasterMaterialCard(QFrame):
 
         outer.addLayout(b_row)
 
-        apply_stylesheets(self)
-        self.refresh(info, bulk_dir=self.bulk_dir)
+        self.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
-    def refresh(self, info: dict, bulk_dir: str = None):
+    def refresh(self, info: dict, bulk_dir: str = None, tex_index: dict = None):
         if bulk_dir:
             self.bulk_dir = bulk_dir
-        self.bindings.setText(
-            describe_bindings(info.get("textures", {}), info.get("slot_overrides", {}))
-        )
-        self._update_thumbnails(info.get("textures", {}), info.get("slot_overrides", {}))
+        textures = info.get("textures", {})
+        slot_overrides = info.get("slot_overrides", {})
+        picks = _classify_textures(textures, slot_overrides)
+        self.bindings.setText(format_picks_summary(picks))
+        self._update_thumbnails(picks, tex_index=tex_index)
 
-    def _update_thumbnails(self, textures: dict, slot_overrides: dict = None):
+    def _update_thumbnails(self, picks: dict, tex_index: dict = None):
         while self.thumbs_layout.count():
             item = self.thumbs_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
-        if not self.bulk_dir or not textures:
-            self.thumbs_container.setVisible(False)
-            return
-
-        picks = _classify_textures(textures, slot_overrides)
-        if not picks:
+        if not self.bulk_dir or not picks:
             self.thumbs_container.setVisible(False)
             return
 
@@ -156,13 +174,13 @@ class MasterMaterialCard(QFrame):
             if tex_path in shown_paths:
                 continue
             shown_paths.add(tex_path)
-            img_path = find_bulk_texture(self.bulk_dir, tex_path)
-            if img_path and os.path.exists(img_path):
-                pm = QPixmap(img_path)
-                if not pm.isNull():
+            img_path = find_bulk_texture(self.bulk_dir, tex_path, tex_index=tex_index)
+            if img_path:
+                pm = get_cached_pixmap(img_path, size=24)
+                if pm and not pm.isNull():
                     lbl = QLabel()
                     lbl.setFixedSize(24, 24)
-                    lbl.setPixmap(pm.scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                    lbl.setPixmap(pm)
                     lbl.setStyleSheet("border: 1px solid #3A3A3C; border-radius: 3px; background-color: #111;")
                     lbl.setToolTip(f"{slot}: {param}")
                     self.thumbs_layout.addWidget(lbl)
@@ -194,22 +212,38 @@ class MasterMaterialList(QScrollArea):
 
     def populate(self, master_groups: dict, bulk_dir: str = None):
         self.bulk_dir = bulk_dir
-        for card in self.cards.values():
-            card.setParent(None)
-            card.deleteLater()
-        self.cards.clear()
+        self._body.setUpdatesEnabled(False)
+        try:
+            while self._layout.count():
+                item = self._layout.takeAt(0)
+                w = item.widget()
+                if w and w is not self._empty:
+                    w.setParent(None)
+                    w.deleteLater()
+            self.cards.clear()
 
-        self._empty.setVisible(not master_groups)
-        for i, (name, info) in enumerate(sorted(master_groups.items())):
-            card = MasterMaterialCard(name, info, parity=(i % 2 == 1), bulk_dir=self.bulk_dir)
-            card.map_slots_requested.connect(self.map_slots_requested)
-            self._layout.insertWidget(i + 1, card)   # after the empty label
-            self.cards[name] = card
+            self._empty.setVisible(not master_groups)
+            self._layout.addWidget(self._empty)
+
+            from .material_converter import get_texture_index
+            tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
+
+            for i, (name, info) in enumerate(sorted(master_groups.items())):
+                card = MasterMaterialCard(name, info, parity=(i % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
+                card.map_slots_requested.connect(self.map_slots_requested)
+                self._layout.addWidget(card)
+                self.cards[name] = card
+
+            self._layout.addStretch(1)
+        finally:
+            self._body.setUpdatesEnabled(True)
 
     def refresh(self, master_name: str, info: dict):
         card = self.cards.get(master_name)
         if card:
-            card.refresh(info, bulk_dir=self.bulk_dir)
+            from .material_converter import get_texture_index
+            tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
+            card.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
     # The Materials tab reads selection/shader back out of these at convert time.
     def checkboxes(self) -> dict:

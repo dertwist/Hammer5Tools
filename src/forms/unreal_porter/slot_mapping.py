@@ -224,14 +224,15 @@ class _ParamRow(QFrame):
         self.target.currentTextChanged.connect(self._sync_channel_box)
         self._sync_channel_box(self.target.currentText())
 
-    def _load_thumbnail(self, bulk_dir: str, tex_path: str):
+    def _load_thumbnail(self, bulk_dir: str, tex_path: str, tex_index: dict = None):
         stem = _tex_name(tex_path)
         if bulk_dir and tex_path:
-            img_path = find_bulk_texture(bulk_dir, tex_path)
-            if img_path and os.path.exists(img_path):
-                pm = QPixmap(img_path)
-                if not pm.isNull():
-                    self.thumb.setPixmap(pm.scaled(36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            img_path = find_bulk_texture(bulk_dir, tex_path, tex_index=tex_index)
+            if img_path:
+                from .master_material_list import get_cached_pixmap
+                pm = get_cached_pixmap(img_path, size=36)
+                if pm and not pm.isNull():
+                    self.thumb.setPixmap(pm)
                     self.thumb.setToolTip(f"{stem}\n({img_path})")
                     return
         ext = stem.split("_")[-1].upper() if "_" in stem else "TEX"
