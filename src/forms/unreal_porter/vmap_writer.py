@@ -6,15 +6,14 @@ Each UE static-mesh placement becomes a CMapEntity(prop_static) whose transform
 is converted from UE space to Source 2 space via the shared transform module,
 and whose `model` points at the vmdl produced for that mesh.
 
-The map skeleton (CMapRootElement / CMapWorld) is taken from a bundled empty
-template so the output matches exactly what Hammer expects (binary/vmap v40);
-we only clear the template's world children and inject our own. Falls back to
-keyvalues2 text encoding if binary saving is unavailable.
+The map skeleton (CMapRootElement / CMapWorld) is built from scratch — see
+new_vmap() — rather than cloned from a bundled empty template, which the
+installed build could not always locate. Falls back to keyvalues2 text
+encoding if binary saving is unavailable.
 """
 
 import os
 import random
-from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from src.dotnet import setup_keyvalues2
@@ -27,12 +26,41 @@ from . import decal_template as DT
 # spline handling and are reported separately, not emitted here.
 _SIMPLE_COMPONENT = "StaticMeshComponent"
 
-_TEMPLATE_CANDIDATES = [
-    "Presets/valve_default/content/maps/xxx_mapname_xxx.vmap",
-    "Presets/hammer5tools/content/maps/xxx_mapname_xxx.vmap",
-    "Hammer5Tools/Presets/valve_default/content/maps/xxx_mapname_xxx.vmap",
-    "Hammer5Tools/Presets/hammer5tools/content/maps/xxx_mapname_xxx.vmap",
-]
+# worldspawn defaults, as Hammer writes them into an empty map.
+_WORLDSPAWN = {
+    "classname": "worldspawn",
+    "targetname": "",
+    "skyname": "sky_day01_01",
+    "startdark": "0",
+    "startcolor": "0 0 0",
+    "pvstype": "0",
+    "newunit": "0",
+    "maxpropscreenwidth": "-1",
+    "minpropscreenwidth": "0",
+    "vrchaperone": "0",
+    "vrmovement": "0",
+    "baked_light_index_min": "0",
+    "baked_light_index_max": "256",
+    "max_lightmap_resolution": "0",
+    "lightmap_queries": "1",
+    "steamaudio_reverb_rebake_option": "1",
+    "steamaudio_reverb_grid_type": "0",
+    "steamaudio_reverb_grid_spacing": "6",
+    "steamaudio_reverb_height_above_floor": "1.5",
+    "steamaudio_reverb_rays": "32768",
+    "steamaudio_reverb_bounces": "32",
+    "steamaudio_reverb_ir_duration": "1.0",
+    "steamaudio_reverb_ambisonic_order": "1",
+    "steamaudio_pathing_rebake_option": "1",
+    "steamaudio_pathing_grid_type": "0",
+    "steamaudio_pathing_grid_spacing": "6",
+    "steamaudio_pathing_height_above_floor": "1.5",
+    "steamaudio_pathing_visibility_samples": "1",
+    "steamaudio_pathing_visibility_radius": "0.0",
+    "steamaudio_pathing_visibility_threshold": "0.1",
+    "steamaudio_pathing_visibility_pathrange": "100.0",
+    "prefab_has_runtime_entity_by_default": "0",
+}
 
 
 def actor_transform(actor: dict, unit_scale: float = UnitScale.ONE_TO_ONE):
@@ -54,14 +82,95 @@ def actor_transform(actor: dict, unit_scale: float = UnitScale.ONE_TO_ONE):
     )
 
 
-def find_empty_template() -> Optional[str]:
-    """Locate a bundled empty vmap to use as the map skeleton."""
-    root = Path(__file__).resolve().parents[3]
-    for rel in _TEMPLATE_CANDIDATES:
-        p = root / rel
-        if p.is_file():
-            return str(p)
-    return None
+def new_vmap():
+    """An empty binary vmap v40 (CMapRootElement + CMapWorld), built in code.
+
+    Same skeleton Hammer writes for File > New, minus the stored camera and
+    the default world children. Returns (datamodel, world element); callers
+    append to world["children"] and Save().
+    """
+    Datamodel, Element, _ = setup_keyvalues2()
+    import Datamodel as DM
+    import System
+    from System.Numerics import Vector3
+
+    dm = DM.Datamodel("vmap", 40)
+    root = Element(dm, "", None, "CMapRootElement")
+    dm.Root = root
+
+    def E(cls):
+        return Element(dm, "", None, cls)
+
+    def node_defaults(el, node_id):
+        """The CMapNode fields every node in the tree carries."""
+        el["nodeID"] = System.Int32(node_id)
+        el["referenceID"] = System.UInt64(0)
+        el["children"] = DM.ElementArray()
+        el["variableTargetKeys"] = DM.StringArray()
+        el["variableNames"] = DM.StringArray()
+        el["origin"] = Vector3(0.0, 0.0, 0.0)
+        el["angles"] = DM.QAngle(0.0, 0.0, 0.0)
+        el["scales"] = Vector3(1.0, 1.0, 1.0)
+        el["transformLocked"] = False
+        el["force_hidden"] = False
+        el["editorOnly"] = False
+        return el
+
+    plug_list = E("DmePlugList")
+    plug_list["names"] = DM.StringArray()
+    plug_list["dataTypes"] = DM.IntArray()
+    plug_list["plugTypes"] = DM.IntArray()
+    plug_list["descriptions"] = DM.StringArray()
+
+    worldspawn = E("EditGameClassProps")
+    for k, v in _WORLDSPAWN.items():
+        worldspawn[k] = v
+
+    world = node_defaults(E("CMapWorld"), 1)
+    world["relayPlugData"] = plug_list
+    world["connectionsData"] = DM.ElementArray()
+    world["entity_properties"] = worldspawn
+    world["nextDecalID"] = System.Int32(0)
+    world["fixupEntityNames"] = True
+    world["mapUsageType"] = "standard"
+
+    visibility = node_defaults(E("CVisibilityMgr"), 0)
+    visibility["nodes"] = DM.ElementArray()
+    visibility["hiddenFlags"] = DM.IntArray()
+
+    variables = E("CMapVariableSet")
+    for k in ("variableNames", "variableValues", "variableTypeNames", "variableTypeParameters"):
+        variables[k] = DM.StringArray()
+    variables["m_ChoiceGroups"] = DM.ElementArray()
+
+    selection_set = E("CMapSelectionSet")
+    selection_set["children"] = DM.ElementArray()
+    selection_set["selectionSetName"] = ""
+    selection_set["selectionSetData"] = None
+
+    camera = E("CStoredCamera")
+    camera["position"] = Vector3(0.0, -1000.0, 1000.0)
+    camera["lookat"] = Vector3(0.0, 0.0, 0.0)
+
+    cameras = E("CStoredCameras")
+    cameras["activecamera"] = System.Int32(-1)
+    cameras["cameras"] = DM.ElementArray()
+
+    root["isprefab"] = False
+    root["editorbuild"] = System.Int32(10430)
+    root["editorversion"] = System.Int32(400)
+    root["itemFile"] = ""
+    root["defaultcamera"] = camera
+    root["3dcameras"] = cameras
+    root["world"] = world
+    root["visbility"] = visibility          # sic — Hammer's spelling
+    root["mapVariables"] = variables
+    root["rootSelectionSet"] = selection_set
+    root["m_ReferencedMeshSnapshots"] = DM.ElementArray()
+    root["m_bIsCordoning"] = False
+    root["m_bCordonsVisible"] = False
+    root["nodeInstanceData"] = DM.ElementArray()
+    return dm, world
 
 
 class VmapWriteResult:
@@ -84,8 +193,7 @@ def write_vmap(
     output_path: str,
     model_resolver: Optional[Callable[[str], str]] = None,
     unit_scale: float = UnitScale.ONE_TO_ONE,
-    template_path: Optional[str] = None,
-    strip_prefix: bool = False,
+    strip_prefix: bool = True,
 ) -> VmapWriteResult:
     """
     Write a .vmap of prop_static entities from normalized scene actors.
@@ -98,21 +206,13 @@ def write_vmap(
     """
     if model_resolver is None:
         model_resolver = lambda mesh: ue_mesh_to_model_path(mesh, strip_prefix=strip_prefix)
-    template_path = template_path or find_empty_template()
-    if not template_path:
-        raise FileNotFoundError(
-            "No empty vmap template found to use as a map skeleton "
-            "(looked under Presets/*/content/maps/xxx_mapname_xxx.vmap)."
-        )
 
     Datamodel, Element, DeferredMode = setup_keyvalues2()
     import Datamodel as DM
     import System
     from System.Numerics import Vector2, Vector3, Vector4
 
-    dm = Datamodel.Load(template_path, DeferredMode.Automatic)
-    world = dm.Root["world"]
-    world["children"].Clear()
+    dm, world = new_vmap()
 
     def E(name, cls):
         return Element(dm, name, None, cls)
@@ -443,6 +543,17 @@ def demo():
     st = actor_transform(actor(x=254, y=254, z=254, s=2.0), unit_scale=UnitScale.CM_TO_INCH)
     assert rounded(st.origin) == (100.0, -100.0, 100.0), st.origin
     assert rounded(st.scales) == (2.0, 2.0, 2.0), st.scales
+
+    # The skeleton needs the DMX stack, so it is checked only where that loads.
+    try:
+        dm, world = new_vmap()
+    except Exception as e:
+        print(f"ok (skeleton skipped: {e})")
+        return
+    assert dm.Format == "vmap" and dm.FormatVersion == 40, (dm.Format, dm.FormatVersion)
+    assert dm.Root.ClassName == "CMapRootElement"
+    assert world.ClassName == "CMapWorld" and world["children"].Count == 0
+    assert world["entity_properties"]["classname"] == "worldspawn"
     print("ok")
 
 

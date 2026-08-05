@@ -26,9 +26,9 @@ class BridgeError(RuntimeError):
     pass
 
 
-# How CUE4Parse writes an object reference in a dump — always a string property
-# under one of these names.
-_REF_FIELD = re.compile(r'"(?:ObjectPath|ObjectName|AssetPathName)"\s*:\s*"([^"]+)"')
+# How CUE4Parse writes references in a dump — string values under ObjectPath,
+# ObjectName, AssetPathName, MaterialSlotName, Parent, etc.
+_REF_FIELD = re.compile(r'"([^"]+)"')
 
 
 def _read_error(fh, limit: int = 300) -> str:
@@ -145,19 +145,12 @@ class UnrealBridge:
         # whose whole tree is actually needed — see iter_refs for the cheap path.
         return self._run_json("dump", self.content_dir, object_path, timeout=600)
 
-    def iter_refs(self, object_path: str, timeout: int = 600) -> set:
+    def iter_refs(self, object_path: str, timeout: int = 600, is_cancelled=None) -> set:
         """Every object reference in an asset, read as a stream.
 
-        `dump` serialises the entire export tree: for a StaticMesh that includes
-        the render data, which runs to hundreds of megabytes of indented JSON.
-        Buffering that and then json.loads-ing it costs several GB of Python
-        objects per asset, and a reference scan walks every selected asset in
-        turn — enough to exhaust the process and abort it mid-scan. References
-        are plain string properties, so read line by line and keep only matches.
-
-        ponytail: the deadline is only checked between lines, so a bridge that
-        hangs before printing anything still blocks; give it a reader thread if
-        that ever shows up.
+        If is_cancelled is a no-arg callable returning truthy, the bridge
+        process is killed and a BridgeError is raised mid-stream — used by the
+        reference-scan worker's cancel path so closing the dialog stops it.
         """
         if not self.is_available():
             raise BridgeError(self.why_unavailable())
@@ -171,8 +164,12 @@ class UnrealBridge:
         )
         deadline = time.monotonic() + timeout
         refs = set()
+        cancelled = False
         try:
             for line in proc.stdout:
+                if is_cancelled is not None and is_cancelled():
+                    cancelled = True
+                    break
                 refs.update(_REF_FIELD.findall(line))
                 if time.monotonic() > deadline:
                     raise BridgeError(f"bridge 'dump' timed out after {timeout}s")
@@ -181,6 +178,8 @@ class UnrealBridge:
             if proc.poll() is None:
                 proc.kill()
             proc.wait()
+        if cancelled:
+            raise BridgeError("bridge 'dump' cancelled")
         if proc.returncode != 0:
             raise BridgeError(f"bridge 'dump' failed (exit {proc.returncode}): {_read_error(err)}")
         err.close()

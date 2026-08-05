@@ -103,23 +103,41 @@ def extract_alpha(color_path: str, out_path: str, mid_band=(32, 223), max_mid=0.
         return None
 
 
-def convert_to_tga(input_path: str, output_dir: str, new_suffix: str):
+def invert_y_normal(img_or_path):
     """
-    Converts a PNG to TGA with a new suffix.
+    Inverts the Green (Y) channel of a normal map image.
+    Unreal Engine uses DirectX normal maps (Green = Y-), while Source 2
+    uses OpenGL normal maps (Green = Y+).
+    Accepts either a PIL Image object or a file path string. Returns a PIL Image object.
+    """
+    if isinstance(img_or_path, str):
+        img = Image.open(img_or_path)
+    else:
+        img = img_or_path
+
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA")
+
+    bands = list(img.split())
+    # Green channel (Y axis) is at index 1
+    bands[1] = bands[1].point(lambda x: 255 - x)
+    return Image.merge(img.mode, bands)
+
+
+def convert_to_tga(input_path: str, output_dir: str, new_suffix: str, invert_y: bool = False, ext: str = "tga"):
+    """
+    Converts an image to target format with a new suffix, optionally inverting Y normal.
     """
     try:
-        base_name = os.path.basename(input_path)
-        name_without_ext = os.path.splitext(base_name)[0]
-        # Usually we want to strip the Unreal suffix like _ALB
-        # But this function just converts and renames.
-        
         img = Image.open(input_path).convert("RGBA")
-        output_name = f"{new_suffix}.tga"
+        if invert_y:
+            img = invert_y_normal(img)
+        output_name = f"{new_suffix}.{ext}"
         output_path = os.path.join(output_dir, output_name)
         img.save(output_path)
         return output_path
     except Exception as e:
-        print(f"Error converting to TGA: {e}")
+        print(f"Error converting texture: {e}")
         return None
 
 def is_metallic(metal_map_path: str):

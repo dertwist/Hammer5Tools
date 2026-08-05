@@ -1,6 +1,7 @@
 import os
 import re
 from PySide6.QtCore import QThread, Signal
+from ._worker_base import CancellableWorker
 from .texture_utils import unpack_rma, convert_to_tga, is_metallic, unpack_orh
 from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
@@ -450,18 +451,20 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
     return groups
 
 
-class MasterMaterialConvertWorker(QThread):
+class MasterMaterialConvertWorker(CancellableWorker):
     progress = Signal(int, int)          # current, total
     file_done = Signal(str, bool, str)   # name, success, message
     finished = Signal(list, list)        # created, skipped
 
     def __init__(self, output_dir, bulk_dir, master_groups, slot_overrides=None, parent=None,
-                 strip_prefix=False):
+                 strip_prefix=True, tex_format="tga", invert_y_normal=True):
         super().__init__(parent)
         self.output_dir = output_dir
         self.bulk_dir = bulk_dir
         self.master_groups = master_groups  # { master_name: { "shader": str, "instances": [...], "slot_overrides": {...}, "enabled": bool } }
         self.strip_prefix = strip_prefix
+        self.tex_format = tex_format
+        self.invert_y_normal = invert_y_normal
 
     def run(self):
         from .material_converter import convert_material, get_texture_index
@@ -489,6 +492,9 @@ class MasterMaterialConvertWorker(QThread):
             master_param_overrides = group_data.get("param_overrides", {})
 
             for stem, path, mat_data in instances:
+                if self.is_cancelled:
+                    self.finished.emit(created, skipped)
+                    return
                 processed += 1
                 self.progress.emit(processed, total_instances)
                 try:
@@ -497,6 +503,8 @@ class MasterMaterialConvertWorker(QThread):
                         shader=shader, slot_overrides=master_slot_overrides,
                         tex_index=tex_index, param_overrides=master_param_overrides,
                         strip_prefix=self.strip_prefix,
+                        tex_format=self.tex_format,
+                        invert_y_normal=self.invert_y_normal,
                     )
                     created.append(stem)
                     msg = f"Success ({shader})"

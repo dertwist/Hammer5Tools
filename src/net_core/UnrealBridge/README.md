@@ -56,10 +56,17 @@ dotnet publish tools/unreal_bridge/UnrealBridge.csproj -c Release -r win-x64 --s
 dotnet H5T.UnrealBridge.dll info <contentDir>
 dotnet H5T.UnrealBridge.dll list <contentDir> <substring>
 dotnet H5T.UnrealBridge.dll dump <contentDir> <objectPath>
+dotnet H5T.UnrealBridge.dll iter-refs <contentDir> <objectPath>
 ```
 
 * `<contentDir>` — the UE project's `Content` folder.
 * `<objectPath>` — package path without extension, e.g.
   `FireWatchTower/Blueprints/BP_Fence01`.
-* `dump` prints all exports as JSON (the raw property tree). Planned normalized
-  commands: `dump-scene`, `dump-blueprint`, `dump-material`.
+* `dump` prints all exports as JSON (the raw property tree).
+* `iter-refs` resolves every object reference in a package (mesh material slots,
+  material textures, component meshes, parent materials, etc.) to a flat JSON
+  list of object paths. Unlike `dump`, it never serialises render data, so it is
+  safe and complete for StaticMeshes whose material slots would otherwise
+  serialise as null.
+* Normalized commands for specific export types: `dump-scene`, `dump-blueprint`,
+  `dump-material`.

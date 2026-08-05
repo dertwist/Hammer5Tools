@@ -33,7 +33,7 @@ def strip_ue_asset_folders(rel_path: str) -> str:
     return "/".join(parts)
 
 
-def ue_material_to_vmat_path(ue_path: str, root: str = "materials", strip_prefix: bool = False) -> str:
+def ue_material_to_vmat_path(ue_path: str, root: str = "materials", strip_prefix: bool = True) -> str:
     """/Game/FireWatchTower/Materials/Material_Instances/MI_Barrel(.MI_Barrel)
         -> materials/firewatchtower/mi_barrel.vmat (or barrel.vmat if strip_prefix=True)"""
     if "'" in ue_path:
@@ -445,11 +445,15 @@ class MaterialResult:
         self.is_decal = is_decal
 
 
+from .texture_utils import invert_y_normal as invert_y_normal_map
+
 def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      shader: str = None, slot_overrides: dict = None,
                      tex_index: dict = None,
                      param_overrides: dict = None,
-                     strip_prefix: bool = False) -> MaterialResult:
+                     strip_prefix: bool = True,
+                     tex_format: str = "tga",
+                     invert_y_normal: bool = True) -> MaterialResult:
     """
     Write a vmat (+ converted/split textures) from a dump-material result.
     Returns MaterialResult with the vmat path relative to the output root.
@@ -473,8 +477,9 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     vmat_abs = os.path.join(output_dir, vmat_rel)
     folder_rel = os.path.dirname(vmat_rel).replace("\\", "/")   # "materials/…"
 
-    def save(img, name) -> str:
-        rel = f"{folder_rel}/{name}.tga"
+    def save(img, name, ext=None) -> str:
+        ext = ext or tex_format
+        rel = f"{folder_rel}/{name}.{ext}"
         dst = os.path.join(output_dir, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if not os.path.exists(dst):
@@ -543,7 +548,10 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     for slot in color_normal_slots:
         src, stem, _ch = load(slot)
         if src:
-            slots[slot] = save(Image.open(src).convert("RGBA"), stem)
+            img = Image.open(src).convert("RGBA")
+            if invert_y_normal and slot.startswith("normal"):
+                img = invert_y_normal_map(img)
+            slots[slot] = save(img, stem)
             written += 1
 
     # Greyscale slots. _classify_textures has already expanded any packed mask

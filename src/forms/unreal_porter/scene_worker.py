@@ -9,6 +9,7 @@ import shutil
 from PySide6.QtCore import QThread, Signal
 
 from .asset_selection import asset_stem, ref_stem, key_to_object_path
+from ._worker_base import CancellableWorker
 from .bridge_client import UnrealBridge, BridgeError
 from .vmap_writer import write_vmap
 from .vsmart_writer import write_vsmart
@@ -39,19 +40,22 @@ def _is_external_ref(key_or_ref) -> bool:
     return ref.startswith("/") and not ref.startswith("/game/")
 
 
-class SceneModelsWorker(QThread):
+class SceneModelsWorker(CancellableWorker):
     log = Signal(str, str)      # message, level (info/warn/error/success)
     progress = Signal(int, int)  # current, total
     done = Signal()
 
     def __init__(self, project_dir, bulk_dir, output_dir,
-                 do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=False, unit_scale=1.0,
+                 do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=True, unit_scale=1.0,
                  use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None,
                  master_param_overrides=None,
-                 selected_assets=None, import_lods=True, import_collision=True, parent=None):
+                 selected_assets=None, import_lods=True, import_collision=True,
+                 tex_format="tga", invert_y_normal=True, parent=None):
         super().__init__(parent)
         self.import_lods = import_lods
         self.import_collision = import_collision
+        self.tex_format = tex_format
+        self.invert_y_normal = invert_y_normal
         # Asset keys the user picked in the port scope dialog, already expanded
         # with their references. None means no filtering — port everything.
         self.selected_stems = (
@@ -80,6 +84,14 @@ class SceneModelsWorker(QThread):
 
     def _log(self, msg, level="info"):
         self.log.emit(msg, level)
+
+    def _cancel_check(self) -> bool:
+        """True if the worker was cancelled. Logs once so each abandoned stage
+        explains why it stopped, instead of going silent mid-conversion."""
+        if self.is_cancelled:
+            self._log("Conversion cancelled by user.", "warn")
+            return True
+        return False
 
     def _write_vmdl(self, *args, **kwargs):
         """write_vmdl with the Models tab's import options applied.
@@ -186,6 +198,8 @@ class SceneModelsWorker(QThread):
             if not map_keys:
                 self._log("No .umap files found in project.", "warn")
             for i, mk in enumerate(map_keys):
+                if self._cancel_check():
+                    return
                 obj = mk[:-len(".umap")]
                 name = os.path.basename(obj)
                 self.progress.emit(i + 1, len(map_keys))
@@ -213,7 +227,10 @@ class SceneModelsWorker(QThread):
                 )
         else:
             # Models-only still needs the mesh list; pull it from the maps.
-            for mk in map_keys:
+            for i, mk in enumerate(map_keys):
+                if self._cancel_check():
+                    return
+                self.progress.emit(i + 1, len(map_keys))
                 try:
                     obj = mk[:-len(".umap")]
                     scene = bridge.dump_scene(obj)
@@ -227,6 +244,7 @@ class SceneModelsWorker(QThread):
 
         # --- Blueprints -> vsmart ---
         if self.do_blueprints:
+            self._log("Scanning blueprints…", "info")
             try:
                 bp_keys = [k for k in bridge.list("") if k.lower().endswith(".uasset") and not k.lower().endswith(".umap")]
             except BridgeError as e:
@@ -255,6 +273,9 @@ class SceneModelsWorker(QThread):
                 self._log(f"Blueprints — candidate assets to inspect: {len(filtered_bp_keys)} of {len(bp_keys)}", "info")
 
                 for i, bk in enumerate(filtered_bp_keys):
+                    if self._cancel_check():
+                        return
+                    self.progress.emit(i + 1, len(filtered_bp_keys))
                     obj = bk[:-len(".uasset")]
                     name = os.path.basename(obj)
 
@@ -287,31 +308,38 @@ class SceneModelsWorker(QThread):
             if bp_count == 0 and self.do_blueprints:
                 self._log("Blueprints — no content-assembly blueprints converted.", "info")
 
+        # Fold the port scope into referenced_meshes BEFORE Materials runs.
+        # Directly-picked meshes (no map/blueprint places them) must be in the
+        # set when _convert_materials reads their FBX material names, or the
+        # "no matching material instances" path fires and the materials that
+        # every selected mesh actually uses never get converted.
+        if self.selected_stems is not None:
+            # Drop meshes the maps reference but the user left unticked...
+            referenced_meshes = {m for m in referenced_meshes if self._wanted(m)}
+            # ...and add meshes picked directly, which no map places. UE
+            # exported an FBX for exactly the assets that are meshes, so the
+            # bulk export is the type test.
+            for key in self.selected_assets:
+                obj = key_to_object_path(key)
+                if obj in referenced_meshes:
+                    continue
+                if self.bulk_dir and find_bulk_export_mesh(self.bulk_dir, obj):
+                    referenced_meshes.add(obj)
+
         # --- Materials -> vmat (before Models so vmdl remaps resolve to real vmats) ---
         if self.do_materials:
             self._convert_materials(referenced_meshes)
 
         # --- Models -> vmdl ---
         if self.do_models:
-            if self.selected_stems is not None:
-                # Drop meshes the maps reference but the user left unticked...
-                referenced_meshes = {m for m in referenced_meshes if self._wanted(m)}
-                # ...and add meshes picked directly, which no map places. UE
-                # exported an FBX for exactly the assets that are meshes, so the
-                # bulk export is the type test.
-                for key in self.selected_assets:
-                    obj = key_to_object_path(key)
-                    if obj in referenced_meshes:
-                        continue
-                    if self.bulk_dir and find_bulk_export_mesh(self.bulk_dir, obj):
-                        referenced_meshes.add(obj)
-
             self._log(f"Referenced meshes found: {len(referenced_meshes)}", "info")
             if not referenced_meshes:
                 self._log("No referenced meshes to build vmdls for. Make sure Scenes is enabled or at least one map was scanned.", "warn")
             made, missing, engine, landscapes = 0, 0, 0, 0
             total = len(referenced_meshes)
             for i, mesh in enumerate(sorted(referenced_meshes)):
+                if self._cancel_check():
+                    return
                 self.progress.emit(i + 1, total)
                 model_rel = ue_mesh_to_model_path(mesh, strip_prefix=self.strip_prefix)                 # models/.../x.vmdl
                 vmdl_path = os.path.join(self.output_dir, model_rel)
@@ -395,6 +423,7 @@ class SceneModelsWorker(QThread):
         slot_overrides = load_overrides()
 
         # Map MI stem -> UE object path (one bridge call).
+        self._log("Resolving scene materials…", "info")
         try:
             mi_keys = self.bridge.list_materials()
         except BridgeError as e:
@@ -422,6 +451,8 @@ class SceneModelsWorker(QThread):
 
         done, missing_tex = 0, 0
         for i, (stem, path) in enumerate(sorted(targets)):
+            if self._cancel_check():
+                return
             self.progress.emit(i + 1, len(targets))
             try:
                 data = self.bridge.dump_material(path)
@@ -435,7 +466,9 @@ class SceneModelsWorker(QThread):
                 res = convert_material(data, self.bulk_dir, self.output_dir,
                                        shader=shader, slot_overrides=overrides,
                                        param_overrides=param_overrides,
-                                       strip_prefix=self.strip_prefix)
+                                       strip_prefix=self.strip_prefix,
+                                       tex_format=self.tex_format,
+                                       invert_y_normal=self.invert_y_normal)
                 done += 1
                 msg = f"  material {stem}: Success ({shader})"
                 if res.missing:

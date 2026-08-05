@@ -31,7 +31,7 @@ def write_vsmart(
     output_path: str,
     model_resolver: Optional[Callable[[str], str]] = None,
     unit_scale: float = UnitScale.ONE_TO_ONE,
-    strip_prefix: bool = False,
+    strip_prefix: bool = True,
 ) -> VsmartWriteResult:
     """
     Write a .vsmart file from normalized UE blueprint components.
