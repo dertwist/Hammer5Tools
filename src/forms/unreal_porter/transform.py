@@ -36,7 +36,9 @@ work keeps the modelled unit count and lets the artist rescale, but
 size matters.
 
 Pure-python (no numpy) so it is safe to call from worker threads and trivial
-to unit-test. See dev/test_ue_transform.py.
+to unit-test. Run the self-check with:
+
+    python -m src.forms.unreal_porter.transform
 """
 
 from __future__ import annotations
@@ -55,10 +57,17 @@ class UnitScale:
     CM_TO_INCH = 1.0 / 2.54   # physically correct cm -> inch (~0.393701)
     INCH_TO_CM = 2.54         # inverse, if a project authored in inches
 
-# Basis change matrix: UE (LH, Z-up) -> Source (RH, Z-up) is an X mirror.
+# Basis change matrix: UE (LH, Z-up) -> Source (RH, Z-up) is a Y mirror.
+#
+# The axis is not a free choice. UE's own FBX exporter converts mesh vertices
+# with FFbxDataConverter::ConvertToFbxPos, which emits (x, -y, z) and declares
+# the scene right-handed, so the geometry has already been mirrored on Y before
+# it reaches Source. Positions and rotations must use the same C or actors land
+# in a different space than the meshes they place. See demo() for the proof that
+# only this axis feeds source_matrix_angles a valid left-vector column.
 _C: Mat3 = [
-    [-1.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0],
+    [1.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0],
     [0.0, 0.0, 1.0],
 ]
 
@@ -147,9 +156,9 @@ def convert_rotation(pitch: float, yaw: float, roll: float) -> Vec3:
     UE FRotator (pitch, yaw, roll) -> Source QAngle (pitch, yaw, roll), degrees.
 
     Applies R_src = C @ R_ue @ C then reads Source Euler angles back out.
-    In practice (verified in dev/test_ue_transform.py) this yields:
-    pitch -> -pitch, yaw -> -yaw, roll -> roll, for the faithful UE and Source
-    angle conventions.
+    Exactly equivalent to (-pitch, -yaw, +roll) away from the gimbal poles —
+    swept and asserted in demo() rather than special-cased here, because the
+    matrix path stays correct at pitch = +-90 where the closed form does not.
     """
     r_ue = ue_rotation_matrix(pitch, yaw, roll)
     r_src = _matmul(_matmul(_C, r_ue), _C)
@@ -190,3 +199,55 @@ def convert_transform(t: UETransform, unit_scale: float = UnitScale.ONE_TO_ONE) 
         angles=convert_rotation(*t.rotation),
         scales=convert_scale(t.scale),
     )
+
+
+def _wrap(a: float) -> float:
+    """Angle wrapped to (-180, 180] so sign-flipped forms compare equal."""
+    return round((a + 180.0) % 360.0 - 180.0, 6) + 0.0
+
+
+def demo():
+    # The mirror axis is the whole ballgame: pick the wrong one and yaw still
+    # looks right (both axes give -yaw), so this is checked structurally rather
+    # than by eyeballing a placement.
+    #
+    # source_matrix_angles reads column 1 as Source's LEFT vector, but UE's
+    # column 1 is its RIGHT vector. Only the Y mirror makes column 1 of C@R@C
+    # come out as the mirrored UE left vector; the X mirror yields mirrored
+    # RIGHT, i.e. every extracted roll/pitch is negated.
+    r = ue_rotation_matrix(20, 60, 30)
+    ue_right = (r[0][1], r[1][1], r[2][1])
+    s = _matmul(_matmul(_C, r), _C)
+    col1 = (s[0][1], s[1][1], s[2][1])
+    want_left = tuple(-v for v in _matvec(_C, ue_right))
+    assert all(abs(a - b) < 1e-9 for a, b in zip(col1, want_left)), (col1, want_left)
+
+    # Y mirror, not X — UE's FBX exporter already mirrored the meshes on Y.
+    assert _C == [[1.0, 0, 0], [0, -1.0, 0], [0, 0, 1.0]], _C
+    assert convert_position((100, 200, 50)) == (100, -200, 50)
+    assert abs(convert_position((100, 200, 50), UnitScale.CM_TO_INCH)[0] - 100 / 2.54) < 1e-9
+    assert convert_scale((1, 2, 3)) == (1.0, 2.0, 3.0), "a mirror does not change magnitudes"
+
+    # (pitch, yaw, roll) -> (-pitch, -yaw, +roll), away from the gimbal poles.
+    for pitch in range(-80, 81, 10):
+        for yaw in range(-180, 180, 15):
+            for roll in range(-180, 180, 15):
+                got = convert_rotation(pitch, yaw, roll)
+                want = (-pitch, -yaw, roll)
+                assert tuple(map(_wrap, got)) == tuple(map(_wrap, want)), (pitch, yaw, roll, got)
+
+    # Straight up/down: roll is indeterminate, so only pitch is pinned. The
+    # matrix path must still produce a finite angle rather than blowing up.
+    for yaw in (0, 90, -90, 180):
+        p, _y, _r = convert_rotation(90, yaw, 0)
+        assert _wrap(p) == -90.0, (yaw, p)
+
+    st = convert_transform(UETransform((10, 20, 30), (0, 90, 0), (1, 1, 2)))
+    assert st.origin == (10, -20, 30), st.origin
+    assert tuple(map(_wrap, st.angles)) == (0.0, -90.0, 0.0), st.angles
+    assert st.scales == (1.0, 1.0, 2.0), st.scales
+    print("ok")
+
+
+if __name__ == "__main__":
+    demo()

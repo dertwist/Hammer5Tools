@@ -110,6 +110,63 @@ def _handle_velopack_hook(argv):
     # ALWAYS exit after handling hooks
     sys.exit(0)
 
+def _desktop_dir():
+    """User's Desktop, honouring OneDrive / policy redirection on Windows."""
+    if sys.platform == 'win32':
+        buf = ctypes.create_unicode_buffer(260)
+        # CSIDL_DESKTOPDIRECTORY = 0x10, SHGFP_TYPE_CURRENT = 0
+        if ctypes.windll.shell32.SHGetFolderPathW(None, 0x10, None, 0, buf) == 0 and buf.value:
+            return buf.value
+    return os.path.join(os.path.expanduser("~"), "Desktop")
+
+
+def write_crash_report(exc_type, exc, tb, thread_name=None):
+    """Dump an unhandled exception to a log on the desktop. Returns the path or None."""
+    import traceback
+    from datetime import datetime
+    try:
+        target = _desktop_dir()
+        if not os.path.isdir(target):
+            target = os.path.expanduser("~")
+        path = os.path.join(target, f"Hammer5Tools_crash_{datetime.now():%Y-%m-%d_%H-%M-%S}.log")
+        try:
+            from src.common import app_version
+        except Exception:
+            app_version = 'unknown'
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(f"Hammer 5 Tools {app_version} crash report\n")
+            f.write(f"Time:    {datetime.now().isoformat(' ', 'seconds')}\n")
+            f.write(f"Thread:  {thread_name or 'MainThread'}\n")
+            f.write(f"Python:  {sys.version}\n")
+            f.write(f"Exe:     {sys.executable}\n")
+            f.write(f"Args:    {sys.argv}\n\n")
+            traceback.print_exception(exc_type, exc, tb, file=f)
+            f.write("\n--- All threads ---\n")
+            f.flush()
+            try:
+                faulthandler.dump_traceback(file=f)
+            except Exception:
+                pass
+        return path
+    except Exception:
+        return None
+
+
+def _install_crash_handler():
+    def hook(exc_type, exc, tb):
+        path = write_crash_report(exc_type, exc, tb)
+        # stderr is None under pythonw / frozen builds without a console.
+        if sys.stderr is not None:
+            if path:
+                print(f"[Hammer5Tools] Crash report written to {path}", file=sys.stderr)
+            sys.__excepthook__(exc_type, exc, tb)
+
+    sys.excepthook = hook
+
+    import threading
+    threading.excepthook = lambda a: hook(a.exc_type, a.exc_value, a.exc_traceback)
+
+
 def allocate_console():
     if not ctypes.windll.kernel32.GetConsoleWindow():
         ctypes.windll.kernel32.AllocConsole()
@@ -128,6 +185,8 @@ if __name__ == "__main__":
         src_dir = os.path.join(current_dir, 'src')
         if os.path.isdir(src_dir) and src_dir not in sys.path:
             sys.path.insert(0, src_dir)
+
+    _install_crash_handler()
 
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)

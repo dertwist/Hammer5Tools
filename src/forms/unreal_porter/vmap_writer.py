@@ -35,6 +35,25 @@ _TEMPLATE_CANDIDATES = [
 ]
 
 
+def actor_transform(actor: dict, unit_scale: float = UnitScale.ONE_TO_ONE):
+    """One actor/component dict from the bridge's dump-scene -> SourceTransform.
+
+    The single point where a placed scene actor crosses from UE space into
+    Source space, so the axis convention is asserted in one place (see demo()).
+    """
+    loc = actor["location"]
+    rot = actor["rotation"]
+    scl = actor["scale"]
+    return convert_transform(
+        UETransform(
+            (loc["x"], loc["y"], loc["z"]),
+            (rot["pitch"], rot["yaw"], rot["roll"]),
+            (scl["x"], scl["y"], scl["z"]),
+        ),
+        unit_scale=unit_scale,
+    )
+
+
 def find_empty_template() -> Optional[str]:
     """Locate a bundled empty vmap to use as the map skeleton."""
     root = Path(__file__).resolve().parents[3]
@@ -356,15 +375,7 @@ def write_vmap(
             result.note_skip(comp)      # foliage/spline/instanced — handled elsewhere
             continue
 
-        loc = a["location"]; rot = a["rotation"]; scl = a["scale"]
-        st = convert_transform(
-            UETransform(
-                (loc["x"], loc["y"], loc["z"]),
-                (rot["pitch"], rot["yaw"], rot["roll"]),
-                (scl["x"], scl["y"], scl["z"]),
-            ),
-            unit_scale=unit_scale,
-        )
+        st = actor_transform(a, unit_scale)
         angles = st.angles
 
         node_id += 1
@@ -395,3 +406,45 @@ def write_vmap(
     except Exception:
         dm.Save(output_path, "keyvalues2", 4)
     return result
+
+
+def demo():
+    """Pins the UE -> Source 2 axis convention at the vmap boundary.
+
+    Runs without the DMX stack: actor_transform is the whole coordinate hop,
+    everything after it is serialization. A wrong mirror axis still yields a
+    correct yaw, so position and roll are what actually catch it here.
+    """
+    def actor(x=0.0, y=0.0, z=0.0, pitch=0.0, yaw=0.0, roll=0.0, s=1.0):
+        return {"location": {"x": x, "y": y, "z": z},
+                "rotation": {"pitch": pitch, "yaw": yaw, "roll": roll},
+                "scale": {"x": s, "y": s, "z": s}}
+
+    def rounded(v):
+        return tuple(round(c, 6) + 0.0 for c in v)
+
+    # UE mirrors Y on FBX export, so the scene must mirror Y too. An X mirror
+    # would put this prop at (-300, 400, 50) — the point rotated 180 degrees
+    # about the world Z axis, which is the bug this guards.
+    st = actor_transform(actor(x=300, y=400, z=50))
+    assert rounded(st.origin) == (300.0, -400.0, 50.0), st.origin
+
+    # Yaw is negated. This alone does NOT prove the axis is right — both mirrors
+    # agree on yaw — so it is checked alongside the position above.
+    assert rounded(actor_transform(actor(yaw=90)).angles) == (0.0, -90.0, 0.0)
+    assert rounded(actor_transform(actor(yaw=-135)).angles) == (0.0, 135.0, 0.0)
+
+    # Pitch negates, roll does not. The X mirror gets both of these backwards.
+    assert rounded(actor_transform(actor(pitch=30)).angles) == (-30.0, 0.0, 0.0)
+    assert rounded(actor_transform(actor(roll=45)).angles) == (0.0, 0.0, 45.0)
+    assert rounded(actor_transform(actor(pitch=20, yaw=60, roll=30)).angles) == (-20.0, -60.0, 30.0)
+
+    # Unit scale applies to position only; a mirror never changes a magnitude.
+    st = actor_transform(actor(x=254, y=254, z=254, s=2.0), unit_scale=UnitScale.CM_TO_INCH)
+    assert rounded(st.origin) == (100.0, -100.0, 100.0), st.origin
+    assert rounded(st.scales) == (2.0, 2.0, 2.0), st.scales
+    print("ok")
+
+
+if __name__ == "__main__":
+    demo()
