@@ -930,15 +930,16 @@ class UnrealPorterWidget(QDialog):
         analyzed = bool(getattr(self, "_analyzed_uproject", None)) and bool(getattr(self, "_project_assets", []))
         has_selection = bool(getattr(self, "_selected_assets", set())) or analyzed
         has_masters = bool(getattr(self, "master_groups", None))
+        resolving = getattr(self, "_resolving_refs", False)
 
         if hasattr(self, "select_assets_button"):
-            self.select_assets_button.setEnabled(analyzed)
+            self.select_assets_button.setEnabled(analyzed and not resolving)
         if hasattr(self, "reanalyze_button"):
-            self.reanalyze_button.setEnabled(bool(uproject) and os.path.isfile(uproject or ""))
+            self.reanalyze_button.setEnabled(bool(uproject) and os.path.isfile(uproject or "") and not resolving)
         if hasattr(self, "convert_button"):
-            self.convert_button.setEnabled(analyzed and has_selection)
+            self.convert_button.setEnabled(analyzed and has_selection and not resolving)
         if hasattr(self, "reconvert_mats_button"):
-            self.reconvert_mats_button.setEnabled(analyzed and has_masters)
+            self.reconvert_mats_button.setEnabled(analyzed and has_masters and not resolving)
 
     # analysis
 
@@ -1043,20 +1044,22 @@ class UnrealPorterWidget(QDialog):
 
         self.console.header("Resolving references")
         self.console.info(f"{len(dlg.selected_keys)} asset(s) picked; following their references…")
-        self.select_assets_button.setEnabled(False)
+        self._resolving_refs = True
+        self._update_button_states()
         worker = ExpandRefsWorker(self.uproject_path(), self.project_dir(), dlg.selected_keys,
                                   self._project_assets, refs_map=self._project_refs)
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(self._on_refs_expanded)
         if not self._start_worker("refs_worker", worker):
-            self.select_assets_button.setEnabled(True)
+            self._resolving_refs = False
+            self._update_button_states()
 
     @Slot(set, dict)
     def _on_refs_expanded(self, selected, new_refs):
         self._project_refs.update(new_refs)
         self._selected_assets = selected
-        self.select_assets_button.setEnabled(True)
+        self._resolving_refs = False
         self.progress_bar.setValue(self.progress_bar.maximum())
         self.progress_bar.setFormat("Done")
         self.console.success(f"Port scope: {len(selected)} asset(s) including references.")
