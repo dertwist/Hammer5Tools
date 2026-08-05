@@ -30,7 +30,7 @@ from .ue_export_runner import DEFAULT_CONTENT_PATHS
 
 # Exports land inside the target addon so everything one port produces lives
 # under one folder and "Clean cache" is a single rmtree.
-TMP_SUBDIR = "_tmp/UnrealPorter"
+TMP_SUBDIR = "hammer5tools/unrealporter/tmp"
 
 # Where the non-project roots land in the export cache — "/Engine/BasicShapes"
 # exports to "<cache>/Engine/BasicShapes". Derived from the export runner's own
