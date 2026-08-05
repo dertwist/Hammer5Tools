@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QTreeView,
     QCheckBox,
     QPushButton,
+    QToolButton,
     QComboBox,
     QFrame,
     QPlainTextEdit,
@@ -443,21 +444,8 @@ QTabBar::tab:selected {
 }
 """
 
-qt_stylesheet_groupbox = """
-QGroupBox {
-    color: #E3E3E3;
-    font: 580 10pt "Segoe UI";
-    border: 1px solid rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    margin-top: 10px;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 3px;
-    color: #E3E3E3;
-}
-"""
+# One definition, shared with the global sheet — see QSS_GROUPBOX for why.
+from src.styles.qt_global_stylesheet import QSS_GROUPBOX as qt_stylesheet_groupbox
 
 qt_stylesheet_radiobutton = """
 QRadioButton {
@@ -589,6 +577,7 @@ def apply_stylesheets(parent: QWidget) -> None:
         QTreeView: qt_stylesheet_classes.get('tree'),
         QCheckBox: qt_stylesheet_checkbox,
         QPushButton: qt_stylesheet_button,
+        QToolButton: qt_stylesheet_toolbutton,
         QComboBox: qt_stylesheet_combobox,
         QFrame: qt_stylesheet_smartprop_editor_frame,
         QPlainTextEdit: qt_stylesheet_plain_text_batch_inline,

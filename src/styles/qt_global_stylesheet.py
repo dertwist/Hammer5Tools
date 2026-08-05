@@ -1,3 +1,39 @@
+# The shared group-box look: a single rule above the title, no box around the
+# content. Its own constant because src/styles/common.py also applies it to
+# widgets one by one (apply_stylesheets), and the two copies drifted apart once
+# — forms using apply_stylesheets drew a full bordered box while everything
+# under the global sheet drew the top rule.
+QSS_GROUPBOX = """
+QGroupBox {
+    border: 1px solid #505050;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    margin-top: 8px;
+	padding-top: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white;
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_down.png);
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+}
+"""
+
 QT_Stylesheet_global = """
 /* # background_neutral 151515
 # background_Primary 1C1C1C
@@ -20,36 +56,7 @@ QLabel {
 
 
 /* ========================================================== */
-
-QGroupBox {
-    border: 1px solid #505050;
-    border-bottom: none;
-    border-left: none;
-    border-right: none;
-    margin-top: 8px;
-	padding-top: 8px;
-}
-
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: white; 
-}
-
-QGroupBox::indicator {
-    width: 13px;
-    height: 13px;
-}
-
-QGroupBox::indicator:checked {
-    image: url(://icons/arrow_drop_down.png); 
-}
-
-QGroupBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_right.png);
-}
-
+""" + QSS_GROUPBOX + """
 /* ========================================================== */
     QPushButton {
 
