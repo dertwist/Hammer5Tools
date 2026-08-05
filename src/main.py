@@ -206,6 +206,10 @@ if __name__ == "__main__":
     if args.console:
         allocate_console()
 
+    # Must run before anything spawns a child process.
+    from src.no_console import install as _install_no_console
+    _install_no_console()
+
     # 3. Check for existing instance via IPC (loads QtNetwork ONLY)
     from PySide6.QtNetwork import QLocalSocket
     from src.ipc.protocol import IPCMessage, IPCCommand
