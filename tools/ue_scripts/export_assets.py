@@ -138,37 +138,37 @@ def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> st
 def _export_assets(unreal, export_paths, output_dir) -> int:
     """Export every path, returning how many succeeded.
 
-    StaticMeshes go one at a time through AssetExportTask because that is the
-    only way to pass FbxExportOption.force_front_x_axis — UE's default FBX front
-    axis is -Y, Source 2's forward is +X, and letting UE emit front-X directly is
-    what saves the converter from rotating every model by 90 degrees afterwards.
-
-    Everything else stays on the bulk call: it is one round trip instead of N,
-    and it lets UE choose each texture's own image format, which a task-supplied
-    filename would override with a single hardcoded extension.
+    StaticMeshes and Texture2Ds go one at a time through AssetExportTask so that
+    (1) meshes use FbxExportOption.force_front_x_axis for Source 2 forward alignment, and
+    (2) textures export reliably in headless / commandlet mode without requiring GUI interaction.
     """
-    meshes, others = [], []
-    can_set_options = hasattr(unreal, "AssetExportTask") and hasattr(unreal, "FbxExportOption")
-    for path in export_paths:
-        asset = unreal.load_asset(path) if can_set_options else None
-        if asset is not None and isinstance(asset, unreal.StaticMesh):
-            meshes.append((path, asset))
-        else:
-            others.append(path)
+    meshes, textures, others = [], [], []
+    has_tasks = hasattr(unreal, "AssetExportTask")
 
-    if not can_set_options:
+    for path in export_paths:
+        asset = unreal.load_asset(path) if has_tasks else None
+        if asset is not None:
+            if isinstance(asset, unreal.StaticMesh):
+                meshes.append((path, asset))
+                continue
+            elif isinstance(asset, unreal.Texture2D):
+                textures.append((path, asset))
+                continue
+        others.append(path)
+
+    if has_tasks and not hasattr(unreal, "FbxExportOption"):
         unreal.log_warning(
             "This Unreal build has no FbxExportOption — meshes export with UE's default "
-            "-Y front axis and will come into Hammer yawed 90 degrees. Nothing downstream "
-            "corrects for it; rotate them in Hammer or export from a newer Editor."
+            "-Y front axis and will come into Hammer yawed 90 degrees."
         )
 
     exported = 0
     if meshes:
-        options = unreal.FbxExportOption()
-        options.set_editor_property("force_front_x_axis", True)
+        options = unreal.FbxExportOption() if hasattr(unreal, "FbxExportOption") else None
+        if options:
+            options.set_editor_property("force_front_x_axis", True)
         for path, asset in meshes:
-            filename = _export_filename(path, output_dir)
+            filename = _export_filename(path, output_dir, ext=".fbx")
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             task = unreal.AssetExportTask()
             task.set_editor_property("object", asset)
@@ -176,11 +176,27 @@ def _export_assets(unreal, export_paths, output_dir) -> int:
             task.set_editor_property("automated", True)
             task.set_editor_property("prompt", False)
             task.set_editor_property("replace_identical", True)
-            task.set_editor_property("options", options)
+            if options:
+                task.set_editor_property("options", options)
             if unreal.Exporter.run_asset_export_task(task):
                 exported += 1
             else:
-                unreal.log_warning(f"Export failed for {path}")
+                unreal.log_warning(f"Export failed for mesh {path}")
+
+    if textures:
+        for path, asset in textures:
+            filename = _export_filename(path, output_dir, ext=".tga")
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            task = unreal.AssetExportTask()
+            task.set_editor_property("object", asset)
+            task.set_editor_property("filename", filename)
+            task.set_editor_property("automated", True)
+            task.set_editor_property("prompt", False)
+            task.set_editor_property("replace_identical", True)
+            if unreal.Exporter.run_asset_export_task(task):
+                exported += 1
+            else:
+                unreal.log_warning(f"Export failed for texture {path}")
 
     if others:
         unreal.AssetToolsHelpers.get_asset_tools().export_assets(others, output_dir)

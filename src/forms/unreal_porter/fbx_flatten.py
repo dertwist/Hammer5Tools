@@ -287,7 +287,7 @@ def source2_mesh_name(name: str) -> str:
     return tag + strip_ue_prefix(name)
 
 
-def flatten_fbx(path, strip_prefix: bool = False) -> dict:
+def flatten_fbx(path, strip_prefix: bool = True) -> dict:
     """
     Flatten path in place. Reparents LOD/UCX meshes to scene root (0) and syncs
     Geometry mesh data names.

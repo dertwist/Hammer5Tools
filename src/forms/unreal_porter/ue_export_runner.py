@@ -66,11 +66,16 @@ DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
-                on_line=None, assets: list = None) -> str:
+                on_line=None, assets: list = None, is_cancelled=None) -> str:
     """Runs the Editor commandlet synchronously and returns its combined
     stdout/stderr. Raises UeExportError on a non-zero exit or missing paths.
     If on_line callback is provided, streams output line by line in real time.
-    If assets list is provided, only those assets will be exported."""
+    If assets list is provided, only those assets will be exported.
+
+    If is_cancelled is a no-arg callable returning truthy, the Editor process
+    is killed and UeExportError is raised — this is the close path out of an
+    export that can otherwise run for minutes.
+    """
     if not output_dir:
         raise UeExportError("An output folder is required.")
 
@@ -104,19 +109,34 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     except Exception as e:
         raise UeExportError(f"Failed to launch Editor process: {e}") from e
 
-    if proc.stdout:
-        for line in iter(proc.stdout.readline, ""):
-            output_lines.append(line)
-            line_str = line.rstrip("\r\n")
-            if line_str and on_line:
-                on_line(line_str)
-        proc.stdout.close()
-
     try:
-        returncode = proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        raise UeExportError(f"UE export timed out after {timeout} seconds.")
+        if is_cancelled is not None and is_cancelled():
+            raise UeExportError("UE export cancelled.")
+
+        if proc.stdout:
+            for line in iter(proc.stdout.readline, ""):
+                # The Editor prints progress throughout the run; polling here is
+                # the only way to kill it before the script finishes.
+                if is_cancelled is not None and is_cancelled():
+                    raise UeExportError("UE export cancelled.")
+                output_lines.append(line)
+                line_str = line.rstrip("\r\n")
+                if line_str and on_line:
+                    on_line(line_str)
+            proc.stdout.close()
+
+        try:
+            returncode = proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            raise UeExportError(f"UE export timed out after {timeout} seconds.")
+    except UeExportError:
+        # Kill the Editor on any abort path (cancel or timeout) — without this
+        # a cancelled export leaves a headless UE process holding the project.
+        if proc.poll() is None:
+            proc.kill()
+        proc.wait()
+        raise
 
     output = "".join(output_lines)
     if returncode != 0:

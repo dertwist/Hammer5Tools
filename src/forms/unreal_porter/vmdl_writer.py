@@ -79,7 +79,7 @@ def strip_ue_prefix(name: str) -> str:
     return re.sub(r"_+", "_", name).strip("_").lower()
 
 
-def ue_mesh_to_model_path(ue_mesh_path: str, models_root: str = "models", strip_prefix: bool = False) -> str:
+def ue_mesh_to_model_path(ue_mesh_path: str, models_root: str = "models", strip_prefix: bool = True) -> str:
     """
     "/Game/FireWatchTower/Meshes/SM_Barrel.SM_Barrel"
         -> "models/firewatchtower/meshes/sm_barrel.vmdl" (or barrel.vmdl if strip_prefix=True)
@@ -265,6 +265,16 @@ _ENGINE_MATERIALS = frozenset((
 ))
 
 
+def _is_real_vmat(filepath: str) -> bool:
+    """True if a .vmat file contains real texture references rather than default stand-ins."""
+    try:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            c = f.read(2048).lower()
+        return "default_color.tga" not in c and "default_color" not in c
+    except Exception:
+        return False
+
+
 def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_rel_path: str = None, default_mat_path: str = None) -> list:
     """
     Inspects fbx_path for embedded FBX material names (e.g. 'mi_rock_3').
@@ -280,6 +290,7 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
     remaps = []
 
     vmat_lookup = {}
+    vmat_quality = {}
     if output_dir:
         mats_root = os.path.join(output_dir, "materials")
         if os.path.exists(mats_root):
@@ -288,10 +299,14 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
                     if f.lower().endswith(".vmat"):
                         full_p = os.path.join(root, f)
                         rel_p = os.path.relpath(full_p, output_dir).replace("\\", "/").lower()
-                        stem = clean_material_stem(f)
-                        vmat_lookup[stem] = rel_p
-                        vmat_lookup.setdefault(_match_key(f), rel_p)
-                        vmat_lookup[f[:-5].lower()] = rel_p
+                        q = 2 if _is_real_vmat(full_p) else 1
+                        stems = [clean_material_stem(f), _match_key(f), f[:-5].lower()]
+                        for st in stems:
+                            if not st:
+                                continue
+                            if st not in vmat_lookup or q > vmat_quality.get(st, 0):
+                                vmat_lookup[st] = rel_p
+                                vmat_quality[st] = q
 
     if embedded_mats:
         for raw_mat in embedded_mats:
@@ -478,7 +493,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                use_graybox_fallback: bool = False,
                import_lods: bool = True,
                import_collision: bool = True,
-               strip_prefix: bool = False) -> str:
+               strip_prefix: bool = True) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to

@@ -1,11 +1,12 @@
 import os
 import pathlib
 import shutil
+import time
 from datetime import datetime
 
 from PySide6.QtCore import Qt, Slot, QPoint, QThread, Signal
 from PySide6.QtWidgets import (
-    QDialog, QFileDialog, QMessageBox, QWidget,
+    QApplication, QDialog, QFileDialog, QMessageBox, QProgressDialog, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel,
     QLineEdit, QPushButton, QProgressBar, QTabWidget, QComboBox,
     QCheckBox, QSplitter, QSpacerItem, QSizePolicy,
@@ -22,6 +23,7 @@ from src.settings.common import get_cs2_path
 
 from src.widgets.console import ConsoleWidget
 from .constants import scan_unsupported
+from ._worker_base import CancellableWorker
 from .transform import UnitScale
 from .ue_install import find_installs, install_for_project
 from .ue_export_runner import DEFAULT_CONTENT_PATHS
@@ -40,7 +42,7 @@ ENGINE_EXPORT_ROOTS = [
 ]
 
 
-class PrepareWorker(QThread):
+class PrepareWorker(CancellableWorker):
     """Export the analyzed assets, then scan what came out.
 
     The project survey used to live here; it moved to AnalyzeWorker so its
@@ -72,15 +74,23 @@ class PrepareWorker(QThread):
 
         try:
             self._report_scope()
+            if self.is_cancelled:
+                self.log.emit("Asset preparation cancelled.", "warn")
+                self.done.emit(False)
+                return
 
             os.makedirs(self.tmp_dir, exist_ok=True)
             self.log.emit(f"Exporting assets into {self.tmp_dir}", "info")
             try:
                 run_export(self.engine_root, self.project_dir, self.tmp_dir,
                            on_line=lambda line: self.log.emit(line, "info"),
-                           assets=self.assets)
+                           assets=self.assets,
+                           is_cancelled=lambda: self._is_cancelled)
             except UeExportError as e:
-                self.log.emit(str(e), "error")
+                # A cancel arrives here as "UE export cancelled." — log it but
+                # treat it as a soft stop rather than an export failure.
+                level = "warn" if "cancelled" in str(e).lower() else "error"
+                self.log.emit(str(e), level)
                 self.done.emit(False)
                 return
             self.log.emit("UE export finished.", "success")
@@ -90,7 +100,7 @@ class PrepareWorker(QThread):
             self.done.emit(False)
 
 
-class AnalyzeWorker(QThread):
+class AnalyzeWorker(CancellableWorker):
     """Mount the project, list what it holds, and group its materials."""
     log = Signal(str, str)
     progress = Signal(int, int)
@@ -108,6 +118,10 @@ class AnalyzeWorker(QThread):
         bridge = UnrealBridge(self.project_dir)
         if not bridge.is_available():
             self.log.emit("CUE4Parse bridge unavailable — " + bridge.why_unavailable(), "error")
+            self.done.emit({})
+            return
+        if self.is_cancelled:
+            self.log.emit("Analysis cancelled.", "warn")
             self.done.emit({})
             return
         try:
@@ -130,6 +144,14 @@ class AnalyzeWorker(QThread):
             self.done.emit({})
             return
 
+        # Cooperative cancel after the (potentially long) bridge scan: drop the
+        # result without writing the cache, so a cancelled run still re-runs on
+        # the next open rather than persisting a partial manifest.
+        if self.is_cancelled:
+            self.log.emit("Analysis cancelled before persisting the result.", "warn")
+            self.done.emit({})
+            return
+
         try:
             manifest = analysis.save(self.uproject_path, self.project_dir, assets, info, materials)
         except OSError as e:
@@ -139,37 +161,46 @@ class AnalyzeWorker(QThread):
         self.done.emit(manifest)
 
 
-class ExpandRefsWorker(QThread):
+class ExpandRefsWorker(CancellableWorker):
     """Walk the chosen assets' dependencies off the UI thread.
 
-    One bridge dump per asset — fine for a hundred, not something to run on
-    the GUI thread for a whole project.
+    Assets already in the cached reference graph cost nothing; the rest are
+    read from the bridge — one process each — and folded back into the
+    manifest so no asset is ever scanned twice for the same project state.
     """
     log = Signal(str, str)
     progress = Signal(int, int)
-    done = Signal(set)
+    done = Signal(set, dict)
 
-    def __init__(self, project_dir, chosen, all_keys, parent=None):
+    def __init__(self, uproject_path, project_dir, chosen, all_keys, refs_map=None, parent=None):
         super().__init__(parent)
+        self.uproject_path = uproject_path
         self.project_dir = project_dir
         self.chosen = chosen
         self.all_keys = all_keys
+        self.refs_map = refs_map
 
     def run(self):
         from .bridge_client import UnrealBridge
         from .asset_selection import expand_references
+        from . import analysis
 
+        new_refs = {}
         try:
             selected = expand_references(
                 UnrealBridge(self.project_dir), self.chosen, self.all_keys,
                 log_cb=lambda msg, level="info": self.log.emit(msg, level),
                 progress_cb=lambda current, total: self.progress.emit(current, total),
+                refs_map=self.refs_map, new_refs=new_refs,
+                is_cancelled=lambda: self._is_cancelled,
             )
-            self.done.emit(selected)
         except Exception as e:  # never let the thread die silently
             self.log.emit(f"Reference scan failed: {e}", "error")
             # Fall back to exactly what was ticked rather than losing the picks.
-            self.done.emit(set(self.chosen))
+            selected = set(self.chosen)
+        # Whatever was read this time is worth keeping even if the walk failed.
+        analysis.update_refs(self.uproject_path, new_refs)
+        self.done.emit(selected, new_refs)
 
 
 class UnrealPorterWidget(QDialog):
@@ -198,6 +229,7 @@ class UnrealPorterWidget(QDialog):
         self.worker = None
         self._analyzed_uproject = None
         self._project_assets = []
+        self._project_refs = {}
         self._selected_assets = set()
         self._installs = find_installs()
 
@@ -499,10 +531,10 @@ class UnrealPorterWidget(QDialog):
             "(SM_ChairLeg → chair_leg.vmdl). Applies to models, materials, "
             "textures and the mesh names inside the FBX."
         )
-        strip_saved = get_settings_value("UnrealConverter", "strip_ue_prefixes", "true").lower() == "true"
+        strip_saved = get_settings_bool("UnrealConverter", "strip_ue_prefixes", True)
         self.strip_prefixes_check.setChecked(strip_saved)
         self.strip_prefixes_check.toggled.connect(
-            lambda checked: set_settings_value("UnrealConverter", "strip_ue_prefixes", "true" if checked else "false")
+            lambda checked: set_settings_bool("UnrealConverter", "strip_ue_prefixes", checked)
         )
         sv.addWidget(self.strip_prefixes_check)
         layout.addWidget(settings_box)
@@ -577,6 +609,7 @@ class UnrealPorterWidget(QDialog):
     def _build_textures_box(self):
         box = QGroupBox("Textures")
         form = QFormLayout(box)
+
         self.tex_format_combo = QComboBox()
         self.tex_format_combo.addItems(["tga", "png"])
         saved_format = get_settings_value("UnrealConverter", "tex_output_format", "tga")
@@ -586,7 +619,25 @@ class UnrealPorterWidget(QDialog):
         self.tex_format_combo.currentTextChanged.connect(
             lambda text: set_settings_value("UnrealConverter", "tex_output_format", text)
         )
-        form.addRow("Output texture format:", self.tex_format_combo)
+
+        self.tex_invert_y_check = QCheckBox("Invert Y-Normal")
+        self.tex_invert_y_check.setToolTip(
+            "Inverts the Green channel (Y-axis) of normal maps to convert Unreal DirectX normals (Y-) to Source 2 OpenGL format (Y+)."
+        )
+        self.tex_invert_y_check.setChecked(
+            get_settings_bool("UnrealConverter", "tex_invert_y_normal", True)
+        )
+        self.tex_invert_y_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "tex_invert_y_normal", checked)
+        )
+
+        tex_row = QHBoxLayout()
+        tex_row.setContentsMargins(0, 0, 0, 0)
+        tex_row.addWidget(self.tex_format_combo)
+        tex_row.addWidget(self.tex_invert_y_check)
+        tex_row.addStretch(1)
+
+        form.addRow("Texture format:", tex_row)
         return box
 
     def _build_materials_tab(self):
@@ -753,19 +804,61 @@ class UnrealPorterWidget(QDialog):
     _WORKER_ATTRS = ("worker", "prepare_worker", "scene_worker", "refs_worker", "analyze_worker")
 
     def closeEvent(self, event):
-        """Closing while a worker runs frees the widgets it's still emitting
-        into — the same access violation _start_worker guards against.
+        """Confirm before closing if a job is running, then stop every worker.
 
-        ponytail: refuses the close instead of cancelling; give the workers a
-        cooperative stop flag if users need to bail out of a long conversion.
+        Cooperative cancel (CancellableWorker.cancel) flips each worker's stop
+        flag; the UE Editor subprocess spawned inside PrepareWorker is killed
+        by the same flag via run_export's is_cancelled hook. We then wait
+        briefly for the threads to drain before letting the close proceed — a
+        worker still emitting into freed widgets is the access violation
+        _start_worker exists to prevent.
         """
-        for attr in self._WORKER_ATTRS:
-            w = getattr(self, attr, None)
-            if w is not None and w.isRunning():
-                QMessageBox.warning(self, "Busy", "A job is still running — wait for it to finish before closing.")
-                event.ignore()
-                return
+        running = [w for attr in self._WORKER_ATTRS
+                   for w in (getattr(self, attr, None),)
+                   if w is not None and w.isRunning()]
+        if not running:
+            super().closeEvent(event)
+            return
+
+        if QMessageBox.question(
+            self, "Stop jobs?",
+            "A conversion or analysis is still running.\n\nStop it and close UnrealPorter?",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        ) != QMessageBox.Yes:
+            event.ignore()
+            return
+
+        self._cancel_and_wait(running)
         super().closeEvent(event)
+
+    def _cancel_and_wait(self, workers, deadline_seconds: float = 10.0):
+        """Ask every running worker to stop, then pump the UI loop until they
+        finish or the deadline passes.
+
+        The UE Editor subprocess is killed by PrepareWorker via its
+        is_cancelled hook, so this does not need a process handle at the
+        widget level. The dialog is not delete-on-close, so a worker that
+        overruns the deadline keeps a live (hidden) widget to emit into — the
+        cancel flag just guarantees it won't start the *next* unit of work.
+        """
+        for w in workers:
+            w.cancel()
+
+        progress = QProgressDialog("Stopping jobs…", None, 0, 0, self)
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setCancelButton(None)
+        progress.setMinimumDuration(0)
+        progress.show()
+
+        deadline = time.monotonic() + deadline_seconds
+        while time.monotonic() < deadline:
+            if not any(w.isRunning() for w in workers):
+                break
+            QApplication.processEvents()
+            for w in workers:
+                w.wait(50)
+
+        progress.close()
 
     def _start_worker(self, attr, worker):
         """Start a QThread, refusing to overwrite one that's still running.
@@ -904,6 +997,9 @@ class UnrealPorterWidget(QDialog):
         self._analyzed_uproject = uproject if manifest else None
         self._project_assets = list(manifest.get("assets", [])) if manifest else []
         self._selected_assets = set(self._project_assets) if self._project_assets else set()
+        # Empty for a manifest written before refs were cached — expansion then
+        # falls back to the bridge, exactly as it used to.
+        self._project_refs = dict(manifest.get("refs") or {}) if manifest else {}
 
         groups = dict(manifest.get("materials") or {}) if manifest else {}
         if groups:
@@ -948,15 +1044,17 @@ class UnrealPorterWidget(QDialog):
         self.console.header("Resolving references")
         self.console.info(f"{len(dlg.selected_keys)} asset(s) picked; following their references…")
         self.select_assets_button.setEnabled(False)
-        worker = ExpandRefsWorker(self.project_dir(), dlg.selected_keys, self._project_assets)
+        worker = ExpandRefsWorker(self.uproject_path(), self.project_dir(), dlg.selected_keys,
+                                  self._project_assets, refs_map=self._project_refs)
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(self._on_refs_expanded)
         if not self._start_worker("refs_worker", worker):
             self.select_assets_button.setEnabled(True)
 
-    @Slot(set)
-    def _on_refs_expanded(self, selected):
+    @Slot(set, dict)
+    def _on_refs_expanded(self, selected, new_refs):
+        self._project_refs.update(new_refs)
         self._selected_assets = selected
         self.select_assets_button.setEnabled(True)
         self.progress_bar.setValue(self.progress_bar.maximum())
@@ -1150,6 +1248,8 @@ class UnrealPorterWidget(QDialog):
             selected_assets=self._selected_assets or None,
             import_lods=self.model_lods_check.isChecked(),
             import_collision=self.model_collision_check.isChecked(),
+            tex_format=self.tex_format_combo.currentText(),
+            invert_y_normal=self.tex_invert_y_check.isChecked(),
         )
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
@@ -1227,6 +1327,8 @@ class UnrealPorterWidget(QDialog):
         worker = MasterMaterialConvertWorker(
             output_dir, self.tmp_dir(), active_master_groups,
             strip_prefix=self.strip_prefixes_check.isChecked(),
+            tex_format=self.tex_format_combo.currentText(),
+            invert_y_normal=self.tex_invert_y_check.isChecked(),
         )
         worker.progress.connect(self._on_progress)
         worker.file_done.connect(self._on_file_done)
@@ -1276,6 +1378,15 @@ class UnrealPorterWidget(QDialog):
     @Slot(list, list)
     def _on_mat_finished(self, created, skipped):
         self.console.info(f"Materials done — created {len(created)}, skipped {len(skipped)}.")
+        # Stage 3 (materials) and Stage 4/5 (scenes/models) run on two threads,
+        # so "Materials done" fires while the scene worker is still writing
+        # maps/vmdls. Only finalize when nothing else is running — otherwise the
+        # bar flips to "Done" and the buttons re-enable while vmdls are still
+        # being produced, which looks like a hang the user then bails out of.
+        scene = getattr(self, "scene_worker", None)
+        if scene is not None and scene.isRunning():
+            self.progress_bar.setFormat("Converting Models/Scenes…")
+            return
         self.progress_bar.setValue(self.progress_bar.maximum())
         self.progress_bar.setFormat("Done")
         self._update_button_states()

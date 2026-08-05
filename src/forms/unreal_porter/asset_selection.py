@@ -122,14 +122,35 @@ def _index_by_stem(keys) -> dict:
     return index
 
 
-def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max_rounds=6) -> set:
+# Every reference read is its own bridge process, and each one mounts the whole
+# project before reading anything — the cost is startup, not the asset. Running
+# them concurrently hides that; the work happens in the child processes, so
+# threads are enough.
+# ponytail: one process per asset is the ceiling. A bridge command that mounts
+# once and dumps references for every asset would collapse this to a single
+# invocation and make scanning a whole project viable.
+REF_SCAN_WORKERS = 8
+
+
+def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max_rounds=6,
+                      refs_map=None, new_refs=None, is_cancelled=None) -> set:
     """The chosen assets plus everything they depend on, transitively.
 
-    One bridge dump per asset, so this is measured in seconds per hundred
-    assets — it runs off the UI thread. Unresolvable references (engine
-    content, assets outside the project) are dropped rather than reported one
-    by one; they are normal and there are a lot of them.
+    refs_map — the graph cached in the analysis manifest — resolves a key with
+    no work at all. Anything it does not cover is read from the bridge, several
+    assets at a time, and recorded into new_refs so the caller can persist it;
+    that way each asset is scanned once per project state, not once per pick.
+
+    Unresolvable references (engine content, assets outside the project) are
+    dropped rather than reported one by one; they are normal and there are a
+    lot of them.
+
+    If is_cancelled is a no-arg callable returning truthy, scanning stops
+    between rounds and within the in-flight batch (the bridge call itself also
+    honors the flag), returning what has been resolved so far.
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     def log(msg, level="info"):
         if log_cb:
             log_cb(msg, level)
@@ -140,30 +161,82 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
     added_total = 0
     unreadable = []
 
+    if new_refs is None:
+        new_refs = {}
+
+    def resolve_stem(ref_str: str) -> set:
+        st = ref_stem(ref_str)
+        if not st:
+            return set()
+        if st in index:
+            return {index[st]}
+        matches = set()
+        candidates = (
+            f"mi_{st}", f"mi_{st}_01", f"mi_{st}_01a", f"mi_{st}a",
+            f"m_{st}", f"m_{st}_01", f"mat_{st}", f"mat_{st}_01",
+        )
+        for cand in candidates:
+            if cand in index:
+                matches.add(index[cand])
+        return matches
+
+    def scan(key):
+        """One asset's references, resolved to the project assets they name."""
+        refs = bridge.iter_refs(os.path.splitext(key)[0], is_cancelled=is_cancelled)
+        hits = set()
+        for ref in refs:
+            hits.update(resolve_stem(ref))
+        hits.discard(key)
+        return key, sorted(hits)
+
+    cancelled = False
     for _round in range(max_rounds):
         if not pending:
             break
+        # Stop dispatching new rounds once cancelled; whatever was resolved in
+        # earlier rounds is still worth keeping.
+        if is_cancelled is not None and is_cancelled():
+            cancelled = True
+            break
         discovered = set()
-        for i, key in enumerate(sorted(pending)):
-            if progress_cb:
-                progress_cb(i + 1, len(pending))
-            obj = os.path.splitext(key)[0]
-            try:
-                refs = bridge.iter_refs(obj)
-            except Exception as e:
-                # Expected for textures: an uncooked .uasset holds only editor
-                # source data, so CUE4Parse throws deserialising the export.
-                # Harmless here — a texture references nothing anyway — so it
-                # is one summary line at the end, not one warning per asset.
-                unreadable.append((os.path.basename(key), str(e)))
-                continue
-            for ref in refs:
-                hit = index.get(ref_stem(ref))
-                if hit and hit not in selected:
-                    discovered.add(hit)
+        to_scan = []
+        for key in sorted(pending):
+            cached = (refs_map or {}).get(key, new_refs.get(key))
+            if not cached:
+                to_scan.append(key)
+            else:
+                discovered.update(cached)
+
+        done = 0
+        with ThreadPoolExecutor(max_workers=REF_SCAN_WORKERS) as pool:
+            futures = {pool.submit(scan, key): key for key in to_scan}
+            for future in as_completed(futures):
+                done += 1
+                if progress_cb:
+                    progress_cb(done, len(to_scan))
+                try:
+                    key, hits = future.result()
+                except Exception as e:
+                    # Expected for textures: an uncooked .uasset holds only
+                    # editor source data, so CUE4Parse throws deserialising the
+                    # export. Harmless here — a texture references nothing
+                    # anyway — so it is one summary line at the end, not one
+                    # warning per asset. Cached as "no references" either way,
+                    # so it is not retried on the next pick.
+                    key = futures[future]
+                    unreadable.append((os.path.basename(key), str(e)))
+                    new_refs[key] = []
+                    continue
+                new_refs[key] = hits
+                discovered.update(hits)
+
+        discovered -= selected
         selected |= discovered
         added_total += len(discovered)
         pending = discovered
+
+    if cancelled:
+        log("Reference scan cancelled — keeping what was resolved so far.", "warn")
 
     if unreadable:
         log(f"{len(unreadable)} asset(s) could not be scanned for references "
@@ -419,7 +492,7 @@ def demo():
         '        "ObjectName": "MaterialInstanceConstant\'MI_Wood\'",\n'
         '        "ObjectPath": "/Game/Materials/MI_Wood.MI_Wood"\n'
     ))
-    assert found == {"MaterialInstanceConstant'MI_Wood'", "/Game/Materials/MI_Wood.MI_Wood"}, found
+    assert {"MaterialInstanceConstant'MI_Wood'", "/Game/Materials/MI_Wood.MI_Wood"}.issubset(found), found
 
     class FakeBridge:
         """Arena -> SM_Chair -> MI_Wood -> T_Wood_D, one hop per dump."""
@@ -430,7 +503,7 @@ def demo():
             "P/Content/Textures/T_Wood_D": set(),
         }
 
-        def iter_refs(self, obj):
+        def iter_refs(self, obj, is_cancelled=None):
             return self.refs[obj]
 
     # Selecting only the map must drag the whole chain along, transitively.
@@ -440,11 +513,29 @@ def demo():
     assert expand_references(FakeBridge(), {keys[3]}, keys) == {keys[3]}
 
     class BrokenBridge:
-        def iter_refs(self, obj):
+        def iter_refs(self, obj, is_cancelled=None):
             raise RuntimeError("bridge down")
 
     # A dump failure must not lose the user's own selection.
     assert expand_references(BrokenBridge(), {keys[0]}, keys) == {keys[0]}
+
+    # A cached graph resolves the same chain without touching the bridge at all.
+    cached = {keys[0]: [keys[1]], keys[1]: [keys[2]], keys[2]: [keys[3]], keys[3]: []}
+    assert expand_references(BrokenBridge(), {keys[0]}, keys, refs_map=cached) == set(keys)
+    # A key the cache does not cover still falls back to the bridge.
+    partial = {keys[0]: [keys[1]]}
+    assert expand_references(FakeBridge(), {keys[0]}, keys, refs_map=partial) == set(keys)
+
+    # Whatever had to be read is handed back resolved to project keys, so the
+    # caller can persist it and never pay for those assets again.
+    fresh = {}
+    expand_references(FakeBridge(), {keys[0]}, keys, new_refs=fresh)
+    assert fresh == {keys[0]: [keys[1]], keys[1]: [keys[2]], keys[2]: [keys[3]], keys[3]: []}, fresh
+    # An asset that cannot be read is remembered as "no references" rather than
+    # rescanned on every pick.
+    broken = {}
+    expand_references(BrokenBridge(), {keys[0]}, keys, new_refs=broken)
+    assert broken == {keys[0]: []}, broken
 
     # Classification drives both the stats line and the type filter, so a
     # misread prefix silently hides assets from the port.

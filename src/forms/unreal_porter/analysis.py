@@ -25,7 +25,11 @@ CACHE_DIR = user_data_dir / "unreal_porter_analysis"
 ASSET_EXTS = (".uasset", ".umap")
 IGNORED_DIRS = {"saved", "intermediate", "deriveddatacache", "build", "binaries", ".git"}
 
-MANIFEST_VERSION = 1
+# v3: refs are now scanned with the bridge's iter-refs command, which resolves
+# StaticMesh material slots the old grep-over-dump approach missed. Existing v2
+# manifests cached those meshes as refs:[] and would never pick up the fix, so
+# bump to invalidate them and force a fresh scan.
+MANIFEST_VERSION = 3
 
 
 def manifest_path(uproject_path: str):
@@ -69,6 +73,35 @@ def is_truncated(assets, info) -> bool:
     return isinstance(total, int) and len(assets or []) < total
 
 
+def update_refs(uproject_path: str, refs) -> None:
+    """Merge newly scanned references into the stored manifest.
+
+    Scanning every asset up front costs one bridge process per asset and stalls
+    for minutes on a real project, so the graph fills in as assets are actually
+    walked and each one is only ever read once. Deliberately does not touch the
+    fingerprint: this adds knowledge about the same project state, it does not
+    re-validate it.
+    """
+    if not refs:
+        return
+    path = manifest_path(uproject_path)
+    try:
+        with open(path, encoding="utf-8") as f:
+            manifest = json.load(f)
+    except (OSError, ValueError):
+        return
+    merged = dict(manifest.get("refs") or {})
+    merged.update(refs)
+    manifest["refs"] = merged
+    tmp = path.with_suffix(".json.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=1)
+        os.replace(tmp, path)
+    except OSError:
+        pass    # a cache we cannot persist is a slower next run, not a failure
+
+
 def load(uproject_path: str, content_dir: str):
     """The cached analysis if it still matches the project, else None."""
     path = manifest_path(uproject_path)
@@ -86,7 +119,7 @@ def load(uproject_path: str, content_dir: str):
     return manifest
 
 
-def save(uproject_path: str, content_dir: str, assets, info, materials=None) -> dict:
+def save(uproject_path: str, content_dir: str, assets, info, materials=None, refs=None) -> dict:
     manifest = {
         "version": MANIFEST_VERSION,
         "uproject": uproject_path,
@@ -98,6 +131,8 @@ def save(uproject_path: str, content_dir: str, assets, info, materials=None) -> 
         # Master Material groups from the same pass. JSON turns the instance
         # tuples into lists, which unpack identically where they are consumed.
         "materials": materials or {},
+        # asset key -> the project assets it references, resolved at analysis time.
+        "refs": refs or {},
     }
     path = manifest_path(uproject_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -179,6 +214,19 @@ def demo():
         # converter can still unpack (tuples come back as lists).
         stem, path, data = cached["materials"]["M_Master"]["instances"][0]
         assert (stem, path) == ("MI_Wood", "P/Content/MI_Wood"), (stem, path)
+
+        # References scanned during one selection must survive into the manifest
+        # so the next one does not pay for them again — and merging them must
+        # not disturb the fingerprint that says the manifest is still valid.
+        assets = ["P/Content/Meshes/SM_Chair.uasset", "P/Content/Materials/MI_Wood.uasset"]
+        save(uproject, content, assets, {"game": "P"})
+        update_refs(uproject, {assets[0]: [assets[1]]})
+        cached = load(uproject, content)
+        assert cached and cached["refs"] == {assets[0]: [assets[1]]}, cached
+        update_refs(uproject, {assets[1]: []})
+        assert load(uproject, content)["refs"] == {assets[0]: [assets[1]], assets[1]: []}
+        # No manifest on disk is not an error, just nothing to remember.
+        update_refs(os.path.join(tmp, "Missing.uproject"), {assets[0]: []})
 
         # A list shorter than the bridge's own file count was cut off by a capped
         # bridge build; replaying it caches a partial project as if it were whole.
