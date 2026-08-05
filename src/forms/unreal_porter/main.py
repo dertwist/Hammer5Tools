@@ -720,8 +720,10 @@ class UnrealPorterWidget(QDialog):
                 switches.setdefault(k, v)
 
         from .slot_mapping import SlotMappingDialog
+        selected_shader = info.get("shader") or "csgo_environment.vfx"
         dlg = SlotMappingDialog(
             master_name, textures, initial_overrides,
+            shader=selected_shader,
             scalars=scalars, vectors=vectors, switches=switches,
             initial_param_overrides=initial_param_overrides,
             bulk_dir=self.tmp_dir(), parent=self,
@@ -760,7 +762,8 @@ class UnrealPorterWidget(QDialog):
 
     def browse_uproject(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Unreal Engine Project", "", "Unreal Project (*.uproject);;All Files (*)"
+            self, "Select Unreal Engine Project", "", "Unreal Project (*.uproject);;All Files (*)",
+            options=QFileDialog.DontUseNativeDialog,
         )
         if path:
             self.uproject_edit.setText(path.replace("\\", "/"))
@@ -788,7 +791,8 @@ class UnrealPorterWidget(QDialog):
                 self,
                 "Save converter log",
                 default_name,
-                "Text Files (*.txt);;All Files (*)"
+                "Text Files (*.txt);;All Files (*)",
+                options=QFileDialog.DontUseNativeDialog,
             )
 
             if not filename:
@@ -1194,6 +1198,8 @@ class UnrealPorterWidget(QDialog):
             self.console.error("Asset preparation failed — conversion aborted.")
             self._update_button_states()
             return
+        from .material_converter import clear_texture_index_cache
+        clear_texture_index_cache()
         self.console.success("Asset preparation completed successfully.")
         self._start_conversion_pipeline()
 
@@ -1369,11 +1375,51 @@ class UnrealPorterWidget(QDialog):
             QMessageBox.warning(self, "Error", "No Master Materials loaded to convert.")
             return
 
+        from .material_converter import clear_texture_index_cache
+        clear_texture_index_cache()
+
+        scope_assets = list(self._selected_assets) if self._selected_assets else list(self._project_assets)
+        missing = self._find_missing_tmp_exports(scope_assets)
+        project_dir = self.project_dir()
+        if missing and project_dir and os.path.isdir(project_dir):
+            install = self.engine_install()
+            if install:
+                self.console.header("Preparing missing assets before Re-converting Materials")
+                self.console.info(f"Preparing {len(missing)} missing asset(s) using {install.label}...")
+                if hasattr(self, "reconvert_mats_button"):
+                    self.reconvert_mats_button.setEnabled(False)
+                self.convert_button.setEnabled(False)
+                self.progress_bar.setValue(0)
+                self.progress_bar.setFormat("Running Unreal Engine…")
+
+                worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing)
+                worker.log.connect(self._on_worker_log)
+                worker.progress.connect(self._on_progress)
+                worker.done.connect(self._on_reconvert_prepare_done)
+                if not self._start_worker("prepare_worker", worker):
+                    self._update_button_states()
+                return
+
         self.console.header("Re-converting Materials")
         if hasattr(self, "reconvert_mats_button"):
             self.reconvert_mats_button.setEnabled(False)
         self.convert_button.setEnabled(False)
 
+        success = self._convert_materials(output_dir)
+        if not success:
+            self._update_button_states()
+
+    @Slot(bool)
+    def _on_reconvert_prepare_done(self, success):
+        from .material_converter import clear_texture_index_cache
+        clear_texture_index_cache()
+        if not success:
+            self.console.error("Asset preparation failed — material re-conversion aborted.")
+            self._update_button_states()
+            return
+        self.console.success("Asset preparation completed successfully.")
+        output_dir = self.output_dir()
+        self.console.header("Re-converting Materials")
         success = self._convert_materials(output_dir)
         if not success:
             self._update_button_states()

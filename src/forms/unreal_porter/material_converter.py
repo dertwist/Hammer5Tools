@@ -54,13 +54,15 @@ def ue_material_to_vmat_path(ue_path: str, root: str = "materials", strip_prefix
 _texture_index_cache = {}
 
 
-def get_texture_index(bulk_dir: str) -> dict:
+def get_texture_index(bulk_dir: str, force_rescan: bool = False) -> dict:
     """Build or retrieve an in-memory stem->filepath index for bulk_dir to eliminate O(N) disk walks."""
     if not bulk_dir or not os.path.isdir(bulk_dir):
         return {}
-    bulk_dir_norm = os.path.abspath(bulk_dir)
-    if bulk_dir_norm in _texture_index_cache:
-        return _texture_index_cache[bulk_dir_norm]
+    bulk_dir_norm = os.path.normpath(bulk_dir)
+    if not force_rescan and bulk_dir_norm in _texture_index_cache:
+        cached = _texture_index_cache[bulk_dir_norm]
+        if cached:
+            return cached
 
     index = {}
     for root, _dirs, files in os.walk(bulk_dir_norm):
@@ -73,6 +75,11 @@ def get_texture_index(bulk_dir: str) -> dict:
 
     _texture_index_cache[bulk_dir_norm] = index
     return index
+
+
+def clear_texture_index_cache():
+    """Clear in-memory texture index cache (e.g. after fresh asset export)."""
+    _texture_index_cache.clear()
 
 
 def find_bulk_texture(bulk_dir: str, ue_tex_path: str, tex_index: dict = None):
@@ -198,7 +205,49 @@ _SLOT_TOKENS = [
 _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
 
-def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
+_SHADER_SLOTS = {
+    "csgo_environment.vfx": [
+        "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive"
+    ],
+    "csgo_glass.vfx": [
+        "color", "normal", "rough", "metal", "ao", "opacity", "emissive"
+    ],
+    "csgo_static_overlay.vfx": [
+        "color", "normal", "rough", "metal", "opacity"
+    ],
+    "csgo_environment_blend.vfx": [
+        "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
+        "color2", "normal2", "rough2", "metal2", "ao2", "height2",
+        "color3", "normal3", "rough3", "metal3", "ao3", "height3",
+        "color4", "normal4", "rough4", "metal4", "ao4", "height4",
+    ],
+}
+
+
+def get_slots_for_shader(shader: str = None) -> list:
+    """Return the list of valid vmat texture slots for the specified CS2 shader."""
+    if not shader:
+        return [
+            "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
+            "color2", "normal2", "rough2", "metal2", "ao2", "height2",
+            "color3", "normal3", "rough3", "metal3", "ao3", "height3",
+            "color4", "normal4", "rough4", "metal4", "ao4", "height4",
+        ]
+    shader_low = str(shader).lower().strip()
+    if "blend" in shader_low:
+        return list(_SHADER_SLOTS["csgo_environment_blend.vfx"])
+    if shader_low in _SHADER_SLOTS:
+        return list(_SHADER_SLOTS[shader_low])
+    return list(_SHADER_SLOTS["csgo_environment.vfx"])
+
+
+def get_channel_slots_for_shader(shader: str = None) -> list:
+    """Return single-channel slots suitable for channel splitting for the specified CS2 shader."""
+    slots = get_slots_for_shader(shader)
+    return [s for s in slots if not s.startswith("color") and not s.startswith("normal") and s != "emissive"]
+
+
+def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str = None) -> dict:
     """
     Map {ue_param_name: ue_tex_path} -> {slot: (param, path, channel)} choosing
     the best primary texture per slot. `channel` is None for a whole-texture
@@ -215,6 +264,7 @@ def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
     if not textures or not isinstance(textures, dict):
         return {}
 
+    allowed_slots = set(get_slots_for_shader(shader)) if shader else None
     overrides = {k.lower(): v for k, v in (slot_overrides or {}).items()}
     valid_slots = dict(_SLOT_TOKENS)
     out = {}
@@ -242,6 +292,8 @@ def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
 
     # Heuristic matching for remaining parameters
     for slot, tokens in _SLOT_TOKENS:
+        if allowed_slots is not None and slot not in allowed_slots:
+            continue
         if slot in out:
             continue
         candidates = []
@@ -486,7 +538,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
             img.save(dst)
         return rel
 
-    picks = _classify_textures(mat_data.get("textures"), slot_overrides)
+    picks = _classify_textures(mat_data.get("textures"), slot_overrides, shader=shader)
     slots = {}
     written = 0
     missing = []

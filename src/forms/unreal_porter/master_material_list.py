@@ -39,10 +39,10 @@ SHADERS = [
 _CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A"}
 
 
-def describe_bindings(textures: dict, slot_overrides: dict = None) -> str:
+def describe_bindings(textures: dict, slot_overrides: dict = None, shader: str = None) -> str:
     """One-line summary of what the current mapping resolves to, e.g.
     'color←Diffuse  normal←Normal  rough←SRMH.G  metal←SRMH.B'."""
-    picks = _classify_textures(textures or {}, slot_overrides)
+    picks = _classify_textures(textures or {}, slot_overrides, shader=shader)
     return format_picks_summary(picks)
 
 
@@ -153,7 +153,8 @@ class MasterMaterialCard(QFrame):
             self.bulk_dir = bulk_dir
         textures = info.get("textures", {})
         slot_overrides = info.get("slot_overrides", {})
-        picks = _classify_textures(textures, slot_overrides)
+        shader = info.get("shader")
+        picks = _classify_textures(textures, slot_overrides, shader=shader)
         self.bindings.setText(format_picks_summary(picks))
         self._update_thumbnails(picks, tex_index=tex_index)
 
