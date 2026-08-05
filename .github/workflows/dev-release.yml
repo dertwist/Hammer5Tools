@@ -28,6 +28,11 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      # PyInstaller only warns about modules it cannot find, so an import of a
+      # package missing from requirements.txt ships and crashes on launch.
+      - name: Verify imports resolve
+        run: python verify_imports.py
+
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v4
         with:
