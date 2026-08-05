@@ -138,6 +138,7 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
     selected = set(keys)
     pending = set(keys)
     added_total = 0
+    unreadable = []
 
     for _round in range(max_rounds):
         if not pending:
@@ -150,7 +151,11 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
             try:
                 refs = bridge.iter_refs(obj)
             except Exception as e:
-                log(f"  {os.path.basename(key)}: could not read references — {e}", "warn")
+                # Expected for textures: an uncooked .uasset holds only editor
+                # source data, so CUE4Parse throws deserialising the export.
+                # Harmless here — a texture references nothing anyway — so it
+                # is one summary line at the end, not one warning per asset.
+                unreadable.append((os.path.basename(key), str(e)))
                 continue
             for ref in refs:
                 hit = index.get(ref_stem(ref))
@@ -160,6 +165,9 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
         added_total += len(discovered)
         pending = discovered
 
+    if unreadable:
+        log(f"{len(unreadable)} asset(s) could not be scanned for references "
+            f"(normal for textures) — e.g. {unreadable[0][0]}: {unreadable[0][1]}", "warn")
     if added_total:
         log(f"Pulled in {added_total} referenced asset(s) alongside the {len(keys)} selected.", "info")
     else:

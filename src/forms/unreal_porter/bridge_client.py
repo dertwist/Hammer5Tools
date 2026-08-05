@@ -16,6 +16,7 @@ import sys
 import json
 import time
 import shutil
+import tempfile
 import subprocess
 from pathlib import Path
 from typing import Any, Optional
@@ -28,6 +29,19 @@ class BridgeError(RuntimeError):
 # How CUE4Parse writes an object reference in a dump — always a string property
 # under one of these names.
 _REF_FIELD = re.compile(r'"(?:ObjectPath|ObjectName|AssetPathName)"\s*:\s*"([^"]+)"')
+
+
+def _read_error(fh, limit: int = 300) -> str:
+    """First line of what the bridge wrote to stderr — CUE4Parse exception text.
+    Without it a failure reads as a bare 'exit 1' and says nothing."""
+    try:
+        fh.seek(0)
+        text = fh.read().decode("utf-8", "replace").strip()
+    except Exception:
+        return "no error output"
+    finally:
+        fh.close()
+    return (text.splitlines()[0][:limit] if text else "no error output")
 
 
 def _candidate_bridge_paths():
@@ -147,9 +161,12 @@ class UnrealBridge:
         """
         if not self.is_available():
             raise BridgeError(self.why_unavailable())
+        # stderr goes to a temp file, not a pipe: nothing reads it until the
+        # process is done, and a pipe that fills up deadlocks the child.
+        err = tempfile.TemporaryFile()
         proc = subprocess.Popen(
             [self.dotnet, self.dll, "dump", self.content_dir, object_path],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=err,
             text=True, encoding="utf-8", errors="replace",
         )
         deadline = time.monotonic() + timeout
@@ -165,7 +182,8 @@ class UnrealBridge:
                 proc.kill()
             proc.wait()
         if proc.returncode != 0:
-            raise BridgeError(f"bridge 'dump' failed (exit {proc.returncode})")
+            raise BridgeError(f"bridge 'dump' failed (exit {proc.returncode}): {_read_error(err)}")
+        err.close()
         return refs
 
     def dump_scene(self, map_path: str) -> dict:
