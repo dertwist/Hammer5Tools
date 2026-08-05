@@ -299,7 +299,8 @@ def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
 _SECONDARY_TOKENS = {
     "dirt", "metal", "metall", "metallic", "fresnel", "emissive", "emmisive",
     "spec", "specular", "rim", "subsurface", "sss", "detail", "snow", "moss",
-    "wear", "edge", "overlay", "secondary", "layer2", "top",
+    "wear", "edge", "overlay", "secondary", "layer2", "top", "wet", "wetness",
+    "water", "puddle", "rain", "tint", "mask", "intensity", "strength", "strenght",
 }
 # What names the *base* colour: a qualifier ("diffuse") and/or a noun ("color").
 _TINT_QUALIFIERS = {"base", "basecolor", "diffuse", "albedo", "main", "model"}
@@ -315,7 +316,10 @@ def _pick_tint(vectors: dict):
     """
     best, best_score = None, 0
     for name, v in (vectors or {}).items():
-        toks = _tokens(name)
+        raw_toks = _tokens(name)
+        if raw_toks & _SECONDARY_TOKENS:
+            continue
+        toks = {re.sub(r"\d+$", "", t) for t in raw_toks} | raw_toks
         if toks & _SECONDARY_TOKENS:
             continue
         score = 0
@@ -391,18 +395,23 @@ def _apply_param_overrides(scalars, vectors, switches, param_overrides):
     dict) wins, mirroring the bridge's own parent-chain merge.
     """
     user_scalars, user_vectors, user_flags, claimed = {}, {}, [], set()
+    scalars_map = {k.lower(): v for k, v in (scalars or {}).items()}
+    vectors_map = {k.lower(): v for k, v in (vectors or {}).items()}
+    switches_map = {k.lower(): v for k, v in (switches or {}).items()}
+
     for ue_name, target in (param_overrides or {}).items():
         if not target:
             continue
-        if ue_name in (scalars or {}) and target not in user_scalars:
-            user_scalars[target] = float(scalars[ue_name])
+        key_low = ue_name.lower()
+        if key_low in scalars_map and target not in user_scalars:
+            user_scalars[target] = float(scalars_map[key_low])
             claimed.add(target)
-        elif ue_name in (vectors or {}) and target not in user_vectors:
-            v = vectors[ue_name]
+        elif key_low in vectors_map and target not in user_vectors:
+            v = vectors_map[key_low]
             user_vectors[target] = (float(v.get("r", 1.0)), float(v.get("g", 1.0)), float(v.get("b", 1.0)))
             claimed.add(target)
-        elif ue_name in (switches or {}) and target in _FLAG_TARGETS and target not in user_flags:
-            if bool(switches[ue_name]):
+        elif key_low in switches_map and target in _FLAG_TARGETS and target not in user_flags:
+            if bool(switches_map[key_low]):
                 user_flags.append(target)
                 claimed.add(target)
     return user_scalars, user_vectors, user_flags, claimed
