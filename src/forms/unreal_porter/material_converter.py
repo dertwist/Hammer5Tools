@@ -33,9 +33,9 @@ def strip_ue_asset_folders(rel_path: str) -> str:
     return "/".join(parts)
 
 
-def ue_material_to_vmat_path(ue_path: str, root: str = "materials") -> str:
+def ue_material_to_vmat_path(ue_path: str, root: str = "materials", strip_prefix: bool = False) -> str:
     """/Game/FireWatchTower/Materials/Material_Instances/MI_Barrel(.MI_Barrel)
-        -> materials/firewatchtower/mi_barrel.vmat"""
+        -> materials/firewatchtower/mi_barrel.vmat (or barrel.vmat if strip_prefix=True)"""
     if "'" in ue_path:
         match = re.search(r"'(.*?)'", ue_path)
         if match:
@@ -44,6 +44,10 @@ def ue_material_to_vmat_path(ue_path: str, root: str = "materials") -> str:
 
     p = ue_path.split(".", 1)[0].replace("/Game/", "").replace("/game/", "").strip("/")
     p = strip_ue_asset_folders(p)
+    if strip_prefix:
+        from .vmdl_writer import strip_ue_prefix
+        folder, _, leaf = p.rpartition("/")
+        p = f"{folder}/{strip_ue_prefix(leaf)}" if folder else strip_ue_prefix(leaf)
     return f"{root}/{p}.vmat".lower()
 
 
@@ -119,7 +123,13 @@ _PACKED_LAYOUTS = {
 CHANNELS = ("r", "g", "b", "a")
 
 # Slots a packed channel can legally feed — all single-channel greyscale maps.
-CHANNEL_SLOTS = ("rough", "metal", "ao", "height", "opacity")
+CHANNEL_SLOTS = (
+    "rough", "metal", "ao", "height", "opacity",
+    "rough1", "metal1", "ao1", "height1",
+    "rough2", "metal2", "ao2", "height2",
+    "rough3", "metal3", "ao3", "height3",
+    "rough4", "metal4", "ao4", "height4",
+)
 
 
 def packed_layout(param_name: str, tex_path: str = ""):
@@ -133,18 +143,57 @@ def packed_layout(param_name: str, tex_path: str = ""):
     return None, None
 
 
+_LAYER2_TOKENS = {"top", "dirt", "moss", "layer2", "2", "l2", "secondary", "overlay"}
+_LAYER3_TOKENS = {"layer3", "3", "l3", "tertiary"}
+_LAYER4_TOKENS = {"layer4", "4", "l4"}
+
+_COLOR_TOKENS = {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c"}
+_NORMAL_TOKENS = {"normal", "nrm", "n", "norm"}
+_ROUGH_TOKENS = {"rough", "roughness", "r"}
+_METAL_TOKENS = {"metal", "metallic", "metalness", "m"}
+_AO_TOKENS = {"ao", "occlusion"}
+_HEIGHT_TOKENS = {"height", "displacement", "disp", "h"}
+_ORM_TOKENS = set(_PACKED_LAYOUTS) | {"packed"}
+
 # Slot -> matching token set. Order = priority (first match wins per param).
 # Whole-token matching avoids false hits like "rma" inside "noRMAl".
 _SLOT_TOKENS = [
     ("opacity",  {"opacity", "opac", "alpha"}),
-    ("orm",      set(_PACKED_LAYOUTS) | {"packed"}),
-    ("normal",   {"normal", "nrm", "n", "norm"}),
-    ("rough",    {"rough", "roughness", "r"}),
-    ("metal",    {"metal", "metallic", "metalness", "m"}),
-    ("ao",       {"ao", "occlusion"}),
-    ("height",   {"height", "displacement", "disp", "h"}),
+    ("orm2",     {"orm2", "srm2", "srmh2", "packed2", "layer2_orm"}),
+    ("orm3",     {"orm3", "srm3", "srmh3", "packed3", "layer3_orm"}),
+    ("orm4",     {"orm4", "srm4", "srmh4", "packed4", "layer4_orm"}),
+    ("orm",      _ORM_TOKENS),
+
+    ("normal2",  {"normal2", "nrm2", "norm2"}),
+    ("normal3",  {"normal3", "nrm3", "norm3"}),
+    ("normal4",  {"normal4", "nrm4", "norm4"}),
+    ("normal",   _NORMAL_TOKENS),
+
+    ("rough2",   {"rough2", "roughness2"}),
+    ("rough3",   {"rough3", "roughness3"}),
+    ("rough4",   {"rough4", "roughness4"}),
+    ("rough",    _ROUGH_TOKENS),
+
+    ("metal2",   {"metal2", "metallic2", "metalness2"}),
+    ("metal3",   {"metal3", "metallic3", "metalness3"}),
+    ("metal4",   {"metal4", "metallic4", "metalness4"}),
+    ("metal",    _METAL_TOKENS),
+
+    ("ao2",      {"ao2", "occlusion2"}),
+    ("ao3",      {"ao3", "occlusion3"}),
+    ("ao4",      {"ao4", "occlusion4"}),
+    ("ao",       _AO_TOKENS),
+
+    ("height2",  {"height2", "displacement2", "disp2", "blendmask", "blendmask2"}),
+    ("height3",  {"height3", "displacement3", "disp3", "blendmask3"}),
+    ("height4",  {"height4", "displacement4", "disp4", "blendmask4"}),
+    ("height",   _HEIGHT_TOKENS),
+
+    ("color2",   {"basecolor2", "diffuse2", "albedo2", "color2"}),
+    ("color3",   {"basecolor3", "diffuse3", "albedo3", "color3"}),
+    ("color4",   {"basecolor4", "diffuse4", "albedo4", "color4"}),
     ("emissive", {"emissive", "emmisive", "emission", "emi"}),
-    ("color",    {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c"}),
+    ("color",    _COLOR_TOKENS),
 ]
 _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
@@ -182,43 +231,61 @@ def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
             for slot, channel in forced.items():
                 if slot in CHANNEL_SLOTS and channel in CHANNELS:
                     out[slot] = (param_name, tex_path, channel)
-        elif forced and forced in valid_slots:
+        elif forced and (forced in valid_slots or any(forced == s for s, _ in _SLOT_TOKENS)):
             out[forced] = (param_name, tex_path, None)
+
+    # Helper map for base slot vs layer slot token requirements
+    slot_map_tokens = {
+        "color": _COLOR_TOKENS, "normal": _NORMAL_TOKENS, "rough": _ROUGH_TOKENS,
+        "metal": _METAL_TOKENS, "ao": _AO_TOKENS, "height": _HEIGHT_TOKENS, "orm": _ORM_TOKENS,
+    }
 
     # Heuristic matching for remaining parameters
     for slot, tokens in _SLOT_TOKENS:
         if slot in out:
             continue
         candidates = []
+        base_kind = re.sub(r"\d+$", "", slot)
+        kind_tokens = slot_map_tokens.get(base_kind, tokens)
+        layer_num = slot[-1] if slot[-1].isdigit() else ""
+
         for param_name, tex_path in textures.items():
             if param_name in used_params:
                 continue
             p_toks = _tokens(param_name)
-            if slot == "color" and p_toks & _COLOR_EXCLUDE:
+            if slot.startswith("color") and p_toks & _COLOR_EXCLUDE:
                 continue
+
             matching = p_toks & tokens
-            if slot == "orm" and not matching:
-                # The param may be named neutrally ("Mask") while the texture
-                # file carries the layout token ("Foo_SRM") — check both.
-                matching = _tokens(os.path.basename(tex_path or "")) & tokens
+            if not matching and base_kind:
+                # Check for layer + kind combination (e.g. 'top' + 'basecolor' -> color2)
+                has_kind = bool(p_toks & kind_tokens)
+                if not has_kind and slot.startswith("orm"):
+                    has_kind = bool(_tokens(os.path.basename(tex_path or "")) & _ORM_TOKENS)
+
+                if has_kind:
+                    if layer_num == "2" and (p_toks & _LAYER2_TOKENS):
+                        matching = {"layer2"}
+                    elif layer_num == "3" and (p_toks & _LAYER3_TOKENS):
+                        matching = {"layer3"}
+                    elif layer_num == "4" and (p_toks & _LAYER4_TOKENS):
+                        matching = {"layer4"}
+
             if matching:
-                # Extra unmatched tokens mean a less specific name, so a plain
-                # "Normal" beats a secondary "Dirt Normal" / "Detail Normal"
-                # for the base slot instead of losing on dict order.
                 score = len(matching) * 10 - (len(p_toks) - len(matching))
-                if re.search(r"\b(layer|uv|v|mask|sub)\d*\b", param_name, re.I):
+                if re.search(r"\b(layer|uv|v|mask|sub)\d*\b", param_name, re.I) and not layer_num:
                     score -= 5
                 candidates.append((score, param_name, tex_path))
         if candidates:
             candidates.sort(key=lambda c: c[0], reverse=True)
             top_param, top_path = candidates[0][1], candidates[0][2]
             used_params.add(top_param)
-            if slot == "orm":
-                # Expand a packed mask straight into its per-channel slots so
-                # everything downstream sees uniform single-channel bindings.
+            if slot.startswith("orm"):
                 _tok, layout = packed_layout(top_param, top_path)
+                suffix = slot[3:] if len(slot) > 3 else ""
                 for channel, mapped in (layout or {}).items():
-                    out.setdefault(mapped, (top_param, top_path, channel))
+                    target_slot = f"{mapped}{suffix}"
+                    out.setdefault(target_slot, (top_param, top_path, channel))
             else:
                 out[slot] = (top_param, top_path, None)
 
@@ -372,7 +439,8 @@ class MaterialResult:
 def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      shader: str = None, slot_overrides: dict = None,
                      tex_index: dict = None,
-                     param_overrides: dict = None) -> MaterialResult:
+                     param_overrides: dict = None,
+                     strip_prefix: bool = False) -> MaterialResult:
     """
     Write a vmat (+ converted/split textures) from a dump-material result.
     Returns MaterialResult with the vmat path relative to the output root.
@@ -392,7 +460,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     shader = shader or pick_shader(flags)
 
     mi_path = mat_data.get("material", "")
-    vmat_rel = ue_material_to_vmat_path(mi_path)
+    vmat_rel = ue_material_to_vmat_path(mi_path, strip_prefix=strip_prefix)
     vmat_abs = os.path.join(output_dir, vmat_rel)
     folder_rel = os.path.dirname(vmat_rel).replace("\\", "/")   # "materials/…"
 
@@ -419,7 +487,13 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         if not src:
             missing.append(slot)
             return None, None, None
-        return src, os.path.splitext(os.path.basename(src))[0].lower(), pick[2]
+        stem = os.path.splitext(os.path.basename(src))[0]
+        if strip_prefix:
+            from .vmdl_writer import strip_ue_prefix
+            # Only the T_ prefix goes — the channel suffix (_ALB/_N/_ORM) is what
+            # keeps this material's maps in separate files.
+            stem = strip_ue_prefix(stem)
+        return src, stem.lower(), pick[2]
 
     if decal:
         # csgo_static_overlay's default Hammer template only exposes TextureColor
@@ -449,8 +523,15 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         write_decal_vmat(vmat_abs, slots, color_tint=color_tint)
         return MaterialResult(vmat_rel, written, missing, is_decal=True)
 
-    # color / normal — straight convert to TGA
-    for slot in ("color", "normal"):
+    # color / normal — straight convert to TGA (handles base & multi-layer slots)
+    color_normal_slots = (
+        "color", "normal",
+        "color1", "normal1",
+        "color2", "normal2",
+        "color3", "normal3",
+        "color4", "normal4",
+    )
+    for slot in color_normal_slots:
         src, stem, _ch = load(slot)
         if src:
             slots[slot] = save(Image.open(src).convert("RGBA"), stem)
@@ -459,7 +540,14 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     # Greyscale slots. _classify_textures has already expanded any packed mask
     # into per-channel bindings, so a packed source and a dedicated one-off map
     # are handled the same way here.
-    for slot in ("rough", "metal", "ao", "height"):
+    greyscale_slots = (
+        "rough", "metal", "ao", "height",
+        "rough1", "metal1", "ao1", "height1",
+        "rough2", "metal2", "ao2", "height2",
+        "rough3", "metal3", "ao3", "height3",
+        "rough4", "metal4", "ao4", "height4",
+    )
+    for slot in greyscale_slots:
         src, stem, channel = load(slot)
         if not src:
             continue

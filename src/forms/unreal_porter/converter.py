@@ -5,6 +5,7 @@ from .texture_utils import unpack_rma, convert_to_tga, is_metallic, unpack_orh
 from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
 from .material_converter import strip_ue_asset_folders
+from .vmdl_writer import strip_ue_prefix
 
 _SUFFIX_MAP = {
     "ALB": "ALB", "BC": "ALB", "D": "ALB", "COLOR": "ALB", "DIFFUSE": "ALB", "BASECOLOR": "ALB", "ALBEDO": "ALB", "C": "ALB", "B": "ALB", "A": "ALB",
@@ -79,7 +80,7 @@ class MaterialConvertWorker(QThread):
 
         for i, (base_name, suffixes) in enumerate(self.selected_groups.items()):
             self.progress.emit(i + 1, total)
-            out_name = re.sub(r"^(t_|mi_|m_|mm_)", "", base_name, flags=re.IGNORECASE).lower().strip("_")
+            out_name = strip_ue_prefix(base_name).strip("_")
             if not out_name:
                 out_name = base_name.lower()
             
@@ -427,7 +428,7 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
         for i, (base_name, suffixes) in enumerate(raw_groups.items()):
             if progress_cb:
                 progress_cb(i + 1, total)
-            master_name = re.sub(r"^(t_|mi_|m_|mm_)", "", base_name, flags=re.IGNORECASE).lower()
+            master_name = strip_ue_prefix(base_name)
             master_name = f"M_{master_name.title()}" if master_name else "M_Master"
             if master_name not in groups:
                 shader = saved_swaps.get(master_name) or predict_cs2_shader(master_name)
@@ -454,11 +455,13 @@ class MasterMaterialConvertWorker(QThread):
     file_done = Signal(str, bool, str)   # name, success, message
     finished = Signal(list, list)        # created, skipped
 
-    def __init__(self, output_dir, bulk_dir, master_groups, slot_overrides=None, parent=None):
+    def __init__(self, output_dir, bulk_dir, master_groups, slot_overrides=None, parent=None,
+                 strip_prefix=False):
         super().__init__(parent)
         self.output_dir = output_dir
         self.bulk_dir = bulk_dir
         self.master_groups = master_groups  # { master_name: { "shader": str, "instances": [...], "slot_overrides": {...}, "enabled": bool } }
+        self.strip_prefix = strip_prefix
 
     def run(self):
         from .material_converter import convert_material, get_texture_index
@@ -493,6 +496,7 @@ class MasterMaterialConvertWorker(QThread):
                         mat_data, self.bulk_dir, self.output_dir,
                         shader=shader, slot_overrides=master_slot_overrides,
                         tex_index=tex_index, param_overrides=master_param_overrides,
+                        strip_prefix=self.strip_prefix,
                     )
                     created.append(stem)
                     msg = f"Success ({shader})"

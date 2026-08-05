@@ -33,20 +33,44 @@ _DEFAULT_SIMPLIFY = {
 }
 
 
+# Epic's asset-name type prefixes. Source 2 content carries none of them, so all
+# of them go — including stacked ones like "SM_MI_Foo".
+_UE_PREFIXES = (
+    "SM", "SKM", "SK",                              # meshes
+    "M", "MI", "MID", "MM", "MF", "MPC",            # materials
+    "T", "TX", "TEX", "RT",                         # textures
+    "BP", "BPI", "ABP", "WBP",                      # blueprints
+    "UCX", "UBX", "USP", "UCP", "PHYS", "PA",       # collision / physics
+    "PS", "NS", "NE", "NM", "FX", "VFX",            # particles
+    "AM", "AS", "BS", "ANIM",                       # animation
+    "SW", "SC", "MS", "CUE", "SFX",                 # audio
+    "DA", "DT", "CRV",                              # data
+)
+# Single letters beyond M_/T_ (A_, S_, E_, L_) are deliberately absent: they eat
+# real words ("SM_A_Frame" -> "frame") for prefixes barely anyone uses.
+_UE_PREFIX_RE = re.compile(r"^(?:(?:%s)_)+" % "|".join(_UE_PREFIXES), re.IGNORECASE)
+# Unreal's type suffixes. Texture channel suffixes (_ALB, _N, _ORM) are NOT in
+# here — they are what keeps a material's exported maps in separate files.
+_UE_SUFFIX_RE = re.compile(r"(?:_(?:inst|instance|mat))+$", re.IGNORECASE)
+
+
 def strip_ue_prefix(name: str) -> str:
     """Unreal asset name -> Source 2 naming style.
 
-    Drops the standard type prefix (SM_, BP_, T_, M_, MI_, SK_, …) and breaks
-    PascalCase into snake_case: "SM_ChairLeg" -> "chair_leg". Source 2 content
-    paths are lowercase by convention, and without the word split everything
-    collapses into unreadable runs like "chairleg".
+    Drops the standard type prefix (SM_, BP_, T_, M_, MI_, SK_, …) and the
+    _Inst-style suffix, then breaks PascalCase into snake_case: "SM_ChairLeg" ->
+    "chair_leg". Source 2 content paths are lowercase by convention, and without
+    the word split everything collapses into unreadable runs like "chairleg".
 
-    The single choke point for the naming option — vmdl paths, vsmart names and
-    vmap model references all route through here.
+    The single choke point for the naming option — vmdl paths, vmat paths,
+    texture names, vsmart names and vmap references all route through here.
     """
     if not name:
         return name
-    name = re.sub(r"^(SM_|BP_|T_|M_|MI_|MM_|MF_|SK_|T_|UCX_|UBX_|USP_)", "", name, flags=re.IGNORECASE)
+    stripped = _UE_SUFFIX_RE.sub("", _UE_PREFIX_RE.sub("", name))
+    # A name that is nothing but prefixes ("T_MI") keeps its original spelling
+    # rather than converting to an empty filename.
+    name = stripped if stripped.strip("_") else name
     # Split acronym boundaries before word boundaries, so "HTTPServer" becomes
     # "http_server" rather than "httpserver".
     name = re.sub(r"(?<=[A-Z])(?=[A-Z][a-z])", "_", name)
@@ -204,15 +228,25 @@ def _import_filter(exclude_by_default: bool, exception_list):
 
 def clean_material_stem(name: str) -> str:
     """
-    Strips material/texture prefixes (mi_, m_, mm_, t_) and extension if present.
+    Strips the Unreal type prefix and the texture channel suffix, plus the
+    extension if present.
     e.g., 'mi_rock_3' -> 'rock_3', 'MI_Wood_01.vmat' -> 'wood_01', 't_wood_d' -> 'wood'
+
+    No PascalCase split here (unlike strip_ue_prefix): this is a lookup key and
+    _ENGINE_MATERIALS is matched against it.
     """
     if not name:
         return ""
     stem = name.rsplit(".", 1)[0].strip()
-    clean = re.sub(r"^(mi_|m_|mm_|t_)", "", stem, flags=re.IGNORECASE)
+    clean = _UE_PREFIX_RE.sub("", stem)
     clean = re.sub(r"_(d|bc|color|albedo|diffuse|nrm|n|normal|rough|r|metal|m|ao|orm|rma)$", "", clean, flags=re.IGNORECASE)
     return clean.strip().lower()
+
+
+def _match_key(name: str) -> str:
+    """Separator-free lookup key, so an FBX's "MI_RockWall" still finds the
+    Source-2-named "rock_wall.vmat" the material pass wrote."""
+    return re.sub(r"[^a-z0-9]", "", clean_material_stem(name))
 
 
 # CS2 stand-in for a slot we cannot convert.
@@ -256,6 +290,7 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
                         rel_p = os.path.relpath(full_p, output_dir).replace("\\", "/").lower()
                         stem = clean_material_stem(f)
                         vmat_lookup[stem] = rel_p
+                        vmat_lookup.setdefault(_match_key(f), rel_p)
                         vmat_lookup[f[:-5].lower()] = rel_p
 
     if embedded_mats:
@@ -264,16 +299,21 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
             stem = clean_material_stem(raw_mat)
             raw_clean = raw_mat.lower()
 
-            to_path = vmat_lookup.get(stem) or vmat_lookup.get(raw_clean)
+            to_path = (vmat_lookup.get(stem) or vmat_lookup.get(raw_clean)
+                       or vmat_lookup.get(_match_key(raw_mat)))
             # After the project lookup: a converted material of the same name
             # still wins over the stand-in.
             if not to_path and stem in _ENGINE_MATERIALS:
                 to_path = GRAYBOX_VMAT
 
             if not to_path:
+                # Nothing on disk yet — guess the name the material pass would
+                # write, i.e. the same Source 2 spelling ue_material_to_vmat_path
+                # produces.
+                guess = strip_ue_prefix(raw_mat.rsplit(".", 1)[0]) or stem
                 if model_rel_path:
                     cat_dir = os.path.dirname(model_rel_path).replace("models/", "materials/").replace("models", "materials")
-                    to_path = f"{cat_dir}/{stem}.vmat".lower()
+                    to_path = f"{cat_dir}/{guess}.vmat".lower()
                 elif default_mat_path:
                     to_path = default_mat_path.replace("\\", "/").lower()
                 else:
@@ -437,12 +477,13 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                output_dir: str = None,
                use_graybox_fallback: bool = False,
                import_lods: bool = True,
-               import_collision: bool = True) -> str:
+               import_collision: bool = True,
+               strip_prefix: bool = False) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
     build per-LOD render meshes and UCX physics; otherwise a simple single-mesh
-    vmdl is written. FBX files are automatically flattened and rotated (P 0 Y 0 R 90) in place.
+    vmdl is written. FBX files are automatically flattened in place.
     If material_path or output_dir is provided, material remapping will be set directly on the material group.
 
     import_lods=False keeps LOD0 only — dropping the LOD list entirely would fall
@@ -456,7 +497,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
 
     if fbx_path and os.path.isfile(fbx_path):
         try:
-            flatten_fbx(fbx_path)
+            flatten_fbx(fbx_path, strip_prefix=strip_prefix)
         except Exception:
             pass
         mesh_info = inspect_fbx_meshes(fbx_path)
@@ -496,6 +537,22 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
 
 def demo():
     import tempfile
+
+    # No UE type prefix or _Inst suffix survives, stacked ones included.
+    assert strip_ue_prefix("MI_RockWall_Inst") == "rock_wall"
+    assert strip_ue_prefix("T_Rock_ALB") == "rock_alb"
+    assert strip_ue_prefix("MM_MasterFoliage") == "master_foliage"
+    assert strip_ue_prefix("SM_MI_Barrel") == "barrel"
+    assert strip_ue_prefix("TX_Concrete") == "concrete"
+    # Prefix-only names keep their spelling instead of becoming "".
+    assert strip_ue_prefix("MI_") == "mi"
+    # A word that merely starts like a prefix is not one.
+    assert strip_ue_prefix("Metal_Beam") == "metal_beam"
+
+    from .material_converter import ue_material_to_vmat_path
+    assert ue_material_to_vmat_path(
+        "/Game/FireWatchTower/Materials/Material_Instances/MI_RockWall.MI_RockWall",
+        strip_prefix=True) == "materials/firewatchtower/rock_wall.vmat"
 
     # Engine content keeps its mount in the output path — this is the exact
     # string a converted UE template map places in its vmap.

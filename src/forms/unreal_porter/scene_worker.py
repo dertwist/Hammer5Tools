@@ -88,6 +88,7 @@ class SceneModelsWorker(QThread):
         """
         kwargs.setdefault("import_lods", self.import_lods)
         kwargs.setdefault("import_collision", self.import_collision)
+        kwargs.setdefault("strip_prefix", self.strip_prefix)
         return write_vmdl(*args, **kwargs)
 
     def _wanted(self, key_or_ref) -> bool:
@@ -433,7 +434,8 @@ class SceneModelsWorker(QThread):
                 param_overrides = self.master_param_overrides.get(master_name) or {}
                 res = convert_material(data, self.bulk_dir, self.output_dir,
                                        shader=shader, slot_overrides=overrides,
-                                       param_overrides=param_overrides)
+                                       param_overrides=param_overrides,
+                                       strip_prefix=self.strip_prefix)
                 done += 1
                 msg = f"  material {stem}: Success ({shader})"
                 if res.missing:

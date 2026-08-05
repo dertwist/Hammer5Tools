@@ -379,7 +379,7 @@ def write_vmap(
             result.placed_smartprops += 1
         elif comp == "DecalComponent" and decal_material:
             from .material_converter import ue_material_to_vmat_path
-            vmat_path = ue_material_to_vmat_path(decal_material)
+            vmat_path = ue_material_to_vmat_path(decal_material, strip_prefix=strip_prefix)
             result.decal_materials.add(decal_material)
             children.Add(make_decal_overlay(name, vmat_path, st.origin, angles, st.scales, node_id))
             result.placed_decals += 1

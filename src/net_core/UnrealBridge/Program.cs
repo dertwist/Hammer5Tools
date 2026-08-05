@@ -91,12 +91,16 @@ static class Program
         return 0;
     }
 
+    // No cap. This is the converter's whole view of a project: the port scope,
+    // the material scan and reference expansion are all built from it, so a
+    // truncated list does not shrink the port, it silently drops every asset
+    // past the cut (a 563-asset project ported 52 meshes). A few thousand paths
+    // of JSON over stdout costs nothing next to that.
     static int List(DefaultFileProvider provider, string substring)
     {
         var matches = provider.Files.Keys
             .Where(f => f.Contains(substring, StringComparison.OrdinalIgnoreCase))
             .OrderBy(f => f)
-            .Take(200)
             .ToList();
         Console.WriteLine(JsonConvert.SerializeObject(matches, Formatting.Indented));
         return 0;

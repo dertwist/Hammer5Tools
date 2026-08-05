@@ -496,7 +496,8 @@ class UnrealPorterWidget(QDialog):
         self.strip_prefixes_check.setToolTip(
             "Rename converted assets the way Source 2 content is named: lowercase, "
             "Unreal's type prefix dropped, PascalCase split into snake_case "
-            "(SM_ChairLeg → chair_leg.vmdl)."
+            "(SM_ChairLeg → chair_leg.vmdl). Applies to models, materials, "
+            "textures and the mesh names inside the FBX."
         )
         strip_saved = get_settings_value("UnrealConverter", "strip_ue_prefixes", "true").lower() == "true"
         self.strip_prefixes_check.setChecked(strip_saved)
@@ -615,16 +616,24 @@ class UnrealPorterWidget(QDialog):
 
     def _populate_master_materials_table(self, master_groups: dict):
         self.master_groups = master_groups
-        self.master_mat_list.populate(master_groups)
-        self.master_checkboxes = self.master_mat_list.checkboxes()
-        self.master_shader_combos = self.master_mat_list.shader_combos()
+        self.master_mat_list.populate(master_groups, bulk_dir=self.tmp_dir())
+
+    # The card widgets belong to master_mat_list and are deleteLater()'d on every
+    # populate(), so they are read live rather than cached here — a cached dict
+    # outlives its widgets the moment anything repopulates the list without going
+    # through _populate_master_materials_table (clearing the cache does exactly
+    # that), and the next read raises "Internal C++ object already deleted".
+    def _master_cards(self):
+        return getattr(self, "master_mat_list", None)
 
     def master_shader_selection(self) -> dict:
         """{master material name: chosen CS2 shader} as picked in the Materials
         tab. Empty until a Scan has run, in which case converters fall back to
         their name heuristic."""
-        return {name: combo.currentText()
-                for name, combo in getattr(self, "master_shader_combos", {}).items()}
+        cards = self._master_cards()
+        if cards is None:
+            return {}
+        return {name: combo.currentText() for name, combo in cards.shader_combos().items()}
 
     def master_slot_overrides(self) -> dict:
         """{master material name: texture slot overrides} from the Materials tab."""
@@ -663,7 +672,8 @@ class UnrealPorterWidget(QDialog):
         dlg = SlotMappingDialog(
             master_name, textures, initial_overrides,
             scalars=scalars, vectors=vectors, switches=switches,
-            initial_param_overrides=initial_param_overrides, parent=self,
+            initial_param_overrides=initial_param_overrides,
+            bulk_dir=self.tmp_dir(), parent=self,
         )
         if dlg.exec() == QDialog.Accepted:
             info["slot_overrides"] = dlg.result_overrides
@@ -1166,11 +1176,15 @@ class UnrealPorterWidget(QDialog):
         from .asset_selection import asset_stem
         scope = {asset_stem(k) for k in self._selected_assets} if self._selected_assets else None
 
+        cards = self._master_cards()
+        checkboxes = cards.checkboxes() if cards else {}
+        combos = cards.shader_combos() if cards else {}
+
         active_master_groups = {}
         dropped = 0
         for master_name, info in self.master_groups.items():
-            chk = getattr(self, "master_checkboxes", {}).get(master_name)
-            combo = getattr(self, "master_shader_combos", {}).get(master_name)
+            chk = checkboxes.get(master_name)
+            combo = combos.get(master_name)
             enabled = chk.isChecked() if chk else True
             selected_shader = combo.currentText() if combo else info.get("shader", "csgo_environment.vfx")
             if not enabled:
@@ -1211,7 +1225,8 @@ class UnrealPorterWidget(QDialog):
         from .converter import MasterMaterialConvertWorker
 
         worker = MasterMaterialConvertWorker(
-            output_dir, self.tmp_dir(), active_master_groups
+            output_dir, self.tmp_dir(), active_master_groups,
+            strip_prefix=self.strip_prefixes_check.isChecked(),
         )
         worker.progress.connect(self._on_progress)
         worker.file_done.connect(self._on_file_done)

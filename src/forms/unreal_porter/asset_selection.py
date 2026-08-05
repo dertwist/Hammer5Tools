@@ -122,27 +122,6 @@ def _index_by_stem(keys) -> dict:
     return index
 
 
-def collect_refs(node, out):
-    """Every object reference anywhere in a dumped asset.
-
-    Walking the JSON generically rather than reading known property names
-    (StaticMaterials, TextureParameterValues, Parent, …) means one code path
-    covers map->mesh, mesh->material, material->texture and material->parent,
-    and keeps working when an asset stores its references somewhere new.
-    """
-    if isinstance(node, dict):
-        for field in ("ObjectPath", "ObjectName", "AssetPathName"):
-            value = node.get(field)
-            if isinstance(value, str) and value:
-                out.add(value)
-        for value in node.values():
-            collect_refs(value, out)
-    elif isinstance(node, list):
-        for value in node:
-            collect_refs(value, out)
-    return out
-
-
 def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max_rounds=6) -> set:
     """The chosen assets plus everything they depend on, transitively.
 
@@ -169,11 +148,11 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
                 progress_cb(i + 1, len(pending))
             obj = os.path.splitext(key)[0]
             try:
-                data = bridge.dump(obj)
+                refs = bridge.iter_refs(obj)
             except Exception as e:
                 log(f"  {os.path.basename(key)}: could not read references — {e}", "warn")
                 continue
-            for ref in collect_refs(data, set()):
+            for ref in refs:
                 hit = index.get(ref_stem(ref))
                 if hit and hit not in selected:
                     discovered.add(hit)
@@ -422,22 +401,28 @@ def demo():
     assert key_to_object_path("Content/A/B.uasset") == "/Game/A/B.B"
     assert ref_stem(key_to_object_path(keys[1])) == asset_stem(keys[1])
 
-    found = collect_refs(
-        {"Properties": {"StaticMaterials": [{"MaterialInterface": {"ObjectPath": "/Game/Materials/MI_Wood.MI_Wood"}}]}},
-        set(),
-    )
-    assert found == {"/Game/Materials/MI_Wood.MI_Wood"}, found
+    # The scan reads a dump as text rather than parsing it, so the pattern that
+    # picks references out of it is what the whole expansion hangs on.
+    from .bridge_client import _REF_FIELD
+    found = set(_REF_FIELD.findall(
+        '  "StaticMaterials": [\n'
+        '    {\n'
+        '      "MaterialInterface": {\n'
+        '        "ObjectName": "MaterialInstanceConstant\'MI_Wood\'",\n'
+        '        "ObjectPath": "/Game/Materials/MI_Wood.MI_Wood"\n'
+    ))
+    assert found == {"MaterialInstanceConstant'MI_Wood'", "/Game/Materials/MI_Wood.MI_Wood"}, found
 
     class FakeBridge:
         """Arena -> SM_Chair -> MI_Wood -> T_Wood_D, one hop per dump."""
         refs = {
-            "P/Content/Maps/Arena": {"a": [{"ObjectPath": "/Game/Meshes/SM_Chair.SM_Chair"}]},
-            "P/Content/Meshes/SM_Chair": {"m": [{"ObjectPath": "/Game/Materials/MI_Wood.MI_Wood"}]},
-            "P/Content/Materials/MI_Wood": {"t": [{"ObjectPath": "/Game/Textures/T_Wood_D.T_Wood_D"}]},
-            "P/Content/Textures/T_Wood_D": {},
+            "P/Content/Maps/Arena": {"/Game/Meshes/SM_Chair.SM_Chair"},
+            "P/Content/Meshes/SM_Chair": {"/Game/Materials/MI_Wood.MI_Wood"},
+            "P/Content/Materials/MI_Wood": {"/Game/Textures/T_Wood_D.T_Wood_D"},
+            "P/Content/Textures/T_Wood_D": set(),
         }
 
-        def dump(self, obj):
+        def iter_refs(self, obj):
             return self.refs[obj]
 
     # Selecting only the map must drag the whole chain along, transitively.
@@ -447,7 +432,7 @@ def demo():
     assert expand_references(FakeBridge(), {keys[3]}, keys) == {keys[3]}
 
     class BrokenBridge:
-        def dump(self, obj):
+        def iter_refs(self, obj):
             raise RuntimeError("bridge down")
 
     # A dump failure must not lose the user's own selection.

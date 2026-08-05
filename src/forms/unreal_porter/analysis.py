@@ -56,6 +56,19 @@ def fingerprint(content_dir: str) -> str:
     return f"{len(parts)}:{digest}"
 
 
+def is_truncated(assets, info) -> bool:
+    """True if an asset list is shorter than the file count the bridge reported.
+
+    `list` and `info.totalFiles` read the same mounted file set, so a gap means
+    the list came back cut short — bridge builds before the fix capped it at 200.
+    A truncated manifest is worse than no manifest: the fingerprint still matches
+    the project, so it is replayed forever as if it were the whole thing, and the
+    port silently drops every asset past the cut.
+    """
+    total = (info or {}).get("totalFiles")
+    return isinstance(total, int) and len(assets or []) < total
+
+
 def load(uproject_path: str, content_dir: str):
     """The cached analysis if it still matches the project, else None."""
     path = manifest_path(uproject_path)
@@ -65,6 +78,8 @@ def load(uproject_path: str, content_dir: str):
     except (OSError, ValueError):
         return None
     if manifest.get("version") != MANIFEST_VERSION:
+        return None
+    if is_truncated(manifest.get("assets"), manifest.get("info")):
         return None
     if manifest.get("fingerprint") != fingerprint(content_dir):
         return None
@@ -109,6 +124,12 @@ def analyze(bridge, content_dir: str, log_cb=None, progress_cb=None):
 
     info = bridge.info()
     assets = bridge.list("")
+    if is_truncated(assets, info) and log_cb:
+        log_cb(
+            f"Bridge listed only {len(assets)} of {info.get('totalFiles')} files — "
+            "H5T.UnrealBridge.dll is out of date. Rebuild it, or the port will miss assets.",
+            "warn",
+        )
     materials = scan_master_materials(
         content_dir, None, bridge, output_dir=None,
         log_cb=log_cb, progress_cb=progress_cb,
@@ -158,6 +179,15 @@ def demo():
         # converter can still unpack (tuples come back as lists).
         stem, path, data = cached["materials"]["M_Master"]["instances"][0]
         assert (stem, path) == ("MI_Wood", "P/Content/MI_Wood"), (stem, path)
+
+        # A list shorter than the bridge's own file count was cut off by a capped
+        # bridge build; replaying it caches a partial project as if it were whole.
+        save(uproject, content, ["P/Content/Meshes/SM_Chair.uasset"], {"totalFiles": 563})
+        assert load(uproject, content) is None, "a truncated manifest was served from cache"
+        assert is_truncated(["a"], {"totalFiles": 2})
+        assert not is_truncated(["a", "b"], {"totalFiles": 2})
+        # Manifests from before totalFiles was recorded must still load.
+        assert not is_truncated(["a"], {})
 
         with open(os.path.join(content, "Meshes", "SM_Table.uasset"), "w") as f:
             f.write("c")
