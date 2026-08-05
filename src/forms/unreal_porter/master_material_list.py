@@ -145,6 +145,7 @@ class MasterMaterialCard(QFrame):
 
         outer.addLayout(b_row)
 
+        apply_stylesheets(self)
         self.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
     def refresh(self, info: dict, bulk_dir: str = None, tex_index: dict = None):
