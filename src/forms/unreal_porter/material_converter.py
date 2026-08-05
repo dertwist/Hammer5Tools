@@ -298,6 +298,49 @@ def _pick_scalar(scalars: dict, *keys, default=1.0):
     return float(best) if best is not None else default
 
 
+# vmat params the heuristic already fills. When the user maps a UE param to one
+# of these, the user's value replaces the heuristic pick; mapping to anything
+# else emits an extra scalar/vector on the vmat.
+_HEURISTIC_SCALAR_TARGETS = {"g_flRoughnessScale", "g_flMetalnessScale"}
+_HEURISTIC_VECTOR_TARGETS = {"g_vColorTint"}
+# Mapping a UE switch to one of these forces that feature/flag on, regardless of
+# its bool value (CS2 flags are presence-based, not value-based).
+_FLAG_TARGETS = {"F_ALPHA_TEST", "F_RENDER_BACKFACES"}
+
+
+def _apply_param_overrides(scalars, vectors, switches, param_overrides):
+    """Resolve {ue_param_name: vmat_param_name} into typed vmat values.
+
+    Returns (user_scalars, user_vectors, user_flags, claimed) where:
+      * user_scalars  {vmat_param: float}     — scalars to emit/override
+      * user_vectors  {vmat_param: (r,g,b)}   — vectors to emit/override
+      * user_flags    [vmat_flag, ...]        — feature flags to force on
+      * claimed       set(vmat_param)         — every target the user took,
+        so the heuristic can be suppressed for just those and left intact
+        for everything else (partial override, not all-or-nothing).
+
+    First-write-wins keeps the outcome deterministic when two UE names map to
+    the same target: the first one encountered (iteration order of the override
+    dict) wins, mirroring the bridge's own parent-chain merge.
+    """
+    user_scalars, user_vectors, user_flags, claimed = {}, {}, [], set()
+    for ue_name, target in (param_overrides or {}).items():
+        if not target:
+            continue
+        if ue_name in (scalars or {}) and target not in user_scalars:
+            user_scalars[target] = float(scalars[ue_name])
+            claimed.add(target)
+        elif ue_name in (vectors or {}) and target not in user_vectors:
+            v = vectors[ue_name]
+            user_vectors[target] = (float(v.get("r", 1.0)), float(v.get("g", 1.0)), float(v.get("b", 1.0)))
+            claimed.add(target)
+        elif ue_name in (switches or {}) and target in _FLAG_TARGETS and target not in user_flags:
+            if bool(switches[ue_name]):
+                user_flags.append(target)
+                claimed.add(target)
+    return user_scalars, user_vectors, user_flags, claimed
+
+
 # --- shader selection from material domain/blend --------------------------
 
 def is_decal(flags: dict) -> bool:
@@ -328,7 +371,8 @@ class MaterialResult:
 
 def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      shader: str = None, slot_overrides: dict = None,
-                     tex_index: dict = None) -> MaterialResult:
+                     tex_index: dict = None,
+                     param_overrides: dict = None) -> MaterialResult:
     """
     Write a vmat (+ converted/split textures) from a dump-material result.
     Returns MaterialResult with the vmat path relative to the output root.
@@ -337,6 +381,11 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
 
     slot_overrides: optional {param_name: slot_name or None} forwarded to
     _classify_textures to override its heuristic pick (see slot_mapping.py).
+
+    param_overrides: optional {ue_param_name: vmat_param_name} from the Params
+    tab. A mapping wins over the heuristic auto-pick for tint/roughness/metalness
+    (e.g. mapping a vector to "g_vColorTint" suppresses _pick_tint); any other
+    target is emitted as an extra scalar/vector on the vmat. See _apply_param_overrides.
     """
     flags = mat_data.get("flags") or {}
     decal = is_decal(flags)
@@ -392,6 +441,11 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
             written += 1
 
         color_tint = _pick_tint(mat_data.get("vectors"))
+        # Decals have a smaller param surface, but a user-mapped tint still wins.
+        _us, user_vectors, _uf, claimed = _apply_param_overrides(
+            mat_data.get("scalars"), mat_data.get("vectors"), mat_data.get("switches"), param_overrides)
+        if "g_vColorTint" in claimed:
+            color_tint = user_vectors.get("g_vColorTint")
         write_decal_vmat(vmat_abs, slots, color_tint=color_tint)
         return MaterialResult(vmat_rel, written, missing, is_decal=True)
 
@@ -427,6 +481,27 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     rough_scale = _pick_scalar(mat_data.get("scalars"), "roughness", "tileable 1 roughness")
     metal_scale = _pick_scalar(mat_data.get("scalars"), "metallic", "metalness", default=0.0)
 
+    # Param-mapping UI: a user mapping to a heuristic target wins over the
+    # auto-pick; anything else is emitted as an extra scalar/vector.
+    user_scalars, user_vectors, user_flags, claimed = _apply_param_overrides(
+        mat_data.get("scalars"), mat_data.get("vectors"), mat_data.get("switches"), param_overrides)
+    if "g_vColorTint" in claimed:
+        v = user_vectors.pop("g_vColorTint")
+        color_tint = v
+    if "g_flRoughnessScale" in claimed:
+        rough_scale = user_scalars.pop("g_flRoughnessScale")
+    if "g_flMetalnessScale" in claimed:
+        metal_scale = user_scalars.pop("g_flMetalnessScale")
+    render_backfaces = "F_RENDER_BACKFACES" in user_flags
+    if "F_ALPHA_TEST" in user_flags and slots.get("trans"):
+        alpha_test_ref = 0.5
+    else:
+        alpha_test_ref = None
+
+    # Anything left in user_scalars/user_vectors has no heuristic equivalent —
+    # emit it verbatim so the user's explicit mappings always reach the vmat.
     write_vmat(vmat_abs, slots, shader=shader, color_tint=color_tint,
-               roughness_scale=rough_scale, metalness_scale=metal_scale)
+               roughness_scale=rough_scale, metalness_scale=metal_scale,
+               extra_scalars=user_scalars or None, extra_vectors=user_vectors or None,
+               alpha_test_ref=alpha_test_ref, render_backfaces=render_backfaces)
     return MaterialResult(vmat_rel, written, missing)

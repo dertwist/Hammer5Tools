@@ -1,110 +1,184 @@
 import os
 import pathlib
+import shutil
 from datetime import datetime
 
 from PySide6.QtCore import Qt, Slot, QPoint, QThread, Signal
 from PySide6.QtWidgets import (
-    QDialog, QFileDialog, QListWidgetItem, QMessageBox, QWidget,
+    QDialog, QFileDialog, QMessageBox, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel,
-    QLineEdit, QPushButton, QListWidget, QProgressBar, QTabWidget, QComboBox,
-    QCheckBox, QSplitter, QSpacerItem, QSizePolicy, QMenu, QInputDialog,
+    QLineEdit, QPushButton, QProgressBar, QTabWidget, QComboBox,
+    QCheckBox, QSplitter, QSpacerItem, QSizePolicy,
 )
 
 from src.common import enable_dark_title_bar
 from src.styles.common import apply_stylesheets
 from src.settings.main import (
-    get_addon_dir, get_addon_name,
+    get_addon_name,
     get_settings_value, set_settings_value,
     get_settings_bool, set_settings_bool,
 )
+from src.settings.common import get_cs2_path
 
 from src.widgets.console import ConsoleWidget
-from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, scan_unsupported
-from .converter import scan_and_group, MaterialConvertWorker
+from .constants import scan_unsupported
 from .transform import UnitScale
+from .ue_install import find_installs, install_for_project
+
+# Exports land inside the target addon so everything one port produces lives
+# under one folder and "Clean cache" is a single rmtree.
+TMP_SUBDIR = "_tmp/UnrealPorter"
 
 
-class UeExportWorker(QThread):
-    """Runs the UE Editor commandlet export off the UI thread — see
-    ue_export_runner.run_export. Assumes a local Unreal Engine install."""
+class PrepareWorker(QThread):
+    """Export the analyzed assets, then scan what came out.
+
+    The project survey used to live here; it moved to AnalyzeWorker so its
+    result could be cached and so this can only run against a project we have
+    already looked at. What is left is the expensive half: booting the Editor.
+    """
     log = Signal(str, str)
+    progress = Signal(int, int)
     done = Signal(bool)
 
-    def __init__(self, engine_root, project_dir, output_dir, parent=None):
+    def __init__(self, engine_root, project_dir, tmp_dir, output_dir, assets=(), parent=None):
         super().__init__(parent)
         self.engine_root = engine_root
         self.project_dir = project_dir
+        self.tmp_dir = tmp_dir
         self.output_dir = output_dir
+        self.assets = list(assets)
+
+    def _report_scope(self):
+        """Say what is going in before spending minutes on the Editor."""
+        from .constants import get_unsupported
+
+        self.log.emit(f"{len(self.assets)} analyzed asset(s) queued for export.", "info")
+        for key, matched in scan_unsupported([os.path.basename(n) for n in self.assets]).items():
+            self.log.emit(f"{get_unsupported(key).label}: {len(matched)} asset(s) will be skipped.", "warn")
 
     def run(self):
         from .ue_export_runner import run_export, UeExportError
 
-        def _on_line(line: str):
-            self.log.emit(line, "info")
-
         try:
-            run_export(self.engine_root, self.project_dir, self.output_dir, on_line=_on_line)
+            self._report_scope()
+
+            os.makedirs(self.tmp_dir, exist_ok=True)
+            self.log.emit(f"Exporting assets into {self.tmp_dir}", "info")
+            try:
+                run_export(self.engine_root, self.project_dir, self.tmp_dir,
+                           on_line=lambda line: self.log.emit(line, "info"),
+                           assets=self.assets)
+            except UeExportError as e:
+                self.log.emit(str(e), "error")
+                self.done.emit(False)
+                return
             self.log.emit("UE export finished.", "success")
             self.done.emit(True)
-        except UeExportError as e:
-            self.log.emit(str(e), "error")
-            self.done.emit(False)
         except Exception as e:  # never let the thread die silently
-            self.log.emit(f"Unexpected error: {e}", "error")
+            self.log.emit(f"Prepare failed: {e}", "error")
             self.done.emit(False)
 
 
-class ScanWorker(QThread):
-    """Scans project materials off the UI thread to prevent GUI freezing."""
+class AnalyzeWorker(QThread):
+    """Mount the project, list what it holds, and group its materials."""
     log = Signal(str, str)
     progress = Signal(int, int)
-    done = Signal(dict)
+    done = Signal(dict)   # the manifest, or {} on failure
 
-    def __init__(self, project_dir, bulk_dir, output_dir, parent=None):
+    def __init__(self, uproject_path, project_dir, parent=None):
+        super().__init__(parent)
+        self.uproject_path = uproject_path
+        self.project_dir = project_dir
+
+    def run(self):
+        from .bridge_client import UnrealBridge, BridgeError
+        from . import analysis
+
+        bridge = UnrealBridge(self.project_dir)
+        if not bridge.is_available():
+            self.log.emit("CUE4Parse bridge unavailable — " + bridge.why_unavailable(), "error")
+            self.done.emit({})
+            return
+        try:
+            assets, info, materials = analysis.analyze(
+                bridge, self.project_dir,
+                log_cb=lambda msg, level="info": self.log.emit(msg, level),
+                progress_cb=lambda current, total: self.progress.emit(current, total),
+            )
+        except BridgeError as e:
+            self.log.emit(f"Analysis failed: {e}", "error")
+            self.done.emit({})
+            return
+        except Exception as e:
+            self.log.emit(f"Analysis failed: {e}", "error")
+            self.done.emit({})
+            return
+
+        if not assets:
+            self.log.emit("Project mounted but contains no assets.", "warn")
+            self.done.emit({})
+            return
+
+        try:
+            manifest = analysis.save(self.uproject_path, self.project_dir, assets, info, materials)
+        except OSError as e:
+            # A cache we cannot persist is a slower next run, not a failure.
+            self.log.emit(f"Could not write the analysis cache: {e}", "warn")
+            manifest = {"assets": sorted(assets), "info": info or {}, "materials": materials}
+        self.done.emit(manifest)
+
+
+class ExpandRefsWorker(QThread):
+    """Walk the chosen assets' dependencies off the UI thread.
+
+    One bridge dump per asset — fine for a hundred, not something to run on
+    the GUI thread for a whole project.
+    """
+    log = Signal(str, str)
+    progress = Signal(int, int)
+    done = Signal(set)
+
+    def __init__(self, project_dir, chosen, all_keys, parent=None):
         super().__init__(parent)
         self.project_dir = project_dir
-        self.bulk_dir = bulk_dir
-        self.output_dir = output_dir
+        self.chosen = chosen
+        self.all_keys = all_keys
 
     def run(self):
         from .bridge_client import UnrealBridge
-        from .converter import scan_master_materials
-
-        bridge = None
-        if self.project_dir and os.path.isdir(self.project_dir):
-            bridge = UnrealBridge(self.project_dir)
-
-        def _log_cb(msg, level="info"):
-            self.log.emit(msg, level)
-
-        def _progress_cb(current, total):
-            self.progress.emit(current, total)
+        from .asset_selection import expand_references
 
         try:
-            master_groups = scan_master_materials(
-                self.project_dir, self.bulk_dir, bridge,
-                output_dir=self.output_dir, log_cb=_log_cb, progress_cb=_progress_cb
+            selected = expand_references(
+                UnrealBridge(self.project_dir), self.chosen, self.all_keys,
+                log_cb=lambda msg, level="info": self.log.emit(msg, level),
+                progress_cb=lambda current, total: self.progress.emit(current, total),
             )
-            self.done.emit(master_groups)
-        except Exception as e:
-            self.log.emit(f"Scan failed: {e}", "error")
-            self.done.emit({})
+            self.done.emit(selected)
+        except Exception as e:  # never let the thread die silently
+            self.log.emit(f"Reference scan failed: {e}", "error")
+            # Fall back to exactly what was ticked rather than losing the picks.
+            self.done.emit(set(self.chosen))
 
 
 class UnrealPorterWidget(QDialog):
     """
     Unreal Engine -> Source 2 content migration helper.
 
-    An entity/content converter (not a full auto-exporter): it turns already
-    exported Unreal data into Source 2 formats — materials -> vmat,
-    models -> vmdl, scenes -> vmap, content blueprints -> vsmart, and splits
-    packed textures. Assets Source 2 has no equivalent for are surfaced as
-    warnings rather than silently dropped.
+    Two steps. "Prepare Assets" surveys a .uproject, drives the local Editor to
+    export its meshes and textures into the target addon's export cache, and
+    scans the result. "Convert" turns that into Source 2 formats — materials ->
+    vmat, models -> vmdl, scenes -> vmap, content blueprints -> vsmart — with
+    the Materials tab in between for shader and texture-slot swapping.
+
+    Assets Source 2 has no equivalent for are surfaced as warnings rather than
+    silently dropped.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("UnrealPorter (UE → Source 2)")
+        self.setWindowTitle("UnrealPorter")
         self.resize(1280, 850)
         self.setMinimumSize(960, 600)
         enable_dark_title_bar(self)
@@ -112,12 +186,31 @@ class UnrealPorterWidget(QDialog):
 
         self.groups = {}
         self.worker = None
-        self.type_checks = {}
+        self._analyzed_uproject = None
+        self._project_assets = []
+        self._selected_assets = set()
+        self._installs = find_installs()
 
         self._build_ui()
         apply_stylesheets(self)
         self._setup_progress_bar_style()
-        self.console.info("UnrealPorter ready. Set input/output folders and Scan.")
+        if self._installs:
+            self.console.info("UnrealPorter ready.")
+        else:
+            self.console.warn(
+                "No Unreal Engine install found — exporting new assets requires one. "
+                "Converting already-exported assets still works."
+            )
+        self.console.header("Instructions")
+        self.console.info("1. Select Unreal Engine Project")
+        self.console.info("2. Analyze project")
+        self.console.info("3. Select assets you want to port")
+        self.console.info("4. Click Convert")
+        # _build_ui ran before the console existed, so the first report lands here.
+        self._log_export_cache()
+        # Restores the port picker and re-enables Prepare from cache, without a
+        # bridge call when the project has not changed since last time.
+        self.ensure_analysis()
 
     def _setup_progress_bar_style(self):
         self.progress_bar.setStyleSheet("""
@@ -155,29 +248,32 @@ class UnrealPorterWidget(QDialog):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "General")
-        self.tabs.addTab(self._build_scenes_tab(), "Scenes")
-        self.tabs.addTab(self._build_models_tab(), "Models")
         self.tabs.addTab(self._build_materials_tab(), "Materials")
-        self.tabs.addTab(self._build_other_tab(), "Textures")
         left_layout.addWidget(self.tabs, 1)
 
         # Action bar in Left Panel
         actions = QHBoxLayout()
-        self.ue_export_button = QPushButton("Run UE Export")
-        self.ue_export_button.setToolTip(
-            "Launches UnrealEditor-Cmd.exe / UE4Editor-Cmd.exe to batch-export meshes/textures under the "
-            "project into the cache folder (tools/ue_scripts/export_assets.py). "
-            "Requires a local Unreal Engine install (UE4.27 or UE5.x)."
+        self.reanalyze_button = QPushButton("Re-analyze")
+        self.reanalyze_button.setToolTip(
+            "Re-read the project through the CUE4Parse bridge, ignoring the cached "
+            "analysis. Only needed if the project changed in a way the file "
+            "timestamps did not capture."
         )
-        self.ue_export_button.clicked.connect(self.on_run_ue_export)
-        self.scan_button = QPushButton("Scan Folder")
-        self.scan_button.clicked.connect(self.on_scan)
+        self.reanalyze_button.setEnabled(False)
+        self.reanalyze_button.clicked.connect(lambda: self.ensure_analysis(force=True))
         self.convert_button = QPushButton("Convert")
+        self.convert_button.setToolTip(
+            "Automatically prepares missing asset exports from Unreal Engine "
+            "and converts selected materials, models, blueprints, and maps to CS2 formats."
+        )
         self.convert_button.clicked.connect(self.on_convert)
         self.convert_button.setEnabled(False)
-        actions.addWidget(self.ue_export_button)
-        actions.addWidget(self.scan_button)
+        self.clean_cache_button = QPushButton("Clean cache")
+        self.clean_cache_button.setToolTip("Deletes the addon's export cache folder.")
+        self.clean_cache_button.clicked.connect(self.on_clean_cache)
+        actions.addWidget(self.reanalyze_button)
         actions.addWidget(self.convert_button)
+        actions.addWidget(self.clean_cache_button)
         actions.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         left_layout.addLayout(actions)
 
@@ -210,222 +306,301 @@ class UnrealPorterWidget(QDialog):
 
         root.addWidget(splitter, 1)
 
-        # Initial auto-scan of the UE export folder if a saved path exists
-        saved_export = self.cache_folder_edit.text().strip()
-        if saved_export and os.path.isdir(saved_export):
-            self._scan_bulk(saved_export)
+        # Pick up an export cache left behind by a previous session so the
+        # Materials tab is populated without re-running the whole export.
+        self._scan_tmp()
 
     def _build_paths_group(self):
         box = QGroupBox("Conversion settings — paths")
         grid = QGridLayout(box)
         grid.setVerticalSpacing(4)
 
-        # Row 0 — raw UE project Content folder (read via CUE4Parse bridge for
-        # scenes / blueprints / material params).
-        lbl_proj = QLabel("UE Project Content:")
-        lbl_proj.setToolTip("scenes/blueprints/materials")
+        # Row 0 — the .uproject. Everything else is derived from it: the Content
+        # folder the bridge reads, and (via EngineAssociation) which engine runs
+        # the export.
+        lbl_proj = QLabel("UE Project:")
+        lbl_proj.setToolTip("The project's .uproject file — scenes, blueprints and materials are read next to it.")
         grid.addWidget(lbl_proj, 0, 0)
-        self.project_folder_edit = QLineEdit()
-        self.project_folder_edit.setPlaceholderText("…/YourProject/Content")
-        grid.addWidget(self.project_folder_edit, 0, 1)
+        self.uproject_edit = QLineEdit()
+        self.uproject_edit.setPlaceholderText("…/YourProject/YourProject.uproject")
+        grid.addWidget(self.uproject_edit, 0, 1)
         proj_btn = QPushButton("Browse")
-        proj_btn.clicked.connect(self.browse_project)
+        proj_btn.clicked.connect(self.browse_uproject)
         grid.addWidget(proj_btn, 0, 2)
 
-        # Row 1 — output (addon content).
-        lbl_out = QLabel("Output folder:")
-        lbl_out.setToolTip("addon content")
-        grid.addWidget(lbl_out, 1, 0)
-        self.output_folder_edit = QLineEdit()
-        grid.addWidget(self.output_folder_edit, 1, 1)
-        out_btn = QPushButton("Browse")
-        out_btn.clicked.connect(self.browse_output)
-        grid.addWidget(out_btn, 1, 2)
+        # Row 1 — target addon, same source of truth as SourcePorter.
+        grid.addWidget(QLabel("Target Addon:"), 1, 0)
+        self.addon_combo = QComboBox()
+        self.addon_combo.setEditable(True)
+        grid.addWidget(self.addon_combo, 1, 1, 1, 2)
 
-        # Row 2 — the exported mesh/texture folder. This is both where "Run UE
-        # Export" writes and where the converter reads FBX/TGA back from; they
-        # were once two separate fields, which only ever created a way to point
-        # them at different folders and silently find nothing.
-        lbl_cache = QLabel("UE Export folder:")
-        lbl_cache.setToolTip(
-            "Meshes (.fbx) and textures (.tga/.png) exported out of Unreal — "
-            "written by 'Run UE Export', or by a manual Asset Actions → Bulk Export."
-        )
-        grid.addWidget(lbl_cache, 2, 0)
-        self.cache_folder_edit = QLineEdit()
-        self.cache_folder_edit.setPlaceholderText("…/UnrealExport  (receives .fbx / .tga from Unreal)")
-        grid.addWidget(self.cache_folder_edit, 2, 1)
-        cache_btn = QPushButton("Browse")
-        cache_btn.clicked.connect(self.browse_cache)
-        grid.addWidget(cache_btn, 2, 2)
+        # Row 2 — what got auto-detected. No engine field: if UE is installed we
+        # find it, and if it isn't, a path picker would not help.
+        grid.addWidget(QLabel("Editor Instance:"), 2, 0)
+        self.engine_label = QLabel()
+        self.engine_label.setWordWrap(True)
+        grid.addWidget(self.engine_label, 2, 1, 1, 2)
 
-        # Row 3 — local Unreal Engine install (assumes UE is installed), used
-        # to launch UnrealEditor-Cmd.exe / UE4Editor-Cmd.exe for the "Run UE Export" button.
-        lbl_engine = QLabel("Unreal Engine install:")
-        lbl_engine.setToolTip("Folder containing Engine/Binaries/Win64 (e.g. …/UE_4.27 or …/UE_5.7)")
-        grid.addWidget(lbl_engine, 3, 0)
-        self.engine_root_edit = QLineEdit()
-        self.engine_root_edit.setPlaceholderText("…/UE_4.27 or …/UE_5.7  (contains Engine/Binaries/Win64)")
-        grid.addWidget(self.engine_root_edit, 3, 1)
-        engine_btn = QPushButton("Browse")
-        engine_btn.clicked.connect(self.browse_engine)
-        grid.addWidget(engine_btn, 3, 2)
-
-        # The export folder is the single source for exported assets; these two
-        # names are what the rest of the form and the material worker read.
-        self.bulk_folder_edit = self.cache_folder_edit
-        self.input_folder_edit = self.cache_folder_edit
-
-        # Restore previously saved folder paths from userdata settings.
         # The settings section is still "UnrealConverter" after the rename to
         # UnrealPorter — it is an on-disk key, never shown to the user, and
         # renaming it would silently orphan everyone's saved paths.
-        saved_project = get_settings_value("UnrealConverter", "project_folder", "")
-        saved_bulk = get_settings_value("UnrealConverter", "bulk_folder", "")
-        saved_output = get_settings_value("UnrealConverter", "output_folder", "")
-        saved_cache = get_settings_value("UnrealConverter", "cache_folder", "")
-        saved_engine = get_settings_value("UnrealConverter", "engine_root", "")
+        saved_uproject = get_settings_value("UnrealConverter", "uproject_path", "")
+        if not saved_uproject:
+            # Carry the old Content-folder setting over rather than making
+            # existing users re-browse.
+            legacy_content = get_settings_value("UnrealConverter", "project_folder", "")
+            if legacy_content:
+                saved_uproject = self._uproject_beside(legacy_content)
+        if saved_uproject:
+            self.uproject_edit.setText(saved_uproject.replace("\\", "/"))
 
-        if saved_project:
-            self.project_folder_edit.setText(saved_project)
-        # The old build had a separate "UE Bulk Export folder"; carry whichever
-        # of the two the user had filled in over to the merged field rather than
-        # making them re-browse for it.
-        if saved_cache or saved_bulk:
-            self.cache_folder_edit.setText(saved_cache or saved_bulk)
-        if saved_engine:
-            self.engine_root_edit.setText(saved_engine)
+        self._populate_addons()
+        active_addon = get_settings_value("UnrealConverter", "addon", "") or get_addon_name() or ""
+        if active_addon:
+            idx = self.addon_combo.findText(active_addon)
+            if idx >= 0:
+                self.addon_combo.setCurrentIndex(idx)
+            else:
+                self.addon_combo.setEditText(active_addon)
 
-        addon_dir = get_addon_dir()
-        if saved_output:
-            self.output_folder_edit.setText(saved_output)
-        elif addon_dir:
-            # Output is the addon content root; the converter writes into its
-            # maps/ models/ materials/ subfolders.
-            self.output_folder_edit.setText(str(addon_dir).replace("\\", "/"))
-
-        # Save to userdata whenever fields change
-        self.project_folder_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "project_folder", text.strip())
-        )
-        self.output_folder_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "output_folder", text.strip())
-        )
-        self.cache_folder_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "cache_folder", text.strip())
-        )
-        self.engine_root_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "engine_root", text.strip())
-        )
+        self.uproject_edit.textChanged.connect(self._on_paths_changed)
+        self.addon_combo.currentTextChanged.connect(self._on_paths_changed)
+        self._refresh_path_labels()
         return box
+
+    @staticmethod
+    def _uproject_beside(content_dir: str) -> str:
+        """The .uproject next to a project's Content folder, or ""."""
+        import glob
+        root = os.path.dirname(os.path.normpath(content_dir))
+        matches = glob.glob(os.path.join(root, "*.uproject"))
+        return matches[0] if matches else ""
+
+    def _populate_addons(self):
+        cs2 = get_cs2_path()
+        if not cs2:
+            return
+        addons = set()
+        for base in ("content/csgo_addons", "game/csgo_addons"):
+            addon_path = pathlib.Path(cs2) / base
+            if addon_path.exists():
+                addons.update(item.name for item in addon_path.iterdir()
+                              if item.is_dir() and not item.name.startswith("."))
+        self.addon_combo.addItems(sorted(addons))
+
+    def _on_paths_changed(self, _text=None):
+        uproject = self.uproject_edit.text().strip()
+        set_settings_value("UnrealConverter", "uproject_path", uproject)
+        set_settings_value("UnrealConverter", "addon", self.addon_combo.currentText().strip())
+        self._refresh_path_labels()
+        if uproject != getattr(self, "_analyzed_uproject", None):
+            self.ensure_analysis()
+
+    def _refresh_path_labels(self):
+        install = self.engine_install()
+        if install:
+            self.engine_label.setText(f"Unreal Engine, {install.version}")
+            self.engine_label.setStyleSheet("color: #7ac07a;")
+        else:
+            self.engine_label.setText("None, please install Unreal Engine 4.27 or 5.x")
+            self.engine_label.setStyleSheet("color: #d08a4a;")
+
+        self._log_export_cache()
+
+    def _log_export_cache(self):
+        """Report the engine instance and export cache to the console when they change."""
+        if not hasattr(self, "console"):
+            return
+        install = self.engine_install()
+        install_root = install.root if install else None
+        if install_root != getattr(self, "_logged_install_root", None):
+            self._logged_install_root = install_root
+            if install:
+                self.console.info(f"Editor Instance path : {install.root}")
+            else:
+                self.console.warn(
+                    "No Unreal Engine install found. Install Unreal Engine (4.27 or 5.x) to "
+                    "export assets — conversion of already-exported files still works."
+                )
+
+        tmp = self.tmp_dir()
+        if tmp == getattr(self, "_logged_tmp", None):
+            return
+        self._logged_tmp = tmp
+        if tmp:
+            self.console.info(f"Export cache: {tmp}")
+        else:
+            self.console.warn("Export cache: select a target addon to set one.")
+
+    # derived paths — the form has three inputs and computes the rest
+
+    def uproject_path(self) -> str:
+        return self.uproject_edit.text().strip()
+
+    def project_dir(self) -> str:
+        """The project's Content folder, which is what the bridge mounts."""
+        uproject = self.uproject_path()
+        return os.path.join(os.path.dirname(uproject), "Content").replace("\\", "/") if uproject else ""
+
+    def output_dir(self) -> str:
+        """The addon content root; the converter writes maps/ models/ materials/ under it."""
+        addon = self.addon_combo.currentText().strip()
+        cs2 = get_cs2_path()
+        if not addon or not cs2:
+            return ""
+        return str(pathlib.Path(cs2) / "content" / "csgo_addons" / addon).replace("\\", "/")
+
+    def tmp_dir(self) -> str:
+        """Where UE exports .fbx/.tga, and where the converter reads them back."""
+        output = self.output_dir()
+        return f"{output}/{TMP_SUBDIR}" if output else ""
+
+    def engine_install(self):
+        return install_for_project(self.uproject_path(), self._installs)
 
     def _build_general_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        types_box = QGroupBox("Convert file types")
-        tv = QVBoxLayout(types_box)
-        for t in FILE_TYPES:
-            cb = QCheckBox(f"{t}  ->  {FILE_TYPE_TARGETS[t]}")
-            cb.setToolTip(FILE_TYPE_DESCRIPTIONS[t])
-            cb.setChecked(get_settings_bool("UnrealConverter", f"type_enabled_{t}", True))
-            cb.stateChanged.connect(
-                lambda state, t=t: set_settings_bool("UnrealConverter", f"type_enabled_{t}", state == Qt.Checked)
-            )
-            self.type_checks[t] = cb
-            tv.addWidget(cb)
-        layout.addWidget(types_box)
+        scope_box = QGroupBox("Asset list")
+        scope_layout = QVBoxLayout(scope_box)
+        self.select_assets_button = QPushButton("Select assets")
+        self.select_assets_button.setToolTip(
+            "Pick individual assets from the project tree and filter by type. "
+            "Anything the selection references — a map's meshes, a mesh's materials, "
+            "a material's textures — is added automatically. Available once the "
+            "project has been analyzed."
+        )
+        self.select_assets_button.setEnabled(False)
+        self.select_assets_button.clicked.connect(self.on_select_assets)
+        scope_layout.addWidget(self.select_assets_button)
+        self.scope_label = QLabel()
+        self.scope_label.setWordWrap(True)
+        self.scope_label.setStyleSheet("color: #9D9D9D;")
+        scope_layout.addWidget(self.scope_label)
+        layout.addWidget(scope_box)
 
         settings_box = QGroupBox("General settings")
         sv = QVBoxLayout(settings_box)
-        self.strip_prefixes_check = QCheckBox("Remove Unreal's file prefixes")
-        self.strip_prefixes_check.setToolTip("Strips prefixes like SM_, BP_, MI_, T_, SK_ from converted asset names (e.g. SM_Chair → chair.vmdl)")
-        strip_saved = get_settings_value("UnrealConverter", "strip_ue_prefixes", "false").lower() == "true"
+        self.strip_prefixes_check = QCheckBox("Source 2 naming style")
+        self.strip_prefixes_check.setToolTip(
+            "Rename converted assets the way Source 2 content is named: lowercase, "
+            "Unreal's type prefix dropped, PascalCase split into snake_case "
+            "(SM_ChairLeg → chair_leg.vmdl)."
+        )
+        strip_saved = get_settings_value("UnrealConverter", "strip_ue_prefixes", "true").lower() == "true"
         self.strip_prefixes_check.setChecked(strip_saved)
-        self.strip_prefixes_check.stateChanged.connect(
-            lambda state: set_settings_value("UnrealConverter", "strip_ue_prefixes", "true" if state == Qt.Checked else "false")
+        self.strip_prefixes_check.toggled.connect(
+            lambda checked: set_settings_value("UnrealConverter", "strip_ue_prefixes", "true" if checked else "false")
         )
         sv.addWidget(self.strip_prefixes_check)
         layout.addWidget(settings_box)
 
+        layout.addWidget(self._build_models_box())
+        layout.addWidget(self._build_textures_box())
         layout.addStretch(1)
         return tab
 
-    def _build_scenes_tab(self):
-        tab = QWidget()
-        form = QFormLayout(tab)
-        self.scene_entity_combo = QComboBox()
-        self.scene_entity_combo.addItems(["prop_static", "prop_dynamic", "prop_physics"])
-        saved_entity = get_settings_value("UnrealConverter", "scene_entity_class", "prop_static")
-        idx = self.scene_entity_combo.findText(saved_entity)
-        if idx != -1:
-            self.scene_entity_combo.setCurrentIndex(idx)
-        self.scene_entity_combo.currentTextChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "scene_entity_class", text)
-        )
-        form.addRow("Place actors as:", self.scene_entity_combo)
-        note = QLabel(
-            "Reads map actors directly from the UE project via the CUE4Parse "
-            "bridge (mesh ref + transform) and writes a vmap of entities. Actor "
-            "transforms go through the shared UE→Source transform. Instanced "
-            "foliage uses per-instance data (handled separately)."
-        )
-        note.setWordWrap(True)
-        form.addRow(note)
-        return tab
-
-    def _build_models_tab(self):
-        tab = QWidget()
-        form = QFormLayout(tab)
+    def _build_models_box(self):
+        box = QGroupBox("Models")
+        form = QFormLayout(box)
         self.model_scale_combo = QComboBox()
-        self.model_scale_combo.addItem("1 : 1  (keep unit count)", UnitScale.ONE_TO_ONE)
-        self.model_scale_combo.addItem("cm → inch  (physically correct)", UnitScale.CM_TO_INCH)
+        # Unreal authors in centimetres: "cm" keeps the unit count as-is, "inch"
+        # converts. Order matters — model_unit_scale_idx is saved by index.
+        self.model_scale_combo.addItem("cm", UnitScale.ONE_TO_ONE)
+        self.model_scale_combo.addItem("inch", UnitScale.CM_TO_INCH)
+        self.model_scale_combo.setToolTip(
+            "cm keeps Unreal's unit count 1:1. inch converts cm → inch (physically correct)."
+        )
         saved_scale_idx = int(get_settings_value("UnrealConverter", "model_unit_scale_idx", 0))
         if 0 <= saved_scale_idx < self.model_scale_combo.count():
             self.model_scale_combo.setCurrentIndex(saved_scale_idx)
         self.model_scale_combo.currentIndexChanged.connect(
             lambda idx: set_settings_value("UnrealConverter", "model_unit_scale_idx", idx)
         )
-        form.addRow("Unit scale:", self.model_scale_combo)
-        self.model_vmdl_check = QCheckBox("Generate .vmdl wrapper referencing the mesh")
-        self.model_vmdl_check.setChecked(get_settings_bool("UnrealConverter", "model_generate_vmdl", True))
-        self.model_vmdl_check.stateChanged.connect(
-            lambda state: set_settings_bool("UnrealConverter", "model_generate_vmdl", state == Qt.Checked)
+
+        self.model_graybox_check = QCheckBox("Fallback material")
+        self.model_graybox_check.setToolTip(
+            "Point converted models at the global fallback material with a graybox "
+            "texture instead of their own converted material."
         )
-        form.addRow(self.model_vmdl_check)
-        self.model_graybox_check = QCheckBox("Use global fallback material with graybox texture")
         self.model_graybox_check.setChecked(get_settings_bool("UnrealConverter", "model_graybox_fallback", False))
-        self.model_graybox_check.stateChanged.connect(
-            lambda state: set_settings_bool("UnrealConverter", "model_graybox_fallback", state == Qt.Checked)
+        self.model_graybox_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "model_graybox_fallback", checked)
         )
-        form.addRow(self.model_graybox_check)
-        note = QLabel(
-            "Wraps an exported FBX/glTF mesh in a .vmdl. Pivot/orientation uses "
-            "the shared UE→Source transform (Y mirror, Z-up preserved). Nanite "
-            "meshes must be exported as regular geometry from Unreal first."
+
+        scale_row = QHBoxLayout()
+        scale_row.setContentsMargins(0, 0, 0, 0)
+        scale_row.addWidget(self.model_scale_combo, 1)
+        scale_row.addWidget(self.model_graybox_check)
+        form.addRow("Unit Scale:", scale_row)
+
+        self.model_lods_check = QCheckBox("LODs")
+        self.model_lods_check.setToolTip(
+            "Build an LOD group per _LOD0..N mesh found in the exported FBX. "
+            "Off imports only the highest-detail mesh."
         )
-        note.setWordWrap(True)
-        form.addRow(note)
-        return tab
+        self.model_lods_check.setChecked(get_settings_bool("UnrealConverter", "model_import_lods", True))
+        self.model_lods_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "model_import_lods", checked)
+        )
+
+        self.model_collision_check = QCheckBox("Collision")
+        self.model_collision_check.setToolTip(
+            "Use the FBX's UCX_/UBX_ collision meshes as the physics hull. "
+            "Off generates a hull from the render mesh instead."
+        )
+        self.model_collision_check.setChecked(get_settings_bool("UnrealConverter", "model_import_collision", True))
+        self.model_collision_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "model_import_collision", checked)
+        )
+
+        mesh_row = QHBoxLayout()
+        mesh_row.setContentsMargins(0, 0, 0, 0)
+        mesh_row.addWidget(self.model_lods_check)
+        mesh_row.addWidget(self.model_collision_check)
+        mesh_row.addStretch(1)
+        form.addRow("Import:", mesh_row)
+        return box
+
+    def _build_textures_box(self):
+        box = QGroupBox("Textures")
+        form = QFormLayout(box)
+        self.tex_format_combo = QComboBox()
+        self.tex_format_combo.addItems(["tga", "png"])
+        saved_format = get_settings_value("UnrealConverter", "tex_output_format", "tga")
+        fmt_idx = self.tex_format_combo.findText(saved_format)
+        if fmt_idx != -1:
+            self.tex_format_combo.setCurrentIndex(fmt_idx)
+        self.tex_format_combo.currentTextChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "tex_output_format", text)
+        )
+        form.addRow("Output texture format:", self.tex_format_combo)
+        return box
 
     def _build_materials_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        layout.addWidget(QLabel("Master Material CS2 Shader & Texture Slot Swap:"))
+        top_row = QHBoxLayout()
+        top_row.addWidget(QLabel("Master Material CS2 Shader & Texture Slot Swap:"))
+        top_row.addStretch()
+
+        self.reconvert_mats_button = QPushButton("Re-convert Materials")
+        self.reconvert_mats_button.setToolTip(
+            "Re-converts only the materials using current shader and slot mappings, "
+            "without re-converting models or maps."
+        )
+        self.reconvert_mats_button.clicked.connect(self.on_reconvert_materials)
+        self.reconvert_mats_button.setEnabled(False)
+        top_row.addWidget(self.reconvert_mats_button)
+
+        layout.addLayout(top_row)
 
         from .master_material_list import MasterMaterialList
         self.master_mat_list = MasterMaterialList()
         self.master_mat_list.map_slots_requested.connect(self._on_map_master_slots)
         layout.addWidget(self.master_mat_list, 1)
-
-        note = QLabel(
-            "Groups Material Instances by their parent Master Material. Select the target "
-            "CS2 shader and configure texture slot assignments per Master Material. "
-            "All Material Instances belonging to a Master Material inherit its shader and slot mappings."
-        )
-        note.setWordWrap(True)
-        layout.addWidget(note)
         return tab
 
     def _populate_master_materials_table(self, master_groups: dict):
@@ -446,6 +621,12 @@ class UnrealPorterWidget(QDialog):
         return {name: info.get("slot_overrides") or {}
                 for name, info in getattr(self, "master_groups", {}).items()}
 
+    def master_param_overrides(self) -> dict:
+        """{master material name: scalar/vector/switch -> vmat param overrides}
+        from the Materials tab's Params mapping."""
+        return {name: info.get("param_overrides") or {}
+                for name, info in getattr(self, "master_groups", {}).items()}
+
     @Slot(str)
     def _on_map_master_slots(self, master_name: str):
         if not hasattr(self, "master_groups") or master_name not in self.master_groups:
@@ -453,41 +634,37 @@ class UnrealPorterWidget(QDialog):
         info = self.master_groups[master_name]
         textures = info.get("textures", {})
         initial_overrides = info.get("slot_overrides", {})
+        initial_param_overrides = info.get("param_overrides", {})
+
+        # The Params tab needs one representative value per parameter name. Each
+        # instance's mat_data already has the master-chain-merged scalars/
+        # vectors/switches; union them across instances so every name the master
+        # exposes is editable, with the first non-empty value as a preview.
+        scalars, vectors, switches = {}, {}, {}
+        for _stem, _path, mat_data in info.get("instances", []):
+            for k, v in (mat_data.get("scalars") or {}).items():
+                scalars.setdefault(k, v)
+            for k, v in (mat_data.get("vectors") or {}).items():
+                vectors.setdefault(k, v)
+            for k, v in (mat_data.get("switches") or {}).items():
+                switches.setdefault(k, v)
 
         from .slot_mapping import SlotMappingDialog
-        dlg = SlotMappingDialog(master_name, textures, initial_overrides, parent=self)
+        dlg = SlotMappingDialog(
+            master_name, textures, initial_overrides,
+            scalars=scalars, vectors=vectors, switches=switches,
+            initial_param_overrides=initial_param_overrides, parent=self,
+        )
         if dlg.exec() == QDialog.Accepted:
             info["slot_overrides"] = dlg.result_overrides
+            info["param_overrides"] = dlg.result_param_overrides
             self.master_mat_list.refresh(master_name, info)
-            count = len(dlg.result_overrides)
-            self.console.info(f"Updated texture slot mapping for {master_name} ({count} override(s) set).")
-
-    def _build_other_tab(self):
-        tab = QWidget()
-        form = QFormLayout(tab)
-        self.tex_split_check = QCheckBox("Split packed textures (ORM / RMA / RMAH)")
-        self.tex_split_check.setChecked(get_settings_bool("UnrealConverter", "tex_split_packed", True))
-        self.tex_split_check.stateChanged.connect(
-            lambda state: set_settings_bool("UnrealConverter", "tex_split_packed", state == Qt.Checked)
-        )
-        form.addRow(self.tex_split_check)
-        self.tex_format_combo = QComboBox()
-        self.tex_format_combo.addItems(["tga", "png"])
-        saved_format = get_settings_value("UnrealConverter", "tex_output_format", "tga")
-        fmt_idx = self.tex_format_combo.findText(saved_format)
-        if fmt_idx != -1:
-            self.tex_format_combo.setCurrentIndex(fmt_idx)
-        self.tex_format_combo.currentTextChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "tex_output_format", text)
-        )
-        form.addRow("Output texture format:", self.tex_format_combo)
-        note = QLabel(
-            "Converts textures to a Source-friendly format and splits packed "
-            "channel masks into separate maps ready for vtex compilation."
-        )
-        note.setWordWrap(True)
-        form.addRow(note)
-        return tab
+            slot_count = len(dlg.result_overrides)
+            param_count = len(dlg.result_param_overrides)
+            self.console.info(
+                f"Updated mapping for {master_name} "
+                f"({slot_count} slot(s), {param_count} param(s))."
+            )
 
     # helpers
 
@@ -495,11 +672,12 @@ class UnrealPorterWidget(QDialog):
         return self.model_scale_combo.currentData()
 
     def is_enabled(self, type_name):
-        cb = self.type_checks.get(type_name)
-        return cb.isChecked() if cb else False
+        """Whether a file type converts. The checkboxes live in the Select assets
+        dialog now, so the setting is the source of truth rather than a widget."""
+        return get_settings_bool("UnrealConverter", f"type_enabled_{type_name}", True)
 
     def get_calculated_rel_path(self):
-        path = self.output_folder_edit.text().replace("\\", "/")
+        path = self.output_dir()
         parts = path.split("/")
         m_idx = -1
         for i, p in enumerate(parts):
@@ -509,26 +687,12 @@ class UnrealPorterWidget(QDialog):
             return "/".join(parts[m_idx:])
         return ""
 
-    def browse_project(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select UE Project 'Content' Folder")
-        if folder:
-            self.project_folder_edit.setText(folder)
-
-    def browse_output(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Output Folder")
-        if folder:
-            self.output_folder_edit.setText(folder)
-
-    def browse_cache(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select UE Export Folder")
-        if folder:
-            self.cache_folder_edit.setText(folder)
-            self._scan_bulk(folder)
-
-    def browse_engine(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Unreal Engine Install Folder")
-        if folder:
-            self.engine_root_edit.setText(folder)
+    def browse_uproject(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select Unreal Engine Project", "", "Unreal Project (*.uproject);;All Files (*)"
+        )
+        if path:
+            self.uproject_edit.setText(path.replace("\\", "/"))
 
     def _console_context_menu(self, pos: QPoint):
         menu = self.console.createStandardContextMenu()
@@ -564,9 +728,9 @@ class UnrealPorterWidget(QDialog):
         except Exception as e:
             self.console.error(f"Failed to save log: {e}")
 
-    # UE export
+    # prepare assets
 
-    _WORKER_ATTRS = ("worker", "scan_worker", "scene_worker", "ue_export_worker")
+    _WORKER_ATTRS = ("worker", "prepare_worker", "scene_worker", "refs_worker", "analyze_worker")
 
     def closeEvent(self, event):
         """Closing while a worker runs frees the widgets it's still emitting
@@ -598,174 +762,351 @@ class UnrealPorterWidget(QDialog):
         worker.start()
         return True
 
-    def on_run_ue_export(self):
-        engine_root = self.engine_root_edit.text().strip()
-        project_dir = self.project_folder_edit.text().strip()
-        output_dir = self.cache_folder_edit.text().strip()
-        if not engine_root or not os.path.isdir(engine_root):
-            QMessageBox.warning(self, "Error", "Set a valid Unreal Engine install folder first.")
-            return
-        if not project_dir or not os.path.isdir(project_dir):
-            QMessageBox.warning(self, "Error", "Set a valid UE Project Content folder first.")
-            return
-        if not output_dir:
-            QMessageBox.warning(self, "Error", "Set a UE Export cache folder first.")
-            return
+    # analysis
 
-        worker = UeExportWorker(engine_root, project_dir, output_dir)
-        worker.log.connect(self._on_worker_log)
-        worker.done.connect(self._on_ue_export_done)
-        self.console.header("UE Export")
-        self.ue_export_button.setEnabled(False)
-        if not self._start_worker("ue_export_worker", worker):
-            self.ue_export_button.setEnabled(True)
+    def ensure_analysis(self, force=False):
+        """Make sure we know what is in the project before anything else runs.
 
-    @Slot(bool)
-    def _on_ue_export_done(self, success):
-        if success:
-            self.console.info(f"UE export wrote into: {self.cache_folder_edit.text().strip()}")
-        self.ue_export_button.setEnabled(True)
+        Cheap path first: if the cached manifest's fingerprint still matches the
+        project on disk, nothing runs at all.
+        """
+        from . import analysis
 
-    # scan
-
-    def on_scan(self):
-        project_dir = self.project_folder_edit.text().strip()
-        bulk_dir = self.bulk_folder_edit.text().strip()
-        output_dir = self.output_folder_edit.text().strip()
-        if not project_dir and not bulk_dir:
-            QMessageBox.warning(self, "Error", "Set a UE Project Content folder and/or a UE Export folder.")
+        uproject = self.uproject_path()
+        project_dir = self.project_dir()
+        if not uproject or not os.path.isfile(uproject) or not os.path.isdir(project_dir):
+            self._set_analysis({}, uproject)
             return
 
-        self.console.header("Scanning")
-        self.scan_button.setEnabled(False)
-        self.convert_button.setEnabled(False)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("Scanning…")
-
-        worker = ScanWorker(project_dir, bulk_dir, output_dir)
-        worker.log.connect(self._on_worker_log)
-        worker.progress.connect(self._on_progress)
-        worker.done.connect(self._on_scan_done)
-        if not self._start_worker("scan_worker", worker):
-            self.scan_button.setEnabled(True)
-            self.convert_button.setEnabled(True)
-
-    @Slot(dict)
-    def _on_scan_done(self, master_groups):
-        if master_groups:
-            self._populate_master_materials_table(master_groups)
-        else:
-            self.console.warn("No Master Materials or material instances found.")
-
-        project_dir = self.project_folder_edit.text().strip()
-        if project_dir and os.path.isdir(project_dir):
-            self._scan_project(project_dir)
-        bulk_dir = self.bulk_folder_edit.text().strip()
-        if bulk_dir and os.path.isdir(bulk_dir):
-            self._scan_bulk(bulk_dir)
-
-        self.progress_bar.setValue(self.progress_bar.maximum())
-        self.progress_bar.setFormat("Done")
-        self.scan_button.setEnabled(True)
-        self.convert_button.setEnabled(bool(master_groups))
-
-    def _scan_project(self, project_dir):
-        """Scan the raw UE project via the CUE4Parse bridge (entity data)."""
-        if not os.path.isdir(project_dir):
-            self.console.error(f"Project Content folder not found: {project_dir}")
-            return
-        from .bridge_client import UnrealBridge, BridgeError
-        bridge = UnrealBridge(project_dir)
-        if not bridge.is_available():
-            self.console.error("CUE4Parse bridge unavailable — " + bridge.why_unavailable())
-            self.console.info("Scenes/blueprints/materials from the raw project need the bridge.")
-            return
-        try:
-            info = bridge.info()
-            self.console.success(
-                f"Project mounted ({info.get('game')}): {info.get('totalFiles')} files, "
-                f"{info.get('umaps')} map(s)."
-            )
-            names = bridge.list("")  # all file keys
-        except BridgeError as e:
-            self.console.error(str(e))
-            return
-
-        hits = scan_unsupported([os.path.basename(n) for n in names])
-        if hits:
-            from .constants import get_unsupported
-            for key, matched in hits.items():
-                cat = get_unsupported(key)
-                self.console.warn(f"{cat.label}: {len(matched)} asset(s) will be skipped.")
-        else:
-            self.console.info("No obviously unsupported assets detected.")
-
-    def _scan_bulk(self, bulk_dir):
-        """Scan the UE bulk-export folder for textures/materials."""
-        if not os.path.isdir(bulk_dir):
-            if hasattr(self, "console"):
-                self.console.error(f"Bulk-export folder not found: {bulk_dir}")
-            return
-        if not hasattr(self, "master_groups") or not self.master_groups:
-            from .converter import scan_master_materials
-            master_groups = scan_master_materials("", bulk_dir, None)
-            if master_groups:
-                self._populate_master_materials_table(master_groups)
-                if hasattr(self, "console"):
-                    self.console.info(f"Bulk-export material groups detected: {len(master_groups)}")
-
-    # convert
-
-    def on_convert(self):
-        output_dir = self.output_folder_edit.text().strip()
-        if not output_dir:
-            QMessageBox.warning(self, "Error", "Set an output folder first.")
-            return
-
-        _bad_suffixes = ("models", "materials", "maps", "sounds", "particles", "panorama")
-        _out_tail = output_dir.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1].lower()
-        if _out_tail in _bad_suffixes:
-            ans = QMessageBox.warning(
-                self, "Output folder looks wrong",
-                f"The output folder ends with '{_out_tail}/'.\n\n"
-                f"The converter writes {_out_tail}/ subfolders itself — the output "
-                f"folder should be the addon content root (e.g. de_firewatch/), not a "
-                f"subfolder inside it.\n\n"
-                f"This would create duplicated paths like {_out_tail}/{_out_tail}/...\n\n"
-                f"Continue anyway?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
-            )
-            if ans != QMessageBox.Yes:
+        if not force:
+            cached = analysis.load(uproject, project_dir)
+            if cached:
+                self.console.info(
+                    f"Using cached analysis from {cached.get('analyzed_at')} "
+                    f"({len(cached.get('assets', []))} asset(s)) — project unchanged."
+                )
+                self._set_analysis(cached, uproject)
                 return
 
-        self.console.header("Converting")
+        self.console.header("Analyzing project")
+        self.console.info(f"{os.path.basename(uproject)} — reading assets through the CUE4Parse bridge…")
+        self._set_analysis({}, uproject)
+        self.progress_bar.setFormat("Analyzing…")
+
+        worker = AnalyzeWorker(uproject, project_dir)
+        worker.log.connect(self._on_worker_log)
+        worker.progress.connect(self._on_progress)
+        worker.done.connect(lambda manifest, u=uproject: self._on_analysis_done(manifest, u))
+        self._start_worker("analyze_worker", worker)
+
+    @Slot(dict, str)
+    def _on_analysis_done(self, manifest, uproject):
+        if manifest:
+            info = manifest.get("info") or {}
+            self.console.success(
+                f"Analyzed {os.path.basename(uproject)} ({info.get('game')}): "
+                f"{len(manifest.get('assets', []))} asset(s), {info.get('umaps')} map(s)."
+            )
+        else:
+            self.console.error("Analysis failed — Prepare Assets stays disabled until the project can be read.")
+        self._set_analysis(manifest, uproject)
+        self.progress_bar.setFormat("Idle")
+
+    def _update_button_states(self):
+        uproject = self.uproject_path() if hasattr(self, "uproject_path") else None
+        analyzed = bool(getattr(self, "_analyzed_uproject", None)) and bool(getattr(self, "_project_assets", []))
+        has_selection = bool(getattr(self, "_selected_assets", set())) or analyzed
+        has_masters = bool(getattr(self, "master_groups", None))
+
+        if hasattr(self, "select_assets_button"):
+            self.select_assets_button.setEnabled(analyzed)
+        if hasattr(self, "reanalyze_button"):
+            self.reanalyze_button.setEnabled(bool(uproject) and os.path.isfile(uproject or ""))
+        if hasattr(self, "convert_button"):
+            self.convert_button.setEnabled(analyzed and has_selection)
+        if hasattr(self, "reconvert_mats_button"):
+            self.reconvert_mats_button.setEnabled(analyzed and has_masters)
+
+    # analysis
+
+    def ensure_analysis(self, force=False):
+        """Make sure we know what is in the project before anything else runs.
+
+        Cheap path first: if the cached manifest's fingerprint still matches the
+        project on disk, nothing runs at all.
+        """
+        from . import analysis
+
+        uproject = self.uproject_path()
+        project_dir = self.project_dir()
+        if not uproject or not os.path.isfile(uproject) or not os.path.isdir(project_dir):
+            self._set_analysis({}, uproject)
+            return
+
+        if not force:
+            cached = analysis.load(uproject, project_dir)
+            if cached:
+                self.console.info(
+                    f"Using cached analysis from {cached.get('analyzed_at')} "
+                    f"({len(cached.get('assets', []))} asset(s)) — project unchanged."
+                )
+                self._set_analysis(cached, uproject)
+                return
+
+        self.console.header("Analyzing project")
+        self.console.info(f"{os.path.basename(uproject)} — reading assets through the CUE4Parse bridge…")
+        self._set_analysis({}, uproject)
+        self.progress_bar.setFormat("Analyzing…")
+
+        worker = AnalyzeWorker(uproject, project_dir)
+        worker.log.connect(self._on_worker_log)
+        worker.progress.connect(self._on_progress)
+        worker.done.connect(lambda manifest, u=uproject: self._on_analysis_done(manifest, u))
+        self._start_worker("analyze_worker", worker)
+
+    @Slot(dict, str)
+    def _on_analysis_done(self, manifest, uproject):
+        if manifest:
+            info = manifest.get("info") or {}
+            self.console.success(
+                f"Analyzed {os.path.basename(uproject)} ({info.get('game')}): "
+                f"{len(manifest.get('assets', []))} asset(s), {info.get('umaps')} map(s)."
+            )
+        else:
+            self.console.error("Analysis failed — project cannot be read.")
+        self._set_analysis(manifest, uproject)
+        self.progress_bar.setFormat("Idle")
+
+    def _set_analysis(self, manifest, uproject):
+        """Adopt an analysis result and gate everything that depends on it."""
+        from .converter import apply_saved_swaps
+
+        self._analyzed_uproject = uproject if manifest else None
+        self._project_assets = list(manifest.get("assets", [])) if manifest else []
+        self._selected_assets = set(self._project_assets) if self._project_assets else set()
+
+        groups = dict(manifest.get("materials") or {}) if manifest else {}
+        if groups:
+            self._populate_master_materials_table(apply_saved_swaps(groups, self.output_dir()))
+            self.console.info(f"{len(groups)} Master Material group(s) loaded from the analysis.")
+        elif manifest:
+            self.console.warn("No Master Materials found in the project.")
+
+        self._update_scope_label()
+        self._update_button_states()
+
+    def _update_scope_label(self):
+        """Counts per type for whatever is actually going to be ported."""
+        from .asset_selection import format_counts
+
+        keys = self._selected_assets or self._project_assets
+        if not keys:
+            self.scope_label.setText("No assets — analyze a project first.")
+            return
+        self.scope_label.setText(format_counts(keys) or f"{len(keys)} asset(s)")
+
+    def on_select_assets(self):
+        if not self._project_assets:
+            QMessageBox.information(
+                self, "Not analyzed yet",
+                "Analyze a project first to choose assets.",
+            )
+            return
+
+        from .asset_selection import AssetSelectionDialog
+        dlg = AssetSelectionDialog(self._project_assets, self._selected_assets, parent=self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+
+        if not dlg.selected_keys:
+            self._selected_assets = set(self._project_assets)
+            self.console.info("Nothing ticked — the whole project will be ported.")
+            self._update_scope_label()
+            self._update_button_states()
+            return
+
+        self.console.header("Resolving references")
+        self.console.info(f"{len(dlg.selected_keys)} asset(s) picked; following their references…")
+        self.select_assets_button.setEnabled(False)
+        worker = ExpandRefsWorker(self.project_dir(), dlg.selected_keys, self._project_assets)
+        worker.log.connect(self._on_worker_log)
+        worker.progress.connect(self._on_progress)
+        worker.done.connect(self._on_refs_expanded)
+        if not self._start_worker("refs_worker", worker):
+            self.select_assets_button.setEnabled(True)
+
+    @Slot(set)
+    def _on_refs_expanded(self, selected):
+        self._selected_assets = selected
+        self.select_assets_button.setEnabled(True)
+        self.progress_bar.setValue(self.progress_bar.maximum())
+        self.progress_bar.setFormat("Done")
+        self.console.success(f"Port scope: {len(selected)} asset(s) including references.")
+        self._update_scope_label()
+        self._update_button_states()
+
+    def _scan_tmp(self):
+        """Fallback: read material groups out of an export cache.
+
+        Only reached when there is no analysis to take them from — an export
+        cache left by a previous session with no project currently selected.
+        """
+        tmp_dir = self.tmp_dir()
+        if not tmp_dir or not os.path.isdir(tmp_dir):
+            return
+        if getattr(self, "master_groups", None):
+            return
+        from .converter import scan_master_materials
+        master_groups = scan_master_materials("", tmp_dir, None)
+        if master_groups:
+            self._populate_master_materials_table(master_groups)
+            self.console.info(f"Found an existing export cache: {len(master_groups)} material group(s).")
+            self._update_button_states()
+
+    def on_clean_cache(self):
+        tmp_dir = self.tmp_dir()
+        if not tmp_dir or not os.path.isdir(tmp_dir):
+            self.console.info("Nothing to clean — no export cache for this addon.")
+            return
+        if QMessageBox.question(
+            self, "Clean cache",
+            f"Delete the export cache?\n\n{tmp_dir}\n\n"
+            "Missing assets will be re-exported from Unreal Engine on next Convert.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        ) != QMessageBox.Yes:
+            return
+        try:
+            shutil.rmtree(tmp_dir)
+        except OSError as e:
+            self.console.error(f"Failed to clean cache: {e}")
+            return
+        self.console.success(f"Removed {tmp_dir}")
+        self.master_groups = {}
+        self.master_mat_list.populate({})
+        self._update_button_states()
+
+    # convert & stage pipeline
+
+    def _find_missing_tmp_exports(self, scope_assets) -> list:
+        tmp_dir = self.tmp_dir()
+        if not tmp_dir or not os.path.isdir(tmp_dir):
+            return list(scope_assets)
+
+        from .asset_selection import asset_stem, classify
+        exported_stems = set()
+        for root_path, _, filenames in os.walk(tmp_dir):
+            for filename in filenames:
+                stem = os.path.splitext(filename)[0].lower()
+                exported_stems.add(stem)
+
+        missing = []
+        for key in scope_assets:
+            cat = classify(key)
+            if cat in ("Models", "Textures"):
+                stem = asset_stem(key)
+                if stem not in exported_stems:
+                    missing.append(key)
+        return missing
+
+    @Slot()
+    def on_convert(self):
+        project_dir = self.project_dir()
+        output_dir = self.output_dir()
+        if not project_dir or not os.path.isdir(project_dir):
+            QMessageBox.warning(self, "Error", f"No Content folder next to the project:\n{project_dir}")
+            return
+        if not output_dir:
+            QMessageBox.warning(self, "Error", "Select a target addon first.")
+            return
+        if not self._project_assets:
+            QMessageBox.warning(self, "Project not analyzed", "Analyze project first.")
+            return
+
+        # STAGE 1: Resolving port scope and checking export cache
+        self.console.header("(1/6) Resolving port scope and checking export cache")
+        scope_assets = list(self._selected_assets) if self._selected_assets else list(self._project_assets)
+        self.console.info(f"Port scope: {len(scope_assets)} asset(s) queued for conversion.")
+
+        missing = self._find_missing_tmp_exports(scope_assets)
+        if missing:
+            install = self.engine_install()
+            if install is None:
+                QMessageBox.warning(
+                    self, "No Unreal Engine found",
+                    "Some assets are missing from the export cache and require Unreal Engine to export.\n\n"
+                    "Please install Unreal Engine (4.27 or 5.x) or point to its install root.",
+                )
+                return
+
+            # STAGE 2: Preparing assets — Running Unreal Engine
+            self.console.header("(2/6) Preparing assets — Running Unreal Engine")
+            self.console.info(f"Preparing {len(missing)} missing asset(s) using {install.label}...")
+            self.convert_button.setEnabled(False)
+            self.reanalyze_button.setEnabled(False)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setFormat("Running Unreal Engine…")
+
+            worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing)
+            worker.log.connect(self._on_worker_log)
+            worker.progress.connect(self._on_progress)
+            worker.done.connect(self._on_auto_prepare_done)
+            if not self._start_worker("prepare_worker", worker):
+                self._update_button_states()
+                return
+        else:
+            self.console.header("(2/6) Preparing assets — Export cache up-to-date")
+            self.console.info("All required assets are present in the export cache — skipping Unreal Engine export.")
+            self._start_conversion_pipeline()
+
+    @Slot(bool)
+    def _on_auto_prepare_done(self, success):
+        if not success:
+            self.console.error("Asset preparation failed — conversion aborted.")
+            self._update_button_states()
+            return
+        self.console.success("Asset preparation completed successfully.")
+        self._start_conversion_pipeline()
+
+    def _start_conversion_pipeline(self):
+        output_dir = self.output_dir()
         did_something = False
 
+        # STAGE 3: Converting Master Materials & Material Instances
+        self.console.header("(3/6) Converting Master Materials & Material Instances")
         if self.is_enabled("Textures") or self.is_enabled("Materials"):
             did_something = self._convert_materials(output_dir) or did_something
+        else:
+            self.console.info("Materials/Textures disabled — skipping stage 3.")
 
+        # STAGE 4 & 5: Models & Scenes/Maps
         if self.is_enabled("Scenes") or self.is_enabled("Models") or self.is_enabled("Blueprints"):
+            self.console.header("(4/6) & (5/6) Converting Models, Blueprints & Maps")
             did_something = self._convert_scenes_models(output_dir) or did_something
+        else:
+            self._finish_conversion_pipeline()
 
-        if not did_something:
-            self.console.warn("No file types enabled — nothing to convert.")
+    def _finish_conversion_pipeline(self):
+        # STAGE 6: Finalizing conversion
+        self.console.header("(6/6) Finalizing conversion & writing manifests")
+        self.console.success("Conversion finished successfully!")
+        self.progress_bar.setValue(self.progress_bar.maximum())
+        self.progress_bar.setFormat("Done")
+        self._update_button_states()
 
     def _convert_scenes_models(self, output_dir):
-        project_dir = self.project_folder_edit.text().strip()
+        project_dir = self.project_dir()
         if not project_dir or not os.path.isdir(project_dir):
-            self.console.error("Scenes/Models/Blueprints need a valid UE Project Content folder.")
+            self.console.error("Scenes/Models/Blueprints need a valid .uproject with a Content folder.")
             return False
 
         from .scene_worker import SceneModelsWorker
-        self.scan_button.setEnabled(False)
         self.convert_button.setEnabled(False)
         self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("Starting…")
+        self.progress_bar.setFormat("Converting Models/Scenes…")
 
         worker = SceneModelsWorker(
             project_dir=project_dir,
-            bulk_dir=self.bulk_folder_edit.text().strip(),
+            bulk_dir=self.tmp_dir(),
             output_dir=output_dir,
             do_scenes=self.is_enabled("Scenes"),
             do_models=self.is_enabled("Models"),
@@ -776,13 +1117,16 @@ class UnrealPorterWidget(QDialog):
             use_graybox_fallback=self.model_graybox_check.isChecked(),
             master_shaders=self.master_shader_selection(),
             master_slot_overrides=self.master_slot_overrides(),
+            master_param_overrides=self.master_param_overrides(),
+            selected_assets=self._selected_assets or None,
+            import_lods=self.model_lods_check.isChecked(),
+            import_collision=self.model_collision_check.isChecked(),
         )
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(self._on_scenes_done)
         if not self._start_worker("scene_worker", worker):
-            self.scan_button.setEnabled(True)
-            self.convert_button.setEnabled(True)
+            self._update_button_states()
             return False
         return True
 
@@ -792,30 +1136,48 @@ class UnrealPorterWidget(QDialog):
 
     @Slot()
     def _on_scenes_done(self):
-        self.console.info("Scenes/Models conversion finished.")
-        self.progress_bar.setValue(self.progress_bar.maximum())
-        self.progress_bar.setFormat("Done")
-        self.scan_button.setEnabled(True)
-        self.convert_button.setEnabled(True)
+        self.console.info("Scenes/Models/Blueprints conversion finished.")
+        self._finish_conversion_pipeline()
 
     def _convert_materials(self, output_dir):
         if not hasattr(self, "master_groups") or not self.master_groups:
-            self.console.warn("No Master Materials loaded to convert. Run Scan first.")
+            self.console.warn("No Master Materials loaded to convert.")
             return False
 
+        from .asset_selection import asset_stem
+        scope = {asset_stem(k) for k in self._selected_assets} if self._selected_assets else None
+
         active_master_groups = {}
+        dropped = 0
         for master_name, info in self.master_groups.items():
             chk = getattr(self, "master_checkboxes", {}).get(master_name)
             combo = getattr(self, "master_shader_combos", {}).get(master_name)
             enabled = chk.isChecked() if chk else True
             selected_shader = combo.currentText() if combo else info.get("shader", "csgo_environment.vfx")
+            if not enabled:
+                continue
 
-            if enabled:
-                active_master_groups[master_name] = {
-                    "shader": selected_shader,
-                    "instances": info.get("instances", []),
-                    "enabled": True,
-                }
+            instances = info.get("instances", [])
+            if scope is not None:
+                kept = [inst for inst in instances if str(inst[0]).lower() in scope]
+                dropped += len(instances) - len(kept)
+                instances = kept
+                if not instances:
+                    continue
+
+            active_master_groups[master_name] = {
+                "shader": selected_shader,
+                "instances": instances,
+                "enabled": True,
+                # Carry the per-master UI mappings through to the worker; without
+                # these the materials-only convert path ignored both the texture
+                # slot remap and the param mapping the user just configured.
+                "slot_overrides": info.get("slot_overrides", {}),
+                "param_overrides": info.get("param_overrides", {}),
+            }
+
+        if dropped:
+            self.console.info(f"Port scope excluded {dropped} material instance(s).")
 
         if not active_master_groups:
             self.console.warn("No Master Material groups selected for conversion.")
@@ -823,22 +1185,20 @@ class UnrealPorterWidget(QDialog):
 
         total_instances = sum(len(g["instances"]) for g in active_master_groups.values())
         self.console.info(f"Converting {total_instances} material instance(s) across {len(active_master_groups)} Master Material swap group(s)…")
-        self.scan_button.setEnabled(False)
         self.convert_button.setEnabled(False)
         self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("Starting…")
+        self.progress_bar.setFormat("Converting Materials…")
 
         from .converter import MasterMaterialConvertWorker
 
         worker = MasterMaterialConvertWorker(
-            output_dir, self.bulk_folder_edit.text().strip(), active_master_groups
+            output_dir, self.tmp_dir(), active_master_groups
         )
         worker.progress.connect(self._on_progress)
         worker.file_done.connect(self._on_file_done)
         worker.finished.connect(self._on_mat_finished)
         if not self._start_worker("worker", worker):
-            self.scan_button.setEnabled(True)
-            self.convert_button.setEnabled(True)
+            self._update_button_states()
             return False
         return True
 
@@ -849,9 +1209,9 @@ class UnrealPorterWidget(QDialog):
         self.progress_bar.setValue(current)
         if total > 0:
             pct = int((current / total) * 100)
-            self.progress_bar.setFormat(f"Converting: {current}/{total} ({pct}%)")
+            self.progress_bar.setFormat(f"Processing: {current}/{total} ({pct}%)")
         else:
-            self.progress_bar.setFormat("Converting…")
+            self.progress_bar.setFormat("Processing…")
 
     @Slot(str, bool, str)
     def _on_file_done(self, name, success, message):
@@ -860,13 +1220,31 @@ class UnrealPorterWidget(QDialog):
         else:
             self.console.error(f"{name}: {message}")
 
+    @Slot()
+    def on_reconvert_materials(self):
+        output_dir = self.output_dir()
+        if not output_dir:
+            QMessageBox.warning(self, "Error", "Select a target addon first.")
+            return
+        if not getattr(self, "master_groups", None):
+            QMessageBox.warning(self, "Error", "No Master Materials loaded to convert.")
+            return
+
+        self.console.header("Re-converting Materials")
+        if hasattr(self, "reconvert_mats_button"):
+            self.reconvert_mats_button.setEnabled(False)
+        self.convert_button.setEnabled(False)
+
+        success = self._convert_materials(output_dir)
+        if not success:
+            self._update_button_states()
+
     @Slot(list, list)
     def _on_mat_finished(self, created, skipped):
         self.console.info(f"Materials done — created {len(created)}, skipped {len(skipped)}.")
         self.progress_bar.setValue(self.progress_bar.maximum())
         self.progress_bar.setFormat("Done")
-        self.scan_button.setEnabled(True)
-        self.convert_button.setEnabled(True)
+        self._update_button_states()
 
 
 # Backward-compatible alias (old name before the UnrealPorter rename).

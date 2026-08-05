@@ -34,10 +34,25 @@ _DEFAULT_SIMPLIFY = {
 
 
 def strip_ue_prefix(name: str) -> str:
-    """Strip standard Unreal prefixes (SM_, BP_, T_, M_, MI_, SK_) if present."""
+    """Unreal asset name -> Source 2 naming style.
+
+    Drops the standard type prefix (SM_, BP_, T_, M_, MI_, SK_, …) and breaks
+    PascalCase into snake_case: "SM_ChairLeg" -> "chair_leg". Source 2 content
+    paths are lowercase by convention, and without the word split everything
+    collapses into unreadable runs like "chairleg".
+
+    The single choke point for the naming option — vmdl paths, vsmart names and
+    vmap model references all route through here.
+    """
     if not name:
         return name
-    return re.sub(r"^(SM_|BP_|T_|M_|MI_|SK_|UCX_|UBX_|USP_)", "", name, flags=re.IGNORECASE)
+    name = re.sub(r"^(SM_|BP_|T_|M_|MI_|MM_|MF_|SK_|T_|UCX_|UBX_|USP_)", "", name, flags=re.IGNORECASE)
+    # Split acronym boundaries before word boundaries, so "HTTPServer" becomes
+    # "http_server" rather than "httpserver".
+    name = re.sub(r"(?<=[A-Z])(?=[A-Z][a-z])", "_", name)
+    name = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name)
+    name = re.sub(r"[\s\-]+", "_", name)
+    return re.sub(r"_+", "_", name).strip("_").lower()
 
 
 def ue_mesh_to_model_path(ue_mesh_path: str, models_root: str = "models", strip_prefix: bool = False) -> str:
@@ -200,6 +215,22 @@ def clean_material_stem(name: str) -> str:
     return clean.strip().lower()
 
 
+# CS2 stand-in for a slot we cannot convert.
+GRAYBOX_VMAT = "materials/dev/reflectivity_20b.vmat"
+
+# UE's built-in materials. They live in the engine install, not the project, so
+# no amount of scoping or exporting will ever produce a vmat for them — a mesh
+# with an unassigned slot carries WorldGridMaterial, and every engine mesh
+# carries DefaultMaterial. Remapping them to the graybox is the only honest
+# answer; without it the vmdl points each one at a vmat nothing writes.
+_ENGINE_MATERIALS = frozenset((
+    "defaultmaterial",
+    "worldgridmaterial",
+    "basicshapematerial",
+    "defaultdeferreddecalmaterial",
+))
+
+
 def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_rel_path: str = None, default_mat_path: str = None) -> list:
     """
     Inspects fbx_path for embedded FBX material names (e.g. 'mi_rock_3').
@@ -234,6 +265,10 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
             raw_clean = raw_mat.lower()
 
             to_path = vmat_lookup.get(stem) or vmat_lookup.get(raw_clean)
+            # After the project lookup: a converted material of the same name
+            # still wins over the stand-in.
+            if not to_path and stem in _ENGINE_MATERIALS:
+                to_path = GRAYBOX_VMAT
 
             if not to_path:
                 if model_rel_path:
@@ -257,6 +292,20 @@ def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_
             remaps.append({"from": "*", "to": fallback_mat})
 
     return remaps
+
+
+def apply_import_options(mesh_info: dict, import_lods: bool = True, import_collision: bool = True) -> dict:
+    """Narrow what inspect_fbx_meshes found to what the user asked to import."""
+    if import_lods and import_collision:
+        return mesh_info
+    trimmed = dict(mesh_info)
+    if not import_lods:
+        # Keep LOD0 rather than clearing: see write_vmdl's note on stacking.
+        trimmed["lods"] = (trimmed.get("lods") or [])[:1]
+        trimmed["lod_filters"] = (trimmed.get("lod_filters") or [])[:1]
+    if not import_collision:
+        trimmed["collision"] = []
+    return trimmed
 
 
 def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=None, use_graybox_fallback=False):
@@ -336,7 +385,7 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=Non
             "name": "",
             "remaps": material_remaps or [],
             "use_global_default": True,
-            "global_default_material": "materials/dev/reflectivity_20b.vmat",
+            "global_default_material": GRAYBOX_VMAT,
         }
     elif material_remaps:
         mat_group = {
@@ -351,7 +400,7 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=Non
             "_class": "DefaultMaterialGroup",
             "remaps": [],
             "use_global_default": True,
-            "global_default_material": "materials/dev/reflectivity_20b.vmat",
+            "global_default_material": GRAYBOX_VMAT,
         }
 
     children = []
@@ -386,13 +435,21 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                fbx_path: str = None,
                material_path: str = None,
                output_dir: str = None,
-               use_graybox_fallback: bool = False) -> str:
+               use_graybox_fallback: bool = False,
+               import_lods: bool = True,
+               import_collision: bool = True) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
     build per-LOD render meshes and UCX physics; otherwise a simple single-mesh
     vmdl is written. FBX files are automatically flattened and rotated (P 0 Y 0 R 90) in place.
     If material_path or output_dir is provided, material remapping will be set directly on the material group.
+
+    import_lods=False keeps LOD0 only — dropping the LOD list entirely would fall
+    through to the single-mesh path, which imports every mesh in the FBX and so
+    would render all the LODs stacked on top of each other.
+    import_collision=False discards the UCX/UBX hulls, leaving the physics hull
+    to be generated from the render mesh as it is for any FBX without them.
     """
     mesh_rel_path = mesh_rel_path.replace("\\", "/")
     mesh_info = {}
@@ -403,6 +460,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
         except Exception:
             pass
         mesh_info = inspect_fbx_meshes(fbx_path)
+        mesh_info = apply_import_options(mesh_info, import_lods, import_collision)
 
     material_remaps = None
     if material_path or fbx_path or output_dir:

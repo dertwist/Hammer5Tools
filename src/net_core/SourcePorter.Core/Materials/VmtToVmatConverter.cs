@@ -48,6 +48,19 @@ public sealed class VmtToVmatConverter
             ApplySystemAttribute(vmat, key, val);
         }
 
+        // Per-shader post-processing: unconditional combo flags gated on the Source 1 shader
+        // (e.g. F_LAYERS "1" for worldvertextransition — without it the layer-2 samplers are dead
+        // code) and combo flags gated on the presence of a Source 1 key (e.g. F_TEXTURETRANSFORMS
+        // only when a layer-2 transform is actually supplied). See docs/blend_material_porting.md §3.
+        if (ShaderOverrides.TryGetValue(vmat.Shader, out var ov))
+        {
+            if (ov.EmitOnSourceShader.TryGetValue(vmt.Shader, out var emit))
+                vmat.Set(emit.Key, emit.Value);
+            foreach (var (srcKey, flagKey, flagVal) in ov.EmitFlagOnKeys)
+                if (vmt.Parameters.ContainsKey(srcKey))
+                    vmat.Set(flagKey, flagVal);
+        }
+
         if (vmt.IsToolMaterial)
             ApplyToolAttributes(vmat, vmt);
 
@@ -58,7 +71,8 @@ public sealed class VmtToVmatConverter
 
     private void ApplyFeature(VmatDocument vmat, VmtFile vmt, string key, string val)
     {
-        if (!Features.TryGetValue(key, out var f))
+        var f = FeatureFor(vmat.Shader, key);
+        if (f is null)
             return;
 
         var outVal = string.IsNullOrEmpty(val) ? f.Default : val;
@@ -86,7 +100,8 @@ public sealed class VmtToVmatConverter
 
     private void ApplyTexture(VmatDocument vmat, string key, string val)
     {
-        if (!Textures.TryGetValue(key, out var t))
+        var t = TextureFor(vmat.Shader, key);
+        if (t is null)
             return;
 
         var outVal = string.IsNullOrEmpty(val) ? Default(t.Suffix) : TexturePathResolver(val);
@@ -126,7 +141,8 @@ public sealed class VmtToVmatConverter
 
     private static void ApplySetting(VmatDocument vmat, string key, string val)
     {
-        if (!Settings.TryGetValue(key, out var s))
+        var s = SettingFor(vmat.Shader, key);
+        if (s is null)
             return;
 
         var outVal = string.IsNullOrEmpty(val) ? s.Default : val;
@@ -206,8 +222,8 @@ public sealed class VmtToVmatConverter
         ["$ignorez"] = new("F_DISABLE_Z_BUFFERING", "1"),
         ["$nocull"] = new("F_RENDER_BACKFACES", "1"),
         ["$decal"] = new("F_OVERLAY", "1"),
-        ["$detailblendmode"] = new("F_DETAIL_TEXTURE", "1", (v, _, _) => MaterialValues.MappedVal(v, DetailBlend)),
-        ["$decalblendmode"] = new("F_DETAIL_TEXTURE", "1", (v, _, _) => MaterialValues.MappedVal(v, DecalBlend)),
+        ["$detailblendmode"] = new("F_DETAILTEXTURE", "1", (v, _, _) => MaterialValues.MappedVal(v, DetailBlend)),
+        ["$decalblendmode"] = new("F_DETAILTEXTURE", "1", (v, _, _) => MaterialValues.MappedVal(v, DecalBlend)),
         ["$sequence_blend_mode"] = new("F_FAST_SEQUENCE_BLEND_MODE", "1", (v, _, _) => MaterialValues.MappedVal(v, SeqBlend)),
         ["$gradientmodulation"] = new("F_GRADIENTMODULATION", "1"),
         ["$selfillum_envmapmask_alpha"] = new("F_SELF_ILLUM", "1"),
@@ -238,8 +254,8 @@ public sealed class VmtToVmatConverter
         ["$normalmap2"] = new("TextureNormal2", "_normal", [("F_SECONDARY_NORMAL", "1")]),
         ["$flowmap"] = new("TextureFlow", "", [("F_FLOW_NORMALS", "1"), ("F_FLOW_DEBUG", "1")]),
         ["$flow_noise_texture"] = new("TextureNoise", "_noise", [("F_FLOW_NORMALS", "1"), ("F_FLOW_DEBUG", "2")]),
-        ["$detail"] = new("TextureDetail", "_detail", [("F_DETAIL_TEXTURE", "1")]),
-        ["$decaltexture"] = new("TextureDetail", "_detail", [("F_DETAIL_TEXTURE", "1"), ("F_SECONDARY_UV", "1"), ("g_bUseSecondaryUvForDetailTexture", "1")]),
+        ["$detail"] = new("TextureDetail", "_detail", [("F_DETAILTEXTURE", "1")]),
+        ["$decaltexture"] = new("TextureDetail", "_detail", [("F_DETAILTEXTURE", "1"), ("F_SECONDARY_UV", "1"), ("g_bUseSecondaryUvForDetailTexture", "1")]),
         ["$detail2"] = new("TextureDetail2", "_detail"),
         ["$selfillummask"] = new("TextureSelfIllumMask", "_selfillummask"),
         ["$tintmasktexture"] = new("TextureTintMask", "_mask", [("F_TINT_MASK", "1")]),
@@ -319,6 +335,115 @@ public sealed class VmtToVmatConverter
         ["$surfaceprop4"] = "PhysicsSurfaceProperties4",
     };
 
+    // =============================================================================================
+    // Per-shader overrides.
+    //
+    // The flat tables above are applied to *every* target shader, but the correct Source 2 parameter
+    // names are per-shader: TextureColorB is right for csgo_simple_2way_blend.vfx and wrong for
+    // csgo_lightmappedgeneric.vfx (which wants TextureLayer2Color). Changing the shared tables in
+    // place would silently break the majority csgo_complex path. This override layer keeps the flat
+    // tables as the default and substitutes per-key for the shaders listed here. See
+    // docs/blend_material_porting.md (measured from 750 decompiled shipped CS2 materials, not inferred).
+    // =============================================================================================
+
+    /// <summary>Per-shader substitutions layered on top of the shared flat tables. Only the S2 shader
+    /// names that need correction are listed; any key absent from the override falls through to the
+    /// flat table. Minimal by design — extend only when a shader's real parameter names are known.</summary>
+    private sealed record ShaderOverride
+    {
+        public Dictionary<string, Texture> Textures { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, Setting> Settings { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, Feature> Features { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Layer0 keys force-emitted after the parameter loop, gated on the Source 1 shader.
+        /// Used for combo flags that are unconditional for a given S1 shader — chiefly
+        /// <c>F_LAYERS "1"</c> for <c>worldvertextransition</c>, the combo that makes layer-2
+        /// samplers non-dead-code (research doc fact #1).</summary>
+        public Dictionary<string, (string Key, string Value)> EmitOnSourceShader { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Combo flags emitted only when the named Source 1 key is actually present — e.g.
+        /// <c>F_TEXTURETRANSFORMS "1"</c> is emitted only if one of the layer-2 transform keys is
+        /// supplied, matching how Valve ships the feature.</summary>
+        public (string SourceKey, string FlagKey, string FlagValue)[] EmitFlagOnKeys { get; init; } = [];
+    }
+
+    /// <summary>Override for <c>csgo_lightmappedgeneric.vfx</c>, populated from
+    /// <c>docs/blend_material_porting.md §3</c> (the WorldVertexTransition → csgo_lightmappedgeneric
+    /// table). Layer 1 is asymmetric: albedo is TextureColor, but normal/AO/detail are Layer1-prefixed;
+    /// layer 2 is fully prefixed. Note $bumpmap is folded into $normalmap by VmtFile, so the layer-1
+    /// normal override keys off $normalmap; $bumpmap2 is not folded.</summary>
+    private static readonly ShaderOverride LightmappedGenericOverride = new()
+    {
+        Textures =
+        {
+            // Layer 1 normal: TextureNormal → TextureLayer1NormalRoughness ($bumpmap folded to $normalmap).
+            ["$normalmap"] = new("TextureLayer1NormalRoughness", "_normal"),
+            // Layer 2 (fully prefixed, replacing the flat TextureColorB/TextureNormalB).
+            ["$basetexture2"] = new("TextureLayer2Color", "_color"),
+            ["$texture2"] = new("TextureLayer2Color", "_color"),
+            ["$bumpmap2"] = new("TextureLayer2NormalRoughness", "_normal"),
+            // $detail: TextureDetail → TextureLayer1Detail; flag spelling is F_DETAILTEXTURE (no underscore).
+            ["$detail"] = new("TextureLayer1Detail", "_detail", [("F_DETAILTEXTURE", "1")]),
+            // $blendmodulatetexture was dropped entirely — it has no flat-table entry at all.
+            ["$blendmodulatetexture"] = new("TextureBlendModulation", "", [("F_FANCY_BLENDING", "1")]),
+        },
+        Settings =
+        {
+            // g_vLayer1DetailScale is a vec4 [s s 0 0]; $detailscale is scalar/vec2 (flat table emits vec2).
+            ["$detailscale"] = new("g_vLayer1DetailScale", "[1.000000 1.000000 0.000000 0.000000]", Layer1DetailScale),
+            // g_vLayer1DetailTintAndBlend is [1 1 1 <factor>]; $detailblendfactor is the w component.
+            ["$detailblendfactor"] = new("g_vLayer1DetailTintAndBlend", "[1.000000 1.000000 1.000000 1.000000]", Layer1DetailTintAndBlend),
+            // $color/$color2 both collapse to g_vColorTint in the flat table; here they split per layer.
+            ["$color"] = new("g_vLayer1Tint", "[1.000000 1.000000 1.000000 0.000000]", v => MaterialValues.FixVector(v, true)),
+            ["$color2"] = new("g_vLayer2Tint", "[1.000000 1.000000 1.000000 0.000000]", v => MaterialValues.FixVector(v, true)),
+            // Border/softness settings drop the "1" suffix (0 uses of the Layer1-prefixed spellings shipped).
+            ["$blendsoftness"] = new("g_flBlendSoftness", "0.500", MaterialValues.FloatVal),
+            ["$layerborderstrenth"] = new("g_flLayerBorderStrength", "0.500", MaterialValues.FloatVal),
+            ["$layerborderoffset"] = new("g_flLayerBorderOffset", "0.000", MaterialValues.FloatVal),
+            ["$layerbordersoftness"] = new("g_flLayerBorderSoftness", "0.500", MaterialValues.FloatVal),
+            ["$layerbordertint"] = new("g_vLayerBorderTint", "[1.000000 1.000000 1.000000 0.000000]", v => MaterialValues.FixVector(v, true)),
+        },
+        Features =
+        {
+            // $detailblendmode: F_DETAIL_TEXTURE → F_DETAILBLENDMODE (existing DetailBlend map reused).
+            ["$detailblendmode"] = new("F_DETAILBLENDMODE", "0", (v, _, _) => MaterialValues.MappedVal(v, DetailBlend)),
+        },
+        // F_LAYERS "1" is what enables blending (research doc fact #1). Emitted for worldvertextransition
+        // only — NOT for plain lightmappedgeneric (single-layer materials must stay single-layer), and
+        // deliberately not for multiblend either (out of scope; csgo_lightmappedgeneric only ships 2 layers).
+        EmitOnSourceShader =
+        {
+            ["worldvertextransition"] = ("F_LAYERS", "1"),
+        },
+        // F_TEXTURETRANSFORMS gates the g_v*TexCoord transform block. The transform key mappings live in
+        // the flat Transforms table (already correct); only the combo flag was missing.
+        EmitFlagOnKeys =
+        [
+            ("$basetexturetransform2", "F_TEXTURETRANSFORMS", "1"),
+            ("$bumptransform2", "F_TEXTURETRANSFORMS", "1"),
+            ("$blendmodulatetransform", "F_TEXTURETRANSFORMS", "1"),
+        ],
+    };
+
+    private static readonly Dictionary<string, ShaderOverride> ShaderOverrides = new(StringComparer.Ordinal)
+    {
+        ["csgo_lightmappedgeneric.vfx"] = LightmappedGenericOverride,
+    };
+
+    // Per-shader-aware table lookups: prefer an override entry for the resolved shader, else fall
+    // through to the flat table. Returning null means "no mapping for this key" (Apply* then returns).
+    private static Texture? TextureFor(string shader, string key)
+        => ShaderOverrides.TryGetValue(shader, out var ov) && ov.Textures.TryGetValue(key, out var t)
+            ? t : Textures.TryGetValue(key, out var fb) ? fb : null;
+
+    private static Feature? FeatureFor(string shader, string key)
+        => ShaderOverrides.TryGetValue(shader, out var ov) && ov.Features.TryGetValue(key, out var f)
+            ? f : Features.TryGetValue(key, out var fb) ? fb : null;
+
+    private static Setting? SettingFor(string shader, string key)
+        => ShaderOverrides.TryGetValue(shader, out var ov) && ov.Settings.TryGetValue(key, out var s)
+            ? s : Settings.TryGetValue(key, out var fb) ? fb : null;
+
     // ---- helpers (ported) -----------------------------------------------------------------------
 
     /// <summary>Ported from <c>fix_envmap</c>: drive metalness/cube-map flags from the env-map value.</summary>
@@ -353,4 +478,22 @@ public sealed class VmtToVmatConverter
             p = p[..dot];
         return "materials/" + p + ".tga";
     }
+
+    // ---- blend-material transforms (csgo_lightmappedgeneric.vfx, research doc §3) --------------
+
+    /// <summary><c>g_vLayer1DetailScale</c> is a vec4 <c>[s s 0 0]</c>; the Source 1
+    /// <c>$detailscale</c> is a scalar or vec2. Reuse FixVector for the xy, then pad z/w with zero.
+    /// (E.g. <c>12</c> → <c>[12.000000 12.000000 0.000000 0.000000]</c>.)</summary>
+    private static string? Layer1DetailScale(string v)
+        => MaterialValues.FixVector(v, addAlpha: false) is { } xy
+            ? xy.TrimEnd(']') + " 0.000000 0.000000]"
+            : null;
+
+    /// <summary><c>g_vLayer1DetailTintAndBlend</c> is <c>[1 1 1 &lt;factor&gt;]</c>; the Source 1
+    /// <c>$detailblendfactor</c> supplies the w component, RGB tint is fixed at white.
+    /// (E.g. <c>0.25</c> → <c>[1.000000 1.000000 1.000000 0.250000]</c>.)</summary>
+    private static string? Layer1DetailTintAndBlend(string v)
+        => MaterialValues.FloatVal(v) is { } f
+            ? $"[1.000000 1.000000 1.000000 {f}]"
+            : null;
 }

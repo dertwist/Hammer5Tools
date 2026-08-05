@@ -8,6 +8,7 @@ import os
 import shutil
 from PySide6.QtCore import QThread, Signal
 
+from .asset_selection import asset_stem, ref_stem, key_to_object_path
 from .bridge_client import UnrealBridge, BridgeError
 from .vmap_writer import write_vmap
 from .vsmart_writer import write_vsmart
@@ -24,6 +25,20 @@ _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
 _LANDSCAPE_MESH_PREFIX = "/H5T/Landscape/"
 
 
+def _is_external_ref(key_or_ref) -> bool:
+    """Does this reference point outside the project's /Game mount?
+
+    UE object paths are rooted ("/Engine/MapTemplates/SM_Template_Map_Floor.…",
+    "/H5T/Landscape/…"); the bridge's asset keys are relative file paths
+    ("MyProj/Content/Meshes/SM_Chair.uasset"). Only the former can be external.
+    """
+    ref = str(key_or_ref)
+    if "'" in ref:                       # Class'/Game/Path/Name.Name'
+        ref = ref.split("'", 2)[1] if ref.count("'") >= 2 else ref
+    ref = ref.strip().replace("\\", "/").lower()
+    return ref.startswith("/") and not ref.startswith("/game/")
+
+
 class SceneModelsWorker(QThread):
     log = Signal(str, str)      # message, level (info/warn/error/success)
     progress = Signal(int, int)  # current, total
@@ -31,14 +46,25 @@ class SceneModelsWorker(QThread):
 
     def __init__(self, project_dir, bulk_dir, output_dir,
                  do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=False, unit_scale=1.0,
-                 use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None, parent=None):
+                 use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None,
+                 master_param_overrides=None,
+                 selected_assets=None, import_lods=True, import_collision=True, parent=None):
         super().__init__(parent)
-        # {master material name: chosen CS2 shader / slot overrides} straight
-        # from the Materials tab. The shader is a property of the Master
-        # Material, so every instance under it converts with the same one
+        self.import_lods = import_lods
+        self.import_collision = import_collision
+        # Asset keys the user picked in the port scope dialog, already expanded
+        # with their references. None means no filtering — port everything.
+        self.selected_stems = (
+            {asset_stem(k) for k in selected_assets} if selected_assets else None
+        )
+        self.selected_assets = list(selected_assets or ())
+        # {master material name: chosen CS2 shader / slot / param overrides}
+        # straight from the Materials tab. The shader is a property of the
+        # Master Material, so every instance under it converts with the same one
         # instead of each re-guessing from its own name.
         self.master_shaders = master_shaders or {}
         self.master_slot_overrides = master_slot_overrides or {}
+        self.master_param_overrides = master_param_overrides or {}
         self.project_dir = project_dir
         self.bulk_dir = bulk_dir
         self.output_dir = output_dir
@@ -54,6 +80,28 @@ class SceneModelsWorker(QThread):
 
     def _log(self, msg, level="info"):
         self.log.emit(msg, level)
+
+    def _write_vmdl(self, *args, **kwargs):
+        """write_vmdl with the Models tab's import options applied.
+
+        Five call sites; injecting here keeps them from drifting apart.
+        """
+        kwargs.setdefault("import_lods", self.import_lods)
+        kwargs.setdefault("import_collision", self.import_collision)
+        return write_vmdl(*args, **kwargs)
+
+    def _wanted(self, key_or_ref) -> bool:
+        """Is this asset in the user's port scope? True when no scope is set.
+
+        Anything outside the project's /Game mount is always in scope. The scope
+        is built from the project's own asset listing, so an engine mesh (the
+        template map floor, a BasicShape) or a synthetic landscape id can never
+        match it — filtering them meant the vmap placed a prop whose vmdl was
+        then silently never written.
+        """
+        if self.selected_stems is None or _is_external_ref(key_or_ref):
+            return True
+        return ref_stem(key_or_ref) in self.selected_stems
 
     def _normalize_landscape_actors(self, actors, map_obj_path):
         """Rewrite dump_scene's "Landscape" actor entries (in place) into ordinary
@@ -119,6 +167,14 @@ class SceneModelsWorker(QThread):
         except BridgeError as e:
             self._log(str(e), "error")
             return
+
+        if self.selected_stems is not None:
+            in_scope = [k for k in map_keys if self._wanted(k)]
+            self._log(
+                f"Port scope: {len(self.selected_stems)} asset(s); "
+                f"{len(in_scope)} of {len(map_keys)} map(s) included.", "info",
+            )
+            map_keys = in_scope
 
         self._log(f"Found {len(map_keys)} map(s): {', '.join(os.path.basename(m) for m in map_keys)}", "info")
 
@@ -191,6 +247,8 @@ class SceneModelsWorker(QThread):
                     fn = os.path.basename(k).lower()
                     if fn.startswith(_NON_BP_PREFIXES) or any(fn.removesuffix(".uasset").endswith(s) for s in _NON_BP_SUFFIXES):
                         continue
+                    if not self._wanted(k):
+                        continue
                     filtered_bp_keys.append(k)
 
                 self._log(f"Blueprints — candidate assets to inspect: {len(filtered_bp_keys)} of {len(bp_keys)}", "info")
@@ -234,6 +292,19 @@ class SceneModelsWorker(QThread):
 
         # --- Models -> vmdl ---
         if self.do_models:
+            if self.selected_stems is not None:
+                # Drop meshes the maps reference but the user left unticked...
+                referenced_meshes = {m for m in referenced_meshes if self._wanted(m)}
+                # ...and add meshes picked directly, which no map places. UE
+                # exported an FBX for exactly the assets that are meshes, so the
+                # bulk export is the type test.
+                for key in self.selected_assets:
+                    obj = key_to_object_path(key)
+                    if obj in referenced_meshes:
+                        continue
+                    if self.bulk_dir and find_bulk_export_mesh(self.bulk_dir, obj):
+                        referenced_meshes.add(obj)
+
             self._log(f"Referenced meshes found: {len(referenced_meshes)}", "info")
             if not referenced_meshes:
                 self._log("No referenced meshes to build vmdls for. Make sure Scenes is enabled or at least one map was scanned.", "warn")
@@ -262,11 +333,11 @@ class SceneModelsWorker(QThread):
                         dst = os.path.join(self.output_dir, fbx_rel)
                         os.makedirs(os.path.dirname(dst), exist_ok=True)
                         shutil.copy2(src, dst)
-                        write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
+                        self._write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
                     else:
                         obj_rel = os.path.splitext(model_rel)[0] + ".obj"
                         generate_engine_mesh_obj(mesh, os.path.join(self.output_dir, obj_rel))
-                        write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
+                        self._write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
                     engine += 1
                     made += 1
                     continue
@@ -293,7 +364,7 @@ class SceneModelsWorker(QThread):
                     )
 
                 # Inspect the copied FBX (or the source) to build LODs + physics.
-                write_vmdl(vmdl_path, mesh_rel, import_scale=self.unit_scale,
+                self._write_vmdl(vmdl_path, mesh_rel, import_scale=self.unit_scale,
                            fbx_path=dst_fbx or src_fbx, material_path=mat_rel, output_dir=self.output_dir,
                            use_graybox_fallback=self.use_graybox_fallback)
                 made += 1
@@ -355,7 +426,10 @@ class SceneModelsWorker(QThread):
                 # saw (e.g. Convert run without a preceding Scan).
                 shader = self.master_shaders.get(master_name) or predict_cs2_shader(master_name, data.get("flags"))
                 overrides = self.master_slot_overrides.get(master_name) or slot_overrides
-                res = convert_material(data, self.bulk_dir, self.output_dir, shader=shader, slot_overrides=overrides)
+                param_overrides = self.master_param_overrides.get(master_name) or {}
+                res = convert_material(data, self.bulk_dir, self.output_dir,
+                                       shader=shader, slot_overrides=overrides,
+                                       param_overrides=param_overrides)
                 done += 1
                 msg = f"  material {stem}: Success ({shader})"
                 if res.missing:
@@ -387,7 +461,7 @@ class SceneModelsWorker(QThread):
             os.makedirs(os.path.dirname(dst_fbx), exist_ok=True)
             shutil.copy2(src_fbx, dst_fbx)
             self._log(f"  {os.path.basename(src_fbx)} -> {fbx_rel} (landscape)", "info")
-            write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst_fbx,
+            self._write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst_fbx,
                        material_path=mat_rel, output_dir=self.output_dir,
                        use_graybox_fallback=self.use_graybox_fallback)
             return True
@@ -414,6 +488,6 @@ class SceneModelsWorker(QThread):
         shutil.copy2(src_obj, dst_obj)
         self._log(f"  {os.path.basename(map_obj_path)} landscape -> {obj_rel}", "info")
 
-        write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel,
+        self._write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel,
                    use_graybox_fallback=self.use_graybox_fallback)
         return True

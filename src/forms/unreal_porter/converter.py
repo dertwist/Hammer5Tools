@@ -235,9 +235,10 @@ def get_master_material_name(mat_data: dict, mat_key: str = "") -> str:
     return "M_Master_Default"
 
 
-def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = None):
-    """Saves Master Material -> CS2 Shader swaps and Master Material -> slot mappings
-    into hammer5tools_ue_converter_material_swaps.kv3 in output_dir."""
+def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = None,
+                            param_mappings: dict = None):
+    """Saves Master Material -> CS2 Shader swaps, slot mappings, and param
+    mappings into hammer5tools_ue_converter_material_swaps.kv3 in output_dir."""
     if not output_dir or not os.path.isdir(output_dir):
         return
     file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
@@ -265,6 +266,19 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
             lines.append("\t\t}")
         lines.append("\t}")
 
+    if param_mappings:
+        lines.append("\tmaster_material_param_mappings = ")
+        lines.append("\t{")
+        for master_name, mappings in sorted(param_mappings.items()):
+            if not mappings:
+                continue
+            lines.append(f'\t\t"{master_name}" = ')
+            lines.append("\t\t{")
+            for param, target in sorted(mappings.items()):
+                lines.append(f'\t\t\t"{param}" = "{target}"')
+            lines.append("\t\t}")
+        lines.append("\t}")
+
     lines.append("}")
     lines.append("")
 
@@ -276,16 +290,16 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
 
 
 def load_material_swaps_kv3(output_dir: str) -> tuple:
-    """Reads Master Material -> CS2 Shader swaps and slot mappings from
-    hammer5tools_ue_converter_material_swaps.kv3 if it exists.
-    Returns: (swaps_dict, slot_mappings_dict)
+    """Reads Master Material -> CS2 Shader swaps, slot mappings, and param
+    mappings from hammer5tools_ue_converter_material_swaps.kv3 if it exists.
+    Returns: (swaps_dict, slot_mappings_dict, param_mappings_dict)
     """
-    swaps, slot_mappings = {}, {}
+    swaps, slot_mappings, param_mappings = {}, {}, {}
     if not output_dir:
-        return swaps, slot_mappings
+        return swaps, slot_mappings, param_mappings
     file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
     if not os.path.isfile(file_path):
-        return swaps, slot_mappings
+        return swaps, slot_mappings, param_mappings
 
     try:
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -302,28 +316,54 @@ def load_material_swaps_kv3(output_dir: str) -> tuple:
             elif "master_material_slot_mappings" in line_s:
                 section = "slots"
                 continue
+            elif "master_material_param_mappings" in line_s:
+                section = "params"
+                continue
 
             if section == "shaders":
                 m = re.search(r'"([^"]+)"\s*=\s*"([^"]+)"', line_s)
                 if m:
                     swaps[m.group(1)] = m.group(2)
-            elif section == "slots":
+            elif section in ("slots", "params"):
                 # Check for parameter assignment first: "BaseColor2" = "emissive" or "param" = null
                 m_param = re.search(r'"([^"]+)"\s*=\s*(null|"([^"]+)")', line_s)
+                target = slot_mappings if section == "slots" else param_mappings
                 if m_param and current_master:
                     param_name = m_param.group(1)
                     val = m_param.group(2)
-                    slot_mappings[current_master][param_name] = None if val == "null" else val.strip('"')
+                    target[current_master][param_name] = None if val == "null" else val.strip('"')
                 else:
                     # Otherwise check for master material block header: "M_Master_Architecture" =
                     m_master = re.search(r'"([^"]+)"\s*=\s*\{?', line_s)
                     if m_master:
                         current_master = m_master.group(1)
-                        if current_master not in slot_mappings:
-                            slot_mappings[current_master] = {}
+                        if current_master not in target:
+                            target[current_master] = {}
     except Exception:
         pass
-    return swaps, slot_mappings
+    return swaps, slot_mappings, param_mappings
+
+
+def apply_saved_swaps(groups: dict, output_dir: str) -> dict:
+    """Overlay an addon's saved shader / slot / param choices onto scanned groups.
+
+    The scan itself is a property of the UE project, so it gets cached in the
+    project's analysis manifest. These choices are a property of the *addon*
+    being ported into, so they are re-applied on top whenever groups are
+    adopted — otherwise switching addon would silently carry the other one's
+    shader picks along.
+    """
+    if not output_dir or not groups:
+        return groups
+    saved_swaps, saved_slot_mappings, saved_param_mappings = load_material_swaps_kv3(output_dir)
+    for name, info in groups.items():
+        if saved_swaps.get(name):
+            info["shader"] = saved_swaps[name]
+        if saved_slot_mappings.get(name):
+            info["slot_overrides"] = saved_slot_mappings[name]
+        if saved_param_mappings.get(name):
+            info["param_overrides"] = saved_param_mappings[name]
+    return groups
 
 
 def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, output_dir: str = None, log_cb=None, progress_cb=None) -> dict:
@@ -332,7 +372,8 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
     Returns: { master_mat_name: { "shader": predicted_shader, "instances": [(mi_stem, mi_path, mat_data)], "count": N, "textures": {...}, "slot_overrides": {...} } }
     """
     groups = {}
-    saved_swaps, saved_slot_mappings = load_material_swaps_kv3(output_dir) if output_dir else ({}, {})
+    saved_swaps, saved_slot_mappings, saved_param_mappings = (
+        load_material_swaps_kv3(output_dir) if output_dir else ({}, {}, {}))
 
     if bridge and bridge.is_available():
         try:
@@ -365,6 +406,7 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
                         "instances": [],
                         "textures": {},
                         "slot_overrides": saved_slot_mappings.get(master_name, {}),
+                        "param_overrides": saved_param_mappings.get(master_name, {}),
                     }
                     if log_cb:
                         log_cb(f"Discovered Master Material: {master_name} (target CS2 shader: {shader})", "info")
@@ -394,6 +436,7 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
                     "instances": [],
                     "textures": {},
                     "slot_overrides": saved_slot_mappings.get(master_name, {}),
+                    "param_overrides": saved_param_mappings.get(master_name, {}),
                 }
             groups[master_name]["instances"].append((base_name, base_name, {"suffixes": suffixes}))
 
@@ -420,12 +463,14 @@ class MasterMaterialConvertWorker(QThread):
     def run(self):
         from .material_converter import convert_material, get_texture_index
 
-        # Save user shader swaps and slot mappings into KV3 in output_dir
+        # Save user shader swaps, slot mappings, and param mappings into KV3 in output_dir
         swaps_to_save = {name: data.get("shader", "csgo_environment.vfx")
                          for name, data in self.master_groups.items() if data.get("enabled", True)}
         slot_mappings_to_save = {name: data.get("slot_overrides", {})
                                  for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("slot_overrides")}
-        save_material_swaps_kv3(self.output_dir, swaps_to_save, slot_mappings_to_save)
+        param_mappings_to_save = {name: data.get("param_overrides", {})
+                                  for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("param_overrides")}
+        save_material_swaps_kv3(self.output_dir, swaps_to_save, slot_mappings_to_save, param_mappings_to_save)
 
         tex_index = get_texture_index(self.bulk_dir)
         total_instances = sum(len(g.get("instances", [])) for g in self.master_groups.values() if g.get("enabled", True))
@@ -438,6 +483,7 @@ class MasterMaterialConvertWorker(QThread):
             shader = group_data.get("shader", "csgo_environment.vfx")
             instances = group_data.get("instances", [])
             master_slot_overrides = group_data.get("slot_overrides", {})
+            master_param_overrides = group_data.get("param_overrides", {})
 
             for stem, path, mat_data in instances:
                 processed += 1
@@ -446,7 +492,7 @@ class MasterMaterialConvertWorker(QThread):
                     res = convert_material(
                         mat_data, self.bulk_dir, self.output_dir,
                         shader=shader, slot_overrides=master_slot_overrides,
-                        tex_index=tex_index
+                        tex_index=tex_index, param_overrides=master_param_overrides,
                     )
                     created.append(stem)
                     msg = f"Success ({shader})"

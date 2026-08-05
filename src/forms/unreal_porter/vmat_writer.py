@@ -10,6 +10,8 @@ def write_vmat(
     extra_params: dict = None,
     alpha_test_ref: float = None,
     render_backfaces: bool = False,
+    extra_scalars: dict = None,
+    extra_vectors: dict = None,
 ):
     """
     Writes a Source 2 .vmat file based on the provided texture slots and shader parameters.
@@ -31,6 +33,11 @@ def write_vmat(
 
     Get the mask from texture_utils.extract_alpha(); it declines to split a
     channel that is a blend mask rather than a shape mask.
+
+    `extra_scalars` ({g_flName: float}) and `extra_vectors` ({g_vName: (r,g,b)})
+    emit authored scalar/vector params (e.g. a UE emissive intensity migrated to a
+    Source 2 scalar) alongside the slot-driven ones. They are typed, unlike the
+    stringly-typed `extra_params`, which quotes its values verbatim.
     """
     color_tint_str = (
         f"[{color_tint[0]:.6f} {color_tint[1]:.6f} {color_tint[2]:.6f} 0.000000]"
@@ -62,6 +69,15 @@ def write_vmat(
     if extra_params:
         for k, v in extra_params.items():
             extra_lines += f'\t{k} "{v}"\n'
+    # Typed scalar/vector params from the param-mapping UI: floats are quoted
+    # as-is, vectors are wrapped in Source 2's "[r g b a]" literal form.
+    if extra_scalars:
+        for k, v in extra_scalars.items():
+            extra_lines += f'\t{k} "{float(v):.6f}"\n'
+    if extra_vectors:
+        for k, v in extra_vectors.items():
+            if v and len(v) >= 3:
+                extra_lines += f'\t{k} "[{v[0]:.6f} {v[1]:.6f} {v[2]:.6f} 0.000000]"\n'
 
     # Feature flags sit directly under the shader line; their scalar companions go
     # at the bottom. This is the layout Hammer's own material editor writes.

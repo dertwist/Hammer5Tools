@@ -8,13 +8,23 @@ to. Each master material is now its own card that can lay out freely and
 display the slot bindings its instances will inherit.
 """
 
+import os
+
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QComboBox,
-    QPushButton, QScrollArea,
+    QToolButton, QScrollArea,
 )
 
+from src.styles.common import apply_stylesheets
 from .material_converter import _classify_textures
+
+# material_remap_arrow.png is not in resources.qrc, so it is loaded from disk —
+# same approach as src/widgets/model_browser/main.py. Resolves to src/icons/...
+_SRC_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REMAP_ICON = os.path.join(_SRC_DIR, "icons", "tools", "modeldoc_editor",
+                           "material_remap_arrow.png")
 
 SHADERS = [
     "csgo_environment.vfx",
@@ -44,14 +54,23 @@ def describe_bindings(textures: dict, slot_overrides: dict = None) -> str:
 
 class MasterMaterialCard(QFrame):
     """One Master Material: whether to convert it, its target CS2 shader, and
-    the texture-slot mapping every instance under it inherits."""
+    the texture-slot mapping every instance under it inherits.
+
+    Row layout: [checkbox] | <name> (instances) | [shader combo] | [remap btn].
+    Cards alternate two background tones so the eye can track a row across a
+    long list.
+    """
 
     map_slots_requested = Signal(str)
 
-    def __init__(self, master_name: str, info: dict, parent=None):
+    def __init__(self, master_name: str, info: dict, parity: bool = False, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.master_name = master_name
+        # Zebra stripe — alternate-background-color the card itself. Scoped to
+        # MasterMaterialCard so it does not repaint its child widgets.
+        bg = "#1D1D1F" if parity else "#1C1C1C"
+        self.setStyleSheet(f"MasterMaterialCard {{ background-color: {bg}; }}")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(10, 8, 10, 8)
@@ -64,11 +83,8 @@ class MasterMaterialCard(QFrame):
         head.addWidget(self.checkbox)
 
         count = info.get("count", len(info.get("instances", [])))
-        title = QLabel(f"<b>{master_name}</b>")
-        subtitle = QLabel(f"{count} instance{'s' if count != 1 else ''}")
-        subtitle.setEnabled(False)
+        title = QLabel(f"<b>{master_name}</b> ({count} instance{'s' if count != 1 else ''})")
         head.addWidget(title)
-        head.addWidget(subtitle)
         head.addStretch(1)
 
         self.shader_combo = QComboBox()
@@ -80,8 +96,9 @@ class MasterMaterialCard(QFrame):
         self.shader_combo.setToolTip("Target CS2 shader for this Master Material")
         head.addWidget(self.shader_combo)
 
-        self.map_button = QPushButton("Texture Slots…")
+        self.map_button = QToolButton()
         self.map_button.setToolTip(f"Configure texture parameter slot assignments for {master_name}")
+        self.map_button.setIcon(QIcon(_REMAP_ICON))
         self.map_button.clicked.connect(lambda: self.map_slots_requested.emit(self.master_name))
         head.addWidget(self.map_button)
         outer.addLayout(head)
@@ -92,6 +109,10 @@ class MasterMaterialCard(QFrame):
         self.bindings.setTextInteractionFlags(Qt.TextSelectableByMouse)
         outer.addWidget(self.bindings)
 
+        # Cards are built at populate-time, after the dialog's one-shot
+        # apply_stylesheets, so each one styles its own children or they stay
+        # with whatever the global sheet gave them.
+        apply_stylesheets(self)
         self.refresh(info)
 
     def refresh(self, info: dict):
@@ -128,7 +149,7 @@ class MasterMaterialList(QScrollArea):
 
         self._empty.setVisible(not master_groups)
         for i, (name, info) in enumerate(sorted(master_groups.items())):
-            card = MasterMaterialCard(name, info)
+            card = MasterMaterialCard(name, info, parity=(i % 2 == 1))
             card.map_slots_requested.connect(self.map_slots_requested)
             self._layout.insertWidget(i + 1, card)   # after the empty label
             self.cards[name] = card
