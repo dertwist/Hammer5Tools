@@ -126,10 +126,10 @@ def find_bulk_export_mesh(bulk_dir: str, ue_mesh_path: str):
         clean_path = clean_path[:-5]
 
     stem = clean_path.split(".", 1)[0].rstrip("/").rsplit("/", 1)[-1].lower()
+    stripped_stem = strip_ue_prefix(stem)
     norm_stem = re.sub(r'[^a-z0-9]', '', stem)
 
     norm_match = None
-    partial_match = None
 
     for root, _dirs, files in os.walk(bulk_dir):
         for fn in files:
@@ -137,16 +137,13 @@ def find_bulk_export_mesh(bulk_dir: str, ue_mesh_path: str):
             if ext.lower() not in (".fbx", ".obj", ".gltf", ".glb", ".dmx"):
                 continue
             name_lower = name.lower()
-            norm_name = re.sub(r'[^a-z0-9]', '', name_lower)
-
-            if name_lower == stem:
+            if name_lower == stem or strip_ue_prefix(name) == stripped_stem:
                 return os.path.join(root, fn)
+            norm_name = re.sub(r'[^a-z0-9]', '', name_lower)
             if norm_name == norm_stem and not norm_match:
                 norm_match = os.path.join(root, fn)
-            elif norm_stem and (norm_stem in norm_name or norm_name in norm_stem) and not partial_match:
-                partial_match = os.path.join(root, fn)
 
-    return norm_match or partial_match
+    return norm_match
 
 
 def inspect_fbx_meshes(fbx_path: str) -> dict:

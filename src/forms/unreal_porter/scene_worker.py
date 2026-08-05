@@ -37,7 +37,20 @@ def _is_external_ref(key_or_ref) -> bool:
     if "'" in ref:                       # Class'/Game/Path/Name.Name'
         ref = ref.split("'", 2)[1] if ref.count("'") >= 2 else ref
     ref = ref.strip().replace("\\", "/").lower()
-    return ref.startswith("/") and not ref.startswith("/game/")
+_NON_MESH_PREFIXES = ("t_", "tx_", "tex_", "m_", "mi_", "mm_", "mf_", "cue_", "ns_", "ps_", "wbp_", "bpi_")
+_NON_MESH_FOLDERS = ("/textures/", "/materials/", "/audio/", "/sounds/", "/particles/", "/ui/", "/widget/")
+
+
+def _is_mesh_asset_path(path: str) -> bool:
+    if not path:
+        return False
+    path_low = path.replace("\\", "/").lower()
+    if any(f in path_low for f in _NON_MESH_FOLDERS):
+        return False
+    stem = os.path.basename(path_low).split(".", 1)[0]
+    if any(stem.startswith(p) for p in _NON_MESH_PREFIXES):
+        return False
+    return True
 
 
 class SceneModelsWorker(CancellableWorker):
@@ -323,7 +336,7 @@ class SceneModelsWorker(CancellableWorker):
                 obj = key_to_object_path(key)
                 if obj in referenced_meshes:
                     continue
-                if self.bulk_dir and find_bulk_export_mesh(self.bulk_dir, obj):
+                if _is_mesh_asset_path(obj) and self.bulk_dir and find_bulk_export_mesh(self.bulk_dir, obj):
                     referenced_meshes.add(obj)
 
         # --- Materials -> vmat (before Models so vmdl remaps resolve to real vmats) ---
