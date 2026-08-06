@@ -399,7 +399,17 @@ class SceneModelsWorker(CancellableWorker):
 
                     clean_bp_name = strip_ue_prefix(name) if self.strip_prefix else name
                     vsmart_path = os.path.join(self.output_dir, "smartprops", f"{clean_bp_name.lower()}.vsmart")
-                    res = write_vsmart(clean_bp_name, components, vsmart_path, unit_scale=self.unit_scale, strip_prefix=self.strip_prefix)
+                    variables = bp_data.get("variables", [])
+                    choices = bp_data.get("choices", [])
+                    res = write_vsmart(
+                        clean_bp_name,
+                        components,
+                        vsmart_path,
+                        unit_scale=self.unit_scale,
+                        strip_prefix=self.strip_prefix,
+                        variables=variables,
+                        choices=choices,
+                    )
                     if res.placed > 0:
                         referenced_meshes.update(res.models)
                         bp_count += 1

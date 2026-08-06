@@ -1041,8 +1041,11 @@ class UnrealPorterWidget(QDialog):
 
         groups = dict(manifest.get("materials") or {}) if manifest else {}
         if groups:
+            multi_c = sum(1 for g in groups.values() if g.get("count", 0) > 1)
+            single_c = sum(1 for g in groups.values() if g.get("count", 0) <= 1)
+            self.console.info(f"Loading {len(groups)} Master Material group(s) ({multi_c} multi-instance, {single_c} standalone) and texture thumbnails...")
             self._populate_master_materials_table(apply_saved_swaps(groups, self.output_dir()))
-            self.console.info(f"{len(groups)} Master Material group(s) loaded from the analysis.")
+            self.console.success(f"{len(groups)} Master Material group(s) ready with texture bindings and thumbnails.")
         elif manifest:
             self.console.warn("No Master Materials found in the project.")
 

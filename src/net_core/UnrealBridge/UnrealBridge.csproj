@@ -21,9 +21,21 @@
     <CUE4ParsePath Condition="'$(CUE4ParsePath)' == ''">$(CUE4ParsePathEnv)</CUE4ParsePath>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="Exists('$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj')">
     <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj" />
     <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse-Conversion\CUE4Parse-Conversion.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!Exists('$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj')">
+    <Reference Include="CUE4Parse">
+      <HintPath>publish\CUE4Parse.dll</HintPath>
+    </Reference>
+    <Reference Include="CUE4Parse-Conversion">
+      <HintPath>publish\CUE4Parse-Conversion.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>publish\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

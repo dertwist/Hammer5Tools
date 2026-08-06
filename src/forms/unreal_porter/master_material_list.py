@@ -129,7 +129,10 @@ class MasterMaterialCard(QFrame):
         head.addWidget(self.checkbox)
 
         count = info.get("count", len(info.get("instances", [])))
-        title = QLabel(f"<b>{master_name}</b> ({count} instance{'s' if count != 1 else ''})")
+        if count <= 1:
+            title = QLabel(f"<b>{master_name}</b> <span style='color:#9D9D9D;'>(standalone material)</span>")
+        else:
+            title = QLabel(f"<b>{master_name}</b> ({count} instance{'s' if count != 1 else ''})")
         head.addWidget(title)
         head.addStretch(1)
 
@@ -186,7 +189,6 @@ class MasterMaterialCard(QFrame):
         picks = _classify_textures(textures, slot_overrides, shader=shader)
         self.bindings.setText(format_picks_summary(picks, info=info))
         self._update_thumbnails(picks, tex_index=tex_index)
-        self._update_thumbnails(picks, tex_index=tex_index)
 
     def _update_thumbnails(self, picks: dict, tex_index: dict = None):
         while self.thumbs_layout.count():
@@ -242,6 +244,29 @@ class MasterMaterialList(QScrollArea):
         self._layout.addStretch(1)
         self.setWidget(self._body)
 
+    @staticmethod
+    def _make_standalone_divider(label_text: str) -> QFrame:
+        """Divider with a label separating material groups (e.g. multi-instance vs standalone)."""
+        container = QFrame()
+        container.setFrameShape(QFrame.NoFrame)
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(12, 8, 12, 4)
+        layout.setSpacing(8)
+
+        def _line():
+            line = QFrame()
+            line.setFrameShape(QFrame.HLine)
+            line.setStyleSheet("color: #363639;")
+            return line
+
+        layout.addWidget(_line(), 1)
+        lbl = QLabel(label_text)
+        lbl.setStyleSheet("color: #9D9D9D; font: 600 9pt 'Segoe UI'; background: transparent;")
+        layout.addWidget(lbl)
+        layout.addWidget(_line(), 1)
+        apply_stylesheets(container)
+        return container
+
     def populate(self, master_groups: dict, bulk_dir: str = None):
         self.bulk_dir = bulk_dir
         self._body.setUpdatesEnabled(False)
@@ -260,11 +285,37 @@ class MasterMaterialList(QScrollArea):
             from .material_converter import get_texture_index
             tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
 
-            for i, (name, info) in enumerate(sorted(master_groups.items())):
-                card = MasterMaterialCard(name, info, parity=(i % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
+            # Sort by instance count descending so the most-used masters are on top.
+            sorted_groups = sorted(
+                master_groups.items(),
+                key=lambda item: item[1].get("count", len(item[1].get("instances", []))),
+                reverse=True,
+            )
+
+            # Partition into multi-instance and single-instance (standalone) groups.
+            multi = [(n, i) for n, i in sorted_groups
+                     if i.get("count", len(i.get("instances", []))) > 1]
+            single = [(n, i) for n, i in sorted_groups
+                      if i.get("count", len(i.get("instances", []))) <= 1]
+
+            idx = 0
+            for name, info in multi:
+                card = MasterMaterialCard(name, info, parity=(idx % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
                 card.map_slots_requested.connect(self.map_slots_requested)
                 self._layout.addWidget(card)
                 self.cards[name] = card
+                idx += 1
+
+            if single:
+                self._layout.addWidget(
+                    self._make_standalone_divider("Standalone Materials (no instances)")
+                )
+                for name, info in single:
+                    card = MasterMaterialCard(name, info, parity=(idx % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
+                    card.map_slots_requested.connect(self.map_slots_requested)
+                    self._layout.addWidget(card)
+                    self.cards[name] = card
+                    idx += 1
 
             self._layout.addStretch(1)
         finally:
@@ -286,9 +337,9 @@ class MasterMaterialList(QScrollArea):
 
 
 def demo():
-    """Builds the list with two fake masters — one plain, one packed SRMH — and
-    checks the binding summary without needing a UE project. Pass --show to
-    open the window and eyeball it.
+    """Builds the list with multi-instance and standalone masters, verifies
+    sorting (descending by count) and the divider. Pass --show to open the
+    window and eyeball it.
 
         python -m src.forms.unreal_porter.master_material_list [--show]
     """
@@ -309,12 +360,23 @@ def demo():
         },
         "Decal": {"count": 5, "shader": "csgo_static_overlay.vfx",
                   "textures": {"Diffuse": "/Game/T/TrashDecal01_D.TrashDecal01_D"}},
+        "M_SingleUse": {"count": 1, "shader": "csgo_environment.vfx",
+                        "textures": {"Diffuse": "/Game/T/Floor_D.Floor_D"}},
     })
-    assert set(widget.cards) == {"bese_material", "Decal"}
+    assert set(widget.cards) == {"bese_material", "Decal", "M_SingleUse"}
     summary = widget.cards["bese_material"].bindings.text()
     assert "rough←SRMH.G" in summary, summary
     assert "metal←SRMH.B" in summary, summary
     assert "color←Diffuse" in summary, summary
+
+    # Verify card ordering: multi-instance first (sorted desc by count),
+    # then the divider widget, then single-instance.
+    card_widgets = [widget._layout.itemAt(i).widget()
+                    for i in range(widget._layout.count())
+                    if widget._layout.itemAt(i).widget()]
+    card_names = [w.master_name for w in card_widgets if isinstance(w, MasterMaterialCard)]
+    assert card_names == ["bese_material", "Decal", "M_SingleUse"], card_names
+
     # Repopulating must not leave the previous cards behind.
     stale_combo = widget.shader_combos()["Decal"]
     widget.populate({"only": {"count": 1, "textures": {}}})
@@ -334,9 +396,15 @@ def demo():
     assert widget.shader_combos() == {} and widget.checkboxes() == {}
 
     if "--show" in sys.argv:
-        widget.populate({"bese_material": {"count": 22, "textures": {
-            "Diffuse": "/Game/T/Box_D.Box_D", "SRMH": "/Game/T/Box_SRM.Box_SRM"}}})
-        widget.resize(760, 300)
+        widget.populate({
+            "bese_material": {"count": 22, "textures": {
+                "Diffuse": "/Game/T/Box_D.Box_D", "SRMH": "/Game/T/Box_SRM.Box_SRM"}},
+            "M_Foliage": {"count": 8, "shader": "csgo_foliage.vfx", "textures": {}},
+            "M_StandaloneWood": {"count": 1, "shader": "csgo_environment.vfx", "textures": {
+                "Diffuse": "/Game/T/Wood_D.Wood_D"}},
+            "M_StandaloneMetal": {"count": 1, "shader": "csgo_environment.vfx", "textures": {}},
+        })
+        widget.resize(760, 400)
         widget.show()
         return app.exec()
     print("ok")

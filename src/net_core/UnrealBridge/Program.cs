@@ -731,7 +731,7 @@ static class Program
                 continue;
             if (isScsTemplate) fromScs.Add(name);
 
-            var meshRef = export.GetOrDefault<FPackageIndex?>("StaticMesh", null);
+            var meshRef = export.GetOrDefault<FPackageIndex?>("StaticMesh", null) ?? export.GetOrDefault<FPackageIndex?>("SkeletalMesh", null);
             string? mesh = meshRef?.ResolvedObject?.GetPathName() ?? ChildActorMesh(export);
 
             var loc = export.GetOrDefault("RelativeLocation", new FVector(0f, 0f, 0f));
