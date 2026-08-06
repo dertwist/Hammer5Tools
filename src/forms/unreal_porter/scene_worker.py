@@ -13,7 +13,9 @@ from ._worker_base import CancellableWorker
 from .bridge_client import UnrealBridge, BridgeError
 from .vmap_writer import write_vmap
 from .vsmart_writer import write_vsmart
-from .vmdl_writer import write_vmdl, ue_mesh_to_model_path, find_bulk_export_mesh, GRAYBOX_VMAT
+from .vmdl_writer import (
+    write_vmdl, ue_mesh_to_model_path, mirrored_model_path, find_bulk_export_mesh, GRAYBOX_VMAT,
+)
 from .engine_meshes import is_engine_mesh, generate_engine_mesh_obj, bundled_fbx_for
 
 _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
@@ -37,6 +39,9 @@ def _is_external_ref(key_or_ref) -> bool:
     if "'" in ref:                       # Class'/Game/Path/Name.Name'
         ref = ref.split("'", 2)[1] if ref.count("'") >= 2 else ref
     ref = ref.strip().replace("\\", "/").lower()
+    return ref.startswith("/") and not ref.startswith("/game/")
+
+
 _NON_MESH_PREFIXES = ("t_", "tx_", "tex_", "m_", "mi_", "mm_", "mf_", "cue_", "ns_", "ps_", "wbp_", "bpi_")
 _NON_MESH_FOLDERS = ("/textures/", "/materials/", "/audio/", "/sounds/", "/particles/", "/ui/", "/widget/")
 
@@ -63,10 +68,22 @@ class SceneModelsWorker(CancellableWorker):
                  use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None,
                  master_param_overrides=None,
                  selected_assets=None, import_lods=True, import_collision=True,
-                 tex_format="tga", invert_y_normal=True, parent=None):
+                 tex_format="tga", invert_y_normal=True,
+                 import_lights=False, import_sky=False, import_cubemaps=False,
+                 import_decals=True, mirror_negative_scale=True, parent=None):
         super().__init__(parent)
         self.import_lods = import_lods
         self.import_collision = import_collision
+        # Map settings — which non-geometry actors a map converts, and whether
+        # handedness-flipped placements get a mirrored copy of their model.
+        self.import_lights = import_lights
+        self.import_sky = import_sky
+        self.import_cubemaps = import_cubemaps
+        self.import_decals = import_decals
+        self.mirror_negative_scale = mirror_negative_scale
+        # (UE mesh, mirror axes) pairs some map placed with a negative scale;
+        # each gets its own mirrored vmdl written in the Models stage.
+        self._mirrored_meshes = set()
         self.tex_format = tex_format
         self.invert_y_normal = invert_y_normal
         # Asset keys the user picked in the port scope dialog, already expanded
@@ -129,6 +146,33 @@ class SceneModelsWorker(CancellableWorker):
             return True
         return ref_stem(key_or_ref) in self.selected_stems
 
+    def _mirror_axes_for(self, mesh):
+        """Every distinct mirror-axis set some map placed this mesh with."""
+        return sorted(axes for m, axes in self._mirrored_meshes if m == mesh)
+
+    def _warn_missing_actor_kinds(self, seen_kinds):
+        """Say so when a Map setting is on but the scene read returned nothing
+        it could apply to.
+
+        A bridge built before lights were added reports those actors as nothing
+        at all, so the setting silently does nothing — indistinguishable from a
+        map that genuinely has no lights unless it is called out here.
+        """
+        from .light_entities import LIGHT_COMPONENTS, SKY_COMPONENTS, CUBEMAP_COMPONENTS
+
+        for enabled, kinds, label in (
+            (self.import_lights, LIGHT_COMPONENTS, "lights"),
+            (self.import_sky, SKY_COMPONENTS, "sky"),
+            (self.import_cubemaps, CUBEMAP_COMPONENTS, "cubemaps"),
+        ):
+            if enabled and not (set(kinds) & seen_kinds):
+                self._log(
+                    f"Import {label} is enabled but the scene read returned no such actors. "
+                    f"Either the maps have none, or the CUE4Parse bridge predates this feature "
+                    f"and needs rebuilding (src/net_core/UnrealBridge/README.md).",
+                    "warn",
+                )
+
     def _normalize_landscape_actors(self, actors, map_obj_path):
         """Rewrite dump_scene's "Landscape" actor entries (in place) into ordinary
         StaticMeshComponent entries pointing at a synthetic mesh id, so the rest
@@ -186,6 +230,9 @@ class SceneModelsWorker(CancellableWorker):
         if not bridge.is_available():
             self._log("CUE4Parse bridge unavailable — " + bridge.why_unavailable(), "error")
             return
+        # Which dll actually ran is the first thing to check when the bridge
+        # returns something the current source says it should not.
+        self._log(f"Bridge       : {bridge.dll}", "info")
 
         # Discover maps from the project.
         try:
@@ -205,6 +252,7 @@ class SceneModelsWorker(CancellableWorker):
         self._log(f"Found {len(map_keys)} map(s): {', '.join(os.path.basename(m) for m in map_keys)}", "info")
 
         referenced_meshes = set()
+        seen_kinds = set()
 
         # --- Scenes -> vmap ---
         if self.do_scenes:
@@ -223,21 +271,38 @@ class SceneModelsWorker(CancellableWorker):
                     continue
 
                 self._normalize_landscape_actors(scene["actors"], obj)
+                seen_kinds.update(a.get("componentType", "") for a in scene["actors"])
 
                 vmap_path = os.path.join(self.output_dir, "maps", f"{name}.vmap")
-                res = write_vmap(scene["actors"], vmap_path, unit_scale=self.unit_scale, strip_prefix=self.strip_prefix)
+                res = write_vmap(
+                    scene["actors"], vmap_path,
+                    unit_scale=self.unit_scale, strip_prefix=self.strip_prefix,
+                    import_lights=self.import_lights, import_sky=self.import_sky,
+                    import_cubemaps=self.import_cubemaps, import_decals=self.import_decals,
+                    mirror_negative_scale=self.mirror_negative_scale,
+                )
                 referenced_meshes.update(
                     a["mesh"] for a in scene["actors"]
                     if a.get("mesh") and a.get("componentType") == "StaticMeshComponent"
                 )
+                self._mirrored_meshes.update(res.mirrored_meshes)
                 skip_note = ""
                 if res.skipped:
                     skip_note = f" ({res.skipped} skipped: {res.skipped_types})"
-                smartprop_note = f", {res.placed_smartprops} smartprop" if res.placed_smartprops else ""
+                extras = [
+                    (res.placed_smartprops, "smartprop"),
+                    (res.placed_decals, "decal"),
+                    (res.placed_lights, "light"),
+                    (res.placed_sky, "sky"),
+                    (res.placed_cubemaps, "cubemap"),
+                    (len(res.mirrored_meshes), "mirrored model"),
+                ]
+                extra_note = "".join(f", {n} {label}" for n, label in extras if n)
                 self._log(
-                    f"{name}.vmap — {res.placed} prop_static{smartprop_note}, {len(res.models)} models{skip_note}",
+                    f"{name}.vmap — {res.placed} prop_static{extra_note}, {len(res.models)} models{skip_note}",
                     "success",
                 )
+            self._warn_missing_actor_kinds(seen_kinds)
         else:
             # Models-only still needs the mesh list; pull it from the maps.
             for i, mk in enumerate(map_keys):
@@ -348,7 +413,7 @@ class SceneModelsWorker(CancellableWorker):
             self._log(f"Referenced meshes found: {len(referenced_meshes)}", "info")
             if not referenced_meshes:
                 self._log("No referenced meshes to build vmdls for. Make sure Scenes is enabled or at least one map was scanned.", "warn")
-            made, missing, engine, landscapes = 0, 0, 0, 0
+            made, missing, engine, landscapes, mirrored = 0, 0, 0, 0, 0
             total = len(referenced_meshes)
             for i, mesh in enumerate(sorted(referenced_meshes)):
                 if self._cancel_check():
@@ -415,11 +480,26 @@ class SceneModelsWorker(CancellableWorker):
                            use_graybox_fallback=self.use_graybox_fallback)
                 made += 1
 
+                # A map placed this mesh with a handedness-flipping scale, so it
+                # also needs the mirrored twin(s) the vmap now references — one
+                # per distinct axis set. All reference the same FBX; the mirror
+                # is a ModelDoc modifier, so no second mesh is exported.
+                for axes in self._mirror_axes_for(mesh):
+                    self._write_vmdl(os.path.join(self.output_dir, mirrored_model_path(model_rel, axes)),
+                               mesh_rel, import_scale=self.unit_scale,
+                               fbx_path=dst_fbx or src_fbx, material_path=mat_rel,
+                               output_dir=self.output_dir,
+                               use_graybox_fallback=self.use_graybox_fallback, mirror_axes=axes)
+                    mirrored += 1
+                    made += 1
+
             parts = [f"{made} vmdl written"]
             if engine:
                 parts.append(f"{engine} engine primitive(s) generated")
             if landscapes:
                 parts.append(f"{landscapes} landscape mesh(es) exported")
+            if mirrored:
+                parts.append(f"{mirrored} mirrored copy(ies)")
             level = "success" if missing == 0 else "warn"
             tail = f" ({missing} without a bulk-export FBX — vmdl references a missing mesh)" if missing else ""
             self._log("Models — " + ", ".join(parts) + tail, level)
@@ -567,6 +647,18 @@ def demo():
     unscoped = SceneModelsWorker.__new__(SceneModelsWorker)
     unscoped.selected_stems = None
     assert unscoped._wanted("/Game/Meshes/SM_Table.SM_Table")
+
+    # One mesh mirrored on different axes in different places needs one vmdl
+    # each; a repeat of the same axis set must not write the file twice.
+    w = SceneModelsWorker.__new__(SceneModelsWorker)
+    w._mirrored_meshes = {
+        ("/Game/M/SM_A.SM_A", (True, False, False)),
+        ("/Game/M/SM_A.SM_A", (False, False, True)),
+        ("/Game/M/SM_B.SM_B", (True, False, False)),
+    }
+    assert w._mirror_axes_for("/Game/M/SM_A.SM_A") == [(False, False, True), (True, False, False)]
+    assert w._mirror_axes_for("/Game/M/SM_B.SM_B") == [(True, False, False)]
+    assert w._mirror_axes_for("/Game/M/SM_C.SM_C") == []
 
     print("ok")
 

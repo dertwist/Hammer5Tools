@@ -17,14 +17,27 @@ import random
 from typing import Callable, Iterable, Optional
 
 from src.dotnet import setup_keyvalues2
-from .transform import convert_transform, UETransform, UnitScale
-from .vmdl_writer import ue_mesh_to_model_path
+from .transform import convert_transform, mirror_placement, UETransform, UnitScale
+from .vmdl_writer import ue_mesh_to_model_path, mirrored_model_path
+from .light_entities import (
+    ue_actor_to_entity, LIGHT_COMPONENTS, SKY_COMPONENTS, CUBEMAP_COMPONENTS,
+)
 from . import decal_template as DT
 
 # Component types whose component-level transform is the world transform of a
 # single placed mesh. Instanced/foliage/spline components need per-instance or
 # spline handling and are reported separately, not emitted here.
 _SIMPLE_COMPONENT = "StaticMeshComponent"
+
+# prop_static's own fields; `model` is filled in per placement.
+_PROP_STATIC = {
+    "classname": "prop_static",
+    "model": "",
+    "skin": "default",
+    "solid": "6",
+    "rendercolor": "255 255 255",
+    "disableshadows": "0",
+}
 
 # worldspawn defaults, as Hammer writes them into an empty map.
 _WORLDSPAWN = {
@@ -178,10 +191,17 @@ class VmapWriteResult:
         self.placed = 0
         self.placed_smartprops = 0
         self.placed_decals = 0
+        self.placed_lights = 0
+        self.placed_sky = 0
+        self.placed_cubemaps = 0
         self.skipped = 0
         self.skipped_types = {}   # componentType -> count
         self.models = set()       # source model paths referenced
         self.decal_materials = set()  # UE decal material paths referenced
+        # (UE mesh, mirror axes) pairs placed with a handedness-flipping scale.
+        # Each distinct pair needs its own mirrored vmdl alongside the normal
+        # one — the same mesh mirrored on X and on Z are two different models.
+        self.mirrored_meshes = set()
 
     def note_skip(self, comp_type):
         self.skipped += 1
@@ -194,6 +214,11 @@ def write_vmap(
     model_resolver: Optional[Callable[[str], str]] = None,
     unit_scale: float = UnitScale.ONE_TO_ONE,
     strip_prefix: bool = True,
+    import_lights: bool = False,
+    import_sky: bool = False,
+    import_cubemaps: bool = False,
+    import_decals: bool = True,
+    mirror_negative_scale: bool = True,
 ) -> VmapWriteResult:
     """
     Write a .vmap of prop_static entities from normalized scene actors.
@@ -203,6 +228,12 @@ def write_vmap(
     model_resolver  : maps a UE mesh path to a Source model path; defaults to
                       ue_mesh_to_model_path.
     unit_scale      : UE→Source unit multiplier (shared with the vmdl import scale).
+
+    The import_* flags are the Map settings: each gates one class of actor, and
+    a disabled class is counted as skipped rather than dropped silently.
+    mirror_negative_scale points handedness-flipping placements at a mirrored
+    copy of their model (collected in result.mirrored_meshes for the caller to
+    write) instead of placing the original inside-out.
     """
     if model_resolver is None:
         model_resolver = lambda mesh: ue_mesh_to_model_path(mesh, strip_prefix=strip_prefix)
@@ -225,14 +256,16 @@ def write_vmap(
         p["descriptions"] = DM.StringArray()
         return p
 
-    def make_prop(name, model, origin, angles, scales, node_id):
+    def make_entity(name, props, origin, angles, scales, node_id):
+        """A CMapEntity carrying `props` as its EditGameClassProps.
+
+        Every point entity the converter emits — prop_static, lights, sky,
+        cubemap volumes — is this element with a different property dict, so
+        the node boilerplate is written once.
+        """
         ep = E("", "EditGameClassProps")
-        ep["classname"] = "prop_static"
-        ep["model"] = model
-        ep["skin"] = "default"
-        ep["solid"] = "6"
-        ep["rendercolor"] = "255 255 255"
-        ep["disableshadows"] = "0"
+        for k, v in props.items():
+            ep[k] = v
 
         ent = E(name, "CMapEntity")
         ent["nodeID"] = System.Int32(node_id)
@@ -250,6 +283,10 @@ def write_vmap(
         for b in ("transformLocked", "force_hidden", "editorOnly", "isProceduralEntity"):
             ent[b] = False
         return ent
+
+    def make_prop(name, model, origin, angles, scales, node_id):
+        return make_entity(name, dict(_PROP_STATIC, model=model),
+                           origin, angles, scales, node_id)
 
     def make_smartprop(name, smartprop_rel_path, origin, angles, scales, node_id):
         # SmartProp placements are a dedicated CMapSmartProp element, not a
@@ -465,23 +502,48 @@ def write_vmap(
     node_id = 1000
     children = world["children"]
 
+    # componentType -> the Map setting that gates it. Anything not listed here
+    # is geometry (or unsupported) and follows the mesh/blueprint path below.
+    gated = {}
+    for kinds, enabled in ((LIGHT_COMPONENTS, import_lights),
+                           (SKY_COMPONENTS, import_sky),
+                           (CUBEMAP_COMPONENTS, import_cubemaps),
+                           (("DecalComponent",), import_decals)):
+        for kind in kinds:
+            gated[kind] = enabled
+
     for a in actors:
         comp = a.get("componentType", "")
         mesh = a.get("mesh")
         bp = a.get("blueprint")
         decal_material = a.get("material") if comp == "DecalComponent" else None
 
-        if comp != _SIMPLE_COMPONENT and comp != "BlueprintActor" and not bp and comp != "DecalComponent":
+        if comp in gated:
+            if not gated[comp]:
+                result.note_skip(comp)  # switched off in Map settings
+                continue
+        elif comp != _SIMPLE_COMPONENT and comp != "BlueprintActor" and not bp:
             result.note_skip(comp)      # foliage/spline/instanced — handled elsewhere
             continue
 
         st = actor_transform(a, unit_scale)
         angles = st.angles
+        scales = st.scales
 
         node_id += 1
         name = a.get("actor") or f"ent_{node_id}"
 
-        if comp == "BlueprintActor" or bp:
+        entity = ue_actor_to_entity(a, unit_scale) if comp in gated else None
+        if entity:
+            _classname, props = entity
+            children.Add(make_entity(name, props, st.origin, angles, scales, node_id))
+            if comp in SKY_COMPONENTS:
+                result.placed_sky += 1
+            elif comp in CUBEMAP_COMPONENTS:
+                result.placed_cubemaps += 1
+            else:
+                result.placed_lights += 1
+        elif comp == "BlueprintActor" or bp:
             bp_name = bp or name
             from .vmdl_writer import strip_ue_prefix
             clean_bp_name = strip_ue_prefix(bp_name) if strip_prefix else bp_name
@@ -496,8 +558,16 @@ def write_vmap(
             result.placed_decals += 1
         elif comp == _SIMPLE_COMPONENT and mesh:
             model = model_resolver(mesh)
+            if mirror_negative_scale:
+                # A negatively scaled prop_static renders inside-out in Source 2,
+                # so the flip moves into a mirrored copy of the model and the
+                # placement keeps its angles and drops the signs off its scale.
+                angles, scales, mirror_axes = mirror_placement(angles, scales)
+                if any(mirror_axes):
+                    result.mirrored_meshes.add((mesh, mirror_axes))
+                    model = mirrored_model_path(model, mirror_axes)
             result.models.add(model)
-            children.Add(make_prop(name, model, st.origin, angles, st.scales, node_id))
+            children.Add(make_prop(name, model, st.origin, angles, scales, node_id))
             result.placed += 1
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
@@ -543,6 +613,18 @@ def demo():
     st = actor_transform(actor(x=254, y=254, z=254, s=2.0), unit_scale=UnitScale.CM_TO_INCH)
     assert rounded(st.origin) == (100.0, -100.0, 100.0), st.origin
     assert rounded(st.scales) == (2.0, 2.0, 2.0), st.scales
+
+    # A mirrored placement must point at a different model than the original,
+    # or every mirrored prop silently reuses the inside-out one.
+    assert mirrored_model_path("models/props/barrel.vmdl", (True, False, False)) \
+        == "models/props/barrel_mirror_x.vmdl"
+
+    # The end-to-end mirror contract this writer relies on: a UE actor scaled
+    # -1 on one axis places the mirrored model, unrotated, at positive scale.
+    st = actor_transform(actor(x=100, y=200, z=50))
+    _a, _s, axes = mirror_placement(st.angles, (-1.0, 1.0, 1.0))
+    assert axes == (True, False, False) and _s == (1.0, 1.0, 1.0), (axes, _s)
+    assert _a == st.angles, _a
 
     # The skeleton needs the DMX stack, so it is checked only where that loads.
     try:

@@ -75,13 +75,24 @@ def category_counts(keys) -> dict:
 
 
 def format_counts(keys) -> str:
-    """"Models 43 | Materials 5 | Blueprints 3 | Maps 7" — empty categories omitted."""
+    """"Models 43  |  Maps 7  |  Other 12  —  62 total" — empty categories omitted.
+
+    Every key is accounted for. classify() only recognises Unreal's own naming
+    convention, and plenty of projects (marketplace packs especially) do not
+    follow it — so dropping what it cannot place made the label read "Maps 1"
+    for a 237-asset project. Unclassified assets port exactly like any other;
+    they just cannot be named here, which is what "Other" says.
+    """
+    keys = list(keys)
+    if not keys:
+        return ""
     counts = category_counts(keys)
-    return "  |  ".join(
-        f"{label} {counts[category]}"
-        for category, label in CATEGORY_LABELS.items()
-        if counts.get(category)
-    )
+    parts = [f"{label} {counts[category]}"
+             for category, label in CATEGORY_LABELS.items() if counts.get(category)]
+    other = len(keys) - sum(counts.values())
+    if other:
+        parts.append(f"Other {other}")
+    return "  |  ".join(parts) + f"  —  {len(keys)} total"
 
 
 def asset_stem(key: str) -> str:
@@ -553,10 +564,18 @@ def demo():
 
     assert category_counts(keys) == {"Scenes": 1, "Models": 1, "Materials": 1, "Textures": 1}
     line = format_counts(keys)
-    assert line == "Models 1  |  Materials 1  |  Textures 1  |  Maps 1", line
+    assert line == "Models 1  |  Materials 1  |  Textures 1  |  Maps 1  —  4 total", line
     # Empty categories are omitted, not printed as zero.
-    assert format_counts(["P/Content/Maps/A.umap"]) == "Maps 1"
+    assert format_counts(["P/Content/Maps/A.umap"]) == "Maps 1  —  1 total"
     assert format_counts([]) == ""
+
+    # The label must account for every asset. A pack that ignores Unreal's
+    # naming convention classifies as nothing, and silently dropping those made
+    # the label report 5 assets for a project holding 237.
+    unnamed = ["P/Content/Props/Bin_01.uasset", "P/Content/Props/Fan.uasset"]
+    line = format_counts(unnamed + ["P/Content/Maps/A.umap"])
+    assert line == "Maps 1  |  Other 2  —  3 total", line
+    assert format_counts(unnamed) == "Other 2  —  2 total"
 
     _demo_tree(keys)
     print("ok")

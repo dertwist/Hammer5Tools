@@ -539,10 +539,46 @@ class UnrealPorterWidget(QDialog):
         sv.addWidget(self.strip_prefixes_check)
         layout.addWidget(settings_box)
 
+        layout.addWidget(self._build_map_settings_box())
         layout.addWidget(self._build_models_box())
         layout.addWidget(self._build_textures_box())
         layout.addStretch(1)
         return tab
+
+    # Map settings — which non-geometry actors a converted map brings across.
+    # (checkbox attribute, label, settings key, default, tooltip)
+    _MAP_SETTINGS = (
+        ("map_lights_check", "Import light", "map_import_lights", False,
+         "Convert Unreal's point, spot, rect and directional lights into their CS2 "
+         "equivalents (light_omni2, light_rect, light_environment). Intensities are "
+         "converted to lumens; tune a converted light with its Brightness Scale in Hammer."),
+        ("map_sky_check", "Import sky", "map_import_sky", False,
+         "Place an env_sky named 'sky' where Unreal's Sky Light / Sky Atmosphere sits. "
+         "Unreal's sky cubemap is not converted — the entity starts on the default sky material."),
+        ("map_cubemaps_check", "Import cubemaps", "map_import_cubemaps", False,
+         "Convert Unreal's reflection capture actors into env_combined_light_probe_volume "
+         "entities, sized from each capture's influence radius or box extent."),
+        ("map_decals_check", "Import decals", "map_import_decals", True,
+         "Place Unreal's decal actors as CS2 static overlays using the converted decal material."),
+        ("map_mirror_check", "Mirror negative scaled actors", "map_mirror_negative_scale", True,
+         "Source 2 renders a negatively scaled prop inside-out. When an actor's scale flips "
+         "handedness, write a mirrored copy of its model (name_mirror.vmdl) and place that at "
+         "positive scale instead."),
+    )
+
+    def _build_map_settings_box(self):
+        box = QGroupBox("Map settings")
+        v = QVBoxLayout(box)
+        for attr, label, key, default, tooltip in self._MAP_SETTINGS:
+            check = QCheckBox(label)
+            check.setToolTip(tooltip)
+            check.setChecked(get_settings_bool("UnrealConverter", key, default))
+            check.toggled.connect(
+                lambda checked, k=key: set_settings_bool("UnrealConverter", k, checked)
+            )
+            setattr(self, attr, check)
+            v.addWidget(check)
+        return box
 
     def _build_models_box(self):
         box = QGroupBox("Models")
@@ -762,8 +798,7 @@ class UnrealPorterWidget(QDialog):
 
     def browse_uproject(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Unreal Engine Project", "", "Unreal Project (*.uproject);;All Files (*)",
-            options=QFileDialog.DontUseNativeDialog,
+            self, "Select Unreal Engine Project", "", "Unreal Project (*.uproject);;All Files (*)"
         )
         if path:
             self.uproject_edit.setText(path.replace("\\", "/"))
@@ -792,7 +827,6 @@ class UnrealPorterWidget(QDialog):
                 "Save converter log",
                 default_name,
                 "Text Files (*.txt);;All Files (*)",
-                options=QFileDialog.DontUseNativeDialog,
             )
 
             if not filename:
@@ -1259,6 +1293,11 @@ class UnrealPorterWidget(QDialog):
             import_collision=self.model_collision_check.isChecked(),
             tex_format=self.tex_format_combo.currentText(),
             invert_y_normal=self.tex_invert_y_check.isChecked(),
+            import_lights=self.map_lights_check.isChecked(),
+            import_sky=self.map_sky_check.isChecked(),
+            import_cubemaps=self.map_cubemaps_check.isChecked(),
+            import_decals=self.map_decals_check.isChecked(),
+            mirror_negative_scale=self.map_mirror_check.isChecked(),
         )
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
