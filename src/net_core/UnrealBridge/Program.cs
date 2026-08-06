@@ -284,9 +284,24 @@ static class Program
         double sy = Math.Sqrt(M[0, 1] * M[0, 1] + M[1, 1] * M[1, 1] + M[2, 1] * M[2, 1]);
         double sz = Math.Sqrt(M[0, 2] * M[0, 2] + M[1, 2] * M[1, 2] + M[2, 2] * M[2, 2]);
 
-        double fwdX = sx > 1e-6 ? M[0, 0] / sx : 1.0;
-        double fwdY = sx > 1e-6 ? M[1, 0] / sx : 0.0;
-        double fwdZ = sx > 1e-6 ? M[2, 0] / sx : 0.0;
+        // Column magnitudes are always positive, so a mirrored actor would come
+        // out as an ordinary one with a bogus (improper) rotation. A negative
+        // determinant is the only evidence the scale flipped handedness; which
+        // axis it was is not recoverable and does not matter, because every
+        // single-axis flip differs from the others only by a rotation this
+        // decomposition then absorbs. Putting it on X keeps that choice in one
+        // place and leaves the basis below proper.
+        double det = M[0, 0] * (M[1, 1] * M[2, 2] - M[1, 2] * M[2, 1])
+                   - M[0, 1] * (M[1, 0] * M[2, 2] - M[1, 2] * M[2, 0])
+                   + M[0, 2] * (M[1, 0] * M[2, 1] - M[1, 1] * M[2, 0]);
+        if (det < 0.0) sx = -sx;
+
+        // Magnitude, not value: sx is signed now, and "> 1e-6" would treat a
+        // mirrored axis as a degenerate one and throw the basis away.
+        double axLen = Math.Abs(sx);
+        double fwdX = axLen > 1e-6 ? M[0, 0] / sx : 1.0;
+        double fwdY = axLen > 1e-6 ? M[1, 0] / sx : 0.0;
+        double fwdZ = axLen > 1e-6 ? M[2, 0] / sx : 0.0;
 
         double rgtZ = sy > 1e-6 ? M[2, 1] / sy : 0.0;
         double upZ  = sz > 1e-6 ? M[2, 2] / sz : 1.0;
@@ -382,6 +397,63 @@ static class Program
         return (null, null, null);
     }
 
+    // Light / sky / reflection components the vmap writer knows how to place.
+    // Spot and rect components derive from the point light component but export
+    // under their own type name, so a plain name match is enough — order is kept
+    // most-specific-first anyway so a renamed subclass cannot fall through to
+    // the wrong CS2 entity.
+    private static string? LightComponentKind(string cls)
+    {
+        if (cls.Contains("SpotLightComponent", StringComparison.Ordinal)) return "SpotLight";
+        if (cls.Contains("RectLightComponent", StringComparison.Ordinal)) return "RectLight";
+        if (cls.Contains("PointLightComponent", StringComparison.Ordinal)) return "PointLight";
+        if (cls.Contains("DirectionalLightComponent", StringComparison.Ordinal)) return "DirectionalLight";
+        if (cls.Contains("SkyLightComponent", StringComparison.Ordinal) ||
+            cls.Contains("SkyAtmosphereComponent", StringComparison.Ordinal)) return "SkyLight";
+        if (cls.Contains("ReflectionCaptureComponent", StringComparison.Ordinal)) return "ReflectionCapture";
+        return null;
+    }
+
+    // Raw Unreal light properties, straight off the component. No conversion
+    // happens here: the photometric and unit mapping lives in Python
+    // (light_entities.py) next to the CS2 key names it has to satisfy, so both
+    // halves of that mapping can be read — and tested — in one place.
+    private static object LightPayload(CUE4Parse.UE4.Assets.Exports.UObject comp, string kind, FVector worldScale)
+    {
+        var color = comp.GetOrDefault("LightColor", new FColor(255, 255, 255, 255));
+        object? boxExtent = null;
+        if (kind == "ReflectionCapture" &&
+            comp.ExportType?.Contains("BoxReflectionCapture", StringComparison.Ordinal) == true)
+        {
+            // A box capture has no radius: its volume is a 100uu cube scaled by
+            // the component transform, so the extent has to come from there.
+            boxExtent = new { x = worldScale.X * 100f, y = worldScale.Y * 100f, z = worldScale.Z * 100f };
+        }
+
+        return new
+        {
+            intensity = comp.GetOrDefault("Intensity", 0f),
+            // Nullable read, matching DumpBlueprint: an unset enum property must
+            // come back as null rather than dereferencing a default FName.
+            intensityUnits = comp.GetOrDefault<FName?>("IntensityUnits", null)?.Text,
+            color = new { r = color.R, g = color.G, b = color.B },
+            useTemperature = comp.GetOrDefault("bUseTemperature", false),
+            temperature = comp.GetOrDefault("Temperature", 6500f),
+            attenuationRadius = comp.GetOrDefault("AttenuationRadius", 0f),
+            innerConeAngle = comp.GetOrDefault("InnerConeAngle", 0f),
+            outerConeAngle = comp.GetOrDefault("OuterConeAngle", 44f),
+            sourceRadius = comp.GetOrDefault("SourceRadius", 0f),
+            sourceWidth = comp.GetOrDefault("SourceWidth", 64f),
+            sourceHeight = comp.GetOrDefault("SourceHeight", 64f),
+            castShadows = comp.GetOrDefault("CastShadows", true),
+            sourceAngle = comp.GetOrDefault("LightSourceAngle", 0f),
+            cubemap = comp.GetOrDefault<FPackageIndex?>("Cubemap", null)?.ResolvedObject?.GetPathName(),
+            influenceRadius = comp.GetOrDefault("InfluenceRadius", 0f),
+            boxExtent,
+            brightness = comp.GetOrDefault("Brightness", 1f),
+        };
+    }
+
     // Normalized scene extraction: every static-mesh-bearing component with its
     // mesh reference and UE transform. Coordinate conversion to Source 2 is done
     // on the Python side via the shared transform module. Instanced/foliage/spline
@@ -469,6 +541,24 @@ static class Program
                     location = new { x = dLoc.X, y = dLoc.Y, z = dLoc.Z },
                     rotation = new { pitch = dRot.Pitch, yaw = dRot.Yaw, roll = dRot.Roll },
                     scale = new { x = dScale.X, y = dScale.Y, z = dScale.Z },
+                });
+                continue;
+            }
+
+            var lightKind = LightComponentKind(cls);
+            if (lightKind != null)
+            {
+                var (lLoc2, lRot2, lScale2) = GetWorldTransform(export);
+                actors.Add(new
+                {
+                    actor = outerName,
+                    componentType = lightKind,
+                    blueprint = (string?)null,
+                    mesh = (string?)null,
+                    light = LightPayload(export, lightKind, lScale2),
+                    location = new { x = lLoc2.X, y = lLoc2.Y, z = lLoc2.Z },
+                    rotation = new { pitch = lRot2.Pitch, yaw = lRot2.Yaw, roll = lRot2.Roll },
+                    scale = new { x = lScale2.X, y = lScale2.Y, z = lScale2.Z },
                 });
                 continue;
             }

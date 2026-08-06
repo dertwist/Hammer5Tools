@@ -143,6 +143,26 @@ def source_matrix_angles(m: Mat3) -> Vec3:
     return (pitch, yaw, roll)
 
 
+def source_rotation_matrix(pitch: float, yaw: float, roll: float) -> Mat3:
+    """Source QAngle -> rotation matrix (Source's AngleMatrix).
+
+    The exact inverse of source_matrix_angles, so a matrix can be built from
+    stored angles, composed with another rotation, and read back out.
+    """
+    p = math.radians(pitch)
+    y = math.radians(yaw)
+    r = math.radians(roll)
+    sp, cp = math.sin(p), math.cos(p)
+    sy, cy = math.sin(y), math.cos(y)
+    sr, cr = math.sin(r), math.cos(r)
+
+    return [
+        [cp * cy, sr * sp * cy - cr * sy, cr * sp * cy + sr * sy],
+        [cp * sy, sr * sp * sy + cr * cy, cr * sp * sy - sr * cy],
+        [-sp,     sr * cp,                cr * cp],
+    ]
+
+
 # Public API
 
 def convert_position(pos_ue: Sequence[float], scale: float = UnitScale.ONE_TO_ONE) -> Vec3:
@@ -201,6 +221,47 @@ def convert_transform(t: UETransform, unit_scale: float = UnitScale.ONE_TO_ONE) 
     )
 
 
+def is_mirrored(scales: Sequence[float]) -> bool:
+    """Does this scale flip handedness (an odd number of negative axes)?
+
+    Source 2 renders a negatively scaled prop inside-out — the winding is never
+    flipped to match — so this is the test for "needs a mirrored copy of the
+    model" rather than a plain placement.
+    """
+    return (float(scales[0]) * float(scales[1]) * float(scales[2])) < 0.0
+
+
+def mirror_placement(angles: Sequence[float], scales: Sequence[float]):
+    """Re-express a mirrored placement as a *mirrored model* at positive scale.
+
+    Returns (angles, scales, mirror_axes) where mirror_axes is a per-axis
+    (x, y, z) tuple of bools for ModelDoc's ModelModifier_ScaleAndMirror. When
+    the scale does not flip handedness nothing is mirrored, mirror_axes is all
+    False, and the inputs come back untouched.
+
+    Mirroring *exactly the negative axes* is what makes this free: every matrix
+    here is diagonal, so it commutes, and
+
+        R @ diag(s) == R @ diag(|s|) @ M      with   M = mirror(negative axes)
+
+    falls straight out — the entity keeps the angles it already had and only
+    drops the signs off its scale. Mirroring some other axis would work too but
+    would leave a 180 degree rotation to fold back into those angles.
+
+    Note the even case is deliberately not mirrored: two negative axes are a
+    proper rotation, winding is preserved, and Source 2 renders it correctly as
+    an ordinary negatively scaled placement.
+    """
+    if not is_mirrored(scales):
+        return (tuple(float(a) for a in angles),
+                tuple(float(s) for s in scales),
+                (False, False, False))
+
+    return (tuple(float(a) for a in angles),
+            tuple(abs(float(s)) for s in scales),
+            tuple(float(s) < 0.0 for s in scales))
+
+
 def _wrap(a: float) -> float:
     """Angle wrapped to (-180, 180] so sign-flipped forms compare equal."""
     return round((a + 180.0) % 360.0 - 180.0, 6) + 0.0
@@ -246,6 +307,52 @@ def demo():
     assert st.origin == (10, -20, 30), st.origin
     assert tuple(map(_wrap, st.angles)) == (0.0, -90.0, 0.0), st.angles
     assert st.scales == (1.0, 1.0, 2.0), st.scales
+
+    # source_rotation_matrix must invert source_matrix_angles exactly, or the
+    # mirror below composes its 180 degree turn onto the wrong basis.
+    for pitch in (-80, -30, 0, 25, 70):
+        for yaw in (-170, -90, 0, 45, 135):
+            for roll in (-150, 0, 60, 179):
+                back = source_matrix_angles(source_rotation_matrix(pitch, yaw, roll))
+                assert tuple(map(_wrap, back)) == (pitch, yaw, roll), (pitch, yaw, roll, back)
+
+    # An even number of negative axes is still a proper rotation — nothing to
+    # mirror, and a copy of the model would be wasted.
+    assert not is_mirrored((1, 1, 1)) and not is_mirrored((-1, -1, 1))
+    assert is_mirrored((-1, 1, 1)) and is_mirrored((-1, -1, -1))
+    a, s, m = mirror_placement((10, 20, 30), (1, 2, 3))
+    assert (a, s, m) == ((10.0, 20.0, 30.0), (1.0, 2.0, 3.0), (False, False, False))
+
+    # Two negative axes are a proper rotation — winding survives, so mirroring
+    # would cost a duplicated model for nothing.
+    assert mirror_placement((0, 0, 0), (-1, -1, 1))[2] == (False, False, False)
+
+    # The whole claim of mirror_placement: the returned angles and positive
+    # scales, applied to a model mirrored on the returned axes, are the SAME
+    # linear map as the original angles at the original negative scales.
+    # Checked on every sign pattern that flips handedness.
+    for sign in ((-1, 1, 1), (1, -1, 1), (1, 1, -1), (-1, -1, -1)):
+        for base_angles in ((0, 0, 0), (0, 90, 0), (15, -40, 65), (-70, 160, -25)):
+            scales = tuple(sg * v for sg, v in zip(sign, (1.5, 2.0, 3.0)))
+            new_angles, new_scales, axes = mirror_placement(base_angles, scales)
+            assert all(v > 0 for v in new_scales), (sign, new_scales)
+            # Exactly the negative axes get mirrored, which is what keeps the
+            # angles untouched.
+            assert axes == tuple(v < 0 for v in sign), (sign, axes)
+            assert new_angles == tuple(float(v) for v in base_angles), (sign, new_angles)
+
+            want = _matmul(source_rotation_matrix(*base_angles),
+                           [[scales[0], 0, 0], [0, scales[1], 0], [0, 0, scales[2]]])
+            # ModelModifier_ScaleAndMirror bakes M into the compiled model, so
+            # it sits to the right of the placement's own scale.
+            mirror: Mat3 = [[0.0] * 3 for _ in range(3)]
+            for i in range(3):
+                mirror[i][i] = -1.0 if axes[i] else 1.0
+            got = _matmul(_matmul(source_rotation_matrix(*new_angles),
+                                  [[new_scales[0], 0, 0], [0, new_scales[1], 0], [0, 0, new_scales[2]]]),
+                          mirror)
+            assert all(abs(want[i][j] - got[i][j]) < 1e-9 for i in range(3) for j in range(3)), \
+                (sign, base_angles, want, got)
     print("ok")
 
 

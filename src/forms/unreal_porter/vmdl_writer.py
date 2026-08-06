@@ -110,6 +110,21 @@ def ue_mesh_to_model_path(ue_mesh_path: str, models_root: str = "models", strip_
     return f"{models_root}/{p}.vmdl".lower()
 
 
+def mirrored_model_path(model_path: str, mirror_axes) -> str:
+    """"models/barrel.vmdl" + (True, False, True) -> "models/barrel_mirror_xz.vmdl".
+
+    The mirrored twin of a model, for placements whose scale flips handedness
+    (see transform.mirror_placement). The axes are in the name because one mesh
+    can be placed mirrored on different axes in the same map, and those are
+    different models — collapsing them to a single "_mirror" name would give
+    every such placement whichever variant happened to be written last.
+    """
+    suffix = "".join(a for a, on in zip("xyz", mirror_axes) if on)
+    if not suffix or not model_path.lower().endswith(".vmdl"):
+        return model_path
+    return f"{model_path[:-5]}_mirror_{suffix}.vmdl"
+
+
 def find_bulk_export_mesh(bulk_dir: str, ue_mesh_path: str):
     """Locate the bulk-exported mesh file for a UE mesh ref by asset stem."""
     if not bulk_dir or not os.path.exists(bulk_dir):
@@ -360,7 +375,30 @@ def apply_import_options(mesh_info: dict, import_lods: bool = True, import_colli
     return trimmed
 
 
-def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=None, use_graybox_fallback=False):
+def _mirror_modifier_list(mirror_axes):
+    """ModelDoc's ModelModifier_ScaleAndMirror, mirroring the given (x, y, z).
+
+    This is the engine's own mirror: it flips the geometry *and* fixes the
+    winding, which a negative import scale does not. `scale` stays 1.0 — the
+    unit conversion already lives on the mesh nodes' import_scale and applying
+    it twice would square it.
+    """
+    return {
+        "_class": "ModelModifierList",
+        "children": [{
+            "_class": "ModelModifier_ScaleAndMirror",
+            "scale": 1.0,
+            "mirror_x": bool(mirror_axes[0]),
+            "mirror_y": bool(mirror_axes[1]),
+            "mirror_z": bool(mirror_axes[2]),
+            "flip_bone_forward": False,
+            "swap_left_and_right_bones": False,
+        }],
+    }
+
+
+def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=None, use_graybox_fallback=False,
+                     mirror_axes=None):
     """Build the modeldoc rootNode dict with LOD + physics from mesh_info."""
     lods = mesh_info.get("lods") or []
     lod_filters = mesh_info.get("lod_filters") or []
@@ -469,6 +507,8 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=Non
         "body_order": "default",
     })
     children.append({"_class": "RenderMeshList", "children": render_children})
+    if mirror_axes and any(mirror_axes):
+        children.append(_mirror_modifier_list(mirror_axes))
 
     return {
         "rootNode": {
@@ -490,7 +530,8 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                use_graybox_fallback: bool = False,
                import_lods: bool = True,
                import_collision: bool = True,
-               strip_prefix: bool = True) -> str:
+               strip_prefix: bool = True,
+               mirror_axes=None) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
@@ -503,6 +544,9 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
     would render all the LODs stacked on top of each other.
     import_collision=False discards the UCX/UBX hulls, leaving the physics hull
     to be generated from the render mesh as it is for any FBX without them.
+    mirror_axes is an (x, y, z) tuple of bools adding a ModelModifier_ScaleAndMirror,
+    so placements with a handedness-flipping scale can reference this copy at
+    positive scale instead of rendering inside-out (see mirrored_model_path).
     """
     mesh_rel_path = mesh_rel_path.replace("\\", "/")
     mesh_info = {}
@@ -535,7 +579,8 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                         except Exception:
                             pass
 
-    vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=material_remaps, use_graybox_fallback=use_graybox_fallback)
+    vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=material_remaps,
+                            use_graybox_fallback=use_graybox_fallback, mirror_axes=mirror_axes)
 
     content = JsonToKv3(vmdl, format="vmdl")
     # Upgrade the header format token modeldoc36 -> modeldoc41.
@@ -587,6 +632,36 @@ def demo():
             fbx_path=cube, output_dir=out, model_rel_path="models/engine/basicshapes/cube.vmdl")
         assert remaps == [{"from": "WorldGridMaterial.vmat",
                            "to": "materials/proj/worldgridmaterial.vmat"}], remaps
+
+    # Mirrored variants are named per axis set: one mesh placed mirrored on X in
+    # one spot and on Z in another needs two distinct models, not one.
+    assert mirrored_model_path("models/props/barrel.vmdl", (True, False, False)) \
+        == "models/props/barrel_mirror_x.vmdl"
+    assert mirrored_model_path("models/props/barrel.vmdl", (True, False, True)) \
+        == "models/props/barrel_mirror_xz.vmdl"
+    assert mirrored_model_path("models/props/barrel.vmdl", (True, True, True)) \
+        == "models/props/barrel_mirror_xyz.vmdl"
+    # Nothing to mirror, or not a vmdl -> unchanged, so no phantom twin is
+    # referenced by a placement that does not need one.
+    assert mirrored_model_path("models/props/barrel.vmdl", (False, False, False)) \
+        == "models/props/barrel.vmdl"
+    assert mirrored_model_path("models/props/barrel.obj", (True, False, False)) \
+        == "models/props/barrel.obj"
+
+    # An unmirrored model carries no modifier list at all; a mirrored one
+    # carries exactly the flags asked for, and its import scale stays positive
+    # (the modifier does the flipping, not a negative scale).
+    plain = _build_vmdl_dict("models/x.fbx", 1.0, {})
+    assert not any(c["_class"] == "ModelModifierList" for c in plain["rootNode"]["children"])
+    mirrored = _build_vmdl_dict("models/x.fbx", 1.0, {}, mirror_axes=(False, True, False))
+    mods = [c for c in mirrored["rootNode"]["children"] if c["_class"] == "ModelModifierList"]
+    assert len(mods) == 1, mirrored["rootNode"]["children"]
+    mod = mods[0]["children"][0]
+    assert mod["_class"] == "ModelModifier_ScaleAndMirror"
+    assert (mod["mirror_x"], mod["mirror_y"], mod["mirror_z"]) == (False, True, False), mod
+    assert mod["scale"] == 1.0, mod
+    meshes = [c for c in mirrored["rootNode"]["children"] if c["_class"] == "RenderMeshList"][0]
+    assert meshes["children"][0]["import_scale"] == 1.0, meshes["children"][0]
 
     print("ok")
 
