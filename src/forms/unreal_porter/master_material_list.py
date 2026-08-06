@@ -26,15 +26,7 @@ _SRC_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 _REMAP_ICON = os.path.join(_SRC_DIR, "icons", "tools", "modeldoc_editor",
                            "material_remap_arrow.png")
 
-SHADERS = [
-    "csgo_environment.vfx",
-    "csgo_environment_blend.vfx",
-    "csgo_static_overlay.vfx",
-    "csgo_foliage.vfx",
-    "csgo_glass.vfx",
-    "csgo_character.vfx",
-    "complex.vfx",
-]
+from .shader_schemas import SHADERS
 
 _CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A"}
 
@@ -112,6 +104,7 @@ class MasterMaterialCard(QFrame):
         head.addWidget(title)
         head.addStretch(1)
 
+        self.info = info
         self.shader_combo = QComboBox()
         self.shader_combo.addItems(SHADERS)
         predicted = info.get("shader", "csgo_environment.vfx")
@@ -119,10 +112,11 @@ class MasterMaterialCard(QFrame):
         if idx >= 0:
             self.shader_combo.setCurrentIndex(idx)
         self.shader_combo.setToolTip("Target CS2 shader for this Master Material")
+        self.shader_combo.currentTextChanged.connect(self._on_shader_changed)
         head.addWidget(self.shader_combo)
 
         self.map_button = QToolButton()
-        self.map_button.setToolTip(f"Configure texture parameter slot assignments for {master_name}")
+        self.map_button.setToolTip(f"Shader Remapper: Configure CS2 shader, feature flags, and texture slot mappings for {master_name}")
         self.map_button.setIcon(QIcon(_REMAP_ICON))
         self.map_button.clicked.connect(lambda: self.map_slots_requested.emit(self.master_name))
         head.addWidget(self.map_button)
@@ -148,12 +142,18 @@ class MasterMaterialCard(QFrame):
         apply_stylesheets(self)
         self.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
+    def _on_shader_changed(self, new_shader: str):
+        if hasattr(self, "info") and self.info:
+            self.info["shader"] = new_shader
+            self.refresh(self.info)
+
     def refresh(self, info: dict, bulk_dir: str = None, tex_index: dict = None):
+        self.info = info
         if bulk_dir:
             self.bulk_dir = bulk_dir
         textures = info.get("textures", {})
         slot_overrides = info.get("slot_overrides", {})
-        shader = info.get("shader")
+        shader = info.get("shader") or self.shader_combo.currentText()
         picks = _classify_textures(textures, slot_overrides, shader=shader)
         self.bindings.setText(format_picks_summary(picks))
         self._update_thumbnails(picks, tex_index=tex_index)
