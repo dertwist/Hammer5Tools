@@ -205,8 +205,24 @@ class MaterialConvertWorker(QThread):
         self.finished.emit(created, skipped)
 
 
-def predict_cs2_shader(master_name: str, mat_flags: dict = None) -> str:
-    """Predict default target CS2 shader for a Master Material."""
+# The one shader used when nothing else is known. Not a guess about the
+# material — just a definite, stated default.
+FALLBACK_SHADER = "csgo_environment.vfx"
+
+
+def seed_shader_for(master_name: str, mat_flags: dict = None) -> str:
+    """The shader a *newly discovered* Master Material starts out mapped to.
+
+    SEEDING ONLY. This runs once, when a master is first seen, to fill in its
+    entry in the saved shader remap table — which is then written to
+    shader_swap.kv3, shown in the Materials tab, and editable. Conversion never
+    calls this: it reads the saved table and nothing else, so the shader a
+    material converts with is always one that is written down and visible.
+
+    Guessing at conversion time is what this replaced; a material silently
+    converting with a shader nobody chose is indistinguishable from a remap
+    being ignored, and cost a long time to track down.
+    """
     name_lower = master_name.lower()
     flags = mat_flags or {}
     domain = flags.get("domain", "")
@@ -219,7 +235,7 @@ def predict_cs2_shader(master_name: str, mat_flags: dict = None) -> str:
         return "csgo_glass.vfx"
     if any(k in name_lower for k in ("character", "skin", "hero")):
         return "csgo_character.vfx"
-    return "csgo_environment.vfx"
+    return FALLBACK_SHADER
 
 
 def get_master_material_name(mat_data: dict, mat_key: str = "") -> str:
@@ -238,9 +254,10 @@ def get_master_material_name(mat_data: dict, mat_key: str = "") -> str:
 
 
 def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = None,
-                            param_mappings: dict = None):
-    """Saves Master Material -> CS2 Shader swaps, slot mappings, and param
-    mappings into hammer5tools/unrealporter/shader_swap.kv3 in output_dir."""
+                            param_mappings: dict = None, feature_flags: dict = None,
+                            blend_modes: dict = None):
+    """Saves Master Material -> CS2 Shader swaps, slot mappings, param
+    mappings, feature flags, and blend modes into hammer5tools/unrealporter/shader_swap.kv3 in output_dir."""
     if not output_dir or not os.path.isdir(output_dir):
         return
     file_path = os.path.join(output_dir, "hammer5tools", "unrealporter", "shader_swap.kv3")
@@ -255,6 +272,7 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
         lines.append(f'\t\t"{master_name}" = "{shader_name}"')
     lines.append("\t}")
 
+    import json
     if slot_mappings:
         lines.append("\tmaster_material_slot_mappings = ")
         lines.append("\t{")
@@ -264,7 +282,12 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
             lines.append(f'\t\t"{master_name}" = ')
             lines.append("\t\t{")
             for param, slot in sorted(mappings.items()):
-                slot_str = "null" if slot is None else f'"{slot}"'
+                if slot is None:
+                    slot_str = "null"
+                elif isinstance(slot, (dict, list)):
+                    slot_str = json.dumps(json.dumps(slot))
+                else:
+                    slot_str = f'"{slot}"'
                 lines.append(f'\t\t\t"{param}" = {slot_str}')
             lines.append("\t\t}")
         lines.append("\t}")
@@ -282,6 +305,26 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
             lines.append("\t\t}")
         lines.append("\t}")
 
+    if feature_flags:
+        lines.append("\tmaster_material_feature_flags = ")
+        lines.append("\t{")
+        for master_name, flags in sorted(feature_flags.items()):
+            if not flags:
+                continue
+            lines.append(f'\t\t"{master_name}" = ')
+            lines.append("\t\t{")
+            for f_key, f_val in sorted(flags.items()):
+                lines.append(f'\t\t\t"{f_key}" = "{f_val}"')
+            lines.append("\t\t}")
+        lines.append("\t}")
+
+    if blend_modes:
+        lines.append("\tmaster_material_blend_modes = ")
+        lines.append("\t{")
+        for master_name, bm in sorted(blend_modes.items()):
+            lines.append(f'\t\t"{master_name}" = {int(bm)}')
+        lines.append("\t}")
+
     lines.append("}")
     lines.append("")
 
@@ -293,20 +336,20 @@ def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = 
 
 
 def load_material_swaps_kv3(output_dir: str) -> tuple:
-    """Reads Master Material -> CS2 Shader swaps, slot mappings, and param
-    mappings from hammer5tools/unrealporter/shader_swap.kv3 if it exists.
-    Returns: (swaps_dict, slot_mappings_dict, param_mappings_dict)
+    """Reads Master Material -> CS2 Shader swaps, slot mappings, param
+    mappings, feature flags, and blend modes from hammer5tools/unrealporter/shader_swap.kv3 if it exists.
+    Returns: (swaps_dict, slot_mappings_dict, param_mappings_dict, feature_flags_dict, blend_modes_dict)
     """
-    swaps, slot_mappings, param_mappings = {}, {}, {}
+    swaps, slot_mappings, param_mappings, feature_flags, blend_modes = {}, {}, {}, {}, {}
     if not output_dir:
-        return swaps, slot_mappings, param_mappings
+        return swaps, slot_mappings, param_mappings, feature_flags, blend_modes
     file_path = os.path.join(output_dir, "hammer5tools", "unrealporter", "shader_swap.kv3")
     if not os.path.isfile(file_path):
         legacy_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
         if os.path.isfile(legacy_path):
             file_path = legacy_path
         else:
-            return swaps, slot_mappings, param_mappings
+            return swaps, slot_mappings, param_mappings, feature_flags, blend_modes
 
     try:
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -326,33 +369,68 @@ def load_material_swaps_kv3(output_dir: str) -> tuple:
             elif "master_material_param_mappings" in line_s:
                 section = "params"
                 continue
+            elif "master_material_feature_flags" in line_s:
+                section = "flags"
+                continue
+            elif "master_material_blend_modes" in line_s:
+                section = "blend_modes"
+                continue
 
             if section == "shaders":
                 m = re.search(r'"([^"]+)"\s*=\s*"([^"]+)"', line_s)
                 if m:
                     swaps[m.group(1)] = m.group(2)
-            elif section in ("slots", "params"):
-                # Check for parameter assignment first: "BaseColor2" = "emissive" or "param" = null
-                m_param = re.search(r'"([^"]+)"\s*=\s*(null|"([^"]+)")', line_s)
-                target = slot_mappings if section == "slots" else param_mappings
-                if m_param and current_master:
-                    param_name = m_param.group(1)
-                    val = m_param.group(2)
-                    target[current_master][param_name] = None if val == "null" else val.strip('"')
+            elif section == "blend_modes":
+                m = re.search(r'"([^"]+)"\s*=\s*(\d+)', line_s)
+                if m:
+                    try:
+                        blend_modes[m.group(1)] = int(m.group(2))
+                    except ValueError:
+                        pass
+            elif section in ("slots", "params", "flags"):
+                if section == "slots":
+                    target = slot_mappings
+                elif section == "params":
+                    target = param_mappings
                 else:
-                    # Otherwise check for master material block header: "M_Master_Architecture" =
-                    m_master = re.search(r'"([^"]+)"\s*=\s*\{?', line_s)
-                    if m_master:
-                        current_master = m_master.group(1)
-                        if current_master not in target:
-                            target[current_master] = {}
+                    target = feature_flags
+
+                m_master = re.search(r'^\s*"([^"]+)"\s*=\s*\{?\s*$', line_s)
+                if m_master:
+                    current_master = m_master.group(1)
+                    if current_master not in target:
+                        target[current_master] = {}
+                else:
+                    m_param = re.search(r'^\s*"([^"]+)"\s*=\s*(.+)$', line_s)
+                    if m_param and current_master:
+                        param_name = m_param.group(1)
+                        raw_val = m_param.group(2).strip().rstrip(",")
+                        if raw_val == "null":
+                            parsed_val = None
+                        else:
+                            clean_val = raw_val
+                            if clean_val.startswith('"') and clean_val.endswith('"') and len(clean_val) >= 2:
+                                clean_val = clean_val[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+                            if (clean_val.startswith("{") and clean_val.endswith("}")) or (clean_val.startswith("[") and clean_val.endswith("]")):
+                                try:
+                                    import json
+                                    parsed_val = json.loads(clean_val)
+                                except Exception:
+                                    try:
+                                        import ast
+                                        parsed_val = ast.literal_eval(clean_val)
+                                    except Exception:
+                                        parsed_val = clean_val
+                            else:
+                                parsed_val = clean_val
+                        target[current_master][param_name] = parsed_val
     except Exception:
         pass
-    return swaps, slot_mappings, param_mappings
+    return swaps, slot_mappings, param_mappings, feature_flags, blend_modes
 
 
 def apply_saved_swaps(groups: dict, output_dir: str) -> dict:
-    """Overlay an addon's saved shader / slot / param choices onto scanned groups.
+    """Overlay an addon's saved shader / slot / param / feature flag choices onto scanned groups.
 
     The scan itself is a property of the UE project, so it gets cached in the
     project's analysis manifest. These choices are a property of the *addon*
@@ -362,7 +440,11 @@ def apply_saved_swaps(groups: dict, output_dir: str) -> dict:
     """
     if not output_dir or not groups:
         return groups
-    saved_swaps, saved_slot_mappings, saved_param_mappings = load_material_swaps_kv3(output_dir)
+    res = load_material_swaps_kv3(output_dir)
+    saved_swaps, saved_slot_mappings, saved_param_mappings = res[0], res[1], res[2]
+    saved_feature_flags = res[3] if len(res) > 3 else {}
+    saved_blend_modes = res[4] if len(res) > 4 else {}
+
     for name, info in groups.items():
         if saved_swaps.get(name):
             info["shader"] = saved_swaps[name]
@@ -370,6 +452,10 @@ def apply_saved_swaps(groups: dict, output_dir: str) -> dict:
             info["slot_overrides"] = saved_slot_mappings[name]
         if saved_param_mappings.get(name):
             info["param_overrides"] = saved_param_mappings[name]
+        if saved_feature_flags.get(name):
+            info["feature_flags"] = saved_feature_flags[name]
+        if saved_blend_modes.get(name):
+            info["blend_mode"] = saved_blend_modes[name]
     return groups
 
 
@@ -379,8 +465,17 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
     Returns: { master_mat_name: { "shader": predicted_shader, "instances": [(mi_stem, mi_path, mat_data)], "count": N, "textures": {...}, "slot_overrides": {...} } }
     """
     groups = {}
-    saved_swaps, saved_slot_mappings, saved_param_mappings = (
-        load_material_swaps_kv3(output_dir) if output_dir else ({}, {}, {}))
+    # Masters that had no saved entry and got one seeded this scan. Reported and
+    # persisted below, so the saved table is complete before any conversion runs.
+    seeded = {}
+    if output_dir:
+        res = load_material_swaps_kv3(output_dir)
+        saved_swaps, saved_slot_mappings, saved_param_mappings = res[0], res[1], res[2]
+        saved_feature_flags = res[3] if len(res) > 3 else {}
+        saved_blend_modes = res[4] if len(res) > 4 else {}
+    else:
+        saved_swaps, saved_slot_mappings, saved_param_mappings = {}, {}, {}
+        saved_feature_flags, saved_blend_modes = {}, {}
 
     if bridge and bridge.is_available():
         try:
@@ -407,13 +502,18 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
                 master_name = get_master_material_name(mat_data, path)
                 stem = os.path.basename(path)
                 if master_name not in groups:
-                    shader = saved_swaps.get(master_name) or predict_cs2_shader(master_name, mat_data.get("flags"))
+                    shader = saved_swaps.get(master_name)
+                    if not shader:
+                        shader = seed_shader_for(master_name, mat_data.get("flags"))
+                        seeded[master_name] = shader
                     groups[master_name] = {
                         "shader": shader,
                         "instances": [],
                         "textures": {},
                         "slot_overrides": saved_slot_mappings.get(master_name, {}),
                         "param_overrides": saved_param_mappings.get(master_name, {}),
+                        "feature_flags": saved_feature_flags.get(master_name, {}),
+                        "blend_mode": saved_blend_modes.get(master_name, 0),
                     }
                     if log_cb:
                         log_cb(f"Discovered Master Material: {master_name} (target CS2 shader: {shader})", "info")
@@ -437,20 +537,45 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
             master_name = strip_ue_prefix(base_name)
             master_name = f"M_{master_name.title()}" if master_name else "M_Master"
             if master_name not in groups:
-                shader = saved_swaps.get(master_name) or predict_cs2_shader(master_name)
+                shader = saved_swaps.get(master_name)
+                if not shader:
+                    shader = seed_shader_for(master_name)
+                    seeded[master_name] = shader
                 groups[master_name] = {
                     "shader": shader,
                     "instances": [],
                     "textures": {},
                     "slot_overrides": saved_slot_mappings.get(master_name, {}),
                     "param_overrides": saved_param_mappings.get(master_name, {}),
+                    "feature_flags": saved_feature_flags.get(master_name, {}),
+                    "blend_mode": saved_blend_modes.get(master_name, 0),
                 }
             groups[master_name]["instances"].append((base_name, base_name, {"suffixes": suffixes}))
 
     for master_name in groups:
         groups[master_name]["count"] = len(groups[master_name]["instances"])
 
+    # Write the seeded entries out now, so from this point the saved table
+    # covers every master and conversion never has to invent one. Without this
+    # the defaults live only in memory and a master that was never opened in the
+    # Materials tab would have no saved shader to convert with.
+    if seeded and output_dir:
+        save_material_swaps_kv3(
+            output_dir,
+            {name: info["shader"] for name, info in groups.items()},
+            slot_mappings={n: i.get("slot_overrides") or {} for n, i in groups.items()},
+            param_mappings={n: i.get("param_overrides") or {} for n, i in groups.items()},
+            feature_flags={n: i.get("feature_flags") or {} for n, i in groups.items()},
+            blend_modes={n: i.get("blend_mode") or 0 for n, i in groups.items()},
+        )
     if log_cb:
+        if seeded:
+            log_cb(
+                f"Shader remapping — {len(seeded)} new Master Material(s) given a starting "
+                f"shader and saved to shader_swap.kv3; change any of them in the Materials tab: "
+                + ", ".join(f"{n} -> {s}" for n, s in sorted(seeded.items())),
+                "info",
+            )
         log_cb(f"Material scan complete: {len(groups)} Master Material group(s) discovered.", "success")
 
     return groups
@@ -472,7 +597,7 @@ class MasterMaterialConvertWorker(CancellableWorker):
         self.invert_y_normal = invert_y_normal
 
     def run(self):
-        from .material_converter import convert_material, get_texture_index
+        from .material_converter import convert_material, process_material_textures, get_texture_index
 
         # Save user shader swaps, slot mappings, and param mappings into KV3 in output_dir
         swaps_to_save = {name: data.get("shader", "csgo_environment.vfx")
@@ -481,7 +606,11 @@ class MasterMaterialConvertWorker(CancellableWorker):
                                  for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("slot_overrides")}
         param_mappings_to_save = {name: data.get("param_overrides", {})
                                   for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("param_overrides")}
-        save_material_swaps_kv3(self.output_dir, swaps_to_save, slot_mappings_to_save, param_mappings_to_save)
+        feature_flags_to_save = {name: data.get("feature_flags", {})
+                                 for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("feature_flags")}
+        blend_modes_to_save = {name: data.get("blend_mode", 0)
+                               for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("blend_mode")}
+        save_material_swaps_kv3(self.output_dir, swaps_to_save, slot_mappings_to_save, param_mappings_to_save, feature_flags_to_save, blend_modes_to_save)
 
         tex_index = get_texture_index(self.bulk_dir)
         total_instances = sum(len(g.get("instances", [])) for g in self.master_groups.values() if g.get("enabled", True))
@@ -495,6 +624,8 @@ class MasterMaterialConvertWorker(CancellableWorker):
             instances = group_data.get("instances", [])
             master_slot_overrides = group_data.get("slot_overrides", {})
             master_param_overrides = group_data.get("param_overrides", {})
+            master_feature_flags = group_data.get("feature_flags", {})
+            master_blend_mode = group_data.get("blend_mode", 0)
 
             for stem, path, mat_data in instances:
                 if self.is_cancelled:
@@ -510,9 +641,13 @@ class MasterMaterialConvertWorker(CancellableWorker):
                         strip_prefix=self.strip_prefix,
                         tex_format=self.tex_format,
                         invert_y_normal=self.invert_y_normal,
+                        feature_flags=master_feature_flags,
+                        blend_mode=master_blend_mode,
                     )
                     created.append(stem)
                     msg = f"Success ({shader})"
+                    if getattr(res, "mapped_info", None):
+                        msg += f" — mapped: {res.mapped_info}"
                     if res.missing:
                         msg += f" (missing: {', '.join(res.missing)})"
                     self.file_done.emit(stem, True, msg)

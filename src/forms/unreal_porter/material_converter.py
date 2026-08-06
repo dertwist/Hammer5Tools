@@ -15,7 +15,7 @@ import os
 import re
 from PIL import Image
 
-from .vmat_writer import write_vmat, write_decal_vmat
+from .vmat_writer import write_vmat
 
 _TEX_EXTS = (".png", ".tga", ".tif", ".tiff", ".exr", ".jpg")
 
@@ -90,15 +90,24 @@ def find_bulk_texture(bulk_dir: str, ue_tex_path: str, tex_index: dict = None):
         match = re.search(r"'(.*?)'", ue_tex_path)
         if match:
             ue_tex_path = match.group(1)
-    ue_tex_path = ue_tex_path.strip()
-
-    stem = ue_tex_path.split(".", 1)[0].rstrip("/").rsplit("/", 1)[-1].lower()
-    if tex_index is not None:
-        return tex_index.get(stem)
-
-    if bulk_dir:
+    filename = os.path.basename(ue_tex_path.replace("\\", "/"))
+    stem = os.path.splitext(filename)[0].split(".", 1)[0].lower()
+    idx = tex_index
+    if idx is None and bulk_dir:
         idx = get_texture_index(bulk_dir)
-        return idx.get(stem)
+
+    if idx:
+        res = idx.get(stem)
+        if res:
+            return res
+        if stem.startswith("t_"):
+            res = idx.get(stem[2:])
+        elif stem.startswith("tex_"):
+            res = idx.get(stem[4:])
+        else:
+            res = idx.get("t_" + stem) or idx.get("tex_" + stem)
+        if res:
+            return res
 
     return None
 
@@ -121,6 +130,8 @@ _PACKED_LAYOUTS = {
     "orh":  {"r": "ao",    "g": "rough", "b": "height"},
     "rma":  {"r": "rough", "g": "metal", "b": "ao"},
     "rmah": {"r": "rough", "g": "metal", "b": "ao",    "a": "height"},
+    # The letters are the channel order, same as every entry here.
+    "rmh":  {"r": "rough", "g": "metal", "b": "height"},
     "mrao": {"r": "metal", "g": "rough", "b": "ao"},
     "arm":  {"r": "ao",    "g": "rough", "b": "metal"},
     "srm":  {                "g": "rough", "b": "metal"},
@@ -135,7 +146,6 @@ CHANNEL_SLOTS = (
     "rough1", "metal1", "ao1", "height1",
     "rough2", "metal2", "ao2", "height2",
     "rough3", "metal3", "ao3", "height3",
-    "rough4", "metal4", "ao4", "height4",
 )
 
 
@@ -152,7 +162,6 @@ def packed_layout(param_name: str, tex_path: str = ""):
 
 _LAYER2_TOKENS = {"top", "dirt", "moss", "layer2", "2", "l2", "secondary", "overlay"}
 _LAYER3_TOKENS = {"layer3", "3", "l3", "tertiary"}
-_LAYER4_TOKENS = {"layer4", "4", "l4"}
 
 _COLOR_TOKENS = {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c"}
 _NORMAL_TOKENS = {"normal", "nrm", "n", "norm"}
@@ -168,32 +177,26 @@ _SLOT_TOKENS = [
     ("opacity",  {"opacity", "opac", "alpha"}),
     ("orm2",     {"orm2", "srm2", "srmh2", "packed2", "layer2_orm"}),
     ("orm3",     {"orm3", "srm3", "srmh3", "packed3", "layer3_orm"}),
-    ("orm4",     {"orm4", "srm4", "srmh4", "packed4", "layer4_orm"}),
     ("orm",      _ORM_TOKENS),
 
     ("normal2",  {"normal2", "nrm2", "norm2"}),
     ("normal3",  {"normal3", "nrm3", "norm3"}),
-    ("normal4",  {"normal4", "nrm4", "norm4"}),
     ("normal",   _NORMAL_TOKENS),
 
     ("rough2",   {"rough2", "roughness2"}),
     ("rough3",   {"rough3", "roughness3"}),
-    ("rough4",   {"rough4", "roughness4"}),
     ("rough",    _ROUGH_TOKENS),
 
     ("metal2",   {"metal2", "metallic2", "metalness2"}),
     ("metal3",   {"metal3", "metallic3", "metalness3"}),
-    ("metal4",   {"metal4", "metallic4", "metalness4"}),
     ("metal",    _METAL_TOKENS),
 
     ("ao2",      {"ao2", "occlusion2"}),
     ("ao3",      {"ao3", "occlusion3"}),
-    ("ao4",      {"ao4", "occlusion4"}),
     ("ao",       _AO_TOKENS),
 
     ("height2",  {"height2", "displacement2", "disp2", "blendmask", "blendmask2"}),
     ("height3",  {"height3", "displacement3", "disp3", "blendmask3"}),
-    ("height4",  {"height4", "displacement4", "disp4", "blendmask4"}),
     ("height",   _HEIGHT_TOKENS),
 
     ("tintmask", {"tintmask", "tint_mask"}),
@@ -202,7 +205,6 @@ _SLOT_TOKENS = [
     ("mask3",    {"mask3", "mask_3"}),
     ("color2",   {"basecolor2", "diffuse2", "albedo2", "color2"}),
     ("color3",   {"basecolor3", "diffuse3", "albedo3", "color3"}),
-    ("color4",   {"basecolor4", "diffuse4", "albedo4", "color4"}),
     ("emissive", {"emissive", "emmisive", "emission", "emi"}),
     ("color",    _COLOR_TOKENS),
 ]
@@ -210,10 +212,20 @@ _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
 
 from .shader_schemas import (
-    SHADER_SLOTS as _SHADER_SLOTS,
     get_slots_for_shader,
     get_channel_slots_for_shader,
 )
+
+
+def norm_key(s: str) -> str:
+    """Normalize a texture parameter name for fuzzy matching (strips spaces, underscores, prefixes)."""
+    if not s:
+        return ""
+    s = s.lower().replace("_", "").replace(" ", "")
+    for prefix in ("texture", "param", "t"):
+        if s.startswith(prefix) and len(s) > len(prefix):
+            s = s[len(prefix):]
+    return s
 
 
 def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str = None) -> dict:
@@ -221,30 +233,35 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
     Map {ue_param_name: ue_tex_path} -> {slot: (param, path, channel)} choosing
     the best primary texture per slot. `channel` is None for a whole-texture
     binding, or one of "r"/"g"/"b"/"a" to take a single channel out of a packed
-    mask. A layer index token ("Diffuse 1") is penalised so the base layer
-    ("M_Diffuse") wins.
+    mask.
 
     slot_overrides: optional {param_name (case-insensitive): override} from the
-    slot-mapping dialog; these always beat the heuristic. An override is either
-      * None                        — exclude the parameter,
-      * "rough"                     — bind the whole texture to that slot, or
-      * {"rough": "g", "ao": "r"}   — route individual channels to slots.
+    slot-mapping dialog; these always beat the heuristic.
     """
     if not textures or not isinstance(textures, dict):
         return {}
 
     allowed_slots = set(get_slots_for_shader(shader)) if shader else None
-    overrides = {k.lower(): v for k, v in (slot_overrides or {}).items()}
     valid_slots = dict(_SLOT_TOKENS)
     out = {}
     used_params = set()
 
+    overrides_norm = {}
+    has_explicit_overrides = False
+    if slot_overrides and isinstance(slot_overrides, dict):
+        for k, v in slot_overrides.items():
+            if k:
+                overrides_norm[k.lower()] = v
+                overrides_norm[norm_key(k)] = v
+                has_explicit_overrides = True
+
     # Apply explicit overrides first
     for param_name, tex_path in textures.items():
-        key = param_name.lower()
-        if key not in overrides:
+        key_lower = param_name.lower()
+        key_norm = norm_key(param_name)
+        forced = overrides_norm.get(key_lower) or overrides_norm.get(key_norm)
+        if forced is None:
             continue
-        forced = overrides[key]
         used_params.add(param_name)
         if isinstance(forced, dict):
             for slot, channel in forced.items():
@@ -256,6 +273,11 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
                     out[slot] = (param_name, tex_path, None)
         elif forced and (forced in valid_slots or any(forced == s for s, _ in _SLOT_TOKENS)):
             out[forced] = (param_name, tex_path, None)
+
+    # If the user explicitly provided slot_overrides for this master material,
+    # ONLY bind what was explicitly requested — do NOT run heuristic fallback guessing!
+    if has_explicit_overrides:
+        return out
 
     # Helper map for base slot vs layer slot token requirements
     slot_map_tokens = {
@@ -293,8 +315,6 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
                         matching = {"layer2"}
                     elif layer_num == "3" and (p_toks & _LAYER3_TOKENS):
                         matching = {"layer3"}
-                    elif layer_num == "4" and (p_toks & _LAYER4_TOKENS):
-                        matching = {"layer4"}
 
             if matching:
                 score = len(matching) * 10 - (len(p_toks) - len(matching))
@@ -426,27 +446,121 @@ def is_decal(flags: dict) -> bool:
     return (flags or {}).get("domain") == "MD_DeferredDecal"
 
 
-def pick_shader(flags: dict) -> str:
-    """
-    Choose the Source 2 shader for a material from its resolved UE render
-    flags (domain/blend/two-sided — see bridge dump-material "flags").
-    Verified against Valve's own shipped content by decompiling a real decal
-    vmat_c (materials/cs_italy/decals/italy_trim_decal_1.vmat_c): deferred-decal
-    UE materials map to csgo_static_overlay.vfx (F_BLEND_MODE=1, translucent).
-    Everything else stays on csgo_environment.vfx (the default PBR shader).
-    """
-    return "csgo_static_overlay.vfx" if is_decal(flags) else "csgo_environment.vfx"
+# The shader used when a caller supplies none. A stated constant, not an
+# inference: the shader for a material comes from the saved remap table, and a
+# converter that quietly picked its own was indistinguishable from one ignoring
+# the table. See converter.seed_shader_for for where defaults are chosen — once,
+# visibly, and on their way to disk.
+DEFAULT_SHADER = "csgo_environment.vfx"
 
 
 class MaterialResult:
-    def __init__(self, vmat_path: str, textures_written: int, missing: list, is_decal: bool = False):
+    def __init__(self, vmat_path: str, textures_written: int, missing: list, is_decal: bool = False, mapped_info: str = ""):
         self.vmat_path = vmat_path
         self.textures_written = textures_written
         self.missing = missing
         self.is_decal = is_decal
+        self.mapped_info = mapped_info
 
 
 from .texture_utils import invert_y_normal as invert_y_normal_map
+
+# _pick_vector_color was removed: the colour tint is user-mapped only. It
+# auto-picked a tint from the material's vectors and was the source of
+# g_vColorTint "[0 0 0 0]" appearing in converted decals. Map a vector to
+# g_vColorTint in the Params tab to set one.
+
+# Derived from _PACKED_LAYOUTS rather than hand-listed: the two had already
+# drifted (the layouts knew "mrao" and "arm", the regex did not), which left
+# those stems carrying a packed suffix into their split output names.
+_PACKED_SUFFIX_RE = re.compile(
+    r"[_\-](?:" + "|".join(sorted(_PACKED_LAYOUTS, key=len, reverse=True)) + r"|packed|mask|raw)$",
+    re.IGNORECASE,
+)
+
+
+def strip_packed_suffix(stem: str) -> str:
+    """Strip packed texture suffixes (_ORM, _RMA, _SRMH, _MASK, _PACKED) from filename stem."""
+    if not stem:
+        return ""
+    return _PACKED_SUFFIX_RE.sub("", stem)
+
+
+# Every way a source texture announces what it holds. These are dropped from the
+# output name so the CS2 slot can take their place — an author's "_diff" is only
+# a claim about the input, and after a packed mask is split it is actively wrong.
+_CHANNEL_SUFFIX_RE = re.compile(
+    r"(?:[_\-])(?:"
+    r"diff|diffuse|d|alb|albedo|basecolor|base_color|bc|c|col|color|"
+    r"nm|n|nrm|norm|normal|"
+    r"rough|roughness|r|metal|metallic|metalness|m|"
+    r"ao|occlusion|height|disp|displacement|h|"
+    r"spec|specular|s|gloss|glossiness|g|"
+    r"opac|opacity|alpha|a|trans|translucency|mask|msk"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def texture_base_name(stem: str) -> str:
+    """Source texture stem -> the base name its converted maps share.
+
+    "p02_wall_01_diff" -> "p02_wall_01", so the color/normal/rough written from
+    that material all sit together as p02_wall_01_color / _normal / _rough.
+    A stem that is nothing but a suffix keeps its spelling rather than becoming "".
+    """
+    if not stem:
+        return ""
+    base = _CHANNEL_SUFFIX_RE.sub("", strip_packed_suffix(stem))
+    return base.strip("_-") or stem
+
+
+def out_name(stem: str, slot: str) -> str:
+    """The filename a converted texture is written under: "<base>_<slot>".
+
+    Naming by destination rather than by source is what makes a slot mapping
+    legible on disk — "prop_rmh" split into three files reads as prop_rough /
+    prop_metal / prop_ao instead of three variations on the packed name.
+    """
+    base = texture_base_name(stem)
+    return f"{base}_{slot}" if base else slot
+
+
+_FLAG_SWITCH_MAP = {
+    ("twosided", "two_sided", "renderbackfaces", "render_backfaces"): "F_RENDER_BACKFACES",
+    ("alphatest", "alpha_test", "usealphatest", "use_alpha_test", "masked"): "F_ALPHA_TEST",
+    ("fogenabled", "fog_enabled", "enablefog", "fog"): "g_bFogEnabled",
+    ("modeltint", "model_tint", "usemodeltint"): "g_bModelTint1",
+    ("depthfeather", "depth_feather"): "F_DEPTH_FEATHER",
+    ("tintmask", "tint_mask"): "F_TINT_MASK",
+}
+
+
+def _pick_boolean_flags(switches: dict) -> list:
+    """Auto-pick feature flags from UE boolean switch parameters."""
+    if not switches or not isinstance(switches, dict):
+        return []
+
+    flags = []
+    lowered = {str(k).lower().replace(" ", "_"): bool(v) for k, v in switches.items()}
+
+    for aliases, flag in _FLAG_SWITCH_MAP.items():
+        for alias in aliases:
+            if alias in lowered:
+                if lowered[alias] and flag not in flags:
+                    flags.append(flag)
+                break
+            matching_key = None
+            for key, val in lowered.items():
+                if alias in key:
+                    matching_key = key
+                    break
+            if matching_key and lowered[matching_key] and flag not in flags:
+                flags.append(flag)
+                break
+
+    return flags
+
 
 def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      shader: str = None, slot_overrides: dict = None,
@@ -454,12 +568,18 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      param_overrides: dict = None,
                      strip_prefix: bool = True,
                      tex_format: str = "tga",
-                     invert_y_normal: bool = True) -> MaterialResult:
+                     invert_y_normal: bool = True,
+                     feature_flags: dict = None,
+                     blend_mode: int = 0) -> MaterialResult:
     """
     Write a vmat (+ converted/split textures) from a dump-material result.
     Returns MaterialResult with the vmat path relative to the output root.
-    Shader defaults to csgo_environment.vfx, or csgo_static_overlay.vfx if the
-    material's UE domain is MD_DeferredDecal (see pick_shader).
+
+    `shader` comes from the caller's saved remap table and is never inferred
+    here; omitting it falls back to DEFAULT_SHADER rather than reading the UE
+    flags for a shader nobody asked for. (`is_decal` still reads the flags, but
+    only to choose the texture *packing* — a decal composites its opacity into
+    the colour alpha — not to override the shader.)
 
     slot_overrides: optional {param_name: slot_name or None} forwarded to
     _classify_textures to override its heuristic pick (see slot_mapping.py).
@@ -468,14 +588,31 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     tab. A mapping wins over the heuristic auto-pick for roughness/metalness, and
     is the *only* source of the colour tint — nothing is guessed there. Any other
     target is emitted as an extra scalar/vector on the vmat. See _apply_param_overrides.
+
+    feature_flags: optional {F_*: "0"/"1"} from the Feature Inspector panel
+    (slot_mapping.ShaderRemapperDialog). These are now threaded through to
+    write_vmat and toggle shader sections — previously this output was discarded.
+
+    blend_mode: F_BLEND_MODE int for csgo_static_overlay (0=Default,
+    1=Translucent, 2=Alpha Test, 3=Mod2x, 4=Additive, 5=Multiply, 6=ModThenAdd).
+    Decals default to 1 (Translucent) to match Hammer's decal authoring.
     """
     flags = mat_data.get("flags") or {}
-    decal = is_decal(flags)
-    shader = shader or pick_shader(flags)
+def process_material_textures(mat_data: dict, bulk_dir: str, output_dir: str,
+                              shader: str = None, slot_overrides: dict = None,
+                              tex_index: dict = None,
+                              strip_prefix: bool = True,
+                              tex_format: str = "tga",
+                              invert_y_normal: bool = True) -> tuple:
+    """Extract, split, composite, and save textures for a material instance.
+    Returns: (slots_dict, written_count, clean_missing_list, split_summary)
+    """
+    flags = mat_data.get("flags") or {}
+    decal = is_decal(flags) or (shader == "csgo_static_overlay.vfx")
+    shader = shader or DEFAULT_SHADER
 
     mi_path = mat_data.get("material", "")
     vmat_rel = ue_material_to_vmat_path(mi_path, strip_prefix=strip_prefix)
-    vmat_abs = os.path.join(output_dir, vmat_rel)
     folder_rel = os.path.dirname(vmat_rel).replace("\\", "/")   # "materials/…"
 
     def save(img, name, ext=None) -> str:
@@ -483,18 +620,16 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         rel = f"{folder_rel}/{name}.{ext}"
         dst = os.path.join(output_dir, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        if not os.path.exists(dst):
-            img.save(dst)
+        img.save(dst)
         return rel
 
     picks = _classify_textures(mat_data.get("textures"), slot_overrides, shader=shader)
     slots = {}
     written = 0
     missing = []
+    split_details = []
 
     def load(slot):
-        """(source file, stem, channel) for a slot — channel is None when the
-        whole texture binds, or "r"/"g"/"b"/"a" for one band of a packed mask."""
         pick = picks.get(slot)
         if not pick:
             return None, None, None
@@ -505,55 +640,65 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         stem = os.path.splitext(os.path.basename(src))[0]
         if strip_prefix:
             from .vmdl_writer import strip_ue_prefix
-            # Only the T_ prefix goes — the channel suffix (_ALB/_N/_ORM) is what
-            # keeps this material's maps in separate files.
             stem = strip_ue_prefix(stem)
+        stem = strip_packed_suffix(stem)
         return src, stem.lower(), pick[2]
 
+    handled = set()
     if decal:
-        # csgo_static_overlay's default Hammer template only exposes TextureColor
-        # (no separate normal/AO/metalness slot) — the decal's shape comes from
-        # that texture's alpha channel, so UE's separate Opacity mask is
-        # composited into it.
-        src, stem, _ch = load("color")
-        opacity_src, _stem, _ch = load("opacity")
+        src, stem, color_ch = load("color")
+        opacity_src, op_stem, opacity_ch = load("opacity")
+        if not opacity_src:
+            opacity_src, op_stem, opacity_ch = load("trans")
+        if opacity_src:
+            handled.add("opacity")
+            handled.add("trans")
         if src:
-            color_img = Image.open(src).convert("RGBA")
+            handled.add("color")
+            color_img = Image.open(src)
+            if color_ch == "rgb":
+                color_img = color_img.convert("RGB")
+            else:
+                color_img = color_img.convert("RGBA")
+
+            color_rel = save(color_img, out_name(stem, "color"))
+            slots["color"] = color_rel
+
             if opacity_src:
-                mask = Image.open(opacity_src).convert("L")
-                if mask.size != color_img.size:
-                    mask = mask.resize(color_img.size)
-                r, g, b, _a = color_img.split()
-                color_img = Image.merge("RGBA", (r, g, b, mask))
+                mask_img = Image.open(opacity_src)
+                if opacity_ch in CHANNELS:
+                    mask = mask_img.convert("RGBA").split()[CHANNELS.index(opacity_ch)]
+                elif opacity_ch == "a" or "A" in mask_img.getbands() or mask_img.mode in ("RGBA", "LA", "PA"):
+                    mask = mask_img.convert("RGBA").split()[3]
+                else:
+                    mask = mask_img.convert("L")
+                trans_rel = save(mask.convert("L"), out_name(op_stem or stem, "trans"))
+                slots["opacity"] = trans_rel
+                slots["trans"] = trans_rel
                 written += 1
-            slots["color"] = save(color_img, stem)
+                split_details.append("Color (RGB) & Translucency (Alpha)")
+            else:
+                slots["opacity"] = color_rel
+                slots["trans"] = color_rel
             written += 1
 
-        # Tint is user-mapped only; nothing is guessed from the vector names.
-        color_tint = None
-        _us, user_vectors, _uf, claimed = _apply_param_overrides(
-            mat_data.get("scalars"), mat_data.get("vectors"), mat_data.get("switches"), param_overrides)
-        if "g_vColorTint" in claimed:
-            color_tint = user_vectors.get("g_vColorTint")
-        write_decal_vmat(vmat_abs, slots, color_tint=color_tint)
-        return MaterialResult(vmat_rel, written, missing, is_decal=True)
-
-    # color / normal / opacity / translucency / tintmask — convert to TGA (handles base & multi-layer slots)
     color_normal_slots = (
         "color", "normal", "opacity", "trans", "tintmask",
         "color1", "normal1", "opacity1", "trans1",
         "color2", "normal2", "opacity2", "trans2",
         "color3", "normal3", "opacity3", "trans3",
-        "color4", "normal4", "opacity4", "trans4",
     )
     for slot in color_normal_slots:
+        if slot in handled:
+            continue
         src, stem, channel = load(slot)
         if src:
             img = Image.open(src)
             if channel == "a":
                 if "A" in img.getbands() or img.mode in ("RGBA", "LA", "PA"):
                     band = img.convert("RGBA").split()[3]
-                    slots[slot] = save(band.convert("L"), f"{stem}_a")
+                    slots[slot] = save(band.convert("L"), out_name(stem, slot))
+                    split_details.append(f"{slot} (Alpha channel)")
                 else:
                     missing.append(slot)
                     continue
@@ -561,43 +706,71 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                 rgb_img = img.convert("RGB")
                 if invert_y_normal and slot.startswith("normal"):
                     rgb_img = invert_y_normal_map(rgb_img)
-                slots[slot] = save(rgb_img, f"{stem}_rgb")
+                slots[slot] = save(rgb_img, out_name(stem, slot))
+                split_details.append(f"{slot} (RGB)")
             else:
                 rgba_img = img.convert("RGBA")
                 if invert_y_normal and slot.startswith("normal"):
                     rgba_img = invert_y_normal_map(rgba_img)
-                slots[slot] = save(rgba_img, stem)
+                slots[slot] = save(rgba_img, out_name(stem, slot))
+                split_details.append(f"{slot}")
             written += 1
 
-    # Greyscale slots. _classify_textures has already expanded any packed mask
-    # into per-channel bindings, so a packed source and a dedicated one-off map
-    # are handled the same way here.
     greyscale_slots = (
         "rough", "metal", "ao", "height",
         "rough1", "metal1", "ao1", "height1",
         "rough2", "metal2", "ao2", "height2",
         "rough3", "metal3", "ao3", "height3",
-        "rough4", "metal4", "ao4", "height4",
     )
     for slot in greyscale_slots:
+        if slot in handled:
+            continue
         src, stem, channel = load(slot)
         if not src:
             continue
         img = Image.open(src)
         if channel:
             if channel == "a" and "A" not in img.getbands():
-                # Param says the mask carries height in alpha (…_SRMH) but the
-                # exported file is 3-channel — convert("RGBA") would invent an
-                # opaque alpha and write a solid-white height map.
                 missing.append(slot)
                 continue
             band = img.convert("RGBA").split()[CHANNELS.index(channel)]
-            slots[slot] = save(band.convert("L"), f"{stem}_{slot}")
+            slots[slot] = save(band.convert("L"), out_name(stem, slot))
+            split_details.append(f"{slot} ({channel.upper()} channel)")
         else:
-            slots[slot] = save(img.convert("L"), stem)
+            slots[slot] = save(img.convert("L"), out_name(stem, slot))
+            split_details.append(f"{slot}")
         written += 1
 
-    color_tint = None   # user-mapped only — see the note above _pick_scalar
+    clean_missing = sorted(list(set(missing) - set(slots.keys())))
+    split_summary = ", ".join(split_details) if split_details else ""
+    return slots, written, clean_missing, split_summary
+
+
+def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
+                     shader: str = None, slot_overrides: dict = None,
+                     tex_index: dict = None,
+                     param_overrides: dict = None,
+                     strip_prefix: bool = True,
+                     tex_format: str = "tga",
+                     invert_y_normal: bool = True,
+                     feature_flags: dict = None,
+                     blend_mode: int = 0) -> MaterialResult:
+    """Write a vmat (+ converted/split textures) from a dump-material result."""
+    flags = mat_data.get("flags") or {}
+    decal = is_decal(flags) or (shader == "csgo_static_overlay.vfx")
+    shader = shader or DEFAULT_SHADER
+
+    mi_path = mat_data.get("material", "")
+    vmat_rel = ue_material_to_vmat_path(mi_path, strip_prefix=strip_prefix)
+    vmat_abs = os.path.join(output_dir, vmat_rel)
+
+    slots, written, missing, split_summary = process_material_textures(
+        mat_data, bulk_dir, output_dir, shader=shader, slot_overrides=slot_overrides,
+        tex_index=tex_index, strip_prefix=strip_prefix, tex_format=tex_format,
+        invert_y_normal=invert_y_normal
+    )
+
+    color_tint = None
     rough_scale = _pick_scalar(mat_data.get("scalars"), "roughness", "tileable 1 roughness")
     metal_scale = _pick_scalar(mat_data.get("scalars"), "metallic", "metalness", default=0.0)
 
@@ -606,8 +779,31 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     user_scalars, user_vectors, user_flags, claimed = _apply_param_overrides(
         mat_data.get("scalars"), mat_data.get("vectors"), mat_data.get("switches"), param_overrides)
     if "g_vColorTint" in claimed:
-        v = user_vectors.pop("g_vColorTint")
-        color_tint = v
+        color_tint = user_vectors.pop("g_vColorTint")
+    # No else: the tint is user-mapped only. Auto-picking one from the
+    # material's vectors wrote g_vColorTint "[0 0 0 0]" — a black tint nobody
+    # asked for — into every decal that happened to declare a dark colour.
+
+    if not (slot_overrides or param_overrides or feature_flags):
+        auto_flags = _pick_boolean_flags(mat_data.get("switches"))
+        for f in auto_flags:
+            if f not in user_flags:
+                user_flags.append(f)
+
+    # csgo_static_overlay gates TextureNormal/Rough/Metal/AO behind F_LIT, which
+    # is off by default — so a mapped normal was written into the vmat's
+    # UnusedVariables block and quietly ignored by the shader, which reads as
+    # the mapping having been dropped. Supplying one of those maps is the
+    # request; turn the feature on so it takes effect. An explicit F_LIT from
+    # the Feature Inspector always wins.
+    feature_flags = dict(feature_flags or {})
+    _LIT_SLOTS = ("normal", "rough", "metal", "ao")
+    if any(slots.get(s) for s in _LIT_SLOTS) and "F_LIT" not in feature_flags:
+        from .shader_schemas import get_shader_schema
+        schema = get_shader_schema(shader)
+        if schema and any(f.name == "F_LIT" for f in (getattr(schema, "features", None) or ())):
+            feature_flags["F_LIT"] = "1"
+
     if "g_flRoughnessScale" in claimed:
         rough_scale = user_scalars.pop("g_flRoughnessScale")
     if "g_flMetalnessScale" in claimed:
@@ -623,5 +819,99 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     write_vmat(vmat_abs, slots, shader=shader, color_tint=color_tint,
                roughness_scale=rough_scale, metalness_scale=metal_scale,
                extra_scalars=user_scalars or None, extra_vectors=user_vectors or None,
-               alpha_test_ref=alpha_test_ref, render_backfaces=render_backfaces)
-    return MaterialResult(vmat_rel, written, missing)
+               alpha_test_ref=alpha_test_ref, render_backfaces=render_backfaces,
+               feature_flags=feature_flags, blend_mode=blend_mode)
+    clean_missing = sorted(list(set(missing) - set(slots.keys())))
+    mapped_info = ", ".join(sorted(slots.keys())) if slots else ""
+    return MaterialResult(vmat_rel, written, clean_missing, is_decal=decal, mapped_info=mapped_info)
+
+
+def demo():
+    # Output textures are named for the CS2 slot they feed, not the source's
+    # claim about itself: a packed mask split three ways must not leave three
+    # files all called "<something>_rmh".
+    assert out_name("prop_diff", "color") == "prop_color"
+    assert out_name("prop_rmh", "rough") == "prop_rough"
+    assert out_name("prop_rmh", "metal") == "prop_metal"
+    assert out_name("prop_diff", "opacity") == "prop_opacity"
+    assert out_name("p02_wall_01_nm", "normal") == "p02_wall_01_normal"
+    assert out_name("t_awning_01_orm", "ao") == "t_awning_01_ao"
+    # A stem with nothing to strip still gets its slot.
+    assert out_name("bare", "color") == "bare_color"
+    # A stem that is *only* a suffix keeps its spelling instead of becoming "_color".
+    assert out_name("diff", "color") == "diff_color"
+
+    # The packed-suffix regex is derived from _PACKED_LAYOUTS, so every layout
+    # the classifier can split is also one the namer can strip. Hand-listing
+    # them had already let "mrao" and "arm" drift out of the regex.
+    for token in _PACKED_LAYOUTS:
+        assert strip_packed_suffix(f"x_{token}") == "x", token
+
+    # An acronym layout splits by its own letter order.
+    token, layout = packed_layout("Mask", "prop_rmh.tga")
+    assert token == "rmh" and layout == {"r": "rough", "g": "metal", "b": "height"}, layout
+
+    # End to end: the two source maps land as four slot-named outputs.
+    picks = _classify_textures({"Albedo": "/G/T/prop_diff.prop_diff",
+                                "RMH": "/G/T/prop_rmh.prop_rmh"})
+    assert set(picks) == {"color", "rough", "metal", "height"}, picks
+    assert picks["rough"][2] == "r" and picks["metal"][2] == "g" and picks["height"][2] == "b"
+
+    # An explicit slot mapping beats the heuristic, and its channel survives —
+    # dropping it is what made a decal's alpha mapping read as luminance.
+    picks = _classify_textures(
+        {"Albedo_Map": "/G/T/d_dirt_01.d_dirt_01"},
+        {"Albedo_Map": {"split_alpha": True, "color": "rgb", "opacity": "a"}},
+        shader="csgo_static_overlay.vfx",
+    )
+    assert picks["color"][2] == "rgb", picks
+    assert picks["opacity"][2] == "a", picks
+
+    # No shader is inferred from the material's own data. A UE deferred decal
+    # used to be forced onto csgo_static_overlay regardless of what the saved
+    # remap table said, which silently overrode exactly the materials a user is
+    # most likely to have remapped on purpose.
+    import tempfile
+    decal_data = {"material": "/Game/M/MI_D.MI_D", "flags": {"domain": "MD_DeferredDecal"},
+                  "textures": {}, "scalars": {}, "vectors": {}, "switches": {}}
+    out = tempfile.mkdtemp()
+    res = convert_material(decal_data, None, out, shader="csgo_environment.vfx")
+    written = open(os.path.join(out, res.vmat_path), encoding="utf-8", errors="replace").read()
+    assert "csgo_environment.vfx" in written, written[:200]
+    assert "csgo_static_overlay.vfx" not in written, "decal branch overrode the chosen shader"
+    # And with no shader given, the stated constant — not a reading of `flags`.
+    res = convert_material(decal_data, None, tempfile.mkdtemp())
+    assert DEFAULT_SHADER == "csgo_environment.vfx"
+
+    # A decal honors every mapped slot, not just colour. The decal path used to
+    # write the colour and return, so a mapped "Normal_Map -> normal" was
+    # dropped and showed up in the vmat's UnusedVariables as TextureNormal "".
+    src_dir = tempfile.mkdtemp()
+    for name in ("deco_diff", "deco_nm"):
+        Image.new("RGBA", (4, 4), (128, 128, 255, 200)).save(os.path.join(src_dir, f"{name}.tga"))
+    decal_tex = {
+        "material": "/Game/M/MI_Deco.MI_Deco",
+        "flags": {"domain": "MD_DeferredDecal"},
+        "textures": {"Albedo_Map": "/Game/T/deco_diff.deco_diff",
+                     "Normal_Map": "/Game/T/deco_nm.deco_nm"},
+        "scalars": {}, "vectors": {"Base Color": {"r": 0.0, "g": 0.0, "b": 0.0}}, "switches": {},
+    }
+    out = tempfile.mkdtemp()
+    res = convert_material(
+        decal_tex, src_dir, out, shader="csgo_static_overlay.vfx", blend_mode=1,
+        slot_overrides={"Albedo_Map": {"split_alpha": True, "color": "rgb", "opacity": "a"},
+                        "Normal_Map": "normal"},
+    )
+    body = open(os.path.join(out, res.vmat_path), encoding="utf-8").read()
+    assert 'TextureNormal "materials' in body, body
+    assert 'TextureColor "materials' in body, body
+    assert res.missing == [], res.missing
+    # ...and no tint is invented from the material's own vectors. A dark base
+    # colour used to become g_vColorTint "[0 0 0 0]" on every such decal.
+    assert 'g_vColorTint "[1.000000 1.000000 1.000000 0.000000]"' in body, body
+
+    print("ok")
+
+
+if __name__ == "__main__":
+    demo()

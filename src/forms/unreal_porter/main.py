@@ -747,6 +747,19 @@ class UnrealPorterWidget(QDialog):
         return {name: info.get("param_overrides") or {}
                 for name, info in getattr(self, "master_groups", {}).items()}
 
+    def master_feature_flags(self) -> dict:
+        """{master material name: {F_*: "0"/"1"}} from the Materials tab's Feature
+        Inspector. Threaded into convert_material so toggled sections actually
+        reach the written vmat (previously this output was discarded)."""
+        return {name: info.get("feature_flags") or {}
+                for name, info in getattr(self, "master_groups", {}).items()}
+
+    def master_blend_modes(self) -> dict:
+        """{master material name: int F_BLEND_MODE} from the Materials tab's Blend
+        selector (static_overlay only). Threaded into convert_material."""
+        return {name: info.get("blend_mode") or 0
+                for name, info in getattr(self, "master_groups", {}).items()}
+
     @Slot(str)
     def _on_map_master_slots(self, master_name: str):
         if not hasattr(self, "master_groups") or master_name not in self.master_groups:
@@ -774,6 +787,7 @@ class UnrealPorterWidget(QDialog):
         selected_shader = card_shaders.get(master_name) or info.get("shader") or "csgo_environment.vfx"
         info["shader"] = selected_shader
         initial_feature_flags = info.get("feature_flags", {})
+        initial_blend_mode = info.get("blend_mode", 0)
 
         dlg = ShaderRemapperDialog(
             master_name, textures, initial_overrides,
@@ -781,12 +795,14 @@ class UnrealPorterWidget(QDialog):
             scalars=scalars, vectors=vectors, switches=switches,
             initial_param_overrides=initial_param_overrides,
             feature_flags=initial_feature_flags,
+            blend_mode=initial_blend_mode,
             bulk_dir=self.tmp_dir(), parent=self,
         )
         if dlg.exec() == QDialog.Accepted:
             info["slot_overrides"] = dlg.result_overrides
             info["param_overrides"] = dlg.result_param_overrides
             info["feature_flags"] = getattr(dlg, "result_feature_flags", {})
+            info["blend_mode"] = getattr(dlg, "result_blend_mode", 0)
             info["shader"] = getattr(dlg, "result_shader", selected_shader)
             cards = self._master_cards()
             if cards and hasattr(cards, "cards") and master_name in cards.cards:
@@ -1228,21 +1244,82 @@ class UnrealPorterWidget(QDialog):
 
     def _start_conversion_pipeline(self):
         output_dir = self.output_dir()
-        did_something = False
 
         # STAGE 3: Converting Master Materials & Material Instances
         self.console.header("(3/6) Converting Master Materials & Material Instances")
+        self._log_shader_swaps()
+        materials_running = False
         if self.is_enabled("Textures") or self.is_enabled("Materials"):
-            did_something = self._convert_materials(output_dir) or did_something
+            materials_running = self._convert_materials(output_dir)
         else:
             self.console.info("Materials/Textures disabled — skipping stage 3.")
 
-        # STAGE 4 & 5: Models & Scenes/Maps
-        if self.is_enabled("Scenes") or self.is_enabled("Models") or self.is_enabled("Blueprints"):
-            self.console.header("(4/6) & (5/6) Converting Models, Blueprints & Maps")
-            did_something = self._convert_scenes_models(output_dir) or did_something
-        else:
+        # STAGE 4 & 5 must wait for stage 3. Both stages write the same vmat
+        # files — stage 3 from the Materials tab's shader choices, the scene
+        # worker from the materials its meshes actually use — so running them on
+        # two threads let whichever finished last win per file, which showed up
+        # as the shader remapping being ignored for an arbitrary subset.
+        if materials_running:
+            self._scene_stage_pending = True
+            return
+        self._start_scene_stage()
+
+    def _start_scene_stage(self):
+        self._scene_stage_pending = False
+        if not (self.is_enabled("Scenes") or self.is_enabled("Models") or self.is_enabled("Blueprints")):
             self._finish_conversion_pipeline()
+            return
+        self.console.header("(4/6) & (5/6) Converting Models, Blueprints & Maps")
+        if not self._convert_scenes_models(self.output_dir()):
+            self._finish_conversion_pipeline()
+
+    def _log_shader_swaps(self):
+        """Print clean, minimal Master Material -> CS2 shader remappings."""
+        swaps = self.master_shader_selection()
+        if not swaps:
+            self.console.warn(
+                "Shader remapping: no Master Material cards loaded — analyze project first."
+            )
+            return
+        groups = getattr(self, "master_groups", {}) or {}
+        self.console.header("(3a/6) Reading Shader Remappings")
+        self.console.info(f"Shader Remappings ({len(swaps)} Master Materials):")
+        for master, shader in sorted(swaps.items()):
+            info = groups.get(master) or {}
+            count = len(info.get("instances", []))
+            blend_str = ""
+            if info.get("blend_mode"):
+                bm = info["blend_mode"]
+                blend_names = {1: "Translucent", 2: "Alpha Test", 3: "Mod2x", 4: "Additive", 5: "Multiply", 6: "ModThenAdd"}
+                blend_str = f" [{blend_names.get(bm, f'Mode {bm}')}]"
+
+            self.console.info(f"  {master} -> {shader}{blend_str} ({count} instances)")
+
+            slot_overrides = info.get("slot_overrides") or {}
+            for param, slot in sorted(slot_overrides.items()):
+                if isinstance(slot, dict):
+                    parts = [f"{s}: {c}" for s, c in slot.items() if s not in ("split_alpha", "split_rgba")]
+                    slot_desc = ", ".join(parts) if parts else str(slot)
+                else:
+                    slot_desc = str(slot)
+                self.console.info(f"    slot {param} -> {slot_desc}")
+
+            for param, target in sorted((info.get("param_overrides") or {}).items()):
+                self.console.info(f"    param {param} -> {target}")
+            for flag, value in sorted((info.get("feature_flags") or {}).items()):
+                self.console.info(f"    feature {flag} = {value}")
+
+        import json
+        raw_remaps = {
+            "shaders": swaps,
+            "slots": {m: info.get("slot_overrides") for m, info in groups.items() if info.get("slot_overrides")},
+            "params": {m: info.get("param_overrides") for m, info in groups.items() if info.get("param_overrides")},
+            "flags": {m: info.get("feature_flags") for m, info in groups.items() if info.get("feature_flags")},
+            "blend_modes": {m: info.get("blend_mode") for m, info in groups.items() if info.get("blend_mode")},
+        }
+        self.console.info("\nRaw Shader Remappings:")
+        for line in json.dumps(raw_remaps, indent=2).splitlines():
+            self.console.info("  " + line)
 
     def _finish_conversion_pipeline(self):
         # STAGE 6: Finalizing conversion
@@ -1277,6 +1354,8 @@ class UnrealPorterWidget(QDialog):
             master_shaders=self.master_shader_selection(),
             master_slot_overrides=self.master_slot_overrides(),
             master_param_overrides=self.master_param_overrides(),
+            master_feature_flags=self.master_feature_flags(),
+            master_blend_modes=self.master_blend_modes(),
             selected_assets=self._selected_assets or None,
             import_lods=self.model_lods_check.isChecked(),
             import_collision=self.model_collision_check.isChecked(),
@@ -1305,13 +1384,13 @@ class UnrealPorterWidget(QDialog):
         self.console.info("Scenes/Models/Blueprints conversion finished.")
         self._finish_conversion_pipeline()
 
-    def _convert_materials(self, output_dir):
+    def _convert_materials(self, output_dir, ignore_scope=False):
         if not hasattr(self, "master_groups") or not self.master_groups:
             self.console.warn("No Master Materials loaded to convert.")
             return False
 
         from .asset_selection import asset_stem
-        scope = {asset_stem(k) for k in self._selected_assets} if self._selected_assets else None
+        scope = None if (ignore_scope or not self._selected_assets) else {asset_stem(k) for k in self._selected_assets}
 
         cards = self._master_cards()
         checkboxes = cards.checkboxes() if cards else {}
@@ -1339,11 +1418,13 @@ class UnrealPorterWidget(QDialog):
                 "shader": selected_shader,
                 "instances": instances,
                 "enabled": True,
-                # Carry the per-master UI mappings through to the worker; without
-                # these the materials-only convert path ignored both the texture
-                # slot remap and the param mapping the user just configured.
+                # Carry all per-master UI mappings through to the worker; without
+                # these the materials-only convert path ignored slot remap, param mapping,
+                # feature flags, and blend modes configured in the UI.
                 "slot_overrides": info.get("slot_overrides", {}),
                 "param_overrides": info.get("param_overrides", {}),
+                "feature_flags": info.get("feature_flags", {}),
+                "blend_mode": info.get("blend_mode", 0),
             }
 
         if dropped:
@@ -1353,32 +1434,29 @@ class UnrealPorterWidget(QDialog):
             self.console.warn("No Master Material groups selected for conversion.")
             return False
 
-        total_instances = sum(len(g["instances"]) for g in active_master_groups.values())
-        self.console.info(f"Converting {total_instances} material instance(s) across {len(active_master_groups)} Master Material swap group(s)…")
+        from .converter import MasterMaterialConvertWorker
         self.convert_button.setEnabled(False)
+        if hasattr(self, "reconvert_mats_button"):
+            self.reconvert_mats_button.setEnabled(False)
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Converting Materials…")
 
-        from .converter import MasterMaterialConvertWorker
-
         worker = MasterMaterialConvertWorker(
-            output_dir, self.tmp_dir(), active_master_groups,
+            output_dir=output_dir,
+            bulk_dir=self.tmp_dir(),
+            master_groups=active_master_groups,
             strip_prefix=self.strip_prefixes_check.isChecked(),
             tex_format=self.tex_format_combo.currentText(),
             invert_y_normal=self.tex_invert_y_check.isChecked(),
         )
-        worker.progress.connect(self._on_progress)
         worker.file_done.connect(self._on_file_done)
+        worker.progress.connect(self._on_progress)
         worker.finished.connect(self._on_mat_finished)
-        if not self._start_worker("worker", worker):
-            self._update_button_states()
-            return False
-        return True
+        return self._start_worker("mat_worker", worker)
 
     @Slot(int, int)
     def _on_progress(self, current, total):
-        max_val = total if total > 0 else 100
-        self.progress_bar.setMaximum(max_val)
+        self.progress_bar.setMaximum(total)
         self.progress_bar.setValue(current)
         if total > 0:
             pct = int((current / total) * 100)
@@ -1406,7 +1484,7 @@ class UnrealPorterWidget(QDialog):
         from .material_converter import clear_texture_index_cache
         clear_texture_index_cache()
 
-        scope_assets = list(self._selected_assets) if self._selected_assets else list(self._project_assets)
+        scope_assets = list(self._project_assets) if self._project_assets else list(self._selected_assets)
         missing = self._find_missing_tmp_exports(scope_assets)
         project_dir = self.project_dir()
         if missing and project_dir and os.path.isdir(project_dir):
@@ -1429,11 +1507,12 @@ class UnrealPorterWidget(QDialog):
                 return
 
         self.console.header("Re-converting Materials")
+        self._log_shader_swaps()
         if hasattr(self, "reconvert_mats_button"):
             self.reconvert_mats_button.setEnabled(False)
         self.convert_button.setEnabled(False)
 
-        success = self._convert_materials(output_dir)
+        success = self._convert_materials(output_dir, ignore_scope=True)
         if not success:
             self._update_button_states()
 
@@ -1448,18 +1527,18 @@ class UnrealPorterWidget(QDialog):
         self.console.success("Asset preparation completed successfully.")
         output_dir = self.output_dir()
         self.console.header("Re-converting Materials")
-        success = self._convert_materials(output_dir)
+        success = self._convert_materials(output_dir, ignore_scope=True)
         if not success:
             self._update_button_states()
 
     @Slot(list, list)
     def _on_mat_finished(self, created, skipped):
         self.console.info(f"Materials done — created {len(created)}, skipped {len(skipped)}.")
-        # Stage 3 (materials) and Stage 4/5 (scenes/models) run on two threads,
-        # so "Materials done" fires while the scene worker is still writing
-        # maps/vmdls. Only finalize when nothing else is running — otherwise the
-        # bar flips to "Done" and the buttons re-enable while vmdls are still
-        # being produced, which looks like a hang the user then bails out of.
+        # Stage 4/5 was deferred until the vmats were written; start it now so
+        # the two stages never write the same file at once.
+        if getattr(self, "_scene_stage_pending", False):
+            self._start_scene_stage()
+            return
         scene = getattr(self, "scene_worker", None)
         if scene is not None and scene.isRunning():
             self.progress_bar.setFormat("Converting Models/Scenes…")
