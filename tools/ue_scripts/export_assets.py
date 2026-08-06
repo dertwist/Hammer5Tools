@@ -279,11 +279,15 @@ def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
 
     export_paths = _select_export_paths(infos, asset_filter=asset_filter)
     if not export_paths:
-        unreal.log_warning(f"No StaticMesh/Texture2D assets found matching criteria under {content_path}")
+        msg = f"[H5T_EXPORT_COMPLETE] No StaticMesh/Texture2D assets found matching criteria under {content_path}"
+        unreal.log_warning(msg)
+        print(msg, flush=True)
         return
 
     ok = _export_assets(unreal, export_paths, output_dir)
-    unreal.log(f"Exported {ok}/{len(export_paths)} asset(s) to {output_dir}")
+    msg = f"[H5T_EXPORT_COMPLETE] Exported {ok}/{len(export_paths)} asset(s) to {output_dir}"
+    unreal.log(msg)
+    print(msg, flush=True)
 
 
 class DummyAssetDataUE4:
