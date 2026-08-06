@@ -106,10 +106,11 @@ class AnalyzeWorker(CancellableWorker):
     progress = Signal(int, int)
     done = Signal(dict)   # the manifest, or {} on failure
 
-    def __init__(self, uproject_path, project_dir, parent=None):
+    def __init__(self, uproject_path, project_dir, output_dir, parent=None):
         super().__init__(parent)
         self.uproject_path = uproject_path
         self.project_dir = project_dir
+        self.output_dir = output_dir
 
     def run(self):
         from .bridge_client import UnrealBridge, BridgeError
@@ -153,7 +154,8 @@ class AnalyzeWorker(CancellableWorker):
             return
 
         try:
-            manifest = analysis.save(self.uproject_path, self.project_dir, assets, info, materials)
+            manifest = analysis.save(self.uproject_path, self.project_dir, self.output_dir,
+                                     assets, info, materials)
         except OSError as e:
             # A cache we cannot persist is a slower next run, not a failure.
             self.log.emit(f"Could not write the analysis cache: {e}", "warn")
@@ -172,10 +174,12 @@ class ExpandRefsWorker(CancellableWorker):
     progress = Signal(int, int)
     done = Signal(set, dict)
 
-    def __init__(self, uproject_path, project_dir, chosen, all_keys, refs_map=None, parent=None):
+    def __init__(self, uproject_path, project_dir, output_dir, chosen, all_keys,
+                 refs_map=None, parent=None):
         super().__init__(parent)
         self.uproject_path = uproject_path
         self.project_dir = project_dir
+        self.output_dir = output_dir
         self.chosen = chosen
         self.all_keys = all_keys
         self.refs_map = refs_map
@@ -199,7 +203,7 @@ class ExpandRefsWorker(CancellableWorker):
             # Fall back to exactly what was ticked rather than losing the picks.
             selected = set(self.chosen)
         # Whatever was read this time is worth keeping even if the walk failed.
-        analysis.update_refs(self.uproject_path, new_refs)
+        analysis.update_refs(self.output_dir, new_refs)
         self.done.emit(selected, new_refs)
 
 
@@ -248,6 +252,20 @@ class UnrealPorterWidget(QDialog):
         self.console.info("2. Analyze project")
         self.console.info("3. Select assets you want to port")
         self.console.info("4. Click Convert")
+
+        self.console.header("Limitations")
+        self.console.warn("• Scene override materials (per-actor material overrides on map instances)")
+        self.console.warn("• Cables / Splines (CableComponent physics & spline mesh ropes)")
+        self.console.warn("• Landscapes / Terrain (heightfield layer blending; must bake to static mesh)")
+        self.console.warn("• Master Materials & HLSL graphs (only Material Instance parameters -> vmat)")
+        self.console.warn("• Nanite virtual geometry (export regular LOD triangulated mesh first)")
+        self.console.warn("• Niagara / Cascade particles (must re-author in CS2 particle editor)")
+        self.console.warn("• Virtual Textures / RVT (must bake to standard 2D textures in UE first)")
+        self.console.warn("• Gameplay & Logic Blueprints (only static component layout Blueprints -> vsmart)")
+        self.console.warn("• Lumen & Baked Lightmaps (lighting bakes must be re-authored in Hammer)")
+        self.console.warn("• Skeletal Meshes & Character Rigs (rigged animations / PhAT physics assets)")
+
+        self.console.header("Settings")
         # _build_ui ran before the console existed, so the first report lands here.
         self._log_export_cache()
         # Restores the port picker and re-enables Prepare from cache, without a
@@ -516,10 +534,6 @@ class UnrealPorterWidget(QDialog):
         self.select_assets_button.setEnabled(False)
         self.select_assets_button.clicked.connect(self.on_select_assets)
         scope_layout.addWidget(self.select_assets_button)
-        self.scope_label = QLabel()
-        self.scope_label.setWordWrap(True)
-        self.scope_label.setStyleSheet("color: #9D9D9D;")
-        scope_layout.addWidget(self.scope_label)
         layout.addWidget(scope_box)
 
         settings_box = QGroupBox("General settings")
@@ -755,24 +769,40 @@ class UnrealPorterWidget(QDialog):
             for k, v in (mat_data.get("switches") or {}).items():
                 switches.setdefault(k, v)
 
-        from .slot_mapping import SlotMappingDialog
-        selected_shader = info.get("shader") or "csgo_environment.vfx"
-        dlg = SlotMappingDialog(
+        from .slot_mapping import ShaderRemapperDialog
+        card_shaders = self.master_shader_selection()
+        selected_shader = card_shaders.get(master_name) or info.get("shader") or "csgo_environment.vfx"
+        info["shader"] = selected_shader
+        initial_feature_flags = info.get("feature_flags", {})
+
+        dlg = ShaderRemapperDialog(
             master_name, textures, initial_overrides,
             shader=selected_shader,
             scalars=scalars, vectors=vectors, switches=switches,
             initial_param_overrides=initial_param_overrides,
+            feature_flags=initial_feature_flags,
             bulk_dir=self.tmp_dir(), parent=self,
         )
         if dlg.exec() == QDialog.Accepted:
             info["slot_overrides"] = dlg.result_overrides
             info["param_overrides"] = dlg.result_param_overrides
+            info["feature_flags"] = getattr(dlg, "result_feature_flags", {})
+            info["shader"] = getattr(dlg, "result_shader", selected_shader)
+            cards = self._master_cards()
+            if cards and hasattr(cards, "cards") and master_name in cards.cards:
+                card = cards.cards[master_name]
+                c_idx = card.shader_combo.findText(info["shader"])
+                if c_idx >= 0:
+                    card.shader_combo.blockSignals(True)
+                    card.shader_combo.setCurrentIndex(c_idx)
+                    card.shader_combo.blockSignals(False)
             self.master_mat_list.refresh(master_name, info)
             slot_count = len(dlg.result_overrides)
             param_count = len(dlg.result_param_overrides)
+            flag_count = len(dlg.result_feature_flags)
             self.console.info(
-                f"Updated mapping for {master_name} "
-                f"({slot_count} slot(s), {param_count} param(s))."
+                f"Updated Shader Remapper for {master_name} "
+                f"({info['shader']}, {slot_count} slot(s), {param_count} param(s), {flag_count} feature(s))."
             )
 
     # helpers
@@ -915,54 +945,6 @@ class UnrealPorterWidget(QDialog):
 
     # analysis
 
-    def ensure_analysis(self, force=False):
-        """Make sure we know what is in the project before anything else runs.
-
-        Cheap path first: if the cached manifest's fingerprint still matches the
-        project on disk, nothing runs at all.
-        """
-        from . import analysis
-
-        uproject = self.uproject_path()
-        project_dir = self.project_dir()
-        if not uproject or not os.path.isfile(uproject) or not os.path.isdir(project_dir):
-            self._set_analysis({}, uproject)
-            return
-
-        if not force:
-            cached = analysis.load(uproject, project_dir)
-            if cached:
-                self.console.info(
-                    f"Using cached analysis from {cached.get('analyzed_at')} "
-                    f"({len(cached.get('assets', []))} asset(s)) — project unchanged."
-                )
-                self._set_analysis(cached, uproject)
-                return
-
-        self.console.header("Analyzing project")
-        self.console.info(f"{os.path.basename(uproject)} — reading assets through the CUE4Parse bridge…")
-        self._set_analysis({}, uproject)
-        self.progress_bar.setFormat("Analyzing…")
-
-        worker = AnalyzeWorker(uproject, project_dir)
-        worker.log.connect(self._on_worker_log)
-        worker.progress.connect(self._on_progress)
-        worker.done.connect(lambda manifest, u=uproject: self._on_analysis_done(manifest, u))
-        self._start_worker("analyze_worker", worker)
-
-    @Slot(dict, str)
-    def _on_analysis_done(self, manifest, uproject):
-        if manifest:
-            info = manifest.get("info") or {}
-            self.console.success(
-                f"Analyzed {os.path.basename(uproject)} ({info.get('game')}): "
-                f"{len(manifest.get('assets', []))} asset(s), {info.get('umaps')} map(s)."
-            )
-        else:
-            self.console.error("Analysis failed — Prepare Assets stays disabled until the project can be read.")
-        self._set_analysis(manifest, uproject)
-        self.progress_bar.setFormat("Idle")
-
     def _update_button_states(self):
         uproject = self.uproject_path() if hasattr(self, "uproject_path") else None
         analyzed = bool(getattr(self, "_analyzed_uproject", None)) and bool(getattr(self, "_project_assets", []))
@@ -996,11 +978,12 @@ class UnrealPorterWidget(QDialog):
             return
 
         if not force:
-            cached = analysis.load(uproject, project_dir)
+            cached = analysis.load(uproject, project_dir, self.output_dir())
             if cached:
                 self.console.info(
                     f"Using cached analysis from {cached.get('analyzed_at')} "
-                    f"({len(cached.get('assets', []))} asset(s)) — project unchanged."
+                    f"({len(cached.get('assets', []))} asset(s), "
+                    f"{len(cached.get('refs') or {})} reference scan(s) cached) — project unchanged."
                 )
                 self._set_analysis(cached, uproject)
                 return
@@ -1010,7 +993,7 @@ class UnrealPorterWidget(QDialog):
         self._set_analysis({}, uproject)
         self.progress_bar.setFormat("Analyzing…")
 
-        worker = AnalyzeWorker(uproject, project_dir)
+        worker = AnalyzeWorker(uproject, project_dir, self.output_dir())
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(lambda manifest, u=uproject: self._on_analysis_done(manifest, u))
@@ -1047,18 +1030,23 @@ class UnrealPorterWidget(QDialog):
         elif manifest:
             self.console.warn("No Master Materials found in the project.")
 
-        self._update_scope_label()
+        self._log_port_scope()
         self._update_button_states()
 
-    def _update_scope_label(self):
-        """Counts per type for whatever is actually going to be ported."""
+    def _log_port_scope(self):
+        """Counts per type for whatever is actually going to be ported.
+
+        Goes to the console rather than a label so the numbers stay on screen
+        next to the run that produced them, instead of being overwritten by the
+        next selection.
+        """
         from .asset_selection import format_counts
 
         keys = self._selected_assets or self._project_assets
         if not keys:
-            self.scope_label.setText("No assets — analyze a project first.")
+            self.console.warn("No assets — analyze a project first.")
             return
-        self.scope_label.setText(format_counts(keys) or f"{len(keys)} asset(s)")
+        self.console.info("Port scope: " + (format_counts(keys) or f"{len(keys)} asset(s)"))
 
     def on_select_assets(self):
         if not self._project_assets:
@@ -1076,7 +1064,7 @@ class UnrealPorterWidget(QDialog):
         if not dlg.selected_keys:
             self._selected_assets = set(self._project_assets)
             self.console.info("Nothing ticked — the whole project will be ported.")
-            self._update_scope_label()
+            self._log_port_scope()
             self._update_button_states()
             return
 
@@ -1084,8 +1072,9 @@ class UnrealPorterWidget(QDialog):
         self.console.info(f"{len(dlg.selected_keys)} asset(s) picked; following their references…")
         self._resolving_refs = True
         self._update_button_states()
-        worker = ExpandRefsWorker(self.uproject_path(), self.project_dir(), dlg.selected_keys,
-                                  self._project_assets, refs_map=self._project_refs)
+        worker = ExpandRefsWorker(self.uproject_path(), self.project_dir(), self.output_dir(),
+                                  dlg.selected_keys, self._project_assets,
+                                  refs_map=self._project_refs)
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(self._on_refs_expanded)
@@ -1101,7 +1090,7 @@ class UnrealPorterWidget(QDialog):
         self.progress_bar.setValue(self.progress_bar.maximum())
         self.progress_bar.setFormat("Done")
         self.console.success(f"Port scope: {len(selected)} asset(s) including references.")
-        self._update_scope_label()
+        self._log_port_scope()
         self._update_button_states()
 
     def _scan_tmp(self):
