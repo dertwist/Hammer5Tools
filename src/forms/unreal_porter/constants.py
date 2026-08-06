@@ -93,6 +93,19 @@ UNSUPPORTED = [
         [r"^BP_GM_", r"^BP_Ctrl", r"^GM_", r"GameMode", r"Controller", r"^ABP_"],
     ),
     Unsupported(
+        "scene_override_materials",
+        "Scene override materials",
+        "Material overrides assigned directly to actor instances in a scene "
+        "cannot be exported automatically.",
+        [r"MaterialOverride", r"OverrideMaterial"],
+    ),
+    Unsupported(
+        "cables",
+        "Cables / Spline components",
+        "CableComponent and spline mesh ropes have no direct Source 2 conversion.",
+        [r"CableComponent", r"SplineMesh"],
+    ),
+    Unsupported(
         "lighting",
         "Lumen lighting / lightmaps",
         "Lighting is not migrated. Light actors and Lumen data must be "
