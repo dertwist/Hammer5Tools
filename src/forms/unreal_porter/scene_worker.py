@@ -5,6 +5,7 @@ per-step feedback to the converter's console.
 """
 
 import os
+import re
 import shutil
 from PySide6.QtCore import QThread, Signal
 
@@ -46,6 +47,21 @@ _NON_MESH_PREFIXES = ("t_", "tx_", "tex_", "m_", "mi_", "mm_", "mf_", "cue_", "n
 _NON_MESH_FOLDERS = ("/textures/", "/materials/", "/audio/", "/sounds/", "/particles/", "/ui/", "/widget/")
 
 
+def _object_path_to_key(ue_object_path: str) -> str:
+    """UE object path -> the asset key the bridge addresses packages by.
+
+    "/Game/Kowloon/Meshes/Decals/D_Dirt_01.D_Dirt_01" -> "Kowloon/Meshes/Decals/D_Dirt_01"
+    The bridge mounts Content as the root, so the /Game/ prefix and the
+    trailing ".ObjectName" both have to come off — passing the object path
+    through verbatim fails with "there is no game file with the path".
+    """
+    ref = str(ue_object_path or "")
+    if "'" in ref:                       # Class'/Game/Path/Name.Name'
+        ref = ref.split("'", 2)[1] if ref.count("'") >= 2 else ref
+    ref = ref.strip().replace("\\", "/").split(".", 1)[0]
+    return re.sub(r"^/?[Gg]ame/", "", ref).strip("/")
+
+
 def _is_mesh_asset_path(path: str) -> bool:
     if not path:
         return False
@@ -84,6 +100,12 @@ class SceneModelsWorker(CancellableWorker):
         # (UE mesh, mirror axes) pairs some map placed with a negative scale;
         # each gets its own mirrored vmdl written in the Models stage.
         self._mirrored_meshes = set()
+        # UE materials a decal actor referenced. Nothing else pulls these in —
+        # the Materials stage works from the material names inside each mesh's
+        # FBX, and a decal has no mesh — so without collecting them here every
+        # decal-only material goes unconverted and its overlay lands in Hammer
+        # pointing at a vmat that was never written.
+        self._decal_materials = set()
         self.tex_format = tex_format
         self.invert_y_normal = invert_y_normal
         # Asset keys the user picked in the port scope dialog, already expanded
@@ -286,6 +308,7 @@ class SceneModelsWorker(CancellableWorker):
                     if a.get("mesh") and a.get("componentType") == "StaticMeshComponent"
                 )
                 self._mirrored_meshes.update(res.mirrored_meshes)
+                self._decal_materials.update(res.decal_materials)
                 skip_note = ""
                 if res.skipped:
                     skip_note = f" ({res.skipped} skipped: {res.skipped_types})"
@@ -535,6 +558,18 @@ class SceneModelsWorker(CancellableWorker):
                 for m in (list_materials(src) or []):
                     wanted.add(m.lower())
 
+        # A decal's material is attached to the actor, not to any mesh, so it
+        # never appears in an FBX and the loop above cannot see it. Its exact
+        # object path is known, so it is registered directly rather than hoping
+        # list_materials' name/folder heuristic recognised it — decal materials
+        # routinely sit in a Decals/ folder under a D_ prefix, which it does not.
+        for ue_mat in self._decal_materials:
+            key = _object_path_to_key(ue_mat)
+            if key:
+                stem = key.rsplit("/", 1)[-1].lower()
+                stem_to_path.setdefault(stem, key)
+                wanted.add(stem)
+
         targets = [(s, p) for s, p in stem_to_path.items() if s in wanted]
         if not targets:
             self._log("Materials — no matching material instances for the scene meshes.", "info")
@@ -647,6 +682,16 @@ def demo():
     unscoped = SceneModelsWorker.__new__(SceneModelsWorker)
     unscoped.selected_stems = None
     assert unscoped._wanted("/Game/Meshes/SM_Table.SM_Table")
+
+    # A decal's material arrives as a UE object path; the bridge addresses
+    # packages by their key. Passing the object path through unconverted fails
+    # with "there is no game file with the path", which is how every decal-only
+    # material went unconverted and left its overlay pointing at nothing.
+    assert _object_path_to_key("/Game/Kowloon/Meshes/Decals/D_Dirt_01.D_Dirt_01") \
+        == "Kowloon/Meshes/Decals/D_Dirt_01"
+    assert _object_path_to_key("MaterialInstanceConstant'/Game/M/MI_A.MI_A'") == "M/MI_A"
+    assert _object_path_to_key("/Game/A.A") == "A"
+    assert _object_path_to_key("") == ""
 
     # One mesh mirrored on different axes in different places needs one vmdl
     # each; a repeat of the same axis set must not write the file twice.

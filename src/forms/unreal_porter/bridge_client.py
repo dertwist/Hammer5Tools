@@ -140,8 +140,18 @@ class UnrealBridge:
         return self._run_json("info", self.content_dir)
 
     def list(self, substring: str = "") -> list:
-        return [k for k in self._run_json("list", self.content_dir, substring)
-                if not is_ignored_asset(k)]
+        return self.list_counted(substring)[0]
+
+    def list_counted(self, substring: str = "") -> tuple:
+        """(assets, ignored) — the listing plus how many entries were dropped.
+
+        The truncation check compares the listing against the bridge's own
+        totalFiles, so anything filtered out here has to be reported or an
+        intact project reads as a cut-off one.
+        """
+        raw = self._run_json("list", self.content_dir, substring)
+        kept = [k for k in raw if not is_ignored_asset(k)]
+        return kept, len(raw) - len(kept)
 
     def list_materials(self) -> list:
         """Find all Material / MaterialInstance .uasset keys under the project,

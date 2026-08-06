@@ -1,24 +1,32 @@
 """Analyze a UE project once, then reuse the result until the project changes.
 
 Mounting a project through the CUE4Parse bridge and listing its assets costs a
-subprocess and several seconds — long enough that doing it on every dialog open,
-every addon switch and again at export time is the difference between a tool
-that feels instant and one that doesn't. So the asset list is written to a JSON
-manifest keyed by project path, alongside a fingerprint of the project's content
-files. A stale fingerprint means reanalyze; a matching one means read the JSON.
+subprocess and several seconds — and resolving one asset's references costs a
+whole bridge process each, which is minutes across a real project. So the asset
+list, the Master Material groups and the resolved reference graph are all
+written to a KV3 manifest in the target addon, alongside a fingerprint of the
+project's content files. A stale fingerprint means reanalyze; a matching one
+means the reference walk is answered from the manifest without running at all.
 
 The fingerprint is a filesystem walk (name, size, mtime) rather than a content
 hash: it is one to two orders of magnitude cheaper on a project with thousands
 of uassets, and it catches every edit a user can make through the Editor.
+
+The manifest lives with the addon rather than in user data, so it travels with
+the content it describes. One addon holds one manifest, so the project it was
+built from is recorded and checked — pointing the same addon at a different
+project is a miss, not a wrong answer.
 """
 import hashlib
-import json
 import os
 import time
+from pathlib import Path
 
-from src.common import user_data_dir
+from src.common import JsonToKv3, Kv3ToJson
 
-CACHE_DIR = user_data_dir / "unreal_porter_analysis"
+# Beside the export cache (main.TMP_SUBDIR), under the addon's content root.
+CACHE_SUBDIR = "hammer5tools/unrealporter"
+CACHE_NAME = "analyze_cache.kv3"
 
 # Only these count towards the fingerprint. Unreal churns Saved/, Intermediate/
 # and DerivedDataCache/ constantly without the content meaning anything different.
@@ -27,17 +35,59 @@ IGNORED_DIRS = {"saved", "intermediate", "deriveddatacache", "build", "binaries"
 
 # v3: refs are now scanned with the bridge's iter-refs command, which resolves
 # StaticMesh material slots the old grep-over-dump approach missed. Existing v2
-# manifests cached those meshes as refs:[] and would never pick up the fix, so
-# bump to invalidate them and force a fresh scan.
-MANIFEST_VERSION = 3
+# manifests cached those meshes as refs:[] and would never pick up the fix.
+# v4: manifests moved into the addon and became KV3.
+MANIFEST_VERSION = 4
 
 
-def manifest_path(uproject_path: str):
-    """Where a project's manifest lives. Keyed by a hash of the project path so
-    two projects with the same folder name never collide."""
-    digest = hashlib.sha1(os.path.normcase(os.path.abspath(uproject_path)).encode("utf-8")).hexdigest()[:16]
-    stem = os.path.splitext(os.path.basename(uproject_path))[0]
-    return CACHE_DIR / f"{stem}.{digest}.json"
+def manifest_path(output_dir: str):
+    """Where the addon's analysis manifest lives, or None without an addon."""
+    return Path(output_dir) / CACHE_SUBDIR / CACHE_NAME if output_dir else None
+
+
+def _same_project(manifest, uproject_path: str) -> bool:
+    """Was this manifest built from the project we are about to port?
+
+    One addon, one manifest — so unlike the old per-project cache file, the
+    project has to be checked rather than assumed from the filename.
+    """
+    stored = str(manifest.get("uproject") or "")
+    if not stored:
+        return False
+    return os.path.normcase(os.path.abspath(stored)) == os.path.normcase(os.path.abspath(uproject_path))
+
+
+def _kv3_safe(value):
+    """KV3 has no tuple type; JSON used to flatten them on the way out."""
+    if isinstance(value, tuple):
+        return [_kv3_safe(v) for v in value]
+    if isinstance(value, list):
+        return [_kv3_safe(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): _kv3_safe(v) for k, v in value.items()}
+    return value
+
+
+def _read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return Kv3ToJson(f.read())
+    except (OSError, ValueError, TypeError, KeyError):
+        return None
+
+
+def _write(path, manifest) -> bool:
+    """Write-then-replace: a half-written manifest that still parses would be
+    cached as a complete asset list."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".kv3.tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(JsonToKv3(_kv3_safe(manifest)))
+        os.replace(tmp, path)
+        return True
+    except (OSError, TypeError, ValueError):
+        return False    # a cache we cannot persist is a slower next run, not a failure
 
 
 def fingerprint(content_dir: str) -> str:
@@ -68,12 +118,16 @@ def is_truncated(assets, info) -> bool:
     A truncated manifest is worse than no manifest: the fingerprint still matches
     the project, so it is replayed forever as if it were the whole thing, and the
     port silently drops every asset past the cut.
+
+    `info.ignored` records the entries deliberately dropped from the listing
+    (editor-only packages), which are a gap in the count and not a truncation.
     """
     total = (info or {}).get("totalFiles")
-    return isinstance(total, int) and len(assets or []) < total
+    ignored = (info or {}).get("ignored") or 0
+    return isinstance(total, int) and len(assets or []) + ignored < total
 
 
-def update_refs(uproject_path: str, refs) -> None:
+def update_refs(output_dir: str, refs) -> None:
     """Merge newly scanned references into the stored manifest.
 
     Scanning every asset up front costs one bridge process per asset and stalls
@@ -82,35 +136,29 @@ def update_refs(uproject_path: str, refs) -> None:
     fingerprint: this adds knowledge about the same project state, it does not
     re-validate it.
     """
-    if not refs:
+    path = manifest_path(output_dir)
+    if not refs or path is None:
         return
-    path = manifest_path(uproject_path)
-    try:
-        with open(path, encoding="utf-8") as f:
-            manifest = json.load(f)
-    except (OSError, ValueError):
+    manifest = _read(path)
+    if manifest is None:
         return
     merged = dict(manifest.get("refs") or {})
     merged.update(refs)
     manifest["refs"] = merged
-    tmp = path.with_suffix(".json.tmp")
-    try:
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(manifest, f, indent=1)
-        os.replace(tmp, path)
-    except OSError:
-        pass    # a cache we cannot persist is a slower next run, not a failure
+    _write(path, manifest)
 
 
-def load(uproject_path: str, content_dir: str):
+def load(uproject_path: str, content_dir: str, output_dir: str):
     """The cached analysis if it still matches the project, else None."""
-    path = manifest_path(uproject_path)
-    try:
-        with open(path, encoding="utf-8") as f:
-            manifest = json.load(f)
-    except (OSError, ValueError):
+    path = manifest_path(output_dir)
+    if path is None:
+        return None
+    manifest = _read(path)
+    if manifest is None:
         return None
     if manifest.get("version") != MANIFEST_VERSION:
+        return None
+    if not _same_project(manifest, uproject_path):
         return None
     if is_truncated(manifest.get("assets"), manifest.get("info")):
         return None
@@ -119,7 +167,8 @@ def load(uproject_path: str, content_dir: str):
     return manifest
 
 
-def save(uproject_path: str, content_dir: str, assets, info, materials=None, refs=None) -> dict:
+def save(uproject_path: str, content_dir: str, output_dir: str, assets, info,
+         materials=None, refs=None) -> dict:
     manifest = {
         "version": MANIFEST_VERSION,
         "uproject": uproject_path,
@@ -128,20 +177,15 @@ def save(uproject_path: str, content_dir: str, assets, info, materials=None, ref
         "analyzed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "info": info or {},
         "assets": sorted(assets),
-        # Master Material groups from the same pass. JSON turns the instance
-        # tuples into lists, which unpack identically where they are consumed.
+        # Master Material groups from the same pass. The instance tuples are
+        # flattened to lists on the way out and unpack identically on the way in.
         "materials": materials or {},
         # asset key -> the project assets it references, resolved at analysis time.
         "refs": refs or {},
     }
-    path = manifest_path(uproject_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # Write-then-replace: a half-written manifest that still parses would be
-    # cached as a complete asset list.
-    tmp = path.with_suffix(".json.tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=1)
-    os.replace(tmp, path)
+    path = manifest_path(output_dir)
+    if path is not None:
+        _write(path, manifest)
     return manifest
 
 
@@ -158,7 +202,8 @@ def analyze(bridge, content_dir: str, log_cb=None, progress_cb=None):
     from .converter import scan_master_materials
 
     info = bridge.info()
-    assets = bridge.list("")
+    assets, ignored = bridge.list_counted("")
+    info = {**(info or {}), "ignored": ignored}
     if is_truncated(assets, info) and log_cb:
         log_cb(
             f"Bridge listed only {len(assets)} of {info.get('totalFiles')} files — "
@@ -202,16 +247,26 @@ def demo():
         changed = fingerprint(content)
         assert changed != first, "an edited asset did not change the fingerprint"
 
+        addon = os.path.join(tmp, "addon")
+
+        # The manifest lands where the addon keeps its other porter data.
+        assert manifest_path(addon) == Path(addon) / CACHE_SUBDIR / CACHE_NAME
+        # No addon selected means nowhere to cache — not a crash.
+        assert manifest_path("") is None
+        assert load(uproject, content, "") is None
+        update_refs("", {"a": []})
+
         # Round-trip: a fresh manifest loads, a stale one does not.
-        assert load(uproject, content) is None, "loaded a manifest that was never written"
+        assert load(uproject, content, addon) is None, "loaded a manifest that was never written"
         groups = {"M_Master": {"shader": "csgo_environment.vfx",
                                "instances": [("MI_Wood", "P/Content/MI_Wood", {})],
                                "textures": {}, "slot_overrides": {}, "count": 1}}
-        save(uproject, content, ["P/Content/Meshes/SM_Chair.uasset"], {"game": "P"}, groups)
-        cached = load(uproject, content)
+        save(uproject, content, addon, ["P/Content/Meshes/SM_Chair.uasset"], {"game": "P"}, groups)
+        cached = load(uproject, content, addon)
         assert cached and cached["assets"] == ["P/Content/Meshes/SM_Chair.uasset"], cached
-        # The material groups must survive the JSON round-trip in a shape the
-        # converter can still unpack (tuples come back as lists).
+        # The material groups must survive the KV3 round-trip in a shape the
+        # converter can still unpack — KV3 has no tuple type, so the instance
+        # tuples have to come back as lists rather than failing to write at all.
         stem, path, data = cached["materials"]["M_Master"]["instances"][0]
         assert (stem, path) == ("MI_Wood", "P/Content/MI_Wood"), (stem, path)
 
@@ -219,34 +274,42 @@ def demo():
         # so the next one does not pay for them again — and merging them must
         # not disturb the fingerprint that says the manifest is still valid.
         assets = ["P/Content/Meshes/SM_Chair.uasset", "P/Content/Materials/MI_Wood.uasset"]
-        save(uproject, content, assets, {"game": "P"})
-        update_refs(uproject, {assets[0]: [assets[1]]})
-        cached = load(uproject, content)
+        save(uproject, content, addon, assets, {"game": "P"})
+        update_refs(addon, {assets[0]: [assets[1]]})
+        cached = load(uproject, content, addon)
         assert cached and cached["refs"] == {assets[0]: [assets[1]]}, cached
-        update_refs(uproject, {assets[1]: []})
-        assert load(uproject, content)["refs"] == {assets[0]: [assets[1]], assets[1]: []}
+        update_refs(addon, {assets[1]: []})
+        assert load(uproject, content, addon)["refs"] == {assets[0]: [assets[1]], assets[1]: []}
         # No manifest on disk is not an error, just nothing to remember.
-        update_refs(os.path.join(tmp, "Missing.uproject"), {assets[0]: []})
+        update_refs(os.path.join(tmp, "empty_addon"), {assets[0]: []})
+
+        # One addon holds one manifest, so the project it describes has to be
+        # checked — repointing the addon at another project must miss, not
+        # replay the first project's asset list as if it were the second's.
+        other_uproject = os.path.join(tmp, "Other.uproject")
+        open(other_uproject, "w").close()
+        assert load(other_uproject, content, addon) is None, "another project's manifest was reused"
+        assert load(uproject, content, addon) is not None
 
         # A list shorter than the bridge's own file count was cut off by a capped
         # bridge build; replaying it caches a partial project as if it were whole.
-        save(uproject, content, ["P/Content/Meshes/SM_Chair.uasset"], {"totalFiles": 563})
-        assert load(uproject, content) is None, "a truncated manifest was served from cache"
+        save(uproject, content, addon, ["P/Content/Meshes/SM_Chair.uasset"], {"totalFiles": 563})
+        assert load(uproject, content, addon) is None, "a truncated manifest was served from cache"
         assert is_truncated(["a"], {"totalFiles": 2})
         assert not is_truncated(["a", "b"], {"totalFiles": 2})
         # Manifests from before totalFiles was recorded must still load.
         assert not is_truncated(["a"], {})
+        # Deliberately dropped editor-only packages are a gap in the count, not
+        # a truncation — without this every project with a _BuiltData asset
+        # reanalyzed on every single open and never cached anything.
+        assert not is_truncated(["a"], {"totalFiles": 2, "ignored": 1})
+        assert is_truncated(["a"], {"totalFiles": 3, "ignored": 1})
 
+        save(uproject, content, addon, ["P/Content/Meshes/SM_Chair.uasset"], {"game": "P"})
+        assert load(uproject, content, addon) is not None
         with open(os.path.join(content, "Meshes", "SM_Table.uasset"), "w") as f:
             f.write("c")
-        assert load(uproject, content) is None, "a new asset did not invalidate the cache"
-
-        # Two projects sharing a filename must not share a manifest.
-        other = os.path.join(content, "P.uproject")
-        open(other, "w").close()
-        assert manifest_path(uproject) != manifest_path(other)
-
-        manifest_path(uproject).unlink()
+        assert load(uproject, content, addon) is None, "a new asset did not invalidate the cache"
 
     print("ok")
 

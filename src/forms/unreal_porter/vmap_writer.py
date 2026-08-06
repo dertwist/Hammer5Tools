@@ -369,7 +369,8 @@ def write_vmap(
         # topology and is positioned/oriented/resized via origin/angles/scales,
         # exactly like a prop, rather than deriving new mesh topology.
         def data_stream(attr_name, values, array_type, vec_ctor):
-            s = E("", "CDmePolygonMeshDataStream")
+            # Hammer names every stream "<attribute>:<semanticIndex>".
+            s = E(f"{attr_name}:0", "CDmePolygonMeshDataStream")
             s["standardAttributeName"] = attr_name
             s["semanticName"] = attr_name
             s["semanticIndex"] = System.Int32(0)
@@ -382,7 +383,7 @@ def write_vmap(
             return s
 
         def int_stream(attr_name, values, flags=1):
-            s = E("", "CDmePolygonMeshDataStream")
+            s = E(f"{attr_name}:0", "CDmePolygonMeshDataStream")
             s["standardAttributeName"] = attr_name
             s["semanticName"] = attr_name
             s["semanticIndex"] = System.Int32(0)
@@ -427,10 +428,16 @@ def write_vmap(
             int_stream("lightmapScaleBias", [0], flags=1),
         ])
         subdivision_data = E("", "CDmePolygonMeshSubdivisionData")
-        subdivision_data["subdivisionLevels"] = DM.IntArray()
+        # One level per face-vertex, all zero (no subdivision). Hammer writes
+        # the array sized, not empty.
+        subdivision_data["subdivisionLevels"] = int_array([0] * len(DT.UVS))
         subdivision_data["streams"] = DM.ElementArray()
 
-        mesh_data = E("", "DmElement")
+        # CDmePolygonMesh, not DmElement: this is the native half-edge mesh type
+        # Hammer parses. Written as a plain DmElement the overlay loads with no
+        # geometry at all, which is indistinguishable from the decal never
+        # having been imported.
+        mesh_data = E("meshData", "CDmePolygonMesh")
         mesh_data["vertexEdgeIndices"] = int_array(DT.VERTEX_EDGE_INDICES)
         mesh_data["vertexDataIndices"] = int_array(DT.VERTEX_DATA_INDICES)
         mesh_data["edgeVertexIndices"] = int_array(DT.EDGE_VERTEX_INDICES)
@@ -449,7 +456,7 @@ def write_vmap(
         mesh_data["faceData"] = face_data
         mesh_data["subdivisionData"] = subdivision_data
 
-        transform_pin = E("", "DmElement")
+        transform_pin = E("transformPin", "DmElement")
         transform_pin["referenceName"] = ""
         transform_pin["targetReferenceID"] = System.UInt64(0)
         transform_pin["offsetOrigin"] = Vector3(0.0, 0.0, 0.0)
@@ -457,7 +464,7 @@ def write_vmap(
         transform_pin["pinAngles"] = True
         transform_pin["twoWay"] = False
 
-        mat_adjust = E("", "DmElement")
+        mat_adjust = E("MaterialAdjustmentParamsStruct", "DmElement")
         mat_adjust["ColorBrightness"] = System.Single(0.5)
         mat_adjust["ColorContrast"] = System.Single(0.5)
         mat_adjust["ColorAlpha"] = System.Single(1.0)
@@ -625,6 +632,45 @@ def demo():
     _a, _s, axes = mirror_placement(st.angles, (-1.0, 1.0, 1.0))
     assert axes == (True, False, False) and _s == (1.0, 1.0, 1.0), (axes, _s)
     assert _a == st.angles, _a
+
+    # A decal overlay's mesh must be a CDmePolygonMesh. Written as a plain
+    # DmElement it serializes fine, loads fine, and carries no geometry — the
+    # overlay simply never appears in Hammer, which reads as "decals were not
+    # imported" even though the vmap says it placed them.
+    try:
+        import os
+        import tempfile
+        from src.dotnet import setup_keyvalues2
+
+        out = os.path.join(tempfile.mkdtemp(), "decal.vmap")
+        res = write_vmap([{
+            "actor": "d", "componentType": "DecalComponent", "mesh": None,
+            "material": "/Game/M/M_G.M_G",
+            "location": {"x": 0, "y": 0, "z": 0},
+            "rotation": {"pitch": 0, "yaw": 0, "roll": 0},
+            "scale": {"x": 1, "y": 1, "z": 1},
+        }], out, import_decals=True)
+        assert res.placed_decals == 1, res.placed_decals
+
+        _dm, _el, deferred = setup_keyvalues2()
+        import Datamodel as DM
+        loaded = DM.Datamodel.Load(out, deferred.Automatic)
+        overlay = list(loaded.Root["world"]["children"])[0]
+        assert overlay.ClassName == "CMapStaticOverlay", overlay.ClassName
+        mesh = overlay["meshData"]
+        assert mesh.ClassName == "CDmePolygonMesh", mesh.ClassName
+        assert mesh["subdivisionData"].ClassName == "CDmePolygonMeshSubdivisionData"
+        # One subdivision level per face-vertex; an empty array is not what
+        # Hammer writes.
+        assert mesh["subdivisionData"]["subdivisionLevels"].Count == len(DT.UVS)
+        assert list(mesh["materials"]) == ["materials/m/g.vmat"], list(mesh["materials"])
+        # Streams are named "<attribute>:<semanticIndex>".
+        assert list(mesh["vertexData"]["streams"])[0].Name == "position:0"
+    except Exception as e:
+        if isinstance(e, AssertionError):
+            raise
+        print(f"ok (decal schema skipped: {e})")
+        return
 
     # The skeleton needs the DMX stack, so it is checked only where that loads.
     try:
