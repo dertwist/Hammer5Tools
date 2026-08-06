@@ -147,6 +147,7 @@ def write_vsmart(
             "m_nElementID": new_element_id(),
             "m_sModelName": model_path,
             "m_sLabel": label,
+            "m_nLodLevel": 0,
             "m_Modifiers": [] if child_elements else modifiers,
             "m_SelectionCriteria": [],
         }

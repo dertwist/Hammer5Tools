@@ -1,55 +1,89 @@
 """
 Manual override for material_converter._classify_textures' heuristic slot
-picks. Lets the user preview one Master Material's detected texture params
+picks and CS2 material feature flag inspector.
+
+Lets the user preview one Master Material's detected texture params
 (via bridge.dump_material) and reassign which vmat slot each maps to, exclude
-it entirely, or — for packed masks like SRMH/ORM — route each colour channel
-to a different slot.
+it entirely, route individual channels for packed masks (like SRMH/ORM), or
+enable automatic alpha channel splitting per map.
 
-Overrides are keyed by UE parameter name, not per-material: Material
-Instances sharing a master material repeat the same parameter names, so one
-override (e.g. "BaseColor2" -> emissive) applies to all of them.
-
-Stored form per parameter:
-    None                        exclude the parameter
-    "rough"                     bind the whole texture to that slot
-    {"rough": "g", "ao": "r"}   route individual channels (slot -> channel)
+Also provides a Valve Hammer-style CS2 Material Feature Inspector panel to toggle
+material feature flags (shadows, 2-sided rendering, Z-buffering, layer 2/3, detail, wetness, etc.).
 """
 
 import json
 import os
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox, QLabel,
-    QDialogButtonBox, QWidget, QScrollArea, QFrame, QPushButton, QTabWidget,
-    QColorDialog,
+    QDialogButtonBox, QWidget, QScrollArea, QFrame, QPushButton, QToolButton, QTabWidget,
+    QColorDialog, QCheckBox, QSplitter,
 )
 
 from src.settings.main import get_settings_value, set_settings_value
-from src.styles.common import apply_stylesheets
+from src.styles.common import (
+    apply_stylesheets,
+    qt_stylesheet_button,
+    qt_stylesheet_checkbox,
+    qt_stylesheet_combobox,
+    qt_stylesheet_toolbutton,
+)
+
+
+_DISABLED_STYLE_APPEND = """
+QPushButton:disabled, QToolButton:disabled {
+    background-color: #18181A;
+    color: #666666;
+    border-color: #2A2A2D;
+}
+QCheckBox:disabled {
+    color: #666666;
+}
+QComboBox:disabled {
+    background-color: #18181A;
+    color: #666666;
+    border-color: #2A2A2D;
+}
+"""
+
+
+def force_apply_stylesheets(parent: QWidget) -> None:
+    """Force-applies registered Qt stylesheets to all child widgets with crisp gray text for disabled controls."""
+    for cb in parent.findChildren(QCheckBox):
+        cb.setStyleSheet(f"{qt_stylesheet_checkbox}\n{_DISABLED_STYLE_APPEND}")
+    for pb in parent.findChildren(QPushButton):
+        pb.setStyleSheet(f"{qt_stylesheet_button}\n{_DISABLED_STYLE_APPEND}")
+    for tb in parent.findChildren(QToolButton):
+        tb.setStyleSheet(f"{qt_stylesheet_toolbutton}\n{_DISABLED_STYLE_APPEND}")
+    for combo in parent.findChildren(QComboBox):
+        combo.setStyleSheet(f"{qt_stylesheet_combobox}\n{_DISABLED_STYLE_APPEND}")
 from .material_converter import (
     _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout, find_bulk_texture,
     get_slots_for_shader, get_channel_slots_for_shader,
 )
+from .shader_schemas import (
+    SHADERS,
+    SCALAR_TARGETS as _SCALAR_TARGETS,
+    VECTOR_TARGETS as _VECTOR_TARGETS,
+    SWITCH_TARGETS as _SWITCH_TARGETS,
+    FEATURE_DEPENDENCIES,
+    get_targets_for_shader,
+    validate_feature_flags,
+)
 
-_SLOTS = [
-    "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
-    "color2", "normal2", "rough2", "metal2", "ao2", "height2",
-    "color3", "normal3", "rough3", "metal3", "ao3", "height3",
-    "color4", "normal4", "rough4", "metal4", "ao4", "height4",
-]
 _AUTO = "Auto"
-_SKIP = "Don't use"
-_SPLIT = "Split channels…"
+_SKIP = "Skip"
+_SPLIT_ALPHA = "Split Alpha (RGB + A)"
+_SPLIT_RGBA = "Split RGBA (R + G + B + A)"
 _UNUSED = "—"
 
 _CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A"}
 
 
 def load_overrides() -> dict:
-    """{param_name: slot_name | None | {slot: channel}}."""
-    raw = get_settings_value("UnrealConverter", "slot_overrides_json", "")
+    raw = get_settings_value("UnrealConverter", "slot_overrides_json", "{}")
     if not raw:
         return {}
     try:
@@ -64,8 +98,7 @@ def save_overrides(overrides: dict):
 
 
 def load_param_overrides() -> dict:
-    """{ue_param_name: vmat_param_name} for scalar/vector/switch mapping."""
-    raw = get_settings_value("UnrealConverter", "param_overrides_json", "")
+    raw = get_settings_value("UnrealConverter", "param_overrides_json", "{}")
     if not raw:
         return {}
     try:
@@ -79,90 +112,13 @@ def save_param_overrides(overrides: dict):
     set_settings_value("UnrealConverter", "param_overrides_json", json.dumps(overrides))
 
 
-# Curated Source 2 (csgo_environment.vfx & csgo_environment_blend.vfx) param targets,
-# grouped by UE value type.
-_SCALAR_TARGETS = [
-    ("(don't map)", ""),
-    ("Roughness scale (Layer 1)", "g_flRoughnessScale"),
-    ("Metalness scale (Layer 1)", "g_flMetalnessScale"),
-    ("Model tint amount", "g_flModelTintAmount"),
-    ("HeightMap scale (Layer 1)", "g_flHeightMapScale1"),
-    ("HeightMap zero point (Layer 1)", "g_flHeightMapZeroPoint1"),
-    ("HeightMap scale (Layer 2)", "g_flHeightMapScale2"),
-    ("HeightMap zero point (Layer 2)", "g_flHeightMapZeroPoint2"),
-    ("HeightMap scale (Layer 3)", "g_flHeightMapScale3"),
-    ("HeightMap zero point (Layer 3)", "g_flHeightMapZeroPoint3"),
-    ("Blend softness (Layer 2)", "g_flBlendSoftness2"),
-    ("Blend softness (Layer 3)", "g_flBlendSoftness3"),
-    ("Border offset (Layer 2)", "g_flBorderOffset2"),
-    ("Border softness (Layer 2)", "g_flBorderSoftness2"),
-    ("Border spread (Layer 2)", "g_flBorderSpread2"),
-    ("Bevel strength (Layer 2)", "g_flBevelStrength2"),
-    ("Bevel softness (Layer 2)", "g_flBevelSoftness2"),
-    ("Bevel curve (Layer 2)", "g_flBevelCurve2"),
-    ("Bevel spread (Layer 2)", "g_flBevelSpread2"),
-    ("Texture brightness (Layer 1)", "g_fTextureColorBrightness1"),
-    ("Texture contrast (Layer 1)", "g_fTextureColorContrast1"),
-    ("Texture saturation (Layer 1)", "g_fTextureColorSaturation1"),
-    ("Texture brightness (Layer 2)", "g_fTextureColorBrightness2"),
-    ("Texture contrast (Layer 2)", "g_fTextureColorContrast2"),
-    ("Texture saturation (Layer 2)", "g_fTextureColorSaturation2"),
-    ("Texture brightness (Layer 3)", "g_fTextureColorBrightness3"),
-    ("Texture contrast (Layer 3)", "g_fTextureColorContrast3"),
-    ("Texture saturation (Layer 3)", "g_fTextureColorSaturation3"),
-    ("Texture roughness brightness (Layer 2)", "g_fTextureRoughnessBrightness2"),
-    ("Texture roughness contrast (Layer 2)", "g_fTextureRoughnessContrast2"),
-    ("Texture roughness brightness (Layer 3)", "g_fTextureRoughnessBrightness3"),
-    ("Texture roughness contrast (Layer 3)", "g_fTextureRoughnessContrast3"),
-    ("Alpha test reference", "g_flAlphaTestReference"),
-    ("Texcoord rotation (Layer 1)", "g_flTexCoordRotation1"),
-    ("Texcoord rotation (Layer 2)", "g_flTexCoordRotation2"),
-    ("Wetness darkening (Layer 1)", "g_flWetnessDarkeningStrength1"),
-]
-
-_VECTOR_TARGETS = [
-    ("(don't map)", ""),
-    ("Color tint / Model tint (g_vColorTint)", "g_vColorTint"),
-    ("Texture color tint (Layer 1)", "g_vTextureColorTint1"),
-    ("Texture color tint (Layer 2)", "g_vTextureColorTint2"),
-    ("Texture color tint (Layer 3)", "g_vTextureColorTint3"),
-    ("Border tint (Layer 2)", "g_vBorderTint2"),
-    ("Border tint (Layer 3)", "g_vBorderTint3"),
-    ("Bevel layer amount (Layer 2)", "g_vBevelLayerAmount2"),
-    ("Border layer amount (Layer 2)", "g_vBorderLayerAmount2"),
-    ("Texcoord scale (Layer 1)", "g_vTexCoordScale1"),
-    ("Texcoord scale (Layer 2)", "g_vTexCoordScale2"),
-    ("Texcoord scale (Layer 3)", "g_vTexCoordScale3"),
-    ("Texcoord offset (Layer 1)", "g_vTexCoordOffset1"),
-    ("Texcoord offset (Layer 2)", "g_vTexCoordOffset2"),
-    ("Texcoord center (Layer 1)", "g_vTexCoordCenter1"),
-    ("AO levels (Layer 1)", "g_vAmbientOcclusionLevels1"),
-    ("AO levels (Layer 2)", "g_vAmbientOcclusionLevels2"),
-    ("AO levels (Layer 3)", "g_vAmbientOcclusionLevels3"),
-]
-
-_SWITCH_TARGETS = [
-    ("(don't map)", ""),
-    ("Alpha test", "F_ALPHA_TEST"),
-    ("Render backfaces", "F_RENDER_BACKFACES"),
-    ("Enable Layer 3", "F_ENABLE_LAYER_3"),
-    ("Enable Layer 4", "F_ENABLE_LAYER_4"),
-    ("Enable Blend Effects (Layer 2)", "F_BLEND_EFFECTS_2"),
-    ("Fog enabled", "g_bFogEnabled"),
-    ("Model tint (Layer 1)", "g_bModelTint1"),
-    ("Model tint (Layer 2)", "g_bModelTint2"),
-    ("Model tint (Layer 3)", "g_bModelTint3"),
-    ("Border tint mask (Layer 2)", "g_bBorderTintMask2"),
-]
-
-
 def _tex_name(ue_path: str) -> str:
     """'/Game/T/Box_SRM.Box_SRM' -> 'Box_SRM'."""
     return str(ue_path or "").split("/")[-1].split(".")[0]
 
 
 class _ParamRow(QFrame):
-    """One UE texture parameter: thumbnail preview, name, and vmat slot mapping."""
+    """One UE texture parameter: thumbnail preview, name, and vmat slot mapping options."""
 
     def __init__(self, param: str, tex_path: str, override, bulk_dir: str = None, shader: str = None, parent=None):
         super().__init__(parent)
@@ -198,35 +154,76 @@ class _ParamRow(QFrame):
         head.addLayout(info_box, 1)
 
         self.target = QComboBox()
-        self.target.addItems([_AUTO, _SKIP] + self.slots + [_SPLIT])
+        self.target.addItems([_AUTO, _SKIP] + self.slots + [_SPLIT_ALPHA, _SPLIT_RGBA])
         self.target.setToolTip(
-            "Where this texture's pixels go in the .vmat.\n"
-            "Auto uses the name-matching heuristic; Split channels routes each\n"
-            "colour channel of a packed mask to a different slot."
+            "Where this texture's pixels go in the .vmat:\n"
+            "• Auto: uses the name-matching heuristic.\n"
+            "• Skip: excludes texture map.\n"
+            "• Slot Name: binds whole texture map to slot.\n"
+            "• Split Alpha (RGB + A): extracts base RGB image + standalone Alpha (A) mask file using custom channel grid.\n"
+            "• Split RGBA (R + G + B + A): extracts Red, Green, Blue, and Alpha into standalone mask images using custom channel grid."
         )
         head.addWidget(self.target)
         outer.addLayout(head)
 
-        # Per-channel grid, shown only in Split mode.
+        # Per-channel custom grid, shown dynamically in Split Alpha (RGB, A) & Split RGBA (R, G, B, A) modes.
         self.channel_box = QWidget()
-        grid = QGridLayout(self.channel_box)
-        grid.setContentsMargins(0, 2, 0, 0)
-        grid.setSpacing(4)
+        self.channel_grid_layout = QGridLayout(self.channel_box)
+        self.channel_grid_layout.setContentsMargins(0, 2, 0, 0)
+        self.channel_grid_layout.setSpacing(4)
         self.channel_combos = {}
-        for col, ch in enumerate(CHANNELS):
-            label = QLabel(_CHANNEL_LABELS[ch])
-            label.setAlignment(Qt.AlignCenter)
-            combo = QComboBox()
-            combo.addItem(_UNUSED)
-            combo.addItems(self.channel_slots)
-            grid.addWidget(label, 0, col)
-            grid.addWidget(combo, 1, col)
-            self.channel_combos[ch] = combo
         outer.addWidget(self.channel_box)
 
-        self._apply_initial(override)
         self.target.currentTextChanged.connect(self._sync_channel_box)
+        self._apply_initial(override)
         self._sync_channel_box(self.target.currentText())
+
+    def update_shader(self, shader: str, feature_flags: dict = None):
+        self.shader = shader
+        self.slots = get_slots_for_shader(shader, feature_flags=feature_flags)
+        self.channel_slots = get_channel_slots_for_shader(shader, feature_flags=feature_flags)
+
+        curr_target = self.target.currentText()
+        split_options = [_SPLIT_ALPHA, _SPLIT_RGBA]
+        valid_targets = [_AUTO, _SKIP] + self.slots + split_options
+
+        self.target.blockSignals(True)
+        self.target.clear()
+        self.target.addItems(valid_targets)
+        if curr_target in valid_targets:
+            self.target.setCurrentText(curr_target)
+        else:
+            self.target.setCurrentText(_AUTO)
+        self.target.blockSignals(False)
+
+        self._rebuild_channel_grid(self.target.currentText())
+
+    def _rebuild_channel_grid(self, text: str):
+        while self.channel_grid_layout.count():
+            item = self.channel_grid_layout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
+
+        self.channel_combos = {}
+
+        if text == _SPLIT_ALPHA:
+            cols = [("rgb", "RGB (Base Map)"), ("a", "Alpha (A)")]
+        elif text == _SPLIT_RGBA:
+            cols = [("r", "R"), ("g", "G"), ("b", "B"), ("a", "A")]
+        else:
+            return
+
+        for col, (ch_key, ch_label) in enumerate(cols):
+            label = QLabel(ch_label)
+            label.setAlignment(Qt.AlignCenter)
+            combo = QComboBox()
+            combo.setStyleSheet(f"{qt_stylesheet_combobox}\n{_DISABLED_STYLE_APPEND}")
+            combo.addItem(_UNUSED)
+            combo.addItems(self.channel_slots)
+            self.channel_grid_layout.addWidget(label, 0, col)
+            self.channel_grid_layout.addWidget(combo, 1, col)
+            self.channel_combos[ch_key] = combo
 
     def _load_thumbnail(self, bulk_dir: str, tex_path: str, tex_index: dict = None):
         stem = _tex_name(tex_path)
@@ -245,40 +242,59 @@ class _ParamRow(QFrame):
 
     def _apply_initial(self, override):
         if isinstance(override, dict):
-            self.target.setCurrentText(_SPLIT)
-            for slot, ch in override.items():
-                if ch in self.channel_combos and slot in self.channel_slots:
-                    self.channel_combos[ch].setCurrentText(slot)
-            return
+            if override.get("split_rgba"):
+                self.target.setCurrentText(_SPLIT_RGBA)
+            elif override.get("split_alpha"):
+                self.target.setCurrentText(_SPLIT_ALPHA)
+
+            slot_mapping = override.get("channels") or override.get("slot") or override
+            if isinstance(slot_mapping, dict):
+                for slot, ch in slot_mapping.items():
+                    if ch in self.channel_combos and slot in self.channel_slots:
+                        self.channel_combos[ch].setCurrentText(slot)
+                return
+            if isinstance(slot_mapping, str) and slot_mapping in self.slots:
+                return
+
         if override is _EXPLICIT_SKIP:
             self.target.setCurrentText(_SKIP)
             return
+
         if isinstance(override, str) and override in self.slots:
             self.target.setCurrentText(override)
             return
+
         self.target.setCurrentText(_AUTO)
-        _tok, layout = packed_layout(self.param)
-        for ch, slot in (layout or {}).items():
-            if ch in self.channel_combos and slot in self.channel_slots:
-                self.channel_combos[ch].setCurrentText(slot)
 
     def _sync_channel_box(self, text):
-        self.channel_box.setVisible(text == _SPLIT)
+        is_split = text in (_SPLIT_ALPHA, _SPLIT_RGBA)
+        self.channel_box.setVisible(is_split)
+        if is_split:
+            self._rebuild_channel_grid(text)
 
     def value(self):
         """The stored override for this parameter, or _NO_OVERRIDE."""
         text = self.target.currentText()
+
         if text == _AUTO:
             return _NO_OVERRIDE
         if text == _SKIP:
             return None
-        if text == _SPLIT:
-            routed = {}
+        if text == _SPLIT_ALPHA:
+            routed = {"split_alpha": True}
             for ch, combo in self.channel_combos.items():
                 slot = combo.currentText()
                 if slot != _UNUSED:
                     routed[slot] = ch
-            return routed or None
+            return routed
+        if text == _SPLIT_RGBA:
+            routed = {"split_rgba": True}
+            for ch, combo in self.channel_combos.items():
+                slot = combo.currentText()
+                if slot != _UNUSED:
+                    routed[slot] = ch
+            return routed
+
         return text
 
 
@@ -287,7 +303,7 @@ _EXPLICIT_SKIP = object()
 
 
 class _VectorParamRow(QHBoxLayout):
-    """Fancy view row for Vector parameter with interactive QColorDialog swatch."""
+    """View row for Vector parameter with interactive QColorDialog swatch."""
 
     def __init__(self, name: str, val: dict, combo: QComboBox, parent=None):
         super().__init__()
@@ -295,83 +311,90 @@ class _VectorParamRow(QHBoxLayout):
         self.val = dict(val) if isinstance(val, dict) else {"r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0}
 
         self.swatch = QPushButton()
-        self.swatch.setFixedSize(36, 22)
-        self.swatch.setToolTip("Click to open color picker")
-        self.swatch.clicked.connect(self._pick_color)
+        self.swatch.setFixedSize(28, 22)
+        self.swatch.setToolTip("Click to pick custom color tint")
+        self.swatch.setCursor(Qt.PointingHandCursor)
+        self.swatch.clicked.connect(self._on_pick_color)
+        self._update_swatch_style()
 
-        self.val_label = QLabel()
-        self.val_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        r = self.val.get("r", 1.0)
+        g = self.val.get("g", 1.0)
+        b = self.val.get("b", 1.0)
+        val_fmt = f"<span style='background-color:#2A2A2D; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>[{r:.2f}, {g:.2f}, {b:.2f}]</span>"
+        label = QLabel(f"{name}  {val_fmt}")
 
-        self._update_display()
-
-        left = QHBoxLayout()
-        left.setSpacing(6)
-        name_lbl = QLabel(f"<b>{name}</b>")
-        left.addWidget(name_lbl)
-        left.addWidget(self.swatch)
-        left.addWidget(self.val_label, 1)
-
-        self.addLayout(left, 1)
+        self.addWidget(self.swatch)
+        self.addWidget(label, 1)
         self.addWidget(combo)
 
-    def _update_display(self):
-        r = max(0, min(255, int(self.val.get("r", 1.0) * 255)))
-        g = max(0, min(255, int(self.val.get("g", 1.0) * 255)))
-        b = max(0, min(255, int(self.val.get("b", 1.0) * 255)))
-        a = self.val.get("a", 1.0)
-
+    def _update_swatch_style(self):
+        r = int(self.val.get("r", 1.0) * 255)
+        g = int(self.val.get("g", 1.0) * 255)
+        b = int(self.val.get("b", 1.0) * 255)
         self.swatch.setStyleSheet(
-            f"QPushButton {{ background-color: rgb({r}, {g}, {b}); border: 1px solid #555; border-radius: 4px; }}"
-            f"QPushButton:hover {{ border: 1px solid #007ACC; }}"
-        )
-        rf, gf, bf = self.val.get("r", 1.0), self.val.get("g", 1.0), self.val.get("b", 1.0)
-        self.val_label.setText(
-            f"<span style='color:#007ACC; font-weight:bold;'>[{rf:.3f} {gf:.3f} {bf:.3f} {a:.3f}]</span> "
-            f"<span style='color:#888888;'>#{r:02X}{g:02X}{b:02X}</span>"
+            f"QPushButton {{ background-color: rgb({r},{g},{b}); border: 1px solid #555; border-radius: 3px; }}"
+            f"QPushButton:hover {{ border: 1px solid #888; }}"
         )
 
-    def _pick_color(self):
-        r = max(0, min(255, int(self.val.get("r", 1.0) * 255)))
-        g = max(0, min(255, int(self.val.get("g", 1.0) * 255)))
-        b = max(0, min(255, int(self.val.get("b", 1.0) * 255)))
-        cur = QColor(r, g, b)
-        col = QColorDialog.getColor(cur, None, f"Select Color — {self.name}")
-        if col.isValid():
-            self.val["r"] = round(col.redF(), 4)
-            self.val["g"] = round(col.greenF(), 4)
-            self.val["b"] = round(col.blueF(), 4)
-            self._update_display()
+    def _on_pick_color(self):
+        r = int(self.val.get("r", 1.0) * 255)
+        g = int(self.val.get("g", 1.0) * 255)
+        b = int(self.val.get("b", 1.0) * 255)
+        init_color = QColor(r, g, b)
+        color = QColorDialog.getColor(init_color, None, f"Select Color Tint for {self.name}")
+        if color.isValid():
+            self.val["r"] = color.red() / 255.0
+            self.val["g"] = color.green() / 255.0
+            self.val["b"] = color.blue() / 255.0
+            self._update_swatch_style()
 
 
 class _ParamMappingTab(QWidget):
-    """Migrate UE scalar/vector/switch params to Source 2 vmat params.
-
-    One row per declared parameter, grouped by value type with fancy controls.
-    """
+    """Migrate UE scalar/vector/switch params to Source 2 vmat params."""
 
     def __init__(self, scalars: dict, vectors: dict, switches: dict,
-                 initial: dict = None, parent=None):
+                 initial: dict = None, shader: str = None, parent=None):
         super().__init__(parent)
         self._rows = {}
+        self.shader = shader
+        self._scalars_items = sorted((scalars or {}).items())
+        self._vectors_items = sorted((vectors or {}).items())
+        self._switches_items = sorted((switches or {}).items())
         initial = initial or {}
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(8)
 
-        body = QWidget()
-        body_layout = QVBoxLayout(body)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-        body_layout.setSpacing(8)
+        self._add_scalars(outer, self._scalars_items, initial)
+        self._add_vectors(outer, self._vectors_items, initial)
+        self._add_switches(outer, self._switches_items, initial)
 
-        self._add_scalars(body_layout, sorted((scalars or {}).items()), initial)
-        self._add_vectors(body_layout, sorted((vectors or {}).items()), initial)
-        self._add_switches(body_layout, sorted((switches or {}).items()), initial)
+    def update_shader(self, shader: str):
+        self.shader = shader
+        scalar_targets = get_targets_for_shader(shader, _SCALAR_TARGETS)
+        vector_targets = get_targets_for_shader(shader, _VECTOR_TARGETS)
+        switch_targets = get_targets_for_shader(shader, _SWITCH_TARGETS)
 
-        body_layout.addStretch(1)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(body)
-        outer.addWidget(scroll, 1)
+        for name, combo in self._rows.items():
+            curr_val = combo.currentData()
+            if any(name == item_name for item_name, _ in self._scalars_items):
+                t_list = scalar_targets
+            elif any(name == item_name for item_name, _ in self._vectors_items):
+                t_list = vector_targets
+            else:
+                t_list = switch_targets
+
+            combo.blockSignals(True)
+            combo.clear()
+            for label_text, data in t_list:
+                combo.addItem(label_text, data)
+            idx = combo.findData(curr_val)
+            if idx >= 0:
+                combo.setCurrentIndex(idx)
+            else:
+                combo.setCurrentIndex(0)
+            combo.blockSignals(False)
 
     def _add_scalars(self, parent_layout, items, initial):
         if not items:
@@ -382,12 +405,13 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Scalars (float)</b>"))
+        targets = get_targets_for_shader(self.shader, _SCALAR_TARGETS)
         for name, val in items:
             row = QHBoxLayout()
             val_fmt = f"<span style='background-color:#2A2A2D; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>{val:.4f}</span>"
             label = QLabel(f"{name}  {val_fmt}")
             combo = QComboBox()
-            for label_text, data in _SCALAR_TARGETS:
+            for label_text, data in targets:
                 combo.addItem(label_text, data)
             stored = initial.get(name, "")
             idx = combo.findData(stored)
@@ -407,9 +431,10 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Vectors & Colors</b>"))
+        targets = get_targets_for_shader(self.shader, _VECTOR_TARGETS)
         for name, val in items:
             combo = QComboBox()
-            for label_text, data in _VECTOR_TARGETS:
+            for label_text, data in targets:
                 combo.addItem(label_text, data)
             stored = initial.get(name, "")
             idx = combo.findData(stored)
@@ -429,12 +454,13 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Switches (bool)</b>"))
+        targets = get_targets_for_shader(self.shader, _SWITCH_TARGETS)
         for name, val in items:
             row = QHBoxLayout()
             badge = "<span style='background-color:#1E3A1E; color:#4EC9B0; padding:2px 8px; border-radius:3px; font-weight:bold;'>ON</span>" if val else "<span style='background-color:#2D2D2D; color:#888888; padding:2px 8px; border-radius:3px;'>OFF</span>"
             label = QLabel(f"{name}  {badge}")
             combo = QComboBox()
-            for label_text, data in _SWITCH_TARGETS:
+            for label_text, data in targets:
                 combo.addItem(label_text, data)
             stored = initial.get(name, "")
             idx = combo.findData(stored)
@@ -455,72 +481,366 @@ class _ParamMappingTab(QWidget):
         return out
 
 
-class SlotMappingDialog(QDialog):
-    """Configures texture parameter -> vmat slot overrides for a Master Material.
-    All Material Instances inheriting from this Master Material use these mappings.
+class _FeatureInspectorWidget(QScrollArea):
+    """CS2 Material Feature Inspector panel matching Hammer's layout."""
+
+    feature_changed = Signal(str, str)
+    features_changed = Signal(dict)
+    shader_changed = Signal(str)
+
+    def __init__(self, shader: str, feature_flags: dict = None, parent=None):
+        super().__init__(parent)
+        self.setWidgetResizable(True)
+        self.setMinimumWidth(280)
+        self.shader = shader or "csgo_environment.vfx"
+        self.feature_flags = dict(feature_flags or {})
+        self.checkboxes = {}
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
+
+        # Top Bar: Shader Selector
+        top_box = QHBoxLayout()
+        top_box.setSpacing(4)
+        top_box.addWidget(QLabel("<b>Shader:</b>"))
+        self.shader_combo = QComboBox()
+        self.shader_combo.addItems(SHADERS)
+        idx = self.shader_combo.findText(self.shader)
+        if idx >= 0:
+            self.shader_combo.setCurrentIndex(idx)
+        self.shader_combo.setToolTip("Select target CS2 shader for this material.")
+        self.shader_combo.currentTextChanged.connect(self._on_shader_changed)
+        top_box.addWidget(self.shader_combo, 1)
+        layout.addLayout(top_box)
+
+        # Sections Container
+        self.sections_container = QWidget()
+        self.sections_layout = QVBoxLayout(self.sections_container)
+        self.sections_layout.setContentsMargins(0, 0, 0, 0)
+        self.sections_layout.setSpacing(6)
+        layout.addWidget(self.sections_container)
+
+        layout.addStretch(1)
+        self.setWidget(container)
+
+        self._build_feature_sections()
+
+    def _build_feature_sections(self):
+        for i in reversed(range(self.sections_layout.count())):
+            item = self.sections_layout.itemAt(i)
+            if item and item.widget():
+                item.widget().deleteLater()
+        self.checkboxes.clear()
+
+        shader_low = str(self.shader).lower().strip()
+        if "overlay" in shader_low or "decal" in shader_low:
+            sections = [
+                ("Lighting", [
+                    ("F_LIT", "Lit (Enables Normal, Rough, Metal, AO, Self Illum)"),
+                ]),
+                ("Shadows", [
+                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
+                ]),
+                ("2-Sided Rendering", [
+                    ("F_RENDER_BACKFACES", "Render Backfaces"),
+                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
+                ]),
+                ("Z-Buffering", [
+                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
+                ]),
+            ]
+        elif "effects" in shader_low:
+            sections = [
+                ("Shadows", [
+                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
+                ]),
+                ("2-Sided Rendering", [
+                    ("F_RENDER_BACKFACES", "Render Backfaces"),
+                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
+                ]),
+                ("Z-Buffering", [
+                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
+                ]),
+                ("Z-Prepass", [
+                    ("F_DISABLE_Z_PREPASS", "Disable Z Prepass"),
+                ]),
+                ("Depth Feather", [
+                    ("F_DEPTH_FEATHER", "Depth Feather"),
+                ]),
+                ("Translucent", [
+                    ("F_ADDITIVE_BLEND", "Additive Blend"),
+                ]),
+                ("Per-Instance Tint Mask", [
+                    ("F_TINT_MASK", "Per-Instance Tint Mask"),
+                ]),
+            ]
+        else:
+            sections = [
+                ("Shadows", [
+                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
+                ]),
+                ("2-Sided Rendering", [
+                    ("F_RENDER_BACKFACES", "Render Backfaces"),
+                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
+                ]),
+                ("Z-Buffering", [
+                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
+                    ("F_DEPTH_BIAS", "Depth Bias"),
+                    ("F_OCCLUSION_CULLING_BOUNDS_SCALE", "Occlusion Culling Bounds Scale"),
+                ]),
+                ("Z-Prepass", [
+                    ("F_DISABLE_Z_PREPASS", "Disable Z Prepass"),
+                ]),
+                ("Translucent / Blend Mode", [
+                    ("F_ALPHA_TEST", "Alpha Test"),
+                    ("F_ADDITIVE_BLEND", "Additive Blend"),
+                ]),
+                ("Layer 2", [
+                    ("F_BLEND_BY_FACING_DIRECTION_2", "Blend By Facing Direction 2"),
+                    ("F_BLEND_EFFECTS_2", "Blend Effects 2"),
+                    ("F_BORDER_ROUGHNESS_2", "Border Roughness 2"),
+                ]),
+                ("Layer 3", [
+                    ("F_ENABLE_LAYER_3", "Enable Layer 3"),
+                    ("F_BLEND_BY_FACING_DIRECTION_3", "Blend By Facing Direction 3"),
+                    ("F_BLEND_EFFECTS_3", "Blend Effects 3"),
+                    ("F_BORDER_ROUGHNESS_3", "Border Roughness 3"),
+                ]),
+                ("Detail", [
+                    ("F_DETAIL_NORMAL", "Detail Normal"),
+                ]),
+                ("Wetness", [
+                    ("F_WETNESS", "Wetness"),
+                ]),
+                ("Blending", [
+                    ("F_USE_NEW_BLENDING", "Use New Blending"),
+                ]),
+                ("Color Effects", [
+                    ("F_SHARED_COLOR_OVERLAY", "Shared Color Overlay"),
+                ]),
+                ("Tint Mask", [
+                    ("F_TINT_MASK", "Tint Mask"),
+                ]),
+                ("Depth Feather", [
+                    ("F_DEPTH_FEATHER", "Depth Feather"),
+                ]),
+                ("Visualizations", [
+                    ("F_ENABLE_VISUALIZATIONS", "Enable Visualizations"),
+                ]),
+            ]
+
+        self.feature_flags = validate_feature_flags(self.shader, self.feature_flags)
+
+        for title, flags in sections:
+            group = QFrame()
+            group.setFrameShape(QFrame.StyledPanel)
+            gl = QVBoxLayout(group)
+            gl.setContentsMargins(4, 4, 4, 4)
+            gl.setSpacing(4)
+
+            hdr = QLabel(f"<b>{title}</b>")
+            hdr.setAlignment(Qt.AlignCenter)
+            hdr.setStyleSheet(
+                "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 3px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+            )
+            gl.addWidget(hdr)
+
+            for flag_name, flag_label in flags:
+                cb = QCheckBox(flag_label)
+                cb.setStyleSheet("QCheckBox:disabled { color: #666666; }")
+                val = str(self.feature_flags.get(flag_name, "0")) in ("1", "True", "true")
+                cb.setChecked(val)
+                cb.toggled.connect(lambda checked, fn=flag_name: self._on_cb_toggled(fn, checked))
+                gl.addWidget(cb)
+                self.checkboxes[flag_name] = cb
+
+            self.sections_layout.addWidget(group)
+
+        self._update_prerequisite_states()
+        force_apply_stylesheets(self)
+
+    def _update_prerequisite_states(self):
+        shader_rules = FEATURE_DEPENDENCIES.get(self.shader, {})
+        for flag_name, cb in self.checkboxes.items():
+            reqs = shader_rules.get(flag_name, [])
+            enabled = True
+            for req in reqs:
+                req_cb = self.checkboxes.get(req)
+                if req_cb and not req_cb.isChecked():
+                    enabled = False
+                    break
+            cb.setEnabled(enabled)
+            if not enabled and cb.isChecked():
+                cb.blockSignals(True)
+                cb.setChecked(False)
+                cb.blockSignals(False)
+
+    def _on_cb_toggled(self, flag_name: str, checked: bool):
+        self.feature_flags[flag_name] = "1" if checked else "0"
+        self.feature_flags = validate_feature_flags(self.shader, self.feature_flags)
+
+        for fn, cb in self.checkboxes.items():
+            val = str(self.feature_flags.get(fn, "0")) in ("1", "True", "true")
+            if cb.isChecked() != val:
+                cb.blockSignals(True)
+                cb.setChecked(val)
+                cb.blockSignals(False)
+
+        self._update_prerequisite_states()
+        self.feature_changed.emit(flag_name, "1" if checked else "0")
+        self.features_changed.emit(dict(self.feature_flags))
+
+    def _on_shader_changed(self, new_shader: str):
+        self.shader = new_shader
+        self._build_feature_sections()
+        self.shader_changed.emit(new_shader)
+        self.features_changed.emit(dict(self.feature_flags))
+
+    def value(self) -> dict:
+        return dict(self.feature_flags)
+
+
+class ShaderRemapperDialog(QDialog):
+    """Configures texture parameter -> vmat slot overrides, parameter mappings,
+    and CS2 material feature flags for a Master Material.
     """
 
     def __init__(self, master_name: str, textures: dict, initial_overrides: dict = None,
                  shader: str = None, scalars: dict = None, vectors: dict = None, switches: dict = None,
-                 initial_param_overrides: dict = None, bulk_dir: str = None, parent=None):
+                 initial_param_overrides: dict = None, feature_flags: dict = None,
+                 bulk_dir: str = None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Texture slots — {master_name}")
-        self.resize(700, 580)
+        self.setWindowTitle(f"Shader Remapper — {master_name}")
+        self.resize(960, 650)
 
         self.master_name = master_name
         self.textures = textures or {}
-        self.shader = shader
+        self.shader = shader or "csgo_environment.vfx"
         self.bulk_dir = bulk_dir
         self.result_overrides = {}
         self.result_param_overrides = {}
+        self.result_feature_flags = dict(feature_flags or {})
+        self.result_shader = self.shader
 
         existing = initial_overrides or {}
 
         layout = QVBoxLayout(self)
 
-        tabs = QTabWidget()
-        layout.addWidget(tabs, 1)
+        # Main Side-by-Side Splitter Layout
+        main_splitter = QSplitter(Qt.Horizontal)
+        layout.addWidget(main_splitter, 1)
 
-        # --- Tab 1: Texture Slots ---
-        tex_tab = QWidget()
-        tex_layout = QVBoxLayout(tex_tab)
-        tex_layout.setContentsMargins(0, 0, 0, 0)
+        # --- Left Panel: CS2 Feature Inspector & Shader Selector ---
+        self._feature_inspector = _FeatureInspectorWidget(
+            self.shader, feature_flags=self.result_feature_flags, parent=self
+        )
+        self._feature_inspector.shader_changed.connect(self._on_shader_changed)
+        self._feature_inspector.features_changed.connect(self._on_features_changed)
+        main_splitter.addWidget(self._feature_inspector)
+
+        # --- Right Panel: Unified Scroll Area (Texture Slots & Params) ---
+        right_scroll = QScrollArea()
+        right_scroll.setWidgetResizable(True)
+
+        right_container = QWidget()
+        right_layout = QVBoxLayout(right_container)
+        right_layout.setContentsMargins(6, 6, 6, 6)
+        right_layout.setSpacing(10)
+
+        # 1. Texture Slots Group
+        tex_group = QFrame()
+        tex_group.setFrameShape(QFrame.StyledPanel)
+        tex_gl = QVBoxLayout(tex_group)
+        tex_gl.setContentsMargins(6, 6, 6, 6)
+        tex_gl.setSpacing(6)
+
+        tex_hdr = QLabel("<b>Texture Slot Assignments</b>")
+        tex_hdr.setAlignment(Qt.AlignCenter)
+        tex_hdr.setStyleSheet(
+            "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+        )
+        tex_gl.addWidget(tex_hdr)
+
         self._rows = []
         if not self.textures:
-            tex_layout.addWidget(QLabel("No texture parameters found on this Master Material."))
+            tex_gl.addWidget(QLabel("No texture parameters found on this Master Material."))
         else:
-            body = QWidget()
-            body_layout = QVBoxLayout(body)
-            body_layout.setContentsMargins(0, 0, 0, 0)
-            body_layout.setSpacing(6)
             for param, path in sorted(self.textures.items()):
                 override = existing[param] if param in existing else _NO_OVERRIDE
                 if param in existing and existing[param] is None:
                     override = _EXPLICIT_SKIP
                 row = _ParamRow(param, path, override, bulk_dir=self.bulk_dir, shader=self.shader)
                 self._rows.append(row)
-                body_layout.addWidget(row)
-            body_layout.addStretch(1)
+                tex_gl.addWidget(row)
 
-            scroll = QScrollArea()
-            scroll.setWidgetResizable(True)
-            scroll.setWidget(body)
-            tex_layout.addWidget(scroll, 1)
-        tabs.addTab(tex_tab, "Texture Slots")
+        right_layout.addWidget(tex_group)
 
-        # --- Tab 2: Params (scalar/vector/switch -> vmat param) ---
-        self._params_tab = _ParamMappingTab(scalars, vectors, switches, initial_param_overrides)
-        tabs.addTab(self._params_tab, "Params")
+        # 2. Shader Parameter Overrides Group
+        params_group = QFrame()
+        params_group.setFrameShape(QFrame.StyledPanel)
+        params_gl = QVBoxLayout(params_group)
+        params_gl.setContentsMargins(6, 6, 6, 6)
+        params_gl.setSpacing(6)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
-        reset = QPushButton("Reset to auto")
-        reset.clicked.connect(self._on_reset)
-        buttons.addButton(reset, QDialogButtonBox.ResetRole)
-        buttons.accepted.connect(self._on_save)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        params_hdr = QLabel("<b>Shader Parameter Overrides</b>")
+        params_hdr.setAlignment(Qt.AlignCenter)
+        params_hdr.setStyleSheet(
+            "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+        )
+        params_gl.addWidget(params_hdr)
 
-        apply_stylesheets(self)
+        self._params_tab = _ParamMappingTab(scalars, vectors, switches, initial_param_overrides, shader=self.shader)
+        params_gl.addWidget(self._params_tab)
+
+        right_layout.addWidget(params_group)
+
+        right_layout.addStretch(1)
+        right_scroll.setWidget(right_container)
+
+        main_splitter.addWidget(right_scroll)
+
+        main_splitter.setStretchFactor(0, 1)
+        main_splitter.setStretchFactor(1, 2)
+
+        # Bottom Action Buttons
+        btn_box = QHBoxLayout()
+        btn_box.setContentsMargins(4, 8, 4, 4)
+        btn_box.setSpacing(8)
+
+        reset_btn = QPushButton("Reset to Auto")
+        reset_btn.setToolTip("Reset all texture slot overrides to automatic detection")
+        reset_btn.clicked.connect(self._on_reset)
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+
+        save_btn = QPushButton("Save")
+        save_btn.setDefault(True)
+        save_btn.clicked.connect(self._on_save)
+
+        btn_box.addWidget(reset_btn)
+        btn_box.addStretch(1)
+        btn_box.addWidget(cancel_btn)
+        btn_box.addWidget(save_btn)
+
+        layout.addLayout(btn_box)
+
+        force_apply_stylesheets(self)
+
+    def _on_features_changed(self, feature_flags: dict):
+        self.result_feature_flags = dict(feature_flags)
+        for row in self._rows:
+            row.update_shader(self.shader, feature_flags=self.result_feature_flags)
+
+    def _on_shader_changed(self, new_shader: str):
+        self.shader = new_shader
+        self.result_shader = new_shader
+        for row in self._rows:
+            row.update_shader(new_shader, feature_flags=self.result_feature_flags)
+        if hasattr(self, "_params_tab"):
+            self._params_tab.update_shader(new_shader)
 
     def _on_reset(self):
         for row in self._rows:
@@ -534,4 +854,10 @@ class SlotMappingDialog(QDialog):
                 overrides[row.param] = value
         self.result_overrides = overrides
         self.result_param_overrides = self._params_tab.value()
+        self.result_feature_flags = self._feature_inspector.value()
+        self.result_shader = self.shader
         self.accept()
+
+
+# Alias for backwards compatibility
+SlotMappingDialog = ShaderRemapperDialog

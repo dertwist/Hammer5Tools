@@ -196,6 +196,10 @@ _SLOT_TOKENS = [
     ("height4",  {"height4", "displacement4", "disp4", "blendmask4"}),
     ("height",   _HEIGHT_TOKENS),
 
+    ("tintmask", {"tintmask", "tint_mask"}),
+    ("mask1",    {"mask1", "mask_1"}),
+    ("mask2",    {"mask2", "mask_2"}),
+    ("mask3",    {"mask3", "mask_3"}),
     ("color2",   {"basecolor2", "diffuse2", "albedo2", "color2"}),
     ("color3",   {"basecolor3", "diffuse3", "albedo3", "color3"}),
     ("color4",   {"basecolor4", "diffuse4", "albedo4", "color4"}),
@@ -205,46 +209,11 @@ _SLOT_TOKENS = [
 _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
 
-_SHADER_SLOTS = {
-    "csgo_environment.vfx": [
-        "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive"
-    ],
-    "csgo_glass.vfx": [
-        "color", "normal", "rough", "metal", "ao", "opacity", "emissive"
-    ],
-    "csgo_static_overlay.vfx": [
-        "color", "normal", "rough", "metal", "opacity"
-    ],
-    "csgo_environment_blend.vfx": [
-        "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
-        "color2", "normal2", "rough2", "metal2", "ao2", "height2",
-        "color3", "normal3", "rough3", "metal3", "ao3", "height3",
-        "color4", "normal4", "rough4", "metal4", "ao4", "height4",
-    ],
-}
-
-
-def get_slots_for_shader(shader: str = None) -> list:
-    """Return the list of valid vmat texture slots for the specified CS2 shader."""
-    if not shader:
-        return [
-            "color", "normal", "rough", "metal", "ao", "height", "opacity", "emissive",
-            "color2", "normal2", "rough2", "metal2", "ao2", "height2",
-            "color3", "normal3", "rough3", "metal3", "ao3", "height3",
-            "color4", "normal4", "rough4", "metal4", "ao4", "height4",
-        ]
-    shader_low = str(shader).lower().strip()
-    if "blend" in shader_low:
-        return list(_SHADER_SLOTS["csgo_environment_blend.vfx"])
-    if shader_low in _SHADER_SLOTS:
-        return list(_SHADER_SLOTS[shader_low])
-    return list(_SHADER_SLOTS["csgo_environment.vfx"])
-
-
-def get_channel_slots_for_shader(shader: str = None) -> list:
-    """Return single-channel slots suitable for channel splitting for the specified CS2 shader."""
-    slots = get_slots_for_shader(shader)
-    return [s for s in slots if not s.startswith("color") and not s.startswith("normal") and s != "emissive"]
+from .shader_schemas import (
+    SHADER_SLOTS as _SHADER_SLOTS,
+    get_slots_for_shader,
+    get_channel_slots_for_shader,
+)
 
 
 def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str = None) -> dict:
@@ -279,8 +248,12 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
         used_params.add(param_name)
         if isinstance(forced, dict):
             for slot, channel in forced.items():
-                if slot in CHANNEL_SLOTS and channel in CHANNELS:
+                if slot in ("split_alpha", "split_rgba"):
+                    continue
+                if channel in ("rgb", "r", "g", "b", "a"):
                     out[slot] = (param_name, tex_path, channel)
+                elif isinstance(channel, str) and channel:
+                    out[slot] = (param_name, tex_path, None)
         elif forced and (forced in valid_slots or any(forced == s for s, _ in _SLOT_TOKENS)):
             out[forced] = (param_name, tex_path, None)
 
@@ -354,40 +327,15 @@ _SECONDARY_TOKENS = {
     "wear", "edge", "overlay", "secondary", "layer2", "top", "wet", "wetness",
     "water", "puddle", "rain", "tint", "mask", "intensity", "strength", "strenght",
 }
-# What names the *base* colour: a qualifier ("diffuse") and/or a noun ("color").
-_TINT_QUALIFIERS = {"base", "basecolor", "diffuse", "albedo", "main", "model"}
-_TINT_NOUNS = {"color", "colour", "tint"}
-
-
-def _pick_tint(vectors: dict):
-    """The base colour tint declared by the material or its master.
-
-    Matches on whole tokens rather than substrings: the old substring list only
-    knew "base color"/"diffuse tint", so a master declaring "diffuse color"
-    (very common) silently produced an untinted white material.
-    """
-    best, best_score = None, 0
-    for name, v in (vectors or {}).items():
-        raw_toks = _tokens(name)
-        if raw_toks & _SECONDARY_TOKENS:
-            continue
-        toks = {re.sub(r"\d+$", "", t) for t in raw_toks} | raw_toks
-        if toks & _SECONDARY_TOKENS:
-            continue
-        score = 0
-        if toks & _TINT_QUALIFIERS:
-            score += 2
-        if toks & _TINT_NOUNS:
-            score += 1
-        if not score:
-            continue
-        # Prefer the least-qualified name when several remain.
-        score = score * 10 - len(toks)
-        if score > best_score:
-            best, best_score = v, score
-    if best is None:
-        return None
-    return (best.get("r", 1.0), best.get("g", 1.0), best.get("b", 1.0))
+# The colour tint is deliberately NOT auto-picked. A Master Material's vectors
+# routinely include half a dozen colours — a dirt overlay, a fresnel rim, a
+# variation tint — and guessing which one is the base colour from its name got
+# it wrong often enough that a wrongly tinted material was the common outcome,
+# not the exception. A tint the user did not ask for is worse than no tint: an
+# untinted material reads as neutral, a wrongly tinted one looks like a broken
+# texture. Map a vector to g_vColorTint in the Params tab of the texture swap
+# dialog to set it. Roughness and metalness keep their heuristic — those pick
+# from far fewer candidates and are corrected the same way when they miss.
 
 
 def _pick_scalar(scalars: dict, *keys, default=1.0):
@@ -421,9 +369,10 @@ def _pick_scalar(scalars: dict, *keys, default=1.0):
     return float(best) if best is not None else default
 
 
-# vmat params the heuristic already fills. When the user maps a UE param to one
-# of these, the user's value replaces the heuristic pick; mapping to anything
-# else emits an extra scalar/vector on the vmat.
+# vmat params write_vmat takes as dedicated arguments rather than emitting as a
+# generic extra. Mapping a UE param to one of these routes it there — replacing
+# the heuristic pick for the scalars, and supplying the only value there is for
+# g_vColorTint, which is not guessed at all.
 _HEURISTIC_SCALAR_TARGETS = {"g_flRoughnessScale", "g_flMetalnessScale"}
 _HEURISTIC_VECTOR_TARGETS = {"g_vColorTint"}
 # Mapping a UE switch to one of these forces that feature/flag on, regardless of
@@ -516,8 +465,8 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     _classify_textures to override its heuristic pick (see slot_mapping.py).
 
     param_overrides: optional {ue_param_name: vmat_param_name} from the Params
-    tab. A mapping wins over the heuristic auto-pick for tint/roughness/metalness
-    (e.g. mapping a vector to "g_vColorTint" suppresses _pick_tint); any other
+    tab. A mapping wins over the heuristic auto-pick for roughness/metalness, and
+    is the *only* source of the colour tint — nothing is guessed there. Any other
     target is emitted as an extra scalar/vector on the vmat. See _apply_param_overrides.
     """
     flags = mat_data.get("flags") or {}
@@ -580,8 +529,8 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
             slots["color"] = save(color_img, stem)
             written += 1
 
-        color_tint = _pick_tint(mat_data.get("vectors"))
-        # Decals have a smaller param surface, but a user-mapped tint still wins.
+        # Tint is user-mapped only; nothing is guessed from the vector names.
+        color_tint = None
         _us, user_vectors, _uf, claimed = _apply_param_overrides(
             mat_data.get("scalars"), mat_data.get("vectors"), mat_data.get("switches"), param_overrides)
         if "g_vColorTint" in claimed:
@@ -589,21 +538,35 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         write_decal_vmat(vmat_abs, slots, color_tint=color_tint)
         return MaterialResult(vmat_rel, written, missing, is_decal=True)
 
-    # color / normal — straight convert to TGA (handles base & multi-layer slots)
+    # color / normal / opacity / translucency / tintmask — convert to TGA (handles base & multi-layer slots)
     color_normal_slots = (
-        "color", "normal",
-        "color1", "normal1",
-        "color2", "normal2",
-        "color3", "normal3",
-        "color4", "normal4",
+        "color", "normal", "opacity", "trans", "tintmask",
+        "color1", "normal1", "opacity1", "trans1",
+        "color2", "normal2", "opacity2", "trans2",
+        "color3", "normal3", "opacity3", "trans3",
+        "color4", "normal4", "opacity4", "trans4",
     )
     for slot in color_normal_slots:
-        src, stem, _ch = load(slot)
+        src, stem, channel = load(slot)
         if src:
-            img = Image.open(src).convert("RGBA")
-            if invert_y_normal and slot.startswith("normal"):
-                img = invert_y_normal_map(img)
-            slots[slot] = save(img, stem)
+            img = Image.open(src)
+            if channel == "a":
+                if "A" in img.getbands() or img.mode in ("RGBA", "LA", "PA"):
+                    band = img.convert("RGBA").split()[3]
+                    slots[slot] = save(band.convert("L"), f"{stem}_a")
+                else:
+                    missing.append(slot)
+                    continue
+            elif channel == "rgb":
+                rgb_img = img.convert("RGB")
+                if invert_y_normal and slot.startswith("normal"):
+                    rgb_img = invert_y_normal_map(rgb_img)
+                slots[slot] = save(rgb_img, f"{stem}_rgb")
+            else:
+                rgba_img = img.convert("RGBA")
+                if invert_y_normal and slot.startswith("normal"):
+                    rgba_img = invert_y_normal_map(rgba_img)
+                slots[slot] = save(rgba_img, stem)
             written += 1
 
     # Greyscale slots. _classify_textures has already expanded any packed mask
@@ -634,7 +597,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
             slots[slot] = save(img.convert("L"), stem)
         written += 1
 
-    color_tint = _pick_tint(mat_data.get("vectors"))
+    color_tint = None   # user-mapped only — see the note above _pick_scalar
     rough_scale = _pick_scalar(mat_data.get("scalars"), "roughness", "tileable 1 roughness")
     metal_scale = _pick_scalar(mat_data.get("scalars"), "metallic", "metalness", default=0.0)
 
