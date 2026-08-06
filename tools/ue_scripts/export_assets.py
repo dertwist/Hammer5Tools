@@ -104,6 +104,35 @@ def _get_asset_object_path(data) -> str:
     return str(getattr(data, "package_name", ""))
 
 
+def _is_valid_asset(unreal, data) -> bool:
+    """Check if the asset file exists on disk and is non-empty (at least 32 bytes for valid UE package summary)."""
+    disk_path = None
+    try:
+        if hasattr(unreal, "SystemLibrary") and hasattr(unreal.SystemLibrary, "get_system_path"):
+            disk_path = unreal.SystemLibrary.get_system_path(data)
+    except Exception:
+        disk_path = None
+
+    if not disk_path:
+        pkg = str(getattr(data, "package_name", ""))
+        if pkg and hasattr(unreal, "Paths"):
+            try:
+                rel_path = unreal.Paths.convert_relative_path_to_full(pkg + ".uasset")
+                if rel_path:
+                    disk_path = rel_path
+            except Exception:
+                pass
+
+    if disk_path and os.path.isfile(disk_path):
+        try:
+            if os.path.getsize(disk_path) < 32:
+                return False
+        except OSError:
+            return False
+
+    return True
+
+
 def _list_assets(unreal, content_path: str):
     """Yields (object_path, class_name) for assets under content_path.
 
@@ -122,6 +151,9 @@ def _list_assets(unreal, content_path: str):
         obj_path = _get_asset_object_path(data)
         cls_name = _get_asset_class_name(data)
         if obj_path and cls_name:
+            if not _is_valid_asset(unreal, data):
+                unreal.log_warning(f"Skipping corrupt or empty asset file: {obj_path}")
+                continue
             yield (obj_path, cls_name)
 
 
@@ -146,7 +178,12 @@ def _export_assets(unreal, export_paths, output_dir) -> int:
     has_tasks = hasattr(unreal, "AssetExportTask")
 
     for path in export_paths:
-        asset = unreal.load_asset(path) if has_tasks else None
+        try:
+            asset = unreal.load_asset(path) if has_tasks else None
+        except Exception as e:
+            unreal.log_warning(f"Failed to load asset {path} (skipped): {e}")
+            continue
+
         if asset is not None:
             if isinstance(asset, unreal.StaticMesh):
                 meshes.append((path, asset))
@@ -154,7 +191,12 @@ def _export_assets(unreal, export_paths, output_dir) -> int:
             elif isinstance(asset, unreal.Texture2D):
                 textures.append((path, asset))
                 continue
-        others.append(path)
+            others.append(path)
+        else:
+            if has_tasks:
+                unreal.log_warning(f"Could not load asset {path} (skipped)")
+            else:
+                others.append(path)
 
     if has_tasks and not hasattr(unreal, "FbxExportOption"):
         unreal.log_warning(
@@ -168,39 +210,48 @@ def _export_assets(unreal, export_paths, output_dir) -> int:
         if options:
             options.set_editor_property("force_front_x_axis", True)
         for path, asset in meshes:
-            filename = _export_filename(path, output_dir, ext=".fbx")
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            task = unreal.AssetExportTask()
-            task.set_editor_property("object", asset)
-            task.set_editor_property("filename", filename)
-            task.set_editor_property("automated", True)
-            task.set_editor_property("prompt", False)
-            task.set_editor_property("replace_identical", True)
-            if options:
-                task.set_editor_property("options", options)
-            if unreal.Exporter.run_asset_export_task(task):
-                exported += 1
-            else:
-                unreal.log_warning(f"Export failed for mesh {path}")
+            try:
+                filename = _export_filename(path, output_dir, ext=".fbx")
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                task = unreal.AssetExportTask()
+                task.set_editor_property("object", asset)
+                task.set_editor_property("filename", filename)
+                task.set_editor_property("automated", True)
+                task.set_editor_property("prompt", False)
+                task.set_editor_property("replace_identical", True)
+                if options:
+                    task.set_editor_property("options", options)
+                if unreal.Exporter.run_asset_export_task(task):
+                    exported += 1
+                else:
+                    unreal.log_warning(f"Export failed for mesh {path}")
+            except Exception as e:
+                unreal.log_warning(f"Error exporting mesh {path}: {e}")
 
     if textures:
         for path, asset in textures:
-            filename = _export_filename(path, output_dir, ext=".tga")
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            task = unreal.AssetExportTask()
-            task.set_editor_property("object", asset)
-            task.set_editor_property("filename", filename)
-            task.set_editor_property("automated", True)
-            task.set_editor_property("prompt", False)
-            task.set_editor_property("replace_identical", True)
-            if unreal.Exporter.run_asset_export_task(task):
-                exported += 1
-            else:
-                unreal.log_warning(f"Export failed for texture {path}")
+            try:
+                filename = _export_filename(path, output_dir, ext=".tga")
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                task = unreal.AssetExportTask()
+                task.set_editor_property("object", asset)
+                task.set_editor_property("filename", filename)
+                task.set_editor_property("automated", True)
+                task.set_editor_property("prompt", False)
+                task.set_editor_property("replace_identical", True)
+                if unreal.Exporter.run_asset_export_task(task):
+                    exported += 1
+                else:
+                    unreal.log_warning(f"Export failed for texture {path}")
+            except Exception as e:
+                unreal.log_warning(f"Error exporting texture {path}: {e}")
 
     if others:
-        unreal.AssetToolsHelpers.get_asset_tools().export_assets(others, output_dir)
-        exported += len(others)
+        try:
+            unreal.AssetToolsHelpers.get_asset_tools().export_assets(others, output_dir)
+            exported += len(others)
+        except Exception as e:
+            unreal.log_warning(f"Error exporting assets batch: {e}")
     return exported
 
 
