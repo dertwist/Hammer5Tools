@@ -21,14 +21,14 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
         metal_path = os.path.join(output_dir, f"{base_name}_metal.tga")
         ao_path = os.path.join(output_dir, f"{base_name}_ao.tga")
 
-        rough_ch.convert("L").save(rough_path)
-        metal_ch.convert("L").save(metal_path)
-        ao_ch.convert("L").save(ao_path)
+        rough_ch.convert("L").save(rough_path, rle=True)
+        metal_ch.convert("L").save(metal_path, rle=True)
+        ao_ch.convert("L").save(ao_path, rle=True)
 
         height_path = None
         if has_height:
             height_path = os.path.join(output_dir, f"{base_name}_height.tga")
-            ch_a.convert("L").save(height_path)
+            ch_a.convert("L").save(height_path, rle=True)
 
         return {
             "rough": rough_path,
@@ -53,9 +53,9 @@ def unpack_orh(orh_path: str, output_dir: str, base_name: str):
         rough_path = os.path.join(output_dir, f"{base_name}_rough.tga")
         height_path = os.path.join(output_dir, f"{base_name}_height.tga")
 
-        ch_r.convert("L").save(ao_path)
-        ch_g.convert("L").save(rough_path)
-        ch_b.convert("L").save(height_path)
+        ch_r.convert("L").save(ao_path, rle=True)
+        ch_g.convert("L").save(rough_path, rle=True)
+        ch_b.convert("L").save(height_path, rle=True)
 
         return {
             "ao": ao_path,
@@ -96,7 +96,7 @@ def extract_alpha(color_path: str, out_path: str, mid_band=(32, 223), max_mid=0.
         if mid > max_mid or off < min_off:
             return None                       # blend/detail mask, not a shape
 
-        alpha.save(out_path)
+        alpha.save(out_path, rle=True)
         return out_path
     except Exception as e:
         print(f"Error extracting alpha from {color_path}: {e}")
@@ -134,7 +134,10 @@ def convert_to_tga(input_path: str, output_dir: str, new_suffix: str, invert_y: 
             img = invert_y_normal(img)
         output_name = f"{new_suffix}.{ext}"
         output_path = os.path.join(output_dir, output_name)
-        img.save(output_path)
+        if ext.lower() == "tga":
+            img.save(output_path, rle=True)
+        else:
+            img.save(output_path)
         return output_path
     except Exception as e:
         print(f"Error converting texture: {e}")

@@ -32,9 +32,12 @@ def write_vsmart(
     model_resolver: Optional[Callable[[str], str]] = None,
     unit_scale: float = UnitScale.ONE_TO_ONE,
     strip_prefix: bool = True,
+    variables: Optional[List[dict]] = None,
+    choices: Optional[List[dict]] = None,
 ) -> VsmartWriteResult:
     """
-    Write a .vsmart file from normalized UE blueprint components.
+    Write a .vsmart file from normalized UE blueprint components, construction script
+    variables, choices, and conditional selection criteria.
     """
     from .vmdl_writer import strip_ue_prefix
     if strip_prefix:
@@ -124,13 +127,35 @@ def write_vsmart(
                 "m_flScale": round(float(st.scales[0]), 4)
             })
 
+        selection_criteria = []
+        if "choice_name" in c and "choice_value" in c:
+            selection_criteria.append({
+                "_class": "CSmartPropSelectionCriteria_Choice",
+                "m_sChoiceName": c["choice_name"],
+                "m_sChoiceValue": c["choice_value"],
+            })
+        elif "expression" in c:
+            selection_criteria.append({
+                "_class": "CSmartPropSelectionCriteria_Expression",
+                "m_sExpression": c["expression"],
+            })
+        elif "variable_condition" in c:
+            cond = c["variable_condition"]
+            if isinstance(cond, dict):
+                v_name = cond.get("variable", "Choice")
+                v_val = cond.get("value", 0)
+                selection_criteria.append({
+                    "_class": "CSmartPropSelectionCriteria_Expression",
+                    "m_sExpression": f"{v_name} == {v_val}",
+                })
+
         def group(children: list) -> dict:
             return {
                 "_class": "CSmartPropElement_Group",
                 "m_nElementID": new_element_id(),
                 "m_sLabel": c_name,
                 "m_Modifiers": modifiers,
-                "m_SelectionCriteria": [],
+                "m_SelectionCriteria": selection_criteria,
                 "m_Children": children,
             }
 
@@ -149,11 +174,9 @@ def write_vsmart(
             "m_sLabel": label,
             "m_nLodLevel": 0,
             "m_Modifiers": [] if child_elements else modifiers,
-            "m_SelectionCriteria": [],
+            "m_SelectionCriteria": selection_criteria,
         }
-        # ponytail: the model keeps its own scale, children of a scaled mesh
-        # component are not scaled with it. Compose scale into the child
-        # translations if a blueprint ever needs it.
+
         if scaled:
             elem["m_vModelScale"] = {
                 "m_Components": [round(float(v), 4) for v in st.scales]
@@ -161,9 +184,6 @@ def write_vsmart(
         if not child_elements:
             return elem
 
-        # CSmartPropElement_Model is a leaf in Source 2 — m_Children on it is
-        # ignored, which silently deletes every component parented to a mesh.
-        # Hoist the transform onto a Group and place the model inside it.
         return group([elem] + child_elements)
 
     root_elements = []
@@ -175,21 +195,150 @@ def write_vsmart(
     if not root_elements:
         return result
 
+    vsmart_variables = []
+    for var in (variables or []):
+        v_name = var.get("name") or var.get("m_VariableName", "selector")
+        v_type = str(var.get("type", "int")).lower()
+        v_default = var.get("default", var.get("m_DefaultValue", 0))
+        min_val = float(var.get("min", var.get("m_flParamaterMinValue", 0)))
+        max_val = float(var.get("max", var.get("m_flParamaterMaxValue", 10)))
+
+        if v_type in ("int", "integer"):
+            vsmart_variables.append({
+                "_class": "CSmartPropVariable_Int",
+                "m_VariableName": v_name,
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": int(v_default),
+                "m_flParamaterMinValue": min_val,
+                "m_flParamaterMaxValue": max_val,
+                "m_sModelName": "None",
+            })
+        elif v_type == "float":
+            vsmart_variables.append({
+                "_class": "CSmartPropVariable_Float",
+                "m_VariableName": v_name,
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": float(v_default),
+                "m_flParamaterMinValue": min_val,
+                "m_flParamaterMaxValue": max_val,
+                "m_sModelName": "None",
+            })
+        elif v_type in ("bool", "boolean"):
+            vsmart_variables.append({
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": v_name,
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": bool(v_default),
+                "m_sModelName": "None",
+            })
+        elif v_type in ("string", "name"):
+            vsmart_variables.append({
+                "_class": "CSmartPropVariable_String",
+                "m_VariableName": v_name,
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": str(v_default),
+                "m_sModelName": "None",
+            })
+
+    # Detect variant model sets that share a variable condition or can be grouped into PickOne
+    var_models: Dict[str, List[dict]] = {}
+    other_elements = []
+
+    for elem in root_elements:
+        cond_var = None
+        if elem.get("_class") == "CSmartPropElement_Model" and elem.get("m_SelectionCriteria"):
+            for sc in elem["m_SelectionCriteria"]:
+                expr = sc.get("m_sExpression", "")
+                if "==" in expr:
+                    cond_var = expr.split("==")[0].strip()
+                    break
+
+        if cond_var:
+            var_models.setdefault(cond_var, []).append(elem)
+        else:
+            other_elements.append(elem)
+
+    # Also group all top-level model elements into a PickOne if no explicit condition was given but multiple model variants exist
+    if not var_models and len(root_elements) > 1 and all(e.get("_class") == "CSmartPropElement_Model" for e in root_elements):
+        var_models["selector"] = list(root_elements)
+        other_elements = []
+
+    final_root_children = list(other_elements)
+
+    for v_name, models_list in var_models.items():
+        if len(models_list) > 1:
+            for m_elem in models_list:
+                m_elem["m_SelectionCriteria"] = []
+
+            pick_one_id = new_element_id()
+            pick_one_node = {
+                "_class": "CSmartPropElement_PickOne",
+                "m_nElementID": pick_one_id,
+                "m_sLabel": f"PickOne_{pick_one_id}",
+                "m_SelectionMode": "SPECIFIC",
+                "m_SpecificChildIndex": {
+                    "m_SourceName": v_name
+                },
+                "m_bConfigurable": True,
+                "m_bEnabled": True,
+                "m_Modifiers": [],
+                "m_SelectionCriteria": [],
+                "m_OutputChoiceVariableName": "",
+                "m_Children": models_list
+            }
+            final_root_children.append(pick_one_node)
+
+            if not any(v.get("m_VariableName") == v_name for v in vsmart_variables):
+                vsmart_variables.append({
+                    "_class": "CSmartPropVariable_Int",
+                    "m_VariableName": v_name,
+                    "m_bExposeAsParameter": True,
+                    "m_DefaultValue": 0,
+                    "m_flParamaterMinValue": 0.0,
+                    "m_flParamaterMaxValue": float(max(0, len(models_list) - 1)),
+                    "m_sModelName": "None"
+                })
+        else:
+            final_root_children.extend(models_list)
+
     top_group = {
         "_class": "CSmartPropElement_Group",
         "m_nElementID": new_element_id(),
         "m_sLabel": bp_name,
         "m_Modifiers": [],
         "m_SelectionCriteria": [],
-        "m_Children": root_elements,
+        "m_Children": final_root_children,
     }
+
+    vsmart_choices = []
+    for choice in (choices or []):
+        c_name = choice.get("name", "Choice")
+        options = []
+        for opt in choice.get("options", []):
+            options.append({
+                "_class": "CSmartPropChoiceOption",
+                "m_sName": opt.get("name", "Option"),
+                "m_VariableValues": [
+                    {
+                        "m_sVariableName": c_name,
+                        "m_Value": opt.get("value", 0)
+                    }
+                ]
+            })
+        if options:
+            vsmart_choices.append({
+                "_class": "CSmartPropChoice",
+                "m_sChoiceName": c_name,
+                "m_sChoiceName": c_name,
+                "m_Options": options,
+            })
 
     vsmart_doc = {
         "generic_data_type": "CSmartPropRoot",
         "m_nContentVersion": 1,
         "m_Children": [top_group],
-        "m_Variables": [],
-        "m_Choices": [],
+        "m_Variables": vsmart_variables,
+        "m_Choices": vsmart_choices,
         "editor_info": {
             "m_nElementID": element_id_counter[0]
         }

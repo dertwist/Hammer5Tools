@@ -136,6 +136,8 @@ _PACKED_LAYOUTS = {
     "arm":  {"r": "ao",    "g": "rough", "b": "metal"},
     "srm":  {                "g": "rough", "b": "metal"},
     "srmh": {                "g": "rough", "b": "metal", "a": "height"},
+    "m":    {"r": "metal", "g": "rough"},
+    "mr":   {"r": "metal", "g": "rough"},
 }
 
 CHANNELS = ("r", "g", "b", "a")
@@ -163,7 +165,7 @@ def packed_layout(param_name: str, tex_path: str = ""):
 _LAYER2_TOKENS = {"top", "dirt", "moss", "layer2", "2", "l2", "secondary", "overlay"}
 _LAYER3_TOKENS = {"layer3", "3", "l3", "tertiary"}
 
-_COLOR_TOKENS = {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c"}
+_COLOR_TOKENS = {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c", "bc"}
 _NORMAL_TOKENS = {"normal", "nrm", "n", "norm"}
 _ROUGH_TOKENS = {"rough", "roughness", "r"}
 _METAL_TOKENS = {"metal", "metallic", "metalness", "m"}
@@ -287,7 +289,7 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
 
     # Heuristic matching for remaining parameters
     for slot, tokens in _SLOT_TOKENS:
-        if allowed_slots is not None and slot not in allowed_slots:
+        if allowed_slots is not None and slot not in allowed_slots and not slot.startswith("orm"):
             continue
         if slot in out:
             continue
@@ -299,7 +301,7 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
         for param_name, tex_path in textures.items():
             if param_name in used_params:
                 continue
-            p_toks = _tokens(param_name)
+            p_toks = _tokens(param_name) | _tokens(os.path.basename(tex_path or ""))
             if slot.startswith("color") and p_toks & _COLOR_EXCLUDE:
                 continue
 
@@ -620,7 +622,10 @@ def process_material_textures(mat_data: dict, bulk_dir: str, output_dir: str,
         rel = f"{folder_rel}/{name}.{ext}"
         dst = os.path.join(output_dir, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        img.save(dst)
+        if ext.lower() == "tga":
+            img.save(dst, rle=True)
+        else:
+            img.save(dst)
         return rel
 
     picks = _classify_textures(mat_data.get("textures"), slot_overrides, shader=shader)
@@ -888,7 +893,7 @@ def demo():
     # dropped and showed up in the vmat's UnusedVariables as TextureNormal "".
     src_dir = tempfile.mkdtemp()
     for name in ("deco_diff", "deco_nm"):
-        Image.new("RGBA", (4, 4), (128, 128, 255, 200)).save(os.path.join(src_dir, f"{name}.tga"))
+        Image.new("RGBA", (4, 4), (128, 128, 255, 200)).save(os.path.join(src_dir, f"{name}.tga"), rle=True)
     decal_tex = {
         "material": "/Game/M/MI_Deco.MI_Deco",
         "flags": {"domain": "MD_DeferredDecal"},

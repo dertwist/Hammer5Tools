@@ -36,8 +36,8 @@ IGNORED_DIRS = {"saved", "intermediate", "deriveddatacache", "build", "binaries"
 # v3: refs are now scanned with the bridge's iter-refs command, which resolves
 # StaticMesh material slots the old grep-over-dump approach missed. Existing v2
 # manifests cached those meshes as refs:[] and would never pick up the fix.
-# v4: manifests moved into the addon and became KV3.
-MANIFEST_VERSION = 4
+# v5: Standalone materials now resolve expression-graph textures & split channel masks.
+MANIFEST_VERSION = 5
 
 
 def manifest_path(output_dir: str):

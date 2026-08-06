@@ -484,7 +484,7 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
             mat_keys = bridge.list_materials()
             total = len(mat_keys)
             if log_cb:
-                log_cb(f"Found {total} potential material asset(s) under project.", "info")
+                log_cb(f"Scanning material graph parameters & texture inputs for {total} asset(s)...", "info")
 
             for i, key in enumerate(mat_keys):
                 if progress_cb:
@@ -554,6 +554,11 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
 
     for master_name in groups:
         groups[master_name]["count"] = len(groups[master_name]["instances"])
+
+    if log_cb and groups:
+        multi_c = sum(1 for g in groups.values() if g.get("count", 0) > 1)
+        single_c = sum(1 for g in groups.values() if g.get("count", 0) <= 1)
+        log_cb(f"Material scan complete: {len(groups)} Master Material group(s) ({multi_c} multi-instance, {single_c} standalone).", "info")
 
     # Write the seeded entries out now, so from this point the saved table
     # covers every master and conversion never has to invent one. Without this
