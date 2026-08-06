@@ -26,9 +26,10 @@ import winsound
 
 
 class ErrorInfo(QDialog):
-    def __init__(self, text="Error", details=""):
+    def __init__(self, text="Error", details="", is_warning=False, dont_show_setting=None, title=None):
         super().__init__()
-        self.setWindowTitle("Error")
+        dialog_title = title if title is not None else ("Warning" if is_warning else "Error")
+        self.setWindowTitle(dialog_title)
         self.setWindowIcon(QIcon("../appicon.ico"))
         enable_dark_title_bar(self)
         self.setMinimumSize(600, 400)
@@ -36,7 +37,13 @@ class ErrorInfo(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
 
         self.details = details
-        winsound.MessageBeep(winsound.MB_ICONHAND)
+        self.dont_show_setting = dont_show_setting
+
+        if is_warning:
+            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+        else:
+            winsound.MessageBeep(winsound.MB_ICONHAND)
+
         main_layout = QVBoxLayout(self)
 
         self.message_label = QLabel(text)
@@ -46,7 +53,8 @@ class ErrorInfo(QDialog):
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         self.details_text.setPlainText(self.details)
-        self.details_text.setStyleSheet("background-color: #1C1C1C; border-color: #974533")
+        border_color = "#E5C07B" if is_warning else "#974533"
+        self.details_text.setStyleSheet(f"background-color: #1C1C1C; border-color: {border_color}")
         main_layout.addWidget(self.details_text)
 
         buttons_layout = QHBoxLayout()
@@ -59,6 +67,11 @@ class ErrorInfo(QDialog):
         self.report_button.clicked.connect(self.report_issue)
         buttons_layout.addWidget(self.report_button)
 
+        if self.dont_show_setting:
+            self.dont_show_button = QPushButton("Don't show again")
+            self.dont_show_button.clicked.connect(self.dont_show_again)
+            buttons_layout.addWidget(self.dont_show_button)
+
         # Spacer to push Close button to the right
         buttons_layout.addStretch()
 
@@ -67,6 +80,16 @@ class ErrorInfo(QDialog):
         buttons_layout.addWidget(self.close_button)
 
         main_layout.addLayout(buttons_layout)
+
+    def dont_show_again(self):
+        if self.dont_show_setting:
+            from src.settings.common import set_settings_bool
+            if isinstance(self.dont_show_setting, (tuple, list)):
+                section, key = self.dont_show_setting
+                set_settings_bool(section, key, False)
+            elif callable(self.dont_show_setting):
+                self.dont_show_setting()
+        self.close()
 
     def save_details(self):
         options = QFileDialog.Options()

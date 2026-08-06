@@ -82,7 +82,7 @@ class SceneModelsWorker(CancellableWorker):
     def __init__(self, project_dir, bulk_dir, output_dir,
                  do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=True, unit_scale=1.0,
                  use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None,
-                 master_param_overrides=None,
+                 master_param_overrides=None, master_feature_flags=None, master_blend_modes=None,
                  selected_assets=None, import_lods=True, import_collision=True,
                  tex_format="tga", invert_y_normal=True,
                  import_lights=False, import_sky=False, import_cubemaps=False,
@@ -121,6 +121,8 @@ class SceneModelsWorker(CancellableWorker):
         self.master_shaders = master_shaders or {}
         self.master_slot_overrides = master_slot_overrides or {}
         self.master_param_overrides = master_param_overrides or {}
+        self.master_feature_flags = master_feature_flags or {}
+        self.master_blend_modes = master_blend_modes or {}
         self.project_dir = project_dir
         self.bulk_dir = bulk_dir
         self.output_dir = output_dir
@@ -575,9 +577,23 @@ class SceneModelsWorker(CancellableWorker):
             self._log("Materials — no matching material instances for the scene meshes.", "info")
             return
 
-        from .converter import predict_cs2_shader, get_master_material_name
+        from .converter import (
+            FALLBACK_SHADER, get_master_material_name, load_material_swaps_kv3,
+            seed_shader_for, save_material_swaps_kv3,
+        )
+
+        kv3_swaps, kv3_slots, kv3_params, kv3_flags, kv3_blend = load_material_swaps_kv3(self.output_dir)
+        merged_shaders = dict(kv3_swaps)
+        if self.master_shaders:
+            merged_shaders.update(self.master_shaders)
 
         done, missing_tex = 0, 0
+        unmapped = set()
+        self._log(
+            f"Materials — {len(targets)} to convert; remap table has "
+            f"{len(merged_shaders)} Master Material(s).",
+            "info",
+        )
         for i, (stem, path) in enumerate(sorted(targets)):
             if self._cancel_check():
                 return
@@ -585,20 +601,53 @@ class SceneModelsWorker(CancellableWorker):
             try:
                 data = self.bridge.dump_material(path)
                 master_name = get_master_material_name(data, path)
-                # The Materials tab's choice for this Master Material wins; the
-                # name heuristic is only a fallback for masters the scan never
-                # saw (e.g. Convert run without a preceding Scan).
-                shader = self.master_shaders.get(master_name) or predict_cs2_shader(master_name, data.get("flags"))
-                overrides = self.master_slot_overrides.get(master_name) or slot_overrides
-                param_overrides = self.master_param_overrides.get(master_name) or {}
+                shader = merged_shaders.get(master_name)
+                if not shader:
+                    shader = seed_shader_for(master_name, data.get("flags"))
+                    merged_shaders[master_name] = shader
+                    save_material_swaps_kv3(self.output_dir, merged_shaders,
+                                            slot_mappings=self.master_slot_overrides or kv3_slots,
+                                            param_mappings=self.master_param_overrides or kv3_params,
+                                            feature_flags=self.master_feature_flags or kv3_flags,
+                                            blend_modes=self.master_blend_modes or kv3_blend)
+                    source = f"stamped & mapped {master_name}"
+                else:
+                    source = f"remap of {master_name}"
+
+                extras = []
+                overrides = (self.master_slot_overrides.get(master_name)
+                             if self.master_slot_overrides and master_name in self.master_slot_overrides
+                             else kv3_slots.get(master_name, slot_overrides))
+                param_overrides = (self.master_param_overrides.get(master_name)
+                                   if self.master_param_overrides and master_name in self.master_param_overrides
+                                   else kv3_params.get(master_name, {}))
+                feature_flags = (self.master_feature_flags.get(master_name)
+                                 if self.master_feature_flags and master_name in self.master_feature_flags
+                                 else kv3_flags.get(master_name, {}))
+                blend_mode = (self.master_blend_modes.get(master_name)
+                              if self.master_blend_modes and master_name in self.master_blend_modes
+                              else kv3_blend.get(master_name, 0))
+
+                if overrides:
+                    extras.append(f"{len(overrides)} slot")
+                if param_overrides:
+                    extras.append(f"{len(param_overrides)} param")
+                if feature_flags:
+                    extras.append(f"{len(feature_flags)} feature")
+                if blend_mode:
+                    extras.append(f"blend mode {blend_mode}")
+                if extras:
+                    source += " + " + "/".join(extras)
+
                 res = convert_material(data, self.bulk_dir, self.output_dir,
                                        shader=shader, slot_overrides=overrides,
                                        param_overrides=param_overrides,
                                        strip_prefix=self.strip_prefix,
                                        tex_format=self.tex_format,
-                                       invert_y_normal=self.invert_y_normal)
+                                       invert_y_normal=self.invert_y_normal,
+                                       feature_flags=feature_flags, blend_mode=blend_mode)
                 done += 1
-                msg = f"  material {stem}: Success ({shader})"
+                msg = f"  material {stem}: Success ({shader}, {source})"
                 if res.missing:
                     missing_tex += 1
                     msg += f" (missing: {', '.join(res.missing)})"
@@ -607,6 +656,16 @@ class SceneModelsWorker(CancellableWorker):
                 self._log(f"  material {stem}: {e}", "warn")
         note = f", {missing_tex} with missing textures" if missing_tex else ""
         self._log(f"Materials — {done} vmat written{note}", "success")
+        if unmapped:
+            # A gap in the saved table, not a conversion failure — but the shader
+            # these got was a fallback constant, not a choice, so say so.
+            self._log(
+                f"Materials — {len(unmapped)} Master Material(s) have no shader remap entry "
+                f"and converted with the {FALLBACK_SHADER} fallback. Re-analyze the project "
+                f"to give them one, then set it in the Materials tab: "
+                + ", ".join(sorted(unmapped)),
+                "warn",
+            )
 
     def _build_landscape_model(self, mesh_id, vmdl_path, model_rel, mat_rel) -> bool:
         """Build the landscape's vmdl from a bulk-exported FBX if the user has

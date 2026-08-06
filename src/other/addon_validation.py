@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMessageBox
-from src.settings.main import get_addon_name, get_addon_dir
+from src.settings.main import get_addon_name, get_addon_dir, get_settings_bool
 from src.widgets import ErrorInfo
 import os
 
@@ -9,6 +9,9 @@ def validate_addon_structure():
     The addon should have a valid structure with only one main vmap file that matches the addon name.
     All versions should be stored in a VCS file or used as prefabs.
     """
+    if not get_settings_bool('APP', 'show_project_structure_warning', True):
+        return True
+
     try:
         addon_name = get_addon_name()
         addon_dir = get_addon_dir()
@@ -37,7 +40,12 @@ def validate_addon_structure():
             "This structure is valid, but version control is still recommended for clean iteration."
         )
 
-        ErrorInfo(text=error_message, details=error_details).exec_()
+        ErrorInfo(
+            text=error_message,
+            details=error_details,
+            is_warning=True,
+            dont_show_setting=('APP', 'show_project_structure_warning')
+        ).exec_()
         return False
     else:
         print(f"Main vmap file '{main_vmap_file}' exists and matches the addon name '{addon_name}'.")

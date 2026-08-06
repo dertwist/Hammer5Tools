@@ -18,7 +18,9 @@ from PySide6.QtWidgets import (
 )
 
 from src.styles.common import apply_stylesheets
-from .material_converter import _classify_textures, find_bulk_texture
+from .material_converter import (
+    _classify_textures, find_bulk_texture, _pick_scalar, _pick_boolean_flags,
+)
 
 # material_remap_arrow.png is not in resources.qrc, so it is loaded from disk —
 # same approach as src/widgets/model_browser/main.py. Resolves to src/icons/...
@@ -28,25 +30,52 @@ _REMAP_ICON = os.path.join(_SRC_DIR, "icons", "tools", "modeldoc_editor",
 
 from .shader_schemas import SHADERS
 
-_CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A"}
+_CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A", "rgb": "RGB"}
 
 
-def describe_bindings(textures: dict, slot_overrides: dict = None, shader: str = None) -> str:
+def describe_bindings(textures: dict, slot_overrides: dict = None, shader: str = None, info: dict = None) -> str:
     """One-line summary of what the current mapping resolves to, e.g.
     'color←Diffuse  normal←Normal  rough←SRMH.G  metal←SRMH.B'."""
     picks = _classify_textures(textures or {}, slot_overrides, shader=shader)
-    return format_picks_summary(picks)
+    return format_picks_summary(picks, info=info)
 
 
-def format_picks_summary(picks: dict) -> str:
-    if not picks:
-        return "No texture slots resolved — this material will convert flat."
+def format_picks_summary(picks: dict, info: dict = None) -> str:
     parts = []
-    for slot in sorted(picks):
-        param, _path, channel = picks[slot]
-        suffix = f".{_CHANNEL_LABELS[channel]}" if channel else ""
-        parts.append(f"{slot}←{param}{suffix}")
-    return "   ".join(parts)
+    if picks:
+        for slot in sorted(picks):
+            param, _path, channel = picks[slot]
+            suffix = f".{_CHANNEL_LABELS.get(channel, str(channel).upper())}" if channel else ""
+            parts.append(f"{slot}←{param}{suffix}")
+
+    scalars = (info or {}).get("scalars") or {}
+    switches = (info or {}).get("switches") or {}
+
+    pbr_parts = []
+
+    rough = _pick_scalar(scalars, "roughness", "tileable 1 roughness", default=None)
+    if rough is not None:
+        pbr_parts.append(f"Roughness: {rough:.2f}")
+
+    metal = _pick_scalar(scalars, "metallic", "metalness", default=None)
+    if metal is not None and metal > 0:
+        pbr_parts.append(f"Metalness: {metal:.2f}")
+
+    auto_flags = _pick_boolean_flags(switches)
+    if auto_flags:
+        clean_flags = [f.replace("F_", "").replace("g_b", "").replace("1", "") for f in auto_flags]
+        pbr_parts.append("Flags: " + ", ".join(clean_flags))
+
+    if parts:
+        summary = "   ".join(parts)
+        if pbr_parts:
+            summary += "  │  " + "   ".join(pbr_parts)
+        return summary
+
+    if pbr_parts:
+        return "Color/PBR Material (No Textures) — " + "   ".join(pbr_parts)
+
+    return "Default PBR material (No textures or color parameters resolved)."
 
 
 _THUMBNAIL_CACHE = {}
@@ -155,7 +184,8 @@ class MasterMaterialCard(QFrame):
         slot_overrides = info.get("slot_overrides", {})
         shader = info.get("shader") or self.shader_combo.currentText()
         picks = _classify_textures(textures, slot_overrides, shader=shader)
-        self.bindings.setText(format_picks_summary(picks))
+        self.bindings.setText(format_picks_summary(picks, info=info))
+        self._update_thumbnails(picks, tex_index=tex_index)
         self._update_thumbnails(picks, tex_index=tex_index)
 
     def _update_thumbnails(self, picks: dict, tex_index: dict = None):

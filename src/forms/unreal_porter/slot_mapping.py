@@ -19,7 +19,7 @@ from PySide6.QtGui import QColor, QPixmap
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox, QLabel,
     QDialogButtonBox, QWidget, QScrollArea, QFrame, QPushButton, QToolButton, QTabWidget,
-    QColorDialog, QCheckBox, QSplitter,
+    QColorDialog, QCheckBox, QRadioButton, QGroupBox, QSplitter,
 )
 
 from src.settings.main import get_settings_value, set_settings_value
@@ -29,6 +29,8 @@ from src.styles.common import (
     qt_stylesheet_checkbox,
     qt_stylesheet_combobox,
     qt_stylesheet_toolbutton,
+    qt_stylesheet_radiobutton,
+    qt_stylesheet_groupbox,
 )
 
 
@@ -40,6 +42,13 @@ QPushButton:disabled, QToolButton:disabled {
 }
 QCheckBox:disabled {
     color: #666666;
+}
+QRadioButton:disabled {
+    color: #666666;
+}
+QGroupBox:disabled {
+    color: #666666;
+    border-color: #2A2A2D;
 }
 QComboBox:disabled {
     background-color: #18181A;
@@ -53,6 +62,10 @@ def force_apply_stylesheets(parent: QWidget) -> None:
     """Force-applies registered Qt stylesheets to all child widgets with crisp gray text for disabled controls."""
     for cb in parent.findChildren(QCheckBox):
         cb.setStyleSheet(f"{qt_stylesheet_checkbox}\n{_DISABLED_STYLE_APPEND}")
+    for rb in parent.findChildren(QRadioButton):
+        rb.setStyleSheet(f"{qt_stylesheet_radiobutton}\n{_DISABLED_STYLE_APPEND}")
+    for gb in parent.findChildren(QGroupBox):
+        gb.setStyleSheet(f"{qt_stylesheet_groupbox}\n{_DISABLED_STYLE_APPEND}")
     for pb in parent.findChildren(QPushButton):
         pb.setStyleSheet(f"{qt_stylesheet_button}\n{_DISABLED_STYLE_APPEND}")
     for tb in parent.findChildren(QToolButton):
@@ -65,13 +78,59 @@ from .material_converter import (
 )
 from .shader_schemas import (
     SHADERS,
-    SCALAR_TARGETS as _SCALAR_TARGETS,
-    VECTOR_TARGETS as _VECTOR_TARGETS,
-    SWITCH_TARGETS as _SWITCH_TARGETS,
-    FEATURE_DEPENDENCIES,
-    get_targets_for_shader,
+    get_shader_schema,
     validate_feature_flags,
+    KIND_SCALAR, KIND_INT, KIND_BOOL, KIND_VECTOR2, KIND_VECTOR3, KIND_IVECTOR2, KIND_COLOR,
 )
+
+_NO_MAP = "(skip)"
+
+
+def _param_targets_for_shader(shader: str, kinds: tuple) -> list:
+    """Derive the (label, vmat_param) dropdown list for a kind group from the
+    schema's blocks. Replaces the legacy flat SCALAR_TARGETS/VECTOR_TARGETS/
+    SWITCH_TARGETS tables + get_targets_for_shader heuristic with per-shader
+    targets straight from the shader's own parameter set."""
+    schema = get_shader_schema(shader)
+    targets = [(_NO_MAP, "")]
+    seen = set()
+    if schema is None:
+        return targets
+    for block in schema.blocks:
+        for param in block.params:
+            if param.kind not in kinds:
+                continue
+            if param.name in seen or param.name.startswith("F_"):
+                continue
+            seen.add(param.name)
+            # Build a readable label: section + param name.
+            label = f"{block.title} — {param.name}"
+            targets.append((label, param.name))
+    return targets
+
+
+def _scalar_targets(shader: str) -> list:
+    return _param_targets_for_shader(shader, (KIND_SCALAR, KIND_INT))
+
+
+def _vector_targets(shader: str) -> list:
+    return _param_targets_for_shader(shader, (KIND_VECTOR2, KIND_VECTOR3, KIND_IVECTOR2, KIND_COLOR))
+
+
+def _switch_targets(shader: str) -> list:
+    """Feature flags (F_*) the user can map a UE switch to. These come from the
+    schema's features list, not its blocks (flags live in their own sections)."""
+    schema = get_shader_schema(shader)
+    targets = [(_NO_MAP, "")]
+    if schema is None:
+        return targets
+    seen = set()
+    for feat in schema.features:
+        if feat.name in seen:
+            continue
+        seen.add(feat.name)
+        targets.append((f"{feat.section} — {feat.name}", feat.name))
+    return targets
 
 _AUTO = "Auto"
 _SKIP = "Skip"
@@ -175,8 +234,14 @@ class _ParamRow(QFrame):
         outer.addWidget(self.channel_box)
 
         self.target.currentTextChanged.connect(self._sync_channel_box)
-        self._apply_initial(override)
+        # Show channel grid for the initial target (Auto/Skip/slot won't show it).
+        # _apply_initial may set Split Alpha/RGBA, which triggers _sync_channel_box
+        # via the signal, building the grid with smart defaults.  After that,
+        # _apply_initial restores the saved channel selections on top.
+        # Do NOT call _sync_channel_box again — that would rebuild the grid and
+        # wipe the restored selections.
         self._sync_channel_box(self.target.currentText())
+        self._apply_initial(override)
 
     def update_shader(self, shader: str, feature_flags: dict = None):
         self.shader = shader
@@ -214,13 +279,36 @@ class _ParamRow(QFrame):
         else:
             return
 
+        param_low = str(self.param or "").lower()
+        is_normal = any(k in param_low for k in ("normal", "nrm", "norm"))
+
         for col, (ch_key, ch_label) in enumerate(cols):
             label = QLabel(ch_label)
             label.setAlignment(Qt.AlignCenter)
             combo = QComboBox()
             combo.setStyleSheet(f"{qt_stylesheet_combobox}\n{_DISABLED_STYLE_APPEND}")
             combo.addItem(_UNUSED)
-            combo.addItems(self.channel_slots)
+            available = self.slots if ch_key == "rgb" else self.channel_slots
+            combo.addItems(available)
+
+            # Auto-select smart default slot based on channel key
+            default_slot = None
+            if ch_key == "rgb":
+                default_slot = "normal" if is_normal else "color"
+            elif ch_key == "a":
+                default_slot = "opacity"
+            elif ch_key == "r":
+                default_slot = "rough"
+            elif ch_key == "g":
+                default_slot = "metal"
+            elif ch_key == "b":
+                default_slot = "ao"
+
+            if default_slot:
+                idx = combo.findText(default_slot)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+
             self.channel_grid_layout.addWidget(label, 0, col)
             self.channel_grid_layout.addWidget(combo, 1, col)
             self.channel_combos[ch_key] = combo
@@ -241,6 +329,19 @@ class _ParamRow(QFrame):
         self.thumb.setToolTip(stem or "Texture preview unavailable")
 
     def _apply_initial(self, override):
+        if isinstance(override, str):
+            override_str = override.strip()
+            if (override_str.startswith("{") and override_str.endswith("}")) or (override_str.startswith("[") and override_str.endswith("]")):
+                try:
+                    import ast
+                    override = ast.literal_eval(override_str)
+                except Exception:
+                    try:
+                        import json
+                        override = json.loads(override_str)
+                    except Exception:
+                        pass
+
         if isinstance(override, dict):
             if override.get("split_rgba"):
                 self.target.setCurrentText(_SPLIT_RGBA)
@@ -250,13 +351,16 @@ class _ParamRow(QFrame):
             slot_mapping = override.get("channels") or override.get("slot") or override
             if isinstance(slot_mapping, dict):
                 for slot, ch in slot_mapping.items():
-                    if ch in self.channel_combos and slot in self.channel_slots:
-                        self.channel_combos[ch].setCurrentText(slot)
+                    if ch in self.channel_combos:
+                        combo = self.channel_combos[ch]
+                        idx = combo.findText(slot)
+                        if idx >= 0:
+                            combo.setCurrentIndex(idx)
                 return
             if isinstance(slot_mapping, str) and slot_mapping in self.slots:
                 return
 
-        if override is _EXPLICIT_SKIP:
+        if override is _EXPLICIT_SKIP or (isinstance(override, str) and override.lower() in ("none", "null", "skip")):
             self.target.setCurrentText(_SKIP)
             return
 
@@ -372,9 +476,9 @@ class _ParamMappingTab(QWidget):
 
     def update_shader(self, shader: str):
         self.shader = shader
-        scalar_targets = get_targets_for_shader(shader, _SCALAR_TARGETS)
-        vector_targets = get_targets_for_shader(shader, _VECTOR_TARGETS)
-        switch_targets = get_targets_for_shader(shader, _SWITCH_TARGETS)
+        scalar_targets = _scalar_targets(shader)
+        vector_targets = _vector_targets(shader)
+        switch_targets = _switch_targets(shader)
 
         for name, combo in self._rows.items():
             curr_val = combo.currentData()
@@ -405,7 +509,7 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Scalars (float)</b>"))
-        targets = get_targets_for_shader(self.shader, _SCALAR_TARGETS)
+        targets = _scalar_targets(self.shader)
         for name, val in items:
             row = QHBoxLayout()
             val_fmt = f"<span style='background-color:#2A2A2D; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>{val:.4f}</span>"
@@ -431,7 +535,7 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Vectors & Colors</b>"))
-        targets = get_targets_for_shader(self.shader, _VECTOR_TARGETS)
+        targets = _vector_targets(self.shader)
         for name, val in items:
             combo = QComboBox()
             for label_text, data in targets:
@@ -454,7 +558,7 @@ class _ParamMappingTab(QWidget):
         gl.setContentsMargins(8, 6, 8, 6)
         gl.setSpacing(4)
         gl.addWidget(QLabel("<b>Switches (bool)</b>"))
-        targets = get_targets_for_shader(self.shader, _SWITCH_TARGETS)
+        targets = _switch_targets(self.shader)
         for name, val in items:
             row = QHBoxLayout()
             badge = "<span style='background-color:#1E3A1E; color:#4EC9B0; padding:2px 8px; border-radius:3px; font-weight:bold;'>ON</span>" if val else "<span style='background-color:#2D2D2D; color:#888888; padding:2px 8px; border-radius:3px;'>OFF</span>"
@@ -487,13 +591,15 @@ class _FeatureInspectorWidget(QScrollArea):
     feature_changed = Signal(str, str)
     features_changed = Signal(dict)
     shader_changed = Signal(str)
+    blend_mode_changed = Signal(int)
 
-    def __init__(self, shader: str, feature_flags: dict = None, parent=None):
+    def __init__(self, shader: str, feature_flags: dict = None, blend_mode: int = 0, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setMinimumWidth(280)
         self.shader = shader or "csgo_environment.vfx"
         self.feature_flags = dict(feature_flags or {})
+        self.blend_mode = int(blend_mode or 0)
         self.checkboxes = {}
 
         container = QWidget()
@@ -534,106 +640,26 @@ class _FeatureInspectorWidget(QScrollArea):
                 item.widget().deleteLater()
         self.checkboxes.clear()
 
-        shader_low = str(self.shader).lower().strip()
-        if "overlay" in shader_low or "decal" in shader_low:
-            sections = [
-                ("Lighting", [
-                    ("F_LIT", "Lit (Enables Normal, Rough, Metal, AO, Self Illum)"),
-                ]),
-                ("Shadows", [
-                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
-                ]),
-                ("2-Sided Rendering", [
-                    ("F_RENDER_BACKFACES", "Render Backfaces"),
-                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
-                ]),
-                ("Z-Buffering", [
-                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
-                ]),
-            ]
-        elif "effects" in shader_low:
-            sections = [
-                ("Shadows", [
-                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
-                ]),
-                ("2-Sided Rendering", [
-                    ("F_RENDER_BACKFACES", "Render Backfaces"),
-                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
-                ]),
-                ("Z-Buffering", [
-                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
-                ]),
-                ("Z-Prepass", [
-                    ("F_DISABLE_Z_PREPASS", "Disable Z Prepass"),
-                ]),
-                ("Depth Feather", [
-                    ("F_DEPTH_FEATHER", "Depth Feather"),
-                ]),
-                ("Translucent", [
-                    ("F_ADDITIVE_BLEND", "Additive Blend"),
-                ]),
-                ("Per-Instance Tint Mask", [
-                    ("F_TINT_MASK", "Per-Instance Tint Mask"),
-                ]),
-            ]
-        else:
-            sections = [
-                ("Shadows", [
-                    ("F_DO_NOT_CAST_SHADOWS", "Do Not Cast Shadows"),
-                ]),
-                ("2-Sided Rendering", [
-                    ("F_RENDER_BACKFACES", "Render Backfaces"),
-                    ("F_DONT_FLIP_BACKFACE_NORMALS", "Dont Flip Backface Normals"),
-                ]),
-                ("Z-Buffering", [
-                    ("F_DISABLE_Z_BUFFERING", "Disable Z Buffering"),
-                    ("F_DEPTH_BIAS", "Depth Bias"),
-                    ("F_OCCLUSION_CULLING_BOUNDS_SCALE", "Occlusion Culling Bounds Scale"),
-                ]),
-                ("Z-Prepass", [
-                    ("F_DISABLE_Z_PREPASS", "Disable Z Prepass"),
-                ]),
-                ("Translucent / Blend Mode", [
-                    ("F_ALPHA_TEST", "Alpha Test"),
-                    ("F_ADDITIVE_BLEND", "Additive Blend"),
-                ]),
-                ("Layer 2", [
-                    ("F_BLEND_BY_FACING_DIRECTION_2", "Blend By Facing Direction 2"),
-                    ("F_BLEND_EFFECTS_2", "Blend Effects 2"),
-                    ("F_BORDER_ROUGHNESS_2", "Border Roughness 2"),
-                ]),
-                ("Layer 3", [
-                    ("F_ENABLE_LAYER_3", "Enable Layer 3"),
-                    ("F_BLEND_BY_FACING_DIRECTION_3", "Blend By Facing Direction 3"),
-                    ("F_BLEND_EFFECTS_3", "Blend Effects 3"),
-                    ("F_BORDER_ROUGHNESS_3", "Border Roughness 3"),
-                ]),
-                ("Detail", [
-                    ("F_DETAIL_NORMAL", "Detail Normal"),
-                ]),
-                ("Wetness", [
-                    ("F_WETNESS", "Wetness"),
-                ]),
-                ("Blending", [
-                    ("F_USE_NEW_BLENDING", "Use New Blending"),
-                ]),
-                ("Color Effects", [
-                    ("F_SHARED_COLOR_OVERLAY", "Shared Color Overlay"),
-                ]),
-                ("Tint Mask", [
-                    ("F_TINT_MASK", "Tint Mask"),
-                ]),
-                ("Depth Feather", [
-                    ("F_DEPTH_FEATHER", "Depth Feather"),
-                ]),
-                ("Visualizations", [
-                    ("F_ENABLE_VISUALIZATIONS", "Enable Visualizations"),
-                ]),
-            ]
-
+        schema = get_shader_schema(self.shader)
         self.feature_flags = validate_feature_flags(self.shader, self.feature_flags)
 
-        for title, flags in sections:
+        sections = {}
+        section_order = []
+        for feat in (schema.features if schema else ()):
+            if feat.section not in sections:
+                sections[feat.section] = []
+                section_order.append(feat.section)
+            sections[feat.section].append(feat)
+
+        if schema and schema.blend_modes and "Blend Mode" not in sections:
+            insert_idx = len(section_order)
+            if "Lighting" in section_order:
+                insert_idx = section_order.index("Lighting") + 1
+            section_order.insert(insert_idx, "Blend Mode")
+            sections["Blend Mode"] = []
+
+        for title in section_order:
+            feats = sections.get(title, [])
             group = QFrame()
             group.setFrameShape(QFrame.StyledPanel)
             gl = QVBoxLayout(group)
@@ -647,56 +673,143 @@ class _FeatureInspectorWidget(QScrollArea):
             )
             gl.addWidget(hdr)
 
-            for flag_name, flag_label in flags:
-                cb = QCheckBox(flag_label)
-                cb.setStyleSheet("QCheckBox:disabled { color: #666666; }")
-                val = str(self.feature_flags.get(flag_name, "0")) in ("1", "True", "true")
-                cb.setChecked(val)
-                cb.toggled.connect(lambda checked, fn=flag_name: self._on_cb_toggled(fn, checked))
-                gl.addWidget(cb)
-                self.checkboxes[flag_name] = cb
+            if title == "Blend Mode" and schema and schema.blend_modes:
+                self._build_blend_mode_group(gl, schema.blend_modes)
+
+            for feat in feats:
+                if feat.is_enum:
+                    self._build_enum_feature(gl, feat)
+                else:
+                    self._build_bool_feature(gl, feat)
 
             self.sections_layout.addWidget(group)
 
         self._update_prerequisite_states()
         force_apply_stylesheets(self)
 
-    def _update_prerequisite_states(self):
-        shader_rules = FEATURE_DEPENDENCIES.get(self.shader, {})
-        for flag_name, cb in self.checkboxes.items():
-            reqs = shader_rules.get(flag_name, [])
-            enabled = True
-            for req in reqs:
-                req_cb = self.checkboxes.get(req)
-                if req_cb and not req_cb.isChecked():
-                    enabled = False
-                    break
-            cb.setEnabled(enabled)
-            if not enabled and cb.isChecked():
-                cb.blockSignals(True)
-                cb.setChecked(False)
-                cb.blockSignals(False)
+    def _build_blend_mode_group(self, gl, blend_modes):
+        """Render CS2 F_BLEND_MODE options as a QGroupBox with radio buttons matching Hammer."""
+        gbox = QGroupBox("Blend Mode")
+        gb_layout = QVBoxLayout(gbox)
+        gb_layout.setContentsMargins(8, 8, 8, 8)
+        gb_layout.setSpacing(4)
 
-    def _on_cb_toggled(self, flag_name: str, checked: bool):
-        self.feature_flags[flag_name] = "1" if checked else "0"
+        self._blend_radio_map = {}
+        for bm in blend_modes:
+            rb = QRadioButton(bm.name)
+            if self.blend_mode == bm.value:
+                rb.setChecked(True)
+            rb.toggled.connect(lambda checked, v=bm.value: self._on_blend_radio_toggled(checked, v))
+            gb_layout.addWidget(rb)
+            self._blend_radio_map[bm.value] = rb
+
+        gl.addWidget(gbox)
+
+    def _on_blend_radio_toggled(self, checked: bool, val: int):
+        if checked:
+            self.blend_mode = val
+            self.blend_mode_changed.emit(val)
+
+    def _build_bool_feature(self, gl, feat):
+        """Render a boolean feature (range 0..1) as a checkbox."""
+        cb = QCheckBox(feat.label)
+        val = str(self.feature_flags.get(feat.name, str(feat.default))) in ("1", "True", "true")
+        cb.setChecked(val)
+        cb.toggled.connect(lambda checked, fn=feat.name: self._on_feature_changed(fn, "1" if checked else "0"))
+        gl.addWidget(cb)
+        self.checkboxes[feat.name] = cb
+
+    def _build_enum_feature(self, gl, feat):
+        """Render an enum-valued feature (range 0..N) as a QGroupBox with radio buttons matching CS2."""
+        gbox = QGroupBox(feat.label)
+        gb_layout = QVBoxLayout(gbox)
+        gb_layout.setContentsMargins(8, 8, 8, 8)
+        gb_layout.setSpacing(4)
+
+        cur = str(self.feature_flags.get(feat.name, str(feat.default)))
+        buttons = {}
+        for i in range(feat.range_max + 1):
+            name = feat.options[i] if i < len(feat.options) else str(i)
+            rb = QRadioButton(name)
+            if cur == str(i):
+                rb.setChecked(True)
+            rb.toggled.connect(lambda checked, val=str(i), fn=feat.name: self._on_enum_radio_toggled(checked, fn, val))
+            gb_layout.addWidget(rb)
+            buttons[str(i)] = rb
+
+        gl.addWidget(gbox)
+        gbox._feat_buttons = buttons
+        self.checkboxes[feat.name] = gbox
+
+    def _on_enum_radio_toggled(self, checked: bool, flag_name: str, val: str):
+        if checked:
+            self._on_feature_changed(flag_name, val)
+
+    def _update_prerequisite_states(self):
+        schema = get_shader_schema(self.shader)
+        for flag_name, widget in self.checkboxes.items():
+            feat = schema.feature(flag_name) if schema else None
+            parents = (feat.requires + feat.child_of) if feat else ()
+            enabled = True
+            for req in parents:
+                req_w = self.checkboxes.get(req)
+                if req_w is None:
+                    continue
+                if isinstance(req_w, QCheckBox):
+                    if not req_w.isChecked():
+                        enabled = False
+                        break
+                elif isinstance(req_w, QGroupBox):
+                    cur_val = str(self.feature_flags.get(req, "0"))
+                    if cur_val in ("0", "False", "false", ""):
+                        enabled = False
+                        break
+            widget.setEnabled(enabled)
+            if not enabled:
+                if isinstance(widget, QCheckBox):
+                    if widget.isChecked():
+                        widget.blockSignals(True)
+                        widget.setChecked(False)
+                        widget.blockSignals(False)
+                        self.feature_flags[flag_name] = "0"
+                elif isinstance(widget, QGroupBox) and hasattr(widget, "_feat_buttons"):
+                    rb_0 = widget._feat_buttons.get("0")
+                    if rb_0 and not rb_0.isChecked():
+                        rb_0.blockSignals(True)
+                        rb_0.setChecked(True)
+                        rb_0.blockSignals(False)
+                        self.feature_flags[flag_name] = "0"
+
+    def _on_feature_changed(self, flag_name: str, value: str):
+        self.feature_flags[flag_name] = value
         self.feature_flags = validate_feature_flags(self.shader, self.feature_flags)
 
-        for fn, cb in self.checkboxes.items():
-            val = str(self.feature_flags.get(fn, "0")) in ("1", "True", "true")
-            if cb.isChecked() != val:
-                cb.blockSignals(True)
-                cb.setChecked(val)
-                cb.blockSignals(False)
+        for fn, widget in self.checkboxes.items():
+            cur = str(self.feature_flags.get(fn, "0"))
+            if isinstance(widget, QCheckBox):
+                on = cur in ("1", "True", "true")
+                if widget.isChecked() != on:
+                    widget.blockSignals(True)
+                    widget.setChecked(on)
+                    widget.blockSignals(False)
+            elif isinstance(widget, QGroupBox) and hasattr(widget, "_feat_buttons"):
+                rb = widget._feat_buttons.get(cur)
+                if rb and not rb.isChecked():
+                    rb.blockSignals(True)
+                    rb.setChecked(True)
+                    rb.blockSignals(False)
 
         self._update_prerequisite_states()
-        self.feature_changed.emit(flag_name, "1" if checked else "0")
+        self.feature_changed.emit(flag_name, value)
         self.features_changed.emit(dict(self.feature_flags))
 
     def _on_shader_changed(self, new_shader: str):
         self.shader = new_shader
+        self.blend_mode = 0
         self._build_feature_sections()
         self.shader_changed.emit(new_shader)
         self.features_changed.emit(dict(self.feature_flags))
+        self.blend_mode_changed.emit(self.blend_mode)
 
     def value(self) -> dict:
         return dict(self.feature_flags)
@@ -710,6 +823,7 @@ class ShaderRemapperDialog(QDialog):
     def __init__(self, master_name: str, textures: dict, initial_overrides: dict = None,
                  shader: str = None, scalars: dict = None, vectors: dict = None, switches: dict = None,
                  initial_param_overrides: dict = None, feature_flags: dict = None,
+                 blend_mode: int = 0,
                  bulk_dir: str = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Shader Remapper — {master_name}")
@@ -722,6 +836,7 @@ class ShaderRemapperDialog(QDialog):
         self.result_overrides = {}
         self.result_param_overrides = {}
         self.result_feature_flags = dict(feature_flags or {})
+        self.result_blend_mode = int(blend_mode or 0)
         self.result_shader = self.shader
 
         existing = initial_overrides or {}
@@ -734,10 +849,12 @@ class ShaderRemapperDialog(QDialog):
 
         # --- Left Panel: CS2 Feature Inspector & Shader Selector ---
         self._feature_inspector = _FeatureInspectorWidget(
-            self.shader, feature_flags=self.result_feature_flags, parent=self
+            self.shader, feature_flags=self.result_feature_flags,
+            blend_mode=self.result_blend_mode, parent=self
         )
         self._feature_inspector.shader_changed.connect(self._on_shader_changed)
         self._feature_inspector.features_changed.connect(self._on_features_changed)
+        self._feature_inspector.blend_mode_changed.connect(self._on_blend_mode_changed)
         main_splitter.addWidget(self._feature_inspector)
 
         # --- Right Panel: Unified Scroll Area (Texture Slots & Params) ---
@@ -767,10 +884,15 @@ class ShaderRemapperDialog(QDialog):
         if not self.textures:
             tex_gl.addWidget(QLabel("No texture parameters found on this Master Material."))
         else:
+            existing_map = {k.lower(): v for k, v in (existing or {}).items()}
             for param, path in sorted(self.textures.items()):
-                override = existing[param] if param in existing else _NO_OVERRIDE
-                if param in existing and existing[param] is None:
-                    override = _EXPLICIT_SKIP
+                p_key = param.lower()
+                if p_key in existing_map:
+                    override = existing_map[p_key]
+                    if override is None or (isinstance(override, str) and override.lower() in ("none", "null", "skip")):
+                        override = _EXPLICIT_SKIP
+                else:
+                    override = _NO_OVERRIDE
                 row = _ParamRow(param, path, override, bulk_dir=self.bulk_dir, shader=self.shader)
                 self._rows.append(row)
                 tex_gl.addWidget(row)
@@ -834,9 +956,14 @@ class ShaderRemapperDialog(QDialog):
         for row in self._rows:
             row.update_shader(self.shader, feature_flags=self.result_feature_flags)
 
+    def _on_blend_mode_changed(self, blend_mode: int):
+        self.result_blend_mode = int(blend_mode or 0)
+
     def _on_shader_changed(self, new_shader: str):
         self.shader = new_shader
         self.result_shader = new_shader
+        # New shader may not support the old blend mode — adopt the inspector's reset.
+        self.result_blend_mode = self._feature_inspector.blend_mode
         for row in self._rows:
             row.update_shader(new_shader, feature_flags=self.result_feature_flags)
         if hasattr(self, "_params_tab"):
@@ -855,6 +982,7 @@ class ShaderRemapperDialog(QDialog):
         self.result_overrides = overrides
         self.result_param_overrides = self._params_tab.value()
         self.result_feature_flags = self._feature_inspector.value()
+        self.result_blend_mode = self._feature_inspector.blend_mode
         self.result_shader = self.shader
         self.accept()
 
