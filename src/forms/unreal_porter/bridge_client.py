@@ -26,6 +26,19 @@ class BridgeError(RuntimeError):
     pass
 
 
+# Packages that exist only to serve the Editor and hold nothing portable.
+# "_BuiltData" is the MapBuildDataRegistry Unreal writes beside every map: it
+# carries baked lightmaps and nothing else, so listing it only ever costs a
+# reference scan and a slot in the port scope.
+_IGNORED_ASSET_SUFFIXES = ("_builtdata",)
+
+
+def is_ignored_asset(key: str) -> bool:
+    """Editor-only packages that must never reach the asset list or a scan."""
+    stem = os.path.splitext(os.path.basename(str(key).replace("\\", "/")))[0].lower()
+    return stem.endswith(_IGNORED_ASSET_SUFFIXES)
+
+
 # How CUE4Parse writes references in a dump — string values under ObjectPath,
 # ObjectName, AssetPathName, MaterialSlotName, Parent, etc.
 _REF_FIELD = re.compile(r'"([^"]+)"')
@@ -45,10 +58,7 @@ def _read_error(fh, limit: int = 300) -> str:
 
 
 def _candidate_bridge_paths():
-    """Locations to search for the published bridge dll, most specific first."""
-    env = os.environ.get("H5T_UNREAL_BRIDGE")
-    if env:
-        yield Path(env)
+    """Locations to search for the published bridge dll."""
     root = Path(__file__).resolve().parents[3]  # repo root (src/forms/unreal_porter -> repo)
     yield root / "src" / "net_core" / "UnrealBridge" / "publish" / "H5T.UnrealBridge.dll"
     yield root / "src" / "net_core" / "UnrealBridge" / "bin" / "Release" / "net10.0" / "H5T.UnrealBridge.dll"
@@ -60,10 +70,20 @@ def _candidate_bridge_paths():
 
 
 def find_bridge_dll() -> Optional[str]:
-    for p in _candidate_bridge_paths():
-        if p and p.is_file():
-            return str(p)
-    return None
+    """The bridge dll to run: an explicit override, else the newest one built.
+
+    Newest wins rather than a fixed search order, because `dotnet build` and
+    `dotnet publish` write to different directories: a stale publish/ dll used
+    to shadow a freshly built bin/Release one, so rebuilding the bridge changed
+    nothing and said nothing about why.
+    """
+    env = os.environ.get("H5T_UNREAL_BRIDGE")
+    if env and Path(env).is_file():
+        return str(Path(env))
+    found = [p for p in _candidate_bridge_paths() if p and p.is_file()]
+    if not found:
+        return None
+    return str(max(found, key=lambda p: p.stat().st_mtime))
 
 
 def find_dotnet() -> Optional[str]:
@@ -120,7 +140,8 @@ class UnrealBridge:
         return self._run_json("info", self.content_dir)
 
     def list(self, substring: str = "") -> list:
-        return self._run_json("list", self.content_dir, substring)
+        return [k for k in self._run_json("list", self.content_dir, substring)
+                if not is_ignored_asset(k)]
 
     def list_materials(self) -> list:
         """Find all Material / MaterialInstance .uasset keys under the project,
