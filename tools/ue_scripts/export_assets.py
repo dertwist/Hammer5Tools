@@ -146,15 +146,30 @@ def _list_assets(unreal, content_path: str):
         raise RuntimeError("AssetRegistryHelpers is not available in Unreal Python.")
 
     registry = unreal.AssetRegistryHelpers.get_asset_registry()
-    registry.scan_paths_synchronous([content_path], force_rescan=True)
-    for data in registry.get_assets_by_path(content_path, recursive=True):
-        obj_path = _get_asset_object_path(data)
-        cls_name = _get_asset_class_name(data)
-        if obj_path and cls_name:
+    try:
+        registry.scan_paths_synchronous([content_path], force_rescan=True)
+    except Exception as e:
+        unreal.log_warning(f"Error scanning path {content_path}: {e}")
+
+    try:
+        assets_data = registry.get_assets_by_path(content_path, recursive=True)
+    except Exception as e:
+        unreal.log_warning(f"Error listing assets under {content_path}: {e}")
+        return
+
+    for data in assets_data:
+        try:
             if not _is_valid_asset(unreal, data):
-                unreal.log_warning(f"Skipping corrupt or empty asset file: {obj_path}")
+                obj_path = _get_asset_object_path(data)
+                unreal.log_warning(f"Skipping corrupt or empty asset file: {obj_path or data}")
                 continue
-            yield (obj_path, cls_name)
+            obj_path = _get_asset_object_path(data)
+            cls_name = _get_asset_class_name(data)
+            if obj_path and cls_name:
+                yield (obj_path, cls_name)
+        except Exception as e:
+            unreal.log_warning(f"Skipping asset entry due to error: {e}")
+            continue
 
 
 def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> str:
