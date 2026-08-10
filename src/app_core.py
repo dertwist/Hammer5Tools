@@ -660,6 +660,7 @@ class Widget(QMainWindow):
             ('SmartPropEditorMainWindow', "SmartProp Editor"),
             ('SoundEventEditorMainWindow', "SoundEvent Editor"),
             ('AudioEditor_instance', "Wave Editor"),
+            ('DetailPropEditorWidget_instance', "DetailProp Editor"),
         )
         unsaved = []
         for attr, editor_name in editors:

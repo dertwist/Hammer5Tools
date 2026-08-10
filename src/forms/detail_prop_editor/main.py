@@ -440,20 +440,14 @@ class DetailPropEditorWidget(QMainWindow):
         if parent is not None and hasattr(parent, "update_title"):
             parent.update_title('saved', self.vdata_path)
 
+    def has_unsaved_changes(self) -> bool:
+        return self._modified
+
+    def unsaved_files(self):
+        """(label, save_callable) for detail_prop_types.vdata if modified."""
+        if self._modified and self.vdata_path:
+            return [(self.vdata_path, self.save)]
+        return []
+
     def closeEvent(self, event):
-        if self._modified:
-            reply = QMessageBox.question(
-                self,
-                "Unsaved Changes",
-                "You have unsaved changes. Do you want to save them before closing?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
-            )
-            if reply == QMessageBox.Yes:
-                self.save()
-                event.accept()
-            elif reply == QMessageBox.No:
-                event.accept()
-            else:
-                event.ignore()
-        else:
-            event.accept()
+        event.accept()
