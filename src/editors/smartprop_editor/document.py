@@ -824,9 +824,14 @@ class SmartPropDocument(QMainWindow):
         if data is None:
             return
         for choice in data:
-            name = choice.get("m_Name", "")
+            name = (
+                choice.get("m_Name") or
+                choice.get("m_sChoiceName") or
+                choice.get("m_sName") or
+                "Choice"
+            )
             default = choice.get("m_DefaultOption", None)
-            options = choice.get("m_Options", None)
+            options = choice.get("m_Options", []) or []
             new_choice = AddChoice(
                 name=name,
                 tree=self.ui.choices_tree_widget,
@@ -835,15 +840,36 @@ class SmartPropDocument(QMainWindow):
             ).item
             if options:
                 for option in options:
-                    option_item = AddOption(parent=new_choice, name=option.get("m_Name", "")).item
-                    variables_list_ = option.get("m_VariableValues", [])
+                    opt_name = (
+                        option.get("m_Name") or
+                        option.get("m_sName") or
+                        option.get("m_sOptionName") or
+                        "Option"
+                    )
+                    option_item = AddOption(parent=new_choice, name=opt_name).item
+                    variables_list_ = option.get("m_VariableValues", []) or []
                     for variable in variables_list_:
+                        target_name = (
+                            variable.get("m_TargetName") or
+                            variable.get("m_sVariableName") or
+                            variable.get("m_VariableName") or
+                            variable.get("m_Name") or
+                            ""
+                        )
+                        target_type = (
+                            variable.get("m_DataType") or
+                            variable.get("m_sDataType") or
+                            variable.get("m_Type") or
+                            ""
+                        )
+                        target_val = variable.get("m_Value", variable.get("m_sValue", ""))
                         AddVariable(
+                            element_id_generator=self.element_id_generator,
                             parent=option_item,
                             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            name=variable.get("m_TargetName", ""),
-                            type=variable.get("m_DataType", ""),
-                            value=variable.get("m_Value", "")
+                            name=target_name,
+                            type=target_type,
+                            value=target_val
                         )
 
     def _populate_variables(self, data):
@@ -2259,9 +2285,12 @@ class SmartPropDocument(QMainWindow):
         for ci in range(root.childCount()):
             choice = root.child(ci)
             combo = tree.itemWidget(choice, 1)
+            default_txt = combo.currentText() if combo and hasattr(combo, 'currentText') else ''
+            if default_txt == "None":
+                default_txt = ""
             choice_data = {
                 'name': choice.text(0),
-                'default': combo.currentText() if combo else '',
+                'default': default_txt,
                 'expanded': choice.isExpanded(),
                 'options': [],
             }
@@ -2277,6 +2306,9 @@ class SmartPropDocument(QMainWindow):
                         if name_widget and hasattr(name_widget, 'combobox')
                         else var_item.text(0)
                     )
+                    if var_name == "None" or not var_name:
+                        var_name = var_item.text(0)
+
                     if val_widget and hasattr(val_widget, 'data'):
                         var_type = val_widget.data.get('m_DataType', '')
                         var_value = val_widget.data.get('m_Value', '')
@@ -2300,22 +2332,22 @@ class SmartPropDocument(QMainWindow):
             for choice_data in state:
                 choice_item = AddChoice(
                     tree=self.ui.choices_tree_widget,
-                    name=choice_data['name'],
-                    default=choice_data['default'],
+                    name=choice_data.get('name', 'Choice'),
+                    default=choice_data.get('default', ''),
                     variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 ).item
-                for option_data in choice_data['options']:
+                for option_data in choice_data.get('options', []):
                     option_item = AddOption(
-                        parent=choice_item, name=option_data['name']
+                        parent=choice_item, name=option_data.get('name', 'Option')
                     ).item
-                    for var_data in option_data['variables']:
+                    for var_data in option_data.get('variables', []):
                         AddVariable(
                             element_id_generator=self.element_id_generator,
                             parent=option_item,
                             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            name=var_data['name'],
-                            value=var_data['value'],
-                            type=var_data['type'],
+                            name=var_data.get('name', ''),
+                            value=var_data.get('value', ''),
+                            type=var_data.get('type', ''),
                         )
                     option_item.setExpanded(option_data.get('expanded', False))
                 choice_item.setExpanded(choice_data.get('expanded', False))
