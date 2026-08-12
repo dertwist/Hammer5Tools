@@ -317,10 +317,11 @@ def write_vsmart(
         for opt in choice.get("options", []):
             options.append({
                 "_class": "CSmartPropChoiceOption",
-                "m_sName": opt.get("name", "Option"),
+                "m_Name": opt.get("name", "Option"),
                 "m_VariableValues": [
                     {
-                        "m_sVariableName": c_name,
+                        "m_TargetName": c_name,
+                        "m_DataType": "Float",
                         "m_Value": opt.get("value", 0)
                     }
                 ]
@@ -328,8 +329,7 @@ def write_vsmart(
         if options:
             vsmart_choices.append({
                 "_class": "CSmartPropChoice",
-                "m_sChoiceName": c_name,
-                "m_sChoiceName": c_name,
+                "m_Name": c_name,
                 "m_Options": options,
             })
 
