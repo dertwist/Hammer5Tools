@@ -625,23 +625,28 @@ class SmartPropEditorMainWindow(QMainWindow):
             error_dialog = ErrorInfo(text="No file selected", details="Please select a file to open.")
             error_dialog.exec_()
 
-    def _setup_document_signals(self, doc, tab_title):
+    def _setup_document_signals(self, doc, tab_title=None):
         """
         Helper method to connect document change signals (if any) and set initial tab text.
         Ensures the tab name is updated when the document is edited.
         """
         # Connect the _edited signal from the document to update the tab title
         if hasattr(doc, "_edited"):
-            doc._edited.connect(lambda: self.update_document_tab_title(doc, tab_title))
+            doc._edited.connect(lambda d=doc: self.update_document_tab_title(d))
             
         self.update_document_tab_title(doc, tab_title)
 
-    def update_document_tab_title(self, doc, base_name):
+    def update_document_tab_title(self, doc, base_name=None):
         """
         If doc is modified, prepend '*' to the tab name; otherwise use base_name.
         """
         idx = self.ui.DocumentTabWidget.indexOf(doc)
         if idx != -1 and hasattr(doc, 'is_modified'):
+            if not base_name:
+                if getattr(doc, 'opened_file', None):
+                    base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
+                else:
+                    base_name = "Untitled"
             text = f"*{base_name}" if doc.is_modified() else base_name
             self.ui.DocumentTabWidget.setTabText(idx, text)
 

@@ -102,6 +102,7 @@ class SmartPropDocument(QMainWindow):
         enable_dark_title_bar(self)
 
         self.undo_stack = QUndoStack(self)
+        self.undo_stack.cleanChanged.connect(self._on_undo_clean_changed)
 
         # Window-level undo/redo shortcuts are handled by main window menu actions
         # (action_undo, action_redo, action_isolate) in SmartPropEditorMainWindow.
@@ -373,6 +374,11 @@ class SmartPropDocument(QMainWindow):
 
     def is_modified(self):
         return self._modified
+
+    def _on_undo_clean_changed(self, clean):
+        if not self._restoring_state:
+            self._modified = not clean
+            self._edited.emit()
 
     def _on_manual_dock_visibility_changed(self, visible):
         """Refresh the manual editor whenever its dock becomes visible."""
@@ -1146,6 +1152,7 @@ class SmartPropDocument(QMainWindow):
         # catching a mid-load exception can never leave the guard permanently
         # raised (which would permanently block all future property undo entries).
         self._property_undo_guard += 1
+        self._restoring_state = True
         try:
             self.opened_file = filename
             vsmart_instance = VsmartOpen(
@@ -1256,8 +1263,10 @@ class SmartPropDocument(QMainWindow):
             # Always release the guard and clear the stack, even if an exception
             # occurred mid-load.  Both are deferred so all singleShot(0)
             # _finish_init callbacks that were queued during file load fire first.
+            self._restoring_state = False
             QTimer.singleShot(0, self._dec_property_undo_guard)
             QTimer.singleShot(0, self.undo_stack.clear)
+            QTimer.singleShot(0, self._edited.emit)
 
     # [Save File]
     def save_file(self, external=False):
@@ -1305,6 +1314,8 @@ class SmartPropDocument(QMainWindow):
                 self.update_title("saved", filename)
             # Mark document as unmodified after saving
             self._modified = False
+            self.undo_stack.setClean()
+            self._edited.emit()
 
     # [Choices Context Menu]
     def open_MenuChoices(self, position):

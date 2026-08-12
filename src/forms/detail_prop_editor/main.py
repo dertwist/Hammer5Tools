@@ -302,9 +302,8 @@ class DetailPropEditorWidget(QMainWindow):
         self.hierarchy.load(load_vdata(self.vdata_path))
         self.setToolTip(self.vdata_path)
         self.undo_stack.clear()
-        self._set_title("" if existed else " *")
-        if not existed:
-            self._modified = True
+        self._modified = False
+        self._set_title("")
         if existed:
             parent = self.parent()
             if parent is not None and hasattr(parent, "update_title"):
