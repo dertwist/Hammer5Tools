@@ -1,2 +1,2 @@
-## General
-* Added crash report handler
+## DetailProp editor
+* Removed unsaved changes dialog when switching addons
