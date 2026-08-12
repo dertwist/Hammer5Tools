@@ -256,25 +256,34 @@ class Widget(QMainWindow):
         redo both advance the index by one, so count() disambiguates them."""
         if stack is None:
             return
-        state = {"idx": stack.index(), "count": stack.count()}
+        try:
+            state = {"idx": stack.index(), "count": stack.count()}
+        except (RuntimeError, AttributeError):
+            return
 
         def on_index_changed(new_idx):
-            prev_idx, prev_count = state["idx"], state["count"]
-            count = stack.count()
-            state["idx"], state["count"] = new_idx, count
-            if count == 0:
-                return
-            if count > prev_count:                       # new command pushed
-                txt = stack.text(new_idx - 1)
-                if txt: self.update_title(text=txt[:1].upper() + txt[1:])
-            elif new_idx < prev_idx:                     # undo
-                txt = stack.text(new_idx)
-                if txt: self.update_title(text=f"Undo [{txt}]")
-            elif new_idx > prev_idx:                     # redo
-                txt = stack.text(new_idx - 1)
-                if txt: self.update_title(text=f"Redo [{txt}]")
+            try:
+                prev_idx, prev_count = state["idx"], state["count"]
+                count = stack.count()
+                state["idx"], state["count"] = new_idx, count
+                if count == 0:
+                    return
+                if count > prev_count:                       # new command pushed
+                    txt = stack.text(new_idx - 1)
+                    if txt: self.update_title(text=txt[:1].upper() + txt[1:])
+                elif new_idx < prev_idx:                     # undo
+                    txt = stack.text(new_idx)
+                    if txt: self.update_title(text=f"Undo [{txt}]")
+                elif new_idx > prev_idx:                     # redo
+                    txt = stack.text(new_idx - 1)
+                    if txt: self.update_title(text=f"Redo [{txt}]")
+            except (RuntimeError, AttributeError):
+                pass
 
-        stack.indexChanged.connect(on_index_changed)
+        try:
+            stack.indexChanged.connect(on_index_changed)
+        except (RuntimeError, AttributeError):
+            pass
 
     def current_tab(self, set_flag):
         if set_flag:
