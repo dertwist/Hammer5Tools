@@ -240,7 +240,14 @@ if __name__ == "__main__":
         existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
-    # 4. No existing instance, load full app logic and start GUI
+    # Initialize COM / OLE in STA apartment mode on Windows to support native OS dialogs
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            ctypes.windll.ole32.OleInitialize(None)
+        except Exception:
+            pass
+
     from src.app_core import Widget, start_instance_server, QT_Stylesheet_global, check_dotnet_runtime
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QTimer
