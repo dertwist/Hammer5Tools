@@ -492,7 +492,8 @@ class AudioDocument(QWidget):
     def open_file(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Open audio file", "",
-            "Audio (*.wav *.mp3 *.flac *.aac *.m4a *.ogg *.wma)")
+            "Audio (*.wav *.mp3 *.flac *.aac *.m4a *.ogg *.wma)"
+        )
         if path:
             self.load(path)
 
@@ -669,7 +670,9 @@ class AudioDocument(QWidget):
         if self.samples is None:
             return
         start = os.path.splitext(self.path)[0] + ".wav" if self.path else ""
-        path, _ = QFileDialog.getSaveFileName(self, "Save WAV", start, "WAV (*.wav)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save WAV", start, "WAV (*.wav)"
+        )
         if path:
             if not path.lower().endswith(".wav"):
                 path += ".wav"

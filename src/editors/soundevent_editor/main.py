@@ -73,33 +73,65 @@ class CopyDefaultSoundFolders:
                     shutil.copytree(source_item, destination_item, dirs_exist_ok=True)
                 else:
                     shutil.copy2(source_item, destination_item)
+from src.editors.soundevent_editor.comment_handler import (
+    extract_vsndevts_comments,
+    serialize_vsndevts_with_comments,
+)
+
 class LoadSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
         super().__init__()
-        data = open(path, "r")
-        data = Kv3ToJson(data.read())
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        file_header_comments, event_comments, file_footer_comments = extract_vsndevts_comments(content)
+        tree.file_header_comments = file_header_comments
+        tree.file_footer_comments = file_footer_comments
+        tree.editor_info_comments = event_comments.get("editor_info", "")
+
+        data = Kv3ToJson(content)
+        tree.editor_info_data = data.get("editor_info")
+
         self.tree = tree
         self.tree.clear()
         self.root = self.tree.invisibleRootItem()
         for key in data:
             if key != "editor_info":
                 new_item = HierarchyItemModel(_data=data[key], _name=key, _class='Event')
+                if key in event_comments:
+                    new_item.setData(0, Qt.UserRole + 1, event_comments[key])
                 self.root.addChild(new_item)
 
 class SaveSoundEvents:
-    def __init__(self, tree: QTreeWidget, path:str):
+    def __init__(self, tree: QTreeWidget, path: str):
         super().__init__()
         data = {}
-        data.update(editor_info)
+        event_comments = {}
+        file_header_comments = getattr(tree, "file_header_comments", "")
+        file_footer_comments = getattr(tree, "file_footer_comments", "")
+        editor_info_comments = getattr(tree, "editor_info_comments", "")
+        editor_info_data = getattr(tree, "editor_info_data", None)
+
         for index in range(tree.invisibleRootItem().childCount()):
             item = tree.invisibleRootItem().child(index)
             key = str(item.text(0))
             value = item.data(0, Qt.UserRole)
-            item_value = {key:value}
-            data.update(item_value)
+            comment = item.data(0, Qt.UserRole + 1)
+            data[key] = value
+            if comment:
+                event_comments[key] = comment
+
         # Write to file
-        with open(path, 'w') as output:
-            output.write(JsonToKv3(data))
+        output_text = serialize_vsndevts_with_comments(
+            data,
+            file_header_comments=file_header_comments,
+            event_comments=event_comments,
+            file_footer_comments=file_footer_comments,
+            editor_info_data=editor_info_data,
+            editor_info_comments=editor_info_comments,
+        )
+        with open(path, 'w', encoding="utf-8") as output:
+            output.write(output_text)
 
 class SoundEventEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
@@ -351,24 +383,37 @@ class SoundEventEditorMainWindow(QMainWindow):
     # SoundEvents
     @exception_handler
     def load_soundevents(self, filepath=None):
-        """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
-        # Cleanup
-        try:
-            self.PropertiesWindow.properties_clear()
-            self.ui.hierarchy_widget.clear()
-        except:
-            pass
-        if filepath is not None:
-            filepath = self.filepath_vsndevts
+        """Load soundevents. If filepath is given, load it. If not, open file dialog."""
+        target_path = None
+
+        if isinstance(filepath, str) and filepath:
+            target_path = filepath
         else:
-            base_dir = os.path.join(get_addon_dir(), 'soundevents')
-            print(base_dir)
-            filepath, _ = QFileDialog.getOpenFileName(self,"Select a Soundevents file",base_dir,"Soundevents Files (*.vsndevts)")
-        if os.path.exists(filepath):
-            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=filepath)
-            self.filepath_vsndevts = filepath
+            # User clicked "Load" button or called without path -> open file dialog
+            base_dir = os.path.join(get_addon_dir(), 'soundevents') if get_addon_dir() else ""
+            if not os.path.exists(base_dir):
+                base_dir = get_addon_dir() or ""
+            target_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Select a Soundevents file",
+                base_dir,
+                "Soundevents Files (*.vsndevts);;All Files (*)"
+            )
+            if not target_path:
+                return
+
+        if target_path and os.path.exists(target_path):
+            try:
+                self.PropertiesWindow.properties_clear()
+                self.ui.hierarchy_widget.clear()
+            except Exception:
+                pass
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=target_path)
+            self.filepath_vsndevts = target_path
+            if callable(self.update_title):
+                self.update_title('saved', self.filepath_vsndevts)
         else:
-            msg_box = QMessageBox()
+            msg_box = QMessageBox(self)
             msg_box.setIcon(QMessageBox.Warning)
             msg_box.setText(
                 "It seems there is no soundevents file available. Would you like to create a default one? Please note: this action may overwrite any existing WAV files in the sounds folder, if they are present.")
@@ -378,7 +423,16 @@ class SoundEventEditorMainWindow(QMainWindow):
             response = msg_box.exec()
             if response == QMessageBox.Yes:
                 CopyDefaultSoundFolders()
-                LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+                if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
+                    try:
+                        self.PropertiesWindow.properties_clear()
+                        self.ui.hierarchy_widget.clear()
+                    except Exception:
+                        pass
+                    LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+                    if callable(self.update_title):
+                        self.update_title('saved', self.filepath_vsndevts)
+
         if hasattr(self, 'undo_stack') and self.undo_stack:
             self.undo_stack.clear()
 
@@ -388,7 +442,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         if hasattr(self, 'undo_stack') and self.undo_stack:
             self.undo_stack.setClean()
         print(f'Saved file: {self.filepath_vsndevts}')
-        self.update_title('saved', self.filepath_vsndevts)
+        if callable(self.update_title):
+            self.update_title('saved', self.filepath_vsndevts)
 
     def has_unsaved_changes(self) -> bool:
         """Returns True if soundevents file has unsaved edits in undo stack."""
