@@ -80,33 +80,16 @@ def load_vdata(path: str) -> dict:
     return types or {"placeholder": default_type()}
 
 
-def _is_default(field, value) -> bool:
-    if isinstance(field.default, list):
-        try:
-            return [float(v) for v in value] == [float(v) for v in field.default]
-        except (TypeError, ValueError):
-            return False
-    if isinstance(field.default, bool):
-        return bool(value) is field.default
-    if isinstance(field.default, float):
-        try:
-            return abs(float(value) - field.default) < 1e-9
-        except (TypeError, ValueError):
-            return False
-    return value == field.default
-
-
 def _serialize_model(model: dict) -> dict:
-    """Emit m_ModelName always, plus every field that differs from its default."""
-    out = {"m_ModelName": flagged_value(model.get("m_ModelName") or "", Flag.resource_name)}
+    """Emit every field defined in MODEL_FIELDS (including defaults), plus unknown keys."""
+    out = {}
     known = {f.key for f in MODEL_FIELDS}
     for f in MODEL_FIELDS:
         if f.key == "m_ModelName":
-            continue
-        value = model.get(f.key, f.default)
-        if _is_default(f, value):
-            continue
-        out[f.key] = list(value) if isinstance(value, list) else value
+            out["m_ModelName"] = flagged_value(model.get("m_ModelName") or "", Flag.resource_name)
+        else:
+            value = model.get(f.key, f.default)
+            out[f.key] = list(value) if isinstance(value, list) else value
     for key, value in model.items():
         if key not in known:
             out[key] = value
@@ -114,12 +97,12 @@ def _serialize_model(model: dict) -> dict:
 
 
 def _serialize_type(detail_type: dict) -> dict:
+    """Emit every field defined in TYPE_FIELDS (including defaults), plus unknown keys."""
     out = {}
     known = {f.key for f in TYPE_FIELDS} | {"m_Models"}
     for f in TYPE_FIELDS:
         value = detail_type.get(f.key, f.default)
-        if not _is_default(f, value):
-            out[f.key] = value
+        out[f.key] = list(value) if isinstance(value, list) else value
     for key, value in detail_type.items():
         if key not in known:
             out[key] = value
