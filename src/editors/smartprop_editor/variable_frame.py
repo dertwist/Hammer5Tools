@@ -78,6 +78,18 @@ class VariableFrame(PropertyMethods, QWidget):
 
         # Connect the edited signal directly to the dedicated instance slot
         self.var_int_instance.edited.connect(self._on_instance_changed)
+        if hasattr(self.var_int_instance, 'default') and self.var_default is None:
+            self.var_default = self.var_int_instance.default
+            self.var_value['default'] = self.var_default
+        if hasattr(self.var_int_instance, 'min') and self.var_min is None:
+            self.var_min = self.var_int_instance.min
+            self.var_value['min'] = self.var_min
+        if hasattr(self.var_int_instance, 'max') and self.var_max is None:
+            self.var_max = self.var_int_instance.max
+            self.var_value['max'] = self.var_max
+        if hasattr(self.var_int_instance, 'model') and self.var_model is None:
+            self.var_model = self.var_int_instance.model
+            self.var_value['model'] = self.var_model
         self.ui.layout.insertWidget(2, self.var_int_instance)
 
         # Setup the CompletingPlainTextEdit for Hide Expression logic
@@ -287,6 +299,19 @@ class VariableFrame(PropertyMethods, QWidget):
 
         # Connect the edited signal directly to the dedicated instance slot
         self.var_int_instance.edited.connect(self._on_instance_changed)
+        if hasattr(self.var_int_instance, 'default'):
+            self.var_default = self.var_int_instance.default
+            self.var_value['default'] = self.var_default
+        if hasattr(self.var_int_instance, 'min'):
+            self.var_min = self.var_int_instance.min
+            self.var_value['min'] = self.var_min
+        if hasattr(self.var_int_instance, 'max'):
+            self.var_max = self.var_int_instance.max
+            self.var_value['max'] = self.var_max
+        if hasattr(self.var_int_instance, 'model'):
+            self.var_model = self.var_int_instance.model
+            self.var_value['model'] = self.var_model
+        self._rebuild_var_value()
         self.ui.layout.insertWidget(2, self.var_int_instance)
         # Emit content_changed directly (pre_change was already emitted above)
         self.update_colors()
@@ -353,6 +378,16 @@ class VariableFrame(PropertyMethods, QWidget):
         if self.var_class == 'Bool':
             self.var_value = {
                 'default': self.var_default if self.var_default is not None else False,
+                'min': None,
+                'max': None,
+                'model': None,
+                'm_nElementID': self.element_id,
+                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None,
+                'm_ReadOnlyExpression': self.read_only_expression if self.read_only_expression is not None else None
+            }
+        elif self.var_class == 'Color':
+            self.var_value = {
+                'default': self.var_default if (self.var_default is not None and self.var_default != '') else [255, 255, 255],
                 'min': None,
                 'max': None,
                 'model': None,

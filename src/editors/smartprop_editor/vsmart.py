@@ -373,12 +373,29 @@ class VsmartSave:
         raw_variables = self.get_variables(self.variables_layout)
         for var_key, var_key_value in raw_variables.items():
             var_default = var_key_value[2]["default"]
+            var_class = var_key_value[1]
             if var_default is None:
-                var_default = ""
+                if var_class == "Color":
+                    var_default = [255, 255, 255]
+                elif var_class == "Bool":
+                    var_default = False
+                elif var_class == "Vector3D":
+                    var_default = [1, 1, 1]
+                elif var_class == "Vector2D":
+                    var_default = [0, 0]
+                elif var_class == "Vector4D":
+                    var_default = [0, 0, 0, 0]
+                elif var_class == "Int":
+                    var_default = 0
+                elif var_class == "Float":
+                    var_default = 0.0
+                else:
+                    var_default = ""
+            elif var_class == "Color" and (var_default == "" or not isinstance(var_default, (list, tuple)) or len(var_default) < 3):
+                var_default = [255, 255, 255]
             var_min = var_key_value[2]["min"]
             var_max = var_key_value[2]["max"]
             var_model = var_key_value[2]["model"]
-            var_class = var_key_value[1]
             var_id = var_key_value[2]["m_nElementID"]
             var_hide_expression = var_key_value[2]["m_HideExpression"]
             var_read_only_expression = var_key_value[2].get("m_ReadOnlyExpression")

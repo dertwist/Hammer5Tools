@@ -648,11 +648,32 @@ class ManualEditor(QWidget):
             widget = layout.itemAt(i).widget()
             if widget and hasattr(widget, 'name') and hasattr(widget, 'var_class'):
                 from src.editors.smartprop_editor.objects import variable_prefix
+                default_val = widget.var_value.get('default')
+                if default_val is None:
+                    if widget.var_class == "Color":
+                        default_val = [255, 255, 255]
+                    elif widget.var_class == "Bool":
+                        default_val = False
+                    elif widget.var_class == "Vector3D":
+                        default_val = [1, 1, 1]
+                    elif widget.var_class == "Vector2D":
+                        default_val = [0, 0]
+                    elif widget.var_class == "Vector4D":
+                        default_val = [0, 0, 0, 0]
+                    elif widget.var_class == "Int":
+                        default_val = 0
+                    elif widget.var_class == "Float":
+                        default_val = 0.0
+                    else:
+                        default_val = ''
+                elif widget.var_class == "Color" and (default_val == '' or not isinstance(default_val, (list, tuple)) or len(default_val) < 3):
+                    default_val = [255, 255, 255]
+
                 var_dict = {
                     "_class": variable_prefix + widget.var_class,
                     "m_VariableName": widget.name,
                     "m_bExposeAsParameter": widget.var_visible_in_editor,
-                    "m_DefaultValue": widget.var_value.get('default', ''),
+                    "m_DefaultValue": default_val,
                 }
                 if widget.var_value.get('m_nElementID') is not None:
                     var_dict["m_nElementID"] = widget.var_value['m_nElementID']
