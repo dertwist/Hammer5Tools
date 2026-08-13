@@ -36,7 +36,7 @@ TYPE_FIELDS = [
 MODEL_FIELDS = [
     Field("m_ModelName", "Model", "model", "",
           "Model to be displayed."),
-    Field("m_MaterialGroup", "Material Group", "string", "",
+    Field("m_MaterialGroup", "Material Group", "material_group", "",
           "Material group (skin) to assign to use with the model."),
     Field("m_flWeight", "Weight", "float", 1.0,
           "A weight determining the frequency at which this model is placed relative to "

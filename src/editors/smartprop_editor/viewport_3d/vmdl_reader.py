@@ -21,10 +21,11 @@ stored in the VBIB — the axis permutation the GLB loader had to undo simply do
 not arise.
 """
 import ctypes
+import functools
 import os
 import re
 import threading
-from typing import Optional
+from typing import Optional, List
 
 import numpy as np
 
@@ -958,3 +959,105 @@ def load_model(resource_path: str, context_addon: str = None,
         bbox_max=vertices.max(axis=0),
         submeshes=submeshes,
     )
+
+
+@functools.lru_cache(maxsize=512)
+def get_model_material_groups(resource_path: str, context_addon: str = None) -> List[str]:
+    """
+    Return a list of material group (skin) names available on the given model.
+    Checks uncompiled source .vmdl on disk (content mounts) and compiled .vmdl_c (VPK / game).
+    """
+    if not resource_path or not isinstance(resource_path, str):
+        return []
+
+    path_clean = resource_path.strip().replace("\\", "/")
+    if not path_clean:
+        return []
+
+    groups: List[str] = []
+
+    # 1. Try uncompiled source .vmdl on disk
+    from src.common import get_cs2_path
+    from src.settings.common import get_addon_name, get_addon_dir
+
+    active_addon = context_addon or get_addon_name() or "addon"
+    addon_name, rel_path = _resolve(path_clean, active_addon)
+    cs2_path = get_cs2_path()
+
+    source_candidates: List[str] = []
+    if os.path.isabs(path_clean) and os.path.isfile(path_clean):
+        source_candidates.append(path_clean)
+
+    if cs2_path:
+        mounts = [os.path.join("csgo_addons", addon_name), "csgo", "csgo_imported", "csgo_core", "core"]
+        if context_addon and context_addon != addon_name:
+            mounts.insert(0, os.path.join("csgo_addons", context_addon))
+        for m in mounts:
+            source_candidates.append(os.path.join(cs2_path, "content", m, rel_path.replace("/", os.sep)))
+
+    addon_dir = get_addon_dir()
+    if addon_dir:
+        source_candidates.append(os.path.join(addon_dir, rel_path.replace("/", os.sep)))
+
+    for candidate in source_candidates:
+        if candidate.endswith(".vmdl_c"):
+            candidate = candidate[:-2]
+        if not candidate.endswith(".vmdl"):
+            candidate += ".vmdl"
+        if os.path.isfile(candidate):
+            try:
+                import keyvalues3 as kv3
+                kv_data = kv3.read(candidate).value
+                root = kv_data.get("rootNode", {})
+                for child in root.get("children", []):
+                    if child.get("_class") == "MaterialGroupList":
+                        for mg in child.get("children", []):
+                            cls_name = mg.get("_class", "")
+                            name = mg.get("name")
+                            if cls_name == "DefaultMaterialGroup" and not name:
+                                name = "default"
+                            if name and name not in groups:
+                                groups.append(str(name))
+                if groups:
+                    return groups
+            except Exception:
+                try:
+                    with open(candidate, "r", encoding="utf-8", errors="ignore") as f:
+                        text = f.read()
+                    if "DefaultMaterialGroup" in text and "default" not in groups:
+                        groups.append("default")
+                    for m in re.finditer(r'_class\s*=\s*"MaterialGroup"\s*[\s\S]*?name\s*=\s*"([^"]+)"', text):
+                        name = m.group(1).strip()
+                        if name and name not in groups:
+                            groups.append(name)
+                    if groups:
+                        return groups
+                except Exception:
+                    pass
+
+    # 2. Try compiled model via VRF
+    try:
+        from src.dotnet import setup_vrf, _suppress_dotnet_console
+        setup_vrf()
+        loader = _get_loader(addon_name, rel_path)
+        if loader is not None:
+            with _suppress_dotnet_console():
+                resource = loader.LoadFileCompiled(rel_path)
+            if resource is not None:
+                model = resource.DataBlock
+                if hasattr(model, "GetMaterialGroups"):
+                    mat_groups = list(model.GetMaterialGroups())
+                    for g in mat_groups:
+                        name = getattr(g, "Item1", None) or getattr(g, "Name", None)
+                        if name is None and hasattr(g, "Key"):
+                            name = g.Key
+                        if name is None:
+                            name = str(g)
+                        name = str(name).strip()
+                        if name and name not in groups:
+                            groups.append(name)
+    except Exception:
+        pass
+
+    return groups
+

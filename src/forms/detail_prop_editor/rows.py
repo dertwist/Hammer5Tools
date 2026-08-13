@@ -20,11 +20,12 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QCheckBox, QPushButton, QSizePolicy,
+    QCheckBox, QPushButton, QSizePolicy, QComboBox,
 )
 
 from src.widgets.widgets import FloatWidget
 from src.editors.smartprop_editor.property import compact
+from src.styles.common import qt_stylesheet_combobox
 
 # Label colours, matching the SmartProp property editor's type coding.
 COLOR_FLOAT = "rgb(181, 255, 239)"
@@ -192,6 +193,43 @@ class QAngleRow(BaseRow):
         return [float(w.value) for w in self.float_widgets]
 
 
+class MaterialGroupRow(BaseRow):
+    """Material group (skin) selector: editable combobox populated with model skins + manual typing."""
+
+    def __init__(self, field, value, choices=None, placeholder="default", parent=None):
+        super().__init__(field, COLOR_STRING, parent)
+        self.combo = QComboBox()
+        self.combo.setEditable(True)
+        self.combo.setStyleSheet(qt_stylesheet_combobox)
+        self.combo.setMaximumHeight(compact.FIELD_H)
+        self.combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        if self.combo.lineEdit():
+            self.combo.lineEdit().setPlaceholderText(placeholder)
+
+        self.set_choices(choices or [], current=str(value or ""))
+        self.combo.currentTextChanged.connect(lambda _: self.edited.emit())
+        self.ui.layout.addWidget(self.combo)
+
+    def value(self) -> str:
+        return self.combo.currentText().strip()
+
+    def set_value(self, text: str):
+        self.combo.blockSignals(True)
+        self.combo.setCurrentText(str(text or ""))
+        self.combo.blockSignals(False)
+
+    def set_choices(self, choices: list, current=None):
+        if current is None:
+            current = self.value()
+        self.combo.blockSignals(True)
+        self.combo.clear()
+        for choice in choices:
+            if choice:
+                self.combo.addItem(str(choice))
+        self.combo.setCurrentText(str(current or ""))
+        self.combo.blockSignals(False)
+
+
 class SectionHeader(QWidget):
     """Group divider between property sections (Model, Fade, Orientation, …)."""
 
@@ -211,10 +249,12 @@ class SectionHeader(QWidget):
         compact.set_widget_bg(self, compact.BG)
 
 
-def build_row(field, value):
+def build_row(field, value, choices=None):
     """Row factory for a schema field."""
     if field.kind == "model":
         return ModelRow(field, value)
+    if field.kind == "material_group":
+        return MaterialGroupRow(field, value, choices=choices)
     if field.kind == "string":
         return StringRow(field, value)
     if field.kind == "bool":
