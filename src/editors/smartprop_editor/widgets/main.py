@@ -296,8 +296,23 @@ class ComboboxVariablesWidget(QWidget):
             final_name = f"{base_name}_{suffix}"
         var_display_name = ''
         var_visible_in_editor = False
+        default_val = None
+        if var_type == "Color":
+            default_val = [255, 255, 255]
+        elif var_type == "Bool":
+            default_val = False
+        elif var_type == "Vector3D":
+            default_val = [1, 1, 1]
+        elif var_type == "Vector2D":
+            default_val = [0, 0]
+        elif var_type == "Vector4D":
+            default_val = [0, 0, 0, 0]
+        elif var_type == "Int":
+            default_val = 0
+        elif var_type == "Float":
+            default_val = 0.0
         var_value = {
-            'default': None,
+            'default': default_val,
             'min': None,
             'max': None,
             'model': None,

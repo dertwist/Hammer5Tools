@@ -15,10 +15,13 @@ class Var_class_color(QWidget):
         self.setAcceptDrops(True)
 
         # Initialize default color
-        if default is None:
+        if default is None or default == '' or not isinstance(default, (list, tuple)) or len(default) < 3:
             self.default = [255, 255, 255]  # Default to white
         else:
-            self.default = default
+            try:
+                self.default = [int(default[0]), int(default[1]), int(default[2])]
+            except (ValueError, TypeError, IndexError):
+                self.default = [255, 255, 255]
 
         # Create a QColor object from the default RGB values
         self.color = QColor(*self.default)

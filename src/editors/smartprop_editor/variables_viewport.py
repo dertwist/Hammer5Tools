@@ -194,7 +194,22 @@ class SmartPropEditorVariableViewport(QWidget):
         var_name = name
         var_display_name = None
         var_visible_in_editor = False
-        var_value = {"default": None, "min": None, "max": None, "model": None}
+        default_val = None
+        if var_class == "Color":
+            default_val = [255, 255, 255]
+        elif var_class == "Bool":
+            default_val = False
+        elif var_class == "Vector3D":
+            default_val = [1, 1, 1]
+        elif var_class == "Vector2D":
+            default_val = [0, 0]
+        elif var_class == "Vector4D":
+            default_val = [0, 0, 0, 0]
+        elif var_class == "Int":
+            default_val = 0
+        elif var_class == "Float":
+            default_val = 0.0
+        var_value = {"default": default_val, "min": None, "max": None, "model": None}
         var_value = self.element_id_generator.update_value(var_value, force=True)
         self.add_variable(
             name=var_name,
