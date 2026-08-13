@@ -74,7 +74,7 @@ def load_vdata(path: str) -> dict:
 
     types = {}
     for name, value in raw.items():
-        if name == "generic_data_type" or not isinstance(value, dict):
+        if name in ("generic_data_type", "editor_info") or not isinstance(value, dict):
             continue
         types[name] = _normalize_type(value)
     return types or {"placeholder": default_type()}
@@ -110,12 +110,43 @@ def _serialize_type(detail_type: dict) -> dict:
     return out
 
 
+import re
+
+
+def _format_vdata_kv3(payload: dict) -> str:
+    """Encode payload to KV3 and format vector properties (e.g. m_vRandomRotationMin/Max) as multiline arrays."""
+    kv3_text = JsonToKv3(payload)
+
+    def replacer(match):
+        indent = match.group(1)
+        prop_name = match.group(2)
+        items_str = match.group(3)
+        items = [x.strip() for x in items_str.split(',') if x.strip()]
+        formatted_items = []
+        for item in items:
+            try:
+                f_val = float(item)
+                formatted_items.append(f"{indent}\t{f_val:.6f},")
+            except ValueError:
+                formatted_items.append(f"{indent}\t{item},")
+        inner = "\n".join(formatted_items)
+        return f"{indent}{prop_name} = \n{indent}[\n{inner}\n{indent}]"
+
+    pattern = re.compile(r"^(\t+)(m_v[A-Za-z0-9_]+)\s*=\s*\[([^\]\n]+)\]", re.MULTILINE)
+    return pattern.sub(replacer, kv3_text)
+
+
 def save_vdata(path: str, types: dict):
     """Write the type map back out as kv3, creating scripts/ if needed."""
-    payload = {"generic_data_type": GENERIC_DATA_TYPE}
+    from src.common import editor_info, fast_deepcopy
+    payload = {
+        "generic_data_type": GENERIC_DATA_TYPE,
+        "editor_info": fast_deepcopy(editor_info.get("editor_info", {})),
+    }
     for name, detail_type in types.items():
-        payload[name] = _serialize_type(detail_type)
+        if name != "editor_info":
+            payload[name] = _serialize_type(detail_type)
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as file:
-        file.write(JsonToKv3(payload))
+        file.write(_format_vdata_kv3(payload))
