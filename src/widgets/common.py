@@ -92,13 +92,11 @@ class ErrorInfo(QDialog):
         self.close()
 
     def save_details(self):
-        options = QFileDialog.Options()
         filename, _ = QFileDialog.getSaveFileName(
             self,
             "Save Error Details",
             "error_details.txt",
-            "Text Files (*.txt);;All Files (*)",
-            options=options
+            "Text Files (*.txt);;All Files (*)"
         )
         if filename:
             try:
