@@ -347,6 +347,27 @@ class Widget(QMainWindow):
             self.ui.MainWindowTools_tabs.setCurrentIndex(smartprop_tab_index)
         self.SmartPropEditorMainWindow.open_file(filename=file_path)
 
+    def open_file_in_soundevent(self, file_path):
+        if not file_path:
+            return
+        file_path = os.path.normpath(file_path)
+        if "csgo_addons" in file_path.lower():
+            parts = file_path.split(os.sep)
+            for i, part in enumerate(parts):
+                if part.lower() == "csgo_addons" and i + 1 < len(parts):
+                    addon_hint = parts[i + 1]
+                    if not self.check_addon_mismatch(addon_hint):
+                        return
+                    break
+
+        if not self.SoundEventEditorMainWindow:
+            print("SoundEvent Editor not initialized")
+            return
+        soundevent_tab_index = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
+        if soundevent_tab_index >= 0:
+            self.ui.MainWindowTools_tabs.setCurrentIndex(soundevent_tab_index)
+        self.SoundEventEditorMainWindow.load_soundevents(filepath=file_path)
+
     def open_quick_create_dialog(self, folder_path, file_type):
         dialog = QuickCreateDialog(folder_path, file_type, self)
         dialog.show()
@@ -848,9 +869,14 @@ def handle_new_connection(server, widget):
                 widget.show_from_tray()
             elif command == IPCCommand.OPEN_FILE.value:
                 file_path = message.get("file_path")
+                editor_type = message.get("editor_type")
                 if file_path:
                     widget.show_from_tray()
-                    widget.open_file_in_smartprop(file_path)
+                    ext = os.path.splitext(file_path)[1].lower()
+                    if editor_type == "soundevent" or ext == '.vsndevts':
+                        widget.open_file_in_soundevent(file_path)
+                    else:
+                        widget.open_file_in_smartprop(file_path)
             elif command == IPCCommand.CREATE_VMDL.value:
                 widget.show_from_tray()
                 widget.open_quick_create_dialog(message.get("file_path"), "vmdl")

@@ -231,7 +231,12 @@ if __name__ == "__main__":
         elif args.quick_process_file:
             message = IPCMessage.create_quick_action(IPCCommand.QUICK_PROCESS_FILE, os.path.abspath(args.quick_process_file))
         elif args.file:
-            message = IPCMessage.create_open_file(os.path.abspath(args.file))
+            file_path = os.path.abspath(args.file)
+            ext = os.path.splitext(file_path)[1].lower()
+            if ext == '.vsndevts':
+                message = IPCMessage.create_open_file(file_path, "soundevent")
+            else:
+                message = IPCMessage.create_open_file(file_path)
         else:
             message = IPCMessage.create_show()
         
@@ -291,6 +296,8 @@ if __name__ == "__main__":
             ext = os.path.splitext(file_path)[1].lower()
             if ext in ('.vsmart', '.vdata'):
                 widget.open_file_in_smartprop(file_path)
+            elif ext == '.vsndevts':
+                widget.open_file_in_soundevent(file_path)
 
     QTimer.singleShot(200, handle_initial_args)
     sys.exit(app.exec())
