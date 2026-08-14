@@ -609,6 +609,12 @@ class Explorer(QMainWindow):
             open_vsmart_action.triggered.connect(lambda: self.open_vsmart(file_path))
             menu.addAction(open_vsmart_action)
 
+        if file_extension == "vsndevts":
+            open_vsndevts_action = QAction("Open SoundEvent", self)
+            open_vsndevts_action.setIcon(QIcon('://icons/tools/assettypes/generic_sm.png'))
+            open_vsndevts_action.triggered.connect(lambda: self.open_vsndevts(file_path))
+            menu.addAction(open_vsndevts_action)
+
         default_app = get_default_application(file_extension)
         if default_app:
             app_name, app_path = default_app
@@ -790,6 +796,8 @@ class Explorer(QMainWindow):
         ext = os.path.splitext(file_path)[1].lower()
         if ext in ('.vsmart', '.vdata'):
             self.open_vsmart(file_path)
+        elif ext == '.vsndevts':
+            self.open_vsndevts(file_path)
         elif ext == '.hbat':
             self.open_config(file_path)
         elif ext in [f".{e}" for e in audio_extensions] or ext[1:] in audio_extensions:
@@ -824,6 +832,20 @@ class Explorer(QMainWindow):
             curr = curr.parent() if hasattr(curr, 'parent') else None
         if parent and hasattr(parent, 'SmartPropEditorMainWindow') and parent.SmartPropEditorMainWindow:
             parent.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
+
+    def open_vsndevts(self, filepath):
+        parent = self.parent()
+        curr = parent
+        while curr is not None:
+            if hasattr(curr, 'open_file_in_soundevent'):
+                curr.open_file_in_soundevent(filepath)
+                return
+            elif hasattr(curr, 'SoundEventEditorMainWindow') and curr.SoundEventEditorMainWindow is not None:
+                curr.SoundEventEditorMainWindow.load_soundevents(filepath=filepath)
+                return
+            curr = curr.parent() if hasattr(curr, 'parent') else None
+        if parent and hasattr(parent, 'SoundEventEditorMainWindow') and parent.SoundEventEditorMainWindow:
+            parent.SoundEventEditorMainWindow.load_soundevents(filepath=filepath)
 
 
     def copy_file(self, index):
