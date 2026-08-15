@@ -21,14 +21,14 @@ class Ui_documentation_dialog(object):
     def setupUi(self, documentation_dialog):
         if not documentation_dialog.objectName():
             documentation_dialog.setObjectName(u"documentation_dialog")
-        documentation_dialog.resize(680, 670)
+        documentation_dialog.resize(680, 580)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(documentation_dialog.sizePolicy().hasHeightForWidth())
         documentation_dialog.setSizePolicy(sizePolicy)
-        documentation_dialog.setMinimumSize(QSize(680, 670))
-        documentation_dialog.setMaximumSize(QSize(680, 670))
+        documentation_dialog.setMinimumSize(QSize(680, 580))
+        documentation_dialog.setMaximumSize(QSize(680, 580))
         documentation_dialog.setStyleSheet(u"background-color: #1C1C1C; color: #E3E3E3;")
         documentation_dialog.setSizeGripEnabled(False)
         documentation_dialog.setModal(False)
@@ -217,8 +217,30 @@ class Ui_documentation_dialog(object):
         self.open_radio_sound_guide_button.setIconSize(QSize(18, 18))
         self.guides_btn_layout.addWidget(self.open_radio_sound_guide_button)
 
+        self.open_smart_props_guide_button = QPushButton(self.guides_card)
+        self.open_smart_props_guide_button.setObjectName(u"open_smart_props_guide_button")
+        self.open_smart_props_guide_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.open_smart_props_guide_button.setStyleSheet(self.btn_style)
+        self.open_smart_props_guide_button.setIcon(icon_doc)
+        self.open_smart_props_guide_button.setIconSize(QSize(18, 18))
+        self.guides_btn_layout.addWidget(self.open_smart_props_guide_button)
+
         self.guides_layout.addLayout(self.guides_btn_layout)
         self.content_layout.addWidget(self.guides_card)
+
+        # Special Thanks Inline Mention
+        self.special_thanks_label = QLabel(self.content_frame)
+        self.special_thanks_label.setObjectName(u"special_thanks_label")
+        font_thanks = QFont()
+        font_thanks.setFamilies([u"Segoe UI"])
+        font_thanks.setPointSize(9)
+        self.special_thanks_label.setFont(font_thanks)
+        self.special_thanks_label.setTextFormat(Qt.TextFormat.RichText)
+        self.special_thanks_label.setOpenExternalLinks(True)
+        self.special_thanks_label.setStyleSheet(u"color: #9D9D9D; border: none; padding: 2px;")
+        self.special_thanks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.content_layout.addWidget(self.special_thanks_label)
+
         self.verticalLayout.addWidget(self.content_frame)
 
         # Bottom Frame
@@ -319,12 +341,14 @@ class Ui_documentation_dialog(object):
         
         self.video_title.setText(QCoreApplication.translate("documentation_dialog", u"CUSTOM LOADINGSCREEN - CS2 Mapping Tutorial", None))
         self.video_desc.setText(QCoreApplication.translate("documentation_dialog", u"In this video i'll show you how you can create a fully customized loadingscreen for your CounterStrike 2 map! Learn how to change the background, description and map icon of your custom CS2 map!\n\nTip: Setup the cameras in the early stages of your map so you can capture the history and progress of your map from start to finish!", None))
-        self.watch_video_button.setText(QCoreApplication.translate("documentation_dialog", u"▶ Watch Tutorial on YouTube", None))
+        self.watch_video_button.setText(QCoreApplication.translate("documentation_dialog", u"Watch Tutorial on YouTube", None))
 
         self.guides_header.setText(QCoreApplication.translate("documentation_dialog", u"📚 Documentation & Guides", None))
         self.open_documentation_button.setText(QCoreApplication.translate("documentation_dialog", u"Documentation", None))
         self.open_radio_sound_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Radio Soundevent Guide", None))
+        self.open_smart_props_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Smart Props Guide", None))
 
+        self.special_thanks_label.setText(QCoreApplication.translate("documentation_dialog", u'Special thanks: <a href="https://github.com/LaplaceTor" style="color: #61AFEF; text-decoration: none;">LaplaceTor</a>, <a href="https://github.com/Andrew900460" style="color: #61AFEF; text-decoration: none;">Andrew900460</a>', None))
 
         self.dont_show_button.setText(QCoreApplication.translate("documentation_dialog", u"Don't show on startup", None))
         self.request_a_new_feature_button.setText(QCoreApplication.translate("documentation_dialog", u"Feedback", None))
