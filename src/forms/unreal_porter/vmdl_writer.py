@@ -522,6 +522,38 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=Non
     }
 
 
+def scale_obj(path: str, scale_factor: float) -> bool:
+    """Scale all vertex positions ('v x y z') in an OBJ file in place."""
+    if abs(scale_factor - 1.0) < 1e-9 or not path or not os.path.isfile(path):
+        return False
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+        out = []
+        modified = False
+        for line in lines:
+            if line.startswith("v "):
+                parts = line.strip().split()
+                if len(parts) >= 4:
+                    try:
+                        x = float(parts[1]) * scale_factor
+                        y = float(parts[2]) * scale_factor
+                        z = float(parts[3]) * scale_factor
+                        w = f" {float(parts[4]) * scale_factor}" if len(parts) > 4 else ""
+                        out.append(f"v {x:.6f} {y:.6f} {z:.6f}{w}\n")
+                        modified = True
+                        continue
+                    except ValueError:
+                        pass
+            out.append(line)
+        if modified:
+            with open(path, "w", encoding="utf-8") as f:
+                f.writelines(out)
+        return modified
+    except Exception:
+        return False
+
+
 def write_vmdl(output_path: str, mesh_rel_path: str,
                import_scale: float = UnitScale.ONE_TO_ONE,
                fbx_path: str = None,
@@ -531,7 +563,9 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                import_lods: bool = True,
                import_collision: bool = True,
                strip_prefix: bool = True,
-               mirror_axes=None) -> str:
+               mirror_axes=None,
+               scale_apply_mode: str = "FBX",
+               processed_files: set = None) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
@@ -539,25 +573,50 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
     vmdl is written. FBX files are automatically flattened in place.
     If material_path or output_dir is provided, material remapping will be set directly on the material group.
 
-    import_lods=False keeps LOD0 only — dropping the LOD list entirely would fall
-    through to the single-mesh path, which imports every mesh in the FBX and so
-    would render all the LODs stacked on top of each other.
-    import_collision=False discards the UCX/UBX hulls, leaving the physics hull
-    to be generated from the render mesh as it is for any FBX without them.
-    mirror_axes is an (x, y, z) tuple of bools adding a ModelModifier_ScaleAndMirror,
-    so placements with a handedness-flipping scale can reference this copy at
-    positive scale instead of rendering inside-out (see mirrored_model_path).
+    scale_apply_mode:
+      - "FBX": Scales mesh geometry (FBX/OBJ) directly, setting import_scale in .vmdl to 1.0.
+      - "Vmdl": Leaves mesh geometry unscaled, setting import_scale in .vmdl to import_scale.
+    processed_files: Set of normalized paths already scaled, to prevent duplicate scaling on shared FBX copies.
     """
     mesh_rel_path = mesh_rel_path.replace("\\", "/")
     mesh_info = {}
 
-    if fbx_path and os.path.isfile(fbx_path):
-        try:
-            flatten_fbx(fbx_path, strip_prefix=strip_prefix)
-        except Exception:
-            pass
-        mesh_info = inspect_fbx_meshes(fbx_path)
-        mesh_info = apply_import_options(mesh_info, import_lods, import_collision)
+    scale_mode = str(scale_apply_mode).strip().lower()
+    if scale_mode == "fbx":
+        vmdl_import_scale = 1.0
+        mesh_scale_factor = float(import_scale)
+    else:
+        vmdl_import_scale = float(import_scale)
+        mesh_scale_factor = 1.0
+
+    target_mesh_file = fbx_path
+    if not target_mesh_file and output_dir and mesh_rel_path:
+        cand = os.path.join(output_dir, mesh_rel_path)
+        if os.path.isfile(cand):
+            target_mesh_file = cand
+
+    if target_mesh_file and os.path.isfile(target_mesh_file):
+        abs_target = os.path.normpath(os.path.abspath(target_mesh_file))
+        already_processed = processed_files is not None and abs_target in processed_files
+
+        if abs_target.lower().endswith(".fbx"):
+            eff_scale = 1.0 if already_processed else mesh_scale_factor
+            try:
+                flatten_fbx(target_mesh_file, strip_prefix=strip_prefix, scale_factor=eff_scale)
+            except Exception:
+                pass
+            if processed_files is not None:
+                processed_files.add(abs_target)
+            mesh_info = inspect_fbx_meshes(target_mesh_file)
+            mesh_info = apply_import_options(mesh_info, import_lods, import_collision)
+        elif abs_target.lower().endswith(".obj"):
+            if not already_processed:
+                try:
+                    scale_obj(target_mesh_file, scale_factor=mesh_scale_factor)
+                except Exception:
+                    pass
+                if processed_files is not None:
+                    processed_files.add(abs_target)
 
     material_remaps = None
     if material_path or fbx_path or output_dir:
@@ -579,7 +638,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
                         except Exception:
                             pass
 
-    vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=material_remaps,
+    vmdl = _build_vmdl_dict(mesh_rel_path, vmdl_import_scale, mesh_info, material_remaps=material_remaps,
                             use_graybox_fallback=use_graybox_fallback, mirror_axes=mirror_axes)
 
     content = JsonToKv3(vmdl, format="vmdl")
@@ -594,6 +653,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
 
 def demo():
     import tempfile
+    import shutil
 
     # No UE type prefix or _Inst suffix survives, stacked ones included.
     assert strip_ue_prefix("MI_RockWall_Inst") == "rock_wall"
@@ -662,6 +722,23 @@ def demo():
     assert mod["scale"] == 1.0, mod
     meshes = [c for c in mirrored["rootNode"]["children"] if c["_class"] == "RenderMeshList"][0]
     assert meshes["children"][0]["import_scale"] == 1.0, meshes["children"][0]
+
+    # Test scale_apply_mode: FBX mode vs Vmdl mode
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        test_fbx = os.path.join(tmp_dir, "test_cube.fbx")
+        shutil.copy(cube, test_fbx)
+        out_vmdl_fbx = os.path.join(tmp_dir, "test_fbx_mode.vmdl")
+        write_vmdl(out_vmdl_fbx, "test_cube.fbx", import_scale=0.5, fbx_path=test_fbx, scale_apply_mode="FBX")
+        with open(out_vmdl_fbx, "r") as f:
+            vmdl_txt = f.read()
+        assert "import_scale = 1.0" in vmdl_txt
+
+        shutil.copy(cube, test_fbx)
+        out_vmdl_vmdl = os.path.join(tmp_dir, "test_vmdl_mode.vmdl")
+        write_vmdl(out_vmdl_vmdl, "test_cube.fbx", import_scale=0.5, fbx_path=test_fbx, scale_apply_mode="Vmdl")
+        with open(out_vmdl_vmdl, "r") as f:
+            vmdl_txt = f.read()
+        assert "import_scale = 0.5" in vmdl_txt
 
     print("ok")
 

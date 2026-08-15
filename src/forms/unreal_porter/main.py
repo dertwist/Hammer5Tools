@@ -612,20 +612,25 @@ class UnrealPorterWidget(QDialog):
             lambda idx: set_settings_value("UnrealConverter", "model_unit_scale_idx", idx)
         )
 
-        self.model_graybox_check = QCheckBox("Fallback material")
-        self.model_graybox_check.setToolTip(
-            "Point converted models at the global fallback material with a graybox "
-            "texture instead of their own converted material."
+        self.model_apply_mode_combo = QComboBox()
+        self.model_apply_mode_combo.addItems(["FBX", "Vmdl"])
+        self.model_apply_mode_combo.setToolTip(
+            "FBX: Apply unit scale directly to FBX geometry (VMDL import scale remains 1.0).\n"
+            "Vmdl: Keep FBX geometry untouched and set import scale in the VMDL file."
         )
-        self.model_graybox_check.setChecked(get_settings_bool("UnrealConverter", "model_graybox_fallback", False))
-        self.model_graybox_check.toggled.connect(
-            lambda checked: set_settings_bool("UnrealConverter", "model_graybox_fallback", checked)
+        saved_apply_mode = get_settings_value("UnrealConverter", "model_scale_apply_mode", "FBX")
+        apply_mode_idx = self.model_apply_mode_combo.findText(saved_apply_mode)
+        if apply_mode_idx != -1:
+            self.model_apply_mode_combo.setCurrentIndex(apply_mode_idx)
+        self.model_apply_mode_combo.currentTextChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "model_scale_apply_mode", text)
         )
 
         scale_row = QHBoxLayout()
         scale_row.setContentsMargins(0, 0, 0, 0)
         scale_row.addWidget(self.model_scale_combo, 1)
-        scale_row.addWidget(self.model_graybox_check)
+        scale_row.addWidget(QLabel("Apply Mode:"))
+        scale_row.addWidget(self.model_apply_mode_combo, 1)
         form.addRow("Unit Scale:", scale_row)
 
         self.model_lods_check = QCheckBox("LODs")
@@ -654,6 +659,22 @@ class UnrealPorterWidget(QDialog):
         mesh_row.addWidget(self.model_collision_check)
         mesh_row.addStretch(1)
         form.addRow("Import:", mesh_row)
+
+        self.model_graybox_check = QCheckBox("Fallback material")
+        self.model_graybox_check.setToolTip(
+            "Point converted models at the global fallback material with a graybox "
+            "texture instead of their own converted material."
+        )
+        self.model_graybox_check.setChecked(get_settings_bool("UnrealConverter", "model_graybox_fallback", False))
+        self.model_graybox_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "model_graybox_fallback", checked)
+        )
+
+        other_row = QHBoxLayout()
+        other_row.setContentsMargins(0, 0, 0, 0)
+        other_row.addWidget(self.model_graybox_check)
+        other_row.addStretch(1)
+        form.addRow("Other:", other_row)
         return box
 
     def _build_textures_box(self):
@@ -825,6 +846,9 @@ class UnrealPorterWidget(QDialog):
 
     def get_unit_scale(self):
         return self.model_scale_combo.currentData()
+
+    def get_scale_apply_mode(self):
+        return self.model_apply_mode_combo.currentText()
 
     def is_enabled(self, type_name):
         """Whether a file type converts. The checkboxes live in the Select assets
@@ -1353,6 +1377,7 @@ class UnrealPorterWidget(QDialog):
             do_materials=self.is_enabled("Materials"),
             strip_prefix=self.strip_prefixes_check.isChecked(),
             unit_scale=self.get_unit_scale(),
+            scale_apply_mode=self.get_scale_apply_mode(),
             use_graybox_fallback=self.model_graybox_check.isChecked(),
             master_shaders=self.master_shader_selection(),
             master_slot_overrides=self.master_slot_overrides(),
