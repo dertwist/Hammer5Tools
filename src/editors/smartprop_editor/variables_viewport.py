@@ -19,6 +19,7 @@ from PySide6.QtGui import (
 
 
 from keyvalues3 import kv3_to_json
+from src.editors.smartprop_editor._common import is_category_widget
 from src.editors.smartprop_editor.variable_frame import VariableFrame, CategoryFrame
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.objects import (
@@ -149,11 +150,15 @@ class SmartPropEditorVariableViewport(QWidget):
             import random, string
             unique_hash = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
             if name.endswith('_start'):
-                name = f"hammer5tools_category_{unique_hash}_start"
-                self.add_category(name, __data[3], __data[4], __index)
+                start_name = f"hammer5tools_category_{unique_hash}_start"
+                end_name = f"hammer5tools_category_{unique_hash}_end"
+                self.add_category(start_name, __data[3], __data[4], __index)
+                self.add_category(end_name, False, "                                             ", __index + 1 if __index is not None else None)
             elif name.endswith('_end'):
-                name = f"hammer5tools_category_{unique_hash}_end"
-                self.add_category(name, False, __data[4], __index)
+                start_name = f"hammer5tools_category_{unique_hash}_start"
+                end_name = f"hammer5tools_category_{unique_hash}_end"
+                self.add_category(start_name, True, "---------- New Category ----------", __index)
+                self.add_category(end_name, False, "                                             ", __index + 1 if __index is not None else None)
         else:
             # For regular variables, unique name generation is handled on focus out, 
             # but let's make it unique initially to avoid collision.
@@ -557,20 +562,70 @@ class SmartPropEditorVariableViewport(QWidget):
         self._sync_committed_state()
         old_state = self._snapshot()
         layout = self.ui.variables_scrollArea
-        idx = -1
-        for i in range(layout.count()):
-            if layout.itemAt(i).widget() == variable_frame:
-                idx = i
-                break
-        if idx != -1:
-            item = layout.takeAt(idx)
-            if item and item.widget():
-                item.widget().deleteLater()
+
+        widgets_to_remove = [variable_frame]
+        is_category = False
+
+        if isinstance(variable_frame, CategoryFrame) or is_category_widget(variable_frame):
+            is_category = True
+            cat_hash = getattr(variable_frame, 'category_hash', None)
+            is_start = getattr(variable_frame, 'is_start', False)
+            is_end = getattr(variable_frame, 'is_end', False)
+
+            if is_start:
+                # Find matching end widget
+                found_self = False
+                matched_end = None
+                fallback_end = None
+                for i in range(layout.count()):
+                    w = layout.itemAt(i).widget() if layout.itemAt(i) else None
+                    if w == variable_frame:
+                        found_self = True
+                        continue
+                    if found_self and (isinstance(w, CategoryFrame) or is_category_widget(w)) and getattr(w, 'is_end', False):
+                        if cat_hash and getattr(w, 'category_hash', None) == cat_hash:
+                            matched_end = w
+                            break
+                        elif fallback_end is None:
+                            fallback_end = w
+                target_end = matched_end or fallback_end
+                if target_end:
+                    widgets_to_remove.append(target_end)
+
+            elif is_end:
+                # Find matching start widget
+                found_self = False
+                matched_start = None
+                fallback_start = None
+                for i in range(layout.count() - 1, -1, -1):
+                    w = layout.itemAt(i).widget() if layout.itemAt(i) else None
+                    if w == variable_frame:
+                        found_self = True
+                        continue
+                    if found_self and (isinstance(w, CategoryFrame) or is_category_widget(w)) and getattr(w, 'is_start', False):
+                        if cat_hash and getattr(w, 'category_hash', None) == cat_hash:
+                            matched_start = w
+                            break
+                        elif fallback_start is None:
+                            fallback_start = w
+                target_start = matched_start or fallback_start
+                if target_start:
+                    widgets_to_remove.append(target_start)
+
+        for w in widgets_to_remove:
+            for i in range(layout.count()):
+                if layout.itemAt(i) and layout.itemAt(i).widget() == w:
+                    item = layout.takeAt(i)
+                    if item and item.widget():
+                        item.widget().deleteLater()
+                    break
+
         self.update_indentation()
         new_state = self._snapshot()
+        description = "Delete Category" if is_category else "Delete Variable"
         from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
         self._document.undo_stack.push(
-            VariablesSnapshotCommand(self._document, old_state, new_state, "Delete Variable")
+            VariablesSnapshotCommand(self._document, old_state, new_state, description)
         )
         self._document._modified = True
         self._document._edited.emit()
