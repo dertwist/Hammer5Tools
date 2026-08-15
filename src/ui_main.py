@@ -185,7 +185,7 @@ class Ui_MainWindow(object):
 
         self.console_label = QLabel(self.centralwidget)
         self.console_label.setObjectName(u"console_label")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.console_label.sizePolicy().hasHeightForWidth())

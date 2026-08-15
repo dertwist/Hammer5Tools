@@ -308,7 +308,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
       <item>
        <widget class="QLabel" name="console_label">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
           <horstretch>1</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
