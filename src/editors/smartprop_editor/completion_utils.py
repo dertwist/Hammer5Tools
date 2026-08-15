@@ -4,6 +4,7 @@ Provides intelligent auto-completion based on variable types and context.
 """
 
 from src.editors.smartprop_editor.objects import expression_completer
+from src.editors.smartprop_editor._common import is_category_widget
 
 
 class CompletionUtils:
@@ -33,7 +34,9 @@ class CompletionUtils:
         count = variables_scrollArea.count()
         for i in range(count):
             widget = variables_scrollArea.itemAt(i).widget()
-            if hasattr(widget, "name") and widget.name and hasattr(widget, "var_class"):
+            if widget and hasattr(widget, "name") and widget.name and hasattr(widget, "var_class"):
+                if is_category_widget(widget):
+                    continue
                 variables.append({
                     'name': widget.name,
                     'type': widget.var_class

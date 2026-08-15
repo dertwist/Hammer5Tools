@@ -4,6 +4,7 @@ from PySide6.QtGui import QIcon, QFont, QPainter, QColor, QTextFormat, QSyntaxHi
 from src.widgets.completer.main import CompletingPlainTextEdit
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.objects import expression_completer
+from src.editors.smartprop_editor._common import is_category_widget, is_category_variable_name
 from src.styles.common import *
 import re
 
@@ -237,28 +238,40 @@ class ExpressionEditor(QToolButton):
         """Extract variable names and their types from the variables scroll area."""
         variables_info = {}
         try:
-            # Iterate through all widgets in the scroll area to find variable types
-            scroll_widget = self.variables_scrollArea.widget()
-            if scroll_widget:
-                for i in range(scroll_widget.layout().count()):
-                    item = scroll_widget.layout().itemAt(i)
+            layout = None
+            if hasattr(self.variables_scrollArea, 'widget'):
+                scroll_widget = self.variables_scrollArea.widget()
+                if scroll_widget:
+                    layout = scroll_widget.layout()
+            elif hasattr(self.variables_scrollArea, 'count'):
+                layout = self.variables_scrollArea
+
+            if layout:
+                for i in range(layout.count()):
+                    item = layout.itemAt(i)
                     if item and item.widget():
                         widget = item.widget()
-                        # Check if widget has a name_label and determine type
-                        if hasattr(widget, 'name_label'):
-                            var_name = widget.name_label.text()
-                            # Determine type based on widget class name
+                        if is_category_widget(widget):
+                            continue
+                        name = getattr(widget, 'name', None)
+                        if not name and hasattr(widget, 'name_label'):
+                            name = widget.name_label.text()
+                        if not name or is_category_variable_name(name):
+                            continue
+                        if hasattr(widget, 'var_class') and widget.var_class:
+                            variables_info[name] = str(widget.var_class).lower()
+                        else:
                             widget_class = widget.__class__.__name__.lower()
                             if 'bool' in widget_class:
-                                variables_info[var_name] = 'bool'
+                                variables_info[name] = 'bool'
                             elif 'vector3d' in widget_class:
-                                variables_info[var_name] = 'vector3d'
+                                variables_info[name] = 'vector3d'
                             elif 'float' in widget_class:
-                                variables_info[var_name] = 'float'
+                                variables_info[name] = 'float'
                             elif 'int' in widget_class:
-                                variables_info[var_name] = 'int'
+                                variables_info[name] = 'int'
                             else:
-                                variables_info[var_name] = 'unknown'
+                                variables_info[name] = 'unknown'
         except Exception:
             pass
         return variables_info

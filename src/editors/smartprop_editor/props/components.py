@@ -64,6 +64,7 @@ from src.settings.main import get_settings_bool
 
 # Clipboard string pattern for SmartProp property items
 CLIPBOARD_PREFIX = "hammer5tools:smartprop_editor_property"
+CLIPBOARD_BATCH_PREFIX = "hammer5tools:smartprop_editor_property_batch"
 
 
 def get_summary_hint(data: dict) -> str:
