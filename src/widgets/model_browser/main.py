@@ -126,9 +126,13 @@ class _FacetPopup(QFrame):
     def _apply_name_filter(self, text: str):
         """Hides rows only — a hidden mount keeps its checked state, so filtering
         the list never silently changes what the grid is showing."""
-        needle = text.strip().lower()
+        tokens = text.strip().lower().split()
         for value, _checkbox, row in self._rows:
-            row.setVisible(needle in value.lower())
+            if not tokens:
+                row.setVisible(True)
+            else:
+                v_lower = value.lower()
+                row.setVisible(all(token in v_lower for token in tokens))
 
     def _on_toggled(self, value: str, on: bool):
         if on:
@@ -508,7 +512,8 @@ class ModelBrowserDialog(QDialog):
     # filtering
 
     def _apply_filter(self, *_):
-        needle = self.filter_edit.text().strip().lower()
+        raw = self.filter_edit.text().strip().lower().replace("\\", "/")
+        tokens = raw.split()
         allowed_mods = self.mod_chip.checked_values()
 
         matches = []
@@ -517,8 +522,12 @@ class ModelBrowserDialog(QDialog):
                 continue
             # Match against the full resource path so "props/urban" narrows by
             # folder just as well as a bare model name does.
-            if needle and needle not in entry.path.lower():
-                continue
+            # Match all space-separated tokens so e.g. "dust 2 crate" matches
+            # any model whose path contains each of those parts.
+            if tokens:
+                path_lower = entry.path.lower()
+                if not all(token in path_lower for token in tokens):
+                    continue
             matches.append(entry)
 
         header = self.list.header()
