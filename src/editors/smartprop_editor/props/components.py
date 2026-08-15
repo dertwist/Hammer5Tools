@@ -477,22 +477,23 @@ class ComponentList(QWidget):
         """Rebuild component list from hierarchy tree item."""
         self.tree_item = tree_item
         self.rebuild()
-        self._select_ref(ComponentRef(self.tree_item, "element", -1), emit_signal=True)
+        if self.tree_item is not None:
+            self._select_ref(ComponentRef(self.tree_item, "element", -1), emit_signal=True)
 
     def selected_refs(self) -> list[ComponentRef]:
         """Return list of currently selected ComponentRef objects, read live
         from whichever surface (element row / either tree) currently holds
         the selection."""
         refs: list[ComponentRef] = []
-        if self.elem_row.is_selected():
+        if self.elem_row.is_selected() and self.elem_row.ref is not None and self.elem_row.ref.item is not None:
             refs.append(self.elem_row.ref)
         for it in self.modifiers_tree.selectedItems():
             ref = it.data(0, Qt.UserRole)
-            if ref is not None:
+            if ref is not None and getattr(ref, 'item', None) is not None:
                 refs.append(ref)
         for it in self.criteria_tree.selectedItems():
             ref = it.data(0, Qt.UserRole)
-            if ref is not None:
+            if ref is not None and getattr(ref, 'item', None) is not None:
                 refs.append(ref)
         return refs
 
@@ -537,7 +538,7 @@ class ComponentList(QWidget):
     def rebuild(self):
         """Refresh element row + both trees from current tree_item data."""
         if not self.tree_item:
-            self.elem_row.ref = ComponentRef(None, "element", -1)
+            self.elem_row.ref = None
             self.modifiers_tree.clear()
             self.criteria_tree.clear()
             self.modifiers_tree.refresh_height()
@@ -610,7 +611,14 @@ class ComponentList(QWidget):
         tree.blockSignals(False)
         tree.refresh_height()
 
-    def _select_ref(self, ref: ComponentRef, emit_signal: bool = True):
+    def _select_ref(self, ref: ComponentRef | None, emit_signal: bool = True):
+        if ref is None or getattr(ref, "item", None) is None:
+            self.elem_row.set_selected(False)
+            self._select_in_tree(self.modifiers_tree, None)
+            self._select_in_tree(self.criteria_tree, None)
+            if emit_signal:
+                self.componentSelected.emit(None)
+            return
         self.elem_row.set_selected(ref.kind == "element")
         self._select_in_tree(self.modifiers_tree, ref if ref.kind == "modifier" else None)
         self._select_in_tree(self.criteria_tree, ref if ref.kind == "criterion" else None)
