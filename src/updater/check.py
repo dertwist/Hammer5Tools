@@ -321,6 +321,70 @@ class DownloadProgressDialog(QDialog):
 
 _active_download_dialog = None
 
+
+def prepare_for_update():
+    """
+    Terminates child processes, other instances, stops IPC and flushes worker threads
+    before Velopack applies an update to avoid sharing violations and locked file errors.
+    """
+    # 1. Stop IPC server
+    try:
+        from src.ipc.server_utils import stop_ipc_server
+        stop_ipc_server()
+    except Exception as e:
+        print(f"Failed to stop IPC server: {e}")
+
+    # 2. Terminate child processes and lingering helpers
+    try:
+        import os
+        import psutil
+        current_pid = os.getpid()
+        current_proc = psutil.Process(current_pid)
+
+        # Kill all direct and indirect children of the current process first
+        try:
+            children = current_proc.children(recursive=True)
+            for child in children:
+                try:
+                    child.terminate()
+                except Exception:
+                    pass
+            gone, alive = psutil.wait_procs(children, timeout=2)
+            for p in alive:
+                try:
+                    p.kill()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"Error terminating child processes: {e}")
+
+        # Kill any other background Hammer5Tools instances (e.g. tray instances) or specific locking tools
+        target_names = {'hammer5tools.exe', 'hammer5tools_core.exe', 'resourcecompiler.exe', 'bspsrc.exe'}
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                pid = proc.info['pid']
+                if pid == current_pid:
+                    continue
+                pname = (proc.info['name'] or '').lower()
+                if pname in target_names:
+                    proc.terminate()
+                elif pname == 'dotnet.exe':
+                    cmdline = ' '.join(proc.info.get('cmdline') or []).lower()
+                    if 'unrealbridge' in cmdline or 'sourceporter' in cmdline:
+                        proc.terminate()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+    except Exception as e:
+        print(f"Error during process cleanup: {e}")
+
+    # 3. Flush / wait for global threadpool
+    try:
+        from PySide6.QtCore import QThreadPool
+        QThreadPool.globalInstance().waitForDone(500)
+    except Exception:
+        pass
+
+
 def show_install_dialog(update, mgr, parent_dialog):
     reply = QMessageBox.question(None, "Installation Confirmation",
                                  "During update installation, Hammer5Tools will be closed.\n"
@@ -328,6 +392,7 @@ def show_install_dialog(update, mgr, parent_dialog):
                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
     if reply == QMessageBox.Yes:
         handle_installation(update, mgr, parent_dialog)
+
 
 def handle_installation(update, mgr, parent_dialog=None):
     global _active_download_dialog
@@ -347,14 +412,8 @@ def handle_installation(update, mgr, parent_dialog=None):
         def run_update():
             global _active_download_dialog
             try:
-                # Disable IPC server
-                try:
-                    from src.ipc.server_utils import stop_ipc_server
-                    stop_ipc_server()
-                except Exception as e:
-                    print(f"Failed to stop IPC server: {e}")
-
                 mgr.download_updates(update, on_progress)
+                prepare_for_update()
                 mgr.apply_updates_and_restart(update)
             except Exception as e:
                 # Close progress dialog and show error on main thread
@@ -370,4 +429,5 @@ def handle_installation(update, mgr, parent_dialog=None):
     except Exception as e:
         _active_download_dialog = None
         QMessageBox.critical(None, "Update Error", f"Failed to start update: {e}")
+
 

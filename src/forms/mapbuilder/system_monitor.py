@@ -78,6 +78,10 @@ class GPUStatsWorker(QObject):
         self._intel_prev_active = None
         self._intel_prev_timestamp = None
 
+    def stop(self):
+        """Signal worker to stop running"""
+        self._running = False
+
     @Slot()
     def fetch_gpu_stats(self):
         """Fetch GPU stats - runs in worker thread"""

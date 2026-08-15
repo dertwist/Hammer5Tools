@@ -388,7 +388,7 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
             print(f"Error running ResourceCompiler: {e}")
 
     # Create a new thread for the compile function
-    thread = threading.Thread(target=run_rc, args=(input_file,))
+    thread = threading.Thread(target=run_rc, args=(input_file,), daemon=True)
     thread.start()
 
 # web
