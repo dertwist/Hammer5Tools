@@ -16,6 +16,7 @@ class AboutDialog(QDialog):
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)
         self.ui.open_radio_sound_guide_button.clicked.connect(self.open_radio_sound_guide)
+        self.ui.open_smart_props_guide_button.clicked.connect(self.open_smart_props_guide)
         self.ui.watch_video_button.clicked.connect(self.open_video_tutorial)
         self.ui.close_button.clicked.connect(self.accept)
 
@@ -29,6 +30,9 @@ class AboutDialog(QDialog):
 
     def open_radio_sound_guide(self):
         QDesktopServices.openUrl(QUrl("https://hammer5tools.github.io/docs.html#radio-sound"))
+
+    def open_smart_props_guide(self):
+        QDesktopServices.openUrl(QUrl("https://hammer5tools.github.io/docs.html#smartprop-guide"))
 
     def open_video_tutorial(self):
         QDesktopServices.openUrl(QUrl("https://www.youtube.com/watch?v=-xIHW65kNYA"))
