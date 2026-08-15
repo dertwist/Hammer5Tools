@@ -1,9 +1,9 @@
 import json
 import os
 from typing import Optional, Dict, List
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit, QPushButton
 from PySide6.QtCore import Qt, QFileSystemWatcher, Signal
-from PySide6.QtGui import QDropEvent, QTextCharFormat, QTextCursor
+from PySide6.QtGui import QDropEvent, QTextCharFormat, QTextCursor, QIcon
 from src.editors.assetgroup_maker.ui_main import Ui_BatchCreator_MainWindow
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
 from src.editors.assetgroup_maker.highlighter import CustomHighlighter
@@ -16,6 +16,10 @@ from src.editors.assetgroup_maker.context_menu import ReplacementsContextMenu
 from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 from src.editors.assetgroup_maker.objects import get_default_file
+try:
+    from src.other.cs2_netcon import CS2Netcon
+except Exception:
+    CS2Netcon = None
 
 class DragDropLineEdit(QLineEdit):
     """A QLineEdit that supports drag-and-drop for file paths."""
@@ -170,6 +174,43 @@ class BatchCreatorMainWindow(QMainWindow):
 
         # Add the new widget to the layout
         parent_layout.insertWidget(1, self.ui.reference_editline)
+
+        # Add open reference button
+        self.ui.open_reference_button = QPushButton()
+        self.ui.open_reference_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        self.ui.open_reference_button.setToolTip("Open reference asset in CS2 Tools")
+        self.ui.open_reference_button.setStyleSheet(self.ui.select_reference_button.styleSheet())
+        self.ui.open_reference_button.setMinimumHeight(self.ui.select_reference_button.minimumHeight())
+        self.ui.open_reference_button.clicked.connect(self.open_reference_asset)
+        parent_layout.addWidget(self.ui.open_reference_button)
+
+    def open_reference_asset(self):
+        """Open the current reference asset in CS2 tools via netcon open_asset command."""
+        reference = self.ui.reference_editline.text().strip()
+        if not reference:
+            QMessageBox.warning(self, "No Reference Asset", "No reference asset specified in the editor.")
+            return
+
+        addon_dir = get_addon_dir()
+        if os.path.isabs(reference) and addon_dir:
+            try:
+                reference = os.path.relpath(reference, addon_dir)
+            except ValueError:
+                pass
+
+        asset_path = reference.replace('\\', '/').strip('/')
+        command = f"open_asset {asset_path}"
+        debug(f"[AssetGroupMaker] Sending CS2 command: {command}")
+        if CS2Netcon is None or not CS2Netcon.send(command):
+            QMessageBox.warning(
+                self,
+                "CS2 Not Reachable",
+                "Could not send command to CS2.\n"
+                "Make sure CS2 is running with -netconport 2121."
+            )
+        else:
+            if self.update_title and callable(self.update_title):
+                self.update_title(text=f"Opened reference asset [{asset_path}] in CS2 Tools")
 
     def select_reference(self):
         """Open a file dialog to select a reference file."""
@@ -438,9 +479,8 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
-        self.monitoring_list.track_new_file(batch_file_path)
-
         self.write_json_file(batch_file_path, get_default_file())
+        self.monitoring_list.track_new_file(batch_file_path)
         self.explorer.select_tree_item(batch_file_path)
 
     def write_json_file(self, file_path: str, data: Dict):
@@ -538,6 +578,8 @@ class BatchCreatorMainWindow(QMainWindow):
         # Track in recent files
         if hasattr(self, 'explorer') and self.explorer is not None:
             self.explorer.add_recent_file(file_path)
+        if self.update_title and callable(self.update_title):
+            self.update_title('opened', file_path)
 
 
     def show_process_options(self):

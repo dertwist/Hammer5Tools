@@ -341,9 +341,12 @@ def prepare_for_update():
         current_pid = os.getpid()
         current_proc = psutil.Process(current_pid)
 
-        # Kill all direct and indirect children of the current process first
+        # Kill all direct and indirect children of the current process first (excluding CS2)
         try:
-            children = current_proc.children(recursive=True)
+            children = [
+                child for child in current_proc.children(recursive=True)
+                if (child.name() or '').lower() != 'cs2.exe'
+            ]
             for child in children:
                 try:
                     child.terminate()

@@ -6,10 +6,10 @@ from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate
     QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget, QApplication
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
+from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator
 from shiboken6 import isValid
 
-from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
+from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, get_addon_dir, debug
 from src.widgets.common import ErrorInfo
 from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from src.styles.common import *
@@ -50,7 +50,7 @@ file_icons = {
 class CustomFileSystemModel(QFileSystemModel):
     NAME_COLUMN = 0
     SIZE_COLUMN = 1
-    CACHE_LIMIT = 100
+    CACHE_LIMIT = 5000
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -223,6 +223,124 @@ def get_default_application(file_extension):
     except (FileNotFoundError, OSError, winreg.error):
         return None
 
+class ExplorerFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, root_directory="", parent=None):
+        super().__init__(parent)
+        self._root_directory = self._normalize_dir(root_directory)
+        self._filter_text = ""
+        self._matching_dirs = set()
+        self._matching_files = set()
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.setDynamicSortFilter(True)
+
+    def _normalize_dir(self, path):
+        if not path:
+            return ""
+        return os.path.normpath(path).lower()
+
+    def set_root_directory(self, root_directory: str):
+        self._root_directory = self._normalize_dir(root_directory)
+        self._matching_dirs.clear()
+        self._matching_files.clear()
+        if self._filter_text:
+            self._rebuild_match_index()
+        self.invalidateFilter()
+
+    def set_filter_text(self, text: str):
+        new_filter = text.lower().strip()
+        if new_filter == self._filter_text:
+            return
+        self._filter_text = new_filter
+        self._rebuild_match_index()
+        self.invalidateFilter()
+
+    def _rebuild_match_index(self):
+        self._matching_dirs.clear()
+        self._matching_files.clear()
+        if not self._filter_text or not self._root_directory or not os.path.exists(self._root_directory):
+            return
+
+        search_term = self._filter_text.replace('\\', '/')
+        has_slash = "/" in search_term
+
+        # Fast single-pass scanner using os.scandir with directory pruning
+        def _scan(dir_path):
+            try:
+                with os.scandir(dir_path) as it:
+                    has_match = False
+                    for entry in it:
+                        name_lower = entry.name.lower()
+                        if entry.is_dir(follow_symlinks=False):
+                            if entry.name in ("__pycache__", ".git", "node_modules", ".vs"):
+                                continue
+                            norm_entry = os.path.normpath(entry.path).lower()
+                            if has_slash:
+                                try:
+                                    rel_p = os.path.relpath(norm_entry, self._root_directory).replace('\\', '/').lower()
+                                    if search_term in rel_p:
+                                        self._matching_dirs.add(norm_entry)
+                                        has_match = True
+                                except Exception:
+                                    pass
+                            elif search_term in name_lower:
+                                self._matching_dirs.add(norm_entry)
+                                has_match = True
+
+                            if _scan(norm_entry):
+                                self._matching_dirs.add(norm_entry)
+                                has_match = True
+                        else:
+                            norm_entry = os.path.normpath(entry.path).lower()
+                            matched = False
+                            if has_slash:
+                                try:
+                                    rel_p = os.path.relpath(norm_entry, self._root_directory).replace('\\', '/').lower()
+                                    matched = (search_term in rel_p)
+                                except Exception:
+                                    pass
+                            else:
+                                matched = (search_term in name_lower)
+
+                            if matched:
+                                self._matching_files.add(norm_entry)
+                                has_match = True
+                    return has_match
+            except (PermissionError, OSError):
+                return False
+
+        _scan(self._root_directory)
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._filter_text:
+            return True
+
+        model = self.sourceModel()
+        source_index = model.index(source_row, 0, source_parent)
+        if not source_index.isValid():
+            return False
+
+        file_path = model.filePath(source_index)
+        norm_path = os.path.normpath(file_path).lower()
+
+        # 1. Always accept ancestors of the root directory so the root index is never broken
+        if self._root_directory:
+            if self._root_directory == norm_path:
+                return True
+            if self._root_directory.startswith(norm_path + os.sep):
+                return True
+            # Exclude anything completely outside the active root directory
+            if not norm_path.startswith(self._root_directory):
+                return False
+
+        # 2. O(1) Instant set lookups
+        if model.isDir(source_index):
+            if norm_path in self._matching_dirs:
+                model.fetchMore(source_index)
+                return True
+            return False
+        else:
+            return norm_path in self._matching_files
+
 class Explorer(QMainWindow):
     play_sound = Signal(str)
 
@@ -232,7 +350,7 @@ class Explorer(QMainWindow):
         if not self.tree_directory:
             self.tree_directory = os.getcwd()
         self.addon = addon
-        self.editor_name = editor_name
+        self.editor_name = editor_name or 'Explorer'
         self.use_internal_player = use_internal_player
         self.base_directories = {label: self._normalize_path(path) for label, path in (base_directories or {}).items()}
         self.show_root_selector = show_root_selector
@@ -247,14 +365,22 @@ class Explorer(QMainWindow):
             os.makedirs(self.tree_directory)
         if not self.use_internal_player:
             self.audio_player = None
-        self.filter_proxy_model = QSortFilterProxyModel(self)
+        self.filter_proxy_model = ExplorerFilterProxyModel(root_directory=self.tree_directory, parent=self)
         self.filter_proxy_model.setSourceModel(self.model)
         self.filter_proxy_model.setFilterKeyColumn(CustomFileSystemModel.NAME_COLUMN)
         self.filter_proxy_model.setDynamicSortFilter(True)
-        self.filter_proxy_model.setRecursiveFilteringEnabled(True)
         self.tree = QTreeView(self)
         self.tree.setModel(self.filter_proxy_model)
         self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(self.tree_directory)))
+
+        # Debounced expansion timer to prevent repetitive layout calculations
+        self._expand_timer = QTimer(self)
+        self._expand_timer.setSingleShot(True)
+        self._expand_timer.setInterval(30)
+        self._expand_timer.timeout.connect(self._expand_all_filtered)
+
+        self.model.directoryLoaded.connect(lambda path: self._expand_timer.start() if self.filter_editline.text().strip() else None)
+        self.filter_proxy_model.rowsInserted.connect(lambda *args: self._expand_timer.start() if self.filter_editline.text().strip() else None)
         self.tree.setSortingEnabled(True)
         self.tree.setAlternatingRowColors(True)
         for column in range(self.model.columnCount()):
@@ -270,10 +396,17 @@ class Explorer(QMainWindow):
         self.tree.doubleClicked.connect(self._on_tree_double_clicked)
         self.tree.viewport().installEventFilter(self)
         self.tree.installEventFilter(self)
+
+        # Debounced filter timer for instant responsive typing
+        self._filter_timer = QTimer(self)
+        self._filter_timer.setSingleShot(True)
+        self._filter_timer.setInterval(120)
+        self._filter_timer.timeout.connect(self._apply_filter_debounced)
+
         self.top_layout = QHBoxLayout()
         self.filter_editline = QLineEdit(self)
         self.filter_editline.setPlaceholderText("Filter files...")
-        self.filter_editline.textChanged.connect(self.update_filter)
+        self.filter_editline.textChanged.connect(lambda text: self._filter_timer.start())
         self.top_layout.addWidget(self.filter_editline)
 
         if self.base_directories:
@@ -330,7 +463,7 @@ class Explorer(QMainWindow):
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
         tree_state = get_settings_value(self.editor_name + '_tree_state', self.addon)
         if tree_state:
-            self.tree.restoreState(tree_state)
+            self.tree.header().restoreState(tree_state)
         self.recent_files = self.load_recent_files()
         self.favorites = self.load_favorites()
         self.select_last_opened_path()
@@ -359,16 +492,28 @@ class Explorer(QMainWindow):
         new_path = self.base_directories.get(label)
         if new_path and os.path.exists(new_path):
             self.tree_directory = new_path
+            self.filter_proxy_model.set_root_directory(new_path)
             self.model.setRootPath(new_path)
             source_index = self.model.index(new_path)
             self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
             debug(f"Explorer root changed to: {new_path}")
 
+    def _apply_filter_debounced(self):
+        if hasattr(self, 'filter_editline') and isValid(self.filter_editline):
+            self.update_filter(self.filter_editline.text())
+
     def update_filter(self, text):
-        self.filter_proxy_model.setFilterFixedString(text)
-        if text.strip() == "":
-            source_index = self.model.index(self.tree_directory)
-            self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
+        self.filter_proxy_model.set_filter_text(text)
+        source_index = self.model.index(self.tree_directory)
+        self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
+        if text.strip() != "":
+            self._expand_all_filtered()
+
+    def _expand_all_filtered(self):
+        if not hasattr(self, 'filter_editline') or not self.filter_editline.text().strip():
+            return
+        if hasattr(self, 'tree') and isValid(self.tree):
+            self.tree.expandAll()
 
     def add_recent_file(self, path):
         if not path:
@@ -414,27 +559,184 @@ class Explorer(QMainWindow):
     def save_favorites(self):
         set_settings_value(self.editor_name + '_favorites', self.addon, self.favorites)
 
-    def select_tree_item(self, path):
-        target_path = self._normalize_path(path)
-        if not target_path:
-            return
+    def resolve_path(self, path: str) -> str | None:
+        """
+        Resolves an absolute or relative path to an existing filesystem path within
+        the explorer's scope (active tree directory, base directories, addon dir, CS2 mounts).
+        """
+        if not path:
+            return None
 
-        if not os.path.exists(target_path):
-            norm_path = target_path.replace('/', '\\')
-            if os.path.exists(norm_path):
-                target_path = norm_path
+        path_str = str(path).strip().strip('\'"')
+        if not path_str:
+            return None
+
+        # Convert file:// URL to local file path if applicable
+        if path_str.startswith(('file:///', 'file://')):
+            url = QUrl(path_str)
+            if url.isValid() and url.isLocalFile():
+                path_str = url.toLocalFile()
             else:
-                debug("select_tree_item: path does not exist - %s" % path)
+                path_str = path_str.replace('file:///', '').replace('file://', '')
+
+        # Standardize slashes
+        norm_input = os.path.normpath(path_str)
+
+        # 1. Check if direct path exists as absolute path
+        # On Windows, os.path.isabs('/models/...') returns True even without a drive letter.
+        # Check splitdrive to ensure it actually has a drive letter or UNC prefix.
+        drive, _ = os.path.splitdrive(norm_input)
+        if drive and os.path.exists(norm_input):
+            return norm_input
+
+        # Check compiled/source swap for absolute path (e.g. .vmdl_c -> .vmdl or game -> content)
+        if drive:
+            candidates = []
+            if norm_input.endswith(('_c', '.vmdl_c', '.vmat_c', '.vsnd_c', '.vtex_c', '.vsmart_c', '.vpcf_c')):
+                candidates.append(re.sub(r'_c$', '', norm_input))
+            if f"{os.sep}game{os.sep}" in norm_input:
+                content_path = norm_input.replace(f"{os.sep}game{os.sep}", f"{os.sep}content{os.sep}")
+                candidates.append(content_path)
+                if content_path.endswith(('_c', '.vmdl_c', '.vmat_c', '.vsnd_c', '.vtex_c', '.vsmart_c', '.vpcf_c')):
+                    candidates.append(re.sub(r'_c$', '', content_path))
+            for cand in candidates:
+                if os.path.exists(cand):
+                    return cand
+
+        # 2. Treat as relative path
+        clean_rel = path_str.replace('/', os.sep).replace('\\', os.sep).lstrip(os.sep)
+
+        rel_variations = [clean_rel]
+        if clean_rel.endswith(('_c', '.vmdl_c', '.vmat_c', '.vsnd_c', '.vtex_c', '.vsmart_c', '.vpcf_c')):
+            rel_variations.append(re.sub(r'_c$', '', clean_rel))
+
+        # Strip common container prefixes if user copied e.g. "content/csgo_addons/addon_name/models/..."
+        for prefix in ['content' + os.sep, 'game' + os.sep]:
+            if clean_rel.lower().startswith(prefix):
+                stripped = clean_rel[len(prefix):]
+                rel_variations.append(stripped)
+                if stripped.lower().startswith('csgo_addons' + os.sep):
+                    parts = stripped.split(os.sep)
+                    if len(parts) > 2:
+                        rel_variations.append(os.sep.join(parts[2:]))
+
+        if clean_rel.lower().startswith('csgo_addons' + os.sep):
+            parts = clean_rel.split(os.sep)
+            if len(parts) > 2:
+                rel_variations.append(os.sep.join(parts[2:]))
+
+        unique_variations = []
+        for var in rel_variations:
+            if var and var not in unique_variations:
+                unique_variations.append(var)
+
+        # Candidate base directories
+        base_dirs = []
+
+        if hasattr(self, 'tree_directory') and self.tree_directory:
+            base_dirs.append(self.tree_directory)
+
+        if hasattr(self, 'base_directories') and self.base_directories:
+            for label, bdir in self.base_directories.items():
+                if bdir and bdir not in base_dirs:
+                    base_dirs.append(bdir)
+
+        try:
+            addon_dir = get_addon_dir()
+            if addon_dir and addon_dir not in base_dirs:
+                base_dirs.append(addon_dir)
+        except Exception:
+            pass
+
+        if hasattr(self, 'rootpath') and self.rootpath and self.rootpath not in base_dirs:
+            base_dirs.append(self.rootpath)
+
+        try:
+            cs2_path = get_cs2_path()
+            if cs2_path:
+                addon_name = self.addon or get_addon_name()
+                if addon_name:
+                    addon_content = os.path.join(cs2_path, "content", "csgo_addons", addon_name)
+                    if addon_content not in base_dirs:
+                        base_dirs.append(addon_content)
+                    addon_game = os.path.join(cs2_path, "game", "csgo_addons", addon_name)
+                    if addon_game not in base_dirs:
+                        base_dirs.append(addon_game)
+
+                for mount in ["csgo", "csgo_imported", "csgo_core", "core"]:
+                    c_mount = os.path.join(cs2_path, "content", mount)
+                    if c_mount not in base_dirs:
+                        base_dirs.append(c_mount)
+                    g_mount = os.path.join(cs2_path, "game", mount)
+                    if g_mount not in base_dirs:
+                        base_dirs.append(g_mount)
+
+                if cs2_path not in base_dirs:
+                    base_dirs.append(cs2_path)
+        except Exception:
+            pass
+
+        for bdir in base_dirs:
+            if not os.path.exists(bdir):
+                continue
+            bdir_name = os.path.basename(os.path.normpath(bdir)).lower()
+            for var in unique_variations:
+                cand = os.path.normpath(os.path.join(bdir, var))
+                if os.path.exists(cand):
+                    return cand
+
+                var_parts = var.split(os.sep)
+                if len(var_parts) > 1 and var_parts[0].lower() == bdir_name:
+                    sub_cand = os.path.normpath(os.path.join(bdir, *var_parts[1:]))
+                    if os.path.exists(sub_cand):
+                        return sub_cand
+
+                parent_cand = os.path.normpath(os.path.join(os.path.dirname(bdir), var))
+                if os.path.exists(parent_cand):
+                    return parent_cand
+
+        return None
+
+    def select_tree_item(self, path):
+        target_path = self.resolve_path(path)
+        if not target_path:
+            target_path = self._normalize_path(path)
+            if target_path and not os.path.exists(target_path):
+                norm_path = target_path.replace('/', '\\')
+                if os.path.exists(norm_path):
+                    target_path = norm_path
+                else:
+                    debug("select_tree_item: path does not exist - %s" % path)
+                    return
+            elif not target_path:
                 return
+
+        # If the target path belongs to a different base directory, switch the root selector if available
+        if hasattr(self, 'base_directories') and self.base_directories and hasattr(self, 'root_selector'):
+            norm_target = os.path.normcase(os.path.normpath(target_path))
+            for label, bdir in self.base_directories.items():
+                if bdir and norm_target.startswith(os.path.normcase(os.path.normpath(bdir))):
+                    if self.root_selector.currentText() != label:
+                        self.root_selector.setCurrentText(label)
+                    break
 
         self.add_recent_file(target_path)
         source_index = self.model.index(target_path)
         if not source_index.isValid():
             debug("select_tree_item: invalid index for path - %s" % target_path)
             return
-        
+
         proxy_index = self.filter_proxy_model.mapFromSource(source_index)
-        
+
+        # If proxy index is invalid because an active filter hides this item, clear the filter
+        if not proxy_index.isValid() and hasattr(self, 'filter_editline') and self.filter_editline.text():
+            self.filter_editline.clear()
+            proxy_index = self.filter_proxy_model.mapFromSource(source_index)
+
+        if not proxy_index.isValid():
+            debug("select_tree_item: invalid proxy index for path - %s" % target_path)
+            return
+
         # Ensure all parents are expanded
         parent_index = proxy_index.parent()
         while parent_index.isValid():
@@ -445,7 +747,7 @@ class Explorer(QMainWindow):
         selection_model.clear()
         selection_model.select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
         self.tree.setCurrentIndex(proxy_index)
-        
+
         # Use singleShot to allow the UI to process expansion before scrolling.
         # Re-resolve indices by target_path at callback time to avoid dangling QModelIndex pointers.
         QTimer.singleShot(50, lambda: self._safe_scroll_to_path(target_path))
@@ -462,6 +764,10 @@ class Explorer(QMainWindow):
         if source_index.isValid():
             proxy_index = self.filter_proxy_model.mapFromSource(source_index)
             if proxy_index.isValid():
+                parent_index = proxy_index.parent()
+                while parent_index.isValid():
+                    self.tree.expand(parent_index)
+                    parent_index = parent_index.parent()
                 self.tree.scrollTo(proxy_index, QTreeView.PositionAtCenter)
 
     def select_last_opened_path(self):
@@ -604,6 +910,11 @@ class Explorer(QMainWindow):
             open_config_action.setIcon(QIcon(file_icons['.hbat']))
             open_config_action.triggered.connect(lambda: self.open_config(file_path))
             menu.addAction(open_config_action)
+
+            open_ref_action = QAction("Open Reference Asset", self)
+            open_ref_action.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+            open_ref_action.triggered.connect(lambda: self.open_reference_asset(file_path))
+            menu.addAction(open_ref_action)
 
         if file_extension == "vsmart":
             open_vsmart_action = QAction("Open SmartProp", self)
@@ -782,6 +1093,9 @@ class Explorer(QMainWindow):
             new_file_name = f"{new_base_name}_{counter:02d}{extension}"
             new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
         if QFile.copy(file_path, new_file_path):
+            if new_file_path.lower().endswith('.hbat'):
+                from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+                MonitoringFileWatcher.notify_new_file(new_file_path)
             return True
         else:
             error_dialog = ErrorInfo(text="Duplication Error", details="Failed to duplicate the file.")
@@ -820,6 +1134,35 @@ class Explorer(QMainWindow):
             curr = curr.parent() if hasattr(curr, 'parent') else None
         if parent and hasattr(parent, 'BatchCreator_MainWindow'):
             parent.BatchCreator_MainWindow.open_filepath(filepath)
+
+    def open_reference_asset(self, filepath: str):
+        from src.editors.assetgroup_maker.monitor import get_reference_asset_path
+        try:
+            from src.other.cs2_netcon import CS2Netcon
+        except Exception:
+            CS2Netcon = None
+
+        asset_path = get_reference_asset_path(filepath)
+        if not asset_path:
+            QMessageBox.warning(self, "No Reference Asset", f"No reference asset found in '{os.path.basename(filepath)}'.")
+            return
+
+        command = f"open_asset {asset_path}"
+        debug(f"[AssetGroupMaker] Sending CS2 command: {command}")
+        if CS2Netcon is None or not CS2Netcon.send(command):
+            QMessageBox.warning(
+                self,
+                "CS2 Not Reachable",
+                "Could not send command to CS2.\n"
+                "Make sure CS2 is running with -netconport 2121."
+            )
+        else:
+            curr = self.parent()
+            while curr is not None:
+                if hasattr(curr, 'update_title') and callable(curr.update_title):
+                    curr.update_title(text=f"Opened reference asset [{asset_path}] in CS2 Tools")
+                    break
+                curr = curr.parent() if hasattr(curr, 'parent') else None
 
     def open_vsmart(self, filepath):
         parent = self.parent()
@@ -871,6 +1214,9 @@ class Explorer(QMainWindow):
             if reply == QMessageBox.Yes:
                 try:
                     shutil.copyfile(file_path_from_clipboard, new_file_name)
+                    if new_file_name.lower().endswith('.hbat'):
+                        from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+                        MonitoringFileWatcher.notify_new_file(new_file_name)
                     return True
                 except shutil.Error as e:
                     error_dialog = ErrorInfo(text="Paste Error", details=str(e))
@@ -882,6 +1228,9 @@ class Explorer(QMainWindow):
             try:
                 shutil.copyfile(file_path_from_clipboard, new_file_name)
                 self.select_tree_item(new_file_name)
+                if new_file_name.lower().endswith('.hbat'):
+                    from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+                    MonitoringFileWatcher.notify_new_file(new_file_name)
                 return True
             except shutil.Error as e:
                 error_dialog = ErrorInfo(text="Paste Error", details=str(e))
@@ -1042,7 +1391,13 @@ class Explorer(QMainWindow):
 
     def goto_clipboard_path(self):
         clipboard = QGuiApplication.clipboard()
-        input_path = clipboard.text().strip().replace('"', '')
+        text = clipboard.text().strip()
+        if not text:
+            return
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            return
+        input_path = lines[0].strip('\'" \t\r\n')
         if input_path:
             self.select_tree_item(input_path)
 
@@ -1263,6 +1618,6 @@ class Explorer(QMainWindow):
             return None
 
     def closeEvent(self, event):
-        tree_state = self.tree.saveState()
+        tree_state = self.tree.header().saveState()
         set_settings_value(self.editor_name + '_tree_state', self.addon, tree_state)
         event.accept()

@@ -58,8 +58,76 @@ def delete_addon(ui=None):
         print('Addon deletion cancelled')
         return False
 
+def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
+    """
+    Launch CS2 as an independent, detached process so that it survives
+    Hammer5Tools closing, minimizing, or updating.
+    """
+    cs2_exe_path = str(cs2_exe_path)
+    commands = str(commands).strip() if commands else ""
+
+    if sys.platform == 'win32':
+        import ctypes
+        work_dir = os.path.dirname(cs2_exe_path)
+        try:
+            # ShellExecuteW asks the Windows Shell (explorer.exe) to create the process,
+            # ensuring that CS2 is completely detached from Hammer5Tools's process tree,
+            # Job Object, and pipe handles.
+            ret = ctypes.windll.shell32.ShellExecuteW(
+                None,
+                "open",
+                cs2_exe_path,
+                commands,
+                work_dir if os.path.exists(work_dir) else None,
+                1  # SW_SHOWNORMAL
+            )
+            if ret > 32:
+                return True
+        except Exception as e:
+            print(f"ShellExecute failed: {e}, falling back to subprocess.Popen")
+
+    # Fallback to subprocess.Popen with full detachment flags and null standard handles
+    flags_breakaway = (
+        getattr(subprocess, 'DETACHED_PROCESS', 0x00000008)
+        | getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0x00000200)
+        | 0x00000001  # CREATE_BREAKAWAY_FROM_JOB
+    )
+    flags_detached = (
+        getattr(subprocess, 'DETACHED_PROCESS', 0x00000008)
+        | getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0x00000200)
+    )
+
+    cmd = f'"{cs2_exe_path}" {commands}'.strip() if commands else f'"{cs2_exe_path}"'
+    popen_kwargs = dict(
+        close_fds=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+    )
+
+    try:
+        subprocess.Popen(
+            cmd,
+            creationflags=flags_breakaway if sys.platform == 'win32' else 0,
+            start_new_session=True if sys.platform != 'win32' else False,
+            **popen_kwargs
+        )
+        return True
+    except (PermissionError, OSError):
+        # Fallback if the job object does not allow breakaway
+        subprocess.Popen(
+            cmd,
+            creationflags=flags_detached if sys.platform == 'win32' else 0,
+            start_new_session=True if sys.platform != 'win32' else False,
+            **popen_kwargs
+        )
+        return True
+
+
 def assemble_commands(commands:str, addon_name):
     return commands.replace('addon_name', addon_name)
+
+
 def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
@@ -97,22 +165,13 @@ def __launch_addon():
                           "Please verify your CS2 installation path in Settings.")
         return
 
-    cs2_launch_commands = f'"{cs2_exe_path}" {commands}'
-
     ncm_mode = get_settings_bool("LAUNCH", "ncm_mode", default=False)
 
     if ncm_mode:
         NCM_mode_setup(cs2_path)
-        launch_command = f'{cs2_launch_commands} -nocustomermachine'
-    else:
-        launch_command = cs2_launch_commands
+        commands = f'{commands} -nocustomermachine'
 
-    psutil.Popen(
-        launch_command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    launch_cs2_process(cs2_exe_path, commands)
 
 
 @exception_handler

@@ -70,5 +70,9 @@ class QuickCreateDialog(QDialog):
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to create file: {e}")
             return
-            
+
+        if self.file_type == 'hbat':
+            from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+            MonitoringFileWatcher.notify_new_file(full_path)
+
         super().accept()
