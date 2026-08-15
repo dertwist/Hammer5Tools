@@ -5,6 +5,7 @@ import re
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets.common import Button, apply_stylesheets
 from src.widgets import ComboboxDynamicItems
+from src.editors.smartprop_editor._common import is_category_widget
 
 
 class ComboboxVariables(ComboboxDynamicItems):
@@ -42,7 +43,10 @@ class ComboboxVariables(ComboboxDynamicItems):
 
     def updateItems(self):
         """Updating widget items on click. Filter items depends on their type if you need"""
-        self.currentTextChanged.disconnect(self.changed_var)
+        try:
+            self.currentTextChanged.disconnect(self.changed_var)
+        except Exception:
+            pass
         self.items = []
         self.items.append('None')
         variables = self.get_variables()
@@ -53,11 +57,16 @@ class ComboboxVariables(ComboboxDynamicItems):
             else:
                 self.items.append(item['name'])
         current = self.currentText()
+        if current and current != 'None' and current not in self.items:
+            self.items.append(current)
         self.clear()
         self.addItems(self.items)
         if current in self.items:
             self.setCurrentText(current)
-        self.currentTextChanged.connect(self.changed_var),
+        try:
+            self.currentTextChanged.connect(self.changed_var)
+        except Exception:
+            pass
     def changed_var(self):
         if self.currentIndex() == 0:
             self.changed.emit({'name': None, 'class': None, 'm_default': None})
@@ -68,10 +77,14 @@ class ComboboxVariables(ComboboxDynamicItems):
                     break
     def get_variables(self):
         data_out = []
+        if self.variables_scrollArea is None:
+            return data_out
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                var = {'name': widget.name, 'class': widget.var_class, 'm_default': widget.var_value['default']}
+            if widget and not is_category_widget(widget):
+                var_value = getattr(widget, 'var_value', {})
+                default_val = var_value.get('default') if isinstance(var_value, dict) else None
+                var = {'name': getattr(widget, 'name', ''), 'class': getattr(widget, 'var_class', ''), 'm_default': default_val}
                 data_out.append(var)
         return data_out
     def set_variable(self, value):
@@ -79,7 +92,8 @@ class ComboboxVariables(ComboboxDynamicItems):
         if value == "" or value is None:
             self.setCurrentIndex(0)
         else:
-            self.addItem(value)
+            if value not in self.items:
+                self.addItem(value)
             self.setCurrentText(value)
     def get_variable(self):
         if self.currentText() == "None":
@@ -333,10 +347,12 @@ class ComboboxVariablesWidget(QWidget):
     def get_all_variables(self):
         """Return a list of all variable names from the variables layout."""
         names = []
+        if self.variables_layout is None:
+            return names
         for i in range(self.variables_layout.count()):
             widget = self.variables_layout.itemAt(i).widget()
-            if widget:
-                names.append(widget.name)
+            if widget and not is_category_widget(widget):
+                names.append(getattr(widget, 'name', ''))
         return names
 
     def get_variables(self):
