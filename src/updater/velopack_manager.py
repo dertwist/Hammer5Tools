@@ -3,7 +3,7 @@ from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import QMessageBox
 from velopack import UpdateManager
 from src.common import get_update_source, get_update_options, app_version
-from src.updater.check import DownloadProgressDialog
+from src.updater.check import DownloadProgressDialog, prepare_for_update
 
 class VelopackManager:
     def __init__(self, parent_window):
@@ -52,6 +52,7 @@ class VelopackManager:
 
         try:
             mgr.download_updates(update, on_progress)
+            prepare_for_update()
             mgr.apply_updates_and_restart(update)
         except Exception as e:
             error_msg = str(e)

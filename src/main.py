@@ -188,6 +188,21 @@ if __name__ == "__main__":
 
     _install_crash_handler()
 
+    # Windows Job Object initialization (ensures all child processes terminate on exit)
+    if sys.platform == 'win32':
+        try:
+            from src.job_object import install_job_object
+            install_job_object()
+        except Exception as e:
+            print(f"Error installing job object: {e}")
+
+    # Velopack official startup runner
+    try:
+        import velopack
+        velopack.App().run()
+    except Exception:
+        pass
+
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)
 
