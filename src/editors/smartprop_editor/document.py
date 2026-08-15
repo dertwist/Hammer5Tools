@@ -595,33 +595,11 @@ class SmartPropDocument(QMainWindow):
 
     # [Properties groups]
     def properties_groups_init(self):
-        # 'property_list_backend' under [SmartPropEditor] selects the property
-        # editor: 'legacy' (default, form-based) or 'new' (experimental treeview).
-        # Toggled from the View menu ("New Property Editor (Experimental)").
-        backend = get_settings_value(
-            'SmartPropEditor', 'property_list_backend', default='legacy'
-        )
         self.smartprop_property_panel = SmartPropPropertyPanel(
-            document=self, parent=self, backend=backend
+            document=self, parent=self
         )
         self.ui.properties_layout.addWidget(self.smartprop_property_panel)
         self.property_panel = self.smartprop_property_panel
-
-        # Slider scrub grouping: the property tree view forwards drag start/end
-        # so a single slider drag collapses to one undo entry (mirrors the
-        # legacy PropertyFrame.slider_pressed/committed connection).
-        # Only wire when the new backend is active (legacy backend uses direct
-        # PropertyFrame.slider_pressed/committed signals instead).
-        try:
-            from src.editors.smartprop_editor.props.view import PropertyPanel
-            tree_view = self.property_panel.property_panel.tree_view
-            tree_view.sliderStarted.connect(lambda _idx: self._on_slider_started())
-            tree_view.sliderCommitted.connect(lambda _idx: self._on_slider_committed())
-        except AttributeError:
-            # Legacy backend has no tree_view — slider signals wired per-frame.
-            pass
-        except Exception:
-            pass
 
         self.ui.properties_placeholder.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.ui.properties_placeholder.setAlignment(Qt.AlignCenter)

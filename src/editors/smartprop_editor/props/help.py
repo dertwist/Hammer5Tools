@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QModelIndex, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QMouseEvent, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
@@ -33,8 +33,7 @@ from src.editors.smartprop_editor.property_tooltips import (
     resolve_image_path,
 )
 from src.editors.smartprop_editor.props.components import get_summary_hint, prettify_class_name
-from src.editors.smartprop_editor.props.model import ComponentRef, FieldDefRole
-from src.editors.smartprop_editor.props.schema import FieldDef
+from src.editors.smartprop_editor.props.model import ComponentRef
 
 _PANEL_BG   = "#1E1E1E"
 _TITLE_COL  = "#4EC9B0"   # cyan-teal — matches Hammer's category colour
@@ -293,19 +292,6 @@ class HelpPanel(QFrame):
             "Select a component or property to view a detailed description.",
             None
         )
-
-    def set_field_help(self, index: QModelIndex):
-        """Set help text from focused property tree index."""
-        if not index.isValid():
-            self.clear_help()
-            return
-        fd: FieldDef = index.data(FieldDefRole)
-        if not fd:
-            self.clear_help()
-            return
-
-        desc, img = get_tooltip_info(fd.field, f"Property '{fd.field}' ({fd.control}).")
-        self.set_help(fd.label, desc, img)
 
     def set_property_help(self, value_class: str, label: str = ""):
         """Set help text for a property selected in the legacy (form) backend.

@@ -81,7 +81,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### Reusable Widgets (`src/widgets/`)
 - **`CustomTreeWidget` (`src/widgets/tree.py`)**: Enhanced `QTreeWidget` with drag-and-drop support, inline editing, and custom signals.
 - **`ConsoleWidget` (`src/widgets/console.py`)**: Embedded logger and output viewer.
-- **`Property Inspectors` (`src/widgets/property/`)**: Specialized property inputs for Vector3, Color, Resource picker, and Enums.
+- **`Property Inspectors` (`src/editors/smartprop_editor/property/`)**: Specialized property inputs for Vector3, Color, Resource picker, and Enums.
 
 ---
 
