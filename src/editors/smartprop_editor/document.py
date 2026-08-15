@@ -141,6 +141,7 @@ class SmartPropDocument(QMainWindow):
 
         # Choices widget-edit debounce (ComboboxTreeChild, VariableWidget, etc.)
         self._choices_widget_old_state = None
+        self._last_committed_choices_state = None
         self._choices_widget_debounce_desc = "Edit Choices"
         self._choices_widget_debounce = QTimer()
         self._choices_widget_debounce.setSingleShot(True)
@@ -777,8 +778,9 @@ class SmartPropDocument(QMainWindow):
             parent_item = self.ui.tree_hierarchy_widget.currentItem()
 
         populate_tree(__data, parent_item)
-        self._populate_choices(__data.get("m_Choices", None))
         self._populate_variables(__data.get("m_Variables"))
+        self._populate_choices(__data.get("m_Choices", None))
+        self._connect_choices_widget_signals()
 
     def load_preset(self, name: str = None, path: str = None):
         with open(path, "r") as file:
@@ -804,9 +806,10 @@ class SmartPropDocument(QMainWindow):
             parent.addChild(item)
             parent.setExpanded(True)
             
-        # 3. Add variables and choices
-        self._populate_choices(__data.get("m_Choices", None))
+        # 3. Add variables and choices (variables first so choices can resolve types and defaults)
         self._populate_variables(__data.get("m_Variables"))
+        self._populate_choices(__data.get("m_Choices", None))
+        self._connect_choices_widget_signals()
         
         new_variables = self._snapshot_variables()
         new_choices = self._snapshot_choices()
@@ -1258,6 +1261,12 @@ class SmartPropDocument(QMainWindow):
                             var_display_name=var_display_name
                         )
 
+            # Populate choices after variables layout has been built
+            self.ui.choices_tree_widget.clear()
+            self._populate_choices(getattr(vsmart_instance, "raw_choices", None))
+            self._connect_choices_widget_signals()
+            self._last_committed_choices_state = self._snapshot_choices()
+
             self._modified = False
         finally:
             # Always release the guard and clear the stack, even if an exception
@@ -1292,6 +1301,7 @@ class SmartPropDocument(QMainWindow):
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
         self.get_variables(self.variable_viewport.ui.variables_scrollArea)
+        self._flush_choices_widget_if_pending()
         content_version = self.content_version_spinbox.value()
         if filename:
             try:
@@ -1363,8 +1373,8 @@ class SmartPropDocument(QMainWindow):
                 )
 
         menu.addSection("")
-        add_menu_action("Move Up", "Move Up", lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
-        add_menu_action("Move Down", "Move Down", lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
+        add_menu_action("Move Up", "Move Up", lambda: self.move_choice_tree_item(-1))
+        add_menu_action("Move Down", "Move Down", lambda: self.move_choice_tree_item(1))
         
         menu.addSection("")
 
@@ -2365,8 +2375,69 @@ class SmartPropDocument(QMainWindow):
         finally:
             self.ui.choices_tree_widget.blockSignals(False)
         self._connect_choices_widget_signals()
+        self._last_committed_choices_state = state
         self._modified = True
         self._edited.emit()
+
+    def move_choice_tree_item(self, direction):
+        """Move a choice, option, or choice variable up or down without destroying widgets."""
+        selected_items = self.ui.choices_tree_widget.selectedItems()
+        if not selected_items:
+            return
+        item = selected_items[0]
+        item_type = item.text(2)
+        state = self._snapshot_choices()
+        root = self.ui.choices_tree_widget.invisibleRootItem()
+
+        target_path = None
+        if item_type == "choice":
+            ci = root.indexOfChild(item)
+            new_ci = ci + direction
+            if 0 <= new_ci < len(state):
+                state[ci], state[new_ci] = state[new_ci], state[ci]
+                target_path = ("choice", new_ci)
+        elif item_type == "option":
+            choice_item = item.parent()
+            if choice_item:
+                ci = root.indexOfChild(choice_item)
+                oi = choice_item.indexOfChild(item)
+                new_oi = oi + direction
+                if 0 <= ci < len(state) and 0 <= new_oi < len(state[ci]['options']):
+                    opts = state[ci]['options']
+                    opts[oi], opts[new_oi] = opts[new_oi], opts[oi]
+                    target_path = ("option", ci, new_oi)
+        elif item_type == "variable":
+            option_item = item.parent()
+            choice_item = option_item.parent() if option_item else None
+            if option_item and choice_item:
+                ci = root.indexOfChild(choice_item)
+                oi = choice_item.indexOfChild(option_item)
+                vi = option_item.indexOfChild(item)
+                new_vi = vi + direction
+                if (0 <= ci < len(state) and 0 <= oi < len(state[ci]['options'])
+                        and 0 <= new_vi < len(state[ci]['options'][oi]['variables'])):
+                    vars_ = state[ci]['options'][oi]['variables']
+                    vars_[vi], vars_[new_vi] = vars_[new_vi], vars_[vi]
+                    target_path = ("variable", ci, oi, new_vi)
+
+        if target_path:
+            self._restore_choices(state)
+            try:
+                tree = self.ui.choices_tree_widget
+                root_item = tree.invisibleRootItem()
+                target_item = None
+                if target_path[0] == "choice":
+                    target_item = root_item.child(target_path[1])
+                elif target_path[0] == "option":
+                    target_item = root_item.child(target_path[1]).child(target_path[2])
+                elif target_path[0] == "variable":
+                    target_item = root_item.child(target_path[1]).child(target_path[2]).child(target_path[3])
+                if target_item:
+                    tree.clearSelection()
+                    target_item.setSelected(True)
+                    tree.scrollToItem(target_item)
+            except Exception:
+                pass
 
     def _connect_choices_widget_signals(self):
         """Connect change signals on all inline widgets inside the choices tree.
@@ -2375,16 +2446,18 @@ class SmartPropDocument(QMainWindow):
         ComboboxTreeChild and VariableWidget/Float/Bool edits are tracked.
         """
         from functools import partial
+        from PySide6.QtWidgets import QLineEdit, QCheckBox, QSlider
         tree = self.ui.choices_tree_widget
         root = tree.invisibleRootItem()
         for ci in range(root.childCount()):
             choice = root.child(ci)
             combo = tree.itemWidget(choice, 1)
             if combo:
-                try:
-                    combo.currentTextChanged.disconnect()
-                except RuntimeError:
-                    pass
+                if hasattr(combo, '_undo_handler'):
+                    try:
+                        combo.currentTextChanged.disconnect(combo._undo_handler)
+                    except (RuntimeError, TypeError):
+                        pass
                 handler = partial(self._on_choices_widget_changed, "Edit Choice Default")
                 combo._undo_handler = handler
                 combo.currentTextChanged.connect(handler)
@@ -2395,40 +2468,46 @@ class SmartPropDocument(QMainWindow):
                     var_item = option.child(vi)
                     var_widget = tree.itemWidget(var_item, 0)
                     if hasattr(var_widget, 'combobox'):
-                        try:
-                            var_widget.combobox.changed.disconnect()
-                        except RuntimeError:
-                            pass
+                        if hasattr(var_widget, '_undo_handler_type'):
+                            try:
+                                var_widget.combobox.changed.disconnect(var_widget._undo_handler_type)
+                            except (RuntimeError, TypeError):
+                                pass
                         handler = partial(self._on_choices_widget_type_changed, "Choice Option Variable type changed")
                         var_widget._undo_handler_type = handler
                         var_widget.combobox.changed.connect(handler)
-                        
+
                     val_widget = tree.itemWidget(var_item, 1)
                     if val_widget:
-                        if hasattr(val_widget, 'editline'):
-                            try:
-                                val_widget.editline.textChanged.disconnect()
-                            except RuntimeError:
-                                pass
-                            handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
-                            val_widget._undo_handler_val = handler
-                            val_widget.editline.textChanged.connect(handler)
-                        elif hasattr(val_widget, 'checkbox'):
-                            try:
-                                val_widget.checkbox.checkStateChanged.disconnect()
-                            except RuntimeError:
-                                pass
-                            handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
-                            val_widget._undo_handler_val = handler
-                            val_widget.checkbox.checkStateChanged.connect(handler)
-                        elif hasattr(val_widget, 'x_edit'):
-                            # Vector3D fallback coverage
-                            for ed in (val_widget.x_edit, val_widget.y_edit, val_widget.z_edit):
-                                try: ed.textChanged.disconnect()
-                                except RuntimeError: pass
-                                handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
-                                setattr(ed, "_undo_handler_val", handler)
-                                ed.textChanged.connect(handler)
+                        handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
+                        val_widget._undo_handler_val = handler
+                        for child in val_widget.findChildren(QLineEdit):
+                            old_h = getattr(child, '_undo_handler_val', None)
+                            if old_h:
+                                try:
+                                    child.textChanged.disconnect(old_h)
+                                except (RuntimeError, TypeError):
+                                    pass
+                            child._undo_handler_val = handler
+                            child.textChanged.connect(handler)
+                        for child in val_widget.findChildren(QCheckBox):
+                            old_h = getattr(child, '_undo_handler_val', None)
+                            if old_h:
+                                try:
+                                    child.checkStateChanged.disconnect(old_h)
+                                except (RuntimeError, TypeError):
+                                    pass
+                            child._undo_handler_val = handler
+                            child.checkStateChanged.connect(handler)
+                        for child in val_widget.findChildren(QSlider):
+                            old_h = getattr(child, '_undo_handler_val', None)
+                            if old_h:
+                                try:
+                                    child.valueChanged.disconnect(old_h)
+                                except (RuntimeError, TypeError):
+                                    pass
+                            child._undo_handler_val = handler
+                            child.valueChanged.connect(handler)
 
     def _on_choices_widget_type_changed(self, description, *args):
         """When user changes var type, choices.py swaps widget instantly. We must reconnect."""
@@ -2442,7 +2521,8 @@ class SmartPropDocument(QMainWindow):
         op_fn()
         new = self._snapshot_choices()
         self._connect_choices_widget_signals()
-        
+        self._last_committed_choices_state = new
+
         print(f"DEBUG _choices_op_with_undo: desc='{description}' | old_len={len(old)} new_len={len(new)}")
         if new != old:
             print(f"DEBUG _choices_op_with_undo: PUSHING -> {description}")
@@ -2463,15 +2543,17 @@ class SmartPropDocument(QMainWindow):
             and self._choices_rename_old_state is not None
         ):
             new_state = self._snapshot_choices()
-            self.undo_stack.push(
-                ChoicesSnapshotCommand(self, self._choices_rename_old_state, new_state, "Rename")
-            )
+            if new_state != self._choices_rename_old_state:
+                self.undo_stack.push(
+                    ChoicesSnapshotCommand(self, self._choices_rename_old_state, new_state, "Rename")
+                )
+            self._last_committed_choices_state = new_state
             self._choices_rename_old_state = None
 
     def _on_choices_widget_changed(self, description="Edit Choices", *args):
         """Debounce handler for ComboboxTreeChild / VariableWidget changes."""
         if self._choices_widget_old_state is None:
-            self._choices_widget_old_state = self._snapshot_choices()
+            self._choices_widget_old_state = self._last_committed_choices_state or self._snapshot_choices()
         self._choices_widget_debounce_desc = description
         self._choices_widget_debounce.start(500)
 
@@ -2488,6 +2570,9 @@ class SmartPropDocument(QMainWindow):
                         self._choices_widget_debounce_desc,
                     )
                 )
+                self._modified = True
+                self._edited.emit()
+            self._last_committed_choices_state = new_state
             self._choices_widget_old_state = None
 
     def _flush_choices_widget_if_pending(self):

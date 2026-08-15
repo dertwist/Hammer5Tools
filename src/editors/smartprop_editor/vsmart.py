@@ -235,8 +235,10 @@ class VsmartOpen:
                 if self.next_element_id:
                     self.element_id_generator.add_id(self.next_element_id)
                     debug(f"Last ElementID from file: {self.next_element_id}")
+        self.raw_choices = data.get("m_Choices", None)
         self.populate_tree(data)
-        self.populate_choices(data.get("m_Choices", None))
+        if self.variables_scrollArea is None:
+            self.populate_choices(self.raw_choices)
 
     def populate_tree(self, data, parent=None):
         """Populate the tree hierarchy with element data."""
