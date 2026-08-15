@@ -276,7 +276,7 @@ class _EventListModel(QAbstractListModel):
         super().__init__(parent)
         self._names: List[str] = []
         if _EventListModel._play_icon is None:
-            _EventListModel._play_icon = QIcon(":/icons/tools/assettypes/generic_sm.png")
+            _EventListModel._play_icon = QIcon(":/icons/tools/assettypes/vmix_sm.png")
 
     def set_names(self, names: List[str]) -> None:
         self.beginResetModel()

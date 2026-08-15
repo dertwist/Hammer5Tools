@@ -36,6 +36,25 @@ def get_smartprop_icon_path():
     dev_path = Path(__file__).parent.parent / "icons" / "smartprop.ico"
     return str(dev_path)
 
+def get_vsnd_icon_path():
+    """Returns the absolute path to vsnd.ico."""
+    if getattr(sys, 'frozen', False):
+        # In frozen builds, it should be in the app root or defaults
+        base_dir = Path(sys.executable).parent
+        # Try several common locations
+        candidates = [
+            base_dir / "app" / "icons" / "vsnd.ico",
+            base_dir / "icons" / "vsnd.ico",
+            base_dir / "defaults" / "icons" / "vsnd.ico"
+        ]
+        for c in candidates:
+            if c.exists():
+                return str(c)
+    
+    # Development fallback
+    dev_path = Path(__file__).parent.parent / "icons" / "vsnd.ico"
+    return str(dev_path)
+
 def check_association(extension):
     """
     Checks the current association for an extension.
@@ -77,8 +96,8 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"{prog_key_path}\\shell\\open\\command") as key:
             winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{open_cmd}" "%1"')
             
-        # Add "Edit with Hammer5Tools" context menu for smartprops
-        if extension == ".vsmart":
+        # Add "Edit with Hammer5Tools" context menu for smartprops and soundevents
+        if extension in [".vsmart", ".vsndevts"]:
             edit_key_path = f"{prog_key_path}\\shell\\editwith"
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, edit_key_path) as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "Edit With Hammer5Tools")
@@ -98,13 +117,11 @@ def setup_all_associations(force=False, parent_window=None):
     """
     fileedit = get_fileedit_path()
     smartprop_icon = get_smartprop_icon_path()
-    
-    # For now we use the same icon for others, or we could add more specific ones later
-    # The user specifically mentioned smartprop.ico for associations.
+    vsnd_icon = get_vsnd_icon_path()
     
     associations = [
         (".vsmart", "Hammer5Tools.SmartProp", "SmartProp File", smartprop_icon),
-        (".vsndevts", "Hammer5Tools.SoundEvent", "SoundEvent File", smartprop_icon),
+        (".vsndevts", "Hammer5Tools.SoundEvent", "SoundEvent File", vsnd_icon),
         (".hbat", "Hammer5Tools.Batch", "Hammer Batch File", smartprop_icon)
     ]
     

@@ -32,7 +32,7 @@ class ZebraMenu(QMenu):
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
-generic_extensions = ['vpost', 'vsndevts', 'rect', 'keybindings', 'kv3']
+generic_extensions = ['vpost', 'rect', 'keybindings', 'kv3']
 model_extensions = ['obj', 'fbx', 'dmx']
 
 file_icons = {
@@ -42,7 +42,9 @@ file_icons = {
     '.vmap': '://icons/tools/assettypes/map_sm.png',
     '.hbat': '://icons/tools/assettypes/vcompmat_sm.png',
     '.vtex': '://icons/tools/assettypes/texture_sm.png',
-    '.vmdl': '://icons/tools/assettypes/model_sm.png'
+    '.vmdl': '://icons/tools/assettypes/model_sm.png',
+    '.vsnd': '://icons/tools/assettypes/vmix_sm.png',
+    '.vsndevts': '://icons/tools/assettypes/vmix_sm.png'
 }
 
 class CustomFileSystemModel(QFileSystemModel):
@@ -611,7 +613,7 @@ class Explorer(QMainWindow):
 
         if file_extension == "vsndevts":
             open_vsndevts_action = QAction("Open SoundEvent", self)
-            open_vsndevts_action.setIcon(QIcon('://icons/tools/assettypes/generic_sm.png'))
+            open_vsndevts_action.setIcon(QIcon(file_icons['.vsndevts']))
             open_vsndevts_action.triggered.connect(lambda: self.open_vsndevts(file_path))
             menu.addAction(open_vsndevts_action)
 
