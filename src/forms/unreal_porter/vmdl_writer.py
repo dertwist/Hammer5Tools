@@ -602,7 +602,8 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
         if abs_target.lower().endswith(".fbx"):
             eff_scale = 1.0 if already_processed else mesh_scale_factor
             try:
-                flatten_fbx(target_mesh_file, strip_prefix=strip_prefix, scale_factor=eff_scale)
+                flatten_fbx(target_mesh_file, strip_prefix=strip_prefix, scale_factor=eff_scale,
+                            import_lods=import_lods, import_collision=import_collision)
             except Exception:
                 pass
             if processed_files is not None:
