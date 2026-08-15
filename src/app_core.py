@@ -109,10 +109,6 @@ class DevWidget(QWidget):
             lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
         )
         layout.addWidget(self.checkBox_debug_info)
-        from src.widgets.property.viewport import PropertyViewport
-        window = PropertyViewport()
-        window.resize(500, 300)
-        window.show()
         self.setLayout(layout)
 
 class Widget(QMainWindow):

@@ -47,7 +47,6 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 from src.common import fast_deepcopy
-from src.editors.smartprop_editor.props.property_list_base import AbstractPropertyList
 from src.editors.smartprop_editor.props.model import ComponentRef
 
 from PySide6.QtCore import Qt, Signal
@@ -93,8 +92,8 @@ class _CachedFrame:
     content: int
 
 
-class LegacyPropertyList(AbstractPropertyList):
-    """Section 2 backend — old PropertyFrame-based property list."""
+class LegacyPropertyList(QWidget):
+    """Section 2 backend — PropertyFrame-based property list."""
 
     # A property row was selected: (value_class, label). Drives the help panel.
     propertySelected = Signal(str, str)

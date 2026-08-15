@@ -224,19 +224,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.docks_menu = view_menu.addMenu("Docks & Panels")
         self.update_docks_menu()
 
-        view_menu.addSeparator()
-
-        # Experimental opt-in for the treeview-based property editor. Default
-        # is off (legacy form-based editor). Applies on next document open.
-        self.action_new_property_editor = view_menu.addAction("New Property Editor (Experimental)")
-        self.action_new_property_editor.setCheckable(True)
-        self.action_new_property_editor.setChecked(
-            get_settings_value('SmartPropEditor', 'property_list_backend', default='legacy') == 'new'
-        )
-        self.action_new_property_editor.toggled.connect(self._on_toggle_new_property_editor)
-
-        view_menu.addSeparator()
-
         self.action_save_layout = view_menu.addAction("Save Current Layout as Default")
         self.action_save_layout.triggered.connect(self.save_layout_action)
 
@@ -284,20 +271,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if hasattr(self, 'action_reset_layout'): self.action_reset_layout.setEnabled(has_doc)
 
         self.update_docks_menu()
-
-    def _on_toggle_new_property_editor(self, checked: bool):
-        """Persist the property-editor backend choice ('new' vs 'legacy').
-
-        The panel is constructed once per document, so the change takes effect
-        for newly opened documents.
-        """
-        set_settings_value('SmartPropEditor', 'property_list_backend', 'new' if checked else 'legacy')
-        self.statusBar().showMessage(
-            "New Property Editor "
-            + ("enabled" if checked else "disabled")
-            + " — takes effect for newly opened documents.",
-            5000,
-        )
 
     def save_all_files(self):
         """Saves all open modified documents."""

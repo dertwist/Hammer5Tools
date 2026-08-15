@@ -3,39 +3,24 @@ SmartPropPropertyPanel — Combined 3-section Property Panel.
 
 Layout (top-to-bottom):
   ┌─────────────────────────────────────┐
-  │  ▼ Components                       │  ← Section 1  (ComponentList) — sized
+  │  ▼ Components                       │  ← Section 1 (ComponentList) — sized
   │                                      │    to its own content, not resizable
-  ├─────────────────────────────────────┤    against Section 2 (no splitter here;
-  │  ▼ Properties          [collapsible]│  ← Section 2  (swappable backend)
-  │    new:    PropertyPanel treeview   │
-  │    legacy: PropertyFrame forms      │
+  ├─────────────────────────────────────┤    against Section 2 (no splitter here)
+  │  ▼ Properties                       │  ← Section 2 (LegacyPropertyList)
   ├─────────────────────────────────────┤
-  │  Title / Body description …         │  ← Section 3  (HelpPanel)
+  │  Title / Body description …         │  ← Section 3 (HelpPanel)
   └─────────────────────────────────────┘
 
-Section 1 sits in the plain outer layout, sized to its own content (it already
-scrolls internally past ~16 rows — see ComponentList.sizeHint). Sections 2 & 3
-live inside a QSplitter so the user can still trade space between properties
+Section 1 sits in the plain outer layout, sized to its own content. Sections 2 & 3
+live inside a QSplitter so the user can trade space between properties
 and the help strip.
-
-Backend selection
------------------
-Pass ``backend='new'`` (default) to use the treeview-based PropertyPanel.
-Pass ``backend='legacy'`` to use the restored PropertyFrame-based system.
-The setting is typically read from QSettings by the document and forwarded
-as a constructor argument:
-
-    SmartPropPropertyPanel(document=self, backend='legacy')
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import QModelIndex, QSize, Qt
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QFrame,
-    QLabel,
-    QScrollArea,
     QSizePolicy,
     QSplitter,
     QToolButton,
@@ -46,9 +31,7 @@ from PySide6.QtWidgets import (
 from src.editors.smartprop_editor.props.components import ComponentList
 from src.editors.smartprop_editor.props.help import HelpPanel
 from src.editors.smartprop_editor.props.model import ComponentRef
-from src.editors.smartprop_editor.props.view import PropertyPanel
 from src.editors.smartprop_editor.props.legacy_property_list import LegacyPropertyList
-from src.editors.smartprop_editor.props.property_list_base import AbstractPropertyList
 
 # ── Colours ────────────────────────────────────────────────────────────────
 _HDR_BG      = "#1A1A1A"
@@ -71,7 +54,6 @@ class _CollapsibleSection(QWidget):
 
     def __init__(self, title: str, content: QWidget, parent=None):
         super().__init__(parent)
-        # Preferred vertical: size hint = content size; no forced growth
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         root = QVBoxLayout(self)
@@ -117,10 +99,8 @@ class _CollapsibleSection(QWidget):
         # ── Content ────────────────────────────────────────────────────────
         self._content = content
         self._content.setParent(self)
-        # Content expands only if the section is allowed to stretch
         root.addWidget(self._content, 1)
 
-    # Report a sensible height so the splitter allocates just enough space
     def sizeHint(self):
         h = self._HEADER_H
         if self._toggle_btn.isChecked() and self._content.isVisible():
@@ -151,45 +131,30 @@ class _CollapsibleSection(QWidget):
         self._toggle_btn.setChecked(value)
 
 
-
 # ── Main Panel ──────────────────────────────────────────────────────────────
 
 class SmartPropPropertyPanel(QWidget):
-    """Unified 3-section SmartProp Property Editor Panel.
-
-    Parameters
-    ----------
-    backend : str
-        ``'new'``    — treeview-based PropertyPanel (default).
-        ``'legacy'`` — form-based LegacyPropertyList (old PropertyFrame system).
-    """
+    """Unified 3-section SmartProp Property Editor Panel."""
 
     _HELP_MIN_H = 80    # px — minimum height for the help strip
 
-    def __init__(self, document=None, parent=None, backend: str = "new"):
+    def __init__(self, document=None, parent=None):
         super().__init__(parent)
         self.document = document
         self.current_item = None
-        self._backend = backend
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         # ── Section 1: Component List ──────────────────────────────────────
-        # Sits directly in the outer layout, not in the splitter below — sized
-        # to its own content (stretch 0), no draggable divider against Section 2.
         self.components_list = ComponentList(document=self.document, parent=self)
         self.components_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        # ── Section 2: Property List (swappable backend) ───────────────────
-        if backend == "legacy":
-            self.property_list: AbstractPropertyList = LegacyPropertyList(
-                document=self.document, parent=self
-            )
-        else:
-            self.property_list = PropertyPanel(document=self.document, parent=self)
-        # Backward-compat alias (document.py accesses .property_panel.property_panel.tree_view)
+        # ── Section 2: Property List ───────────────────────────────────────
+        self.property_list = LegacyPropertyList(
+            document=self.document, parent=self
+        )
         self.property_panel = self.property_list
 
         # ── Section 3: Help strip ──────────────────────────────────────────
@@ -225,14 +190,7 @@ class SmartPropPropertyPanel(QWidget):
 
         # ── Wire signals ───────────────────────────────────────────────────
         self.components_list.componentSelected.connect(self._on_component_selected)
-        # Property → help panel. The new backend reports the focused tree row;
-        # the legacy backend reports the selected PropertyFrame row.
-        if backend == "new" and isinstance(self.property_list, PropertyPanel):
-            self.property_list.tree_view.selectionModel().currentChanged.connect(
-                self._on_property_focused
-            )
-        elif isinstance(self.property_list, LegacyPropertyList):
-            self.property_list.propertySelected.connect(self.help_panel.set_property_help)
+        self.property_list.propertySelected.connect(self.help_panel.set_property_help)
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -271,12 +229,3 @@ class SmartPropPropertyPanel(QWidget):
         refs = self.components_list.selected_refs()
         self.property_list.set_components(refs)
         self.help_panel.set_component_help(ref)
-
-    def _on_property_focused(self, current: QModelIndex, previous: QModelIndex):
-        """Update help from the focused property row (new backend only)."""
-        if current.isValid():
-            self.help_panel.set_field_help(current)
-        else:
-            refs = self.components_list.selected_refs()
-            ref = refs[0] if refs else None
-            self.help_panel.set_component_help(ref)
