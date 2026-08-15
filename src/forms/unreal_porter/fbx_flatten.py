@@ -32,6 +32,7 @@ ASCII/other inputs are returned untouched.
 """
 
 import os
+import re
 import struct
 import zlib
 
@@ -422,31 +423,250 @@ def scale_fbx(path: str, scale_factor: float) -> bool:
     return True
 
 
-def flatten_fbx(path, strip_prefix: bool = True, scale_factor: float = 1.0) -> dict:
+def remove_nodes_from_fbx(d: bytearray, ranges_to_remove: list) -> bytearray:
+    """
+    Remove byte ranges [(start_off, end_off), ...] from FBX bytearray d,
+    updating EndOffset in all affected node headers.
+    """
+    if not ranges_to_remove:
+        return d
+
+    version = struct.unpack("<I", d[23:27])[0]
+    is_64 = version >= 7500
+    hdr_fmt, hdr_size, null_len = _reader(version)
+    end_fmt = "<Q" if is_64 else "<I"
+
+    # Sort ranges from highest offset to lowest offset so deletions don't affect earlier offsets
+    sorted_ranges = sorted(ranges_to_remove, key=lambda r: r[0], reverse=True)
+
+    # Initial collection of all nodes (hdr_offset, end_offset)
+    node_records = []
+    def collect_nodes(start_off, limit_end):
+        off = start_off
+        while off < limit_end - null_len:
+            end, npr, pl = struct.unpack(hdr_fmt, d[off:off + hdr_size])
+            if end == 0:
+                break
+            node_records.append((off, end))
+            nlen = d[off + hdr_size]
+            children_start = off + hdr_size + 1 + nlen + pl
+            if children_start < end - null_len:
+                collect_nodes(children_start, end)
+            off = end
+
+    collect_nodes(27, len(d))
+
+    for s, e in sorted_ranges:
+        delta = e - s
+        if delta <= 0:
+            continue
+
+        # Filter out node records that were completely inside the deleted range [s, e)
+        new_records = []
+        for hoff, end in node_records:
+            if s <= hoff and end <= e:
+                continue
+            new_hoff = hoff - delta if hoff >= s else hoff
+            new_end = end - delta if end > s else end
+            new_records.append((new_hoff, new_end))
+
+        # Delete the byte slice
+        del d[s:e]
+
+        # Patch EndOffsets in headers
+        for hoff, end in new_records:
+            struct.pack_into(end_fmt, d, hoff, end)
+
+        node_records = new_records
+
+    return d
+
+
+def filter_fbx_objects(d: bytearray, import_lods: bool = True, import_collision: bool = True) -> tuple[bytearray, dict]:
+    """
+    Filter out unimported LODs (LOD1+) and/or collision meshes from FBX bytearray d.
+    Returns (modified_d, stats_dict).
+    """
+    if import_lods and import_collision:
+        return d, {"removed_models": [], "removed_geometries": []}
+
+    fbx = _Fbx(d)
+    tops = fbx.top_nodes()
+    if "Objects" not in tops or "Connections" not in tops:
+        return d, {"removed_models": [], "removed_geometries": []}
+
+    models = {}          # mid -> (clean_name, sub, node_off, node_end)
+    geometries = {}      # gid -> (clean_name, sub, node_off, node_end)
+    node_attrs = {}      # aid -> (clean_name, sub, node_off, node_end)
+
+    for nm, node in fbx.child_nodes(tops["Objects"]):
+        props, _ = _parse_props(d, node[4], node[2])
+        if len(props) < 2:
+            continue
+        obj_id = props[0][1]
+        obj_name = props[1][1].split('\x00', 1)[0] if isinstance(props[1][1], str) else ""
+        obj_sub = props[2][1] if len(props) >= 3 and isinstance(props[2][1], str) else ""
+
+        if nm == "Model":
+            models[obj_id] = (obj_name, obj_sub, node[0], node[1])
+        elif nm == "Geometry":
+            geometries[obj_id] = (obj_name, obj_sub, node[0], node[1])
+        elif nm == "NodeAttribute":
+            node_attrs[obj_id] = (obj_name, obj_sub, node[0], node[1])
+
+    models_to_delete = set()
+    for mid, (mname, msub, _s, _e) in models.items():
+        is_collision = any(mname.upper().startswith(t) for t in _COLLISION_TAGS)
+        if not import_collision and is_collision:
+            models_to_delete.add(mid)
+            continue
+
+        if not import_lods:
+            if msub == "LodGroup" or mname.lower().startswith(("fbxlodgroup", "lodgroup")):
+                models_to_delete.add(mid)
+                continue
+            if not is_collision:
+                m = re.search(r"_LOD(\d+)$", mname, re.I)
+                if m and int(m.group(1)) > 0:
+                    models_to_delete.add(mid)
+
+    if not models_to_delete:
+        return d, {"removed_models": [], "removed_geometries": []}
+
+    # Find connected geometries and node attributes to delete
+    geoms_to_delete = set()
+    attrs_to_delete = set()
+    conns_to_delete = []
+
+    for nm, node in fbx.child_nodes(tops["Connections"]):
+        if nm != "C":
+            continue
+        props, _ = _parse_props(d, node[4], node[2])
+        if len(props) < 3:
+            continue
+        ctype, child, parent = props[0][1], props[1][1], props[2][1]
+
+        if child in geometries and parent in models_to_delete:
+            geoms_to_delete.add(child)
+        if child in node_attrs and parent in models_to_delete:
+            attrs_to_delete.add(child)
+
+        if child in models_to_delete or parent in models_to_delete:
+            conns_to_delete.append((node[0], node[1]))
+
+    # Also catch connections for deleted geoms / attrs
+    for nm, node in fbx.child_nodes(tops["Connections"]):
+        if nm != "C":
+            continue
+        props, _ = _parse_props(d, node[4], node[2])
+        if len(props) < 3:
+            continue
+        ctype, child, parent = props[0][1], props[1][1], props[2][1]
+        if (child in geoms_to_delete or parent in geoms_to_delete or
+            child in attrs_to_delete or parent in attrs_to_delete):
+            if (node[0], node[1]) not in conns_to_delete:
+                conns_to_delete.append((node[0], node[1]))
+
+    ranges_to_remove = []
+    removed_models = []
+    for mid in models_to_delete:
+        mname, _sub, s, e = models[mid]
+        ranges_to_remove.append((s, e))
+        removed_models.append(mname)
+
+    removed_geoms = []
+    for gid in geoms_to_delete:
+        gname, _sub, s, e = geometries[gid]
+        ranges_to_remove.append((s, e))
+        removed_geoms.append(gname)
+
+    for aid in attrs_to_delete:
+        _aname, _sub, s, e = node_attrs[aid]
+        ranges_to_remove.append((s, e))
+
+    ranges_to_remove.extend(conns_to_delete)
+
+    d = remove_nodes_from_fbx(d, ranges_to_remove)
+
+    # Optionally update object counts in Definitions
+    try:
+        fbx_after = _Fbx(d)
+        tops_after = fbx_after.top_nodes()
+        if "Definitions" in tops_after:
+            defs_node = tops_after["Definitions"]
+            num_m_del = len(models_to_delete)
+            num_g_del = len(geoms_to_delete)
+            num_a_del = len(attrs_to_delete)
+            total_del = num_m_del + num_g_del + num_a_del
+
+            for dnm, dnode in fbx_after.child_nodes(defs_node):
+                if dnm == "Count":
+                    dprops, _ = _parse_props(d, dnode[4], dnode[2])
+                    if dprops and dprops[0][0] == 'I':
+                        old_cnt = dprops[0][1]
+                        struct.pack_into("<i", d, dprops[0][2], max(0, old_cnt - total_del))
+                elif dnm == "ObjectType":
+                    dprops, _ = _parse_props(d, dnode[4], dnode[2])
+                    if dprops and len(dprops) >= 1:
+                        obj_type = dprops[0][1]
+                        delta = 0
+                        if obj_type == "Model":
+                            delta = num_m_del
+                        elif obj_type == "Geometry":
+                            delta = num_g_del
+                        elif obj_type == "NodeAttribute":
+                            delta = num_a_del
+                        if delta > 0:
+                            for cnm, cnode in fbx_after.child_nodes(dnode):
+                                if cnm == "Count":
+                                    cprops, _ = _parse_props(d, cnode[4], cnode[2])
+                                    if cprops and cprops[0][0] == 'I':
+                                        old_c = cprops[0][1]
+                                        struct.pack_into("<i", d, cprops[0][2], max(0, old_c - delta))
+    except Exception:
+        pass
+
+    return d, {
+        "removed_models": removed_models,
+        "removed_geometries": removed_geoms
+    }
+
+
+def flatten_fbx(path, strip_prefix: bool = True, scale_factor: float = 1.0,
+                import_lods: bool = True, import_collision: bool = True) -> dict:
     """
     Flatten path in place. Reparents LOD/UCX meshes to scene root (0) and syncs
     Geometry mesh data names.
     strip_prefix additionally renames the Model/Geometry nodes to Source 2 style.
     scale_factor scales vertex coordinates and model translation/pivot properties directly.
+    import_lods=False removes LOD1, LOD2, etc., keeping only LOD0.
+    import_collision=False removes UCX/UBX/USP/UCP collision meshes.
     Returns {"flattened": bool, "reparented": [mesh names], "renamed_models": [(old, new)],
-             "renamed_geometries": [(old, new)], "scaled": bool, "reason": str}.
+             "renamed_geometries": [(old, new)], "removed_models": [mesh names],
+             "removed_geometries": [geom names], "scaled": bool, "reason": str}.
     """
     with open(path, "rb") as f:
         d = bytearray(f.read())
     if d[:len(_MAGIC)] != _MAGIC:
-        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "scaled": False, "reason": "not a binary FBX"}
+        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [],
+                "removed_models": [], "removed_geometries": [], "scaled": False, "reason": "not a binary FBX"}
 
     fbx = _Fbx(d)
     tops = fbx.top_nodes()
     if "Objects" not in tops or "Connections" not in tops:
-        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "scaled": False, "reason": "no Objects/Connections"}
+        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [],
+                "removed_models": [], "removed_geometries": [], "scaled": False, "reason": "no Objects/Connections"}
 
     # UE 5.7+ writes C-type (char/bool) properties at P-record position 3
     # inside Properties70, which Blender 3.6's importer crashes on.
     # Convert them to S-type (string) so all importers can read the file.
     patched_flags = _patch_p70_bool_flags(d)
 
-    # Re-parse after flag patching (offsets may have shifted).
+    # Filter out unimported LODs / collision if requested
+    d, filter_stats = filter_fbx_objects(d, import_lods=import_lods, import_collision=import_collision)
+    filtered = bool(filter_stats.get("removed_models") or filter_stats.get("removed_geometries"))
+
+    # Re-parse after flag patching / filtering (offsets may have shifted).
     fbx = _Fbx(d)
     tops = fbx.top_nodes()
 
@@ -532,9 +752,9 @@ def flatten_fbx(path, strip_prefix: bool = True, scale_factor: float = 1.0) -> d
         d = scale_fbx_data(d, scale_factor)
         scaled = True
 
-    if not reparent_patches and not edits and not patched_flags and not scaled:
+    if not reparent_patches and not edits and not patched_flags and not scaled and not filtered:
         return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [],
-                "scaled": False, "reason": "already flat and synced"}
+                "removed_models": [], "removed_geometries": [], "scaled": False, "reason": "already flat and synced"}
 
     with open(path, "wb") as f:
         f.write(d)
@@ -543,6 +763,8 @@ def flatten_fbx(path, strip_prefix: bool = True, scale_factor: float = 1.0) -> d
         "reparented": [n for _o, n in reparent_patches],
         "renamed_models": renamed_models,
         "renamed_geometries": renamed_list,
+        "removed_models": filter_stats.get("removed_models", []),
+        "removed_geometries": filter_stats.get("removed_geometries", []),
         "scaled": scaled,
         "reason": ""
     }
@@ -631,6 +853,23 @@ def demo():
                             raw = zlib.decompress(raw)
                         verts = struct.unpack(f"<{al}d", raw)
                         assert max(abs(v) for v in verts) <= 25.0001, max(abs(v) for v in verts)
+
+        # Collision removal test
+        shutil.copy(src, f)
+        res_no_col = flatten_fbx(f, strip_prefix=True, import_collision=False)
+        assert [n for n, _s in list_models(f)] == ["cube"], list_models(f)
+        assert res_no_col["removed_models"] == ["UCX_Cube"], res_no_col
+        info_no_col = inspect_fbx_meshes(f)
+        assert info_no_col["collision"] == []
+
+        # LOD removal test with renamed LOD models
+        shutil.copy(src, f)
+        _rename_model(f, "Cube", "SM_Chair_LOD0")
+        _rename_model(f, "UCX_Cube", "SM_Chair_LOD1")
+        assert [n for n, _s in list_models(f)] == ["SM_Chair_LOD0", "SM_Chair_LOD1"]
+        res_no_lod = flatten_fbx(f, strip_prefix=True, import_lods=False, import_collision=True)
+        assert [n for n, _s in list_models(f)] == ["chair_lod0"], list_models(f)
+        assert res_no_lod["removed_models"] == ["SM_Chair_LOD1"], res_no_lod
 
     print("ok")
 
