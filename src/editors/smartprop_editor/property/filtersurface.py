@@ -2,6 +2,7 @@ import re
 
 from src.editors.smartprop_editor.objects import surfaces_list
 from src.editors.smartprop_editor.property.ui_filtersurface import Ui_Widget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from PySide6.QtWidgets import QWidget, QColorDialog, QTreeWidgetItem, QMenu
 from PySide6.QtCore import Signal, Qt
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -112,10 +113,4 @@ class PropertySurface(QWidget):
 
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)

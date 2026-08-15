@@ -29,4 +29,32 @@ def get_label_id_from_value(value):
         print(f'Cant get value from _class key from value: \n {value}')
     return f"{prefix}_%02d" % (int(suffix))
 
+
+def is_category_variable_name(name) -> bool:
+    """Return True if the variable name matches a category marker pattern."""
+    if not name or not isinstance(name, str):
+        return False
+    if name.startswith("hammer5tools_category_"):
+        return True
+    import re
+    return bool(
+        re.match(r"^hammer5tools_category_([a-z0-9]+)_(start|end)$", name)
+        or re.match(r"^hammer5tools_category_(.*)_category_(.*)_(start|end)$", name)
+    )
+
+
+def is_category_widget(widget) -> bool:
+    """Return True if the widget represents a variable category marker."""
+    if widget is None:
+        return False
+    if hasattr(widget, "is_start") or hasattr(widget, "is_end"):
+        return True
+    widget_class = widget.__class__.__name__
+    if "Category" in widget_class:
+        return True
+    name = getattr(widget, "name", None)
+    if name and is_category_variable_name(name):
+        return True
+    return False
+
 
