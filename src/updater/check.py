@@ -4,9 +4,19 @@ import webbrowser
 import markdown2
 import threading
 import urllib.request
-import velopack
-from velopack import UpdateManager
+try:
+    import velopack
+    from velopack import UpdateManager
+except ImportError:
+    velopack = None
+    UpdateManager = None
 from src.common import get_channel, get_update_source, get_update_options
+from src.updater.attachment_preview import (
+    parse_release_segments,
+    AttachmentThumbnailWidget,
+    VideoAttachmentWidget,
+    FileAttachmentWidget
+)
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
@@ -38,7 +48,7 @@ class UpdateWorker(QObject):
             update = None
             
             # 1. Velopack check (only if frozen)
-            if is_frozen:
+            if is_frozen and UpdateManager:
                 try:
                     print(f"Checking Velopack updates on channel: {get_channel()}")
                     mgr = UpdateManager(get_update_source(), options=get_update_options())
@@ -159,15 +169,49 @@ def show_update_notification(update, releases, owner, repo, mgr):
         for idx, release in enumerate(releases):
             rel_version = release.get('tag_name', 'unknown').lstrip('v')
             rel_notes = release.get('body') or ""
-            formatted_notes = markdown2.markdown(
+
+            # Version Header
+            version_label = QLabel(f"<h3>Version: {rel_version}</h3>")
+            version_label.setTextFormat(Qt.RichText)
+            version_label.setStyleSheet("padding: 5px 5px 0px 5px;")
+            content_layout.addWidget(version_label)
+
+            # In-place release segments (rendered in original markdown order)
+            segments = parse_release_segments(
                 rel_notes,
-                extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"]
+                assets=release.get('assets', []),
+                owner=owner,
+                repo=repo,
+                tag=release.get('tag_name', '')
             )
-            note_label = QLabel(f"<h3>Version: {rel_version}</h3><div>{formatted_notes}</div>")
-            note_label.setTextFormat(Qt.RichText)
-            note_label.setWordWrap(True)
-            note_label.setStyleSheet("padding: 5px;")
-            content_layout.addWidget(note_label)
+
+            for seg_type, seg_data in segments:
+                if seg_type == 'text':
+                    text_content = seg_data.strip()
+                    if text_content:
+                        formatted_notes = markdown2.markdown(
+                            text_content,
+                            extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"]
+                        )
+                        if formatted_notes.strip():
+                            note_label = QLabel(f"<div>{formatted_notes}</div>")
+                            note_label.setTextFormat(Qt.RichText)
+                            note_label.setWordWrap(True)
+                            note_label.setOpenExternalLinks(True)
+                            note_label.setStyleSheet("padding: 0px 5px;")
+                            content_layout.addWidget(note_label)
+                elif seg_type == 'attachment':
+                    att = seg_data
+                    if att.media_type in ('image', 'gif'):
+                        thumb = AttachmentThumbnailWidget(att, content_widget)
+                        content_layout.addWidget(thumb)
+                    elif att.media_type == 'video':
+                        video_card = VideoAttachmentWidget(att, content_widget)
+                        content_layout.addWidget(video_card)
+                    else:
+                        file_card = FileAttachmentWidget(att, content_widget)
+                        content_layout.addWidget(file_card)
+
             if idx < len(releases) - 1:
                 divider = QFrame()
                 divider.setFrameShape(QFrame.HLine)

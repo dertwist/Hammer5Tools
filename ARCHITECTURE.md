@@ -93,6 +93,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 
 ### Auto-Updater (`src/updater/`)
 - **`check_updates()`**: Asynchronous update checker using Velopack package releases.
+- **`src/updater/attachment_preview.py`**: Attachment extraction from markdown/HTML/assets, asynchronous image caching, thumbnail preview cards, animated GIF playback, and integration with SmartProp Editor's `HelpImageDialog` for full-size viewing.
 
 ### Git Sync & VMAP Merge (`src/git_sync/` & `src/gitvmapmerge.py`)
 - **`GitController`**: Manages repository sync buttons, commits, and branch operations inside the UI.
