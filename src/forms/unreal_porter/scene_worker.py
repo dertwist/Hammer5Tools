@@ -81,6 +81,7 @@ class SceneModelsWorker(CancellableWorker):
 
     def __init__(self, project_dir, bulk_dir, output_dir,
                  do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=True, unit_scale=1.0,
+                 scale_apply_mode="FBX",
                  use_graybox_fallback=False, master_shaders=None, master_slot_overrides=None,
                  master_param_overrides=None, master_feature_flags=None, master_blend_modes=None,
                  selected_assets=None, import_lods=True, import_collision=True,
@@ -132,6 +133,8 @@ class SceneModelsWorker(CancellableWorker):
         self.do_materials = do_materials
         self.strip_prefix = strip_prefix
         self.unit_scale = unit_scale
+        self.scale_apply_mode = scale_apply_mode
+        self._processed_meshes = set()
         self.use_graybox_fallback = use_graybox_fallback
         self.bridge = None
         self._landscape_sources = {}   # synthetic mesh id -> map object path
@@ -155,6 +158,8 @@ class SceneModelsWorker(CancellableWorker):
         kwargs.setdefault("import_lods", self.import_lods)
         kwargs.setdefault("import_collision", self.import_collision)
         kwargs.setdefault("strip_prefix", self.strip_prefix)
+        kwargs.setdefault("scale_apply_mode", self.scale_apply_mode)
+        kwargs.setdefault("processed_files", self._processed_meshes)
         return write_vmdl(*args, **kwargs)
 
     def _wanted(self, key_or_ref) -> bool:

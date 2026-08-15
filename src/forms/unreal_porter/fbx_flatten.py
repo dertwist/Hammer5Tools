@@ -33,6 +33,7 @@ ASCII/other inputs are returned untouched.
 
 import os
 import struct
+import zlib
 
 _MAGIC = b"Kaydara FBX Binary"
 
@@ -287,23 +288,158 @@ def source2_mesh_name(name: str) -> str:
     return tag + strip_ue_prefix(name)
 
 
-def flatten_fbx(path, strip_prefix: bool = True) -> dict:
+def scale_fbx_data(d: bytearray, scale_factor: float) -> bytearray:
+    """Scale all mesh vertex coordinates and translation/pivot properties in binary FBX bytearray d."""
+    if abs(scale_factor - 1.0) < 1e-9 or d[:len(_MAGIC)] != _MAGIC:
+        return d
+
+    version = struct.unpack("<I", d[23:27])[0]
+    is_64 = version >= 7500
+    hdr_size = 24 if is_64 else 12
+    null_len = 25 if is_64 else 13
+
+    fbx = _Fbx(d)
+    tops = fbx.top_nodes()
+    if "Objects" not in tops:
+        return d
+
+    patches = []
+
+    for nm, node in fbx.child_nodes(tops["Objects"]):
+        if nm in ("Geometry", "Shape"):
+            for cnm, cnode in fbx.child_nodes(node):
+                if cnm in ("Vertices", "Points"):
+                    p = cnode[4]
+                    t = chr(d[p])
+                    if t == "d":
+                        al, enc, cl = struct.unpack("<III", d[p + 1 : p + 13])
+                        raw = d[p + 13 : p + 13 + cl]
+                        if enc == 1:
+                            uncompressed = zlib.decompress(raw)
+                            verts = struct.unpack(f"<{al}d", uncompressed)
+                            scaled_verts = [v * scale_factor for v in verts]
+                            new_uncompressed = struct.pack(f"<{al}d", *scaled_verts)
+                            new_raw = zlib.compress(new_uncompressed)
+                            new_cl = len(new_raw)
+                            new_prop_hdr = b"d" + struct.pack("<III", al, 1, new_cl)
+                            new_prop_bytes = new_prop_hdr + new_raw
+                            old_len = 1 + 12 + cl
+                            patches.append((p, old_len, new_prop_bytes, cnode[0]))
+                        elif enc == 0:
+                            verts = struct.unpack(f"<{al}d", raw)
+                            scaled_verts = [v * scale_factor for v in verts]
+                            new_raw = struct.pack(f"<{al}d", *scaled_verts)
+                            new_prop_hdr = b"d" + struct.pack("<III", al, 0, len(new_raw))
+                            new_prop_bytes = new_prop_hdr + new_raw
+                            old_len = 1 + 12 + cl
+                            patches.append((p, old_len, new_prop_bytes, cnode[0]))
+
+    for nm, node in fbx.child_nodes(tops["Objects"]):
+        if nm == "Model":
+            for cnm, cnode in fbx.child_nodes(node):
+                if cnm == "Properties70":
+                    for pnm, pnode in fbx.child_nodes(cnode):
+                        pprops, _ = _parse_props(d, pnode[4], pnode[2])
+                        if not pprops:
+                            continue
+                        p_name = pprops[0][1]
+                        if p_name in (
+                            "Lcl Translation",
+                            "GeometricTranslation",
+                            "RotationOffset",
+                            "RotationPivot",
+                            "ScalingOffset",
+                            "ScalingPivot",
+                            "TranslationOffset",
+                            "TranslationPivot",
+                        ):
+                            for prop_idx in range(4, len(pprops)):
+                                pt, pv, pvoff = pprops[prop_idx]
+                                if pt == "D" and pv is not None:
+                                    scaled_v = pv * scale_factor
+                                    struct.pack_into("<d", d, pvoff, scaled_v)
+
+    if not patches:
+        return d
+
+    patches.sort(key=lambda x: x[0], reverse=True)
+
+    for p_off, old_len, new_bytes, node_off in patches:
+        delta = len(new_bytes) - old_len
+        node_records = []
+
+        def collect_nodes(start_off, limit_end):
+            off = start_off
+            while off < limit_end - null_len:
+                if is_64:
+                    end, npr, pl = struct.unpack("<QQQ", d[off : off + 24])
+                else:
+                    end, npr, pl = struct.unpack("<III", d[off : off + 12])
+                if end == 0:
+                    break
+                node_records.append((off, end, pl, off == node_off))
+                nlen = d[off + hdr_size]
+                node_name_end = off + hdr_size + 1 + nlen
+                children_start = node_name_end + pl
+                if children_start < end - null_len:
+                    collect_nodes(children_start, end)
+                off = end
+
+        if delta != 0:
+            collect_nodes(27, len(d))
+
+        d[p_off : p_off + old_len] = new_bytes
+
+        if delta != 0:
+            for off, end, pl, is_target in node_records:
+                new_off = off + delta if off >= p_off else off
+                new_end = end + delta if end > p_off else end
+                new_pl = pl + delta if is_target else pl
+
+                if is_64:
+                    struct.pack_into("<Q", d, new_off, new_end)
+                    if is_target:
+                        struct.pack_into("<Q", d, new_off + 16, new_pl)
+                else:
+                    struct.pack_into("<I", d, new_off, new_end)
+                    if is_target:
+                        struct.pack_into("<I", d, new_off + 8, new_pl)
+
+    return d
+
+
+def scale_fbx(path: str, scale_factor: float) -> bool:
+    """Scale all mesh vertex coordinates and translation/pivot properties in an FBX file in place."""
+    if abs(scale_factor - 1.0) < 1e-9:
+        return False
+    with open(path, "rb") as f:
+        d = bytearray(f.read())
+    if d[:len(_MAGIC)] != _MAGIC:
+        return False
+    d = scale_fbx_data(d, scale_factor)
+    with open(path, "wb") as f:
+        f.write(d)
+    return True
+
+
+def flatten_fbx(path, strip_prefix: bool = True, scale_factor: float = 1.0) -> dict:
     """
     Flatten path in place. Reparents LOD/UCX meshes to scene root (0) and syncs
     Geometry mesh data names.
     strip_prefix additionally renames the Model/Geometry nodes to Source 2 style.
+    scale_factor scales vertex coordinates and model translation/pivot properties directly.
     Returns {"flattened": bool, "reparented": [mesh names], "renamed_models": [(old, new)],
-             "renamed_geometries": [(old, new)], "reason": str}.
+             "renamed_geometries": [(old, new)], "scaled": bool, "reason": str}.
     """
     with open(path, "rb") as f:
         d = bytearray(f.read())
     if d[:len(_MAGIC)] != _MAGIC:
-        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "reason": "not a binary FBX"}
+        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "scaled": False, "reason": "not a binary FBX"}
 
     fbx = _Fbx(d)
     tops = fbx.top_nodes()
     if "Objects" not in tops or "Connections" not in tops:
-        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "reason": "no Objects/Connections"}
+        return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [], "scaled": False, "reason": "no Objects/Connections"}
 
     # UE 5.7+ writes C-type (char/bool) properties at P-record position 3
     # inside Properties70, which Blender 3.6's importer crashes on.
@@ -390,9 +526,15 @@ def flatten_fbx(path, strip_prefix: bool = True) -> dict:
     for voff, old_full, new_full, node_off in edits:
         patch_fbx_string(d, voff, old_full, new_full, target_node_off=node_off)
 
-    if not reparent_patches and not edits and not patched_flags:
+    # Scale vertices and model translations if scale_factor is set
+    scaled = False
+    if abs(scale_factor - 1.0) >= 1e-9:
+        d = scale_fbx_data(d, scale_factor)
+        scaled = True
+
+    if not reparent_patches and not edits and not patched_flags and not scaled:
         return {"flattened": False, "reparented": [], "renamed_models": [], "renamed_geometries": [],
-                "reason": "already flat and synced"}
+                "scaled": False, "reason": "already flat and synced"}
 
     with open(path, "wb") as f:
         f.write(d)
@@ -401,6 +543,7 @@ def flatten_fbx(path, strip_prefix: bool = True) -> dict:
         "reparented": [n for _o, n in reparent_patches],
         "renamed_models": renamed_models,
         "renamed_geometries": renamed_list,
+        "scaled": scaled,
         "reason": ""
     }
 
@@ -466,11 +609,28 @@ def demo():
         assert info["collision"] == ["UCX_cube"], info
         assert info["base"] == "test_cube_thing", info
 
-        # Untouched by default.
+        # Untouched by default (strip_prefix=False).
         shutil.copy(src, f)
-        flatten_fbx(f)
+        flatten_fbx(f, strip_prefix=False)
         assert [n for n, _s in list_models(f)] == ["Cube", "UCX_Cube"]
         assert _p70_flag_types(f) and "C" not in _p70_flag_types(f), _p70_flag_types(f)
+
+        # Scale test
+        scale_fbx(f, 0.5)
+        with open(f, "rb") as fh:
+            d_scaled = bytearray(fh.read())
+        fbx_s = _Fbx(d_scaled)
+        for nm, node in fbx_s.child_nodes(fbx_s.top_nodes()["Objects"]):
+            if nm == "Geometry":
+                for cnm, cnode in fbx_s.child_nodes(node):
+                    if cnm == "Vertices":
+                        p = cnode[4]
+                        al, enc, cl = struct.unpack("<III", d_scaled[p + 1 : p + 13])
+                        raw = d_scaled[p + 13 : p + 13 + cl]
+                        if enc == 1:
+                            raw = zlib.decompress(raw)
+                        verts = struct.unpack(f"<{al}d", raw)
+                        assert max(abs(v) for v in verts) <= 25.0001, max(abs(v) for v in verts)
 
     print("ok")
 
