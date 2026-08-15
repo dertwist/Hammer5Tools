@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Dict, Tuple, List
 
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout, QMenu, QListWidget, QListWidgetItem, QApplication
+    QWidget, QLabel, QPushButton, QHBoxLayout, QMenu, QListWidget, QListWidgetItem, QApplication, QMessageBox
 )
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
@@ -13,6 +13,10 @@ from src.settings.main import get_addon_dir, debug
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
 from src.editors.assetgroup_maker.process import StartProcess
 from src.settings.common import get_settings_value
+try:
+    from src.other.cs2_netcon import CS2Netcon
+except Exception:
+    CS2Netcon = None
 
 
 def read_reference_from_file(config_path: str) -> Optional[str]:
@@ -28,6 +32,33 @@ def read_reference_from_file(config_path: str) -> Optional[str]:
                 return str(Path(get_addon_dir()) / reference)
     except Exception as e:
         debug(f"Error reading {config_path}: {e}")
+    return None
+
+
+def get_reference_asset_path(config_path: str) -> Optional[str]:
+    """
+    Read the relative asset reference path from a configuration file for the open_asset command.
+    """
+    try:
+        with open(config_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            process = data.get('process', {})
+            reference = process.get('reference', '')
+            if not reference:
+                return None
+
+            addon_dir = get_addon_dir()
+            if os.path.isabs(reference):
+                if addon_dir:
+                    try:
+                        reference = os.path.relpath(reference, addon_dir)
+                    except ValueError:
+                        pass
+
+            reference = reference.replace('\\', '/').strip('/')
+            return reference
+    except Exception as e:
+        debug(f"Error reading reference from {config_path}: {e}")
     return None
 
 
@@ -63,10 +94,11 @@ def validate_reference_file(reference_path: str) -> bool:
 
 class FileItemWidget(QWidget):
     """
-    Widget representing a file item with options to open or process the file.
+    Widget representing a file item with options to open, process, or open reference asset.
     """
     open_requested = Signal(str)
     process_requested = Signal(str)
+    open_reference_requested = Signal(str)
 
     def __init__(self, file_path: str):
         super().__init__()
@@ -81,33 +113,44 @@ class FileItemWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         addon_dir = get_addon_dir()
-        relative_path = os.path.relpath(self.file_path, addon_dir)
-        path_parts = relative_path.split(os.sep)
-        text = os.sep.join(path_parts[-2:]) if len(path_parts) >= 2 else relative_path
+        relative_path = os.path.relpath(self.file_path, addon_dir) if addon_dir else os.path.basename(self.file_path)
+        path_parts = relative_path.replace('\\', '/').split('/')
+        text = '/'.join(path_parts[-2:]) if len(path_parts) >= 2 else relative_path
 
         self.label = QLabel(text)
         self.setToolTip(self.file_path)
 
         self.play_button = QPushButton()
         self.open_button = QPushButton()
+        self.open_ref_button = QPushButton()
 
         self.play_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.open_button.setIcon(QIcon(":/valve_common/icons/tools/common/edit.png"))
+        self.open_ref_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+
         self.play_button.setStyleSheet(qt_stylesheet_button)
         self.open_button.setStyleSheet(qt_stylesheet_button)
+        self.open_ref_button.setStyleSheet(qt_stylesheet_button)
+
+        self.play_button.setToolTip("Process batch file")
+        self.open_button.setToolTip("Open config in editor")
+        self.open_ref_button.setToolTip("Open reference asset in CS2 Tools")
 
         button_size = QSize(24, 24)
         self.play_button.setFixedSize(button_size)
         self.open_button.setFixedSize(button_size)
+        self.open_ref_button.setFixedSize(button_size)
 
         layout.addWidget(self.label)
         layout.addWidget(self.play_button)
         layout.addWidget(self.open_button)
+        layout.addWidget(self.open_ref_button)
 
         self.setLayout(layout)
 
         self.play_button.clicked.connect(self.start_process)
         self.open_button.clicked.connect(self.open_file)
+        self.open_ref_button.clicked.connect(self.open_reference_asset)
 
     def start_process(self):
         """
@@ -121,11 +164,45 @@ class FileItemWidget(QWidget):
         """
         self.open_requested.emit(self.file_path)
 
+    def open_reference_asset(self):
+        """
+        Open the reference asset in CS2 tools via netcon open_asset command.
+        """
+        asset_path = get_reference_asset_path(self.file_path)
+        if not asset_path:
+            QMessageBox.warning(self, "No Reference Asset", f"No reference asset found in '{os.path.basename(self.file_path)}'.")
+            return
+
+        command = f"open_asset {asset_path}"
+        debug(f"[AssetGroupMaker] Sending CS2 command: {command}")
+        if CS2Netcon is None or not CS2Netcon.send(command):
+            QMessageBox.warning(
+                self,
+                "CS2 Not Reachable",
+                "Could not send command to CS2.\n"
+                "Make sure CS2 is running with -netconport 2121."
+            )
+        else:
+            self.open_reference_requested.emit(asset_path)
+            curr = self.parent()
+            while curr is not None:
+                if hasattr(curr, 'update_title') and callable(curr.update_title):
+                    curr.update_title(text=f"Opened reference asset [{asset_path}] in CS2 Tools")
+                    break
+                curr = curr.parent() if hasattr(curr, 'parent') else None
+
     def contextMenuEvent(self, event):
         """
         Create a context menu for additional actions.
         """
         menu = QMenu(self)
+        open_ref_action = QAction("Open Reference Asset", self)
+        open_ref_action.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        open_ref_action.triggered.connect(self.open_reference_asset)
+        menu.addAction(open_ref_action)
+
+        menu.addSeparator()
+
         open_folder_action = QAction("Open Folder", self)
         open_folder_action.triggered.connect(self.open_folder)
         menu.addAction(open_folder_action)
@@ -143,27 +220,43 @@ class MonitoringFileWatcher(QListWidget):
     """
     Widget to monitor file changes and manage file processing, enforcing an exact folder match.
     It collects all .hbat files under the root path from allowed folders, validates referenced files before processing,
-    and uses a 3-second debounce delay for updates.
+    and uses a 500ms debounce delay for updates.
     """
     open_file = Signal(str)
+    _instances: List['MonitoringFileWatcher'] = []
 
     def __init__(self, root_path: str):
         super().__init__()
+        if self not in MonitoringFileWatcher._instances:
+            MonitoringFileWatcher._instances.append(self)
         self.root_path: Path = Path(root_path)
-        self.file_system_watcher = QFileSystemWatcher()
+        self.file_system_watcher = QFileSystemWatcher(self)
         self.file_widgets: Dict[str, Tuple[QListWidgetItem, FileItemWidget]] = {}
         self.config_references: Dict[str, str] = {}
         self.reference_configs: Dict[str, set] = {}
         self.process_threads: Dict[str, StartProcess] = {}
         self.watched_directories: set = set()
 
-        # Debounce timer for update delays (3 seconds)
-        self.debounce_timer = QTimer()
+        # Debounce timer for update delays (500ms)
+        self.debounce_timer = QTimer(self)
         self.debounce_timer.setSingleShot(True)
+        self.debounce_timer.setInterval(500)
         self.debounce_timer.timeout.connect(self.update_file_list)
 
         self.initialize_watcher()
         self.setStyleSheet(qt_stylesheet_widgetlist)
+
+    @classmethod
+    def notify_new_file(cls, file_path: str):
+        """
+        Notify all active MonitoringFileWatcher instances about a newly created or modified .hbat file.
+        """
+        file_path = os.path.normpath(str(file_path))
+        for instance in list(cls._instances):
+            try:
+                instance.track_new_file(file_path)
+            except Exception as e:
+                debug(f"Error notifying watcher of new file {file_path}: {e}")
 
     def initialize_watcher(self):
         """
@@ -176,14 +269,15 @@ class MonitoringFileWatcher(QListWidget):
         # Watch the root directory; additional directories will be added later if necessary.
         self.add_directory_watch(str(self.root_path))
         self.update_file_list()
-        self.file_system_watcher.directoryChanged.connect(lambda _: self.debounce_timer.start(3000))
+        self.file_system_watcher.directoryChanged.connect(self.on_directory_changed)
         self.file_system_watcher.fileChanged.connect(self.on_file_changed)
 
     def add_directory_watch(self, directory: str):
         """
         Add a directory to the file system watcher if not already watched.
         """
-        if directory not in self.watched_directories:
+        directory = os.path.normpath(directory)
+        if directory not in self.watched_directories and os.path.isdir(directory):
             self.file_system_watcher.addPath(directory)
             self.watched_directories.add(directory)
 
@@ -191,8 +285,10 @@ class MonitoringFileWatcher(QListWidget):
         """
         Remove a directory from the file system watcher.
         """
+        directory = os.path.normpath(directory)
         if directory in self.watched_directories:
-            self.file_system_watcher.removePath(directory)
+            if directory in self.file_system_watcher.directories():
+                self.file_system_watcher.removePath(directory)
             self.watched_directories.remove(directory)
 
     def is_file_in_allowed_folder(self, file_path: str) -> bool:
@@ -202,13 +298,16 @@ class MonitoringFileWatcher(QListWidget):
         Only files whose relative path (from the add-on directory) contains one of the allowed folder names are accepted.
         """
         allowed = get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
-        allowed_set = {x.strip().lower() for x in allowed.split(',')}
+        allowed_set = {x.strip().lower() for x in allowed.split(',') if x.strip()}
+        addon_dir = get_addon_dir()
+        if not addon_dir:
+            return False
         try:
-            relative_path = os.path.relpath(file_path, get_addon_dir())
+            relative_path = os.path.relpath(file_path, addon_dir)
         except Exception as e:
             debug(f"Error obtaining relative path for {file_path}: {e}")
             return False
-        path_parts = relative_path.split(os.sep)
+        path_parts = relative_path.replace('\\', '/').split('/')
         for folder in path_parts:
             if folder.lower() in allowed_set:
                 return True
@@ -226,10 +325,13 @@ class MonitoringFileWatcher(QListWidget):
                 with os.scandir(path) as it:
                     for entry in it:
                         entry_path = Path(entry.path)
+                        dir_str = str(entry_path)
                         if entry.is_dir(follow_symlinks=False):
+                            if self.is_file_in_allowed_folder(dir_str):
+                                self.add_directory_watch(dir_str)
                             scan_dir(entry_path)
-                        elif entry.is_file() and entry.name.lower().endswith('.hbat') and self.is_file_in_allowed_folder(str(entry_path)):
-                            collected_files.append(str(entry_path))
+                        elif entry.is_file() and entry.name.lower().endswith('.hbat') and self.is_file_in_allowed_folder(dir_str):
+                            collected_files.append(os.path.normpath(dir_str))
             except OSError as e:
                 debug(f"Error scanning directory {path}: {e}")
 
@@ -265,22 +367,30 @@ class MonitoringFileWatcher(QListWidget):
         to add a new file to tracking immediately.
         Returns True if the file was added, False otherwise.
         """
-        file_path = str(Path(file_path))
+        file_path = os.path.normpath(str(Path(file_path)))
         if not file_path.lower().endswith('.hbat'):
             return False
 
         if not self.is_file_in_allowed_folder(file_path):
             return False
 
+        # Ensure the parent directory is watched
+        self.add_directory_watch(os.path.dirname(file_path))
+
         if file_path not in self.file_widgets:
             self.add_file_widget(file_path)
             return True
-        return False
+        else:
+            self.update_reference(file_path)
+            return True
 
     def add_file_widget(self, path: str):
         """
         Add a file widget for a new .hbat file.
         """
+        path = os.path.normpath(path)
+        if path in self.file_widgets:
+            return
         item = QListWidgetItem(self)
         widget = FileItemWidget(path)
         item.setSizeHint(widget.sizeHint())
@@ -291,8 +401,11 @@ class MonitoringFileWatcher(QListWidget):
         widget.open_requested.connect(self.open_file.emit)
         widget.process_requested.connect(self.start_processing)
 
+        # Ensure parent directory is watched
+        self.add_directory_watch(os.path.dirname(path))
+
         # Watch the file for changes if not already watched.
-        if path not in self.file_system_watcher.files():
+        if os.path.isfile(path) and path not in self.file_system_watcher.files():
             self.file_system_watcher.addPath(path)
         self.update_reference(path)
 
@@ -300,6 +413,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         Remove a file widget for a deleted or disallowed .hbat.
         """
+        path = os.path.normpath(path)
         self.stop_processing(path)
         if path in self.file_system_watcher.files():
             self.file_system_watcher.removePath(path)
@@ -313,9 +427,14 @@ class MonitoringFileWatcher(QListWidget):
         Update the reference path for a .hbat file. Validate the referenced file
         and track it if valid.
         """
+        config_path = os.path.normpath(config_path)
         reference_path = read_reference_from_file(config_path)
-        if reference_path and validate_reference_file(reference_path):
-            self.track_reference(config_path, reference_path)
+        if reference_path:
+            reference_path = os.path.normpath(reference_path)
+            if validate_reference_file(reference_path):
+                self.track_reference(config_path, reference_path)
+            else:
+                self.untrack_reference(config_path)
         else:
             self.untrack_reference(config_path)
 
@@ -323,13 +442,15 @@ class MonitoringFileWatcher(QListWidget):
         """
         Track a reference path for a configuration file and watch it.
         """
+        config_path = os.path.normpath(config_path)
+        reference_path = os.path.normpath(reference_path)
         old_ref = self.config_references.get(config_path)
         if old_ref and old_ref != reference_path:
             self.untrack_reference(config_path)
         self.config_references[config_path] = reference_path
         if reference_path not in self.reference_configs:
             self.reference_configs[reference_path] = set()
-            if reference_path not in self.file_system_watcher.files():
+            if os.path.exists(reference_path) and reference_path not in self.file_system_watcher.files():
                 self.file_system_watcher.addPath(reference_path)
         self.reference_configs[reference_path].add(config_path)
 
@@ -337,6 +458,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         Untrack a reference path for a configuration file.
         """
+        config_path = os.path.normpath(config_path)
         reference_path = self.config_references.pop(config_path, None)
         if reference_path:
             configs = self.reference_configs.get(reference_path)
@@ -351,22 +473,26 @@ class MonitoringFileWatcher(QListWidget):
         """
         Handle directory change events using debouncing to minimize rescans.
         """
-        self.debounce_timer.start(3000)
+        debug(f"Directory changed: {path}")
+        self.debounce_timer.start(500)
 
     def on_file_changed(self, path: str):
         """
         Handle file change events.
         For .hbat files or reference files, trigger appropriate updates.
         """
+        path = os.path.normpath(path)
         debug(f"File changed: {path}")
         if os.path.exists(path):
+            if os.path.isfile(path) and path not in self.file_system_watcher.files():
+                self.file_system_watcher.addPath(path)
             if path in self.file_widgets:
                 self.update_reference(path)
                 _, widget = self.file_widgets[path]
                 self.stop_processing(path)
                 self.start_processing(path)
             elif path in self.reference_configs:
-                configs = self.reference_configs[path]
+                configs = list(self.reference_configs[path])
                 for config_path in configs:
                     self.stop_processing(config_path)
                     self.start_processing(config_path)
@@ -375,7 +501,7 @@ class MonitoringFileWatcher(QListWidget):
                 self.remove_file_widget(path)
             elif path in self.reference_configs:
                 configs = self.reference_configs.pop(path, set())
-                for config_path in configs:
+                for config_path in list(configs):
                     self.config_references.pop(config_path, None)
                     self.stop_processing(config_path)
                 if path in self.file_system_watcher.files():
@@ -387,6 +513,7 @@ class MonitoringFileWatcher(QListWidget):
         Start processing a config file using StartProcess.
         Avoid duplicate processing threads.
         """
+        config_path = os.path.normpath(config_path)
         if config_path in self.process_threads:
             debug(f"Processing already started for: {config_path}")
             return
@@ -399,6 +526,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         Stop processing if the thread is running.
         """
+        config_path = os.path.normpath(config_path)
         if config_path in self.process_threads:
             thread = self.process_threads.pop(config_path)
             if thread.isRunning():
@@ -409,6 +537,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         Clean up a finished processing thread.
         """
+        config_path = os.path.normpath(config_path)
         self.process_threads.pop(config_path, None)
         debug(f"Finished processing: {config_path}")
 
@@ -417,6 +546,8 @@ class MonitoringFileWatcher(QListWidget):
         Gracefully close all running threads and disconnect signals.
         """
         debug("Closing MonitoringFileWatcher.")
+        if self in MonitoringFileWatcher._instances:
+            MonitoringFileWatcher._instances.remove(self)
         try:
             self.debounce_timer.stop()
             self.file_system_watcher.directoryChanged.disconnect()

@@ -77,15 +77,24 @@ class QuickConfigFile:
         reference = rel_path.replace('/', '\\')
         try:
             children = source_model.get('rootNode', {}).get('children', [])
-            if len(children) > 1:
+            extracted_filename = ''
+            for child in children:
+                if child.get('_class') == 'RenderMeshList':
+                    for grand_child in child.get('children', []):
+                        if 'filename' in grand_child:
+                            extracted_filename = grand_child.get('filename', '')
+                            break
+                    if extracted_filename:
+                        break
+            if not extracted_filename and len(children) > 1:
                 child = children[1]
                 grand_children = child.get('children', [])
                 if grand_children:
                     extracted_filename = grand_children[0].get('filename', '')
                 else:
                     raise ValueError("No grandchild found in source model")
-            else:
-                raise ValueError("Not enough children in source model")
+            elif not extracted_filename and not children:
+                raise ValueError("No children found in source model")
         except Exception as e:
             debug(f"Error extracting filename from source model: {e}")
             return
@@ -125,6 +134,8 @@ class QuickConfigFile:
             with open(output_file, 'w') as file:
                 json.dump(new_config, file, indent=4)
             debug(f"Created config file: {output_file}")
+            from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+            MonitoringFileWatcher.notify_new_file(output_file)
         except Exception as e:
             debug(f"Error creating config file: {e}")
 

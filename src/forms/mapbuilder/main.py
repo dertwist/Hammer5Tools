@@ -25,7 +25,7 @@ from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, Buil
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir, default_commands
-from src.other.addon_functions import launch_addon
+from src.other.addon_functions import launch_addon, launch_cs2_process
 from src.other.cs2_netcon import CS2Netcon
 
 
@@ -261,9 +261,8 @@ class BuildCubemapsThread(QThread):
             _time.sleep(1)
             self.outputReceived.emit(f"Launching CS2 for addon '{addon_name}': {launch_cmd}")
             
-            process = None
             try:
-                process = _subprocess.Popen(launch_cmd, shell=True)
+                launch_cs2_process(self.cs2_exe, commands)
             except Exception as e:
                 self.outputReceived.emit(f"Failed to launch CS2: {e}")
                 self.finished.emit(False)
@@ -1289,7 +1288,7 @@ class MapBuilderDialog(QMainWindow):
             self.log_info('Closing existing CS2 instances...')
             subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'], capture_output=True, check=False)
             time.sleep(1)
-            subprocess.Popen(launch_cmd, shell=True)
+            launch_cs2_process(str(cs2_exe), f'{commands} +map_workshop {addon_name} {map_name}')
         except Exception as e:
             self.log_error(f'Failed to launch map: {e}')
 
@@ -1455,7 +1454,7 @@ class MapBuilderDialog(QMainWindow):
         self.log_info('Closing existing CS2 instances...')
         subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'], capture_output=True, check=False)
         time.sleep(1)
-        subprocess.Popen(launch_cmd, shell=True)
+        launch_cs2_process(str(cs2_exe), f'{commands} +map_workshop {addon_name} {map_name}')
 
     def log_phase(self, message: str):
         self._log_colored(message, '#4DA6FF')
