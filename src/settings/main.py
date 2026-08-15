@@ -12,7 +12,6 @@ from src.settings.common import *
 from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
 from src.widgets.common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
-from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
 from src.other.file_association import setup_all_associations
 
 
@@ -195,50 +194,6 @@ class PreferencesDialog(QDialog):
         self.spe_export_properties.setChecked(True)
         layout_format.addWidget(self.spe_export_properties)
         layout.addWidget(frame_format)
-        # Divider for Realtime Saving Subcategory
-        layout.addWidget(self.create_divider(smartprop_content))
-        label_rt_saving = QLabel("Realtime Saving", smartprop_content)
-        layout.addWidget(label_rt_saving)
-        frame_rt_saving = QFrame(smartprop_content)
-        layout_rt_saving = QVBoxLayout(frame_rt_saving)
-        # Enable Transparency window while realtime saving
-        row_enable_transparency = QHBoxLayout()
-        self.spe_enable_transparency_window = QCheckBox("Enable Transparency Window", frame_rt_saving)
-        self.spe_enable_transparency_window.setChecked(True)
-        self.spe_enable_transparency_window.setStyleSheet(qt_stylesheet_checkbox)
-        row_enable_transparency.addWidget(self.spe_enable_transparency_window)
-        layout_rt_saving.addLayout(row_enable_transparency)
-        row_transparency = QHBoxLayout()
-        label_transparency = QLabel("Transparency Window (%):", frame_rt_saving)
-        label_transparency.setMinimumWidth(130)
-        row_transparency.addWidget(label_transparency)
-        self.spe_transparency_window = FloatWidget(frame_rt_saving,
-                                                   slider_range=[10, 100],
-                                                   lock_range=True,
-                                                   spacer_enable=False,
-                                                   digits=0,
-                                                   only_positive=True,
-                                                   value=70)
-        row_transparency.addWidget(self.spe_transparency_window)
-        layout_rt_saving.addLayout(row_transparency)
-        # Relative Saving Delay row
-        row_rt_delay = QHBoxLayout()
-        label_rt_delay = QLabel("Realtime Saving Delay (milliseconds):", frame_rt_saving)
-        label_rt_delay.setMinimumWidth(130)
-        row_rt_delay.addWidget(label_rt_delay)
-        self.spe_realtime_saving_delay = FloatWidget(frame_rt_saving,
-                                                     slider_range=[5, 1000],
-                                                     lock_range=True,
-                                                     spacer_enable=False,
-                                                     digits=3,
-                                                     only_positive=True,
-                                                     value=5,
-                                                     value_step=15,
-                                                     slider_scale=5
-                                                     )
-        row_rt_delay.addWidget(self.spe_realtime_saving_delay)
-        layout_rt_saving.addLayout(row_rt_delay)
-        layout.addWidget(frame_rt_saving)
 
         # Divider for VMAP Import Subcategory
         layout.addWidget(self.create_divider(smartprop_content))
@@ -432,18 +387,6 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_ignore_ext.setText(process.get('ignore_extensions', 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'))
         # Populate SoundEventEditor preferences
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
-        # Populate new SmartPropEditor Realtime Saving preferences
-        try:
-            rt_delay = float(get_settings_value('SmartPropEditor', 'realtime_saving_delay') or 0.01)
-        except ValueError:
-            rt_delay = 0.01
-        self.spe_realtime_saving_delay.set_value(rt_delay)
-        self.spe_enable_transparency_window.setChecked(get_settings_bool('SmartPropEditor', 'enable_transparency_window', False))
-        try:
-            trans_win = float(get_settings_value('SmartPropEditor', 'transparency_window') or 50)
-        except ValueError:
-            trans_win = 50
-        self.spe_transparency_window.set_value(trans_win)
 
         # Populate VMAP Import settings
         self.spe_round_vmap_values.setChecked(get_settings_bool('SmartPropEditor', 'round_vmap_values', False))
@@ -515,16 +458,6 @@ class PreferencesDialog(QDialog):
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
             lambda: set_settings_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
-        )
-        # Connect new SmartPropEditor Realtime Saving signals
-        self.spe_realtime_saving_delay.edited.connect(
-            lambda val: set_settings_value('SmartPropEditor', 'realtime_saving_delay', str(val))
-        )
-        self.spe_enable_transparency_window.toggled.connect(
-            lambda: set_settings_bool('SmartPropEditor', 'enable_transparency_window', self.spe_enable_transparency_window.isChecked())
-        )
-        self.spe_transparency_window.edited.connect(
-            lambda val: set_settings_value('SmartPropEditor', 'transparency_window', str(val))
         )
         # Connect VMAP Import rounding signals
         self.spe_round_vmap_values.toggled.connect(
