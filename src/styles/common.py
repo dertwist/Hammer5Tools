@@ -67,12 +67,11 @@ qt_stylesheet_classes = {
     'tree':
         """QTreeWidget, QTreeView, HierarchyTreeWidget {
         color: #E3E3E3;
-        border: 2px solid black;
-        border-radius: 1px;
-        border-color: rgba(80, 80, 80, 255);
+        border: none;
+        outline: none;
         font: 580 10pt "Segoe UI";
-        background-color: #292929; /* Background color for the tree view */
-        alternate-background-color: #ff242424;
+        background-color: #151515;
+        alternate-background-color: #1a1a1a;
     }
     
     QTreeWidget::item, QTreeView::item, HierarchyTreeWidget::item {
@@ -81,19 +80,18 @@ qt_stylesheet_classes = {
         padding-top: 2px;
         padding-bottom: 2px;
         border-style: none;
-        border-bottom: 0.5px solid black;
-        border-color: rgba(255, 255, 255, 10);
+        border-bottom: 0.5px solid rgba(255, 255, 255, 10);
     }
     
     QTreeWidget::item:selected, QTreeView::item:selected, HierarchyTreeWidget::item:selected {
-        background-color: #414956; /* Background color for selected item */
-        alternate-background-color: #414956; /* Background color for selected item */
-        color: white; /* Text color for selected item */
+        background-color: #414956;
+        alternate-background-color: #414956;
+        color: white;
     }
     
     QTreeWidget::item:hover, QTreeView::item:hover, HierarchyTreeWidget::item:hover {
-        background-color: #272729; /* Background color for hovered item */
-        color: #E3E3E3; /* Text color for hovered item */
+        background-color: #272729;
+        color: #E3E3E3;
     }
     
     QTreeWidget::branch, QTreeView::branch, HierarchyTreeWidget::branch {
@@ -101,21 +99,19 @@ qt_stylesheet_classes = {
     }
     
     QTreeWidget::branch:has-siblings, QTreeView::branch:has-siblings {
-        border-image: url(:/icons/vertical_line.png) 0; /* Set the vertical line for branches with siblings */
+        border-image: url(:/icons/vertical_line.png) 0;
     }
     
     QTreeWidget::branch:has-siblings:adjoins-item, QTreeView::branch:has-siblings:adjoins-item {
-        border-image: none; /* Remove the line where the branch adjoins an item */
+        border-image: none;
     }
-    
     
     QTreeWidget::branch:closed:has-children, QTreeView::branch:closed:has-children {
          image: url(:/icons/arrow_right_16dp.svg);
     }
     
     QTreeWidget::branch:open:has-children, QTreeView::branch:open:has-children {
-         /* Icon for open branch */
-        image: url(:/icons/arrow_drop_down_16dp.svg);
+         image: url(:/icons/arrow_drop_down_16dp.svg);
     }
     
     /* Remove border for edit line in tree */
@@ -123,8 +119,8 @@ qt_stylesheet_classes = {
         border: none;
         margin: 0px;
         padding: 0px;
-        background-color: #1C1C1C; /* Match the background color of the tree view */
-        color: #E3E3E3; /* Match the text color of the tree view */
+        background-color: #1C1C1C;
+        color: #E3E3E3;
     }"""
 }
 qt_stylesheet_checkbox = """
