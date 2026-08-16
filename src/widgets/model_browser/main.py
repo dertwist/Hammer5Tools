@@ -15,10 +15,10 @@ from PySide6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QRadioButton, QSlider, QListWidget, QListWidgetItem, QTreeWidget,
     QTreeWidgetItem, QStackedWidget, QCheckBox, QButtonGroup, QFrame,
-    QAbstractItemView,
+    QAbstractItemView, QMenu, QApplication
 )
 from PySide6.QtCore import Qt, QSize, QTimer, Signal
-from PySide6.QtGui import QPixmap, QPainter, QColor
+from PySide6.QtGui import QPixmap, QPainter, QColor, QAction, QPen, QImage
 
 from src.styles.common import apply_stylesheets
 from src.editors.smartprop_editor.property import compact
@@ -27,12 +27,14 @@ from src.widgets.model_browser.index import (
 )
 from src.widgets.model_browser.thumbnails import ThumbnailService, THUMB_SIZE
 
+try:
+    from src.other.cs2_netcon import CS2Netcon
+except Exception:
+    CS2Netcon = None
+
 # Resource path carried on each item, used to marry thumbnails back to rows.
 _PATH_ROLE = Qt.UserRole + 1
 
-# List-view columns. The index into this list is also the sort key, and the
-# tree's own QHeaderView provides the clickable sort buttons — which is why grid
-# mode shows no header at all: there is no separate bar to hide.
 COLUMNS = ["Name", "Source", "Mod", "Size"]
 COL_NAME, COL_SOURCE, COL_MOD, COL_SIZE = range(4)
 
@@ -41,16 +43,9 @@ _SOURCE_COLOR = {
     SOURCE_CORE: "#a2a8b1",
 }
 
+
 class _FacetPopup(QFrame):
-    """The drop-down behind a facet chip: name filter, bulk actions, value rows.
-
-    Each row carries an "(Only)" button because isolating one mount is the common
-    case and doing it by hand means unchecking every other box.
-
-    A QFrame rather than a plain QWidget so the panel border and background come
-    from the application style — a bare QWidget with Qt.Popup paints nothing and
-    would show through to whatever is behind it.
-    """
+    """The drop-down behind a facet chip: name filter, bulk actions, value rows."""
 
     changed = Signal()
 
@@ -124,8 +119,6 @@ class _FacetPopup(QFrame):
         return set(self._checked)
 
     def _apply_name_filter(self, text: str):
-        """Hides rows only — a hidden mount keeps its checked state, so filtering
-        the list never silently changes what the grid is showing."""
         tokens = text.strip().lower().split()
         for value, _checkbox, row in self._rows:
             if not tokens:
@@ -188,8 +181,6 @@ class _FacetChip(QPushButton):
 
     def _show_popup(self):
         self.popup.adjustSize()
-        # Right-align the popup with the chip so it opens inward, not off-screen
-        # for chips that sit near the dialog's right edge.
         corner = self.mapToGlobal(self.rect().bottomRight())
         self.popup.move(corner.x() - self.popup.width(), corner.y() + 2)
         self.popup.show()
@@ -202,7 +193,6 @@ class _FacetChip(QPushButton):
 
 def _get_model_icon(grayscaled: bool = False) -> Optional[QPixmap]:
     import os
-    from PySide6.QtGui import QImage
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", "model_lg.png")
     if not os.path.isfile(icon_path):
@@ -243,7 +233,6 @@ def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
     inset = size // 5
     painter.drawRect(inset, inset, size - 2 * inset, size - 2 * inset)
 
-    # Draw model_lg.png icon
     icon_pixmap = _get_model_icon(grayscaled=grayscaled)
     if icon_pixmap and not icon_pixmap.isNull():
         target_dim = max(16, size - 24)
@@ -260,16 +249,12 @@ _PLACEHOLDER_CACHE = {}
 
 
 def _placeholder_pixmap(size: int) -> QPixmap:
-    """Fallback tile with a 3D model (.vmdl) icon shown when no thumbnail is available (cached)."""
     if size not in _PLACEHOLDER_CACHE:
         _PLACEHOLDER_CACHE[size] = _vmdl_icon_pixmap(size, grayscaled=False)
     return _PLACEHOLDER_CACHE[size]
 
 
 def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
-    """Grayscaled .vmdl icon tile overlaid with a smooth rotating loading spinner."""
-    from PySide6.QtGui import QPen
-
     pixmap = _vmdl_icon_pixmap(size, grayscaled=True)
 
     painter = QPainter(pixmap)
@@ -279,7 +264,6 @@ def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
     center_y = size // 2 - 4
     radius = max(10, min(size // 5, 22))
 
-    # Track ring (semi-transparent background disk + track)
     painter.setBrush(QColor(15, 15, 18, 160))
     painter.setPen(Qt.NoPen)
     painter.drawEllipse(center_x - radius - 3, center_y - radius - 3, (radius + 3) * 2, (radius + 3) * 2)
@@ -309,26 +293,27 @@ def _human_size(num_bytes: int) -> str:
     return f"{num_bytes:.1f} GB"
 
 
-class ModelBrowserDialog(QDialog):
-    """Pick a .vmdl by resource path."""
+class ModelBrowserWidget(QWidget):
+    """Reusable Source 2 Model Browser widget."""
 
-    # Tiles never render above THUMB_SIZE; the slider only scales them down, so
-    # its ceiling is that resolution rather than an arbitrary larger one.
+    model_selected = Signal(str)
+    model_double_clicked = Signal(str)
+    use_as_template = Signal(str)
+
     MIN_THUMB, MAX_THUMB = 64, THUMB_SIZE
 
-    def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
+    def __init__(
+        self, parent=None, current_path: str = "", addon: Optional[str] = None,
+        show_accept: bool = False, auto_scan: bool = True
+    ):
         super().__init__(parent)
-        self.setWindowTitle("Select Model")
-        self.resize(940, 720)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
-
         self._entries: List[ModelEntry] = []
         self._visible: List[ModelEntry] = []
         self._selected_path = current_path or ""
         self._thumb_size = THUMB_SIZE
-        # Resolve the addon up front. scan_all() falls back to get_addon_name()
-        # on its own, so leaving this None would index the addon's models but
-        # then omit its mount from the chip — filtering every one of them out.
+        self.show_accept = show_accept
+        self._has_scanned = False
+
         if not addon:
             from src.settings.common import get_addon_name
             addon = get_addon_name()
@@ -344,9 +329,8 @@ class ModelBrowserDialog(QDialog):
         self._anim_timer.timeout.connect(self._update_loading_spinners)
 
         self._build_ui()
-        self._start_scan()
-
-    # UI
+        if auto_scan:
+            self._start_scan()
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -364,8 +348,10 @@ class ModelBrowserDialog(QDialog):
         self.grid.setWordWrap(True)
         self.grid.setSpacing(3)
         self.grid.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.grid.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.grid.customContextMenuRequested.connect(self._show_context_menu)
         self.grid.itemSelectionChanged.connect(self._on_grid_selection)
-        self.grid.itemDoubleClicked.connect(lambda _: self.accept())
+        self.grid.itemDoubleClicked.connect(self._on_item_double_clicked)
         self.grid.verticalScrollBar().valueChanged.connect(self._schedule_thumbnails)
 
         self.list = QTreeWidget()
@@ -375,13 +361,11 @@ class ModelBrowserDialog(QDialog):
         self.list.setColumnCount(len(COLUMNS))
         self.list.setHeaderLabels(COLUMNS)
         self.list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._show_context_menu)
         self.list.itemSelectionChanged.connect(self._on_list_selection)
-        self.list.itemDoubleClicked.connect(lambda *_: self.accept())
+        self.list.itemDoubleClicked.connect(self._on_item_double_clicked)
 
-        # Sorting is driven from the header indicator but applied in
-        # _apply_filter(), not by Qt: the views are rebuilt from self._visible on
-        # every change, and letting the tree sort itself as well would leave the
-        # grid ordered differently from the list.
         header = self.list.header()
         header.setSectionsClickable(True)
         header.setSortIndicatorShown(True)
@@ -395,8 +379,6 @@ class ModelBrowserDialog(QDialog):
 
         root.addLayout(self._build_footer())
 
-        # Thumbnail requests are coalesced so a flung scrollbar queues one batch
-        # for where it lands, not one per intermediate frame.
         self._thumb_timer = QTimer(self)
         self._thumb_timer.setSingleShot(True)
         self._thumb_timer.setInterval(90)
@@ -467,7 +449,7 @@ class ModelBrowserDialog(QDialog):
         row = QHBoxLayout()
         row.setSpacing(5)
 
-        self.status_label = QLabel("Scanning…")
+        self.status_label = QLabel("Ready")
         row.addWidget(self.status_label)
 
         row.addStretch(1)
@@ -475,23 +457,52 @@ class ModelBrowserDialog(QDialog):
         self.path_label = QLabel(self._selected_path or "")
         row.addWidget(self.path_label)
 
-        self.accept_button = QPushButton("Accept")
-        self.accept_button.setEnabled(bool(self._selected_path))
-        self.accept_button.setDefault(True)
-        self.accept_button.clicked.connect(self.accept)
-        row.addWidget(self.accept_button)
+        if self.show_accept:
+            self.accept_button = QPushButton("Accept")
+            self.accept_button.setEnabled(bool(self._selected_path))
+            self.accept_button.setDefault(True)
+            row.addWidget(self.accept_button)
 
         return row
 
-    # scanning
+    def _show_context_menu(self, position):
+        sender = self.sender()
+        if not sender:
+            return
+
+        path = self._selected_path
+        if not path:
+            return
+
+        menu = QMenu(self)
+
+        use_template_action = QAction("Use as Reference Template in AssetGroup Maker", self)
+        use_template_action.triggered.connect(lambda: self.use_as_template.emit(path))
+        menu.addAction(use_template_action)
+
+        menu.addSeparator()
+
+        copy_action = QAction("Copy Resource Path", self)
+        copy_action.triggered.connect(lambda: QApplication.clipboard().setText(path))
+        menu.addAction(copy_action)
+
+        open_cs2_action = QAction("Open in CS2 Tools", self)
+        open_cs2_action.triggered.connect(lambda: self._open_in_cs2(path))
+        menu.addAction(open_cs2_action)
+
+        menu.exec_(sender.mapToGlobal(position))
+
+    def _open_in_cs2(self, path: str):
+        if CS2Netcon:
+            clean_path = path.replace('\\', '/').strip('/')
+            CS2Netcon.send(f"open_asset {clean_path}")
 
     def _start_scan(self, use_cache: bool = True):
         from PySide6.QtCore import QThreadPool
-
+        self._has_scanned = True
         self.status_label.setText("Scanning…")
         self.refresh_button.setEnabled(False)
 
-        # Owned by the dialog so the worker cannot outlive its signal target.
         self._scan_signals = ScanSignals()
         self._scan_signals.finished.connect(self._on_scan_finished, Qt.QueuedConnection)
         QThreadPool.globalInstance().start(
@@ -500,17 +511,8 @@ class ModelBrowserDialog(QDialog):
     def _on_scan_finished(self, entries: list):
         self._entries = entries
         self.refresh_button.setEnabled(True)
-
-        # Every mount on the search path, in precedence order rather than
-        # alphabetically, so the addon sits at the top where Hammer puts it.
-        # Mounts that contributed nothing are still listed: csgo_imported and
-        # csgo_core carry no models at all, and quietly dropping them would make
-        # the chip's contents look different between installs.
         self.mod_chip.set_values(active_mounts(self._addon))
-
         self._apply_filter()
-
-    # filtering
 
     def _apply_filter(self, *_):
         raw = self.filter_edit.text().strip().lower().replace("\\", "/")
@@ -521,10 +523,6 @@ class ModelBrowserDialog(QDialog):
         for entry in self._entries:
             if entry.mod not in allowed_mods:
                 continue
-            # Match against the full resource path so "props/urban" narrows by
-            # folder just as well as a bare model name does.
-            # Match all space-separated tokens so e.g. "dust 2 crate" matches
-            # any model whose path contains each of those parts.
             if tokens:
                 path_lower = entry.path.lower()
                 if not all(token in path_lower for token in tokens):
@@ -534,8 +532,7 @@ class ModelBrowserDialog(QDialog):
         header = self.list.header()
         column = header.sortIndicatorSection()
         descending = header.sortIndicatorOrder() == Qt.DescendingOrder
-        # Path is the tiebreaker everywhere so equal sizes/mods keep a stable,
-        # readable order rather than whatever the filter loop happened to yield.
+
         sort_keys = {
             COL_NAME: lambda e: e.path.lower(),
             COL_SOURCE: lambda e: (e.source, e.path.lower()),
@@ -558,7 +555,6 @@ class ModelBrowserDialog(QDialog):
         self.list.clear()
 
         self.grid.setIconSize(QSize(self._thumb_size, self._thumb_size))
-        # Room for the icon plus the two-line elided name beneath it.
         self.grid.setGridSize(QSize(self._thumb_size + 16, self._thumb_size + 38))
 
         selected_grid_item = None
@@ -602,19 +598,10 @@ class ModelBrowserDialog(QDialog):
             f"{len(self._visible)} of {len(self._entries)} Assets Visible")
         self._schedule_thumbnails()
 
-    # thumbnails
-
     def _schedule_thumbnails(self, *_):
         self._thumb_timer.start()
 
     def _request_visible_thumbnails(self):
-        """Queue thumbnails for exactly the tiles the user can see right now.
-
-        A full index runs to thousands of models; baking all of them would spend
-        minutes of GPU and disk on tiles nobody looks at. Anything queued for a
-        previous scroll position is dropped first, so a fast scroll does not make
-        the tiles now on screen wait behind a backlog of ones already passed.
-        """
         if self.stack.currentWidget() is not self.grid:
             self._anim_timer.stop()
             return
@@ -706,27 +693,22 @@ class ModelBrowserDialog(QDialog):
 
     def _on_thumb_size_changed(self, value: int):
         self._thumb_size = value
-        # The service renders at a fixed resolution and the grid scales down, so
-        # dragging the slider never invalidates the cache.
         self._populate()
 
-    # selection
-
     def _on_view_mode_changed(self, grid_checked: bool):
-        # Grid mode has no column header of its own — switching the stack is all
-        # it takes for the Name/Source/Mod/Size buttons to go away.
         self.stack.setCurrentWidget(self.grid if grid_checked else self.list)
         self._schedule_thumbnails()
 
     def resizeEvent(self, event):
-        # The grid rewraps on resize, bringing different tiles into view.
         super().resizeEvent(event)
         self._schedule_thumbnails()
 
     def _set_selected(self, resource_path: str):
         self._selected_path = resource_path or ""
         self.path_label.setText(self._selected_path)
-        self.accept_button.setEnabled(bool(self._selected_path))
+        if hasattr(self, 'accept_button'):
+            self.accept_button.setEnabled(bool(self._selected_path))
+        self.model_selected.emit(self._selected_path)
 
     def _on_grid_selection(self):
         item = self.grid.currentItem()
@@ -736,17 +718,33 @@ class ModelBrowserDialog(QDialog):
         item = self.list.currentItem()
         self._set_selected(item.data(0, _PATH_ROLE) if item else "")
 
-    # API
+    def _on_item_double_clicked(self, *_):
+        if self._selected_path:
+            self.model_double_clicked.emit(self._selected_path)
 
     def selected_path(self) -> str:
         return self._selected_path
 
-    def keyPressEvent(self, event):
-        # Enter in the filter box should not fall through to Accept while the
-        # user is still narrowing the list.
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter) and self.filter_edit.hasFocus():
-            return
-        super().keyPressEvent(event)
+
+class ModelBrowserDialog(QDialog):
+    """Dialog wrapper around ModelBrowserWidget."""
+
+    def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Model")
+        self.resize(940, 720)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.browser = ModelBrowserWidget(self, current_path=current_path, addon=addon, show_accept=True, auto_scan=True)
+        self.browser.accept_button.clicked.connect(self.accept)
+        self.browser.model_double_clicked.connect(lambda _: self.accept())
+        layout.addWidget(self.browser)
+
+    def selected_path(self) -> str:
+        return self.browser.selected_path()
 
 
 def pick_model(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
