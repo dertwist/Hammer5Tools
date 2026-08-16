@@ -391,16 +391,6 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
     thread = threading.Thread(target=run_rc, args=(input_file,), daemon=True)
     thread.start()
 
-# web
-discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
-
-# other
-default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
-
-# QT functions
-def set_qdock_tab_style(findChildren):
-    for tab_bar in findChildren(QTabBar):
-        tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
 def convert_snake_case(name: str = None):
     """

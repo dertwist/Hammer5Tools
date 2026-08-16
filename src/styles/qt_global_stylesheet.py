@@ -34,6 +34,65 @@ QGroupBox::indicator:unchecked {
 }
 """
 
+QSS_TABBAR = """
+QTabWidget {
+    background-color: #151515;
+}
+
+QTabWidget::pane {
+    border: 1px solid #363639;
+    background-color: #1d1d1f;
+    border-radius: 0px;
+}
+
+QTabWidget#MainWindowTools_tabs::pane {
+    border-bottom: none;
+}
+
+QTabBar {
+    background-color: #151515;
+    qproperty-drawBase: 0;
+}
+
+QTabBar::tab {
+    background-color: #151515;
+    color: #E3E3E3;
+    border-radius: 0px;
+    padding: 4px 10px;
+    margin: 0px;
+    font: 580 10pt "Segoe UI";
+    border: 2px solid #151515;
+    border-bottom: none;
+    border-right: 2px solid rgba(80, 80, 80, 80);
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #242426;
+    color: #FFFFFF;
+}
+
+QTabBar::tab:selected {
+    border: 2px solid rgba(80, 80, 80, 255);
+    border-bottom: none;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    color: #E3E3E3;
+    background-color: #1d1d1f;
+}
+
+QTabBar::close-button {
+    image: url(:/icons/valve_style/tab-closebutton.png);
+    subcontrol-position: right;
+    margin: 2px;
+}
+
+QTabBar::close-button:hover {
+    image: url(:/icons/valve_style/tab-closebutton-hovered.png);
+}
+"""
+
 QT_Stylesheet_global = """
 /* # background_neutral 151515
 # background_Primary 1C1C1C
@@ -138,61 +197,7 @@ QToolButton:pressed {
 
 
 /* ========================================================== */
-QTabWidget::pane {
-    background-color: solid red;
-    border-radius: 0px;
-    border: 2px solid gray;
-    border-color: #363639;
-    background-color: #1d1d1f;
-}
-/* ========================================================== */
-QTabBar::tab {
-    background-color: #323232;
-    color: #9A9F91;
-    border-radius: 0px;
-    border-top-right-radius: 0px;
-    border-top-left-radius: 0px;
-    padding: 4px;
-    padding-left:48px;
-    padding-right: 48px;
-
-    border-top: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 700 10pt "Segoe UI";
-    border-left: 2px solid darkgray;
-    border-top: 0px solid darkgray;
-    border-color: #151515;
-    border-right: 2px solid rgba(80, 80, 80, 80);
-
-
-
-    color: #E3E3E3;
-    background-color: #151515;
-
-}
-QTabBar::tab:selected {
-    border-radius: 0px;
-    border-top-right-radius: 7px;
-    border-top-left-radius: 7px;
-
-    border-top: 2px solid gray;
-    border-left: 2px solid gray;
-    border-right: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 700 10pt "Segoe UI";
-    border-color: rgba(80, 80, 80, 180);
-    height:20px;
-    color: #E3E3E3;
-    background-color: #1d1d1f;
-
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-        border-bottom: 0px solid black;
-}
-
+""" + QSS_TABBAR + """
 /* ========================================================== */
 QDockWidget {
     font: 580 9pt "Segoe UI";
@@ -1027,7 +1032,7 @@ QSlider::add-page:horizontal {
 /* ========================================================== */
 
 
-QTreeView {
+QTreeWidget, QTreeView, HierarchyTreeWidget {
     color: #E3E3E3;
     border: 2px solid black;
     border-radius: 1px;
@@ -1037,7 +1042,7 @@ QTreeView {
     alternate-background-color: #ff242424;
 }
 
-QTreeView::item {
+QTreeWidget::item, QTreeView::item, HierarchyTreeWidget::item {
     padding-left: 1px;
     padding-right: 1px;
     padding-top: 2px;
@@ -1048,37 +1053,41 @@ QTreeView::item {
     border-color: rgba(255, 255, 255, 10);
 }
 
-QTreeView::item:selected {
+QTreeWidget::item:selected, QTreeView::item:selected, HierarchyTreeWidget::item:selected {
     background-color: #414956; /* Background color for selected item */
     alternate-background-color: #414956; /* Background color for selected item */
     color: white; /* Text color for selected item */
 }
 
-QTreeView::item:hover {
+QTreeWidget::item:hover, QTreeView::item:hover, HierarchyTreeWidget::item:hover {
     background-color: #272729; /* Background color for hovered item */
     color: #E3E3E3; /* Text color for hovered item */
 }
 
-QTreeView::branch:has-siblings {
+QTreeWidget::branch, QTreeView::branch, HierarchyTreeWidget::branch {
+    background: transparent;
+}
+
+QTreeWidget::branch:has-siblings, QTreeView::branch:has-siblings {
     border-image: url(:/icons/vertical_line.png) 0; /* Set the vertical line for branches with siblings */
 }
 
-QTreeView::branch:has-siblings:adjoins-item {
+QTreeWidget::branch:has-siblings:adjoins-item, QTreeView::branch:has-siblings:adjoins-item {
     border-image: none; /* Remove the line where the branch adjoins an item */
 }
 
 
-QTreeView::branch:closed:has-children {
+QTreeWidget::branch:closed:has-children, QTreeView::branch:closed:has-children {
      image: url(:/icons/arrow_right_16dp.svg);
 }
 
-QTreeView::branch:open:has-children {
+QTreeWidget::branch:open:has-children, QTreeView::branch:open:has-children {
      /* Icon for open branch */
     image: url(:/icons/arrow_drop_down_16dp.svg);
 }
 
 /* Remove border for edit line in tree */
-QTreeView::item QLineEdit {
+QTreeWidget::item QLineEdit, QTreeView::item QLineEdit {
     border: none;
     margin: 0px;
     padding: 0px;

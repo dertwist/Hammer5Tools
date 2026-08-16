@@ -766,9 +766,7 @@ class HierarchyItemModel(QTreeWidgetItem):
             2: QColor("#9D9D9D"),
             3: QColor("#9D9D9D"),
         }
-        self.background_colors = {
-            0: QColor("#f0f0f0"),  # Light grey background in column 0
-        }
+        self.background_colors = {}
         self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
 
     def update_icon(self):

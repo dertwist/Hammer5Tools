@@ -67,12 +67,28 @@ def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
     commands = str(commands).strip() if commands else ""
 
     if sys.platform == 'win32':
-        import ctypes
         work_dir = os.path.dirname(cs2_exe_path)
+
+        # 1. Primary: Use Windows Explorer COM interface (IShellDispatch2).
+        # This delegates process creation directly to explorer.exe, ensuring CS2
+        # is created outside of Hammer5Tools's process tree, Job Objects, and VS Code.
         try:
-            # ShellExecuteW asks the Windows Shell (explorer.exe) to create the process,
-            # ensuring that CS2 is completely detached from Hammer5Tools's process tree,
-            # Job Object, and pipe handles.
+            import win32com.client
+            shell = win32com.client.Dispatch("Shell.Application")
+            shell.ShellExecute(
+                cs2_exe_path,
+                commands,
+                work_dir if os.path.exists(work_dir) else "",
+                "open",
+                1  # SW_SHOWNORMAL
+            )
+            return True
+        except Exception:
+            pass
+
+        # 2. Secondary: ShellExecuteW via shell32
+        try:
+            import ctypes
             ret = ctypes.windll.shell32.ShellExecuteW(
                 None,
                 "open",

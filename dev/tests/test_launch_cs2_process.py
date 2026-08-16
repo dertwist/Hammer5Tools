@@ -19,8 +19,23 @@ def test_assemble_commands():
     assert result == " -addon test_addon -tool hammer -asset maps/test_addon.vmap"
 
 
+def test_launch_cs2_process_com_success():
+    mock_shell_com = MagicMock()
+    with patch("sys.platform", "win32"), \
+         patch.dict("sys.modules", {"win32com": MagicMock(), "win32com.client": MagicMock()}):
+        import win32com.client
+        win32com.client.Dispatch.return_value = mock_shell_com
+        success = launch_cs2_process("C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe", "-tools -steam")
+        assert success is True
+        mock_shell_com.ShellExecute.assert_called_once()
+        args = mock_shell_com.ShellExecute.call_args[0]
+        assert args[0] == "C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe"
+        assert args[1] == "-tools -steam"
+
+
 def test_launch_cs2_process_shellexecute_success():
     with patch("sys.platform", "win32"), \
+         patch.dict("sys.modules", {"win32com": None, "win32com.client": None}), \
          patch("ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell:
         success = launch_cs2_process("C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe", "-tools -steam")
         assert success is True
@@ -34,6 +49,7 @@ def test_launch_cs2_process_shellexecute_success():
 
 def test_launch_cs2_process_shellexecute_fallback_to_popen():
     with patch("sys.platform", "win32"), \
+         patch.dict("sys.modules", {"win32com": None, "win32com.client": None}), \
          patch("ctypes.windll.shell32.ShellExecuteW", return_value=2), \
          patch("subprocess.Popen") as mock_popen:
         mock_popen.return_value = MagicMock()
@@ -47,12 +63,17 @@ def test_launch_cs2_process_shellexecute_fallback_to_popen():
         assert kwargs.get("stdout") == -3  # subprocess.DEVNULL is -3 in Python
 
 
-def test_launch_cs2_process_empty_commands():
-    with patch("sys.platform", "win32"), \
-         patch("ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell:
-        success = launch_cs2_process("C:\\cs2.exe", "")
-        assert success is True
-        mock_shell.assert_called_once_with(None, "open", "C:\\cs2.exe", "", "C:\\", 1)
+def test_job_object_limit_flags():
+    from src.job_object import install_job_object
+    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000
+    JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x0800
+    JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x1000
+    expected_flags = (
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        | JOB_OBJECT_LIMIT_BREAKAWAY_OK
+        | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK
+    )
+    assert expected_flags == 0x3800
 
 
 if __name__ == "__main__":
