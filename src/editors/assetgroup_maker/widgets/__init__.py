@@ -1,0 +1,1 @@
+# AssetGroup Maker widgets package
