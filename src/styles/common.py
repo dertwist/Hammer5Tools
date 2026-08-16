@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QTreeView,
+    QTreeWidget,
     QCheckBox,
     QPushButton,
     QToolButton,
@@ -64,7 +65,7 @@ qt_stylesheet_classes = {
         }
         """,
     'tree':
-        """QTreeView {
+        """QTreeWidget, QTreeView, HierarchyTreeWidget {
         color: #E3E3E3;
         border: 2px solid black;
         border-radius: 1px;
@@ -74,7 +75,7 @@ qt_stylesheet_classes = {
         alternate-background-color: #ff242424;
     }
     
-    QTreeView::item {
+    QTreeWidget::item, QTreeView::item, HierarchyTreeWidget::item {
         padding-left: 1px;
         padding-right: 1px;
         padding-top: 2px;
@@ -84,37 +85,41 @@ qt_stylesheet_classes = {
         border-color: rgba(255, 255, 255, 10);
     }
     
-    QTreeView::item:selected {
+    QTreeWidget::item:selected, QTreeView::item:selected, HierarchyTreeWidget::item:selected {
         background-color: #414956; /* Background color for selected item */
         alternate-background-color: #414956; /* Background color for selected item */
         color: white; /* Text color for selected item */
     }
     
-    QTreeView::item:hover {
+    QTreeWidget::item:hover, QTreeView::item:hover, HierarchyTreeWidget::item:hover {
         background-color: #272729; /* Background color for hovered item */
         color: #E3E3E3; /* Text color for hovered item */
     }
     
-    QTreeView::branch:has-siblings {
+    QTreeWidget::branch, QTreeView::branch, HierarchyTreeWidget::branch {
+        background: transparent;
+    }
+    
+    QTreeWidget::branch:has-siblings, QTreeView::branch:has-siblings {
         border-image: url(:/icons/vertical_line.png) 0; /* Set the vertical line for branches with siblings */
     }
     
-    QTreeView::branch:has-siblings:adjoins-item {
+    QTreeWidget::branch:has-siblings:adjoins-item, QTreeView::branch:has-siblings:adjoins-item {
         border-image: none; /* Remove the line where the branch adjoins an item */
     }
     
     
-    QTreeView::branch:closed:has-children {
+    QTreeWidget::branch:closed:has-children, QTreeView::branch:closed:has-children {
          image: url(:/icons/arrow_right_16dp.svg);
     }
     
-    QTreeView::branch:open:has-children {
+    QTreeWidget::branch:open:has-children, QTreeView::branch:open:has-children {
          /* Icon for open branch */
         image: url(:/icons/arrow_drop_down_16dp.svg);
     }
     
     /* Remove border for edit line in tree */
-    QTreeView::item QLineEdit {
+    QTreeWidget::item QLineEdit, QTreeView::item QLineEdit {
         border: none;
         margin: 0px;
         padding: 0px;
@@ -403,49 +408,11 @@ background-color: None;
 }
 """
 
-qt_stylesheet_tabbar = """
-QTabBar::tab {
-    background-color: #323232;
-    color: #9A9F91;
-    border-radius: 0px;
-    border-top-right-radius: 0px;
-    border-top-left-radius: 0px;
-    padding: 2px;
-    margin: 0px;
-    padding-left:8px;
-    padding-right: 8px;
-
-    border-top: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 580 10pt "Segoe UI";
-    border-left: 2px solid darkgray;
-    border-top: 0px solid darkgray;
-    border-color: #151515;
-    border-right: 2px solid rgba(80, 80, 80, 80);
-
-
-
-    color: #E3E3E3;
-    background-color: #151515;
-
-}
-QTabBar::tab:selected {
-    border-radius: 0px;
-
-    border-color: rgba(80, 80, 80, 180);
-    color: #E3E3E3;
-    background-color: #1d1d1f;
-    border-top: 0px solid gray;
-
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-}
-"""
-
-# One definition, shared with the global sheet — see QSS_GROUPBOX for why.
-from src.styles.qt_global_stylesheet import QSS_GROUPBOX as qt_stylesheet_groupbox
+# Shared definitions from the global sheet — see QSS_GROUPBOX / QSS_TABBAR
+from src.styles.qt_global_stylesheet import (
+    QSS_GROUPBOX as qt_stylesheet_groupbox,
+    QSS_TABBAR as qt_stylesheet_tabbar,
+)
 
 qt_stylesheet_radiobutton = """
 QRadioButton {
@@ -575,6 +542,7 @@ def apply_stylesheets(parent: QWidget) -> None:
     widget_styles = {
         QLabel: qt_stylesheet_classes.get('label'),
         QTreeView: qt_stylesheet_classes.get('tree'),
+        QTreeWidget: qt_stylesheet_classes.get('tree'),
         QCheckBox: qt_stylesheet_checkbox,
         QPushButton: qt_stylesheet_button,
         QToolButton: qt_stylesheet_toolbutton,
