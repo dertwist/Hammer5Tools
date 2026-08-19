@@ -19,37 +19,75 @@ def test_assemble_commands():
     assert result == " -addon test_addon -tool hammer -asset maps/test_addon.vmap"
 
 
-def test_launch_cs2_process_com_success():
-    mock_shell_com = MagicMock()
+def test_launch_cs2_process_desktop_window_success():
+    mock_shell = MagicMock()
+    mock_windows = MagicMock()
+    mock_desktop_window = MagicMock()
+    mock_app = MagicMock()
+
+    mock_shell.Windows.return_value = mock_windows
+    mock_windows.FindWindowSW.return_value = mock_desktop_window
+    mock_desktop_window.Document.Application = mock_app
+
     with patch("sys.platform", "win32"), \
          patch.dict("sys.modules", {"win32com": MagicMock(), "win32com.client": MagicMock()}):
         import win32com.client
-        win32com.client.Dispatch.return_value = mock_shell_com
+        win32com.client.Dispatch.return_value = mock_shell
         success = launch_cs2_process("C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe", "-tools -steam")
         assert success is True
-        mock_shell_com.ShellExecute.assert_called_once()
-        args = mock_shell_com.ShellExecute.call_args[0]
+        mock_app.ShellExecute.assert_called_once()
+        args = mock_app.ShellExecute.call_args[0]
         assert args[0] == "C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe"
         assert args[1] == "-tools -steam"
 
 
-def test_launch_cs2_process_shellexecute_success():
+def test_launch_cs2_process_wmi_powershell_fallback():
+    mock_shell = MagicMock()
+    mock_windows = MagicMock()
+    mock_shell.Windows.return_value = mock_windows
+    mock_windows.FindWindowSW.return_value = None  # Desktop not found
+
+    mock_run_result = MagicMock(returncode=0)
+
     with patch("sys.platform", "win32"), \
-         patch.dict("sys.modules", {"win32com": None, "win32com.client": None}), \
-         patch("ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell:
+         patch.dict("sys.modules", {"win32com": MagicMock(), "win32com.client": MagicMock()}), \
+         patch("subprocess.run", return_value=mock_run_result) as mock_subrun:
+        import win32com.client
+        win32com.client.Dispatch.return_value = mock_shell
         success = launch_cs2_process("C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe", "-tools -steam")
         assert success is True
-        mock_shell.assert_called_once()
-        args = mock_shell.call_args[0]
-        assert args[0] is None
-        assert args[1] == "open"
-        assert args[2] == "C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe"
-        assert args[3] == "-tools -steam"
+        mock_subrun.assert_called_once()
+        cmd_args = mock_subrun.call_args[0][0]
+        assert "powershell" in cmd_args[0]
+        assert "Invoke-CimMethod" in cmd_args[-1]
+        assert "Win32_Process" in cmd_args[-1]
 
 
-def test_launch_cs2_process_shellexecute_fallback_to_popen():
+def test_launch_cs2_process_shellexecute_success():
+    mock_shell = MagicMock()
+    mock_windows = MagicMock()
+    mock_shell.Windows.return_value = mock_windows
+    mock_windows.FindWindowSW.return_value = None  # Desktop not found
+
+    mock_run_result = MagicMock(returncode=1)  # WMI failed
+
+    with patch("sys.platform", "win32"), \
+         patch.dict("sys.modules", {"win32com": MagicMock(), "win32com.client": MagicMock()}), \
+         patch("subprocess.run", return_value=mock_run_result), \
+         patch("ctypes.windll.shell32.ShellExecuteW", return_value=42) as mock_shell_api:
+        import win32com.client
+        win32com.client.Dispatch.return_value = mock_shell
+        success = launch_cs2_process("C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe", "-tools -steam")
+        assert success is True
+        mock_shell_api.assert_called_once()
+
+
+def test_launch_cs2_process_fallback_to_popen():
+    mock_run_result = MagicMock(returncode=1)
+
     with patch("sys.platform", "win32"), \
          patch.dict("sys.modules", {"win32com": None, "win32com.client": None}), \
+         patch("subprocess.run", return_value=mock_run_result), \
          patch("ctypes.windll.shell32.ShellExecuteW", return_value=2), \
          patch("subprocess.Popen") as mock_popen:
         mock_popen.return_value = MagicMock()
@@ -60,7 +98,7 @@ def test_launch_cs2_process_shellexecute_fallback_to_popen():
         assert "cs2.exe" in called_cmd
         kwargs = mock_popen.call_args[1]
         assert kwargs.get("close_fds") is True
-        assert kwargs.get("stdout") == -3  # subprocess.DEVNULL is -3 in Python
+        assert kwargs.get("stdout") == -3
 
 
 def test_job_object_limit_flags():
