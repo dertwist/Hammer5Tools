@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QTreeView,
-    QTreeWidget,
     QCheckBox,
     QPushButton,
     QToolButton,
@@ -65,62 +64,62 @@ qt_stylesheet_classes = {
         }
         """,
     'tree':
-        """QTreeWidget, QTreeView, HierarchyTreeWidget {
+        """QTreeView {
         color: #E3E3E3;
-        border: none;
-        outline: none;
+        border: 2px solid black;
+        border-radius: 1px;
+        border-color: rgba(80, 80, 80, 255);
         font: 580 10pt "Segoe UI";
-        background-color: #151515;
-        alternate-background-color: #1a1a1a;
+        background-color: #292929; /* Background color for the tree view */
+        alternate-background-color: #ff242424;
     }
     
-    QTreeWidget::item, QTreeView::item, HierarchyTreeWidget::item {
+    QTreeView::item {
         padding-left: 1px;
         padding-right: 1px;
         padding-top: 2px;
         padding-bottom: 2px;
         border-style: none;
-        border-bottom: 0.5px solid rgba(255, 255, 255, 10);
+        border-bottom: 0.5px solid black;
+        border-color: rgba(255, 255, 255, 10);
     }
     
-    QTreeWidget::item:selected, QTreeView::item:selected, HierarchyTreeWidget::item:selected {
-        background-color: #414956;
-        alternate-background-color: #414956;
-        color: white;
+    QTreeView::item:selected {
+        background-color: #414956; /* Background color for selected item */
+        alternate-background-color: #414956; /* Background color for selected item */
+        color: white; /* Text color for selected item */
     }
     
-    QTreeWidget::item:hover, QTreeView::item:hover, HierarchyTreeWidget::item:hover {
-        background-color: #272729;
-        color: #E3E3E3;
+    QTreeView::item:hover {
+        background-color: #272729; /* Background color for hovered item */
+        color: #E3E3E3; /* Text color for hovered item */
     }
     
-    QTreeWidget::branch, QTreeView::branch, HierarchyTreeWidget::branch {
-        background: transparent;
+    QTreeView::branch:has-siblings {
+        border-image: url(:/icons/vertical_line.png) 0; /* Set the vertical line for branches with siblings */
     }
     
-    QTreeWidget::branch:has-siblings, QTreeView::branch:has-siblings {
-        border-image: url(:/icons/vertical_line.png) 0;
+    QTreeView::branch:has-siblings:adjoins-item {
+        border-image: none; /* Remove the line where the branch adjoins an item */
     }
     
-    QTreeWidget::branch:has-siblings:adjoins-item, QTreeView::branch:has-siblings:adjoins-item {
-        border-image: none;
-    }
     
-    QTreeWidget::branch:closed:has-children, QTreeView::branch:closed:has-children {
+    QTreeView::branch:closed:has-children {
          image: url(:/icons/arrow_right_16dp.svg);
     }
     
-    QTreeWidget::branch:open:has-children, QTreeView::branch:open:has-children {
-         image: url(:/icons/arrow_drop_down_16dp.svg);
+    QTreeView::branch:open:has-children {
+         /* Icon for open branch */
+        image: url(:/icons/arrow_drop_down_16dp.svg);
     }
     
     /* Remove border for edit line in tree */
-    QTreeWidget::item QLineEdit, QTreeView::item QLineEdit {
+    QTreeView::item QLineEdit {
         border: none;
         margin: 0px;
         padding: 0px;
-        background-color: #1C1C1C;
-        color: #E3E3E3;
+        background-color: #1C1C1C; /* Match the background color of the tree view */
+        color: #E3E3E3; /* Match the text color of the tree view */
     }"""
 }
 qt_stylesheet_checkbox = """
@@ -404,11 +403,49 @@ background-color: None;
 }
 """
 
-# Shared definitions from the global sheet — see QSS_GROUPBOX / QSS_TABBAR
-from src.styles.qt_global_stylesheet import (
-    QSS_GROUPBOX as qt_stylesheet_groupbox,
-    QSS_TABBAR as qt_stylesheet_tabbar,
-)
+qt_stylesheet_tabbar = """
+QTabBar::tab {
+    background-color: #323232;
+    color: #9A9F91;
+    border-radius: 0px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 2px;
+    margin: 0px;
+    padding-left:8px;
+    padding-right: 8px;
+
+    border-top: 2px solid gray;
+    border-bottom: 0px solid black;
+
+    font: 580 10pt "Segoe UI";
+    border-left: 2px solid darkgray;
+    border-top: 0px solid darkgray;
+    border-color: #151515;
+    border-right: 2px solid rgba(80, 80, 80, 80);
+
+
+
+    color: #E3E3E3;
+    background-color: #151515;
+
+}
+QTabBar::tab:selected {
+    border-radius: 0px;
+
+    border-color: rgba(80, 80, 80, 180);
+    color: #E3E3E3;
+    background-color: #1d1d1f;
+    border-top: 0px solid gray;
+
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+}
+"""
+
+# One definition, shared with the global sheet — see QSS_GROUPBOX for why.
+from src.styles.qt_global_stylesheet import QSS_GROUPBOX as qt_stylesheet_groupbox
 
 qt_stylesheet_radiobutton = """
 QRadioButton {
@@ -538,7 +575,6 @@ def apply_stylesheets(parent: QWidget) -> None:
     widget_styles = {
         QLabel: qt_stylesheet_classes.get('label'),
         QTreeView: qt_stylesheet_classes.get('tree'),
-        QTreeWidget: qt_stylesheet_classes.get('tree'),
         QCheckBox: qt_stylesheet_checkbox,
         QPushButton: qt_stylesheet_button,
         QToolButton: qt_stylesheet_toolbutton,
