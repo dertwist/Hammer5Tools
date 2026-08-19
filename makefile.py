@@ -256,6 +256,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
         '--hidden-import=vpk',
         '--collect-all=velopack',
+        '--collect-all=win32com',
 
         '--noconfirm',
 
@@ -316,14 +317,34 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Phase 0: cleanup moved to main() for thread safety
     build_app_pyinstaller(fast=fast, channel=channel)
 
+    def _safe_rmtree(p):
+        import stat
+        def _onerror(func, path, exc_info):
+            try:
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            except Exception:
+                pass
+        for attempt in range(5):
+            try:
+                if os.path.isdir(p):
+                    shutil.rmtree(p, onerror=_onerror)
+                elif os.path.exists(p):
+                    os.remove(p)
+                break
+            except Exception:
+                time.sleep(0.5)
+        else:
+            if os.path.isdir(p):
+                shutil.rmtree(p, ignore_errors=True)
+
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
     # Safe cleanup: only remove build artifacts, keep data folders
     for item in ['app', '_internal']:
         path = os.path.join(bundle_root, item)
         if os.path.exists(path):
-            if os.path.isdir(path): shutil.rmtree(path)
-            else: os.remove(path)
+            _safe_rmtree(path)
     if not os.path.exists(bundle_root):
         os.makedirs(bundle_root)
 
@@ -335,10 +356,13 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
             dst = os.path.join(bundle_root, item)
             # Remove old versions if they exist
             if os.path.exists(dst):
-                if os.path.isdir(dst): shutil.rmtree(dst)
-                else: os.remove(dst)
-            shutil.move(src, dst)
-        shutil.rmtree(os.path.join(cur_dir, 'out_hammer5tools'))
+                _safe_rmtree(dst)
+            try:
+                shutil.move(src, dst)
+            except Exception:
+                _safe_rmtree(dst)
+                shutil.copytree(src, dst) if os.path.isdir(src) else shutil.copy2(src, dst)
+        _safe_rmtree(os.path.join(cur_dir, 'out_hammer5tools'))
 
     # Ensure data folders are present in bundle_root (they should be if it's the source folder)
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
