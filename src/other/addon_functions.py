@@ -61,32 +61,57 @@ def delete_addon(ui=None):
 def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
     """
     Launch CS2 as an independent, detached process so that it survives
-    Hammer5Tools closing, minimizing, or updating.
+    Hammer5Tools closing, minimizing, updating, or stopping VS Code debug sessions.
     """
     cs2_exe_path = str(cs2_exe_path)
     commands = str(commands).strip() if commands else ""
 
     if sys.platform == 'win32':
         work_dir = os.path.dirname(cs2_exe_path)
+        if not os.path.exists(work_dir):
+            work_dir = "C:\\"
 
-        # 1. Primary: Use Windows Explorer COM interface (IShellDispatch2).
-        # This delegates process creation directly to explorer.exe, ensuring CS2
-        # is created outside of Hammer5Tools's process tree, Job Objects, and VS Code.
+        # 1. Primary: Obtain the active Windows Explorer desktop shell dispatch.
+        # This delegates process creation to the actual explorer.exe desktop process,
+        # so CS2's parent process in Windows is explorer.exe (NOT python.exe / VS Code / debugpy).
         try:
             import win32com.client
             shell = win32com.client.Dispatch("Shell.Application")
-            shell.ShellExecute(
-                cs2_exe_path,
-                commands,
-                work_dir if os.path.exists(work_dir) else "",
-                "open",
-                1  # SW_SHOWNORMAL
-            )
-            return True
+            desktop_window = shell.Windows().FindWindowSW(0, 0, 8, 0, 1)  # SWC_DESKTOP=8, SWFO_NEEDDISPATCH=1
+            if desktop_window:
+                desktop_window.Document.Application.ShellExecute(
+                    cs2_exe_path,
+                    commands,
+                    work_dir,
+                    "open",
+                    1  # SW_SHOWNORMAL
+                )
+                return True
         except Exception:
             pass
 
-        # 2. Secondary: ShellExecuteW via shell32
+        # 2. Secondary: Launch via WMI Win32_Process.
+        # WMI process creation is performed by the Windows WMI service (WmiPrvSE.exe),
+        # placing the spawned process completely outside VS Code's debugger process tree.
+        try:
+            cmd = f'"{cs2_exe_path}" {commands}'.strip() if commands else f'"{cs2_exe_path}"'
+            escaped_cmd = cmd.replace('"', '`"')
+            escaped_work_dir = work_dir.replace('"', '`"')
+            ps_script = (
+                f'Invoke-CimMethod -ClassName Win32_Process -MethodName Create '
+                f'-Arguments @{{CommandLine = "{escaped_cmd}"; CurrentDirectory = "{escaped_work_dir}"}}'
+            )
+            ret = subprocess.run(
+                ['powershell', '-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', ps_script],
+                capture_output=True,
+                check=False
+            )
+            if ret.returncode == 0:
+                return True
+        except Exception:
+            pass
+
+        # 3. Tertiary: ShellExecuteW via shell32
         try:
             import ctypes
             ret = ctypes.windll.shell32.ShellExecuteW(
@@ -102,7 +127,7 @@ def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
         except Exception as e:
             print(f"ShellExecute failed: {e}, falling back to subprocess.Popen")
 
-    # Fallback to subprocess.Popen with full detachment flags and null standard handles
+    # 4. Fallback: subprocess.Popen with full detachment flags and null standard handles
     flags_breakaway = (
         getattr(subprocess, 'DETACHED_PROCESS', 0x00000008)
         | getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0x00000200)
