@@ -13,8 +13,9 @@ import importlib.util
 import os
 import sys
 
-CUR_DIR = os.path.abspath(os.path.dirname(__file__))
-SRC_DIR = os.path.join(CUR_DIR, 'src')
+REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+CUR_DIR = REPO_DIR
+SRC_DIR = os.path.join(REPO_DIR, 'src')
 
 # .NET assemblies pythonnet materialises at runtime after clr.AddReference().
 # They never exist as Python packages, so no static check can resolve them.
