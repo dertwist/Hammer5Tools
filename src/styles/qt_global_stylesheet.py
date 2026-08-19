@@ -138,59 +138,61 @@ QToolButton:pressed {
 
 
 /* ========================================================== */
-QTabWidget::pane {
-    background-color: solid red;
-    border-radius: 0px;
-    border: 2px solid gray;
-    border-color: #363639;
-    background-color: #1d1d1f;
-}
-/* ========================================================== */
-QTabBar::tab {
-    background-color: #323232;
-    color: #9A9F91;
-    border-radius: 0px;
-    border-top-right-radius: 0px;
-    border-top-left-radius: 0px;
-    padding: 4px;
-    padding-left:48px;
-    padding-right: 48px;
-
-    border-top: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 700 10pt "Segoe UI";
-    border-left: 2px solid darkgray;
-    border-top: 0px solid darkgray;
-    border-color: #151515;
-    border-right: 2px solid rgba(80, 80, 80, 80);
-
-
-
-    color: #E3E3E3;
+QTabWidget {
     background-color: #151515;
-
 }
-QTabBar::tab:selected {
+
+QTabWidget::pane {
+    border: 1px solid #363639;
+    background-color: #1d1d1f;
     border-radius: 0px;
-    border-top-right-radius: 7px;
-    border-top-left-radius: 7px;
+}
 
-    border-top: 2px solid gray;
-    border-left: 2px solid gray;
-    border-right: 2px solid gray;
-    border-bottom: 0px solid black;
+QTabWidget#MainWindowTools_tabs::pane {
+    border-bottom: none;
+}
 
-    font: 700 10pt "Segoe UI";
-    border-color: rgba(80, 80, 80, 180);
-    height:20px;
+QTabBar {
+    background-color: #151515;
+    qproperty-drawBase: 0;
+}
+
+QTabBar::tab {
+    background-color: #151515;
+    color: #E3E3E3;
+    border-radius: 0px;
+    padding: 4px 10px;
+    margin: 0px;
+    font: 580 10pt "Segoe UI";
+    border: 2px solid #151515;
+    border-bottom: none;
+    border-right: 2px solid rgba(80, 80, 80, 80);
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #242426;
+    color: #FFFFFF;
+}
+
+QTabBar::tab:selected {
+    border: 2px solid rgba(80, 80, 80, 255);
+    border-bottom: none;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
     color: #E3E3E3;
     background-color: #1d1d1f;
+}
 
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-        border-bottom: 0px solid black;
+QTabBar::close-button {
+    image: url(:/icons/valve_style/tab-closebutton.png);
+    subcontrol-position: right;
+    margin: 2px;
+}
+
+QTabBar::close-button:hover {
+    image: url(:/icons/valve_style/tab-closebutton-hovered.png);
 }
 
 /* ========================================================== */
