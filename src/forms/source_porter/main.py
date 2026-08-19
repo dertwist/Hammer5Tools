@@ -269,7 +269,26 @@ class SourcePorterWidget(QDialog):
             QPushButton#btn_stop:hover {
                 background-color: #D32F2F;
             }
-
+            QTabWidget::pane {
+                border: 1px solid #363639;
+                background-color: #151515;
+                border-radius: 2px;
+            }
+            QTabBar::tab {
+                background-color: #151515;
+                color: #9D9D9D;
+                padding: 6px 16px;
+                font: 700 9.5pt "Segoe UI";
+                border: 1px solid #363639;
+                border-bottom: none;
+                border-top-left-radius: 3px;
+                border-top-right-radius: 3px;
+            }
+            QTabBar::tab:selected {
+                background-color: #1D1D1F;
+                color: #E3E3E3;
+                border-color: #3A78C4;
+            }
         """)
 
         # Splitter

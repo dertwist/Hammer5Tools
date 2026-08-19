@@ -34,6 +34,7 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setDragDropMode(QTreeWidget.InternalMove)
         self.list_mode = list_mode
         self.setIndentation(18)
+        self.setStyleSheet("HierarchyTreeWidget::branch { background: transparent; }")
 
     def drawBranches(self, painter: QPainter, rect: QRect, index):
         if getattr(self, 'list_mode', False):
