@@ -315,21 +315,23 @@ class SmartPropEditorVariableViewport(QWidget):
                 if widget.is_start:
                     widget.set_indent(0)
                     indent_level = 1
-                    widget.setVisible(should_show)
+                    if widget.isVisible() != should_show:
+                        widget.setVisible(should_show)
                     if not widget.ui.show_child.isChecked() and not search_term:
                         hide_children = True
                     else:
                         hide_children = False
                 elif widget.is_end:
                     indent_level = 0
-                    widget.setVisible(should_show if not hide_children else False)
+                    end_visible = should_show if not hide_children else False
+                    if widget.isVisible() != end_visible:
+                        widget.setVisible(end_visible)
                     hide_children = False
             elif hasattr(widget, 'set_indent'): # It's a VariableFrame
                 widget.set_indent(indent_level)
-                if hide_children and not search_term:
-                    widget.setVisible(False)
-                else:
-                    widget.setVisible(should_show)
+                var_visible = False if (hide_children and not search_term) else should_show
+                if widget.isVisible() != var_visible:
+                    widget.setVisible(var_visible)
 
     # [Variables Other]
     def search_variables(self, search_term=None):

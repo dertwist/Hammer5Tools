@@ -574,6 +574,7 @@ class CategoryFrame(VariableFrame):
 
         # Categories don't have frame_layout values
         self.ui.frame_layout.hide()
+        self.ui.frame_layout.setMaximumSize(16666, 0)
         if hasattr(self, 'var_int_instance'):
             self.var_int_instance.hide()
 
@@ -582,7 +583,9 @@ class CategoryFrame(VariableFrame):
             self.category_name = self._extract_display_name(self.var_display_name)
             self.ui.variable_name.setPlaceholderText("Category Name")
             self.ui.variable_name.setText(self.category_name)
+            self.ui.variable_name.setInputMethodHints(Qt.InputMethodHint.ImhNone)
             self.ui.frame_3.hide()
+            self.setFixedHeight(24)
             
             # Start categories can expand/collapse children
             self.ui.show_child.show()
@@ -646,10 +649,8 @@ class CategoryFrame(VariableFrame):
                 found_start = True
                 continue
             if found_start and isinstance(w, CategoryFrame) and w.is_end and w.category_hash == self.category_hash:
-                w.pre_change.emit()
                 w.name = f"hammer5tools_category_{self.category_hash}_end"
                 w.var_visible_in_editor = False
-                w.content_changed.emit()
                 break
 
     def update_colors(self):
@@ -663,11 +664,59 @@ class CategoryFrame(VariableFrame):
             style += f'\nbackground-color: {target_color};'
         self.ui.label.setStyleSheet(style)
 
-    def eventFilter(self, obj, event):
-        if obj == self.ui.variable_name and event.type() == QEvent.FocusOut:
+    def show_context_menu(self):
+        context_menu = QMenu(self)
+        delete_action = QAction("Delete", context_menu)
+        copy_action = QAction("Copy", context_menu)
+        duplicate_action = QAction("Duplicate", context_menu)
+        context_menu.addActions([delete_action, copy_action, duplicate_action])
+
+        action = context_menu.exec(QCursor.pos())
+
+        if action == delete_action:
+            self.delete_requested.emit()
+        elif action == copy_action:
+            clipboard = QApplication.clipboard()
+            m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName': self.name,
+                          'm_bExposeAsParameter': self.var_visible_in_editor}
+            if self.var_display_name:
+                m_variable.update({'m_DisplayName': self.var_display_name})
+            if self.var_default is not None:
+                m_variable.update({'m_DefaultValue': self.var_default})
+            if self.var_min is not None:
+                m_variable.update({'m_flParamaterMinValue': self.var_min})
+            if self.var_max is not None:
+                m_variable.update({'m_flParamaterMaxValue': self.var_max})
+            if self.var_model is not None:
+                m_variable.update({'m_sModelName': self.var_model})
+            if self.hide_expression is not None:
+                m_variable.update({'m_HideExpression': self.hide_expression})
+            if self.read_only_expression is not None:
+                m_variable.update({'m_ReadOnlyExpression': self.read_only_expression})
+                
             if self.is_start:
-                new_cat_name = self.ui.variable_name.text()
-                self.category_name = new_cat_name
-                self.update_self()
-            return True
+                m_variable.update({'m_Hammer5ToolsCategoryName': getattr(self, 'category_name', 'Category name')})
+            else:
+                m_variable.update({'m_Hammer5ToolsCategoryName': 'New category'})
+                    
+            m_data = {'m_Variables': []}
+            m_data['m_Variables'].append(m_variable)
+            clipboard.setText(JsonToKv3(m_data))
+        elif action == duplicate_action:
+            __data = [self.name, self.var_class, self.var_value, self.var_visible_in_editor, self.var_display_name]
+            __index = self.widget_list.indexOf(self)
+            self.duplicate.emit(__data, __index)
+
+    def eventFilter(self, obj, event):
+        if obj == self.ui.variable_name:
+            if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Return, Qt.Key_Enter):
+                self.ui.variable_name.clearFocus()
+                return True
+            elif event.type() == QEvent.FocusOut:
+                if self.is_start:
+                    new_cat_name = self.ui.variable_name.text()
+                    if new_cat_name != getattr(self, 'category_name', ''):
+                        self.category_name = new_cat_name
+                        self.update_self()
+                return False
         return super(CategoryFrame, self).eventFilter(obj, event)
