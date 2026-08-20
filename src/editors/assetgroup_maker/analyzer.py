@@ -197,42 +197,44 @@ def _analyze_vmat(result: ReferenceAnalysisResult, content: str):
     """Analyze a Source 2 Material .vmat file."""
     base = result.base_name
 
-    # Comprehensive CS2 shader texture map patterns (csgo_environment, csgo_complex, csgo_foliage, csgo_glass, etc.)
+    # Comprehensive CS2 shader texture map patterns (csgo_environment, csgo_complex, csgo_foliage, csgo_glass, Layer0, etc.)
     tex_patterns = [
         # Layer 1 / Primary Slots
-        ('color', 'Color / Albedo Map', r'(?:g_tColor|TextureColor|TextureDiffuse|g_tBaseColor|g_tAlbedo|g_tColorA)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('normal', 'Normal Map', r'(?:g_tNormal|TextureNormal|g_tNormalRoughness|g_tNormalA)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('roughness', 'Roughness Map', r'(?:g_tRoughness|TextureRoughness)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('metalness', 'Metalness Map', r'(?:g_tMetalness|TextureMetalness)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('ao', 'Ambient Occlusion Map', r'(?:g_tAmbientOcclusion|TextureAmbientOcclusion|g_tAO)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('orm', 'Packed ORM / Mask Map', r'(?:g_tORM|g_tMask|g_tMasks|g_tRMA|g_tSRM|g_tSRMH|TextureORM|TextureMask)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('height', 'Height / Displacement', r'(?:g_tHeight|TextureHeight|g_tDisplacement|TextureDisplacement)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('emissive', 'Emissive / Self-Illum', r'(?:g_tSelfIllumMask|TextureSelfIllumMask|g_tEmissiveMask|g_tEmission|g_tSelfIllum|TextureSelfIllum)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('opacity', 'Opacity / Translucency', r'(?:g_tTranslucency|TextureTranslucency|g_tOpacityMask|TextureOpacityMask|g_tAlpha|g_tTranslucencyMask)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('tintmask', 'Tint Mask', r'(?:g_tTintMask|TextureTintMask)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('transmission', 'Transmission / SSS', r'(?:g_tTransmissionMask|g_tSubsurfaceColor)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('blendmask', 'Layer Blend Mask', r'(?:g_tBlendMask|g_tLayerBlendMask)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
+        ('color', 'Color / Albedo Map', r'([ \t]*(?:g_tColor|TextureColor|TextureDiffuse|g_tBaseColor|g_tAlbedo|g_tColorA)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('normal', 'Normal Map', r'([ \t]*(?:g_tNormal|TextureNormal|g_tNormalRoughness|g_tNormalA)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('roughness', 'Roughness Map', r'([ \t]*(?:g_tRoughness|TextureRoughness)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('metalness', 'Metalness Map', r'([ \t]*(?:g_tMetalness|TextureMetalness)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('ao', 'Ambient Occlusion Map', r'([ \t]*(?:g_tAmbientOcclusion|TextureAmbientOcclusion|g_tAO)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('orm', 'Packed ORM / Mask Map', r'([ \t]*(?:g_tORM|g_tMask|g_tMasks|g_tRMA|g_tSRM|g_tSRMH|TextureORM|TextureMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('height', 'Height / Displacement', r'([ \t]*(?:g_tHeight|TextureHeight|g_tDisplacement|TextureDisplacement)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('emissive', 'Emissive / Self-Illum', r'([ \t]*(?:g_tSelfIllumMask|TextureSelfIllumMask|g_tEmissiveMask|g_tEmission|g_tSelfIllum|TextureSelfIllum)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('opacity', 'Opacity / Translucency', r'([ \t]*(?:g_tTranslucency|TextureTranslucency|g_tOpacityMask|TextureOpacityMask|g_tAlpha|g_tTranslucencyMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('tintmask', 'Tint Mask', r'([ \t]*(?:g_tTintMask|TextureTintMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('transmission', 'Transmission / SSS', r'([ \t]*(?:g_tTransmissionMask|g_tSubsurfaceColor)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('blendmask', 'Layer Blend Mask', r'([ \t]*(?:g_tBlendMask|g_tLayerBlendMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
 
         # Layer 2 Blend Slots
-        ('color2', 'Layer 2 Color Map', r'(?:g_tColorB|g_tLayer2Color|TextureColor2)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('normal2', 'Layer 2 Normal Map', r'(?:g_tNormalB|g_tLayer2Normal|TextureNormal2)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('roughness2', 'Layer 2 Roughness', r'(?:g_tLayer2Roughness|TextureRoughness2)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('metalness2', 'Layer 2 Metalness', r'(?:g_tLayer2Metalness|TextureMetalness2)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('ao2', 'Layer 2 Ambient Occlusion', r'(?:g_tLayer2AmbientOcclusion|TextureAmbientOcclusion2)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('orm2', 'Layer 2 ORM Map', r'(?:g_tLayer2ORM|TextureLayer2ORM)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
+        ('color2', 'Layer 2 Color Map', r'([ \t]*(?:g_tColorB|g_tLayer2Color|TextureColor2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('normal2', 'Layer 2 Normal Map', r'([ \t]*(?:g_tNormalB|g_tLayer2Normal|TextureNormal2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('roughness2', 'Layer 2 Roughness', r'([ \t]*(?:g_tLayer2Roughness|TextureRoughness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('metalness2', 'Layer 2 Metalness', r'([ \t]*(?:g_tLayer2Metalness|TextureMetalness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('ao2', 'Layer 2 Ambient Occlusion', r'([ \t]*(?:g_tLayer2AmbientOcclusion|TextureAmbientOcclusion2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('orm2', 'Layer 2 ORM Map', r'([ \t]*(?:g_tLayer2ORM|TextureLayer2ORM)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
 
         # Layer 3 Blend Slots
-        ('color3', 'Layer 3 Color Map', r'(?:g_tColorC|g_tLayer3Color|TextureColor3)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
-        ('normal3', 'Layer 3 Normal Map', r'(?:g_tNormalC|g_tLayer3Normal|TextureNormal3)\s*=\s*resource:?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\']'),
+        ('color3', 'Layer 3 Color Map', r'([ \t]*(?:g_tColorC|g_tLayer3Color|TextureColor3)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('normal3', 'Layer 3 Normal Map', r'([ \t]*(?:g_tNormalC|g_tLayer3Normal|TextureNormal3)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
     ]
 
     for slot_key, label, pattern in tex_patterns:
         match = re.search(pattern, content, re.IGNORECASE)
         if match:
-            tex_path = match.group(1)
+            full_match_line = match.group(1)
+            tex_path = match.group(2)
             result.slots[slot_key] = {
                 'label': label,
                 'source': tex_path,
+                'full_line': full_match_line,
                 'filename': os.path.basename(tex_path),
                 'required': (slot_key == 'color'),
                 'token': f'#${slot_key.upper()}$#'
@@ -269,7 +271,7 @@ def _analyze_generic(result: ReferenceAnalysisResult, content: str):
 def _build_replacements_and_template(result: ReferenceAnalysisResult):
     """
     Constructs the replacements mapping and parameterizes the raw content
-    into a reusable template string.
+    into a reusable template string with slot conditionals.
     """
     content = result.raw_content
     base = result.base_name
@@ -279,18 +281,33 @@ def _build_replacements_and_template(result: ReferenceAnalysisResult):
     # 1. Replace specific slot files first, longest string first to avoid substring conflicts
     sorted_slots = sorted(
         result.slots.items(),
-        key=lambda item: len(item[1].get('filename', '')),
+        key=lambda item: len(item[1].get('source', '') or item[1].get('filename', '')),
         reverse=True
     )
     for slot_name, slot_info in sorted_slots:
         source_path = slot_info.get('source', '')
         source_filename = slot_info.get('filename', '')
-        token = slot_info.get('token', f'#${slot_name.upper()}$#')
+        full_line = slot_info.get('full_line', '')
 
-        if source_filename and source_filename in content:
-            content = content.replace(source_filename, token)
+        if full_line and full_line in content:
+            # Replace source_path within full_line and wrap in conditional
+            param_line = full_line.replace(source_path, f"#$FOLDER_PATH$#/#${slot_name.upper()}$#")
+            cond_block = f"<!-- IF {slot_name.upper()} -->\n{param_line}\n<!-- ENDIF -->"
+            content = content.replace(full_line, cond_block)
             replacements_dict[str(rep_idx)] = {
-                'replacement': [source_filename, token]
+                'replacement': [source_path, f"#$FOLDER_PATH$#/#${slot_name.upper()}$#"]
+            }
+            rep_idx += 1
+        elif source_path and source_path in content:
+            content = content.replace(source_path, f"#$FOLDER_PATH$#/#${slot_name.upper()}$#")
+            replacements_dict[str(rep_idx)] = {
+                'replacement': [source_path, f"#$FOLDER_PATH$#/#${slot_name.upper()}$#"]
+            }
+            rep_idx += 1
+        elif source_filename and source_filename in content:
+            content = content.replace(source_filename, f"#${slot_name.upper()}$#")
+            replacements_dict[str(rep_idx)] = {
+                'replacement': [source_filename, f"#${slot_name.upper()}$#"]
             }
             rep_idx += 1
 
