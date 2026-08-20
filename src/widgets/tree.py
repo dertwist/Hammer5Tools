@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
+    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QTreeView,
     QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
 )
 from PySide6.QtGui import QUndoStack, QUndoCommand, QMouseEvent, QPainter, QPen, QColor, QBrush
@@ -9,6 +9,93 @@ try:
     from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
 except:
     from commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
+
+
+def _draw_hierarchy_branches(tree_view, painter: QPainter, rect: QRect, index):
+    """Shared branch drawing logic for hierarchy-style trees with circular expand/collapse buttons."""
+    painter.save()
+
+    from src.styles import theme
+    line_color = theme.qcolor("#636363")
+    pen = QPen(line_color, 1, Qt.SolidLine)
+    painter.setPen(pen)
+
+    indent = tree_view.indentation()
+    if indent <= 0:
+        indent = 18
+
+    cy = rect.center().y()
+
+    root = tree_view.rootIndex()
+    ancestors = []
+    curr = index
+    while curr.isValid() and curr != root:
+        ancestors.append(curr)
+        curr = curr.parent()
+    ancestors.reverse()
+
+    depth = len(ancestors) - 1
+
+    # 1. Draw ancestor vertical lines and branch connections
+    for level in range(depth):
+        child_anc = ancestors[level + 1]
+        has_sibling_below = child_anc.sibling(child_anc.row() + 1, 0).isValid()
+        spine_cx = rect.left() + (level + 1) * indent + indent // 2
+
+        if level < depth - 1:
+            if has_sibling_below:
+                painter.drawLine(spine_cx, rect.top(), spine_cx, rect.bottom())
+        else:
+            top_y = rect.top()
+            bottom_y = rect.bottom() if has_sibling_below else cy
+            painter.drawLine(spine_cx, top_y, spine_cx, bottom_y)
+
+            item_x = rect.left() + (depth + 1) * indent
+            target_x = spine_cx + indent if tree_view.model().hasChildren(child_anc) else item_x
+            painter.drawLine(spine_cx, cy, target_x, cy)
+
+    # 2. Current item's expander & step to next spine
+    has_children = tree_view.model().hasChildren(index)
+    is_expanded = tree_view.isExpanded(index)
+    expander_cx = rect.left() + depth * indent + indent // 2
+
+    if is_expanded and has_children:
+        next_spine_cx = rect.left() + (depth + 1) * indent + indent // 2
+        painter.drawLine(expander_cx, cy, next_spine_cx, cy)
+        painter.drawLine(next_spine_cx, cy, next_spine_cx, rect.bottom())
+
+    if depth == 0 and has_children:
+        item_x = rect.left() + indent
+        painter.drawLine(expander_cx, cy, item_x, cy)
+
+    # 3. Draw expand/collapse circular button if item has children
+    if has_children:
+        r = 4
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setBrush(QBrush(theme.qcolor("#363636")))
+        painter.setPen(QPen(theme.qcolor("#727272"), 1))
+        painter.drawEllipse(expander_cx - r, cy - r, r * 2, r * 2)
+
+        painter.setRenderHint(QPainter.Antialiasing, False)
+        painter.setPen(QPen(theme.qcolor("#b6b6b6"), 1))
+        painter.drawLine(expander_cx - 2, cy, expander_cx + 2, cy)
+
+        if not is_expanded:
+            painter.drawLine(expander_cx, cy - 2, expander_cx, cy + 2)
+
+    painter.restore()
+
+
+class BranchTreeView(QTreeView):
+    """QTreeView subclass with the same hierarchy branch drawing as HierarchyTreeWidget."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setIndentation(18)
+        self.setStyleSheet("BranchTreeView::branch { background: transparent; }")
+
+    def drawBranches(self, painter: QPainter, rect: QRect, index):
+        _draw_hierarchy_branches(self, painter, rect, index)
 
 class HierarchyTreeWidget(QTreeWidget):
     def __init__(self, undo_stack, list_mode=False):
@@ -41,76 +128,7 @@ class HierarchyTreeWidget(QTreeWidget):
             super().drawBranches(painter, rect, index)
             return
 
-        painter.save()
-
-        from src.styles import theme
-        line_color = theme.qcolor("#636363")
-        pen = QPen(line_color, 1, Qt.SolidLine)
-        painter.setPen(pen)
-
-        indent = self.indentation()
-        if indent <= 0:
-            indent = 18
-
-        cy = rect.center().y()
-
-        ancestors = []
-        curr = index
-        while curr.isValid():
-            ancestors.append(curr)
-            curr = curr.parent()
-        ancestors.reverse()
-
-        depth = len(ancestors) - 1
-
-        # 1. Draw ancestor vertical lines and branch connections
-        for level in range(depth):
-            child_anc = ancestors[level + 1]
-            has_sibling_below = child_anc.sibling(child_anc.row() + 1, 0).isValid()
-            spine_cx = rect.left() + (level + 1) * indent + indent // 2
-
-            if level < depth - 1:
-                if has_sibling_below:
-                    painter.drawLine(spine_cx, rect.top(), spine_cx, rect.bottom())
-            else:
-                top_y = rect.top()
-                bottom_y = rect.bottom() if has_sibling_below else cy
-                painter.drawLine(spine_cx, top_y, spine_cx, bottom_y)
-
-                item_x = rect.left() + (depth + 1) * indent
-                target_x = spine_cx + indent if self.model().hasChildren(child_anc) else item_x
-                painter.drawLine(spine_cx, cy, target_x, cy)
-
-        # 2. Current item's expander & step to next spine
-        has_children = self.model().hasChildren(index)
-        is_expanded = self.isExpanded(index)
-        expander_cx = rect.left() + depth * indent + indent // 2
-
-        if is_expanded and has_children:
-            next_spine_cx = rect.left() + (depth + 1) * indent + indent // 2
-            painter.drawLine(expander_cx, cy, next_spine_cx, cy)
-            painter.drawLine(next_spine_cx, cy, next_spine_cx, rect.bottom())
-
-        if depth == 0 and has_children:
-            item_x = rect.left() + indent
-            painter.drawLine(expander_cx, cy, item_x, cy)
-
-        # 3. Draw expand/collapse circular button if item has children
-        if has_children:
-            r = 4
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setBrush(QBrush(theme.qcolor("#363636")))
-            painter.setPen(QPen(theme.qcolor("#727272"), 1))
-            painter.drawEllipse(expander_cx - r, cy - r, r * 2, r * 2)
-
-            painter.setRenderHint(QPainter.Antialiasing, False)
-            painter.setPen(QPen(theme.qcolor("#b6b6b6"), 1))
-            painter.drawLine(expander_cx - 2, cy, expander_cx + 2, cy)
-
-            if not is_expanded:
-                painter.drawLine(expander_cx, cy - 2, expander_cx, cy + 2)
-
-        painter.restore()
+        _draw_hierarchy_branches(self, painter, rect, index)
 
     def _external_drop_paths(self, event):
         """Local file paths of an external drop, or None if this is a normal internal drag."""

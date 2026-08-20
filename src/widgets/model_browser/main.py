@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QMenu, QApplication
 )
 from PySide6.QtCore import Qt, QSize, QTimer, Signal
-from PySide6.QtGui import QPixmap, QPainter, QColor, QAction, QPen, QImage
+from PySide6.QtGui import QPixmap, QPainter, QColor, QAction, QPen, QImage, QIcon
 
 from src.styles.common import apply_stylesheets
 from src.editors.smartprop_editor.property import compact
@@ -191,16 +191,48 @@ class _FacetChip(QPushButton):
         self.setText(f"{checked}/{total} {self.noun}")
 
 
-def _get_model_icon(grayscaled: bool = False) -> Optional[QPixmap]:
+ASSET_LG_ICONS = {
+    "vmdl": "model_lg.png",
+    "vmat": "material_lg.png",
+    "vsmart": "smart_prop_lg.png",
+    "vsndevts": "vmix_lg.png",
+    "vsnd": "vmix_lg.png",
+    "vdata": "vdata_lg.png",
+    "vpcf": "particles_lg.png",
+    "vpost": "postprocessing_lg.png",
+    "vmap": "map_lg.png",
+    "vtex": "texture_lg.png",
+}
+
+ASSET_SM_ICONS = {
+    "vmdl": "://icons/tools/assettypes/model_sm.png",
+    "vmat": "://icons/tools/assettypes/material_sm.png",
+    "vsmart": "://icons/tools/assettypes/vsmart_sm.png",
+    "vsndevts": "://icons/tools/assettypes/vmix_sm.png",
+    "vsnd": "://icons/tools/assettypes/vmix_sm.png",
+    "vdata": "://icons/tools/assettypes/vdata_sm.png",
+    "vpcf": "://icons/tools/assettypes/generic_sm.png",
+    "vpost": "://icons/tools/assettypes/generic_sm.png",
+    "vmap": "://icons/tools/assettypes/map_sm.png",
+    "vtex": "://icons/tools/assettypes/texture_sm.png",
+}
+
+
+def _get_asset_icon(asset_type: str = "vmdl", grayscaled: bool = False) -> Optional[QPixmap]:
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", "model_lg.png")
+    icon_name = ASSET_LG_ICONS.get(asset_type.lower(), "model_lg.png")
+    icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", icon_name)
     if not os.path.isfile(icon_path):
-        icon_path = "src/icons/tools/assettypes/model_lg.png"
+        icon_path = f"src/icons/tools/assettypes/{icon_name}"
 
     pixmap = QPixmap(icon_path)
     if pixmap.isNull():
-        return None
+        # Fallback to model_lg.png
+        icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", "model_lg.png")
+        pixmap = QPixmap(icon_path)
+        if pixmap.isNull():
+            return None
 
     if grayscaled:
         img = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
@@ -218,8 +250,8 @@ def _get_model_icon(grayscaled: bool = False) -> Optional[QPixmap]:
     return pixmap
 
 
-def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
-    """Tile with the model_lg.png icon."""
+def _asset_icon_pixmap(asset_type: str, size: int, grayscaled: bool = False) -> QPixmap:
+    """Tile with the asset type icon."""
     from src.styles import theme
     pixmap = QPixmap(size, size)
     pixmap.fill(QColor(theme.color(compact.BG)))
@@ -233,7 +265,7 @@ def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
     inset = size // 5
     painter.drawRect(inset, inset, size - 2 * inset, size - 2 * inset)
 
-    icon_pixmap = _get_model_icon(grayscaled=grayscaled)
+    icon_pixmap = _get_asset_icon(asset_type, grayscaled=grayscaled)
     if icon_pixmap and not icon_pixmap.isNull():
         target_dim = max(16, size - 24)
         scaled_icon = icon_pixmap.scaled(target_dim, target_dim, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -248,14 +280,15 @@ def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
 _PLACEHOLDER_CACHE = {}
 
 
-def _placeholder_pixmap(size: int) -> QPixmap:
-    if size not in _PLACEHOLDER_CACHE:
-        _PLACEHOLDER_CACHE[size] = _vmdl_icon_pixmap(size, grayscaled=False)
-    return _PLACEHOLDER_CACHE[size]
+def _placeholder_pixmap(size: int, asset_type: str = "vmdl") -> QPixmap:
+    key = (size, asset_type)
+    if key not in _PLACEHOLDER_CACHE:
+        _PLACEHOLDER_CACHE[key] = _asset_icon_pixmap(asset_type, size, grayscaled=False)
+    return _PLACEHOLDER_CACHE[key]
 
 
 def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
-    pixmap = _vmdl_icon_pixmap(size, grayscaled=True)
+    pixmap = _asset_icon_pixmap("vmdl", size, grayscaled=True)
 
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
@@ -294,7 +327,7 @@ def _human_size(num_bytes: int) -> str:
 
 
 class ModelBrowserWidget(QWidget):
-    """Reusable Source 2 Model Browser widget."""
+    """Reusable Source 2 Asset & Model Browser widget."""
 
     model_selected = Signal(str)
     model_double_clicked = Signal(str)
@@ -304,7 +337,8 @@ class ModelBrowserWidget(QWidget):
 
     def __init__(
         self, parent=None, current_path: str = "", addon: Optional[str] = None,
-        show_accept: bool = False, auto_scan: bool = True
+        show_accept: bool = False, auto_scan: bool = True,
+        addon_only: bool = False, asset_types: Optional[List[str]] = None
     ):
         super().__init__(parent)
         self._entries: List[ModelEntry] = []
@@ -313,6 +347,8 @@ class ModelBrowserWidget(QWidget):
         self._thumb_size = THUMB_SIZE
         self.show_accept = show_accept
         self._has_scanned = False
+        self._addon_only = addon_only
+        self._asset_types = asset_types
 
         if not addon:
             from src.settings.common import get_addon_name
@@ -404,7 +440,7 @@ class ModelBrowserWidget(QWidget):
         row.addWidget(self.filter_edit, 1)
 
         self.refresh_button = QPushButton("Rescan")
-        self.refresh_button.setToolTip("Rebuild the model index from disk")
+        self.refresh_button.setToolTip("Rebuild the asset index from disk")
         self.refresh_button.clicked.connect(lambda: self._start_scan(use_cache=False))
         row.addWidget(self.refresh_button)
 
@@ -438,10 +474,9 @@ class ModelBrowserWidget(QWidget):
         self.mod_chip.changed.connect(self._apply_filter)
         row.addWidget(self.mod_chip)
 
-        type_chip = QPushButton("1/1 Asset Types")
-        type_chip.setEnabled(False)
-        type_chip.setToolTip("This browser lists .vmdl models only")
-        row.addWidget(type_chip)
+        self.type_chip = _FacetChip("Asset Types")
+        self.type_chip.changed.connect(self._apply_filter)
+        row.addWidget(self.type_chip)
 
         return row
 
@@ -506,22 +541,40 @@ class ModelBrowserWidget(QWidget):
         self._scan_signals = ScanSignals()
         self._scan_signals.finished.connect(self._on_scan_finished, Qt.QueuedConnection)
         QThreadPool.globalInstance().start(
-            ScanWorker(self._addon, self._scan_signals, use_cache=use_cache))
+            ScanWorker(
+                self._addon,
+                self._scan_signals,
+                use_cache=use_cache,
+                addon_only=self._addon_only,
+                asset_types=self._asset_types
+            )
+        )
 
     def _on_scan_finished(self, entries: list):
         self._entries = entries
         self.refresh_button.setEnabled(True)
-        self.mod_chip.set_values(active_mounts(self._addon))
+        self.mod_chip.set_values(active_mounts(self._addon, addon_only=self._addon_only))
+
+        discovered_types = sorted(list({f".{e.asset_type}" for e in self._entries if e.asset_type}))
+        if discovered_types:
+            self.type_chip.set_values(discovered_types)
+            self.type_chip.show()
+        else:
+            self.type_chip.hide()
+
         self._apply_filter()
 
     def _apply_filter(self, *_):
         raw = self.filter_edit.text().strip().lower().replace("\\", "/")
         tokens = raw.split()
         allowed_mods = self.mod_chip.checked_values()
+        allowed_types = {t.lstrip('.').lower() for t in self.type_chip.checked_values()}
 
         matches = []
         for entry in self._entries:
             if entry.mod not in allowed_mods:
+                continue
+            if allowed_types and entry.asset_type.lower() not in allowed_types:
                 continue
             if tokens:
                 path_lower = entry.path.lower()
@@ -547,7 +600,6 @@ class ModelBrowserWidget(QWidget):
     def _populate(self):
         self._anim_timer.stop()
         self.thumbnails.cancel_pending()
-        placeholder = _placeholder_pixmap(self._thumb_size)
 
         self.grid.setUpdatesEnabled(False)
         self.list.setUpdatesEnabled(False)
@@ -561,6 +613,7 @@ class ModelBrowserWidget(QWidget):
         selected_list_item = None
 
         for entry in self._visible:
+            placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)
             item = QListWidgetItem(entry.name)
             item.setIcon(placeholder)
             item.setData(_PATH_ROLE, entry.path)
@@ -574,6 +627,8 @@ class ModelBrowserWidget(QWidget):
             row = QTreeWidgetItem([
                 entry.path, entry.source, entry.mod, _human_size(entry.size)])
             row.setData(0, _PATH_ROLE, entry.path)
+            sm_icon = ASSET_SM_ICONS.get(entry.asset_type.lower(), "://icons/tools/assettypes/generic_sm.png")
+            row.setIcon(0, QIcon(sm_icon))
             row.setForeground(1, QColor(_SOURCE_COLOR.get(entry.source, "#e5e5e5")))
             self.list.addTopLevelItem(row)
             if entry.path == self._selected_path:
@@ -621,16 +676,20 @@ class ModelBrowserWidget(QWidget):
                 continue
             path = item.data(_PATH_ROLE)
             if path in by_path:
-                visible_items.append((item, by_path[path]))
-                visible_paths.add(path)
+                entry = by_path[path]
+                if entry.asset_type.lower() == 'vmdl':
+                    visible_items.append((item, entry))
+                    visible_paths.add(path)
+                else:
+                    item.setIcon(_placeholder_pixmap(self._thumb_size, entry.asset_type))
 
         self.thumbnails.set_visible_paths(visible_paths)
 
         has_pending = False
         loading_icon = _loading_pixmap(self._thumb_size, self._spinner_angle)
-        placeholder = _placeholder_pixmap(self._thumb_size)
 
         for item, entry in visible_items:
+            placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)
             pixmap = self.thumbnails.request(entry)
             if pixmap is not None:
                 item.setIcon(self._scaled(pixmap))
@@ -651,42 +710,36 @@ class ModelBrowserWidget(QWidget):
             self._anim_timer.stop()
             return
 
-        self._spinner_angle = (self._spinner_angle + 25) % 360
+        self._spinner_angle = (self._spinner_angle + 10) % 360
         loading_icon = _loading_pixmap(self._thumb_size, self._spinner_angle)
 
-        viewport_rect = self.grid.viewport().rect()
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            rect = self.grid.visualItemRect(item)
-            if not rect.intersects(viewport_rect):
-                if rect.isValid() and rect.top() > viewport_rect.bottom():
-                    break
-                continue
             path = item.data(_PATH_ROLE)
-            if path and self.thumbnails.is_pending(path):
+            if self.thumbnails.is_pending(path):
                 item.setIcon(loading_icon)
 
     def _scaled(self, pixmap: QPixmap) -> QPixmap:
-        if pixmap.width() == self._thumb_size:
+        if pixmap.width() == self._thumb_size and pixmap.height() == self._thumb_size:
             return pixmap
-        return pixmap.scaled(self._thumb_size, self._thumb_size,
-                             Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        return pixmap.scaled(
+            self._thumb_size, self._thumb_size,
+            Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
-    def _on_thumbnail_ready(self, resource_path: str, pixmap: QPixmap):
+    def _on_thumbnail_ready(self, path: str, pixmap: QPixmap):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if item.data(_PATH_ROLE) == resource_path:
+            if item.data(_PATH_ROLE) == path:
                 item.setIcon(self._scaled(pixmap))
                 break
         if not self.thumbnails.has_pending():
             self._anim_timer.stop()
 
-    def _on_thumbnail_failed(self, resource_path: str):
-        placeholder = _placeholder_pixmap(self._thumb_size)
+    def _on_thumbnail_failed(self, path: str):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if item.data(_PATH_ROLE) == resource_path:
-                item.setIcon(placeholder)
+            if item.data(_PATH_ROLE) == path:
+                item.setIcon(_placeholder_pixmap(self._thumb_size, "vmdl"))
                 break
         if not self.thumbnails.has_pending():
             self._anim_timer.stop()
@@ -747,9 +800,69 @@ class ModelBrowserDialog(QDialog):
         return self.browser.selected_path()
 
 
+class AssetBrowserDialog(QDialog):
+    """Dialog wrapper around ModelBrowserWidget supporting multi-asset types and addon filtering."""
+
+    def __init__(
+        self,
+        parent=None,
+        current_path: str = "",
+        addon: Optional[str] = None,
+        addon_only: bool = True,
+        asset_types: Optional[List[str]] = None,
+        title: str = "Select Reference Template Asset"
+    ):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.resize(960, 720)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.browser = ModelBrowserWidget(
+            self,
+            current_path=current_path,
+            addon=addon,
+            show_accept=True,
+            auto_scan=True,
+            addon_only=addon_only,
+            asset_types=asset_types
+        )
+        self.browser.accept_button.clicked.connect(self.accept)
+        self.browser.model_double_clicked.connect(lambda _: self.accept())
+        layout.addWidget(self.browser)
+
+    def selected_path(self) -> str:
+        return self.browser.selected_path()
+
+
 def pick_model(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
     """Open the browser and return the chosen resource path, or None if cancelled."""
     dialog = ModelBrowserDialog(parent, current_path=current_path, addon=addon)
+    apply_stylesheets(dialog)
+    if dialog.exec() == QDialog.Accepted:
+        return dialog.selected_path() or None
+    return None
+
+
+def pick_asset(
+    parent=None,
+    current_path: str = "",
+    addon: Optional[str] = None,
+    addon_only: bool = True,
+    asset_types: Optional[List[str]] = None,
+    title: str = "Select Asset"
+) -> Optional[str]:
+    """Open the asset browser dialog and return chosen resource path, or None if cancelled."""
+    dialog = AssetBrowserDialog(
+        parent,
+        current_path=current_path,
+        addon=addon,
+        addon_only=addon_only,
+        asset_types=asset_types,
+        title=title
+    )
     apply_stylesheets(dialog)
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None
