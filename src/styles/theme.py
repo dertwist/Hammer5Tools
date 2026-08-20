@@ -1,6 +1,6 @@
 """Runtime theme brightness for the dark palette.
 
-The interface brightness setting (Preferences -> Appearance, stored as
+The interface brightness setting (Preferences -> General, stored as
 APP/brightness_level in settings.ini) has three levels:
 
     1 - Dark    : the original pre-brightening palette

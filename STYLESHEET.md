@@ -31,7 +31,7 @@ The application uses a dark theme palette defined in `src/styles/qt_global_style
 
 ### Interface Brightness Levels
 
-The palette above is the **level 2 (Standard)** canonical source: every QSS color literal in the codebase is written at level 2. `src/styles/theme.py` maps all stylesheets at runtime to the user's brightness choice (Preferences → Appearance, stored as `APP/brightness_level`):
+The palette above is the **level 2 (Standard)** canonical source: every QSS color literal in the codebase is written at level 2. `src/styles/theme.py` maps all stylesheets at runtime to the user's brightness choice (Preferences → General, stored as `APP/brightness_level`):
 
 | Level | Name | Mapping |
 |---|---|---|

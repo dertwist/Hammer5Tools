@@ -80,7 +80,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 
 ### Theme Brightness (`src/styles/theme.py`)
 - **`set_brightness_level(level)`**: Activates interface brightness 1/2/3 (`APP/brightness_level` in settings.ini; level 2 = identity).
-- **`install()`**: Patches `QWidget`/`QApplication` `setStyleSheet` so every stylesheet is mapped to the active level; `reapply()` restyles all live widgets (instant switching from Preferences → Appearance).
+- **`install()`**: Patches `QWidget`/`QApplication` `setStyleSheet` so every stylesheet is mapped to the active level; `reapply()` restyles all live widgets (instant switching from Preferences → General).
 - **`color()` / `qcolor()` / `gl_clear_color()`**: Level-aware lookups for QPainter and OpenGL sites that bypass stylesheets.
 
 ### Reusable Widgets (`src/widgets/`)
