@@ -13,6 +13,7 @@ DEFAULT_FILE_TEMPLATE = {
         'custom_files': [],
         'custom_output': 'relative_path',
         'algorithm': 0,
+        'watch_changes': False,
         'ignore_extensions': 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'
     }
 }

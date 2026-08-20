@@ -4,12 +4,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QFrame, QGroupBox, QToolButton
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon, QFont, QDropEvent
 
 from src.settings.main import get_addon_dir, debug
 from src.editors.assetgroup_maker.analyzer import analyze_reference_file, ReferenceAnalysisResult
-from src.styles.common import qt_stylesheet_button
+from src.styles.common import qt_stylesheet_button, qt_stylesheet_lineedit, apply_stylesheets
 
 try:
     from src.other.cs2_netcon import CS2Netcon
@@ -25,6 +25,7 @@ class DragDropReferenceLineEdit(QLineEdit):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setPlaceholderText("Select or drop a reference file (.vmdl, .vmat, .vsmart)...")
+        self.setStyleSheet(qt_stylesheet_lineedit)
 
     def dragEnterEvent(self, event: QDropEvent):
         if event.mimeData().hasUrls() or event.mimeData().hasText():
@@ -72,16 +73,16 @@ class ReferenceCardWidget(QWidget):
 
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(6, 6, 6, 6)
-        main_layout.setSpacing(6)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(4)
 
         # 1. Main Card Frame
         card_frame = QFrame()
         card_frame.setStyleSheet("""
             QFrame {
-                background-color: #1C1C1C;
-                border: 1px solid #363639;
-                border-radius: 4px;
+                background-color: #2E2E2E;
+                border: 1px solid #464649;
+                border-radius: 2px;
             }
         """)
         card_layout = QVBoxLayout(card_frame)
@@ -93,11 +94,11 @@ class ReferenceCardWidget(QWidget):
         header_row.setSpacing(6)
 
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon(":/valve_common/icons/tools/common/browse.png").pixmap(18, 18))
+        icon_label.setPixmap(QIcon(":/valve_common/icons/tools/common/browse.png").pixmap(16, 16))
         header_row.addWidget(icon_label)
 
         title_label = QLabel("Reference Template Asset")
-        title_label.setStyleSheet("font: 700 10pt 'Segoe UI'; color: #FFFFFF;")
+        title_label.setStyleSheet("font: 600 10pt 'Segoe UI'; color: #E5E5E5;")
         header_row.addWidget(title_label)
 
         header_row.addStretch(1)
@@ -107,8 +108,8 @@ class ReferenceCardWidget(QWidget):
             QLabel {
                 background-color: #2D333F;
                 color: #A0C4FF;
-                border: 1px solid #3A78C4;
-                border-radius: 3px;
+                border: 1px solid #4A83C9;
+                border-radius: 0px;
                 padding: 2px 6px;
                 font: 600 8.5pt 'Segoe UI';
             }
@@ -123,13 +124,24 @@ class ReferenceCardWidget(QWidget):
         file_row.setSpacing(4)
 
         self.ref_edit = DragDropReferenceLineEdit()
+        self.ref_edit.setFixedHeight(28)
         self.ref_edit.file_dropped.connect(self.set_reference_path)
         self.ref_edit.textChanged.connect(self._on_text_changed)
         file_row.addWidget(self.ref_edit, 1)
 
+        self.asset_browser_btn = QPushButton("Asset Browser...")
+        self.asset_browser_btn.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        self.asset_browser_btn.setToolTip("Pick template asset using interactive Asset Browser")
+        self.asset_browser_btn.setStyleSheet(qt_stylesheet_button)
+        self.asset_browser_btn.setFixedHeight(28)
+        self.asset_browser_btn.clicked.connect(self._on_asset_browser_clicked)
+        file_row.addWidget(self.asset_browser_btn)
+
         self.browse_btn = QPushButton("Browse...")
+        self.browse_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
         self.browse_btn.setStyleSheet(qt_stylesheet_button)
-        self.browse_btn.setMinimumHeight(24)
+        self.browse_btn.setFixedHeight(28)
+        self.browse_btn.setToolTip("Browse file system for reference template file")
         self.browse_btn.clicked.connect(self._on_browse_clicked)
         file_row.addWidget(self.browse_btn)
 
@@ -137,7 +149,7 @@ class ReferenceCardWidget(QWidget):
         self.open_cs2_btn.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.open_cs2_btn.setToolTip("Open reference asset in CS2 Tools")
         self.open_cs2_btn.setStyleSheet(qt_stylesheet_button)
-        self.open_cs2_btn.setFixedSize(24, 24)
+        self.open_cs2_btn.setFixedSize(28, 28)
         self.open_cs2_btn.clicked.connect(self._open_in_cs2)
         file_row.addWidget(self.open_cs2_btn)
 
@@ -150,7 +162,7 @@ class ReferenceCardWidget(QWidget):
         self.slots_layout.setSpacing(6)
 
         slots_title = QLabel("Detected Slots:")
-        slots_title.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #9D9D9D;")
+        slots_title.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
         self.slots_layout.addWidget(slots_title)
 
         self.slot_pills_host = QWidget()
@@ -165,12 +177,27 @@ class ReferenceCardWidget(QWidget):
 
         # Collapsible Ignore Settings
         self.ignore_toggle_btn = QToolButton()
-        self.ignore_toggle_btn.setStyleSheet("QToolButton { border: none; color: #9D9D9D; font: 600 9pt 'Segoe UI'; }")
+        self.ignore_toggle_btn.setIcon(QIcon(":/icons/arrow_drop_right.png"))
+        self.ignore_toggle_btn.setIconSize(QSize(10, 10))
         self.ignore_toggle_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.ignore_toggle_btn.setArrowType(Qt.RightArrow)
         self.ignore_toggle_btn.setText("Ignore Settings (Extensions & File Exclusions)")
         self.ignore_toggle_btn.setCheckable(True)
         self.ignore_toggle_btn.setChecked(False)
+        self.ignore_toggle_btn.setCursor(Qt.PointingHandCursor)
+        self.ignore_toggle_btn.setStyleSheet("""
+            QToolButton {
+                border: none;
+                background: transparent;
+                color: #A5A5A5;
+                font: 600 8.5pt 'Segoe UI';
+                padding: 1px 2px;
+                margin: 0px;
+                height: 16px;
+            }
+            QToolButton:hover {
+                color: #FFFFFF;
+            }
+        """)
         self.ignore_toggle_btn.toggled.connect(self._toggle_ignore_panel)
         card_layout.addWidget(self.ignore_toggle_btn)
 
@@ -182,9 +209,10 @@ class ReferenceCardWidget(QWidget):
         # Ignore Extensions Row
         ext_row = QHBoxLayout()
         ext_label = QLabel("Ignore Extensions:")
-        ext_label.setFixedWidth(115)
-        ext_label.setStyleSheet("color: #C7C7BB; font: 580 9pt 'Segoe UI';")
+        ext_label.setFixedWidth(120)
+        ext_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
         self.ignore_ext_edit = QLineEdit()
+        self.ignore_ext_edit.setStyleSheet(qt_stylesheet_lineedit)
         self.ignore_ext_edit.setPlaceholderText("mb, ma, max, blend, blend1, tga, png, jpg, exr, hdr")
         self.ignore_ext_edit.textChanged.connect(lambda _: self.ignore_settings_changed.emit())
         ext_row.addWidget(ext_label)
@@ -194,9 +222,10 @@ class ReferenceCardWidget(QWidget):
         # Ignore Files List Row
         file_ignore_row = QHBoxLayout()
         file_ignore_label = QLabel("Ignore Files List:")
-        file_ignore_label.setFixedWidth(115)
-        file_ignore_label.setStyleSheet("color: #C7C7BB; font: 580 9pt 'Segoe UI';")
+        file_ignore_label.setFixedWidth(120)
+        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
         self.ignore_files_edit = QLineEdit()
+        self.ignore_files_edit.setStyleSheet(qt_stylesheet_lineedit)
         self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*, .git*")
         self.ignore_files_edit.textChanged.connect(lambda _: self.ignore_settings_changed.emit())
         file_ignore_row.addWidget(file_ignore_label)
@@ -209,8 +238,30 @@ class ReferenceCardWidget(QWidget):
         main_layout.addWidget(card_frame)
 
     def _toggle_ignore_panel(self, checked: bool):
-        self.ignore_toggle_btn.setArrowType(Qt.DownArrow if checked else Qt.RightArrow)
+        icon_path = ":/icons/arrow_drop_down.png" if checked else ":/icons/arrow_drop_right.png"
+        self.ignore_toggle_btn.setIcon(QIcon(icon_path))
         self.ignore_panel.setVisible(checked)
+
+    def _on_asset_browser_clicked(self):
+        from src.widgets.model_browser.main import AssetBrowserDialog
+        from src.settings.main import get_addon_name
+        from src.styles.common import apply_stylesheets
+        from PySide6.QtWidgets import QDialog
+
+        addon_name = get_addon_name()
+        dialog = AssetBrowserDialog(
+            self,
+            current_path=self.ref_edit.text().strip(),
+            addon=addon_name,
+            addon_only=True,
+            asset_types=[".vmdl", ".vmat", ".vsmart", ".vsndevts", ".vdata", ".vpcf"],
+            title="Select Reference Template Asset"
+        )
+        apply_stylesheets(dialog)
+        if dialog.exec() == QDialog.Accepted:
+            selected = dialog.selected_path()
+            if selected:
+                self.set_reference_path(selected)
 
     def _on_browse_clicked(self):
         addon_dir = get_addon_dir() or ""
@@ -218,7 +269,7 @@ class ReferenceCardWidget(QWidget):
             self,
             "Select Reference Template Asset",
             addon_dir,
-            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts);;All Files (*.*)"
+            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)"
         )
         if file_path:
             self.set_reference_path(file_path)
@@ -283,10 +334,10 @@ class ReferenceCardWidget(QWidget):
                 pill = QLabel(f"<b>{label_text}:</b> {filename}")
                 pill.setStyleSheet("""
                     QLabel {
-                        background-color: #26262B;
-                        color: #E3E3E3;
-                        border: 1px solid #363639;
-                        border-radius: 3px;
+                        background-color: #2F2F31;
+                        color: #E5E5E5;
+                        border: 1px solid #464649;
+                        border-radius: 0px;
                         padding: 2px 6px;
                         font: 580 8.5pt 'Segoe UI';
                     }

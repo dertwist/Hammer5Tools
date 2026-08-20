@@ -72,30 +72,38 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
     """Analyze a Source 2 ModelDoc .vmdl file."""
     base = result.base_name
 
-    # 1. Look for render mesh files (e.g. filename = "models/props/.../crate_01.fbx")
-    mesh_matches = re.findall(r'filename\s*=\s*["\']([^"\']+\.(?:fbx|obj|dmx))["\']', content, re.IGNORECASE)
-    
-    primary_mesh = None
-    collision_mesh = None
+    # 1. Look for explicit physics mesh blocks first
+    phys_blocks = re.findall(r'(?:PhysicsHullFile|PhysicsMeshFile)[\s\S]*?filename\s*=\s*["\']([^"\']+\.(?:fbx|obj|dmx))["\']', content, re.IGNORECASE)
+    render_blocks = re.findall(r'RenderMeshFile[\s\S]*?filename\s*=\s*["\']([^"\']+\.(?:fbx|obj|dmx))["\']', content, re.IGNORECASE)
+
+    collision_mesh = phys_blocks[0] if phys_blocks else None
+    primary_mesh = render_blocks[0] if render_blocks else None
     lod_meshes = []
 
-    for mesh_path in mesh_matches:
+    # 2. General scan if explicit blocks didn't catch both
+    all_mesh_matches = re.findall(r'filename\s*=\s*["\']([^"\']+\.(?:fbx|obj|dmx))["\']', content, re.IGNORECASE)
+    for mesh_path in all_mesh_matches:
         mesh_filename = os.path.basename(mesh_path)
         mesh_base, _ = os.path.splitext(mesh_filename)
+        b_lower = mesh_base.lower()
 
         # Check if it's collision
-        if any(s in mesh_base.lower() for s in ('_phys', '_col', '_hull', '_collision')):
-            collision_mesh = mesh_path
+        if b_lower.startswith(('phys_', 'col_', 'hull_', 'physics_', 'collision_')) or any(
+            s in b_lower for s in ('_phys', '_col', '_hull', '_collision', '_physics')
+        ):
+            if not collision_mesh:
+                collision_mesh = mesh_path
         # Check if it's LOD
-        elif re.search(r'_lod[1-9]', mesh_base, re.IGNORECASE):
-            lod_meshes.append(mesh_path)
+        elif b_lower.startswith(('lod1_', 'lod2_')) or re.search(r'_lod[1-9]', b_lower):
+            if mesh_path not in lod_meshes:
+                lod_meshes.append(mesh_path)
         else:
             if not primary_mesh:
                 primary_mesh = mesh_path
 
     # Fallback if primary wasn't found but meshes exist
-    if not primary_mesh and mesh_matches:
-        primary_mesh = mesh_matches[0]
+    if not primary_mesh and all_mesh_matches:
+        primary_mesh = all_mesh_matches[0]
 
     # Populate slots
     if primary_mesh:
@@ -127,7 +135,7 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
             'token': f'#$LOD{idx}$#'
         }
 
-    # 2. Look for material references (e.g. global_default_material = "...crate_01.vmat")
+    # 3. Look for material references (e.g. global_default_material = "...crate_01.vmat")
     mat_matches = re.findall(r'(?:material|global_default_material|m_sMaterialName)\s*=\s*["\']([^"\']+\.vmat)["\']', content, re.IGNORECASE)
     for mat_path in mat_matches:
         mat_filename = os.path.basename(mat_path)
@@ -209,8 +217,13 @@ def _build_replacements_and_template(result: ReferenceAnalysisResult):
     replacements_dict = {}
     rep_idx = 0
 
-    # 1. Replace specific slot files first
-    for slot_name, slot_info in result.slots.items():
+    # 1. Replace specific slot files first, longest string first to avoid substring conflicts
+    sorted_slots = sorted(
+        result.slots.items(),
+        key=lambda item: len(item[1].get('filename', '')),
+        reverse=True
+    )
+    for slot_name, slot_info in sorted_slots:
         source_path = slot_info.get('source', '')
         source_filename = slot_info.get('filename', '')
         token = slot_info.get('token', f'#${slot_name.upper()}$#')

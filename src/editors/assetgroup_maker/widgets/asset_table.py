@@ -1,14 +1,73 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict, Set, Tuple
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QMenu, QMessageBox, QApplication, QFrame
+    QMenu, QMessageBox, QApplication, QFrame, QStyledItemDelegate, QStyle
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QBrush, QAction, QDropEvent, QIcon
+from PySide6.QtCore import Qt, Signal, QRect
+from PySide6.QtGui import QColor, QBrush, QPen, QAction, QDropEvent, QIcon, QPainter, QFont
 
 from src.editors.assetgroup_maker.matcher import AssetGroupItem
+from src.styles.common import (
+    qt_stylesheet_lineedit, qt_stylesheet_combobox, qt_stylesheet_table, apply_stylesheets
+)
+
+
+class StatusBadgeDelegate(QStyledItemDelegate):
+    """Paints a crisp, centered status badge with zero layout margins or widget clipping."""
+
+    def paint(self, painter: QPainter, option, index):
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing, True)
+
+        # Selection background
+        if option.state & QStyle.State_Selected:
+            painter.fillRect(option.rect, QColor("#515965"))
+        elif option.state & QStyle.State_MouseOver:
+            painter.fillRect(option.rect, QColor("#38383B"))
+
+        text = index.data(Qt.DisplayRole) or ""
+        lower = text.lower()
+
+        if text:
+            rect = option.rect
+            badge_w = 58
+            badge_h = 17
+            badge_x = rect.x() + (rect.width() - badge_w) // 2
+            badge_y = rect.y() + (rect.height() - badge_h) // 2
+            badge_rect = QRect(badge_x, badge_y, badge_w, badge_h)
+
+            if lower == "ready":
+                bg = QColor("#233827")
+                border = QColor("#2E7D32")
+                fg = QColor("#81C784")
+            elif lower == "warning":
+                bg = QColor("#3E341B")
+                border = QColor("#F57F17")
+                fg = QColor("#FFD54F")
+            else:
+                bg = QColor("#3E2020")
+                border = QColor("#C62828")
+                fg = QColor("#E57373")
+
+            painter.setBrush(QBrush(bg))
+            painter.setPen(QPen(border, 1))
+            painter.drawRect(badge_rect)
+
+            painter.setPen(fg)
+            font = painter.font()
+            font.setFamily("Segoe UI")
+            font.setPointSize(8)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(badge_rect, Qt.AlignCenter, text)
+
+        painter.restore()
+
+
+from src.editors.assetgroup_maker.matcher import AssetGroupItem, _evaluate_item_status
+from src.editors.assetgroup_maker.widgets.slot_editor import SlotAssignmentDialog
 
 
 class AssetTableWidget(QWidget):
@@ -18,16 +77,21 @@ class AssetTableWidget(QWidget):
     """
 
     files_dropped = Signal(list)  # List[str] of dropped paths
+    slots_modified = Signal(AssetGroupItem)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._all_items: List[AssetGroupItem] = []
         self._visible_items: List[AssetGroupItem] = []
+        self.slots_def: Dict[str, Dict] = {}
         self._build_ui()
+
+    def set_slots_definition(self, slots_def: Dict[str, Dict]):
+        self.slots_def = slots_def or {}
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 4, 6, 6)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
         # 1. Filter Bar
@@ -35,20 +99,22 @@ class AssetTableWidget(QWidget):
         filter_row.setSpacing(6)
 
         search_label = QLabel("Search:")
-        search_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #9D9D9D;")
+        search_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
         filter_row.addWidget(search_label)
 
         self.search_edit = QLineEdit()
+        self.search_edit.setStyleSheet(qt_stylesheet_lineedit)
         self.search_edit.setPlaceholderText("Filter assets by name or file path...")
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.textChanged.connect(self._apply_filter)
         filter_row.addWidget(self.search_edit, 1)
 
         status_label = QLabel("Filter:")
-        status_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #9D9D9D;")
+        status_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
         filter_row.addWidget(status_label)
 
         self.status_combo = QComboBox()
+        self.status_combo.setStyleSheet(qt_stylesheet_combobox)
         self.status_combo.addItems(["All", "Ready", "Warnings", "Errors"])
         self.status_combo.currentIndexChanged.connect(self._apply_filter)
         filter_row.addWidget(self.status_combo)
@@ -68,39 +134,23 @@ class AssetTableWidget(QWidget):
         self.table.setWordWrap(False)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.table.cellDoubleClicked.connect(self._on_cell_double_clicked)
         self.table.setAcceptDrops(True)
 
         header = self.table.horizontalHeader()
         header.setStretchLastSection(True)
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.Fixed)
         header.setSectionResizeMode(2, QHeaderView.Interactive)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.Interactive)
-        self.table.setColumnWidth(2, 180)
-        self.table.setColumnWidth(4, 220)
+        self.table.setColumnWidth(0, 36)
+        self.table.setColumnWidth(1, 72)
+        self.table.setColumnWidth(2, 170)
+        self.table.setColumnWidth(4, 210)
 
-        self.table.setStyleSheet("""
-            QTableWidget {
-                background-color: #151515;
-                gridline-color: #2D2D30;
-                border: 1px solid #363639;
-                border-radius: 3px;
-                color: #E3E3E3;
-                font: 580 9pt "Segoe UI";
-            }
-            QHeaderView::section {
-                background-color: #1C1C1C;
-                color: #C7C7BB;
-                padding: 4px 6px;
-                border: 1px solid #363639;
-                font: 600 9pt "Segoe UI";
-            }
-            QTableWidget::item:selected {
-                background-color: #414956;
-                color: #FFFFFF;
-            }
-        """)
+        self.table.setItemDelegateForColumn(1, StatusBadgeDelegate(self.table))
+        self.table.setStyleSheet(qt_stylesheet_table)
 
         # Override drop event on table
         self.table.dragEnterEvent = self._table_drag_enter
@@ -183,9 +233,12 @@ class AssetTableWidget(QWidget):
             idx_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             self.table.setItem(row_idx, 0, idx_item)
 
-            # 1. Status Badge Widget
-            status_widget = self._create_status_badge(item)
-            self.table.setCellWidget(row_idx, 1, status_widget)
+            # 1. Status Badge Item (Rendered cleanly via StatusBadgeDelegate)
+            status_item = QTableWidgetItem(item.status.capitalize())
+            status_item.setTextAlignment(Qt.AlignCenter)
+            status_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            status_item.setToolTip(item.status_message)
+            self.table.setItem(row_idx, 1, status_item)
 
             # 2. Asset Name
             name_item = QTableWidgetItem(item.name)
@@ -204,53 +257,9 @@ class AssetTableWidget(QWidget):
             out_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             self.table.setItem(row_idx, 4, out_item)
 
-            self.table.setRowHeight(row_idx, 26)
+            self.table.setRowHeight(row_idx, 24)
 
         self.table.setUpdatesEnabled(True)
-
-    def _create_status_badge(self, item: AssetGroupItem) -> QWidget:
-        container = QWidget()
-        h = QHBoxLayout(container)
-        h.setContentsMargins(4, 2, 4, 2)
-        h.setAlignment(Qt.AlignCenter)
-
-        badge = QLabel()
-        badge.setAlignment(Qt.AlignCenter)
-
-        if item.status == "ready":
-            badge.setText("Ready")
-            badge.setStyleSheet("""
-                background-color: #1E3A24;
-                color: #68D391;
-                border: 1px solid #2F855A;
-                border-radius: 3px;
-                padding: 1px 6px;
-                font: 600 8pt 'Segoe UI';
-            """)
-        elif item.status == "warning":
-            badge.setText("Warning")
-            badge.setStyleSheet("""
-                background-color: #3D321D;
-                color: #ECC94B;
-                border: 1px solid #D69E2E;
-                border-radius: 3px;
-                padding: 1px 6px;
-                font: 600 8pt 'Segoe UI';
-            """)
-        else:
-            badge.setText("Error")
-            badge.setStyleSheet("""
-                background-color: #3B1E1E;
-                color: #FC8181;
-                border: 1px solid #E53E3E;
-                border-radius: 3px;
-                padding: 1px 6px;
-                font: 600 8pt 'Segoe UI';
-            """)
-
-        badge.setToolTip(item.status_message)
-        h.addWidget(badge)
-        return container
 
     def _format_slots_string(self, item: AssetGroupItem) -> str:
         parts = []
@@ -259,8 +268,64 @@ class AssetTableWidget(QWidget):
             parts.append(f"{k.capitalize()}: {fname}")
         return "  |  ".join(parts) if parts else "—"
 
+    def _on_cell_double_clicked(self, row: int, column: int):
+        if 0 <= row < len(self._visible_items):
+            item = self._visible_items[row]
+            self._edit_slots_for_item(item)
+
+    def _edit_slots_for_item(self, item: AssetGroupItem):
+        dialog = SlotAssignmentDialog(item, self.slots_def, self)
+        if dialog.exec():
+            item.slots = dialog.assigned_slots
+            _evaluate_item_status(item, self.slots_def)
+            self._populate_table()
+            self.slots_modified.emit(item)
+
     def _show_context_menu(self, position):
+        row = self.table.currentRow()
+        if not (0 <= row < len(self._visible_items)):
+            return
+
+        item = self._visible_items[row]
         menu = QMenu(self)
+
+        edit_slots_action = QAction("Edit Slot Mappings...", self)
+        edit_slots_action.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        edit_slots_action.triggered.connect(lambda: self._edit_slots_for_item(item))
+        menu.addAction(edit_slots_action)
+
+        menu.addSeparator()
+
+        # Slot Quick-Assign Submenus
+        active_slots_def = self.slots_def.copy()
+        if 'mesh' not in active_slots_def:
+            active_slots_def['mesh'] = {'label': 'Render Mesh', 'required': True}
+        if 'collision' not in active_slots_def:
+            active_slots_def['collision'] = {'label': 'Collision Hull', 'required': False}
+
+        for slot_key, slot_info in active_slots_def.items():
+            slot_label = slot_info.get('label', slot_key)
+            slot_menu = menu.addMenu(f"Assign {slot_label}")
+
+            curr_val = item.slots.get(slot_key, "")
+
+            # Clear action
+            clear_action = QAction("(Clear / None)", self)
+            clear_action.triggered.connect(lambda _, key=slot_key: self._quick_assign_slot(item, key, ""))
+            slot_menu.addAction(clear_action)
+            slot_menu.addSeparator()
+
+            # Discovered candidates
+            for cand in item.available_candidates:
+                fname = os.path.basename(cand)
+                act = QAction(fname, self)
+                act.setCheckable(True)
+                if curr_val and os.path.normpath(curr_val).lower() == os.path.normpath(cand).lower():
+                    act.setChecked(True)
+                act.triggered.connect(lambda _, key=slot_key, p=cand: self._quick_assign_slot(item, key, p))
+                slot_menu.addAction(act)
+
+        menu.addSeparator()
 
         copy_name_action = QAction("Copy Asset Name", self)
         copy_name_action.triggered.connect(self._copy_selected_name)
@@ -270,7 +335,17 @@ class AssetTableWidget(QWidget):
         copy_output_action.triggered.connect(self._copy_selected_output)
         menu.addAction(copy_output_action)
 
-        menu.exec_(self.table.mapToGlobal(position))
+        menu.exec(self.table.mapToGlobal(position))
+
+    def _quick_assign_slot(self, item: AssetGroupItem, slot_key: str, file_path: str):
+        if file_path:
+            item.slots[slot_key] = file_path
+        elif slot_key in item.slots:
+            del item.slots[slot_key]
+
+        _evaluate_item_status(item, self.slots_def)
+        self._populate_table()
+        self.slots_modified.emit(item)
 
     def _copy_selected_name(self):
         row = self.table.currentRow()

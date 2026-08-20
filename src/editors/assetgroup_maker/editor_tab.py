@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QMessageBox, QFrame, QCheckBox
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QIcon
 
 from src.settings.main import get_addon_dir, get_cs2_path, get_addon_name, debug
 from src.editors.assetgroup_maker.widgets.reference_card import ReferenceCardWidget
@@ -13,7 +14,7 @@ from src.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
 from src.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
 from src.editors.assetgroup_maker.process import perform_batch_processing
 from src.editors.assetgroup_maker.objects import get_default_file
-from src.styles.common import qt_stylesheet_button
+from src.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit, apply_stylesheets
 
 
 class EditorTabWidget(QWidget):
@@ -45,8 +46,8 @@ class EditorTabWidget(QWidget):
 
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(4, 4, 4, 4)
-        root.setSpacing(4)
+        root.setContentsMargins(6, 6, 6, 6)
+        root.setSpacing(6)
 
         # 1. Top Reference Card
         self.reference_card = ReferenceCardWidget(self)
@@ -60,13 +61,13 @@ class EditorTabWidget(QWidget):
         footer_frame = QFrame()
         footer_frame.setStyleSheet("""
             QFrame {
-                background-color: #1C1C1C;
-                border: 1px solid #363639;
-                border-radius: 4px;
+                background-color: #2E2E2E;
+                border: 1px solid #464649;
+                border-radius: 2px;
             }
         """)
         footer_layout = QVBoxLayout(footer_frame)
-        footer_layout.setContentsMargins(8, 6, 8, 6)
+        footer_layout.setContentsMargins(8, 8, 8, 8)
         footer_layout.setSpacing(6)
 
         # Output options row
@@ -74,19 +75,25 @@ class EditorTabWidget(QWidget):
         opt_row.setSpacing(8)
 
         self.same_folder_cb = QCheckBox("Output to same folder as batch")
+        self.same_folder_cb.setStyleSheet(qt_stylesheet_checkbox)
         self.same_folder_cb.setChecked(True)
+        self.same_folder_cb.setFixedHeight(28)
         self.same_folder_cb.toggled.connect(self._on_output_toggled)
         opt_row.addWidget(self.same_folder_cb)
 
         self.custom_output_edit = QLineEdit()
+        self.custom_output_edit.setStyleSheet(qt_stylesheet_lineedit)
         self.custom_output_edit.setPlaceholderText("Custom output directory relative to addon...")
         self.custom_output_edit.setEnabled(False)
+        self.custom_output_edit.setFixedHeight(28)
         self.custom_output_edit.textChanged.connect(self._mark_dirty)
         opt_row.addWidget(self.custom_output_edit, 1)
 
         self.browse_output_btn = QPushButton("Browse...")
+        self.browse_output_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
         self.browse_output_btn.setStyleSheet(qt_stylesheet_button)
         self.browse_output_btn.setEnabled(False)
+        self.browse_output_btn.setFixedHeight(28)
         self.browse_output_btn.clicked.connect(self._on_browse_output)
         opt_row.addWidget(self.browse_output_btn)
 
@@ -97,57 +104,82 @@ class EditorTabWidget(QWidget):
         action_row.setSpacing(8)
 
         self.status_label = QLabel("No assets loaded")
-        self.status_label.setStyleSheet("color: #9D9D9D; font: 580 9pt 'Segoe UI';")
+        self.status_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        self.status_label.setFixedHeight(28)
         action_row.addWidget(self.status_label, 1)
+
+        self.watch_changes_cb = QCheckBox("Watch the changes")
+        self.watch_changes_cb.setStyleSheet(qt_stylesheet_checkbox)
+        self.watch_changes_cb.setToolTip("Automatically monitor asset files and live-update batch configuration on changes")
+        self.watch_changes_cb.setChecked(False)
+        self.watch_changes_cb.setFixedHeight(28)
+        self.watch_changes_cb.toggled.connect(self._on_watch_changes_toggled)
+        action_row.addWidget(self.watch_changes_cb)
+
+        self.save_btn = QPushButton("Save")
+        self.save_btn.setIcon(QIcon(":/valve_common/icons/tools/common/save.png"))
+        self.save_btn.setStyleSheet(qt_stylesheet_button)
+        self.save_btn.setFixedHeight(28)
+        self.save_btn.setToolTip("Save this Batch Profile (Ctrl+S)")
+        self.save_btn.clicked.connect(lambda: self.save_file())
+        action_row.addWidget(self.save_btn)
 
         self.revert_btn = QPushButton("Revert Batch")
         self.revert_btn.setStyleSheet(qt_stylesheet_button)
         self.revert_btn.setEnabled(False)
+        self.revert_btn.setFixedHeight(28)
         self.revert_btn.setToolTip("Delete files created by the last batch process")
         self.revert_btn.clicked.connect(self.revert_created_files)
         action_row.addWidget(self.revert_btn)
 
         self.process_btn = QPushButton("Process Batch")
-        self.process_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #3A78C4;
-                color: #FFFFFF;
-                border: 1px solid #4C8BE2;
-                border-radius: 3px;
-                padding: 4px 14px;
-                font: 600 10pt "Segoe UI";
-                min-height: 22px;
-            }
-            QPushButton:hover {
-                background-color: #4C8BE2;
-            }
-            QPushButton:pressed {
-                background-color: #2D62A3;
-            }
-            QPushButton:disabled {
-                background-color: #26262B;
-                color: #606060;
-                border: 1px solid #363639;
-            }
-        """)
+        self.process_btn.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
+        self.process_btn.setStyleSheet(qt_stylesheet_button)
+        self.process_btn.setFixedHeight(28)
         self.process_btn.clicked.connect(self.process_all)
         action_row.addWidget(self.process_btn)
 
         footer_layout.addLayout(action_row)
         root.addWidget(footer_frame)
 
+        apply_stylesheets(self)
+
     def _connect_signals(self):
         self.reference_card.reference_changed.connect(self._on_reference_changed)
         self.reference_card.ignore_settings_changed.connect(self._on_ignore_settings_changed)
         self.reference_card.analysis_updated.connect(self._on_analysis_updated)
         self.asset_table.files_dropped.connect(self._on_files_dropped)
+        self.asset_table.slots_modified.connect(self._on_table_slots_modified)
+
+    def _on_table_slots_modified(self, item):
+        self._mark_dirty()
+        items = self.asset_table.get_items()
+        ready_count = sum(1 for i in items if i.status == "ready")
+        warn_count = sum(1 for i in items if i.status == "warning")
+        err_count = sum(1 for i in items if i.status == "error")
+        self.status_label.setText(
+            f"Total: {len(items)} assets | Ready: {ready_count} | Warnings: {warn_count} | Errors: {err_count}"
+        )
 
     def _apply_default_data(self):
         default = get_default_file()
         self.process_data = default['process'].copy()
         self.reference_card.set_ignore_extensions(self.process_data.get('ignore_extensions', ''))
         self.reference_card.set_ignore_list(self.process_data.get('ignore_list', ''))
+        self.watch_changes_cb.blockSignals(True)
+        self.watch_changes_cb.setChecked(self.process_data.get('watch_changes', False))
+        self.watch_changes_cb.blockSignals(False)
         self.refresh_matching()
+        self._dirty = False
+        self.dirty_changed.emit(False)
+
+    def _on_watch_changes_toggled(self, checked: bool):
+        self.process_data['watch_changes'] = checked
+        self._mark_dirty()
+        if self.file_path:
+            from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+            for watcher in MonitoringFileWatcher._instances:
+                watcher.update_watch_status(self.file_path, checked)
 
     def _on_reference_changed(self, text: str):
         self.process_data['reference'] = text
@@ -218,6 +250,8 @@ class EditorTabWidget(QWidget):
         elif 'mesh' not in slots_def:
             slots_def = {'mesh': {'required': True, 'label': 'Render Mesh'}}
 
+        self.asset_table.set_slots_definition(slots_def)
+
         target_dir = ""
         if self.file_path:
             target_dir = os.path.splitext(self.file_path)[0]
@@ -276,6 +310,12 @@ class EditorTabWidget(QWidget):
             self.same_folder_cb.setChecked(output_to_folder)
             self.custom_output_edit.setText(self.process_data.get('custom_output', ''))
 
+            # Watch changes setting
+            watch_val = self.process_data.get('watch_changes', False)
+            self.watch_changes_cb.blockSignals(True)
+            self.watch_changes_cb.setChecked(bool(watch_val))
+            self.watch_changes_cb.blockSignals(False)
+
             self._dirty = False
             self.title_changed.emit(os.path.basename(self.file_path))
             self.refresh_matching()
@@ -300,6 +340,7 @@ class EditorTabWidget(QWidget):
         self.process_data['ignore_list'] = self.reference_card.get_ignore_list()
         self.process_data['output_to_the_folder'] = self.same_folder_cb.isChecked()
         self.process_data['custom_output'] = self.custom_output_edit.text()
+        self.process_data['watch_changes'] = self.watch_changes_cb.isChecked()
 
         # If template content is empty, generate it from reference analysis
         if not self.raw_template_content and self.reference_card.current_analysis:
@@ -321,6 +362,11 @@ class EditorTabWidget(QWidget):
             self.dirty_changed.emit(False)
             self.title_changed.emit(os.path.basename(self.file_path))
             debug(f"[EditorTab] Saved file: {self.file_path}")
+
+            from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+            for watcher in MonitoringFileWatcher._instances:
+                watcher.update_watch_status(self.file_path, self.watch_changes_cb.isChecked())
+
             return True
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save file:\n{e}")

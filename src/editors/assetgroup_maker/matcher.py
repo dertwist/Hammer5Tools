@@ -4,6 +4,15 @@ import fnmatch
 from typing import Dict, List, Optional, Set, Tuple
 from src.settings.main import get_addon_dir, debug
 
+KNOWN_PREFIXES = [
+    # Collision prefixes
+    'phys_', 'col_', 'hull_', 'physics_', 'collision_',
+    # LOD prefixes
+    'lod0_', 'lod1_', 'lod2_', 'lod3_', 'lod4_',
+    # Render prefixes
+    'render_', 'mesh_', 'high_', 'low_',
+]
+
 KNOWN_SUFFIXES = [
     # Collision suffixes
     '_phys', '_col', '_hull', '_collision', '_physics',
@@ -29,6 +38,7 @@ class AssetGroupItem:
         self.name = name
         self.relative_folder = relative_folder
         self.slots: Dict[str, str] = {}
+        self.available_candidates: List[str] = []
         self.status: str = "ready"  # "ready", "warning", "error"
         self.status_message: str = "Ready"
         self.target_output: str = ""
@@ -48,12 +58,29 @@ class AssetGroupItem:
         }
 
 
-def strip_known_suffix(base_name: str) -> str:
-    lower = base_name.lower()
+def strip_known_affixes(base_name: str) -> str:
+    cleaned = base_name
+    lower = cleaned.lower()
+
+    # Check prefixes
+    for prefix in KNOWN_PREFIXES:
+        if lower.startswith(prefix):
+            cleaned = cleaned[len(prefix):]
+            lower = cleaned.lower()
+            break
+
+    # Check suffixes
     for suffix in KNOWN_SUFFIXES:
         if lower.endswith(suffix):
-            return base_name[:-len(suffix)]
-    return base_name
+            cleaned = cleaned[:-len(suffix)]
+            lower = cleaned.lower()
+            break
+
+    return cleaned if cleaned else base_name
+
+
+def strip_known_suffix(base_name: str) -> str:
+    return strip_known_affixes(base_name)
 
 
 def is_file_ignored(file_name: str, ignore_extensions: List[str], ignore_patterns: List[str]) -> bool:
@@ -94,10 +121,13 @@ def match_folder_assets(
         return []
 
     all_files: List[Tuple[str, str]] = []
+    folder_candidates: List[str] = []
     for root, _, files in os.walk(directory):
         for f in files:
+            full_p = os.path.join(root, f)
+            folder_candidates.append(full_p)
             if not is_file_ignored(f, ignore_extensions, ignore_patterns):
-                all_files.append((f, os.path.join(root, f)))
+                all_files.append((f, full_p))
 
     asset_groups: Dict[str, List[Tuple[str, str]]] = {}
 
@@ -106,7 +136,7 @@ def match_folder_assets(
         if algorithm == 1:
             root_name = base.rsplit('_', 1)[0] if '_' in base else base
         else:
-            root_name = strip_known_suffix(base)
+            root_name = strip_known_affixes(base)
 
         if not root_name:
             root_name = base
@@ -118,37 +148,48 @@ def match_folder_assets(
     for asset_name, group_files in sorted(asset_groups.items()):
         item = AssetGroupItem(name=asset_name, relative_folder=rel_folder)
         item.target_output = f"{asset_name}.{extension}"
+        item.available_candidates = folder_candidates
 
         assigned_files: Set[str] = set()
 
         for fname, fpath in group_files:
             base, ext = os.path.splitext(fname)
+            b_lower = base.lower()
 
-            if any(s in base.lower() for s in ('_phys', '_col', '_hull', '_collision')):
+            # 1. Collision Hull
+            if b_lower.startswith(('phys_', 'col_', 'hull_', 'physics_', 'collision_')) or any(
+                s in b_lower for s in ('_phys', '_col', '_hull', '_collision', '_physics')
+            ):
                 item.slots['collision'] = fpath
                 assigned_files.add(fname)
-            elif '_lod1' in base.lower() or '_lod_1' in base.lower():
+            # 2. LODs
+            elif b_lower.startswith(('lod1_', 'lod_1_')) or '_lod1' in b_lower or '_lod_1' in b_lower:
                 item.slots['lod1'] = fpath
                 assigned_files.add(fname)
-            elif '_lod2' in base.lower() or '_lod_2' in base.lower():
+            elif b_lower.startswith(('lod2_', 'lod_2_')) or '_lod2' in b_lower or '_lod_2' in b_lower:
                 item.slots['lod2'] = fpath
                 assigned_files.add(fname)
-            elif any(s in base.lower() for s in ('_color', '_albedo', '_basecolor', '_c', '_diffuse')):
+            elif b_lower.startswith(('lod3_', 'lod_3_')) or '_lod3' in b_lower or '_lod_3' in b_lower:
+                item.slots['lod3'] = fpath
+                assigned_files.add(fname)
+            # 3. Textures & Materials
+            elif any(s in b_lower for s in ('_color', '_albedo', '_basecolor', '_c', '_diffuse')):
                 item.slots['color'] = fpath
                 assigned_files.add(fname)
-            elif any(s in base.lower() for s in ('_normal', '_norm', '_n')):
+            elif any(s in b_lower for s in ('_normal', '_norm', '_n')):
                 item.slots['normal'] = fpath
                 assigned_files.add(fname)
-            elif any(s in base.lower() for s in ('_rough', '_roughness', '_r')):
+            elif any(s in b_lower for s in ('_rough', '_roughness', '_r')):
                 item.slots['roughness'] = fpath
                 assigned_files.add(fname)
-            elif any(s in base.lower() for s in ('_ao', '_ambient', '_occlusion')):
+            elif any(s in b_lower for s in ('_ao', '_ambient', '_occlusion')):
                 item.slots['ao'] = fpath
                 assigned_files.add(fname)
-            elif any(s in base.lower() for s in ('_metal', '_metallic', '_m')):
+            elif any(s in b_lower for s in ('_metal', '_metallic', '_m')):
                 item.slots['metalness'] = fpath
                 assigned_files.add(fname)
 
+        # Remaining files -> Primary Render Mesh
         remaining = [f for f in group_files if f[0] not in assigned_files]
         if remaining:
             exact = next((f for f in remaining if os.path.splitext(f[0])[0].lower() == asset_name.lower()), None)

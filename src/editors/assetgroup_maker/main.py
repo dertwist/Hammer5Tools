@@ -3,26 +3,28 @@ import json
 from typing import Optional, Dict, List, Tuple
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTabWidget, QSplitter, QDockWidget, QFileDialog,
-    QMessageBox, QTabBar, QToolButton, QMenu, QApplication, QInputDialog
+    QPushButton, QTabWidget, QDockWidget, QFileDialog, QMessageBox,
+    QTabBar, QToolButton, QMenu, QApplication, QStackedWidget, QFrame,
+    QCheckBox
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QIcon, QAction, QKeySequence, QCloseEvent
+from PySide6.QtGui import QIcon, QAction, QKeySequence, QCloseEvent, QPixmap
 
-from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, get_settings_value, set_settings_value, debug
 from src.widgets.explorer.main import Explorer
 from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
-from src.widgets.model_browser.main import ModelBrowserWidget
 from src.editors.assetgroup_maker.editor_tab import EditorTabWidget
 from src.editors.assetgroup_maker.objects import get_default_file
-from src.styles.common import qt_stylesheet_button
+from src.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit
 
 
 class BatchCreatorMainWindow(QMainWindow):
     """
     Redesigned AssetGroup Maker Main Window:
-    - Left Dock: Addon Explorer (top) + Config Explorer / Monitored .hbat files (bottom)
-    - Center Area: Multi-Document Tab System (.hbat tabs) + Model Asset Browser tab
+    - Left Dock: Addon Explorer with "New config for selected folder" button at bottom
+    - Center Area: Multi-Document Tab System + Empty State Placeholder ("Create config for asset folder or open a config")
+      with Save & Watch the changes inside each individual document footer
+    - Right Dock: Config Explorer (Monitored .hbat files) with search filter, global "Watch the changes" toggle, and "+ New Config..." button
     """
 
     def __init__(self, parent: Optional[QMainWindow] = None, update_title: Optional[callable] = None):
@@ -44,13 +46,66 @@ class BatchCreatorMainWindow(QMainWindow):
     def _build_ui(self):
         self.setWindowTitle("AssetGroup Maker")
 
-        # 1. Central Widget with Tabs
+        # 1. Central Container with Stack (Empty State / Tabs)
         self.central_container = QWidget()
         central_layout = QVBoxLayout(self.central_container)
         central_layout.setContentsMargins(0, 0, 0, 0)
         central_layout.setSpacing(0)
 
-        # Tab Widget
+        # Central Stack: Page 0 = Empty State, Page 1 = Document Tabs
+        self.central_stack = QStackedWidget()
+
+        # Page 0: Empty State View
+        self.empty_state_widget = QWidget()
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(QPixmap(":/valve_common/icons/tools/model_editor/hierarchy_sequence_group_referenced.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Create config for asset folder or open a config")
+        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("Select an asset folder in the Explorer on the left, open an existing .hbat file, or create a new profile.")
+        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.setAlignment(Qt.AlignCenter)
+
+        btn_create_folder = QPushButton("New Config for Selected Folder")
+        btn_create_folder.setIcon(QIcon(":/valve_common/icons/tools/common/folder.png"))
+        btn_create_folder.setStyleSheet(qt_stylesheet_button)
+        btn_create_folder.setFixedHeight(28)
+        btn_create_folder.clicked.connect(self.create_new_config_for_selected_folder)
+        btn_row.addWidget(btn_create_folder)
+
+        btn_open = QPushButton("Open Config...")
+        btn_open.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
+        btn_open.setStyleSheet(qt_stylesheet_button)
+        btn_open.setFixedHeight(28)
+        btn_open.clicked.connect(self._open_file_dialog)
+        btn_row.addWidget(btn_open)
+
+        btn_new = QPushButton("Create New Config...")
+        btn_new.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        btn_new.setStyleSheet(qt_stylesheet_button)
+        btn_new.setFixedHeight(28)
+        btn_new.clicked.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
+        btn_row.addWidget(btn_new)
+
+        empty_layout.addLayout(btn_row)
+        self.central_stack.addWidget(self.empty_state_widget)
+
+        # Page 1: Multi-Document Tab Widget
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
@@ -77,41 +132,23 @@ class BatchCreatorMainWindow(QMainWindow):
                 border-radius: 2px;
             }
         """)
-        self.new_tab_btn.clicked.connect(self.create_new_config_dialog)
+        self.new_tab_btn.clicked.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
         self.tab_widget.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
 
-        # 2. Add Persistent "Asset Browser" Tab (Lazy scanned)
-        self.asset_browser = ModelBrowserWidget(self, addon=self.addon_name, show_accept=False, auto_scan=False)
-        self.asset_browser.use_as_template.connect(self._on_model_use_as_template)
-        self.tab_widget.addTab(self.asset_browser, QIcon(":/valve_common/icons/tools/common/browse.png"), "Asset Browser")
-        tab_bar = self.tab_widget.tabBar()
-        tab_bar.setTabButton(0, QTabBar.RightSide, None)
+        self.central_stack.addWidget(self.tab_widget)
+        central_layout.addWidget(self.central_stack, 1)
 
-        central_layout.addWidget(self.tab_widget)
         self.setCentralWidget(self.central_container)
 
-        # 3. Left Dock Widget
-        self.left_dock = QDockWidget("Asset & Config Explorer", self)
-        self.left_dock.setObjectName("AssetGroup_LeftDock")
-        self.left_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        # 2. Left Dock Widget: Addon Explorer
+        self.explorer_dock = QDockWidget("Explorer", self)
+        self.explorer_dock.setObjectName("AssetGroup_ExplorerDock")
+        self.explorer_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
 
-        left_dock_content = QWidget()
-        left_dock_layout = QVBoxLayout(left_dock_content)
-        left_dock_layout.setContentsMargins(0, 0, 0, 0)
-        left_dock_layout.setSpacing(0)
-
-        # Splitter: Upper = Addon Explorer, Lower = Config Explorer
-        self.left_splitter = QSplitter(Qt.Vertical)
-
-        # Addon Explorer Host
-        explorer_host = QWidget()
-        explorer_layout = QVBoxLayout(explorer_host)
-        explorer_layout.setContentsMargins(0, 0, 0, 0)
-        explorer_layout.setSpacing(2)
-
-        exp_header = QLabel("  ADDON EXPLORER")
-        exp_header.setStyleSheet("background-color: #1C1C1C; color: #9D9D9D; font: 700 8.5pt 'Segoe UI'; padding: 3px;")
-        explorer_layout.addWidget(exp_header)
+        explorer_dock_content = QWidget()
+        explorer_dock_layout = QVBoxLayout(explorer_dock_content)
+        explorer_dock_layout.setContentsMargins(2, 2, 2, 2)
+        explorer_dock_layout.setSpacing(4)
 
         self.explorer = Explorer(
             parent=self.parent,
@@ -119,73 +156,78 @@ class BatchCreatorMainWindow(QMainWindow):
             addon=self.addon_name,
             editor_name='BatchCreator'
         )
-        explorer_layout.addWidget(self.explorer.frame)
-        self.left_splitter.addWidget(explorer_host)
+        explorer_dock_layout.addWidget(self.explorer.frame, 1)
 
-        # Config Explorer Host (Monitored .hbat files)
-        config_host = QWidget()
-        config_layout = QVBoxLayout(config_host)
-        config_layout.setContentsMargins(0, 0, 0, 0)
-        config_layout.setSpacing(2)
+        self.new_cfg_for_folder_btn = QPushButton("New config for selected folder")
+        self.new_cfg_for_folder_btn.setIcon(QIcon(":/valve_common/icons/tools/common/folder.png"))
+        self.new_cfg_for_folder_btn.setToolTip("Create a new batch configuration for the selected directory in Explorer")
+        self.new_cfg_for_folder_btn.setStyleSheet(qt_stylesheet_button)
+        self.new_cfg_for_folder_btn.setFixedHeight(28)
+        self.new_cfg_for_folder_btn.clicked.connect(self.create_new_config_for_selected_folder)
+        explorer_dock_layout.addWidget(self.new_cfg_for_folder_btn)
 
-        cfg_header_row = QHBoxLayout()
-        cfg_header_row.setContentsMargins(4, 3, 4, 3)
-        cfg_header_row.setSpacing(4)
+        self.explorer_dock.setWidget(explorer_dock_content)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.explorer_dock)
 
-        cfg_header = QLabel("CONFIG EXPLORER (.hbat)")
-        cfg_header.setStyleSheet("color: #9D9D9D; font: 700 8.5pt 'Segoe UI';")
-        cfg_header_row.addWidget(cfg_header)
+        # 3. Right Dock Widget: Config Explorer (.hbat files)
+        self.config_dock = QDockWidget("Config Explorer", self)
+        self.config_dock.setObjectName("AssetGroup_ConfigDock")
+        self.config_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
 
-        cfg_header_row.addStretch(1)
+        config_dock_content = QWidget()
+        config_dock_layout = QVBoxLayout(config_dock_content)
+        config_dock_layout.setContentsMargins(4, 4, 4, 4)
+        config_dock_layout.setSpacing(4)
 
-        # Explicit + New Config Button in Config Explorer Header
-        self.new_cfg_btn = QPushButton("+ New")
-        self.new_cfg_btn.setToolTip("Create a new .hbat batch config file (Ctrl+N)")
-        self.new_cfg_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #26262B;
-                color: #E3E3E3;
-                border: 1px solid #363639;
-                border-radius: 3px;
-                padding: 1px 6px;
-                font: 600 8.5pt 'Segoe UI';
-                min-height: 18px;
-            }
-            QPushButton:hover {
-                background-color: #3A78C4;
-                color: #FFFFFF;
-                border-color: #4C8BE2;
-            }
-            QPushButton:pressed {
-                background-color: #2D62A3;
-            }
-        """)
-        self.new_cfg_btn.clicked.connect(self.create_new_config_dialog)
-        cfg_header_row.addWidget(self.new_cfg_btn)
-
+        # Search / filter input at top of Config Explorer
         self.cfg_search = QLineEdit()
         self.cfg_search.setPlaceholderText("Filter configs...")
-        self.cfg_search.setMaximumWidth(110)
+        self.cfg_search.setStyleSheet(qt_stylesheet_lineedit)
+        self.cfg_search.setClearButtonEnabled(True)
         self.cfg_search.textChanged.connect(self._filter_configs)
-        cfg_header_row.addWidget(self.cfg_search)
+        config_dock_layout.addWidget(self.cfg_search)
 
-        config_layout.addLayout(cfg_header_row)
-
+        # List of monitored .hbat files
         self.monitoring_list = MonitoringFileWatcher(self.explorer_directory)
         self.monitoring_list.open_file.connect(self.open_filepath)
-        config_layout.addWidget(self.monitoring_list)
+        self.monitoring_list.watch_status_changed.connect(self._on_monitor_watch_status_changed)
+        config_dock_layout.addWidget(self.monitoring_list, 1)
 
-        self.left_splitter.addWidget(config_host)
-        self.left_splitter.setSizes([350, 250])
+        # Bottom section: Global Watch Changes checkbox and + New Config... button
+        cfg_bottom_layout = QVBoxLayout()
+        cfg_bottom_layout.setContentsMargins(0, 2, 0, 0)
+        cfg_bottom_layout.setSpacing(4)
 
-        left_dock_layout.addWidget(self.left_splitter)
-        self.left_dock.setWidget(left_dock_content)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.left_dock)
+        self.global_watch_cb = QCheckBox("Watch the changes")
+        self.global_watch_cb.setStyleSheet(qt_stylesheet_checkbox)
+        self.global_watch_cb.setToolTip("Globally enable or pause watching all monitored batch configs")
+        saved_global_watch = get_settings_value('AssetGroupMaker', 'global_watch_changes')
+        is_global_watch = (saved_global_watch == 'true')
+        self.global_watch_cb.setChecked(is_global_watch)
+        self.monitoring_list.set_global_watch_enabled(is_global_watch)
+        self.global_watch_cb.toggled.connect(self._on_global_watch_toggled)
+        cfg_bottom_layout.addWidget(self.global_watch_cb)
+
+        self.new_cfg_btn = QPushButton("New Config...")
+        self.new_cfg_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        self.new_cfg_btn.setToolTip("Open file dialog to create a new .hbat batch config file (Ctrl+N)")
+        self.new_cfg_btn.setStyleSheet(qt_stylesheet_button)
+        self.new_cfg_btn.setFixedHeight(28)
+        self.new_cfg_btn.clicked.connect(self._open_new_config_file_dialog)
+        cfg_bottom_layout.addWidget(self.new_cfg_btn)
+
+        config_dock_layout.addLayout(cfg_bottom_layout)
+
+        self.config_dock.setWidget(config_dock_content)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.config_dock)
+
+        # Initialize view stack state
+        self._update_view_stack()
 
     def _setup_shortcuts(self):
         new_act = QAction("New Batch Profile", self)
         new_act.setShortcut(QKeySequence.New)
-        new_act.triggered.connect(self.create_new_config_dialog)
+        new_act.triggered.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
         self.addAction(new_act)
 
         open_act = QAction("Open Batch Profile", self)
@@ -203,6 +245,27 @@ class BatchCreatorMainWindow(QMainWindow):
         close_act.triggered.connect(lambda: self.close_tab(self.tab_widget.currentIndex()))
         self.addAction(close_act)
 
+    def _update_view_stack(self):
+        if self.tab_widget.count() > 0:
+            self.central_stack.setCurrentWidget(self.tab_widget)
+        else:
+            self.central_stack.setCurrentWidget(self.empty_state_widget)
+
+    def _on_global_watch_toggled(self, checked: bool):
+        set_settings_value('AssetGroupMaker', 'global_watch_changes', 'true' if checked else 'false')
+        self.monitoring_list.set_global_watch_enabled(checked)
+
+    def _on_monitor_watch_status_changed(self, file_path: str, enabled: bool):
+        norm = os.path.normpath(file_path)
+        for idx in range(self.tab_widget.count()):
+            widget = self.tab_widget.widget(idx)
+            if isinstance(widget, EditorTabWidget) and widget.file_path:
+                if os.path.normpath(widget.file_path).lower() == norm.lower():
+                    widget.watch_changes_cb.blockSignals(True)
+                    widget.watch_changes_cb.setChecked(enabled)
+                    widget.watch_changes_cb.blockSignals(False)
+                    widget.process_data['watch_changes'] = enabled
+
     def _filter_configs(self, text: str):
         search_term = text.lower().strip()
         for idx in range(self.monitoring_list.count()):
@@ -212,53 +275,64 @@ class BatchCreatorMainWindow(QMainWindow):
                 full_path = widget.file_path.lower()
                 item.setHidden(search_term not in full_path)
 
-    def create_new_config_dialog(self):
-        """
-        Prompts to create a new .hbat config file in the active folder or opens a new tab.
-        """
-        # Determine current folder from explorer if available
-        current_folder = ""
-        if hasattr(self, 'explorer') and self.explorer:
-            selected_path = self.explorer.get_current_path()
-            if selected_path:
-                addon_dir = get_addon_dir() or self.explorer_directory
-                full_selected = os.path.join(addon_dir, selected_path) if not os.path.isabs(selected_path) else selected_path
-                if os.path.isdir(full_selected):
-                    current_folder = full_selected
-                else:
-                    current_folder = os.path.dirname(full_selected)
+    def _get_selected_folder_from_explorer(self) -> Optional[str]:
+        if hasattr(self, 'explorer') and self.explorer and hasattr(self.explorer, 'tree'):
+            curr_idx = self.explorer.tree.currentIndex()
+            if curr_idx.isValid():
+                src_idx = self.explorer.filter_proxy_model.mapToSource(curr_idx)
+                path = self.explorer.model.filePath(src_idx)
+                if path:
+                    abs_path = os.path.abspath(path)
+                    if os.path.isdir(abs_path):
+                        return abs_path
+                    return os.path.dirname(abs_path)
+        return None
 
+    def create_new_config_for_selected_folder(self):
+        folder = self._get_selected_folder_from_explorer()
+        if not folder:
+            addon_dir = get_addon_dir() or self.explorer_directory
+            folder = addon_dir
+        self.create_new_config_dialog(target_folder=folder, force_file_dialog=True)
+
+    def _open_new_config_file_dialog(self):
+        self.create_new_config_dialog(force_file_dialog=True)
+
+    def create_new_config_dialog(self, target_folder: Optional[str] = None, force_file_dialog: bool = True):
+        """
+        Prompts to create a new .hbat config file in the specified/active folder or opens a new tab.
+        """
+        current_folder = target_folder
+        if not current_folder:
+            current_folder = self._get_selected_folder_from_explorer()
         if not current_folder:
             current_folder = get_addon_dir() or self.explorer_directory
 
         default_name = os.path.basename(current_folder) if current_folder else "new_batch"
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Create New Batch Profile (.hbat)",
-            os.path.join(current_folder, f"{default_name}.hbat"),
-            "Hammer Batch (*.hbat)"
-        )
+        default_target = os.path.join(current_folder, f"{default_name}.hbat") if current_folder else "new_batch.hbat"
 
-        if file_path:
-            if not file_path.lower().endswith(".hbat"):
-                file_path += ".hbat"
+        if force_file_dialog:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Create New Batch Profile (.hbat)",
+                default_target,
+                "Hammer Batch (*.hbat)"
+            )
+            if file_path:
+                if not file_path.lower().endswith(".hbat"):
+                    file_path += ".hbat"
 
-            # Write default template
-            default_data = get_default_file()
-            try:
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(default_data, f, indent=4)
-                
-                # Notify file watcher
-                MonitoringFileWatcher.notify_new_file(file_path)
-                
-                # Open in a new tab
-                self.open_filepath(file_path)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to create .hbat file:\n{e}")
+                default_data = get_default_file()
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(default_data, f, indent=4)
+                    
+                    MonitoringFileWatcher.notify_new_file(file_path)
+                    self.open_filepath(file_path)
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Failed to create .hbat file:\n{e}")
         else:
-            # If user cancelled file picker, create an in-memory untitled tab
             self.create_new_batch_tab()
 
     def create_new_batch_tab(self, reference_path: Optional[str] = None) -> EditorTabWidget:
@@ -273,6 +347,7 @@ class BatchCreatorMainWindow(QMainWindow):
         tab.dirty_changed.connect(lambda dirty, t=tab: self._on_tab_dirty(t, dirty))
         tab.status_updated.connect(self._on_status_updated)
 
+        self._update_view_stack()
         return tab
 
     def open_filepath(self, file_path: str):
@@ -283,11 +358,12 @@ class BatchCreatorMainWindow(QMainWindow):
         norm_path = os.path.normpath(file_path)
 
         # Check if already open
-        for idx in range(1, self.tab_widget.count()):
+        for idx in range(self.tab_widget.count()):
             widget = self.tab_widget.widget(idx)
             if isinstance(widget, EditorTabWidget) and widget.file_path:
                 if os.path.normpath(widget.file_path).lower() == norm_path.lower():
                     self.tab_widget.setCurrentIndex(idx)
+                    self._update_view_stack()
                     return
 
         # Open in new tab
@@ -306,6 +382,8 @@ class BatchCreatorMainWindow(QMainWindow):
         if self.update_title_cb and callable(self.update_title_cb):
             self.update_title_cb('opened', norm_path)
 
+        self._update_view_stack()
+
     def _open_file_dialog(self):
         addon_dir = get_addon_dir() or self.explorer_directory
         file_path, _ = QFileDialog.getOpenFileName(
@@ -313,13 +391,6 @@ class BatchCreatorMainWindow(QMainWindow):
         )
         if file_path:
             self.open_filepath(file_path)
-
-    def _on_model_use_as_template(self, model_path: str):
-        current_widget = self.tab_widget.currentWidget()
-        if isinstance(current_widget, EditorTabWidget):
-            current_widget.reference_card.set_reference_path(model_path)
-        else:
-            self.create_new_batch_tab(reference_path=model_path)
 
     def _update_tab_title(self, tab: EditorTabWidget, title: str):
         idx = self.tab_widget.indexOf(tab)
@@ -335,14 +406,10 @@ class BatchCreatorMainWindow(QMainWindow):
             self.tab_widget.setTabText(idx, f"{base_title}{dirty_suffix}")
 
     def _on_tab_changed(self, idx: int):
-        if idx == 0:
-            if not getattr(self.asset_browser, '_has_scanned', False):
-                self.asset_browser._start_scan()
-        else:
-            widget = self.tab_widget.widget(idx)
-            if isinstance(widget, EditorTabWidget) and widget.file_path:
-                if self.update_title_cb and callable(self.update_title_cb):
-                    self.update_title_cb('opened', widget.file_path)
+        widget = self.tab_widget.widget(idx)
+        if isinstance(widget, EditorTabWidget) and widget.file_path:
+            if self.update_title_cb and callable(self.update_title_cb):
+                self.update_title_cb('opened', widget.file_path)
 
     def _on_status_updated(self, msg: str):
         if self.update_title_cb and callable(self.update_title_cb):
@@ -358,7 +425,7 @@ class BatchCreatorMainWindow(QMainWindow):
         return False
 
     def close_tab(self, idx: int):
-        if idx <= 0:
+        if idx < 0 or idx >= self.tab_widget.count():
             return
 
         widget = self.tab_widget.widget(idx)
@@ -379,10 +446,11 @@ class BatchCreatorMainWindow(QMainWindow):
 
             self.tab_widget.removeTab(idx)
             widget.deleteLater()
+            self._update_view_stack()
 
     def _show_tab_context_menu(self, position):
         tab_idx = self.tab_widget.tabBar().tabAt(position)
-        if tab_idx <= 0:
+        if tab_idx < 0:
             return
 
         menu = QMenu(self)
@@ -407,12 +475,12 @@ class BatchCreatorMainWindow(QMainWindow):
             widget.save_file()
 
     def _close_other_tabs(self, keep_idx: int):
-        for i in reversed(range(1, self.tab_widget.count())):
+        for i in reversed(range(self.tab_widget.count())):
             if i != keep_idx:
                 self.close_tab(i)
 
     def has_unsaved_changes(self) -> bool:
-        for idx in range(1, self.tab_widget.count()):
+        for idx in range(self.tab_widget.count()):
             widget = self.tab_widget.widget(idx)
             if isinstance(widget, EditorTabWidget) and widget.has_unsaved_changes():
                 return True
@@ -420,7 +488,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def unsaved_files(self) -> List[Tuple[str, callable]]:
         results = []
-        for idx in range(1, self.tab_widget.count()):
+        for idx in range(self.tab_widget.count()):
             widget = self.tab_widget.widget(idx)
             if isinstance(widget, EditorTabWidget) and widget.has_unsaved_changes():
                 name = widget.file_path or "Untitled.hbat"
@@ -436,7 +504,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
             )
             if reply == QMessageBox.Save:
-                for idx in range(1, self.tab_widget.count()):
+                for idx in range(self.tab_widget.count()):
                     widget = self.tab_widget.widget(idx)
                     if isinstance(widget, EditorTabWidget) and widget.has_unsaved_changes():
                         widget.save_file()
@@ -446,4 +514,4 @@ class BatchCreatorMainWindow(QMainWindow):
             else:
                 event.ignore()
                 return
-        super().closeEvent(event)
+        super().closeEvent(event)
