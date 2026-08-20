@@ -222,29 +222,32 @@ def test_batch_process_with_conditional_blocks(fake_addon_dir):
 
 
 def test_editor_tab_widget(qapp, fake_addon_dir):
+    from src.editors.assetgroup_maker.objects import load_hbat_file
+
     crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
     hbat_path = os.path.join(crate_dir, "test_editor.hbat")
 
     tab = EditorTabWidget(file_path=hbat_path)
     try:
         assert tab.file_path == os.path.normpath(hbat_path)
-        assert tab.same_folder_cb.isChecked() is True
+        assert tab.custom_output_edit.text() == ""
         assert tab.save_btn is not None
         assert tab.watch_changes_cb is not None
         assert tab.watch_changes_cb.isChecked() is False
+        assert len(tab.template_manager.template_cards) >= 1
 
-        tab.reference_card.set_reference_path("models/props/crate/box_01.vmdl")
-        assert tab.reference_card.get_reference_path() == "models/props/crate/box_01.vmdl"
+        first_card = tab.template_manager.template_cards[0]
+        first_card.set_reference_path("models/props/crate/box_01.vmdl")
+        assert first_card.ref_edit.text() == "models/props/crate/box_01.vmdl"
 
         tab.watch_changes_cb.setChecked(True)
         tab.save_file()
         assert os.path.isfile(hbat_path)
 
-        with open(hbat_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        assert data.get("version") == 2
-        assert data["process"]["reference"] == "models/props/crate/box_01.vmdl"
-        assert data["process"]["watch_changes"] is True
+        data = load_hbat_file(hbat_path)
+        assert data.get("version") == 3
+        assert data["templates"][0]["reference"] == "models/props/crate/box_01.vmdl"
+        assert data["settings"]["watch_changes"] is True
     finally:
         tab.deleteLater()
 
@@ -436,40 +439,814 @@ def test_analyzer_kv3_physics_and_render_mesh(fake_addon_dir):
 
 
 def test_slot_assignment_dialog(qapp, fake_addon_dir):
-    from src.editors.assetgroup_maker.matcher import AssetGroupItem
-    from src.editors.assetgroup_maker.widgets.slot_editor import SlotAssignmentDialog
+    from src.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
 
-    item = AssetGroupItem("treedead", "models/pine")
-    item.available_candidates = [
-        os.path.join(fake_addon_dir, "treedead.fbx"),
-        os.path.join(fake_addon_dir, "phys_treedead.fbx"),
-        os.path.join(fake_addon_dir, "alt_phys.fbx")
-    ]
-    item.slots = {
-        'mesh': os.path.join(fake_addon_dir, "treedead.fbx"),
-        'collision': os.path.join(fake_addon_dir, "phys_treedead.fbx")
+    template_data = {
+        'id': 'template_0',
+        'extension': 'vmdl',
+        'reference': 'models/props/box.vmdl',
+        'skipped_slots': []
     }
 
-    slots_def = {
-        'mesh': {'label': 'Render Mesh', 'required': True},
-        'collision': {'label': 'Collision Hull', 'required': False}
-    }
-
-    dialog = SlotAssignmentDialog(item, slots_def)
+    dialog = TemplateSlotMappingDialog(template_data)
     try:
-        assert 'mesh' in dialog.combos
-        assert 'collision' in dialog.combos
-        # Change collision slot
-        collision_combo = dialog.combos['collision']
-        for i in range(collision_combo.count()):
-            if "alt_phys.fbx" in collision_combo.itemText(i):
-                collision_combo.setCurrentIndex(i)
-                break
+        assert 'mesh' in dialog.slot_check_boxes
+        assert 'collision' in dialog.slot_check_boxes
+        assert dialog.slot_check_boxes['mesh'].isChecked() is True
+        assert dialog.slot_check_boxes['collision'].isChecked() is True
 
+        # Toggle collision to skip
+        dialog.slot_check_boxes['collision'].setChecked(False)
         dialog._apply_and_close()
-        assert "alt_phys.fbx" in dialog.assigned_slots['collision']
+
+        assert 'collision' in dialog.skipped_slots
+        assert 'mesh' not in dialog.skipped_slots
     finally:
         dialog.deleteLater()
+
+
+def test_kv3_hbat_io_and_no_raw_text(fake_addon_dir):
+    from src.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
+
+    hbat_path = os.path.join(fake_addon_dir, "models", "props", "crate", "test.hbat")
+    data = {
+        'version': 3,
+        'settings': {
+            'watch_changes': True,
+            'ignore_extensions': 'tga,png',
+            'ignore_list': 'draft_*',
+            'custom_output': 'relative_path',
+            'algorithm': 0
+        },
+        'templates': [
+            {
+                'id': 'template_0',
+                'extension': 'vmdl',
+                'reference': 'models/props/crate/box_01.vmdl',
+                'replacements': [{'from': 'box_01.fbx', 'to': '#$MESH$#'}]
+            },
+            {
+                'id': 'template_1',
+                'extension': 'vmat',
+                'reference': 'materials/nature/rock_01.vmat',
+                'replacements': [{'from': 'rock_01_color.png', 'to': '#$COLOR$#'}]
+            }
+        ]
+    }
+
+    # Save to file
+    saved = save_hbat_file(hbat_path, data)
+    assert saved is True
+    assert os.path.isfile(hbat_path)
+
+    # Verify file content is KeyValues3 text and does NOT have raw content
+    with open(hbat_path, 'r', encoding='utf-8') as f:
+        text = f.read()
+
+    assert '<!-- kv3' in text
+    assert 'version = 3' in text
+    assert 'box_01.vmdl' in text
+    assert 'rock_01.vmat' in text
+    assert 'content =' not in text  # No raw embedded text!
+
+    # Load back
+    loaded = load_hbat_file(hbat_path)
+    assert loaded['version'] == 3
+    assert loaded['settings']['watch_changes'] is True
+    assert len(loaded['templates']) == 2
+    assert loaded['templates'][0]['extension'] == 'vmdl'
+    assert loaded['templates'][1]['extension'] == 'vmat'
+
+
+def test_legacy_json_automatic_conversion(fake_addon_dir):
+    from src.editors.assetgroup_maker.objects import load_hbat_file
+
+    legacy_json_path = os.path.join(fake_addon_dir, "models", "props", "crate", "legacy.hbat")
+    legacy_dict = {
+        "version": 2,
+        "process": {
+            "extension": "vmdl",
+            "reference": "models/props/crate/box_01.vmdl",
+            "ignore_extensions": "mb,ma,max,blend",
+            "ignore_list": "temp_*",
+            "custom_output": "relative_path",
+            "algorithm": 0,
+            "watch_changes": True
+        },
+        "replacements": {
+            "0": {
+                "replacement": [
+                    "models/props/crate/box_01.fbx",
+                    "#$FOLDER_PATH$#/#$MESH$#"
+                ]
+            }
+        },
+        "file": {
+            "content": "<!-- kv3 raw embedded modeldoc content that should be discarded -->"
+        }
+    }
+
+    with open(legacy_json_path, 'w', encoding='utf-8') as f:
+        json.dump(legacy_dict, f, indent=4)
+
+    # Load legacy file -> should auto-convert to clean v3 structure
+    upgraded = load_hbat_file(legacy_json_path)
+
+    assert upgraded['version'] == 3
+    assert upgraded['settings']['watch_changes'] is True
+    assert upgraded['settings']['ignore_extensions'] == "mb,ma,max,blend"
+    assert upgraded['settings']['ignore_list'] == "temp_*"
+    assert 'file' not in upgraded or upgraded.get('file') is None  # Raw content stripped!
+
+    assert len(upgraded['templates']) == 1
+    t0 = upgraded['templates'][0]
+    assert t0['extension'] == 'vmdl'
+    assert t0['reference'] == "models/props/crate/box_01.vmdl"
+    assert len(t0['replacements']) == 1
+    assert t0['replacements'][0]['from'] == "models/props/crate/box_01.fbx"
+    assert t0['replacements'][0]['to'] == "#$FOLDER_PATH$#/#$MESH$#"
+
+
+def test_multi_template_matching_vmdl_and_vmat(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+
+    target_dir = os.path.join(fake_addon_dir, "models", "props", "multi_test")
+    os.makedirs(target_dir, exist_ok=True)
+
+    # 4 FBX files + 2 VMAT/texture files
+    files = [
+        "crate_small.fbx",
+        "crate_small_phys.fbx",
+        "crate_large.fbx",
+        "crate_large_phys.fbx",
+        "wood_bark_color.png",
+        "wood_bark_normal.png"
+    ]
+    for fn in files:
+        with open(os.path.join(target_dir, fn), "w") as f:
+            f.write("dummy")
+
+    templates = [
+        {
+            'id': 'template_vmdl',
+            'extension': 'vmdl',
+            'reference': 'models/props/crate/box_01.vmdl'
+        },
+        {
+            'id': 'template_vmat',
+            'extension': 'vmat',
+            'reference': 'materials/nature/rock_01.vmat'
+        }
+    ]
+
+    slots_map = {
+        'template_vmdl': {
+            'mesh': {'label': 'Render Mesh', 'required': True},
+            'collision': {'label': 'Collision Hull', 'required': False}
+        },
+        'template_vmat': {
+            'color': {'label': 'Color Map', 'required': True},
+            'normal': {'label': 'Normal Map', 'required': False}
+        }
+    }
+
+    items = match_multi_template_folder_assets(
+        directory=target_dir,
+        templates=templates,
+        analyzed_slots_map=slots_map
+    )
+
+    # Should have matched crate_small & crate_large for VMDL, and wood_bark for VMAT
+    assert len(items) == 3
+
+    vmdl_items = [i for i in items if i.extension == 'vmdl']
+    vmat_items = [i for i in items if i.extension == 'vmat']
+
+    assert len(vmdl_items) == 2
+    assert {i.name for i in vmdl_items} == {'crate_small', 'crate_large'}
+    for vi in vmdl_items:
+        assert 'mesh' in vi.slots
+        assert 'collision' in vi.slots
+        assert vi.target_output.endswith('.vmdl')
+
+    assert len(vmat_items) == 1
+    assert vmat_items[0].name == 'wood_bark'
+    assert 'color' in vmat_items[0].slots
+    assert 'normal' in vmat_items[0].slots
+    assert vmat_items[0].target_output == 'wood_bark.vmat'
+
+
+def test_multi_template_batch_processing(fake_addon_dir):
+    from src.editors.assetgroup_maker.process import perform_batch_processing
+
+    # Setup template references
+    vmdl_ref = os.path.join(fake_addon_dir, "models", "props", "ref_model.vmdl")
+    with open(vmdl_ref, "w") as f:
+        f.write('<!-- kv3 -->\n{\n  mesh = "#$FOLDER_PATH$#/#$MESH$#"\n  name = "#$ASSET_NAME$#"\n}')
+
+    vmat_ref = os.path.join(fake_addon_dir, "materials", "props", "ref_mat.vmat")
+    os.makedirs(os.path.dirname(vmat_ref), exist_ok=True)
+    with open(vmat_ref, "w") as f:
+        f.write('<!-- kv3 -->\n{\n  color = "#$FOLDER_PATH$#/#$COLOR$#"\n  mat_name = "#$ASSET_NAME$#"\n}')
+
+    # Setup source directory with 2 models and 1 texture
+    batch_dir = os.path.join(fake_addon_dir, "models", "props", "batch_run")
+    os.makedirs(batch_dir, exist_ok=True)
+
+    with open(os.path.join(batch_dir, "box_a.fbx"), "w") as f: f.write("fbx")
+    with open(os.path.join(batch_dir, "box_b.fbx"), "w") as f: f.write("fbx")
+    with open(os.path.join(batch_dir, "wood_color.png"), "w") as f: f.write("png")
+
+    hbat_path = os.path.join(batch_dir, "batch_run.hbat")
+    config = {
+        'version': 3,
+        'settings': {
+            'watch_changes': False,
+            'custom_output': 'relative_path',
+            'algorithm': 0
+        },
+        'templates': [
+            {
+                'id': 'tpl_vmdl',
+                'extension': 'vmdl',
+                'reference': 'models/props/ref_model.vmdl',
+                'replacements': []
+            },
+            {
+                'id': 'tpl_vmat',
+                'extension': 'vmat',
+                'reference': 'materials/props/ref_mat.vmat',
+                'replacements': []
+            }
+        ]
+    }
+
+    created = perform_batch_processing(hbat_path, config_data=config)
+
+    # Should create box_a.vmdl, box_b.vmdl, and wood.vmat!
+    assert len(created) == 3
+    created_basenames = [os.path.basename(p) for p in created]
+    assert "box_a.vmdl" in created_basenames
+    assert "box_b.vmdl" in created_basenames
+    assert "wood.vmat" in created_basenames
+
+    # Verify generated content
+    box_a_vmdl = os.path.join(batch_dir, "box_a.vmdl")
+    assert os.path.isfile(box_a_vmdl)
+    with open(box_a_vmdl, "r") as f:
+        c = f.read()
+        assert 'name = "box_a"' in c
+        assert 'box_a.fbx' in c
+
+    wood_vmat = os.path.join(batch_dir, "wood.vmat")
+    assert os.path.isfile(wood_vmat)
+    with open(wood_vmat, "r") as f:
+        c = f.read()
+        assert 'mat_name = "wood"' in c
+        assert 'wood_color.png' in c
+
+
+def test_create_new_config_for_selected_folder_without_browser(qapp, fake_addon_dir, monkeypatch):
+    from unittest.mock import MagicMock
+    from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
+    from PySide6.QtWidgets import QFileDialog
+
+    # Ensure QFileDialog is never called
+    mock_file_dialog = MagicMock()
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_file_dialog)
+
+    win = BatchCreatorMainWindow()
+    try:
+        target_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
+        os.makedirs(target_dir, exist_ok=True)
+
+        # Mock selected folder in explorer
+        monkeypatch.setattr(win, "_get_selected_folder_from_explorer", lambda: target_dir)
+
+        # 1. Create first config
+        win.create_new_config_for_selected_folder()
+
+        mock_file_dialog.assert_not_called()
+        expected_first = os.path.join(target_dir, "crate.hbat")
+        assert os.path.isfile(expected_first)
+        assert win.tab_widget.count() == 1
+        assert os.path.normpath(win.tab_widget.currentWidget().file_path) == os.path.normpath(expected_first)
+
+        # 2. Create second config in same folder -> should create crate_1.hbat without prompting
+        win.create_new_config_for_selected_folder()
+
+        mock_file_dialog.assert_not_called()
+        expected_second = os.path.join(target_dir, "crate_1.hbat")
+        assert os.path.isfile(expected_second)
+        assert win.tab_widget.count() == 2
+        assert os.path.normpath(win.tab_widget.currentWidget().file_path) == os.path.normpath(expected_second)
+    finally:
+        win.deleteLater()
+
+
+def test_per_template_ignore_settings(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+
+    target_dir = os.path.join(fake_addon_dir, "models", "props", "ignore_test")
+    os.makedirs(target_dir, exist_ok=True)
+
+    files = [
+        "barrel_01.fbx",
+        "barrel_01_phys.fbx",
+        "barrel_01_color.png",
+        "barrel_01_normal.png",
+        "temp_trash.fbx",
+        "draft_texture.png"
+    ]
+    for fn in files:
+        with open(os.path.join(target_dir, fn), "w") as f:
+            f.write("dummy")
+
+    templates = [
+        {
+            'id': 'tpl_vmdl',
+            'extension': 'vmdl',
+            'reference': '',
+            'ignore_extensions': 'png,jpg,tga',
+            'ignore_list': 'temp_*'
+        },
+        {
+            'id': 'tpl_vmat',
+            'extension': 'vmat',
+            'reference': '',
+            'ignore_extensions': 'fbx,obj',
+            'ignore_list': 'draft_*'
+        }
+    ]
+
+    items = match_multi_template_folder_assets(
+        directory=target_dir,
+        templates=templates
+    )
+
+    vmdl_items = [i for i in items if i.extension == 'vmdl']
+    vmat_items = [i for i in items if i.extension == 'vmat']
+
+    # VMDL should only have barrel_01 (temp_trash ignored by list, pngs ignored by ext)
+    assert len(vmdl_items) == 1
+    assert vmdl_items[0].name == 'barrel_01'
+    assert 'mesh' in vmdl_items[0].slots
+
+    # VMAT should only have barrel_01 (draft_texture ignored by list, fbx ignored by ext)
+    assert len(vmat_items) == 1
+    assert vmat_items[0].name == 'barrel_01'
+    assert 'color' in vmat_items[0].slots
+    assert 'normal' in vmat_items[0].slots
+
+
+def test_material_shader_slots_orm_emissive_height(fake_addon_dir):
+    from src.editors.assetgroup_maker.analyzer import analyze_reference_file
+    from src.editors.assetgroup_maker.matcher import match_folder_assets
+
+    vmat_path = os.path.join(fake_addon_dir, "materials", "props", "complex_box.vmat")
+    os.makedirs(os.path.dirname(vmat_path), exist_ok=True)
+    vmat_content = """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+Layer0
+{
+    shader "csgo_environment.vfx"
+    g_tColor = resource:"materials/props/box_color.png"
+    g_tNormal = resource:"materials/props/box_normal.png"
+    g_tORM = resource:"materials/props/box_orm.png"
+    g_tHeight = resource:"materials/props/box_height.png"
+    g_tEmissiveMask = resource:"materials/props/box_emissive.png"
+    g_tTranslucency = resource:"materials/props/box_opacity.png"
+}
+"""
+    with open(vmat_path, "w", encoding="utf-8") as f:
+        f.write(vmat_content)
+
+    analysis = analyze_reference_file(vmat_path)
+    assert analysis.asset_type == "vmat"
+    assert "color" in analysis.slots
+    assert "normal" in analysis.slots
+    assert "orm" in analysis.slots
+    assert "height" in analysis.slots
+    assert "emissive" in analysis.slots
+    assert "opacity" in analysis.slots
+
+    # Test matcher pairing with ORM and emissive textures
+    tex_dir = os.path.join(fake_addon_dir, "materials", "props", "test_mats")
+    os.makedirs(tex_dir, exist_ok=True)
+
+    files = [
+        "crate_color.png",
+        "crate_normal.png",
+        "crate_orm.png",
+        "crate_height.png",
+        "crate_emissive.png"
+    ]
+    for fn in files:
+        with open(os.path.join(tex_dir, fn), "w") as f:
+            f.write("tex")
+
+    items = match_folder_assets(
+        directory=tex_dir,
+        slots=analysis.slots,
+        extension="vmat"
+    )
+
+    assert len(items) == 1
+    crate_mat = items[0]
+    assert crate_mat.name == "crate"
+    assert "color" in crate_mat.slots
+    assert "normal" in crate_mat.slots
+    assert "orm" in crate_mat.slots
+    assert "height" in crate_mat.slots
+    assert "emissive" in crate_mat.slots
+    assert crate_mat.status == "ready"
+
+
+def test_ignore_list_spaces_and_prefix_patterns(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_folder_assets
+
+    target_dir = os.path.join(fake_addon_dir, "models", "props", "filter_test")
+    os.makedirs(target_dir, exist_ok=True)
+
+    files = [
+        "treedead.fbx",
+        "phys_treedead.fbx",
+        "treedead.png",
+        "treedead.vmat",
+        "rock.blend",
+        "rock.fbx"
+    ]
+    for fn in files:
+        with open(os.path.join(target_dir, fn), "w") as f:
+            f.write("dummy")
+
+    # Comma-separated list with spaces, prefix pattern 'phys_', and extensions
+    ignore_str = "mb,ma,max,st,blend,blend1, vmdl, vmat,vsmart,tga,png,jpg,exr,hdr, phys_"
+
+    items = match_folder_assets(
+        directory=target_dir,
+        slots={'mesh': {'label': 'Render Mesh', 'required': True}},
+        extension="vmdl",
+        ignore_extensions_str=ignore_str,
+        filter_mode="exclude"
+    )
+
+    item_names = [i.name for i in items]
+    assert "treedead" in item_names
+    assert "rock" in item_names
+    assert "phys_treedead" not in item_names
+
+    # treedead should only have treedead.fbx as mesh, phys_treedead was ignored
+    treedead_item = next(i for i in items if i.name == "treedead")
+    assert os.path.basename(treedead_item.slots['mesh']) == "treedead.fbx"
+    assert 'collision' not in treedead_item.slots
+
+
+def test_include_filter_mode(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_folder_assets
+
+    target_dir = os.path.join(fake_addon_dir, "models", "props", "include_test")
+    os.makedirs(target_dir, exist_ok=True)
+
+    files = [
+        "box_01.fbx",
+        "box_01_col.obj",
+        "box_01.blend",
+        "box_01_color.png",
+        "box_01_normal.tga",
+        "trash_note.txt"
+    ]
+    for fn in files:
+        with open(os.path.join(target_dir, fn), "w") as f:
+            f.write("dummy")
+
+    # In INCLUDE mode: only process fbx and obj
+    include_str = " fbx, obj "
+    items = match_folder_assets(
+        directory=target_dir,
+        slots={'mesh': {'label': 'Render Mesh', 'required': True}},
+        extension="vmdl",
+        ignore_extensions_str=include_str,
+        filter_mode="include"
+    )
+
+    assert len(items) == 1
+    assert items[0].name == "box_01"
+    assert os.path.basename(items[0].slots['mesh']) == "box_01.fbx"
+
+
+def test_template_skipped_slots(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_folder_assets
+    from src.editors.assetgroup_maker.process import render_asset_template, perform_batch_processing
+
+    batch_dir = os.path.join(fake_addon_dir, "models", "props", "skip_test")
+    os.makedirs(batch_dir, exist_ok=True)
+
+    with open(os.path.join(batch_dir, "pillar.fbx"), "w") as f:
+        f.write("mesh")
+
+    # Template defines required mesh and required collision
+    slots_def = {
+        'mesh': {'label': 'Render Mesh', 'required': True},
+        'collision': {'label': 'Collision Mesh', 'required': True}
+    }
+
+    # When collision is in skipped_slots, status should be READY instead of ERROR
+    items = match_folder_assets(
+        directory=batch_dir,
+        slots=slots_def,
+        extension="vmdl",
+        skipped_slots=["collision"]
+    )
+
+    assert len(items) == 1
+    pillar = items[0]
+    assert pillar.status == "ready"
+
+    # Test rendering skips collision conditional block
+    tpl_content = """<!-- kv3 -->
+{
+    mesh = "#$MESH$#"
+    <!-- IF COLLISION -->
+    collision = "#$COLLISION$#"
+    <!-- ENDIF -->
+}"""
+    rendered = render_asset_template(
+        content_template=tpl_content,
+        asset_item=pillar,
+        relative_batch_path="models/props/skip_test",
+        skipped_slots=["collision"]
+    )
+    assert 'mesh = "pillar.fbx"' in rendered
+    assert 'collision' not in rendered
+
+
+def test_asset_table_context_menu_show(qapp, fake_addon_dir, monkeypatch):
+    from unittest.mock import MagicMock
+    from PySide6.QtCore import QPoint
+    import src.editors.assetgroup_maker.widgets.asset_table as at_mod
+    from src.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
+    from src.editors.assetgroup_maker.matcher import AssetGroupItem
+
+    widget = AssetTableWidget()
+    try:
+        item = AssetGroupItem("treedead", "models/props")
+        item.target_output = "models/props/treedead.vmdl"
+        widget.set_items([item])
+
+        # Select row 0
+        widget.table.selectRow(0)
+
+        # Mock QMenu to verify menu builds and doesn't crash
+        mock_menu = MagicMock()
+        monkeypatch.setattr(at_mod, "QMenu", lambda *args, **kwargs: mock_menu)
+
+        widget._show_context_menu(QPoint(10, 10))
+        mock_menu.exec.assert_called_once()
+    finally:
+        widget.deleteLater()
+
+
+def test_firewatch_trees_pine_scenario(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+
+    pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
+    os.makedirs(pine_dir, exist_ok=True)
+
+    # 1. Models
+    tree_names = ["treedead", "treefar01", "treefar02", "treelarge", "treemid", "treesmall"]
+    for t in tree_names:
+        with open(os.path.join(pine_dir, f"{t}.fbx"), "w") as f:
+            f.write("mesh")
+        with open(os.path.join(pine_dir, f"phys_{t}.fbx"), "w") as f:
+            f.write("phys")
+
+    # 2. Textures for Material
+    with open(os.path.join(pine_dir, "armor_color.png"), "w") as f:
+        f.write("color_tex")
+    with open(os.path.join(pine_dir, "armor_normal.png"), "w") as f:
+        f.write("normal_tex")
+
+    templates = [
+        {
+            'id': 'template_vmdl',
+            'extension': 'vmdl',
+            'reference': 'models/firewatch/nature/trees/pine/treedead.vmdl',
+            'filter_mode': 'include',
+            'ignore_extensions': 'fbx',
+            'ignore_list': 'temp_*, draft_*, *backup*'
+        },
+        {
+            'id': 'template_vmat',
+            'extension': 'vmat',
+            'reference': 'models/firewatch/nature/trees/pine/armor.vmat',
+            'filter_mode': 'include',
+            'ignore_extensions': 'color',
+            'ignore_list': 'temp_*, draft_*, *backup*'
+        }
+    ]
+
+    items = match_multi_template_folder_assets(
+        directory=pine_dir,
+        templates=templates
+    )
+
+    vmdl_items = [i for i in items if i.extension == 'vmdl']
+    vmat_items = [i for i in items if i.extension == 'vmat']
+
+    # 1. ModelDoc items should only be the 6 tree meshes
+    assert len(vmdl_items) == 6
+    for item in vmdl_items:
+        assert item.name in tree_names
+        assert item.target_output == f"{item.name}.vmdl"
+        assert "mesh" in item.slots
+        assert "collision" in item.slots
+        assert item.slots["mesh"].endswith(f"{item.name}.fbx")
+        assert item.slots["collision"].endswith(f"phys_{item.name}.fbx")
+
+    # 2. Material items should ONLY be armor.vmat, NOT treedead.vmat!
+    assert len(vmat_items) == 1
+    armor_vmat = vmat_items[0]
+    assert armor_vmat.name == "armor"
+    assert armor_vmat.target_output == "armor.vmat"
+    assert "color" in armor_vmat.slots
+    assert armor_vmat.slots["color"].endswith("armor_color.png")
+    assert "normal" in armor_vmat.slots
+    assert armor_vmat.slots["normal"].endswith("armor_normal.png")
+    assert "collision" not in armor_vmat.slots
+
+
+def test_firewatch_multi_template_batch_execution(fake_addon_dir):
+    from src.editors.assetgroup_maker.process import perform_batch_processing
+    from src.editors.assetgroup_maker.objects import save_hbat_file
+
+    pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
+    os.makedirs(pine_dir, exist_ok=True)
+    hbat_path = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine.hbat")
+
+    # 1. Create reference VMDL file
+    ref_vmdl = os.path.join(pine_dir, "treedead.vmdl")
+    vmdl_raw = """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc29:version{3cec4278-4302-4dd9-9b53-44f42a1f104c} -->
+{
+    rootNode = 
+    {
+        _class = "RootNode"
+        children = 
+        [
+            {
+                _class = "RenderMeshFile"
+                filename = "models/firewatch/nature/trees/pine/treedead.fbx"
+            },
+            {
+                _class = "PhysicsHullFile"
+                filename = "models/firewatch/nature/trees/pine/phys_treedead.fbx"
+            },
+        ]
+    }
+}
+"""
+    with open(ref_vmdl, "w", encoding="utf-8") as f:
+        f.write(vmdl_raw)
+
+    # 2. Create reference VMAT file
+    ref_vmat = os.path.join(pine_dir, "armor.vmat")
+    vmat_raw = """<!-- kv3 -->
+Layer0
+{
+    shader "csgo_environment.vfx"
+    g_tColor = resource:"materials/firewatch/nature/trees/pine/armor_color.png"
+    g_tNormal = resource:"materials/firewatch/nature/trees/pine/armor_normal.png"
+}
+"""
+    with open(ref_vmat, "w", encoding="utf-8") as f:
+        f.write(vmat_raw)
+
+    # 3. Create models and texture source files
+    tree_names = ["treedead", "treefar01", "treefar02", "treelarge", "treemid", "treesmall"]
+    for t in tree_names:
+        with open(os.path.join(pine_dir, f"{t}.fbx"), "w") as f:
+            f.write(f"{t} mesh")
+        with open(os.path.join(pine_dir, f"phys_{t}.fbx"), "w") as f:
+            f.write(f"{t} phys")
+
+    with open(os.path.join(pine_dir, "armor_color.png"), "w") as f:
+        f.write("armor color")
+    with open(os.path.join(pine_dir, "armor_normal.png"), "w") as f:
+        f.write("armor normal")
+
+    # 4. Save and run batch config
+    config_data = {
+        'version': 3,
+        'settings': {
+            'watch_changes': False,
+            'custom_output': '',
+            'algorithm': 0
+        },
+        'templates': [
+            {
+                'id': 'template_vmdl',
+                'extension': 'vmdl',
+                'reference': 'models/firewatch/nature/trees/pine/treedead.vmdl',
+                'filter_mode': 'include',
+                'ignore_extensions': 'fbx',
+                'ignore_list': 'temp_*, draft_*, *backup*'
+            },
+            {
+                'id': 'template_vmat',
+                'extension': 'vmat',
+                'reference': 'models/firewatch/nature/trees/pine/armor.vmat',
+                'filter_mode': 'include',
+                'ignore_extensions': 'color',
+                'ignore_list': 'temp_*, draft_*, *backup*'
+            }
+        ]
+    }
+    save_hbat_file(hbat_path, config_data)
+
+    created = perform_batch_processing(
+        file_path=hbat_path,
+        config_data=config_data
+    )
+
+    assert len(created) >= 5  # 5 other tree vmdls (treedead was the reference)
+
+    for other_tree in ["treefar01", "treefar02", "treelarge", "treemid", "treesmall"]:
+        vmdl_file = os.path.join(pine_dir, f"{other_tree}.vmdl")
+        assert os.path.isfile(vmdl_file)
+        with open(vmdl_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert f"{other_tree}.fbx" in content
+        assert f"phys_{other_tree}.fbx" in content
+
+
+def test_template_filter_and_ignore_serialization(fake_addon_dir):
+    from src.editors.assetgroup_maker.objects import save_hbat_file, load_hbat_file
+
+    save_path = os.path.join(fake_addon_dir, "models", "test_roundtrip.hbat")
+    data_to_save = {
+        'version': 3,
+        'settings': {
+            'watch_changes': True,
+            'filter_mode': 'include',
+            'ignore_extensions': 'fbx, obj',
+            'ignore_list': 'draft_*, temp_*',
+            'custom_output': 'models/custom',
+            'algorithm': 1,
+            'custom_files': []
+        },
+        'templates': [
+            {
+                'id': 'template_0',
+                'extension': 'vmdl',
+                'reference': 'models/props/box.vmdl',
+                'filter_mode': 'include',
+                'ignore_extensions': 'fbx',
+                'ignore_list': 'test_ignore_*',
+                'skipped_slots': ['collision', 'lod1'],
+                'custom_tokens': {'mesh': '#$CUSTOM_MESH$#'},
+                'replacements': [{'from': 'box', 'to': '#$ASSET_NAME$#'}]
+            },
+            {
+                'id': 'template_1',
+                'extension': 'vmat',
+                'reference': 'materials/props/box.vmat',
+                'filter_mode': 'exclude',
+                'ignore_extensions': 'png, tga',
+                'ignore_list': 'backup_*',
+                'skipped_slots': ['roughness'],
+                'custom_tokens': {},
+                'replacements': []
+            }
+        ]
+    }
+
+    assert save_hbat_file(save_path, data_to_save) is True
+    assert os.path.isfile(save_path)
+
+    loaded = load_hbat_file(save_path)
+    assert loaded['version'] == 3
+    assert loaded['settings']['filter_mode'] == 'include'
+    assert loaded['settings']['ignore_extensions'] == 'fbx, obj'
+    assert loaded['settings']['ignore_list'] == 'draft_*, temp_*'
+    assert loaded['settings']['watch_changes'] is True
+
+    assert len(loaded['templates']) == 2
+    t0 = loaded['templates'][0]
+    assert t0['id'] == 'template_0'
+    assert t0['filter_mode'] == 'include'
+    assert t0['ignore_extensions'] == 'fbx'
+    assert t0['ignore_list'] == 'test_ignore_*'
+    assert t0['skipped_slots'] == ['collision', 'lod1']
+    assert t0['custom_tokens'] == {'mesh': '#$CUSTOM_MESH$#'}
+
+    t1 = loaded['templates'][1]
+    assert t1['id'] == 'template_1'
+    assert t1['filter_mode'] == 'exclude'
+    assert t1['ignore_extensions'] == 'png, tga'
+    assert t1['ignore_list'] == 'backup_*'
+    assert t1['skipped_slots'] == ['roughness']
+
+
+
 
 
 

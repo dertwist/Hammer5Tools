@@ -129,7 +129,8 @@ class BatchCreatorProcessDialog(QDialog):
     def select_files_to_process(self) -> None:
         """Open a file dialog to select files for processing."""
         file_paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Files to Process", "", "All Files (*)"
+            self, "Select Files to Process", "", "All Files (*)",
+            options=QFileDialog.Option.DontUseNativeDialog
         )
         if file_paths:
             addon_dir = get_addon_dir()
@@ -141,7 +142,8 @@ class BatchCreatorProcessDialog(QDialog):
             self.parent_window.cs2_path, 'content', 'csgo_addons', self.parent_window.addon_name
         )
         selected_directory = QFileDialog.getExistingDirectory(
-            self, "Select Output Directory", default_output, options=QFileDialog.ShowDirsOnly
+            self, "Select Output Directory", default_output,
+            options=QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontUseNativeDialog
         )
         if selected_directory:
             self.process_data['custom_output'] = os.path.abspath(selected_directory)

@@ -1,34 +1,48 @@
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from PySide6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QFileDialog, QFrame, QScrollArea
+    QPushButton, QLineEdit, QCheckBox, QFrame, QScrollArea
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 
 from src.settings.main import get_addon_dir
 from src.styles.common import (
-    qt_stylesheet_button, qt_stylesheet_combobox, qt_stylesheet_lineedit, apply_stylesheets
+    qt_stylesheet_button, qt_stylesheet_combobox, qt_stylesheet_lineedit,
+    qt_stylesheet_checkbox, apply_stylesheets
 )
-from src.editors.assetgroup_maker.matcher import AssetGroupItem
+from src.editors.assetgroup_maker.analyzer import ReferenceAnalysisResult
 
 
-class SlotAssignmentDialog(QDialog):
+class TemplateSlotMappingDialog(QDialog):
     """
-    Dialog to inspect and customize which companion files (render mesh, physics mesh,
-    materials, LODs) are assigned to specific fields for an asset.
+    Dialog to configure slot mappings for a Template:
+    - View and customize slot tokens
+    - Enable / Skip slot mappings (e.g. skip collision mesh or skip roughness map)
+    - Configure fallbacks
     """
 
-    def __init__(self, item: AssetGroupItem, slots_def: Dict[str, Dict], parent=None):
+    def __init__(
+        self,
+        template_data: Dict[str, Any],
+        analysis: Optional[ReferenceAnalysisResult] = None,
+        parent=None
+    ):
         super().__init__(parent)
-        self.item = item
-        self.slots_def = slots_def
-        self.assigned_slots: Dict[str, str] = item.slots.copy()
-        self.combos: Dict[str, QComboBox] = {}
+        self.template_data = template_data
+        self.analysis = analysis
+        self.skipped_slots: List[str] = list(template_data.get('skipped_slots', []))
+        self.custom_tokens: Dict[str, str] = dict(template_data.get('custom_tokens', {}))
+        self.slot_check_boxes: Dict[str, QCheckBox] = {}
+        self.token_edits: Dict[str, QLineEdit] = {}
 
-        self.setWindowTitle(f"Edit Slot Mappings — {item.name}")
-        self.setMinimumWidth(540)
+        ext = template_data.get('extension', 'vmdl').upper()
+        ref = template_data.get('reference', '')
+        ref_name = os.path.basename(ref) if ref else "Untitled"
+
+        self.setWindowTitle(f"Template Slot Mappings — {ref_name} ({ext})")
+        self.setMinimumWidth(560)
         self._build_ui()
         apply_stylesheets(self)
 
@@ -37,35 +51,31 @@ class SlotAssignmentDialog(QDialog):
         root_layout.setContentsMargins(12, 12, 12, 12)
         root_layout.setSpacing(10)
 
-        # 1. Header Card: Asset details
+        # 1. Header Frame: Template Info
         header_frame = QFrame()
         header_frame.setStyleSheet("""
             QFrame {
                 background-color: #2E2E2E;
                 border: 1px solid #464649;
-                border-radius: 0px;
+                border-radius: 2px;
             }
         """)
         header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(8, 8, 8, 8)
+        header_layout.setContentsMargins(10, 8, 10, 8)
         header_layout.setSpacing(4)
 
-        title_lbl = QLabel(f"<b>Asset:</b> {self.item.name}")
-        title_lbl.setStyleSheet("font: 600 10pt 'Segoe UI'; color: #E5E5E5;")
-        header_layout.addWidget(title_lbl)
+        ref_path = self.template_data.get('reference', '')
+        ref_lbl = QLabel(f"<b>Template Reference:</b> {ref_path if ref_path else '(None selected)'}")
+        ref_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        header_layout.addWidget(ref_lbl)
 
-        out_lbl = QLabel(f"<b>Target Output:</b> {self.item.target_output}")
-        out_lbl.setStyleSheet("font: 580 9pt 'Segoe UI'; color: #A5A5A5;")
-        header_layout.addWidget(out_lbl)
-
-        if self.item.relative_folder:
-            folder_lbl = QLabel(f"<b>Directory:</b> {self.item.relative_folder}")
-            folder_lbl.setStyleSheet("font: 580 9pt 'Segoe UI'; color: #A5A5A5;")
-            header_layout.addWidget(folder_lbl)
+        desc_lbl = QLabel("Configure which slots to map or skip during batch asset generation.")
+        desc_lbl.setStyleSheet("font: 580 8.5pt 'Segoe UI'; color: #A5A5A5;")
+        header_layout.addWidget(desc_lbl)
 
         root_layout.addWidget(header_frame)
 
-        # 2. Slot Fields List
+        # 2. Slots Scroll Area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -75,146 +85,158 @@ class SlotAssignmentDialog(QDialog):
         fields_layout.setContentsMargins(0, 0, 0, 0)
         fields_layout.setSpacing(8)
 
-        # Ensure primary slots exist even if not explicitly analyzed
-        active_slots_def = self.slots_def.copy()
-        if 'mesh' not in active_slots_def:
-            active_slots_def['mesh'] = {'label': 'Render Mesh (LOD0)', 'required': True}
-        if 'collision' not in active_slots_def:
-            active_slots_def['collision'] = {'label': 'Collision Hull (Physics)', 'required': False}
+        # Determine active slots definition
+        slots_def = {}
+        if self.analysis and self.analysis.slots:
+            slots_def = self.analysis.slots.copy()
+        else:
+            ext = self.template_data.get('extension', 'vmdl').lower()
+            if ext == 'vmdl':
+                slots_def = {
+                    'mesh': {'label': 'Render Mesh (LOD0)', 'required': True, 'token': '#$MESH$#'},
+                    'collision': {'label': 'Collision Hull (Physics)', 'required': False, 'token': '#$COLLISION$#'},
+                    'lod1': {'label': 'LOD 1 Mesh', 'required': False, 'token': '#$LOD1$#'}
+                }
+            elif ext == 'vmat':
+                slots_def = {
+                    'color': {'label': 'Color / Albedo Map', 'required': True, 'token': '#$COLOR$#'},
+                    'normal': {'label': 'Normal Map', 'required': False, 'token': '#$NORMAL$#'},
+                    'roughness': {'label': 'Roughness Map', 'required': False, 'token': '#$ROUGHNESS$#'},
+                    'metalness': {'label': 'Metalness Map', 'required': False, 'token': '#$METALNESS$#'},
+                    'ao': {'label': 'Ambient Occlusion Map', 'required': False, 'token': '#$AO$#'},
+                    'orm': {'label': 'Packed ORM Map', 'required': False, 'token': '#$ORM$#'},
+                    'height': {'label': 'Height / Displacement', 'required': False, 'token': '#$HEIGHT$#'},
+                    'emissive': {'label': 'Emissive / Self-Illum', 'required': False, 'token': '#$EMISSIVE$#'},
+                }
+            else:
+                slots_def = {
+                    'model': {'label': 'Primary Model', 'required': True, 'token': '#$MODEL$#'}
+                }
 
-        for slot_key, slot_info in active_slots_def.items():
-            slot_row = self._create_slot_field_row(slot_key, slot_info)
-            fields_layout.addWidget(slot_row)
+        for slot_key, slot_info in slots_def.items():
+            row_frame = self._create_slot_row(slot_key, slot_info)
+            fields_layout.addWidget(row_frame)
 
         fields_layout.addStretch(1)
         scroll.setWidget(fields_container)
         root_layout.addWidget(scroll, 1)
 
-        # 3. Bottom Action Buttons (Cancel / Apply)
+        # 3. Bottom Action Buttons (Cancel / Save Mappings)
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
         btn_row.addStretch(1)
 
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setStyleSheet(qt_stylesheet_button)
-        cancel_btn.setFixedHeight(24)
+        cancel_btn.setFixedHeight(28)
         cancel_btn.clicked.connect(self.reject)
         btn_row.addWidget(cancel_btn)
 
-        apply_btn = QPushButton("Apply Mappings")
+        apply_btn = QPushButton("Save Slot Mappings")
+        apply_btn.setIcon(QIcon(":/valve_common/icons/tools/common/save.png"))
         apply_btn.setStyleSheet(qt_stylesheet_button)
-        apply_btn.setFixedHeight(24)
+        apply_btn.setFixedHeight(28)
         apply_btn.clicked.connect(self._apply_and_close)
         btn_row.addWidget(apply_btn)
 
         root_layout.addLayout(btn_row)
 
-    def _create_slot_field_row(self, slot_key: str, slot_info: Dict) -> QWidget:
+    def _create_slot_row(self, slot_key: str, slot_info: Dict[str, Any]) -> QWidget:
         row_frame = QFrame()
         row_frame.setStyleSheet("""
             QFrame {
                 background-color: #272727;
                 border: 1px solid #464649;
-                border-radius: 0px;
+                border-radius: 2px;
             }
         """)
         row_layout = QVBoxLayout(row_frame)
-        row_layout.setContentsMargins(8, 6, 8, 6)
-        row_layout.setSpacing(4)
+        row_layout.setContentsMargins(10, 8, 10, 8)
+        row_layout.setSpacing(6)
 
-        # Label row
-        lbl_row = QHBoxLayout()
-        lbl_row.setSpacing(6)
+        # Header Row: Checkbox + Slot Name + Required/Optional Badge
+        top_row = QHBoxLayout()
+        top_row.setSpacing(8)
 
-        slot_name = slot_info.get('label', slot_key)
+        is_skipped = slot_key in self.skipped_slots
+        cb = QCheckBox("Map this slot")
+        cb.setStyleSheet(qt_stylesheet_checkbox)
+        cb.setChecked(not is_skipped)
+        self.slot_check_boxes[slot_key] = cb
+        top_row.addWidget(cb)
+
+        slot_label = slot_info.get('label', slot_key)
         is_req = slot_info.get('required', False)
-        title_text = f"{slot_name}" + (" <span style='color: #EF5350;'>(Required)</span>" if is_req else " <span style='color: #81C784;'>(Optional)</span>")
-        lbl = QLabel(title_text)
-        lbl.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #E5E5E5;")
-        lbl_row.addWidget(lbl)
-        lbl_row.addStretch(1)
-        row_layout.addLayout(lbl_row)
+        badge_color = "#4A83C9" if is_req else "#757575"
+        badge_text = "REQUIRED" if is_req else "OPTIONAL"
 
-        # Input & browse row
-        ctrl_row = QHBoxLayout()
-        ctrl_row.setSpacing(4)
+        title_lbl = QLabel(f"<b>{slot_label}</b> ({slot_key})")
+        title_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        top_row.addWidget(title_lbl)
 
-        combo = QComboBox()
-        combo.setStyleSheet(qt_stylesheet_combobox)
-        combo.setFixedHeight(24)
+        badge_lbl = QLabel(badge_text)
+        badge_lbl.setStyleSheet(f"""
+            QLabel {{
+                background-color: #2D333F;
+                color: {badge_color};
+                border: 1px solid {badge_color};
+                border-radius: 0px;
+                padding: 1px 5px;
+                font: 600 7.5pt 'Segoe UI';
+            }}
+        """)
+        top_row.addWidget(badge_lbl)
+        top_row.addStretch(1)
 
-        # Populate candidates
-        current_val = self.assigned_slots.get(slot_key, "")
-        combo.addItem("(None / Clear)", "")
+        source_filename = slot_info.get('filename', '')
+        if source_filename:
+            file_lbl = QLabel(f"Reference File: <span style='color:#E0E0E0;'>{source_filename}</span>")
+            file_lbl.setStyleSheet("font: 580 8.5pt 'Segoe UI'; color: #A5A5A5;")
+            top_row.addWidget(file_lbl)
 
-        candidates = self._get_candidates_for_slot(slot_key)
-        selected_idx = 0
-        for idx, cand_path in enumerate(candidates, start=1):
-            fname = os.path.basename(cand_path)
-            combo.addItem(fname, cand_path)
-            if current_val and os.path.normpath(current_val).lower() == os.path.normpath(cand_path).lower():
-                selected_idx = idx
+        row_layout.addLayout(top_row)
 
-        # If current_val is not in candidates list, add it
-        if current_val and selected_idx == 0:
-            fname = os.path.basename(current_val)
-            combo.addItem(f"{fname} (Custom)", current_val)
-            selected_idx = combo.count() - 1
+        # Token Row
+        token_row = QHBoxLayout()
+        token_row.setSpacing(6)
 
-        combo.setCurrentIndex(selected_idx)
-        self.combos[slot_key] = combo
-        ctrl_row.addWidget(combo, 1)
+        tok_lbl = QLabel("Replacement Token:")
+        tok_lbl.setFixedWidth(130)
+        tok_lbl.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        token_row.addWidget(tok_lbl)
 
-        browse_btn = QPushButton("Browse...")
-        browse_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
-        browse_btn.setStyleSheet(qt_stylesheet_button)
-        browse_btn.setFixedHeight(24)
-        browse_btn.clicked.connect(lambda _, key=slot_key: self._browse_custom_file(key))
-        ctrl_row.addWidget(browse_btn)
+        default_tok = slot_info.get('token', f'#${slot_key.upper()}$#')
+        curr_tok = self.custom_tokens.get(slot_key, default_tok)
 
-        row_layout.addLayout(ctrl_row)
+        tok_edit = QLineEdit(curr_tok)
+        tok_edit.setStyleSheet(qt_stylesheet_lineedit)
+        tok_edit.setFixedHeight(24)
+        self.token_edits[slot_key] = tok_edit
+        token_row.addWidget(tok_edit, 1)
+
+        row_layout.addLayout(token_row)
+
+        # Connect checkbox to enable/disable token edit
+        cb.toggled.connect(tok_edit.setEnabled)
+        tok_edit.setEnabled(cb.isChecked())
+
         return row_frame
 
-    def _get_candidates_for_slot(self, slot_key: str) -> List[str]:
-        """Gathers suitable candidate files for a slot."""
-        candidates = []
-        for cand in self.item.available_candidates:
-            fname = os.path.basename(cand)
-            _, ext = os.path.splitext(fname)
-            ext = ext.lower()
-
-            if slot_key in ('mesh', 'collision', 'lod1', 'lod2', 'lod3'):
-                if ext in ('.fbx', '.obj', '.dmx'):
-                    candidates.append(cand)
-            elif slot_key in ('material', 'color', 'normal', 'roughness', 'ao'):
-                if ext in ('.vmat', '.tga', '.png', '.jpg', '.exr', '.psd'):
-                    candidates.append(cand)
-            else:
-                candidates.append(cand)
-
-        return candidates
-
-    def _browse_custom_file(self, slot_key: str):
-        addon_dir = get_addon_dir() or ""
-        chosen, _ = QFileDialog.getOpenFileName(
-            self,
-            f"Select Companion File for {slot_key}",
-            addon_dir,
-            "Supported 3D/Material Files (*.fbx *.obj *.dmx *.vmat *.tga *.png);;All Files (*.*)"
-        )
-        if chosen:
-            combo = self.combos.get(slot_key)
-            if combo:
-                fname = os.path.basename(chosen)
-                combo.addItem(f"{fname} (External)", chosen)
-                combo.setCurrentIndex(combo.count() - 1)
-
     def _apply_and_close(self):
-        for slot_key, combo in self.combos.items():
-            val = combo.currentData()
-            if val:
-                self.assigned_slots[slot_key] = val
-            elif slot_key in self.assigned_slots:
-                del self.assigned_slots[slot_key]
+        self.skipped_slots.clear()
+        self.custom_tokens.clear()
+
+        for slot_key, cb in self.slot_check_boxes.items():
+            if not cb.isChecked():
+                self.skipped_slots.append(slot_key)
+
+        for slot_key, edit in self.token_edits.items():
+            tok_text = edit.text().strip()
+            if tok_text:
+                self.custom_tokens[slot_key] = tok_text
 
         self.accept()
+
+
+# Backward compatibility alias
+SlotAssignmentDialog = TemplateSlotMappingDialog

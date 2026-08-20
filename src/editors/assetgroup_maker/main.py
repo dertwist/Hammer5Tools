@@ -293,7 +293,35 @@ class BatchCreatorMainWindow(QMainWindow):
         if not folder:
             addon_dir = get_addon_dir() or self.explorer_directory
             folder = addon_dir
-        self.create_new_config_dialog(target_folder=folder, force_file_dialog=True)
+
+        if not folder or not os.path.exists(folder):
+            QMessageBox.warning(self, "Warning", "No valid folder selected in Explorer.")
+            return
+
+        if os.path.isfile(folder):
+            folder = os.path.dirname(folder)
+
+        folder_name = os.path.basename(os.path.normpath(folder))
+        if not folder_name:
+            folder_name = "new_batch"
+
+        candidate = os.path.join(folder, f"{folder_name}.hbat")
+        if os.path.exists(candidate):
+            idx = 1
+            while os.path.exists(os.path.join(folder, f"{folder_name}_{idx}.hbat")):
+                idx += 1
+            candidate = os.path.join(folder, f"{folder_name}_{idx}.hbat")
+
+        file_path = candidate
+        default_data = get_default_file()
+        try:
+            from src.editors.assetgroup_maker.objects import save_hbat_file
+            save_hbat_file(file_path, default_data)
+
+            MonitoringFileWatcher.notify_new_file(file_path)
+            self.open_filepath(file_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to create .hbat file:\n{e}")
 
     def _open_new_config_file_dialog(self):
         self.create_new_config_dialog(force_file_dialog=True)
@@ -316,7 +344,8 @@ class BatchCreatorMainWindow(QMainWindow):
                 self,
                 "Create New Batch Profile (.hbat)",
                 default_target,
-                "Hammer Batch (*.hbat)"
+                "Hammer Batch (*.hbat)",
+                options=QFileDialog.Option.DontUseNativeDialog
             )
             if file_path:
                 if not file_path.lower().endswith(".hbat"):
@@ -324,9 +353,8 @@ class BatchCreatorMainWindow(QMainWindow):
 
                 default_data = get_default_file()
                 try:
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        json.dump(default_data, f, indent=4)
+                    from src.editors.assetgroup_maker.objects import save_hbat_file
+                    save_hbat_file(file_path, default_data)
                     
                     MonitoringFileWatcher.notify_new_file(file_path)
                     self.open_filepath(file_path)
@@ -338,7 +366,11 @@ class BatchCreatorMainWindow(QMainWindow):
     def create_new_batch_tab(self, reference_path: Optional[str] = None) -> EditorTabWidget:
         tab = EditorTabWidget(file_path=None, parent=self)
         if reference_path:
-            tab.reference_card.set_reference_path(reference_path)
+            tab.template_manager.set_data({
+                'version': 3,
+                'settings': get_default_file()['settings'],
+                'templates': [{'id': 'template_0', 'extension': 'vmdl', 'reference': reference_path, 'replacements': []}]
+            })
 
         tab_idx = self.tab_widget.addTab(tab, QIcon(":/valve_common/icons/tools/assettypes/vcompmat_sm.png"), "Untitled.hbat")
         self.tab_widget.setCurrentIndex(tab_idx)
@@ -387,7 +419,8 @@ class BatchCreatorMainWindow(QMainWindow):
     def _open_file_dialog(self):
         addon_dir = get_addon_dir() or self.explorer_directory
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Batch Profile", addon_dir, "Hammer Batch (*.hbat);;All Files (*.*)"
+            self, "Open Batch Profile", addon_dir, "Hammer Batch (*.hbat);;All Files (*.*)",
+            options=QFileDialog.Option.DontUseNativeDialog
         )
         if file_path:
             self.open_filepath(file_path)

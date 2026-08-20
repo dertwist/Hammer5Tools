@@ -1,6 +1,5 @@
 import os
-import json
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QMessageBox, QFrame, QCheckBox
@@ -9,18 +8,18 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 
 from src.settings.main import get_addon_dir, get_cs2_path, get_addon_name, debug
-from src.editors.assetgroup_maker.widgets.reference_card import ReferenceCardWidget
+from src.editors.assetgroup_maker.widgets.reference_card import MultiTemplateManagerWidget
 from src.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
-from src.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
+from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets, AssetGroupItem
 from src.editors.assetgroup_maker.process import perform_batch_processing
-from src.editors.assetgroup_maker.objects import get_default_file
+from src.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file, get_default_file
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit, apply_stylesheets
 
 
 class EditorTabWidget(QWidget):
     """
-    Self-contained editor widget for a single .hbat batch profile document.
-    Includes ReferenceCard, AssetTable, and Action Footer.
+    Self-contained editor widget for a multi-template .hbat batch profile document.
+    Includes MultiTemplateManager, AssetTable, and Action Footer.
     """
 
     dirty_changed = Signal(bool)
@@ -32,9 +31,6 @@ class EditorTabWidget(QWidget):
         self.file_path: Optional[str] = file_path
         self._dirty: bool = False
         self.created_files: List[str] = []
-        self.raw_template_content: str = ""
-        self.process_data: Dict = get_default_file()['process'].copy()
-        self.replacements_data: Dict = {}
 
         self._build_ui()
         self._connect_signals()
@@ -49,9 +45,9 @@ class EditorTabWidget(QWidget):
         root.setContentsMargins(6, 6, 6, 6)
         root.setSpacing(6)
 
-        # 1. Top Reference Card
-        self.reference_card = ReferenceCardWidget(self)
-        root.addWidget(self.reference_card)
+        # 1. Top Multi-Template Manager (Cards + Global Ignore Settings + Add Template button)
+        self.template_manager = MultiTemplateManagerWidget(self)
+        root.addWidget(self.template_manager)
 
         # 2. Center Asset Table
         self.asset_table = AssetTableWidget(self)
@@ -70,29 +66,25 @@ class EditorTabWidget(QWidget):
         footer_layout.setContentsMargins(8, 8, 8, 8)
         footer_layout.setSpacing(6)
 
-        # Output options row
+        # Output Directory Row
         opt_row = QHBoxLayout()
         opt_row.setSpacing(8)
 
-        self.same_folder_cb = QCheckBox("Output to same folder as batch")
-        self.same_folder_cb.setStyleSheet(qt_stylesheet_checkbox)
-        self.same_folder_cb.setChecked(True)
-        self.same_folder_cb.setFixedHeight(28)
-        self.same_folder_cb.toggled.connect(self._on_output_toggled)
-        opt_row.addWidget(self.same_folder_cb)
+        output_lbl = QLabel("Output Directory:")
+        output_lbl.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        output_lbl.setFixedHeight(28)
+        opt_row.addWidget(output_lbl)
 
         self.custom_output_edit = QLineEdit()
         self.custom_output_edit.setStyleSheet(qt_stylesheet_lineedit)
-        self.custom_output_edit.setPlaceholderText("Custom output directory relative to addon...")
-        self.custom_output_edit.setEnabled(False)
+        self.custom_output_edit.setPlaceholderText("Output directory relative to addon (leave blank to output in asset folder)...")
         self.custom_output_edit.setFixedHeight(28)
-        self.custom_output_edit.textChanged.connect(self._mark_dirty)
+        self.custom_output_edit.textChanged.connect(self._on_output_text_changed)
         opt_row.addWidget(self.custom_output_edit, 1)
 
         self.browse_output_btn = QPushButton("Browse...")
         self.browse_output_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
         self.browse_output_btn.setStyleSheet(qt_stylesheet_button)
-        self.browse_output_btn.setEnabled(False)
         self.browse_output_btn.setFixedHeight(28)
         self.browse_output_btn.clicked.connect(self._on_browse_output)
         opt_row.addWidget(self.browse_output_btn)
@@ -145,11 +137,17 @@ class EditorTabWidget(QWidget):
         apply_stylesheets(self)
 
     def _connect_signals(self):
-        self.reference_card.reference_changed.connect(self._on_reference_changed)
-        self.reference_card.ignore_settings_changed.connect(self._on_ignore_settings_changed)
-        self.reference_card.analysis_updated.connect(self._on_analysis_updated)
+        self.template_manager.data_changed.connect(self._on_template_data_changed)
+        self.template_manager.analysis_updated.connect(self.refresh_matching)
         self.asset_table.files_dropped.connect(self._on_files_dropped)
         self.asset_table.slots_modified.connect(self._on_table_slots_modified)
+
+    def _on_template_data_changed(self):
+        self._mark_dirty()
+        self.refresh_matching()
+
+    def _on_output_text_changed(self):
+        self._mark_dirty()
 
     def _on_table_slots_modified(self, item):
         self._mark_dirty()
@@ -163,52 +161,31 @@ class EditorTabWidget(QWidget):
 
     def _apply_default_data(self):
         default = get_default_file()
-        self.process_data = default['process'].copy()
-        self.reference_card.set_ignore_extensions(self.process_data.get('ignore_extensions', ''))
-        self.reference_card.set_ignore_list(self.process_data.get('ignore_list', ''))
+        self.template_manager.set_data(default)
+        custom_out = default.get('settings', {}).get('custom_output', '')
+        if custom_out.lower() == 'relative_path':
+            custom_out = ''
+        self.custom_output_edit.setText(custom_out)
         self.watch_changes_cb.blockSignals(True)
-        self.watch_changes_cb.setChecked(self.process_data.get('watch_changes', False))
+        self.watch_changes_cb.setChecked(default.get('settings', {}).get('watch_changes', False))
         self.watch_changes_cb.blockSignals(False)
         self.refresh_matching()
         self._dirty = False
         self.dirty_changed.emit(False)
 
     def _on_watch_changes_toggled(self, checked: bool):
-        self.process_data['watch_changes'] = checked
         self._mark_dirty()
         if self.file_path:
             from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
             for watcher in MonitoringFileWatcher._instances:
                 watcher.update_watch_status(self.file_path, checked)
 
-    def _on_reference_changed(self, text: str):
-        self.process_data['reference'] = text
-        self._mark_dirty()
-        self.refresh_matching()
-
-    def _on_ignore_settings_changed(self):
-        self.process_data['ignore_extensions'] = self.reference_card.get_ignore_extensions()
-        self.process_data['ignore_list'] = self.reference_card.get_ignore_list()
-        self._mark_dirty()
-        self.refresh_matching()
-
-    def _on_analysis_updated(self, analysis):
-        if analysis:
-            self.process_data['extension'] = analysis.asset_type
-            self.raw_template_content = analysis.template_content
-            self.replacements_data = analysis.replacements
-        self.refresh_matching()
-
-    def _on_output_toggled(self, checked: bool):
-        self.same_folder_cb.setChecked(checked)
-        self.custom_output_edit.setEnabled(not checked)
-        self.browse_output_btn.setEnabled(not checked)
-        self.process_data['output_to_the_folder'] = checked
-        self._mark_dirty()
-
     def _on_browse_output(self):
         addon_dir = get_addon_dir() or ""
-        chosen = QFileDialog.getExistingDirectory(self, "Select Output Directory", addon_dir)
+        chosen = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory", addon_dir,
+            options=QFileDialog.Option.DontUseNativeDialog
+        )
         if chosen:
             if addon_dir:
                 try:
@@ -218,39 +195,25 @@ class EditorTabWidget(QWidget):
             else:
                 rel = chosen
             self.custom_output_edit.setText(rel)
-            self.process_data['custom_output'] = rel
             self._mark_dirty()
 
     def _on_files_dropped(self, paths: List[str]):
-        # Add dropped files/folders to custom files or refresh
         for path in paths:
             if os.path.isdir(path):
-                # Set target directory
                 self.file_path = os.path.join(path, f"{os.path.basename(path)}.hbat")
                 self.title_changed.emit(os.path.basename(self.file_path))
                 self.refresh_matching()
                 self._mark_dirty()
                 return
 
-        # If individual files dropped:
-        custom_files = self.process_data.setdefault('custom_files', [])
-        for p in paths:
-            if os.path.isfile(p) and p not in custom_files:
-                custom_files.append(p)
-        self.process_data['load_from_the_folder'] = False
-        self._mark_dirty()
-        self.refresh_matching()
-
     def refresh_matching(self):
-        """Scans the target directory or custom files and updates the asset table."""
-        slots_def = {}
-        analysis = self.reference_card.current_analysis
-        if analysis and analysis.slots:
-            slots_def = analysis.slots
-        elif 'mesh' not in slots_def:
-            slots_def = {'mesh': {'required': True, 'label': 'Render Mesh'}}
+        """Scans the target directory and matches assets across all active templates."""
+        data = self.template_manager.get_data()
+        templates = data.get('templates', [])
+        settings = data.get('settings', {})
+        slots_map = self.template_manager.get_analyzed_slots_map()
 
-        self.asset_table.set_slots_definition(slots_def)
+        self.asset_table.set_slots_definition(slots_map)
 
         target_dir = ""
         if self.file_path:
@@ -261,17 +224,11 @@ class EditorTabWidget(QWidget):
         if not target_dir and get_addon_dir():
             target_dir = get_addon_dir()
 
-        ext = self.process_data.get('extension', 'vmdl')
-        ignore_exts = self.reference_card.get_ignore_extensions()
-        ignore_list = self.reference_card.get_ignore_list()
-
-        items = match_folder_assets(
+        items = match_multi_template_folder_assets(
             directory=target_dir,
-            slots=slots_def,
-            extension=ext,
-            ignore_extensions_str=ignore_exts,
-            ignore_list_str=ignore_list,
-            algorithm=int(self.process_data.get('algorithm', 0))
+            templates=templates,
+            settings=settings,
+            analyzed_slots_map=slots_map
         )
 
         self.asset_table.set_items(items)
@@ -288,30 +245,20 @@ class EditorTabWidget(QWidget):
         self.process_btn.setEnabled(len(items) > 0)
 
     def load_file(self, file_path: str):
-        """Loads .hbat JSON file into this tab."""
+        """Loads .hbat file (auto-detecting and converting legacy JSON if necessary)."""
         try:
             self.file_path = os.path.normpath(file_path)
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+            data = load_hbat_file(self.file_path)
 
-            self.process_data = data.get('process', {})
-            self.replacements_data = data.get('replacements', {})
-            self.raw_template_content = data.get('file', {}).get('content', '')
+            self.template_manager.set_data(data)
 
-            # Populate reference card
-            ref_path = self.process_data.get('reference', '')
-            self.reference_card.set_reference_path(ref_path)
-            self.reference_card.set_ignore_extensions(
-                self.process_data.get('ignore_extensions', get_default_file()['process']['ignore_extensions']))
-            self.reference_card.set_ignore_list(self.process_data.get('ignore_list', ''))
+            settings = data.get('settings', {})
+            custom_out = settings.get('custom_output', '')
+            if custom_out.lower() == 'relative_path':
+                custom_out = ''
+            self.custom_output_edit.setText(custom_out)
 
-            # Output settings
-            output_to_folder = self.process_data.get('output_to_the_folder', True)
-            self.same_folder_cb.setChecked(output_to_folder)
-            self.custom_output_edit.setText(self.process_data.get('custom_output', ''))
-
-            # Watch changes setting
-            watch_val = self.process_data.get('watch_changes', False)
+            watch_val = settings.get('watch_changes', False)
             self.watch_changes_cb.blockSignals(True)
             self.watch_changes_cb.setChecked(bool(watch_val))
             self.watch_changes_cb.blockSignals(False)
@@ -324,67 +271,56 @@ class EditorTabWidget(QWidget):
             QMessageBox.critical(self, "Load Error", f"Failed to load batch file:\n{e}")
 
     def save_file(self, path: Optional[str] = None):
-        """Saves current state to .hbat file."""
+        """Saves current state to KeyValues3 .hbat file."""
         target_path = path or self.file_path
         if not target_path:
             addon_dir = get_addon_dir() or ""
             target_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Batch Profile", addon_dir, "Hammer Batch (*.hbat)"
+                self, "Save Batch Profile", addon_dir, "Hammer Batch (*.hbat)",
+                options=QFileDialog.Option.DontUseNativeDialog
             )
             if not target_path:
                 return False
             self.file_path = target_path
 
-        self.process_data['reference'] = self.reference_card.get_reference_path()
-        self.process_data['ignore_extensions'] = self.reference_card.get_ignore_extensions()
-        self.process_data['ignore_list'] = self.reference_card.get_ignore_list()
-        self.process_data['output_to_the_folder'] = self.same_folder_cb.isChecked()
-        self.process_data['custom_output'] = self.custom_output_edit.text()
-        self.process_data['watch_changes'] = self.watch_changes_cb.isChecked()
-
-        # If template content is empty, generate it from reference analysis
-        if not self.raw_template_content and self.reference_card.current_analysis:
-            self.raw_template_content = self.reference_card.current_analysis.template_content
-            self.replacements_data = self.reference_card.current_analysis.replacements
-
-        payload = {
-            'version': 2,
-            'process': self.process_data,
-            'replacements': self.replacements_data,
-            'file': {'content': self.raw_template_content}
-        }
+        data = self.template_manager.get_data()
+        data['version'] = 3
+        data['settings']['watch_changes'] = self.watch_changes_cb.isChecked()
+        data['settings']['custom_output'] = self.custom_output_edit.text().strip() or 'relative_path'
 
         try:
-            os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                json.dump(payload, f, indent=4)
-            self._dirty = False
-            self.dirty_changed.emit(False)
-            self.title_changed.emit(os.path.basename(self.file_path))
-            debug(f"[EditorTab] Saved file: {self.file_path}")
+            success = save_hbat_file(self.file_path, data)
+            if success:
+                self._dirty = False
+                self.dirty_changed.emit(False)
+                self.title_changed.emit(os.path.basename(self.file_path))
+                debug(f"[EditorTab] Saved KV3 file: {self.file_path}")
 
-            from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
-            for watcher in MonitoringFileWatcher._instances:
-                watcher.update_watch_status(self.file_path, self.watch_changes_cb.isChecked())
+                from src.editors.assetgroup_maker.monitor import MonitoringFileWatcher
+                for watcher in MonitoringFileWatcher._instances:
+                    watcher.update_watch_status(self.file_path, self.watch_changes_cb.isChecked())
 
-            return True
+                return True
+            else:
+                QMessageBox.critical(self, "Save Error", "Failed to save KeyValues3 file.")
+                return False
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save file:\n{e}")
             return False
 
     def process_all(self):
-        """Executes batch creation on disk."""
+        """Executes batch creation for all configured templates."""
         if not self.file_path:
             if not self.save_file():
                 return
 
         self.save_file()
+        data = self.template_manager.get_data()
+        data['settings']['custom_output'] = self.custom_output_edit.text().strip()
+
         created = perform_batch_processing(
             file_path=self.file_path,
-            process=self.process_data,
-            preview=False,
-            replacements=self.replacements_data,
-            content_template=self.raw_template_content
+            config_data=data
         )
 
         if created:
@@ -392,11 +328,11 @@ class EditorTabWidget(QWidget):
             self.revert_btn.setEnabled(True)
             self.status_updated.emit(f"Created {len(created)} assets successfully.")
             QMessageBox.information(
-                self, "Batch Complete", f"Successfully created {len(created)} asset file(s)!"
+                self, "Batch Complete", f"Successfully created {len(created)} asset file(s) across templates!"
             )
         else:
             QMessageBox.warning(
-                self, "Batch Warning", "No assets were created. Check reference template and input files."
+                self, "Batch Warning", "No assets were created. Check reference templates and source files."
             )
 
     def revert_created_files(self):
