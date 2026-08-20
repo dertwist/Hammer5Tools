@@ -136,21 +136,21 @@ class VerificationDialog(QDialog):
         layout = QVBoxLayout(self)
         
         title = QLabel("Verifying Addon Cleanup")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #E3E3E3;")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #e5e5e5;")
         layout.addWidget(title)
         
         self.status_label = QLabel("Initializing compilation check...")
-        self.status_label.setStyleSheet("color: #E3E3E3;")
+        self.status_label.setStyleSheet("color: #e5e5e5;")
         layout.addWidget(self.status_label)
         
         self.progress_bar = QProgressBar()
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 2px;
                 text-align: center;
                 color: white;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
             QProgressBar::chunk {
                 background-color: #1a528a;
@@ -164,11 +164,11 @@ class VerificationDialog(QDialog):
         self.log_view.setReadOnly(True)
         self.log_view.setStyleSheet("""
             QTextEdit {
-                background-color: #1E1E1E;
+                background-color: #303030;
                 color: #D4D4D4;
                 font-family: Consolas, Courier New, monospace;
                 font-size: 11px;
-                border: 1px solid #333333;
+                border: 1px solid #434343;
             }
         """)
         layout.addWidget(self.log_view)
@@ -224,7 +224,7 @@ class VerificationDialog(QDialog):
         
         # Split the report from the actual log using - symbols
         self.log_view.append("\n")
-        self.log_view.append('<span style="color: #555555;">----------------------------------------------------------------------</span>\n')
+        self.log_view.append('<span style="color: #636363;">----------------------------------------------------------------------</span>\n')
         
         # Extract unique missing paths across all maps
         all_unique_missing = []
@@ -251,7 +251,7 @@ class VerificationDialog(QDialog):
             self.log_view.append(f'<span style="color: #F44336; font-weight: bold; font-size: 13px;">'
                                  f'WARNING: {len(errors)} missing resource references found! Please review the log above.</span>\n')
             
-            self.log_view.append('<span style="color: #E3E3E3; font-weight: bold;">Missing files per vmap file</span>\n')
+            self.log_view.append('<span style="color: #e5e5e5; font-weight: bold;">Missing files per vmap file</span>\n')
             
             for map_rel_path, map_errors in errors_by_map.items():
                 if map_errors:
@@ -269,9 +269,9 @@ class VerificationDialog(QDialog):
                         self.log_view.append(f'<span style="color: #FF7043;">- {path}</span>')
                     self.log_view.append("")  # blank line after map with errors
                 else:
-                    self.log_view.append(f'<span style="color: #4CAF50;">{map_rel_path} (missing 0)</span>')
+                    self.log_view.append(f'<span style="color: #5ab55e;">{map_rel_path} (missing 0)</span>')
             
-            self.log_view.append('\n<span style="color: #E3E3E3; font-weight: bold;">Missing files (all missing files combined):</span>')
+            self.log_view.append('\n<span style="color: #e5e5e5; font-weight: bold;">Missing files (all missing files combined):</span>')
             for path in sorted(all_unique_missing):
                 self.log_view.append(f'<span style="color: #FF7043;">- {path}</span>')
             self.log_view.append("")
@@ -282,15 +282,15 @@ class VerificationDialog(QDialog):
         else:
             self.status_label.setText("Verification complete. No errors detected!")
             
-            self.log_view.append('<span style="color: #4CAF50; font-weight: bold; font-size: 13px;">'
+            self.log_view.append('<span style="color: #5ab55e; font-weight: bold; font-size: 13px;">'
                                  'SUCCESS: No missing materials or models detected.</span>\n')
             
-            self.log_view.append('<span style="color: #E3E3E3; font-weight: bold;">Missing files per vmap file</span>\n')
+            self.log_view.append('<span style="color: #e5e5e5; font-weight: bold;">Missing files per vmap file</span>\n')
             for map_rel_path in errors_by_map.keys():
-                self.log_view.append(f'<span style="color: #4CAF50;">{map_rel_path} (missing 0)</span>')
+                self.log_view.append(f'<span style="color: #5ab55e;">{map_rel_path} (missing 0)</span>')
             
-            self.log_view.append('\n<span style="color: #E3E3E3; font-weight: bold;">Missing files (all missing files combined):</span>')
-            self.log_view.append('<span style="color: #4CAF50;">None</span>\n')
+            self.log_view.append('\n<span style="color: #e5e5e5; font-weight: bold;">Missing files (all missing files combined):</span>')
+            self.log_view.append('<span style="color: #5ab55e;">None</span>\n')
             
             QMessageBox.information(self, "Verification Success", 
                                     "No missing materials or models references detected.")
@@ -352,7 +352,7 @@ class CleanupDialog(QDialog):
         dirtlist_label = QLabel(
             'Files listed in <b>.dirtlist</b> will be ignored during cleanup.'
         )
-        dirtlist_label.setStyleSheet("color: #999999; font-size: 11px; background-color: transparent;")
+        dirtlist_label.setStyleSheet("color: #a1a1a1; font-size: 11px; background-color: transparent;")
         dirtlist_layout.addWidget(dirtlist_label)
         dirtlist_layout.addStretch()
 
@@ -478,7 +478,7 @@ class CleanupDialog(QDialog):
 
         # Style labels for dark mode
         for label in self.findChildren(QLabel):
-            label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
+            label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
 
         self.update_statistics()
 
@@ -659,7 +659,7 @@ class CleanupDialog(QDialog):
                 
             verify_dialog = VerificationDialog(cs2_path, self.addon_dir, vmaps, self)
             for label in verify_dialog.findChildren(QLabel):
-                label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
+                label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
             verify_dialog.exec()
         except Exception as e:
             QMessageBox.warning(self, "Verification Error", f"Failed to start verification: {e}")

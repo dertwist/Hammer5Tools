@@ -156,7 +156,7 @@ def save_wav(path, samples, sr, cue_positions=None):
 def _sep():
     line = QFrame()
     line.setFrameShape(QFrame.VLine)
-    line.setStyleSheet("color: rgba(80,80,80,255);")
+    line.setStyleSheet("color: rgba(94, 94, 94,255);")
     return line
 
 
@@ -208,7 +208,7 @@ class VerticalVUMeter(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
         r = self.rect()
-        p.fillRect(r, QColor(0x1D, 0x1D, 0x1F))  # #1D1D1F
+        p.fillRect(r, QColor(0x1D, 0x1D, 0x1F))  # #2f2f31
 
         pad_top, pad_bot = 8, 8
         bar_x, bar_w = 6, 18
@@ -347,14 +347,14 @@ class AudioDocument(QWidget):
         # Categorized menu bar: File / Edit / View / Playback / Effects / Markers
         menubar = QMenuBar(self)
         menubar.setStyleSheet(
-            "QMenuBar { background-color:#1C1C1C; color:#E3E3E3; border:none; }"
+            "QMenuBar { background-color:#2e2e2e; color:#e5e5e5; border:none; }"
             "QMenuBar::item { padding:3px 8px; background:transparent; }"
-            "QMenuBar::item:selected { background-color:#414956; color:#FFFFFF; }"
-            "QMenu { background-color:#1C1C1C; color:#E3E3E3;"
-            " border:1px solid rgba(80,80,80,255); }"
+            "QMenuBar::item:selected { background-color:#515965; color:#FFFFFF; }"
+            "QMenu { background-color:#2e2e2e; color:#e5e5e5;"
+            " border:1px solid rgba(94, 94, 94,255); }"
             "QMenu::item { padding:4px 20px; }"
-            "QMenu::item:selected { background-color:#414956; color:#FFFFFF; }"
-            "QMenu::separator { height:1px; background:rgba(80,80,80,255); margin:3px 6px; }")
+            "QMenu::item:selected { background-color:#515965; color:#FFFFFF; }"
+            "QMenu::separator { height:1px; background:rgba(94, 94, 94,255); margin:3px 6px; }")
         for name, acts in self._menus:
             m = menubar.addMenu(name)
             for a in acts:
@@ -365,23 +365,23 @@ class AudioDocument(QWidget):
         root.setMenuBar(menubar)
 
         # Compact toolbar mirroring the same actions (one group per menu).
-        # Colours/borders match the SoundEvent editor (#1C1C1C, 2px grey border,
-        # #414956 hover) but with tighter padding so the buttons stay small.
+        # Colours/borders match the SoundEvent editor (#2e2e2e, 2px grey border,
+        # #515965 hover) but with tighter padding so the buttons stay small.
         toolbar = QToolBar(self)
         toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         toolbar.setIconSize(QSize(14, 14))
         toolbar.setStyleSheet(
-            "QToolBar { background-color:#1C1C1C; border:none; spacing:2px; padding:2px; }"
-            "QToolBar::separator { background:rgba(80,80,80,255); width:1px; margin:2px 3px; }"
+            "QToolBar { background-color:#2e2e2e; border:none; spacing:2px; padding:2px; }"
+            "QToolBar::separator { background:rgba(94, 94, 94,255); width:1px; margin:2px 3px; }"
             "QToolButton {"
             "  font: 580 8pt 'Segoe UI';"
-            "  color:#E3E3E3; background-color:#1C1C1C;"
-            "  border:2px solid rgba(80,80,80,255); border-radius:2px;"
+            "  color:#e5e5e5; background-color:#2e2e2e;"
+            "  border:2px solid rgba(94, 94, 94,255); border-radius:2px;"
             "  padding:1px 5px;"
             "}"
-            "QToolButton:hover { background-color:#414956; color:#FFFFFF; }"
-            "QToolButton:pressed { background-color:#1C1C1C; }"
-            "QToolButton:checked { background-color:#414956; }")
+            "QToolButton:hover { background-color:#515965; color:#FFFFFF; }"
+            "QToolButton:pressed { background-color:#2e2e2e; }"
+            "QToolButton:checked { background-color:#515965; }")
         # Actions excluded from the toolbar (stay accessible via menus/hotkeys)
         toolbar_excluded = {
             self.act_open, self.act_save, self.act_save_as,
@@ -410,7 +410,7 @@ class AudioDocument(QWidget):
         pg.setConfigOptions(antialias=True)
         self._vb = _SelectViewBox(self._set_selection, self._seek_to)
         self.plot = pg.PlotWidget(viewBox=self._vb)
-        self.plot.setBackground("#1C1C1C")
+        self.plot.setBackground("#2e2e2e")
         self.plot.showGrid(x=True, y=False, alpha=0.15)
         self.plot.setYRange(-1.05, 1.05)
         self.plot.setMouseEnabled(x=True, y=False)
@@ -444,9 +444,9 @@ class AudioDocument(QWidget):
         else:
             self.info_button.setIcon(info_icon)
         self.info_button.setStyleSheet(
-            "QToolButton { background-color:#1D1D1F; border:1px solid #333336;"
-            " border-radius:2px; color:#E3E3E3; }"
-            "QToolButton:hover { background-color:#414956; color:#FFFFFF; }")
+            "QToolButton { background-color:#2f2f31; border:1px solid #434346;"
+            " border-radius:2px; color:#e5e5e5; }"
+            "QToolButton:hover { background-color:#515965; color:#FFFFFF; }")
         self._info_overlay = DBInfoOverlay(self)
         self.info_button.clicked.connect(self._toggle_info)
         right.addWidget(self.info_button, 0, Qt.AlignHCenter)
@@ -456,7 +456,7 @@ class AudioDocument(QWidget):
 
         self.status = QLabel("Drop an audio file here, or use File ▸ Open. "
                              "Single-click to move the play line; left-drag to select.")
-        self.status.setStyleSheet("color:#9D9D9D; font: 9pt 'Segoe UI';")
+        self.status.setStyleSheet("color:#a5a5a5; font: 9pt 'Segoe UI';")
         root.addWidget(self.status)
 
     def _seek_to(self, x):
@@ -778,7 +778,7 @@ class AudioEditor(QMainWindow):
         self.explorer.tree.doubleClicked.connect(self._on_explorer_double_click)
 
         explorer_border = QWidget()
-        explorer_border.setStyleSheet("border:2px solid #363639;")
+        explorer_border.setStyleSheet("border:2px solid #464649;")
         _border_lay = QVBoxLayout(explorer_border)
         _border_lay.setContentsMargins(0, 0, 0, 0)
         _border_lay.addWidget(self.explorer.frame)

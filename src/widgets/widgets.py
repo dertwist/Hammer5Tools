@@ -271,11 +271,11 @@ class BoxSlider(QWidget):
 
     STYLE = """
     QLineEdit {
-        background-color: #1C1C1C;
-        color: #E3E3E3;
+        background-color: #2e2e2e;
+        color: #e5e5e5;
         border: none;
         padding: 0px;
-        selection-background-color: #414956;
+        selection-background-color: #515965;
         font: 580 10pt "Segoe UI";
     }
     """
@@ -390,15 +390,15 @@ class BoxSlider(QWidget):
 
         # Draw background
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor("#1C1C1C"))
+        painter.setBrush(QColor("#2e2e2e"))
         painter.drawRect(self.rect())
 
         # Draw border
-        painter.setPen(QPen(QColor("#363639")))
+        painter.setPen(QPen(QColor("#464649")))
         painter.drawRect(self.slider_rect)
 
         # Draw text
-        painter.setPen(QColor("#E3E3E3"))
+        painter.setPen(QColor("#e5e5e5"))
         value_text = f"{int(self.value) if self.int_output else self.value:.{self.digits}f}"
         painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
 
@@ -763,8 +763,8 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         # Set up custom colors and font for specific columns
         self.custom_colors = {
-            2: QColor("#9D9D9D"),
-            3: QColor("#9D9D9D"),
+            2: QColor("#a5a5a5"),
+            3: QColor("#a5a5a5"),
         }
         self.background_colors = {
             0: QColor("#f0f0f0"),  # Light grey background in column 0
@@ -846,7 +846,7 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         if role == Qt.ForegroundRole:
             if not is_enabled:
-                return QColor("#6B6B6B")  # Dim gray for disabled elements
+                return QColor("#777777")  # Dim gray for disabled elements
             if column in self.custom_colors:
                 return self.custom_colors[column]
 

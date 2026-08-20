@@ -397,7 +397,7 @@ class AttachmentThumbnailWidget(QFrame):
         self.preview_label = QLabel(self)
         self.preview_label.setAlignment(Qt.AlignCenter)
         self.preview_label.setText("Loading preview...")
-        self.preview_label.setStyleSheet("color: #888888; font-size: 11px; background: transparent; border: none;")
+        self.preview_label.setStyleSheet("color: #929292; font-size: 11px; background: transparent; border: none;")
         layout.addWidget(self.preview_label)
 
         self.setToolTip("Click to view full image in viewer")
@@ -437,7 +437,7 @@ class AttachmentThumbnailWidget(QFrame):
 
     def _on_download_error(self, err_msg: str):
         self.preview_label.setText("Image preview unavailable")
-        self.preview_label.setStyleSheet("color: #6D6D6D; font-size: 10px; font-style: italic;")
+        self.preview_label.setStyleSheet("color: #797979; font-size: 10px; font-style: italic;")
 
     def _update_scaled_pixmap(self):
         if self.pixmap is None or self.pixmap.isNull():
@@ -481,13 +481,13 @@ class AttachmentThumbnailWidget(QFrame):
         menu = QMenu(self)
         menu.setStyleSheet("""
             QMenu {
-                background-color: #1C1C1C;
-                color: #E3E3E3;
-                border: 1px solid #363639;
+                background-color: #2e2e2e;
+                color: #e5e5e5;
+                border: 1px solid #464649;
                 padding: 4px;
             }
             QMenu::item:selected {
-                background-color: #414956;
+                background-color: #515965;
             }
         """)
 
@@ -524,15 +524,15 @@ class VideoAttachmentWidget(QFrame):
                 margin: 0px;
             }
             QPushButton {
-                background-color: #262626;
-                color: #E3E3E3;
-                border: 1px solid #363639;
+                background-color: #373737;
+                color: #e5e5e5;
+                border: 1px solid #464649;
                 border-radius: 3px;
                 padding: 3px 10px;
                 font-size: 11px;
             }
             QPushButton:hover {
-                background-color: #3A78C4;
+                background-color: #4a83c9;
                 color: white;
             }
         """)
@@ -543,7 +543,7 @@ class VideoAttachmentWidget(QFrame):
 
         # Video indicator
         icon_label = QLabel("▶", self)
-        icon_label.setStyleSheet("color: #3A78C4; font-size: 14px; font-weight: bold;")
+        icon_label.setStyleSheet("color: #4a83c9; font-size: 14px; font-weight: bold;")
         layout.addWidget(icon_label)
 
         # Info text
@@ -552,11 +552,11 @@ class VideoAttachmentWidget(QFrame):
 
         title = self.attachment.alt_text or self.attachment.filename or "Video Recording"
         title_label = QLabel(title, self)
-        title_label.setStyleSheet("color: #E3E3E3; font-size: 11px; font-weight: bold;")
+        title_label.setStyleSheet("color: #e5e5e5; font-size: 11px; font-weight: bold;")
         text_layout.addWidget(title_label)
 
         sub_label = QLabel("Video Attachment", self)
-        sub_label.setStyleSheet("color: #9D9D9D; font-size: 10px;")
+        sub_label.setStyleSheet("color: #a5a5a5; font-size: 10px;")
         text_layout.addWidget(sub_label)
 
         layout.addLayout(text_layout, 1)
@@ -584,15 +584,15 @@ class FileAttachmentWidget(QFrame):
                 margin: 0px;
             }
             QPushButton {
-                background-color: #262626;
-                color: #E3E3E3;
-                border: 1px solid #363639;
+                background-color: #373737;
+                color: #e5e5e5;
+                border: 1px solid #464649;
                 border-radius: 3px;
                 padding: 3px 10px;
                 font-size: 11px;
             }
             QPushButton:hover {
-                background-color: #3A78C4;
+                background-color: #4a83c9;
                 color: white;
             }
         """)
@@ -609,7 +609,7 @@ class FileAttachmentWidget(QFrame):
         text_layout.setSpacing(2)
 
         name_label = QLabel(self.attachment.filename, self)
-        name_label.setStyleSheet("color: #E3E3E3; font-size: 11px; font-weight: bold;")
+        name_label.setStyleSheet("color: #e5e5e5; font-size: 11px; font-weight: bold;")
         text_layout.addWidget(name_label)
 
         size_str = ""
@@ -617,7 +617,7 @@ class FileAttachmentWidget(QFrame):
             mb = self.attachment.size_bytes / (1024 * 1024)
             size_str = f"{mb:.1f} MB" if mb >= 1.0 else f"{self.attachment.size_bytes / 1024:.0f} KB"
             size_label = QLabel(size_str, self)
-            size_label.setStyleSheet("color: #9D9D9D; font-size: 10px;")
+            size_label.setStyleSheet("color: #a5a5a5; font-size: 10px;")
             text_layout.addWidget(size_label)
 
         layout.addLayout(text_layout, 1)

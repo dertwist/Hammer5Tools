@@ -35,9 +35,9 @@ from src.editors.smartprop_editor.property_tooltips import (
 from src.editors.smartprop_editor.props.components import get_summary_hint, prettify_class_name
 from src.editors.smartprop_editor.props.model import ComponentRef
 
-_PANEL_BG   = "#1E1E1E"
+_PANEL_BG   = "#303030"
 _TITLE_COL  = "#4EC9B0"   # cyan-teal — matches Hammer's category colour
-_BODY_COL   = "#AAAAAA"
+_BODY_COL   = "#b1b1b1"
 _FONT_FACE  = "Segoe UI"
 
 
@@ -149,7 +149,7 @@ class HelpPanel(QFrame):
         self.setStyleSheet(f"""
             HelpPanel {{
                 background-color: {_PANEL_BG};
-                border-top: 1px solid #2D2D2D;
+                border-top: 1px solid #3e3e3e;
             }}
         """)
 
@@ -182,7 +182,7 @@ class HelpPanel(QFrame):
                 background: transparent;
             }}
             QScrollBar::handle:vertical {{
-                background: #444;
+                background: #555;
                 border-radius: 0px;
             }}
         """)

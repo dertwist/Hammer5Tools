@@ -54,7 +54,7 @@ class ErrorInfo(QDialog):
         self.details_text.setReadOnly(True)
         self.details_text.setPlainText(self.details)
         border_color = "#E5C07B" if is_warning else "#974533"
-        self.details_text.setStyleSheet(f"background-color: #1C1C1C; border-color: {border_color}")
+        self.details_text.setStyleSheet(f"background-color: #2e2e2e; border-color: {border_color}")
         main_layout.addWidget(self.details_text)
 
         buttons_layout = QHBoxLayout()

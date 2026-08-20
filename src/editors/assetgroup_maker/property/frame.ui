@@ -83,13 +83,13 @@
          <string notr="true">image: url(:/icons/more_vert.png);
 padding-left: 3px;
 padding-right: 3px;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
-background-color: #242424;</string>
+background-color: #363636;</string>
         </property>
         <property name="text">
          <string/>
@@ -121,16 +121,16 @@ QCheckBox {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-    color: #E3E3E3;
-background-color: #242424;
+    color: #e5e5e5;
+background-color: #363636;
     padding-left: 4px;
 }
 QCheckBox:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QCheckBox{
@@ -199,18 +199,18 @@ border-top: 0px solid black;
             <string notr="true">QToolButton {
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 border-left: None;
 border-top: None;
 border-right: None;
     padding: 2px;
-    color: #E3E3E3;
-    background-color: #242424;
+    color: #e5e5e5;
+    background-color: #363636;
 height:16px;
 width:16px;
 }
 QToolButton:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }</string>
            </property>
@@ -244,19 +244,19 @@ QToolButton:hover {
     border-top: 0px;
     border-left: 0px;
     border-right: 0px;
-    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-bottom: 2px solid rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-    color: #E3E3E3;
-    background-color: #242424;
+    color: #e5e5e5;
+    background-color: #363636;
 }
 
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }</string>
            </property>
@@ -295,19 +295,19 @@ QLineEdit::selection {
     border-top: 0px;
     border-left: 0px;
     border-right: 0px;
-    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-bottom: 2px solid rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-    color: #6D6D6D;
-    background-color: #242424;
+    color: #797979;
+    background-color: #363636;
 }
 
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }</string>
         </property>
@@ -336,21 +336,21 @@ QPushButton {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	border-top:0px;
 border-left:0px;
 border-right:0px;
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-	background-color: #242424;
+	background-color: #363636;
     padding-left: 8px;
 	padding-right: 8px;
-	color: #E3E3E3;
+	color: #e5e5e5;
 }
 
 QPushButton:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -359,17 +359,17 @@ QPushButton:pressed {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	border-top:0px;
 border-left:0px;
 border-right:0px;
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-	background-color: #242424;
+	background-color: #363636;
     padding-left: 8px;
 	padding-right: 8px;
-	color: #E3E3E3;
+	color: #e5e5e5;
 }</string>
         </property>
         <property name="text">
@@ -389,21 +389,21 @@ QPushButton {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	border-top:0px;
 border-left:0px;
 border-right:0px;
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-	background-color: #242424;
+	background-color: #363636;
     padding-left: 8px;
 	padding-right: 8px;
-	color: #E3E3E3;
+	color: #e5e5e5;
 }
 
 QPushButton:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -412,17 +412,17 @@ QPushButton:pressed {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	border-top:0px;
 border-left:0px;
 border-right:0px;
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-	background-color: #242424;
+	background-color: #363636;
     padding-left: 8px;
 	padding-right: 8px;
-	color: #E3E3E3;
+	color: #e5e5e5;
 }</string>
         </property>
         <property name="text">

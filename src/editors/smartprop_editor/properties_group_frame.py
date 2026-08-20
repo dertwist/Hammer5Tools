@@ -59,13 +59,13 @@ class PropertiesGroupFrame(QWidget):
                 f"image: url(:/icons/more_vert.png);\n"
                 f"padding-left: 3px;\n"
                 f"padding-right: 3px;\n"
-                f"border: 2px solid #CCCCCC;\n"
+                f"border: 2px solid #d0d0d0;\n"
                 f"border-top: 0px;\n"
                 f"border-right: 0px;\n"
                 f"border-bottom: 0px;\n"
                 f"border-left: 3px solid {color};\n"
                 f"border-radius: 0px;\n"
-                f"background-color: #242424;"
+                f"background-color: #363636;"
             )
 
     def add_action(self):

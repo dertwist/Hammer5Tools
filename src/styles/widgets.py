@@ -15,9 +15,9 @@ QCheckBox {
     font: 700 10pt "Segoe UI";
     height:14px;
     width:8x;
-    color: #E3E3E3;
+    color: #e5e5e5;
 }
 QCheckBox:hover {
     color: white;
-    background-color: #414956;
+    background-color: #515965;
 }"""

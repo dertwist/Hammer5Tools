@@ -140,8 +140,8 @@ class ElementRowWidget(QFrame):
 
     selected = Signal(object)  # ComponentRef
 
-    SELECTION_COLOR = "#4F5259"
-    HOVER_COLOR = "#33363D"
+    SELECTION_COLOR = "#5d6066"
+    HOVER_COLOR = "#43464d"
 
     def __init__(self, ref: ComponentRef, parent=None):
         super().__init__(parent)
@@ -175,7 +175,7 @@ class ElementRowWidget(QFrame):
         font_id = QFont()
         font_id.setPixelSize(11)
         self.lbl_id.setFont(font_id)
-        self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #606060; }")
+        self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #6d6d6d; }")
         layout.addWidget(self.lbl_id)
 
         self._update_appearance()
@@ -289,8 +289,8 @@ class ComponentTree(HierarchyTreeWidget):
             QTreeWidget {{ background: transparent; border: none; outline: none; }}
             QTreeWidget::item {{ height: {self.ROW_H - 2}px; border: none; background: transparent; }}
             QTreeWidget::item:alternate {{ background-color: {compact.BG_ALT}; }}
-            QTreeWidget::item:selected {{ background-color: #4F5259; }}
-            QTreeWidget::item:hover {{ background-color: #33363D; }}
+            QTreeWidget::item:selected {{ background-color: #5d6066; }}
+            QTreeWidget::item:hover {{ background-color: #43464d; }}
             QTreeWidget::branch {{ background: transparent; border: none; }}
         """)
         self.verticalScrollBar().valueChanged.connect(self._reset_scroll)
@@ -596,7 +596,7 @@ class ComponentList(QWidget):
             titem = QTreeWidgetItem()
             titem.setText(0, title)
             titem.setText(1, f"ID:{eid}")
-            titem.setForeground(1, QBrush(QColor("#606060")))
+            titem.setForeground(1, QBrush(QColor("#6d6d6d")))
             titem.setTextAlignment(1, Qt.AlignLeft | Qt.AlignVCenter)
             base_icon = _component_icon(kind, raw_class)
             comp_icon = make_composite_icon(base_icon, val, size=18)
@@ -604,7 +604,7 @@ class ComponentList(QWidget):
 
             enabled_val = val.get("m_bEnabled", True)
             if enabled_val is False or enabled_val == "false":
-                titem.setForeground(0, QBrush(QColor("#6B6B6B")))
+                titem.setForeground(0, QBrush(QColor("#777777")))
 
             titem.setData(0, Qt.UserRole, ref)
             tree.addTopLevelItem(titem)

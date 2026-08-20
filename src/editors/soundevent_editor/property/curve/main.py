@@ -199,10 +199,10 @@ class SoundEventEditorPropertyCurve(QWidget):
     MIN_POINTS_REQUIRED = 2
     CURVE_STEPS = 256
     GRID_ALPHA = 0.3
-    CURVE_COLOR = '#7F7F7F'
+    CURVE_COLOR = '#898989'
     CURVE_WIDTH = 1.5
-    BACKGROUND_COLOR = '#1C1C1C'
-    AXIS_COLOR = '#232323'
+    BACKGROUND_COLOR = '#2e2e2e'
+    AXIS_COLOR = '#353535'
     AXIS_WIDTH = 2
 
     def __init__(self, parent=None, label_text: str = None, value: dict = None, labels=None):

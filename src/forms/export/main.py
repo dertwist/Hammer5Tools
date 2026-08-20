@@ -76,7 +76,7 @@ class ExportAndImportAddonDialog(QDialog):
 
         # Style labels for dark mode
         for label in self.findChildren(QLabel):
-            label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
+            label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
 
     def _create_simple_tab(self):
         self.simple_tab = QWidget()

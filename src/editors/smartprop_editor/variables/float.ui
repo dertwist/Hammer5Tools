@@ -33,18 +33,18 @@
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
+    border-color: rgba(66, 66, 66, 255);
     padding: 8px;
     padding-left: 6px;
     padding-right: 6px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QWidget::hover {
 }
 .QWidget::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -79,15 +79,15 @@
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(66, 66, 66, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QFrame::hover {
 }
 .QFrame::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
      </property>
      <property name="frameShape">
@@ -142,9 +142,9 @@ font: 8pt &quot;Segoe UI&quot;;
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(94, 94, 94, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 border:0px;
 }
 
@@ -155,7 +155,7 @@ QDoubleSpinBox:hover {
 }
 
 QDoubleSpinBox:pressed {
-	background-color: #121212;
+	background-color: #252525;
 }
 
 QDoubleSpinBox::up-button {
@@ -165,7 +165,7 @@ QDoubleSpinBox::up-button {
     border-left: 2px solid black;
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -184,7 +184,7 @@ QDoubleSpinBox::down-button {
     border-left: 2px solid black;
     border-top: 2px solid black;
 border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -229,15 +229,15 @@ QDoubleSpinBox::down-arrow {
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(66, 66, 66, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QFrame::hover {
 }
 .QFrame::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
      </property>
      <property name="frameShape">
@@ -271,10 +271,10 @@ QDoubleSpinBox::down-arrow {
          <string notr="true">QCheckBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:4px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 	border:0px;
 }
 
@@ -298,9 +298,9 @@ QCheckBox::indicator:checked {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(94, 94, 94, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 border:0px;
 }
 
@@ -311,7 +311,7 @@ QDoubleSpinBox:hover {
 }
 
 QDoubleSpinBox:pressed {
-	background-color: #121212;
+	background-color: #252525;
 }
 
 QDoubleSpinBox::up-button {
@@ -321,7 +321,7 @@ QDoubleSpinBox::up-button {
     border-left: 2px solid black;
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -340,7 +340,7 @@ QDoubleSpinBox::down-button {
     border-left: 2px solid black;
     border-top: 2px solid black;
 border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -353,7 +353,7 @@ QDoubleSpinBox::down-arrow {
 }
 
 QDoubleSpinBox:disabled {
-	color: rgba(125, 125, 125, 100);
+	color: rgba(135, 135, 135, 100);
 }</string>
         </property>
         <property name="decimals">
@@ -389,15 +389,15 @@ QDoubleSpinBox:disabled {
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(66, 66, 66, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QFrame::hover {
 }
 .QFrame::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
      </property>
      <property name="frameShape">
@@ -431,10 +431,10 @@ QDoubleSpinBox:disabled {
          <string notr="true">QCheckBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:4px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 	border:0px;
 }
 
@@ -461,9 +461,9 @@ QCheckBox::indicator:checked {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(94, 94, 94, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 border:0px;
 }
 
@@ -474,7 +474,7 @@ QDoubleSpinBox:hover {
 }
 
 QDoubleSpinBox:pressed {
-	background-color: #121212;
+	background-color: #252525;
 }
 
 QDoubleSpinBox::up-button {
@@ -484,7 +484,7 @@ QDoubleSpinBox::up-button {
     border-left: 2px solid black;
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -503,7 +503,7 @@ QDoubleSpinBox::down-button {
     border-left: 2px solid black;
     border-top: 2px solid black;
 border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 	width:16px;
     margin:0px;
 border:0px;
@@ -516,7 +516,7 @@ QDoubleSpinBox::down-arrow {
 }
 
 QDoubleSpinBox:disabled {
-	color: rgba(125, 125, 125, 100);
+	color: rgba(135, 135, 135, 100);
 }</string>
         </property>
         <property name="decimals">

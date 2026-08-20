@@ -34,10 +34,10 @@ from src.editors.smartprop_editor.props.model import ComponentRef
 from src.editors.smartprop_editor.props.legacy_property_list import LegacyPropertyList
 
 # ── Colours ────────────────────────────────────────────────────────────────
-_HDR_BG      = "#1A1A1A"
-_HDR_BG_HVR  = "#252525"
-_HDR_FG      = "#C8C8C8"
-_HDR_BORDER  = "#333333"
+_HDR_BG      = "#2c2c2c"
+_HDR_BG_HVR  = "#363636"
+_HDR_FG      = "#cccccc"
+_HDR_BORDER  = "#434343"
 _ARROW_OPEN  = "▼"
 _ARROW_SHUT  = "►"
 
@@ -168,7 +168,7 @@ class SmartPropPropertyPanel(QWidget):
         self.splitter.setHandleWidth(4)
         self.splitter.setStyleSheet("""
             QSplitter::handle {
-                background-color: #2A2A2A;
+                background-color: #3b3b3b;
             }
             QSplitter::handle:hover {
                 background-color: #4A7EBB;

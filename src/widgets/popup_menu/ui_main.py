@@ -33,12 +33,12 @@ class Ui_PoPupMenu(object):
         self.horizontalWidget.setMinimumSize(QSize(0, 30))
         self.horizontalWidget.setMaximumSize(QSize(16777215, 30))
         self.horizontalWidget.setStyleSheet(u"QWidget  {\n"
-"    background-color: #151515;\n"
+"    background-color: #272727;\n"
 "    outline: none;\n"
 "	border:2px solid black;\n"
 "	border-bottom:0px solid black;\n"
 "	border-radius: 0px;\n"
-"	border-color: rgba(80, 80, 80, 255);\n"
+"	border-color: rgba(94, 94, 94, 255);\n"
 "}")
         self.horizontalLayout = QHBoxLayout(self.horizontalWidget)
         self.horizontalLayout.setSpacing(6)
@@ -47,15 +47,15 @@ class Ui_PoPupMenu(object):
         self.lineEdit = QLineEdit(self.horizontalWidget)
         self.lineEdit.setObjectName(u"lineEdit")
         self.lineEdit.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid #CCCCCC;\n"
+"    border: 0px solid #d0d0d0;\n"
 "    border-radius: 0px;\n"
-"    color: #E3E3E3;\n"
+"    color: #e5e5e5;\n"
 "	font: 700 10pt \"Segoe UI\";\n"
 "margin: 0px;\n"
 "padding: 0px;\n"
 "padding-top: 0px;\n"
 "padding-bottom: 0px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
+"        border-color: rgba(94, 94, 94, 255);\n"
 "height:22px;\n"
 "}\n"
 "QLineEdit:focus {\n"
@@ -98,7 +98,7 @@ class Ui_PoPupMenu(object):
     def retranslateUi(self, PoPupMenu):
         PoPupMenu.setWindowTitle(QCoreApplication.translate("PoPupMenu", u"Form", None))
 #if QT_CONFIG(whatsthis)
-        PoPupMenu.setWhatsThis(QCoreApplication.translate("PoPupMenu", u"<html><head/><body><pre style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Courier New'; background-color:#1f1f1f;\"><br/></pre></body></html>", None))
+        PoPupMenu.setWhatsThis(QCoreApplication.translate("PoPupMenu", u"<html><head/><body><pre style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Courier New'; background-color:#313131;\"><br/></pre></body></html>", None))
 #endif // QT_CONFIG(whatsthis)
         self.lineEdit.setPlaceholderText(QCoreApplication.translate("PoPupMenu", u"Search...", None))
     # retranslateUi

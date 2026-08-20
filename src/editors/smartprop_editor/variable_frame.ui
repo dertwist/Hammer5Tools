@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: #1C1C1C;</string>
+   <string notr="true">background-color: #2e2e2e;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -68,13 +68,13 @@
          <string notr="true">image: url(:/icons/more_vert.png);
 padding-left: 3px;
 padding-right: 3px;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
-background-color: #242424;</string>
+background-color: #363636;</string>
         </property>
         <property name="text">
          <string/>
@@ -103,16 +103,16 @@ QCheckBox {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:14px;
     padding-top: 2px;
     padding-bottom:4px;
-    color: #E3E3E3;
-background-color: #242424;
+    color: #e5e5e5;
+background-color: #363636;
     padding-left: 4px;
 }
 QCheckBox:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QCheckBox{
@@ -156,16 +156,16 @@ QCheckBox {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:14px;
     padding-top: 2px;
     padding-bottom:2px;
-    color: #E3E3E3;
+    color: #e5e5e5;
     padding-left: 4px;
-background-color: #242424;
+background-color: #363636;
 }
 QCheckBox:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QCheckBox{
@@ -200,21 +200,21 @@ border-top: 0px solid black;
         <property name="styleSheet">
          <string notr="true">QLineEdit {
 	font: 8pt &quot;Segoe UI&quot;;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-color: #E3E3E3;
-background-color: #242424;
+color: #e5e5e5;
+background-color: #363636;
 }
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -263,21 +263,21 @@ QLineEdit::selection {
         <property name="styleSheet">
          <string notr="true">QLineEdit {
 	font: 8pt &quot;Segoe UI&quot;;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-	color: rgb(188, 188, 188);
-	background-color: #242424;
+	color: rgb(193, 193, 193);
+	background-color: #363636;
 }
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -306,16 +306,16 @@ QToolButton {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:14px;
     padding-top: 2px;
     padding-bottom:2px;
-    color: #E3E3E3;
+    color: #e5e5e5;
     padding-left: 4px;
-background-color: #242424;
+background-color: #363636;
 }
 QToolButton:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QToolButton{
@@ -348,21 +348,21 @@ border-top: 0px solid black;
         <property name="styleSheet">
          <string notr="true">QLineEdit {
 	font: 8pt &quot;Segoe UI&quot;;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-	color: rgb(188, 188, 188);
-	background-color: #242424;
+	color: rgb(193, 193, 193);
+	background-color: #363636;
 }
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -393,21 +393,21 @@ QLineEdit::selection {
         <property name="styleSheet">
          <string notr="true">QLineEdit {
 	font: 8pt &quot;Segoe UI&quot;;
-    border: 2px solid #CCCCCC;
+    border: 2px solid #d0d0d0;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 0px;
     padding: 2px;
-	color: rgb(188, 188, 188);
-	background-color: #242424;
+	color: rgb(193, 193, 193);
+	background-color: #363636;
 }
 QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 QLineEdit::selection {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
@@ -430,7 +430,7 @@ QLineEdit::selection {
    <item>
     <widget class="QFrame" name="frame_layout">
      <property name="styleSheet">
-      <string notr="true">QFrame#frame_layout { border: 0px; border-top: 2px solid rgba(80, 80, 80, 255); }</string>
+      <string notr="true">QFrame#frame_layout { border: 0px; border-top: 2px solid rgba(94, 94, 94, 255); }</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::Shape::NoFrame</enum>
@@ -478,15 +478,15 @@ QLineEdit::selection {
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(66, 66, 66, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QFrame::hover {
 }
 .QFrame::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
           </property>
           <property name="frameShape">
@@ -532,12 +532,12 @@ font: 8pt &quot;Segoe UI&quot;;
             <widget class="QLineEdit" name="varialbe_display_name">
              <property name="styleSheet">
               <string notr="true">QLineEdit {
-    border: 0px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
+    border: 0px solid #d0d0d0;
+    border-color: rgba(94, 94, 94, 255);
     border-radius: 2px;
     padding: 2px;
-    color: #E3E3E3;
-background-color: #1C1C1C;
+    color: #e5e5e5;
+background-color: #2e2e2e;
 
 }
 </string>
@@ -566,15 +566,15 @@ background-color: #1C1C1C;
     border-left: 0px;
     border-right: 0px;
 	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    border-color: rgba(66, 66, 66, 255);
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 .QFrame::hover {
 }
 .QFrame::selected {
-    background-color: #414956;
+    background-color: #515965;
 }</string>
           </property>
           <property name="frameShape">

@@ -73,7 +73,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 ## 4. UI Widgets & Styling System (`src/widgets/` & `src/styles/`)
 
 ### Global QSS Stylesheet (`src/styles/qt_global_stylesheet.py`)
-- **`QT_Stylesheet_global`**: Primary Qt QSS stylesheet string defining dark palette (`#151515`, `#1C1C1C`, `#1D1D1F`, `#E3E3E3`, `#363639`, `#414956`).
+- **`QT_Stylesheet_global`**: Primary Qt QSS stylesheet string defining dark palette (`#272727`, `#2E2E2E`, `#2F2F31`, `#E5E5E5`, `#464649`, `#515965`).
 
 ### Styling Helpers (`src/styles/common.py` & `property_icons.py`)
 - Utility functions for tab styling, palette colors, and property type icon generation.

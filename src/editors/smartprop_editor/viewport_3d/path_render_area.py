@@ -345,7 +345,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             self._perform_pick_flag = False
             self._do_picking_pass()
 
-        GL.glClearColor(0.11, 0.11, 0.11, 1.0)
+        GL.glClearColor(0.18, 0.18, 0.18, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         self._upload_curve_if_needed()

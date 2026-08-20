@@ -332,8 +332,8 @@ class PropertyFrame(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         # Two stylesheets would otherwise paint over everything paintEvent draws:
-        # the .ui's flat "background-color: #1C1C1C" on the form, and the
-        # application-wide "QWidget { background-color: #151515; }". Replace the
+        # the .ui's flat "background-color: #2e2e2e" on the form, and the
+        # application-wide "QWidget { background-color: #272727; }". Replace the
         # first with an explicit transparent rule, which also beats the second
         # (a widget's own sheet wins over the application sheet). paintEvent
         # then supplies the base colour, the zebra stripes and the highlight.
@@ -1309,13 +1309,13 @@ class PropertyFrame(QWidget):
                 f"image: url(:/icons/more_vert.png);\n"
                 f"padding-left: 3px;\n"
                 f"padding-right: 3px;\n"
-                f"border: 2px solid #CCCCCC;\n"
+                f"border: 2px solid #d0d0d0;\n"
                 f"border-top: 0px;\n"
                 f"border-right: 0px;\n"
                 f"border-bottom: 0px;\n"
                 f"border-left: 3px solid {color};\n"
                 f"border-radius: 0px;\n"
-                f"background-color: #242424;"
+                f"background-color: #363636;"
             )
 
     def set_selected(self, selected):
@@ -1325,7 +1325,7 @@ class PropertyFrame(QWidget):
         self.ui.frame.style().polish(self.ui.frame)
         if selected:
             self.ui.frame.setStyleSheet(
-                'QFrame#frame { background-color: #2A2E38; }'
+                'QFrame#frame { background-color: #3b3f48; }'
             )
         else:
             self.ui.frame.setStyleSheet('')
