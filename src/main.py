@@ -281,7 +281,7 @@ if __name__ == "__main__":
         from PySide6.QtCore import QCoreApplication
         QCoreApplication.addLibraryPath(plugins_dir)
         
-    # Interface brightness (Preferences -> Appearance): must be active before
+    # Interface brightness (Preferences -> General): must be active before
     # any stylesheet is set so the global QSS is mapped to the chosen level
     from src.styles import theme
     from src.settings.common import get_settings_value
