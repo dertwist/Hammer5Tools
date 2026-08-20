@@ -51,13 +51,14 @@ _INDEX_TTL_SECONDS = 24 * 60 * 60
 
 @dataclass
 class ModelEntry:
-    """One browsable .vmdl."""
+    """One browsable asset entry."""
     path: str            # game-relative, forward slashes: "models/props/foo.vmdl"
     name: str            # basename with extension: "foo.vmdl"
     source: str          # SOURCE_ADDON | SOURCE_CORE
     mod: str             # owning addon name, or "csgo" for Core
     fs_path: str = ""    # absolute on-disk path; "" when the model lives in a VPK
     size: int = 0        # bytes; 0 when unknown (VPK entries report compiled size)
+    asset_type: str = "vmdl"  # vmdl, vmat, vsmart, vsndevts, vdata, vpcf, vpost, vmap, vtex
 
     @property
     def folder(self) -> str:
@@ -85,57 +86,69 @@ def _rel_resource_path(abs_path: str, content_root: str) -> Optional[str]:
     return rel.replace("\\", "/")
 
 
-def _scan_disk_tree(root: str, source: str, mod: str, extension: str) -> List[ModelEntry]:
-    """Collect every model under <root>/models matching ``extension``.
+SUPPORTED_EXTENSIONS = (".vmdl", ".vmat", ".vsmart", ".vsndevts", ".vdata", ".vpcf", ".vpost", ".vmap", ".vtex")
 
-    ``extension`` is ".vmdl" for content trees and ".vmdl_c" for game trees; the
-    compiled suffix is stripped so both yield the same resource path.
-    """
+
+def _scan_disk_tree(
+    root: str, source: str, mod: str, extensions: Optional[tuple] = None, is_compiled: bool = False
+) -> List[ModelEntry]:
+    """Collect assets under <root> matching extensions."""
     entries = []
-    models_dir = os.path.join(root, "models")
-    if not os.path.isdir(models_dir):
+    if not os.path.isdir(root):
         return entries
 
-    for dirpath, _dirnames, filenames in os.walk(models_dir):
+    exts = tuple(extensions) if extensions else SUPPORTED_EXTENSIONS
+
+    for dirpath, _dirnames, filenames in os.walk(root):
         for filename in filenames:
-            if not filename.endswith(extension):
+            fname_lower = filename.lower()
+            matched_ext = None
+            if is_compiled:
+                for ext in exts:
+                    if fname_lower.endswith(ext + "_c"):
+                        matched_ext = ext
+                        break
+            else:
+                for ext in exts:
+                    if fname_lower.endswith(ext):
+                        matched_ext = ext
+                        break
+
+            if not matched_ext:
                 continue
+
             abs_path = os.path.join(dirpath, filename)
             rel = _rel_resource_path(abs_path, root)
             if rel is None:
                 continue
             if rel.endswith("_c"):
                 rel = rel[:-2]
+            clean_type = matched_ext.lstrip('.').lower()
             try:
                 size = os.path.getsize(abs_path)
             except OSError:
                 size = 0
             entries.append(ModelEntry(
                 path=rel, name=os.path.basename(rel), source=source, mod=mod,
-                fs_path=abs_path, size=size,
+                fs_path=abs_path, size=size, asset_type=clean_type,
             ))
     return entries
 
 
-def _scan_vpks(game_root: str, source: str, mod: str) -> List[ModelEntry]:
-    """Enumerate models/**.vmdl_c inside a mount's VPKs via ValvePak.
-
-    VPK stores *compiled* names (.vmdl_c); the browser presents source paths, so
-    the trailing "_c" is stripped to match what a .vsmart field expects.
-    """
-    # Only *_dir.vpk are readable archives; the numbered pak01_0xx.vpk siblings
-    # are data blobs the dir index points into.
+def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple] = None) -> List[ModelEntry]:
+    """Enumerate assets inside a mount's VPKs via ValvePak."""
     vpk_paths = sorted(glob.glob(os.path.join(game_root, "*_dir.vpk")))
     if not vpk_paths:
         return []
+
+    exts = tuple(extensions) if extensions else SUPPORTED_EXTENSIONS
+    bucket_keys = [ext.lstrip('.') + "_c" for ext in exts]
 
     entries: List[ModelEntry] = []
     try:
         from src.dotnet import DotNetInterop
 
         interop = DotNetInterop()
-        # setup_vrf() is what bootstraps pythonnet, so the System import has to
-        # follow it — importing first raises "No module named 'System'".
         _, _, _, _, _, Package = interop.setup_vrf()
         import System
     except Exception as exc:
@@ -148,28 +161,27 @@ def _scan_vpks(game_root: str, source: str, mod: str) -> List[ModelEntry]:
             package = System.Activator.CreateInstance(Package)
             package.Read(vpk_path)
 
-            # Entries are bucketed by extension; "vmdl_c" is the only one we want.
-            try:
-                bucket = package.Entries["vmdl_c"]
-            except Exception:
-                continue
-            if bucket is None:
-                continue
-
-            for entry in bucket:
-                directory = str(entry.DirectoryName or "").replace("\\", "/")
-                filename = f"{entry.FileName}.vmdl"
-                rel = f"{directory}/{filename}" if directory else filename
-                if not rel.startswith("models/"):
-                    continue
+            for b_key in bucket_keys:
                 try:
-                    size = int(entry.TotalLength)
+                    bucket = package.Entries[b_key]
                 except Exception:
-                    size = 0
-                entries.append(ModelEntry(
-                    path=rel, name=filename, source=source, mod=mod,
-                    fs_path="", size=size,
-                ))
+                    continue
+                if bucket is None:
+                    continue
+
+                raw_ext = b_key[:-2]  # strip _c
+                for entry in bucket:
+                    directory = str(entry.DirectoryName or "").replace("\\", "/")
+                    filename = f"{entry.FileName}.{raw_ext}"
+                    rel = f"{directory}/{filename}" if directory else filename
+                    try:
+                        size = int(entry.TotalLength)
+                    except Exception:
+                        size = 0
+                    entries.append(ModelEntry(
+                        path=rel, name=filename, source=source, mod=mod,
+                        fs_path="", size=size, asset_type=raw_ext,
+                    ))
         except Exception as exc:
             print(f"[model_browser] VPK scan failed for {vpk_path}: {exc}")
         finally:
@@ -181,35 +193,40 @@ def _scan_vpks(game_root: str, source: str, mod: str) -> List[ModelEntry]:
     return entries
 
 
-def _scan_mount(cs2_path: str, mount: str, source: str) -> List[ModelEntry]:
-    """Collect one content mount from all three places it can hold models.
-
-    Order matters: content-side sources first (what the user edits), then loose
-    compiled files, then VPKs — the engine resolves the filesystem ahead of the
-    pak, and the de-dupe in scan_all() keeps whichever it sees first.
-    """
+def _scan_mount(
+    cs2_path: str, mount: str, source: str, extensions: Optional[tuple] = None, scan_vpk: bool = True
+) -> List[ModelEntry]:
+    """Collect one content mount from content, game, and VPKs."""
     entries: List[ModelEntry] = []
     entries += _scan_disk_tree(
-        os.path.join(cs2_path, "content", mount), source, mount, ".vmdl")
+        os.path.join(cs2_path, "content", mount), source, mount, extensions=extensions, is_compiled=False
+    )
     game_root = os.path.join(cs2_path, "game", mount)
-    entries += _scan_disk_tree(game_root, source, mount, ".vmdl_c")
-    entries += _scan_vpks(game_root, source, mount)
+    entries += _scan_disk_tree(
+        game_root, source, mount, extensions=extensions, is_compiled=True
+    )
+    if scan_vpk:
+        entries += _scan_vpks(game_root, source, mount, extensions=extensions)
     return entries
 
 
-def active_mounts(active_addon: Optional[str] = None) -> List[str]:
-    """The mounts on the active addon's search path, highest precedence first."""
+def active_mounts(active_addon: Optional[str] = None, addon_only: bool = False) -> List[str]:
+    """The mounts on the active search path."""
     mounts = []
     if active_addon:
         mounts.append(f"csgo_addons/{active_addon}")
-    mounts.extend(GAME_MOUNTS)
+    if not addon_only:
+        mounts.extend(GAME_MOUNTS)
     return mounts
 
 
-def scan_all(active_addon: Optional[str] = None) -> List[ModelEntry]:
+def scan_all(
+    active_addon: Optional[str] = None,
+    addon_only: bool = False,
+    asset_types: Optional[List[str]] = None
+) -> List[ModelEntry]:
     """Build the full index. Blocking — call from ScanWorker, not the GUI thread."""
-    from src.common import get_cs2_path
-    from src.settings.common import get_addon_name
+    from src.settings.main import get_cs2_path, get_addon_name
 
     cs2_path = get_cs2_path()
     if not cs2_path:
@@ -217,13 +234,14 @@ def scan_all(active_addon: Optional[str] = None) -> List[ModelEntry]:
 
     active_addon = active_addon or get_addon_name()
 
-    # Insertion order encodes precedence: the first entry to claim a resource
-    # path wins, so an addon model shadows the Core model it overrides — exactly
-    # how the engine resolves it.
+    exts = tuple(asset_types) if asset_types else SUPPORTED_EXTENSIONS
+
     entries: List[ModelEntry] = []
-    for mount in active_mounts(active_addon):
+    mount_list = active_mounts(active_addon, addon_only=addon_only)
+    for mount in mount_list:
         source = SOURCE_ADDON if mount.startswith("csgo_addons/") else SOURCE_CORE
-        entries += _scan_mount(cs2_path, mount, source)
+        # Only scan VPKs if we are including game mounts (not addon only)
+        entries += _scan_mount(cs2_path, mount, source, extensions=exts, scan_vpk=(not addon_only))
 
     seen = set()
     unique = []
@@ -238,8 +256,16 @@ def scan_all(active_addon: Optional[str] = None) -> List[ModelEntry]:
     return unique
 
 
-def load_cached_index(active_addon: Optional[str]) -> Optional[List[ModelEntry]]:
+def load_cached_index(
+    active_addon: Optional[str],
+    addon_only: bool = False,
+    asset_types: Optional[List[str]] = None
+) -> Optional[List[ModelEntry]]:
     """Return a still-valid cached index, or None to force a rescan."""
+    # Don't use persistent model-only cache for specialized addon_only or multi-type scans
+    if addon_only or (asset_types is not None and set(asset_types) != set(SUPPORTED_EXTENSIONS)):
+        return None
+
     cache_file = _index_cache_file()
     if not os.path.isfile(cache_file):
         return None
@@ -282,40 +308,41 @@ class ScanSignals(QObject):
 
 
 class ScanWorker(QRunnable):
-    """Builds the index off the GUI thread.
+    """Builds the index off the GUI thread."""
 
-    ``signals`` is supplied by the caller rather than created here so its
-    lifetime follows the dialog, not the runnable: QThreadPool deletes the
-    runnable as soon as run() returns, and a scan that outlives the dialog it
-    was started for would otherwise emit into a freed QObject.
-    """
-
-    def __init__(self, active_addon: Optional[str], signals: ScanSignals,
-                 use_cache: bool = True):
+    def __init__(
+        self,
+        active_addon: Optional[str],
+        signals: ScanSignals,
+        use_cache: bool = True,
+        addon_only: bool = False,
+        asset_types: Optional[List[str]] = None
+    ):
         super().__init__()
         self.active_addon = active_addon
         self.signals = signals
         self.use_cache = use_cache
+        self.addon_only = addon_only
+        self.asset_types = asset_types
 
     def _emit(self, entries: List[ModelEntry]):
         try:
             self.signals.finished.emit(entries)
         except RuntimeError:
-            # Dialog closed mid-scan; the index cache still got written, so the
-            # work is not wasted.
             pass
 
     @Slot()
     def run(self):
         entries: List[ModelEntry] = []
         try:
-            if self.use_cache:
-                cached = load_cached_index(self.active_addon)
+            if self.use_cache and not self.addon_only:
+                cached = load_cached_index(self.active_addon, addon_only=self.addon_only, asset_types=self.asset_types)
                 if cached is not None:
                     self._emit(cached)
                     return
-            entries = scan_all(self.active_addon)
-            save_cached_index(self.active_addon, entries)
+            entries = scan_all(self.active_addon, addon_only=self.addon_only, asset_types=self.asset_types)
+            if not self.addon_only and not self.asset_types:
+                save_cached_index(self.active_addon, entries)
         except Exception as exc:
             print(f"[model_browser] scan failed: {exc}")
         self._emit(entries)

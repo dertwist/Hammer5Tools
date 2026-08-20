@@ -12,6 +12,7 @@ from shiboken6 import isValid
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, get_addon_dir, debug
 from src.widgets.common import ErrorInfo
 from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
+from src.widgets.tree import BranchTreeView
 from src.styles.common import *
 from src.common import enable_dark_title_bar
 
@@ -56,10 +57,12 @@ class CustomFileSystemModel(QFileSystemModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._cache = {}
+        self._folder_icon = QIcon('://valve_common/icons/tools/common/folder_sm.png')
+        self._folder_icon.addFile('://valve_common/icons/tools/common/folder.png')
 
     def data(self, index, role):
         if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
-            return QIcon('://icons/folder_16dp.svg')
+            return self._folder_icon
         elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             for ext, icon_path in file_icons.items():
@@ -370,7 +373,7 @@ class Explorer(QMainWindow):
         self.filter_proxy_model.setSourceModel(self.model)
         self.filter_proxy_model.setFilterKeyColumn(CustomFileSystemModel.NAME_COLUMN)
         self.filter_proxy_model.setDynamicSortFilter(True)
-        self.tree = QTreeView(self)
+        self.tree = BranchTreeView(self)
         self.tree.setModel(self.filter_proxy_model)
         self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(self.tree_directory)))
 
@@ -1533,7 +1536,7 @@ class Explorer(QMainWindow):
                 item.setToolTip(path)
                 item.setData(Qt.UserRole, path)  # store absolute path
                 if os.path.isdir(path):
-                    item.setIcon(QIcon("://icons/folder_16dp.svg"))
+                    item.setIcon(QIcon("://valve_common/icons/tools/common/folder_sm.png"))
                 else:
                     ext = os.path.splitext(path)[1].lower()
                     if ext in file_icons:
