@@ -230,15 +230,16 @@ def _get_model_icon(grayscaled: bool = False) -> Optional[QPixmap]:
 
 def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
     """Tile with the model_lg.png icon."""
+    from src.styles import theme
     pixmap = QPixmap(size, size)
-    pixmap.fill(QColor(compact.BG))
+    pixmap.fill(QColor(theme.color(compact.BG)))
 
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
     painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
     # Outer border
-    painter.setPen(QColor("#252528" if grayscaled else "#3e3e41"))
+    painter.setPen(theme.qcolor("#252528" if grayscaled else "#3e3e41"))
     inset = size // 5
     painter.drawRect(inset, inset, size - 2 * inset, size - 2 * inset)
 

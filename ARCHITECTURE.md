@@ -78,6 +78,11 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### Styling Helpers (`src/styles/common.py` & `property_icons.py`)
 - Utility functions for tab styling, palette colors, and property type icon generation.
 
+### Theme Brightness (`src/styles/theme.py`)
+- **`set_brightness_level(level)`**: Activates interface brightness 1/2/3 (`APP/brightness_level` in settings.ini; level 2 = identity).
+- **`install()`**: Patches `QWidget`/`QApplication` `setStyleSheet` so every stylesheet is mapped to the active level; `reapply()` restyles all live widgets (instant switching from Preferences → Appearance).
+- **`color()` / `qcolor()` / `gl_clear_color()`**: Level-aware lookups for QPainter and OpenGL sites that bypass stylesheets.
+
 ### Reusable Widgets (`src/widgets/`)
 - **`CustomTreeWidget` (`src/widgets/tree.py`)**: Enhanced `QTreeWidget` with drag-and-drop support, inline editing, and custom signals.
 - **`ConsoleWidget` (`src/widgets/console.py`)**: Embedded logger and output viewer.

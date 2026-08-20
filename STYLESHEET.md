@@ -29,6 +29,18 @@ The application uses a dark theme palette defined in `src/styles/qt_global_style
 | `pressed` | `#6D7882` | Button active/pressed states |
 | `accent` | `#4A83C9` | Primary action buttons, focused input borders |
 
+### Interface Brightness Levels
+
+The palette above is the **level 2 (Standard)** canonical source: every QSS color literal in the codebase is written at level 2. `src/styles/theme.py` maps all stylesheets at runtime to the user's brightness choice (Preferences → Appearance, stored as `APP/brightness_level`):
+
+| Level | Name | Mapping |
+|---|---|---|
+| 1 | Dark | Inverse of the brightening rewrite — restores the original pre-brightening palette (e.g. `#272727 → #151515`) |
+| 2 | Standard | Identity — literals pass through untouched (default) |
+| 3 | Bright | One more 8%-toward-white lift of every palette color (e.g. `#272727 → #383838`) |
+
+All colors must therefore be written as level-2 literals. New palette colors MUST be added to `_OLD_TO_LEVEL2` in `src/styles/theme.py` (and `dev/scripts/brighten_colors.py`) so they follow the brightness setting. Colors that bypass `setStyleSheet()` (QPainter pens, OpenGL clear colors) MUST resolve through `theme.qcolor()` / `theme.color()` / `theme.gl_clear_color()` instead of raw literals.
+
 ---
 
 ## 3. Typography Standards

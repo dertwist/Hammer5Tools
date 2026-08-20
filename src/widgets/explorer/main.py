@@ -17,16 +17,17 @@ from src.common import enable_dark_title_bar
 
 class ZebraMenu(QMenu):
     """QMenu with alternating (zebra-striped) row backgrounds, since QSS has no nth-child selector for QMenu::item."""
-    _EVEN_COLOR = QColor("#2f2f31")
-    _ODD_COLOR = QColor("#37373c")
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        from src.styles import theme
+        even = theme.qcolor("#2f2f31")
+        odd = theme.qcolor("#37373c")
         for i, action in enumerate(self.actions()):
             if action.isSeparator():
                 continue
             rect = self.actionGeometry(action)
-            painter.fillRect(rect, self._ODD_COLOR if i % 2 else self._EVEN_COLOR)
+            painter.fillRect(rect, odd if i % 2 else even)
         painter.end()
         super().paintEvent(event)
 
