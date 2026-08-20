@@ -188,7 +188,7 @@ class Ui_Widget(object):
 "    padding-left: 5px;\n"
 "    padding-right: 5px;\n"
 "    background-color: #"
-                        "414956;\n"
+                        "515965;\n"
 "    color: white;\n"
 "    border: none; /* Remove border */\n"
 "    outline: none; /* Remove outline */\n"

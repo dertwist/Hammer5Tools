@@ -16,8 +16,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QDockWidget, QLabel, QMainWindow,
-    QSizePolicy, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QSizePolicy,
+    QTabWidget, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -75,13 +75,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.DocumentTabWidget)
 
-        self.placeholder_label = QLabel(self.centralwidget)
-        self.placeholder_label.setObjectName(u"placeholder_label")
-        self.placeholder_label.setStyleSheet(u"color: gray; font-size: 13px;")
-        self.placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.verticalLayout.addWidget(self.placeholder_label)
-
         MainWindow.setCentralWidget(self.centralwidget)
         self.ExplorerDock = QDockWidget(MainWindow)
         self.ExplorerDock.setObjectName(u"ExplorerDock")
@@ -120,7 +113,6 @@ class Ui_MainWindow(object):
         self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
-        self.placeholder_label.setText(QCoreApplication.translate("MainWindow", u"Open or create a new file", None))
         self.ExplorerDock.setWindowTitle("")
     # retranslateUi
 
