@@ -68,7 +68,8 @@ def _draw_disabled_frame(widget):
         GL.glBindVertexArray(0)
         GL.glUseProgram(0)
         GL.glDisable(GL.GL_DEPTH_TEST)
-        GL.glClearColor(0.18, 0.18, 0.18, 1.0)
+        from src.styles import theme as _theme
+        GL.glClearColor(*_theme.gl_clear_color(), 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
     except Exception:
         pass

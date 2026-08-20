@@ -55,6 +55,7 @@ class PreferencesDialog(QDialog):
         self.tabWidget.setStyleSheet("background-color: #2e2e2e;")
         self.main_layout.addWidget(self.tabWidget)
         # Create tabs and bottom action panel
+        self.create_appearance_tab()
         self.create_general_tab()
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
@@ -84,6 +85,35 @@ class PreferencesDialog(QDialog):
             }
         """)
         return scroll_area
+
+    def create_appearance_tab(self):
+        appearance_content = QWidget()
+        layout = QVBoxLayout(appearance_content)
+        layout.setContentsMargins(10, 10, 10, 10)
+        # Interface Subcategory
+        label_interface_header = QLabel("Interface", appearance_content)
+        layout.addWidget(label_interface_header)
+        frame_brightness = QFrame(appearance_content)
+        layout_brightness = QHBoxLayout(frame_brightness)
+        label_brightness = QLabel("Brightness:", frame_brightness)
+        label_brightness.setMinimumWidth(130)
+        layout_brightness.addWidget(label_brightness)
+        self.appearance_combo_brightness = QComboBox(frame_brightness)
+        self.appearance_combo_brightness.setStyleSheet(qt_stylesheet_combobox)
+        self.appearance_combo_brightness.addItem("1 · Dark", 1)
+        self.appearance_combo_brightness.addItem("2 · Standard", 2)
+        self.appearance_combo_brightness.addItem("3 · Bright", 3)
+        self.appearance_combo_brightness.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.appearance_combo_brightness.setMinimumWidth(200)
+        layout_brightness.addWidget(self.appearance_combo_brightness)
+        layout_brightness.addStretch()
+        layout.addWidget(frame_brightness)
+        hint_brightness = QLabel("Applies immediately to the whole interface.", appearance_content)
+        hint_brightness.setStyleSheet("color: #a5a5a5; border: none;")
+        layout.addWidget(hint_brightness)
+        layout.addStretch()
+        appearance_scroll = self.wrap_in_scroll_area(appearance_content)
+        self.tabWidget.addTab(appearance_scroll, "Appearance")
 
     def create_general_tab(self):
         general_tab_content = QWidget()
@@ -345,6 +375,14 @@ class PreferencesDialog(QDialog):
         self.main_layout.addWidget(self.action_buttons_panel)
 
     def populate_preferences(self):
+        # Interface brightness (Appearance tab)
+        try:
+            brightness_val = int(get_settings_value('APP', 'brightness_level', 2))
+        except (TypeError, ValueError):
+            brightness_val = 2
+        brightness_idx = self.appearance_combo_brightness.findData(brightness_val)
+        self.appearance_combo_brightness.setCurrentIndex(
+            brightness_idx if brightness_idx != -1 else self.appearance_combo_brightness.findData(2))
         self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
         # Populate CS2 path
         manual_cs2_path = get_manual_cs2_path()
@@ -418,7 +456,15 @@ class PreferencesDialog(QDialog):
         default_file = {'process': process}
         set_settings_value('AssetGroupMaker', 'default_file', str(default_file))
 
+    def apply_brightness_level(self):
+        level = int(self.appearance_combo_brightness.currentData())
+        set_settings_value('APP', 'brightness_level', level)
+        from src.styles import theme
+        theme.set_brightness_level(level)
+        theme.reapply()
+
     def connect_signals(self):
+        self.appearance_combo_brightness.currentIndexChanged.connect(self.apply_brightness_level)
         self.preferences_lineedit_archive_path.textChanged.connect(
             lambda: set_settings_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
         )

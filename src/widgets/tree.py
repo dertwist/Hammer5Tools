@@ -43,7 +43,8 @@ class HierarchyTreeWidget(QTreeWidget):
 
         painter.save()
 
-        line_color = QColor("#636363")
+        from src.styles import theme
+        line_color = theme.qcolor("#636363")
         pen = QPen(line_color, 1, Qt.SolidLine)
         painter.setPen(pen)
 
@@ -98,12 +99,12 @@ class HierarchyTreeWidget(QTreeWidget):
         if has_children:
             r = 4
             painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setBrush(QBrush(QColor("#363636")))
-            painter.setPen(QPen(QColor("#727272"), 1))
+            painter.setBrush(QBrush(theme.qcolor("#363636")))
+            painter.setPen(QPen(theme.qcolor("#727272"), 1))
             painter.drawEllipse(expander_cx - r, cy - r, r * 2, r * 2)
 
             painter.setRenderHint(QPainter.Antialiasing, False)
-            painter.setPen(QPen(QColor("#b6b6b6"), 1))
+            painter.setPen(QPen(theme.qcolor("#b6b6b6"), 1))
             painter.drawLine(expander_cx - 2, cy, expander_cx + 2, cy)
 
             if not is_expanded:

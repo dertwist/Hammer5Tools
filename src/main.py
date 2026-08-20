@@ -281,6 +281,17 @@ if __name__ == "__main__":
         from PySide6.QtCore import QCoreApplication
         QCoreApplication.addLibraryPath(plugins_dir)
         
+    # Interface brightness (Preferences -> Appearance): must be active before
+    # any stylesheet is set so the global QSS is mapped to the chosen level
+    from src.styles import theme
+    from src.settings.common import get_settings_value
+    theme.install()
+    try:
+        brightness = int(get_settings_value('APP', 'brightness_level', 2))
+    except (TypeError, ValueError):
+        brightness = 2
+    theme.set_brightness_level(brightness)
+
     app.setStyleSheet(QT_Stylesheet_global)
     
     # Check .NET runtime if libraries are present

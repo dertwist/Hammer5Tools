@@ -123,7 +123,10 @@ void main() {
 """
 
 # Tile background, matching compact.BG so tiles sit flush on the grid.
-_CLEAR_COLOR = (0.109, 0.109, 0.109, 1.0)
+# RGB comes from the active theme brightness (alpha is 1.0).
+def _clear_color():
+    from src.styles import theme
+    return (*theme.gl_clear_color(), 1.0)
 
 #: Thumbnails render at exactly this resolution. The grid scales tiles down from
 #: it, so the slider never invalidates the cache and never asks for a re-render.
@@ -402,7 +405,7 @@ class ThumbnailService(QObject):
         textures = []
         try:
             GL.glViewport(0, 0, self.size, self.size)
-            GL.glClearColor(*_CLEAR_COLOR)
+            GL.glClearColor(*_clear_color())
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             GL.glEnable(GL.GL_DEPTH_TEST)
             GL.glDisable(GL.GL_CULL_FACE)
