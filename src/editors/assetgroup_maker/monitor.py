@@ -19,6 +19,36 @@ except Exception:
     CS2Netcon = None
 
 
+def is_watch_enabled(config_path: str) -> bool:
+    """
+    Check if watch_changes is enabled for this .hbat config. Defaults to False.
+    """
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return bool(data.get('process', {}).get('watch_changes', False))
+    except Exception:
+        return False
+
+
+def set_watch_enabled(config_path: str, enabled: bool):
+    """
+    Set watch_changes setting in .hbat file.
+    """
+    try:
+        if not os.path.isfile(config_path):
+            return
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if 'process' not in data:
+            data['process'] = {}
+        data['process']['watch_changes'] = enabled
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        debug(f"Error updating watch_changes in {config_path}: {e}")
+
+
 def read_reference_from_file(config_path: str) -> Optional[str]:
     """
     Read the reference path from a configuration file.
@@ -94,15 +124,17 @@ def validate_reference_file(reference_path: str) -> bool:
 
 class FileItemWidget(QWidget):
     """
-    Widget representing a file item with options to open, process, or open reference asset.
+    Widget representing a file item with options to toggle watch changes, open, process, or open reference asset.
     """
     open_requested = Signal(str)
     process_requested = Signal(str)
     open_reference_requested = Signal(str)
+    watch_toggled = Signal(str, bool)
 
     def __init__(self, file_path: str):
         super().__init__()
         self.file_path = file_path
+        self.watch_enabled = is_watch_enabled(self.file_path)
         self.setup_ui()
 
     def setup_ui(self):
@@ -111,6 +143,7 @@ class FileItemWidget(QWidget):
         """
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
 
         addon_dir = get_addon_dir()
         relative_path = os.path.relpath(self.file_path, addon_dir) if addon_dir else os.path.basename(self.file_path)
@@ -119,6 +152,13 @@ class FileItemWidget(QWidget):
 
         self.label = QLabel(text)
         self.setToolTip(self.file_path)
+
+        button_size = QSize(22, 22)
+
+        self.watch_button = QPushButton()
+        self.watch_button.setFixedSize(button_size)
+        self.watch_button.setStyleSheet(qt_stylesheet_button)
+        self.update_watch_ui(self.watch_enabled)
 
         self.play_button = QPushButton()
         self.open_button = QPushButton()
@@ -136,21 +176,38 @@ class FileItemWidget(QWidget):
         self.open_button.setToolTip("Open config in editor")
         self.open_ref_button.setToolTip("Open reference asset in CS2 Tools")
 
-        button_size = QSize(24, 24)
         self.play_button.setFixedSize(button_size)
         self.open_button.setFixedSize(button_size)
         self.open_ref_button.setFixedSize(button_size)
 
-        layout.addWidget(self.label)
+        layout.addWidget(self.label, 1)
+        layout.addWidget(self.watch_button)
         layout.addWidget(self.play_button)
         layout.addWidget(self.open_button)
         layout.addWidget(self.open_ref_button)
 
         self.setLayout(layout)
 
+        self.watch_button.clicked.connect(self.toggle_watch)
         self.play_button.clicked.connect(self.start_process)
         self.open_button.clicked.connect(self.open_file)
         self.open_ref_button.clicked.connect(self.open_reference_asset)
+
+    def toggle_watch(self):
+        new_val = not is_watch_enabled(self.file_path)
+        self.watch_enabled = new_val
+        set_watch_enabled(self.file_path, new_val)
+        self.update_watch_ui(new_val)
+        self.watch_toggled.emit(self.file_path, new_val)
+
+    def update_watch_ui(self, enabled: bool):
+        self.watch_enabled = enabled
+        if enabled:
+            self.watch_button.setIcon(QIcon(":/icons/visibility_24dp.png"))
+            self.watch_button.setToolTip("Watch changes: Enabled (Click to disable auto-processing)")
+        else:
+            self.watch_button.setIcon(QIcon(":/icons/visibility_off_24dp.png"))
+            self.watch_button.setToolTip("Watch changes: Disabled (Click to enable auto-processing)")
 
     def start_process(self):
         """
@@ -223,6 +280,7 @@ class MonitoringFileWatcher(QListWidget):
     and uses a 500ms debounce delay for updates.
     """
     open_file = Signal(str)
+    watch_status_changed = Signal(str, bool)
     _instances: List['MonitoringFileWatcher'] = []
 
     def __init__(self, root_path: str):
@@ -236,6 +294,7 @@ class MonitoringFileWatcher(QListWidget):
         self.reference_configs: Dict[str, set] = {}
         self.process_threads: Dict[str, StartProcess] = {}
         self.watched_directories: set = set()
+        self._global_watch_enabled: bool = False
 
         # Debounce timer for update delays (500ms)
         self.debounce_timer = QTimer(self)
@@ -245,6 +304,19 @@ class MonitoringFileWatcher(QListWidget):
 
         self.initialize_watcher()
         self.setStyleSheet(qt_stylesheet_widgetlist)
+
+    def set_global_watch_enabled(self, enabled: bool):
+        self._global_watch_enabled = enabled
+        debug(f"[MonitoringFileWatcher] Global watch set to: {enabled}")
+
+    def is_global_watch_enabled(self) -> bool:
+        return self._global_watch_enabled
+
+    def update_watch_status(self, config_path: str, enabled: bool):
+        path = os.path.normpath(config_path)
+        if path in self.file_widgets:
+            _, widget = self.file_widgets[path]
+            widget.update_watch_ui(enabled)
 
     @classmethod
     def notify_new_file(cls, file_path: str):
@@ -400,6 +472,7 @@ class MonitoringFileWatcher(QListWidget):
 
         widget.open_requested.connect(self.open_file.emit)
         widget.process_requested.connect(self.start_processing)
+        widget.watch_toggled.connect(self.watch_status_changed.emit)
 
         # Ensure parent directory is watched
         self.add_directory_watch(os.path.dirname(path))
@@ -483,19 +556,26 @@ class MonitoringFileWatcher(QListWidget):
         """
         path = os.path.normpath(path)
         debug(f"File changed: {path}")
+        if not self._global_watch_enabled:
+            debug(f"[MonitoringFileWatcher] Global watch disabled. Skipping file change processing for: {path}")
+            if os.path.exists(path) and path in self.file_widgets:
+                self.update_reference(path)
+            return
+
         if os.path.exists(path):
             if os.path.isfile(path) and path not in self.file_system_watcher.files():
                 self.file_system_watcher.addPath(path)
             if path in self.file_widgets:
                 self.update_reference(path)
-                _, widget = self.file_widgets[path]
-                self.stop_processing(path)
-                self.start_processing(path)
+                if is_watch_enabled(path):
+                    self.stop_processing(path)
+                    self.start_processing(path)
             elif path in self.reference_configs:
                 configs = list(self.reference_configs[path])
                 for config_path in configs:
-                    self.stop_processing(config_path)
-                    self.start_processing(config_path)
+                    if is_watch_enabled(config_path):
+                        self.stop_processing(config_path)
+                        self.start_processing(config_path)
         else:
             if path in self.file_widgets:
                 self.remove_file_widget(path)

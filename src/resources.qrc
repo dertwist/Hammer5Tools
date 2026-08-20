@@ -255,17 +255,25 @@
     <file>icons/tools/assettypes/vcdlist_sm.png</file>
     <file>icons/tools/assettypes/vclip_sm.png</file>
     <file>icons/tools/assettypes/vcompmat_sm.png</file>
+    <file>icons/tools/assettypes/vcompmat_lg.png</file>
     <file>icons/tools/assettypes/vdata_sm.png</file>
+    <file>icons/tools/assettypes/vdata_lg.png</file>
     <file>icons/tools/assettypes/vmix_sm.png</file>
+    <file>icons/tools/assettypes/vmix_lg.png</file>
     <file>icons/tools/assettypes/vnmgrph_sm.png</file>
     <file>icons/tools/assettypes/vodb_sm.png</file>
+    <file>icons/tools/assettypes/vodb_lg.png</file>
     <file>icons/tools/assettypes/vskel_sm.png</file>
     <file>icons/tools/assettypes/xml_sm.png</file>
+    <file>icons/tools/assettypes/xml_lg.png</file>
     <file>icons/keyboard.png</file>
     <file>icons/volume_up.png</file>
     <file>icons/smartprop_editor.png</file>
     <file>icons/tools/vmixtool/appicon.ico</file>
     <file>icons/tools/assettypes/vsmart_sm.png</file>
+    <file>icons/tools/assettypes/smart_prop_lg.png</file>
+    <file>icons/tools/assettypes/model_lg.png</file>
+    <file>icons/tools/assettypes/model_prefab_lg.png</file>
     <file>icons/propertyeditor/array_drag_cursor.png</file>
     <file>icons/propertyeditor/array_drag_handle.png</file>
     <file>icons/propertyeditor/array_drag_handle_active.png</file>
