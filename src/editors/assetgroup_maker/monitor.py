@@ -12,6 +12,7 @@ from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 from src.settings.main import get_addon_dir, debug
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
 from src.editors.assetgroup_maker.process import StartProcess
+from src.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
 from src.settings.common import get_settings_value
 try:
     from src.other.cs2_netcon import CS2Netcon
@@ -24,9 +25,8 @@ def is_watch_enabled(config_path: str) -> bool:
     Check if watch_changes is enabled for this .hbat config. Defaults to False.
     """
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return bool(data.get('process', {}).get('watch_changes', False))
+        data = load_hbat_file(config_path)
+        return bool(data.get('settings', {}).get('watch_changes', False))
     except Exception:
         return False
 
@@ -38,13 +38,11 @@ def set_watch_enabled(config_path: str, enabled: bool):
     try:
         if not os.path.isfile(config_path):
             return
-        with open(config_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if 'process' not in data:
-            data['process'] = {}
-        data['process']['watch_changes'] = enabled
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4)
+        data = load_hbat_file(config_path)
+        if 'settings' not in data:
+            data['settings'] = {}
+        data['settings']['watch_changes'] = enabled
+        save_hbat_file(config_path, data)
     except Exception as e:
         debug(f"Error updating watch_changes in {config_path}: {e}")
 
@@ -54,12 +52,17 @@ def read_reference_from_file(config_path: str) -> Optional[str]:
     Read the reference path from a configuration file.
     """
     try:
-        with open(config_path, 'r') as file:
-            data = json.load(file)
-            process = data.get('process', {})
-            reference = process.get('reference', '')
+        data = load_hbat_file(config_path)
+        templates = data.get('templates', [])
+        addon_dir = get_addon_dir()
+        for tpl in templates:
+            reference = tpl.get('reference', '')
             if reference:
-                return str(Path(get_addon_dir()) / reference)
+                if os.path.isabs(reference):
+                    return reference
+                if addon_dir:
+                    return str(Path(addon_dir) / reference)
+                return reference
     except Exception as e:
         debug(f"Error reading {config_path}: {e}")
     return None
@@ -70,25 +73,20 @@ def get_reference_asset_path(config_path: str) -> Optional[str]:
     Read the relative asset reference path from a configuration file for the open_asset command.
     """
     try:
-        with open(config_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            process = data.get('process', {})
-            reference = process.get('reference', '')
-            if not reference:
-                return None
-
-            addon_dir = get_addon_dir()
-            if os.path.isabs(reference):
-                if addon_dir:
+        data = load_hbat_file(config_path)
+        templates = data.get('templates', [])
+        for tpl in templates:
+            reference = tpl.get('reference', '')
+            if reference:
+                addon_dir = get_addon_dir()
+                if os.path.isabs(reference) and addon_dir:
                     try:
                         reference = os.path.relpath(reference, addon_dir)
                     except ValueError:
                         pass
-
-            reference = reference.replace('\\', '/').strip('/')
-            return reference
+                return reference.replace('\\', '/').strip('/')
     except Exception as e:
-        debug(f"Error reading reference from {config_path}: {e}")
+        debug(f"Error getting asset path for {config_path}: {e}")
     return None
 
 

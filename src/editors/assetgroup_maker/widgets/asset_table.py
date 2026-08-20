@@ -13,6 +13,11 @@ from src.styles.common import (
     qt_stylesheet_lineedit, qt_stylesheet_combobox, qt_stylesheet_table, apply_stylesheets
 )
 
+try:
+    from src.other.cs2_netcon import CS2Netcon
+except Exception:
+    CS2Netcon = None
+
 
 class StatusBadgeDelegate(QStyledItemDelegate):
     """Paints a crisp, centered status badge with zero layout margins or widget clipping."""
@@ -109,7 +114,7 @@ class AssetTableWidget(QWidget):
         self.search_edit.textChanged.connect(self._apply_filter)
         filter_row.addWidget(self.search_edit, 1)
 
-        status_label = QLabel("Filter:")
+        status_label = QLabel("Status:")
         status_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
         filter_row.addWidget(status_label)
 
@@ -119,13 +124,23 @@ class AssetTableWidget(QWidget):
         self.status_combo.currentIndexChanged.connect(self._apply_filter)
         filter_row.addWidget(self.status_combo)
 
+        tpl_label = QLabel("Template:")
+        tpl_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        filter_row.addWidget(tpl_label)
+
+        self.template_filter_combo = QComboBox()
+        self.template_filter_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.template_filter_combo.addItem("All Templates")
+        self.template_filter_combo.currentIndexChanged.connect(self._apply_filter)
+        filter_row.addWidget(self.template_filter_combo)
+
         layout.addLayout(filter_row)
 
         # 2. Table Widget
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels([
-            "#", "Status", "Target Asset Name", "Matched Multi-File Slots", "Target Output File"
+            "#", "Status", "Template", "Target Asset Name", "Matched Multi-File Slots", "Target Output File"
         ])
 
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -142,12 +157,14 @@ class AssetTableWidget(QWidget):
         header.setSectionResizeMode(0, QHeaderView.Fixed)
         header.setSectionResizeMode(1, QHeaderView.Fixed)
         header.setSectionResizeMode(2, QHeaderView.Interactive)
-        header.setSectionResizeMode(3, QHeaderView.Stretch)
-        header.setSectionResizeMode(4, QHeaderView.Interactive)
+        header.setSectionResizeMode(3, QHeaderView.Interactive)
+        header.setSectionResizeMode(4, QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QHeaderView.Interactive)
         self.table.setColumnWidth(0, 36)
         self.table.setColumnWidth(1, 72)
-        self.table.setColumnWidth(2, 170)
-        self.table.setColumnWidth(4, 210)
+        self.table.setColumnWidth(2, 125)
+        self.table.setColumnWidth(3, 170)
+        self.table.setColumnWidth(5, 210)
 
         self.table.setItemDelegateForColumn(1, StatusBadgeDelegate(self.table))
         self.table.setStyleSheet(qt_stylesheet_table)
@@ -190,7 +207,25 @@ class AssetTableWidget(QWidget):
 
     def set_items(self, items: List[AssetGroupItem]):
         self._all_items = items
+        self._update_template_filter_options()
         self._apply_filter()
+
+    def _update_template_filter_options(self):
+        current = self.template_filter_combo.currentText()
+        templates_present = sorted(list(set(i.template_label for i in self._all_items if i.template_label)))
+
+        self.template_filter_combo.blockSignals(True)
+        self.template_filter_combo.clear()
+        self.template_filter_combo.addItem("All Templates")
+        for tpl in templates_present:
+            self.template_filter_combo.addItem(tpl)
+
+        idx = self.template_filter_combo.findText(current)
+        if idx >= 0:
+            self.template_filter_combo.setCurrentIndex(idx)
+        else:
+            self.template_filter_combo.setCurrentIndex(0)
+        self.template_filter_combo.blockSignals(False)
 
     def get_items(self) -> List[AssetGroupItem]:
         return self._all_items
@@ -198,6 +233,7 @@ class AssetTableWidget(QWidget):
     def _apply_filter(self):
         query = self.search_edit.text().strip().lower()
         status_filter = self.status_combo.currentText().lower()
+        tpl_filter = self.template_filter_combo.currentText()
 
         filtered = []
         for item in self._all_items:
@@ -209,12 +245,17 @@ class AssetTableWidget(QWidget):
             if status_filter == "errors" and item.status != "error":
                 continue
 
+            # Template filter
+            if tpl_filter != "All Templates" and item.template_label != tpl_filter:
+                continue
+
             # Query filter
             if query:
                 name_match = query in item.name.lower()
                 slot_match = any(query in os.path.basename(p).lower() for p in item.slots.values())
                 out_match = query in item.target_output.lower()
-                if not (name_match or slot_match or out_match):
+                tpl_match = query in item.template_label.lower()
+                if not (name_match or slot_match or out_match or tpl_match):
                     continue
 
             filtered.append(item)
@@ -240,26 +281,36 @@ class AssetTableWidget(QWidget):
             status_item.setToolTip(item.status_message)
             self.table.setItem(row_idx, 1, status_item)
 
-            # 2. Asset Name
+            # 2. Template
+            tpl_item = QTableWidgetItem(item.template_label or item.extension)
+            tpl_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            self.table.setItem(row_idx, 2, tpl_item)
+
+            # 3. Asset Name
             name_item = QTableWidgetItem(item.name)
             name_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            self.table.setItem(row_idx, 2, name_item)
+            self.table.setItem(row_idx, 3, name_item)
 
-            # 3. Matched Slots String
+            # 4. Matched Slots String
             slots_str = self._format_slots_string(item)
             slots_item = QTableWidgetItem(slots_str)
             slots_item.setToolTip("\n".join(f"{k}: {v}" for k, v in item.slots.items()))
             slots_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            self.table.setItem(row_idx, 3, slots_item)
+            self.table.setItem(row_idx, 4, slots_item)
 
-            # 4. Target Output
+            # 5. Target Output
             out_item = QTableWidgetItem(item.target_output)
             out_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            self.table.setItem(row_idx, 4, out_item)
+            self.table.setItem(row_idx, 5, out_item)
 
             self.table.setRowHeight(row_idx, 24)
 
         self.table.setUpdatesEnabled(True)
+
+    def _get_slots_for_item(self, item: AssetGroupItem) -> Dict[str, Dict]:
+        if item.template_id in self.slots_def and isinstance(self.slots_def[item.template_id], dict):
+            return self.slots_def[item.template_id]
+        return self.slots_def
 
     def _format_slots_string(self, item: AssetGroupItem) -> str:
         parts = []
@@ -271,15 +322,7 @@ class AssetTableWidget(QWidget):
     def _on_cell_double_clicked(self, row: int, column: int):
         if 0 <= row < len(self._visible_items):
             item = self._visible_items[row]
-            self._edit_slots_for_item(item)
-
-    def _edit_slots_for_item(self, item: AssetGroupItem):
-        dialog = SlotAssignmentDialog(item, self.slots_def, self)
-        if dialog.exec():
-            item.slots = dialog.assigned_slots
-            _evaluate_item_status(item, self.slots_def)
-            self._populate_table()
-            self.slots_modified.emit(item)
+            self._show_in_explorer(item)
 
     def _show_context_menu(self, position):
         row = self.table.currentRow()
@@ -289,41 +332,16 @@ class AssetTableWidget(QWidget):
         item = self._visible_items[row]
         menu = QMenu(self)
 
-        edit_slots_action = QAction("Edit Slot Mappings...", self)
-        edit_slots_action.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
-        edit_slots_action.triggered.connect(lambda: self._edit_slots_for_item(item))
-        menu.addAction(edit_slots_action)
+        show_folder_action = QAction("Show in Explorer", self)
+        show_folder_action.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
+        show_folder_action.triggered.connect(lambda: self._show_in_explorer(item))
+        menu.addAction(show_folder_action)
 
-        menu.addSeparator()
-
-        # Slot Quick-Assign Submenus
-        active_slots_def = self.slots_def.copy()
-        if 'mesh' not in active_slots_def:
-            active_slots_def['mesh'] = {'label': 'Render Mesh', 'required': True}
-        if 'collision' not in active_slots_def:
-            active_slots_def['collision'] = {'label': 'Collision Hull', 'required': False}
-
-        for slot_key, slot_info in active_slots_def.items():
-            slot_label = slot_info.get('label', slot_key)
-            slot_menu = menu.addMenu(f"Assign {slot_label}")
-
-            curr_val = item.slots.get(slot_key, "")
-
-            # Clear action
-            clear_action = QAction("(Clear / None)", self)
-            clear_action.triggered.connect(lambda _, key=slot_key: self._quick_assign_slot(item, key, ""))
-            slot_menu.addAction(clear_action)
-            slot_menu.addSeparator()
-
-            # Discovered candidates
-            for cand in item.available_candidates:
-                fname = os.path.basename(cand)
-                act = QAction(fname, self)
-                act.setCheckable(True)
-                if curr_val and os.path.normpath(curr_val).lower() == os.path.normpath(cand).lower():
-                    act.setChecked(True)
-                act.triggered.connect(lambda _, key=slot_key, p=cand: self._quick_assign_slot(item, key, p))
-                slot_menu.addAction(act)
+        if CS2Netcon:
+            open_cs2_action = QAction("Open in CS2 Tools", self)
+            open_cs2_action.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
+            open_cs2_action.triggered.connect(lambda: self._open_asset_in_cs2(item))
+            menu.addAction(open_cs2_action)
 
         menu.addSeparator()
 
@@ -337,15 +355,29 @@ class AssetTableWidget(QWidget):
 
         menu.exec(self.table.mapToGlobal(position))
 
-    def _quick_assign_slot(self, item: AssetGroupItem, slot_key: str, file_path: str):
-        if file_path:
-            item.slots[slot_key] = file_path
-        elif slot_key in item.slots:
-            del item.slots[slot_key]
+    def _show_in_explorer(self, item: AssetGroupItem):
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
+        from src.settings.main import get_addon_dir
 
-        _evaluate_item_status(item, self.slots_def)
-        self._populate_table()
-        self.slots_modified.emit(item)
+        addon_dir = get_addon_dir()
+        first_file = next(iter(item.slots.values()), None)
+        if first_file and os.path.isfile(first_file):
+            folder = os.path.dirname(first_file)
+        elif item.relative_folder and addon_dir:
+            folder = os.path.join(addon_dir, item.relative_folder)
+        else:
+            folder = addon_dir or os.getcwd()
+
+        if os.path.isdir(folder):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+
+    def _open_asset_in_cs2(self, item: AssetGroupItem):
+        if CS2Netcon and item.target_output:
+            path = item.target_output.replace('\\', '/').strip('/')
+            if item.relative_folder:
+                path = f"{item.relative_folder.strip('/')}/{path}"
+            CS2Netcon.send(f"open_asset {path}")
 
     def _copy_selected_name(self):
         row = self.table.currentRow()

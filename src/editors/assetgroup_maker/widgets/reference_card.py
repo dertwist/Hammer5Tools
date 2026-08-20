@@ -1,15 +1,17 @@
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QFileDialog, QFrame, QGroupBox, QToolButton
+    QFileDialog, QFrame, QToolButton, QScrollArea, QComboBox
 )
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QIcon, QFont, QDropEvent
+from PySide6.QtGui import QIcon, QDropEvent
 
 from src.settings.main import get_addon_dir, debug
 from src.editors.assetgroup_maker.analyzer import analyze_reference_file, ReferenceAnalysisResult
-from src.styles.common import qt_stylesheet_button, qt_stylesheet_lineedit, apply_stylesheets
+from src.styles.common import (
+    qt_stylesheet_button, qt_stylesheet_lineedit, qt_stylesheet_combobox, apply_stylesheets
+)
 
 try:
     from src.other.cs2_netcon import CS2Netcon
@@ -24,7 +26,7 @@ class DragDropReferenceLineEdit(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.setPlaceholderText("Select or drop a reference file (.vmdl, .vmat, .vsmart)...")
+        self.setPlaceholderText("Select or drop a reference file (.vmdl, .vmat, .vsmart, .vsndevts)...")
         self.setStyleSheet(qt_stylesheet_lineedit)
 
     def dragEnterEvent(self, event: QDropEvent):
@@ -54,27 +56,26 @@ class DragDropReferenceLineEdit(QLineEdit):
         event.ignore()
 
 
-class ReferenceCardWidget(QWidget):
+class TemplateCardWidget(QWidget):
     """
-    Card at the top of the editor displaying:
-    - Reference Template Asset selector with browse & CS2 Tools open action
-    - Auto-detected slot pills (Mesh, Collision, Material, Textures)
-    - Collapsible Ignore Settings (ignore_extensions & ignore_list)
+    Card representing a single template configuration in a multi-template batch profile.
     """
 
-    reference_changed = Signal(str)
-    ignore_settings_changed = Signal()
-    analysis_updated = Signal(object)  # ReferenceAnalysisResult
+    template_changed = Signal()
+    delete_requested = Signal(object)  # Emits self
+    analysis_updated = Signal(str, object)  # template_id, ReferenceAnalysisResult
 
-    def __init__(self, parent=None):
+    def __init__(self, template_id: str = "template_0", parent=None):
         super().__init__(parent)
+        self.template_id = template_id
         self.current_analysis: Optional[ReferenceAnalysisResult] = None
+        self.replacements: List[Dict[str, str]] = []
         self._build_ui()
 
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(4)
+        main_layout.setSpacing(0)
 
         # 1. Main Card Frame
         card_frame = QFrame()
@@ -89,7 +90,7 @@ class ReferenceCardWidget(QWidget):
         card_layout.setContentsMargins(8, 8, 8, 8)
         card_layout.setSpacing(6)
 
-        # Title / Header Row
+        # Header Row: Title, Type Badge, Delete Button
         header_row = QHBoxLayout()
         header_row.setSpacing(6)
 
@@ -97,9 +98,9 @@ class ReferenceCardWidget(QWidget):
         icon_label.setPixmap(QIcon(":/valve_common/icons/tools/common/browse.png").pixmap(16, 16))
         header_row.addWidget(icon_label)
 
-        title_label = QLabel("Reference Template Asset")
-        title_label.setStyleSheet("font: 600 10pt 'Segoe UI'; color: #E5E5E5;")
-        header_row.addWidget(title_label)
+        self.title_label = QLabel("Template Asset")
+        self.title_label.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        header_row.addWidget(self.title_label)
 
         header_row.addStretch(1)
 
@@ -116,6 +117,26 @@ class ReferenceCardWidget(QWidget):
         """)
         self.type_badge.hide()
         header_row.addWidget(self.type_badge)
+
+        self.del_btn = QToolButton()
+        self.del_btn.setText("✕")
+        self.del_btn.setToolTip("Remove this template from config")
+        self.del_btn.setStyleSheet("""
+            QToolButton {
+                color: #A5A5A5;
+                background: transparent;
+                border: none;
+                font: 700 9pt 'Segoe UI';
+                padding: 2px 6px;
+            }
+            QToolButton:hover {
+                color: #EF5350;
+                background-color: #3E2020;
+                border-radius: 2px;
+            }
+        """)
+        self.del_btn.clicked.connect(lambda: self.delete_requested.emit(self))
+        header_row.addWidget(self.del_btn)
 
         card_layout.addLayout(header_row)
 
@@ -172,15 +193,23 @@ class ReferenceCardWidget(QWidget):
         self.slots_layout.addWidget(self.slot_pills_host)
         self.slots_layout.addStretch(1)
 
+        self.edit_slots_btn = QPushButton("Edit Slot Mappings...")
+        self.edit_slots_btn.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        self.edit_slots_btn.setToolTip("Configure slot mappings, custom tokens, and skip options for this template")
+        self.edit_slots_btn.setStyleSheet(qt_stylesheet_button)
+        self.edit_slots_btn.setFixedHeight(24)
+        self.edit_slots_btn.clicked.connect(self._open_slot_mappings_dialog)
+        self.slots_layout.addWidget(self.edit_slots_btn)
+
         self.slots_container.hide()
         card_layout.addWidget(self.slots_container)
 
-        # Collapsible Ignore Settings
+        # Collapsible Per-Template Filter / Ignore Settings
         self.ignore_toggle_btn = QToolButton()
         self.ignore_toggle_btn.setIcon(QIcon(":/icons/arrow_drop_right.png"))
         self.ignore_toggle_btn.setIconSize(QSize(10, 10))
         self.ignore_toggle_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.ignore_toggle_btn.setText("Ignore Settings (Extensions & File Exclusions)")
+        self.ignore_toggle_btn.setText("Template Filter & Ignore Settings (Extensions & Exclusions)")
         self.ignore_toggle_btn.setCheckable(True)
         self.ignore_toggle_btn.setChecked(False)
         self.ignore_toggle_btn.setCursor(Qt.PointingHandCursor)
@@ -201,33 +230,54 @@ class ReferenceCardWidget(QWidget):
         self.ignore_toggle_btn.toggled.connect(self._toggle_ignore_panel)
         card_layout.addWidget(self.ignore_toggle_btn)
 
-        self.ignore_panel = QWidget()
+        self.ignore_panel = QFrame()
+        self.ignore_panel.setStyleSheet("""
+            QFrame {
+                background-color: #242424;
+                border: 1px solid #3E3E42;
+                border-radius: 2px;
+            }
+        """)
         ignore_layout = QVBoxLayout(self.ignore_panel)
         ignore_layout.setContentsMargins(6, 4, 6, 4)
         ignore_layout.setSpacing(4)
 
-        # Ignore Extensions Row
+        mode_row = QHBoxLayout()
+        mode_label = QLabel("Filter Mode:")
+        mode_label.setFixedWidth(120)
+        mode_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        self.filter_mode_combo = QComboBox()
+        self.filter_mode_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.filter_mode_combo.setFixedHeight(24)
+        self.filter_mode_combo.addItems(["Exclude (Blacklist)", "Include (Whitelist)"])
+        self.filter_mode_combo.currentTextChanged.connect(self._on_filter_mode_changed)
+        mode_row.addWidget(mode_label)
+        mode_row.addWidget(self.filter_mode_combo)
+        mode_row.addStretch(1)
+        ignore_layout.addLayout(mode_row)
+
         ext_row = QHBoxLayout()
-        ext_label = QLabel("Ignore Extensions:")
-        ext_label.setFixedWidth(120)
-        ext_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        self.ext_label = QLabel("Filter Extensions:")
+        self.ext_label.setFixedWidth(120)
+        self.ext_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
         self.ignore_ext_edit = QLineEdit()
         self.ignore_ext_edit.setStyleSheet(qt_stylesheet_lineedit)
-        self.ignore_ext_edit.setPlaceholderText("mb, ma, max, blend, blend1, tga, png, jpg, exr, hdr")
-        self.ignore_ext_edit.textChanged.connect(lambda _: self.ignore_settings_changed.emit())
-        ext_row.addWidget(ext_label)
+        self.ignore_ext_edit.setFixedHeight(24)
+        self.ignore_ext_edit.setPlaceholderText("e.g. mb, blend, phys_, temp_*, tga (comma separated)")
+        self.ignore_ext_edit.textChanged.connect(lambda _: self.template_changed.emit())
+        ext_row.addWidget(self.ext_label)
         ext_row.addWidget(self.ignore_ext_edit)
         ignore_layout.addLayout(ext_row)
 
-        # Ignore Files List Row
         file_ignore_row = QHBoxLayout()
         file_ignore_label = QLabel("Ignore Files List:")
         file_ignore_label.setFixedWidth(120)
-        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
         self.ignore_files_edit = QLineEdit()
         self.ignore_files_edit.setStyleSheet(qt_stylesheet_lineedit)
-        self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*, .git*")
-        self.ignore_files_edit.textChanged.connect(lambda _: self.ignore_settings_changed.emit())
+        self.ignore_files_edit.setFixedHeight(24)
+        self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*")
+        self.ignore_files_edit.textChanged.connect(lambda _: self.template_changed.emit())
         file_ignore_row.addWidget(file_ignore_label)
         file_ignore_row.addWidget(self.ignore_files_edit)
         ignore_layout.addLayout(file_ignore_row)
@@ -237,16 +287,43 @@ class ReferenceCardWidget(QWidget):
 
         main_layout.addWidget(card_frame)
 
+    def _on_filter_mode_changed(self, mode_text: str):
+        if "Include" in mode_text:
+            self.ext_label.setText("Include Extensions:")
+            self.ignore_ext_edit.setPlaceholderText("e.g. fbx, obj, dmx (comma separated)")
+        else:
+            self.ext_label.setText("Exclude Extensions:")
+            self.ignore_ext_edit.setPlaceholderText("e.g. mb, blend, phys_, temp_*, tga (comma separated)")
+        self.template_changed.emit()
+
     def _toggle_ignore_panel(self, checked: bool):
         icon_path = ":/icons/arrow_drop_down.png" if checked else ":/icons/arrow_drop_right.png"
         self.ignore_toggle_btn.setIcon(QIcon(icon_path))
         self.ignore_panel.setVisible(checked)
 
+    def set_template_title(self, title: str):
+        self.title_label.setText(title)
+
+    def set_can_delete(self, can_delete: bool):
+        self.del_btn.setVisible(can_delete)
+
+    def _open_slot_mappings_dialog(self):
+        from src.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
+        dialog = TemplateSlotMappingDialog(
+            template_data=self.get_template_data(),
+            analysis=self.current_analysis,
+            parent=self
+        )
+        if dialog.exec():
+            self.skipped_slots = list(dialog.skipped_slots)
+            self.custom_tokens = dict(dialog.custom_tokens)
+            self._update_slot_pills()
+            self.template_changed.emit()
+            self.analysis_updated.emit(self.template_id, self.current_analysis)
+
     def _on_asset_browser_clicked(self):
         from src.widgets.model_browser.main import AssetBrowserDialog
         from src.settings.main import get_addon_name
-        from src.styles.common import apply_stylesheets
-        from PySide6.QtWidgets import QDialog
 
         addon_name = get_addon_name()
         dialog = AssetBrowserDialog(
@@ -258,6 +335,7 @@ class ReferenceCardWidget(QWidget):
             title="Select Reference Template Asset"
         )
         apply_stylesheets(dialog)
+        from PySide6.QtWidgets import QDialog
         if dialog.exec() == QDialog.Accepted:
             selected = dialog.selected_path()
             if selected:
@@ -269,7 +347,8 @@ class ReferenceCardWidget(QWidget):
             self,
             "Select Reference Template Asset",
             addon_dir,
-            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)"
+            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)",
+            options=QFileDialog.Option.DontUseNativeDialog
         )
         if file_path:
             self.set_reference_path(file_path)
@@ -288,8 +367,8 @@ class ReferenceCardWidget(QWidget):
         self._analyze_current_reference()
 
     def _on_text_changed(self, text: str):
-        self.reference_changed.emit(text.strip())
         self._analyze_current_reference()
+        self.template_changed.emit()
 
     def _analyze_current_reference(self):
         ref_text = self.ref_edit.text().strip()
@@ -297,12 +376,12 @@ class ReferenceCardWidget(QWidget):
             self.type_badge.hide()
             self.slots_container.hide()
             self.current_analysis = None
-            self.analysis_updated.emit(None)
+            self.analysis_updated.emit(self.template_id, None)
             return
 
         self.current_analysis = analyze_reference_file(ref_text)
         self._update_slot_pills()
-        self.analysis_updated.emit(self.current_analysis)
+        self.analysis_updated.emit(self.template_id, self.current_analysis)
 
     def _update_slot_pills(self):
         if not self.current_analysis:
@@ -310,7 +389,6 @@ class ReferenceCardWidget(QWidget):
             self.type_badge.hide()
             return
 
-        # Update type badge
         type_names = {
             'vmdl': 'ModelDoc (.vmdl)',
             'vmat': 'Material (.vmat)',
@@ -320,7 +398,6 @@ class ReferenceCardWidget(QWidget):
         self.type_badge.setText(type_names.get(self.current_analysis.asset_type, f".{self.current_analysis.asset_type}"))
         self.type_badge.show()
 
-        # Clear existing pills
         while self.slot_pills_layout.count():
             child = self.slot_pills_layout.takeAt(0)
             if child.widget():
@@ -331,17 +408,31 @@ class ReferenceCardWidget(QWidget):
                 label_text = slot_info.get('label', slot_key)
                 filename = slot_info.get('filename', '')
 
-                pill = QLabel(f"<b>{label_text}:</b> {filename}")
-                pill.setStyleSheet("""
-                    QLabel {
-                        background-color: #2F2F31;
-                        color: #E5E5E5;
-                        border: 1px solid #464649;
-                        border-radius: 0px;
-                        padding: 2px 6px;
-                        font: 580 8.5pt 'Segoe UI';
-                    }
-                """)
+                is_skipped = hasattr(self, 'skipped_slots') and slot_key in self.skipped_slots
+                if is_skipped:
+                    pill = QLabel(f"<s>{label_text}</s> <span style='color:#EF5350;'>(Skipped)</span>")
+                    pill.setStyleSheet("""
+                        QLabel {
+                            background-color: #242424;
+                            color: #777777;
+                            border: 1px dashed #555555;
+                            border-radius: 0px;
+                            padding: 2px 6px;
+                            font: 580 8.5pt 'Segoe UI';
+                        }
+                    """)
+                else:
+                    pill = QLabel(f"<b>{label_text}:</b> {filename}")
+                    pill.setStyleSheet("""
+                        QLabel {
+                            background-color: #2F2F31;
+                            color: #E5E5E5;
+                            border: 1px solid #464649;
+                            border-radius: 0px;
+                            padding: 2px 6px;
+                            font: 580 8.5pt 'Segoe UI';
+                        }
+                    """)
                 self.slot_pills_layout.addWidget(pill)
 
             self.slots_container.show()
@@ -356,18 +447,276 @@ class ReferenceCardWidget(QWidget):
             clean_path = ref_text.replace('\\', '/').strip('/')
             CS2Netcon.send(f"open_asset {clean_path}")
 
-    # Accessors for state
-    def get_reference_path(self) -> str:
-        return self.ref_edit.text().strip()
+    def get_template_data(self) -> Dict[str, Any]:
+        ref = self.ref_edit.text().strip()
+        ext = "vmdl"
+        if self.current_analysis:
+            ext = self.current_analysis.asset_type
+        elif ref:
+            ext = os.path.splitext(ref)[1].lstrip('.').lower()
+
+        # Build normalized replacements if analysis available
+        reps = []
+        if self.current_analysis and self.current_analysis.replacements:
+            for _, rep_info in self.current_analysis.replacements.items():
+                pair = rep_info.get('replacement', [])
+                if len(pair) >= 2:
+                    reps.append({'from': pair[0], 'to': pair[1]})
+
+        filter_mode = "include" if "Include" in self.filter_mode_combo.currentText() else "exclude"
+
+        return {
+            'id': self.template_id,
+            'extension': ext or 'vmdl',
+            'reference': ref,
+            'filter_mode': filter_mode,
+            'ignore_extensions': self.ignore_ext_edit.text().strip(),
+            'ignore_list': self.ignore_files_edit.text().strip(),
+            'skipped_slots': getattr(self, 'skipped_slots', []),
+            'custom_tokens': getattr(self, 'custom_tokens', {}),
+            'replacements': reps if reps else self.replacements
+        }
+
+    def set_template_data(self, data: Dict[str, Any]):
+        self.template_id = data.get('id', self.template_id)
+        self.replacements = list(data.get('replacements', []))
+        self.skipped_slots = list(data.get('skipped_slots', []))
+        self.custom_tokens = dict(data.get('custom_tokens', {}))
+        filter_mode = data.get('filter_mode', 'exclude')
+        if filter_mode == 'include':
+            self.filter_mode_combo.setCurrentIndex(1)
+        else:
+            self.filter_mode_combo.setCurrentIndex(0)
+        self.ignore_ext_edit.setText(data.get('ignore_extensions', ''))
+        self.ignore_files_edit.setText(data.get('ignore_list', ''))
+        self.set_reference_path(data.get('reference', ''))
+
+
+class MultiTemplateManagerWidget(QWidget):
+    """
+    Manager container containing multiple template cards and global ignore settings.
+    """
+
+    data_changed = Signal()
+    analysis_updated = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.template_cards: List[TemplateCardWidget] = []
+        self._build_ui()
+
+    def _build_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(6)
+
+        # 1. Global Ignore Settings Panel (Collapsible)
+        self.ignore_toggle_btn = QToolButton()
+        self.ignore_toggle_btn.setIcon(QIcon(":/icons/arrow_drop_right.png"))
+        self.ignore_toggle_btn.setIconSize(QSize(10, 10))
+        self.ignore_toggle_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.ignore_toggle_btn.setText("Global Ignore Settings (Extensions & File Exclusions)")
+        self.ignore_toggle_btn.setCheckable(True)
+        self.ignore_toggle_btn.setChecked(False)
+        self.ignore_toggle_btn.setCursor(Qt.PointingHandCursor)
+        self.ignore_toggle_btn.setStyleSheet("""
+            QToolButton {
+                border: none;
+                background: transparent;
+                color: #A5A5A5;
+                font: 600 8.5pt 'Segoe UI';
+                padding: 1px 2px;
+                margin: 0px;
+                height: 18px;
+            }
+            QToolButton:hover {
+                color: #FFFFFF;
+            }
+        """)
+        self.ignore_toggle_btn.toggled.connect(self._toggle_ignore_panel)
+        main_layout.addWidget(self.ignore_toggle_btn)
+
+        self.ignore_panel = QFrame()
+        self.ignore_panel.setStyleSheet("""
+            QFrame {
+                background-color: #282828;
+                border: 1px solid #464649;
+                border-radius: 2px;
+            }
+        """)
+        ignore_layout = QVBoxLayout(self.ignore_panel)
+        ignore_layout.setContentsMargins(8, 6, 8, 6)
+        ignore_layout.setSpacing(4)
+
+        mode_row = QHBoxLayout()
+        mode_label = QLabel("Filter Mode:")
+        mode_label.setFixedWidth(120)
+        mode_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        self.filter_mode_combo = QComboBox()
+        self.filter_mode_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.filter_mode_combo.setFixedHeight(24)
+        self.filter_mode_combo.addItems(["Exclude (Blacklist)", "Include (Whitelist)"])
+        self.filter_mode_combo.currentTextChanged.connect(lambda _: self.data_changed.emit())
+        mode_row.addWidget(mode_label)
+        mode_row.addWidget(self.filter_mode_combo)
+        mode_row.addStretch(1)
+        ignore_layout.addLayout(mode_row)
+
+        ext_row = QHBoxLayout()
+        ext_label = QLabel("Filter Extensions:")
+        ext_label.setFixedWidth(120)
+        ext_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        self.ignore_ext_edit = QLineEdit()
+        self.ignore_ext_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_ext_edit.setPlaceholderText("mb, ma, max, blend, blend1, tga, png, jpg, exr, hdr, phys_")
+        self.ignore_ext_edit.textChanged.connect(lambda _: self.data_changed.emit())
+        ext_row.addWidget(ext_label)
+        ext_row.addWidget(self.ignore_ext_edit)
+        ignore_layout.addLayout(ext_row)
+
+        file_ignore_row = QHBoxLayout()
+        file_ignore_label = QLabel("Ignore Files List:")
+        file_ignore_label.setFixedWidth(120)
+        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        self.ignore_files_edit = QLineEdit()
+        self.ignore_files_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*, .git*")
+        self.ignore_files_edit.textChanged.connect(lambda _: self.data_changed.emit())
+        file_ignore_row.addWidget(file_ignore_label)
+        file_ignore_row.addWidget(self.ignore_files_edit)
+        ignore_layout.addLayout(file_ignore_row)
+
+        self.ignore_panel.hide()
+        main_layout.addWidget(self.ignore_panel)
+
+        # 2. Templates Cards Container
+        self.cards_layout = QVBoxLayout()
+        self.cards_layout.setContentsMargins(0, 0, 0, 0)
+        self.cards_layout.setSpacing(6)
+        main_layout.addLayout(self.cards_layout)
+
+        # 3. Add Template Action Button
+        add_row = QHBoxLayout()
+        add_row.setContentsMargins(0, 0, 0, 0)
+
+        self.add_template_btn = QPushButton("+ Add Template")
+        self.add_template_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        self.add_template_btn.setStyleSheet(qt_stylesheet_button)
+        self.add_template_btn.setFixedHeight(28)
+        self.add_template_btn.setToolTip("Add another template configuration (e.g. for .vmat or .vsmart)")
+        self.add_template_btn.clicked.connect(lambda: self.add_template())
+        add_row.addWidget(self.add_template_btn)
+        add_row.addStretch(1)
+
+        main_layout.addLayout(add_row)
+
+    def _toggle_ignore_panel(self, checked: bool):
+        icon_path = ":/icons/arrow_drop_down.png" if checked else ":/icons/arrow_drop_right.png"
+        self.ignore_toggle_btn.setIcon(QIcon(icon_path))
+        self.ignore_panel.setVisible(checked)
+
+    def add_template(self, template_data: Optional[Dict[str, Any]] = None) -> TemplateCardWidget:
+        idx = len(self.template_cards)
+        t_id = template_data.get('id', f'template_{idx}') if template_data else f'template_{idx}'
+
+        card = TemplateCardWidget(template_id=t_id, parent=self)
+        card.template_changed.connect(self._on_card_changed)
+        card.delete_requested.connect(self.remove_template)
+        card.analysis_updated.connect(self._on_card_analysis_updated)
+
+        self.template_cards.append(card)
+        self.cards_layout.addWidget(card)
+
+        if template_data:
+            card.set_template_data(template_data)
+
+        self._update_cards_ui()
+        self.data_changed.emit()
+        return card
+
+    def remove_template(self, card: TemplateCardWidget):
+        if len(self.template_cards) <= 1:
+            return  # Always keep at least 1 template
+
+        if card in self.template_cards:
+            self.template_cards.remove(card)
+            self.cards_layout.removeWidget(card)
+            card.deleteLater()
+            self._update_cards_ui()
+            self.data_changed.emit()
+            self.analysis_updated.emit()
+
+    def _update_cards_ui(self):
+        count = len(self.template_cards)
+        for idx, card in enumerate(self.template_cards, start=1):
+            if count == 1:
+                card.set_template_title("Reference Template Asset")
+                card.set_can_delete(False)
+            else:
+                card.set_template_title(f"Template {idx}")
+                card.set_can_delete(True)
+
+    def _on_card_changed(self):
+        self.data_changed.emit()
+
+    def _on_card_analysis_updated(self, template_id: str, analysis: Any):
+        self.analysis_updated.emit()
+
+    def set_data(self, data: Dict[str, Any]):
+        # Clear existing cards
+        for card in list(self.template_cards):
+            self.cards_layout.removeWidget(card)
+            card.deleteLater()
+        self.template_cards.clear()
+
+        # Settings
+        settings = data.get('settings', {})
+        filter_mode = settings.get('filter_mode', 'exclude')
+        if filter_mode == 'include':
+            self.filter_mode_combo.setCurrentIndex(1)
+        else:
+            self.filter_mode_combo.setCurrentIndex(0)
+        self.ignore_ext_edit.setText(settings.get('ignore_extensions', ''))
+        self.ignore_files_edit.setText(settings.get('ignore_list', ''))
+
+        # Templates
+        templates = data.get('templates', [])
+        if not templates:
+            templates = [{'id': 'template_0', 'extension': 'vmdl', 'reference': '', 'replacements': []}]
+
+        for t in templates:
+            self.add_template(t)
+
+        self._update_cards_ui()
+
+    def get_data(self) -> Dict[str, Any]:
+        templates_list = [c.get_template_data() for c in self.template_cards]
+        filter_mode = "include" if "Include" in self.filter_mode_combo.currentText() else "exclude"
+        return {
+            'settings': {
+                'filter_mode': filter_mode,
+                'ignore_extensions': self.ignore_ext_edit.text().strip(),
+                'ignore_list': self.ignore_files_edit.text().strip(),
+            },
+            'templates': templates_list
+        }
+
+    def get_all_templates(self) -> List[Dict[str, Any]]:
+        return [c.get_template_data() for c in self.template_cards]
+
+    def get_analyzed_slots_map(self) -> Dict[str, Dict[str, Any]]:
+        slots_map = {}
+        for card in self.template_cards:
+            if card.current_analysis and card.current_analysis.slots:
+                slots_map[card.template_id] = card.current_analysis.slots
+        return slots_map
 
     def get_ignore_extensions(self) -> str:
         return self.ignore_ext_edit.text().strip()
 
-    def set_ignore_extensions(self, val: str):
-        self.ignore_ext_edit.setText(val)
-
     def get_ignore_list(self) -> str:
         return self.ignore_files_edit.text().strip()
 
-    def set_ignore_list(self, val: str):
-        self.ignore_files_edit.setText(val)
+
+# Backward-compatibility alias
+ReferenceCardWidget = TemplateCardWidget
