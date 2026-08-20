@@ -326,14 +326,9 @@ class EditorTabWidget(QWidget):
         if created:
             self.created_files.extend(created)
             self.revert_btn.setEnabled(True)
-            self.status_updated.emit(f"Created {len(created)} assets successfully.")
-            QMessageBox.information(
-                self, "Batch Complete", f"Successfully created {len(created)} asset file(s) across templates!"
-            )
+            self.status_updated.emit(f"Successfully created {len(created)} asset file(s) across templates!")
         else:
-            QMessageBox.warning(
-                self, "Batch Warning", "No assets were created. Check reference templates and source files."
-            )
+            self.status_updated.emit("No assets were created. Check reference templates and source files.")
 
     def revert_created_files(self):
         """Reverts (deletes) all created files from the last process run."""

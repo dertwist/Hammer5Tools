@@ -1246,6 +1246,88 @@ def test_template_filter_and_ignore_serialization(fake_addon_dir):
     assert t1['skipped_slots'] == ['roughness']
 
 
+def test_preview_equals_output_11_assets(fake_addon_dir):
+    from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+    from src.editors.assetgroup_maker.process import perform_batch_processing
+    from src.editors.assetgroup_maker.objects import save_hbat_file
+
+    pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
+    os.makedirs(pine_dir, exist_ok=True)
+    hbat_path = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine.hbat")
+
+    # 1. 6 Models
+    tree_names = ["treedead", "treefar01", "treefar02", "treelarge", "treemid", "treesmall"]
+    for t in tree_names:
+        with open(os.path.join(pine_dir, f"{t}.fbx"), "w") as f:
+            f.write("mesh")
+        with open(os.path.join(pine_dir, f"phys_{t}.fbx"), "w") as f:
+            f.write("phys")
+
+    # 2. 5 Materials
+    mat_names = ["armor", "ash", "bear_pelt", "bed_double", "bed_single"]
+    for m in mat_names:
+        with open(os.path.join(pine_dir, f"{m}_color.tga"), "w") as f:
+            f.write("color")
+        with open(os.path.join(pine_dir, f"{m}_normal.tga"), "w") as f:
+            f.write("normal")
+
+    # 3. Create dummy reference templates
+    with open(os.path.join(pine_dir, "treedead.vmdl"), "w") as f:
+        f.write('<!-- kv3 -->\n{\n filename = "models/firewatch/nature/trees/pine/treedead.fbx"\n}\n')
+    with open(os.path.join(pine_dir, "armor.vmat"), "w") as f:
+        f.write('<!-- kv3 -->\nLayer0\n{\n g_tColor = resource:"materials/firewatch/nature/trees/pine/armor_color.tga"\n}\n')
+
+    # Config matching user screenshot:
+    # Global ignore: Exclude with large blacklist
+    # Templates: Include with empty include extensions (placeholder) and ignore list
+    config_data = {
+        'version': 3,
+        'settings': {
+            'watch_changes': False,
+            'filter_mode': 'exclude',
+            'ignore_extensions': 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr,phys_',
+            'ignore_list': 'temp_*, draft_*, *backup*, .git*',
+            'custom_output': '',
+            'algorithm': 0
+        },
+        'templates': [
+            {
+                'id': 'template_vmdl',
+                'extension': 'vmdl',
+                'reference': 'models/firewatch/nature/trees/pine/treedead.vmdl',
+                'filter_mode': 'include',
+                'ignore_extensions': '',
+                'ignore_list': 'temp_*, draft_*, *backup*'
+            },
+            {
+                'id': 'template_vmat',
+                'extension': 'vmat',
+                'reference': 'models/firewatch/nature/trees/pine/armor.vmat',
+                'filter_mode': 'include',
+                'ignore_extensions': '',
+                'ignore_list': 'temp_*, draft_*, *backup*'
+            }
+        ]
+    }
+    save_hbat_file(hbat_path, config_data)
+
+    # 1. Preview Matching check (treedead.vmdl and armor.vmat exist in folder as references -> excluded from overwrite)
+    matched_items = match_multi_template_folder_assets(
+        directory=pine_dir,
+        templates=config_data['templates'],
+        settings=config_data['settings']
+    )
+    assert len(matched_items) == 9
+
+    # 2. Batch Processing Output check
+    created_files = perform_batch_processing(
+        file_path=hbat_path,
+        config_data=config_data
+    )
+    assert len(created_files) == 9
+
+
+
 
 
 

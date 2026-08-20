@@ -232,9 +232,14 @@ def match_folder_assets(
             if valid_source_exts is not None and clean_f_ext not in valid_source_exts:
                 continue
 
-            # In exclude mode, discard ignored files early
-            if filter_mode == "exclude":
-                if is_file_ignored(f, ignore_extensions, ignore_patterns, filter_mode="exclude"):
+            # Always exclude files matching ignore patterns (e.g. temp_*, draft_*, *backup*, .git*)
+            if ignore_patterns:
+                if any(matches_filter_entry(f, p) for p in ignore_patterns):
+                    continue
+
+            # In exclude mode, also discard files matching ignore_extensions
+            if filter_mode == "exclude" and ignore_extensions:
+                if any(matches_filter_entry(f, e) for e in ignore_extensions):
                     continue
 
             relevant_files.append((f, full_p))
@@ -258,19 +263,17 @@ def match_folder_assets(
         asset_groups.setdefault(root_name, []).append((fname, fpath))
 
     # In include mode, keep groups where either the group name or at least one companion file matches an include entry
-    if filter_mode == "include":
-        all_include_entries = [e for e in (ignore_extensions + ignore_patterns) if e]
-        if all_include_entries:
-            filtered_groups = {}
-            for group_name, group_files in asset_groups.items():
-                group_matches = any(matches_filter_entry(group_name, entry) for entry in all_include_entries)
-                file_matches = any(
-                    any(matches_filter_entry(fname, entry) for entry in all_include_entries)
-                    for fname, _ in group_files
-                )
-                if group_matches or file_matches:
-                    filtered_groups[group_name] = group_files
-            asset_groups = filtered_groups
+    if filter_mode == "include" and ignore_extensions:
+        filtered_groups = {}
+        for group_name, group_files in asset_groups.items():
+            group_matches = any(matches_filter_entry(group_name, entry) for entry in ignore_extensions)
+            file_matches = any(
+                any(matches_filter_entry(fname, entry) for entry in ignore_extensions)
+                for fname, _ in group_files
+            )
+            if group_matches or file_matches:
+                filtered_groups[group_name] = group_files
+        asset_groups = filtered_groups
 
     results: List[AssetGroupItem] = []
 
@@ -405,10 +408,13 @@ def match_multi_template_folder_assets(
         ext = template_info.get('extension', 'vmdl').lower().strip('.')
         ref_path = template_info.get('reference', '')
 
-        # Per-template ignore list: check if defined on template, else fallback to global
+        tpl_filter_mode = template_info.get('filter_mode') or global_filter_mode
         tpl_ignore_exts = template_info.get('ignore_extensions')
         if tpl_ignore_exts is None or tpl_ignore_exts == '':
-            tpl_ignore_exts = global_ignore_extensions
+            if tpl_filter_mode == global_filter_mode:
+                tpl_ignore_exts = global_ignore_extensions
+            else:
+                tpl_ignore_exts = ''
 
         tpl_ignore_list = template_info.get('ignore_list')
         if tpl_ignore_list is None or tpl_ignore_list == '':
@@ -428,15 +434,32 @@ def match_multi_template_folder_assets(
                 slots_def = {'mesh': {'label': 'Render Mesh', 'required': True}}
             elif ext == 'vmat':
                 slots_def = {'color': {'label': 'Color Map', 'required': True}}
+            elif ext == 'vsndevts':
+                slots_def = {'sound': {'label': 'Audio File', 'required': True}}
             elif ext == 'vsmart':
                 slots_def = {'model': {'label': 'Model Asset', 'required': True}}
+            else:
+                slots_def = {'mesh': {'label': 'Source Asset', 'required': True}}
+
+        ref_base_to_skip = None
+        if ref_path:
+            from src.editors.assetgroup_maker.analyzer import resolve_reference_full_path
+            ref_full = resolve_reference_full_path(ref_path, context_folder=directory)
+            if ref_full and os.path.isfile(ref_full):
+                try:
+                    ref_dir = os.path.dirname(os.path.normpath(os.path.abspath(ref_full))).lower()
+                    scanned_dir = os.path.normpath(os.path.abspath(directory)).lower()
+                    if ref_dir == scanned_dir:
+                        ref_base_to_skip = os.path.splitext(os.path.basename(ref_full))[0].lower()
+                except Exception:
+                    pass
 
         type_label = {
             'vmdl': 'ModelDoc (.vmdl)',
             'vmat': 'Material (.vmat)',
-            'vsmart': 'SmartProp (.vsmart)',
-            'vsndevts': 'SoundEvent (.vsndevts)'
-        }.get(ext, f'.{ext}')
+            'vsndevts': 'Sound Event (.vsndevts)',
+            'vsmart': 'SmartProp (.vsmart)'
+        }.get(ext, f"Unknown (.{ext})")
 
         items = match_folder_assets(
             directory=directory,
@@ -450,6 +473,9 @@ def match_multi_template_folder_assets(
             template_id=template_id,
             template_label=type_label
         )
+
+        if ref_base_to_skip:
+            items = [it for it in items if it.name.lower() != ref_base_to_skip]
 
         all_results.extend(items)
 

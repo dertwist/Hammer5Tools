@@ -91,6 +91,160 @@ def render_asset_template(
     return data
 
 
+DEFAULT_TEMPLATES = {
+    'vmdl': """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0} -->
+{
+\trootNode = 
+\t{
+\t\t_class = "RootNode"
+\t\tchildren = 
+\t\t[
+\t\t\t{
+\t\t\t\t_class = "MaterialGroupList"
+\t\t\t\tchildren = 
+\t\t\t\t[
+\t\t\t\t\t{
+\t\t\t\t\t\t_class = "DefaultMaterialGroup"
+\t\t\t\t\t\tname = ""
+\t\t\t\t\t\tremaps = [  ]
+\t\t\t\t\t\tuse_global_default = true
+\t\t\t\t\t\tglobal_default_material = "materials/dev/reflectivity_20b.vmat"
+\t\t\t\t\t},
+\t\t\t\t]
+\t\t\t},
+\t\t\t{
+\t\t\t\t_class = "RenderMeshList"
+\t\t\t\tchildren = 
+\t\t\t\t[
+\t\t\t\t\t{
+\t\t\t\t\t\t_class = "RenderMeshFile"
+\t\t\t\t\t\tname = "#$ASSET_NAME$#"
+\t\t\t\t\t\tfilename = "#$FOLDER_PATH$#/#$MESH$#"
+\t\t\t\t\t\timport_scale = 1.0
+\t\t\t\t\t\timport_filter = 
+\t\t\t\t\t\t{
+\t\t\t\t\t\t\texclude_by_default = false
+\t\t\t\t\t\t\texception_list = [  ]
+\t\t\t\t\t\t}
+\t\t\t\t\t},
+\t\t\t\t]
+\t\t\t},
+<!-- IF COLLISION -->
+\t\t\t{
+\t\t\t\t_class = "PhysicsShapeList"
+\t\t\t\tchildren = 
+\t\t\t\t[
+\t\t\t\t\t{
+\t\t\t\t\t\t_class = "PhysicsHullFile"
+\t\t\t\t\t\tname = "#$ASSET_NAME$#"
+\t\t\t\t\t\tparent_bone = ""
+\t\t\t\t\t\tsurface_prop = "default"
+\t\t\t\t\t\tcollision_prop = "default"
+\t\t\t\t\t\ttool_material = ""
+\t\t\t\t\t\trecenter_on_parent_bone = false
+\t\t\t\t\t\toffset_origin = [ 0.0, 0.0, 0.0 ]
+\t\t\t\t\t\toffset_angles = [ 0.0, 0.0, 0.0 ]
+\t\t\t\t\t\tfilename = "#$FOLDER_PATH$#/#$COLLISION$#"
+\t\t\t\t\t\timport_scale = 1.0
+\t\t\t\t\t\tfaceMergeAngle = 5.0
+\t\t\t\t\t\tmaxHullVertices = 24
+\t\t\t\t\t\timport_mode = "HullPerElement"
+\t\t\t\t\t\tsmall_element_threshold = 0.0
+\t\t\t\t\t\tthin_element_threshold = 0.0
+\t\t\t\t\t\toptimization_algorithm = "QEM"
+\t\t\t\t\t\timport_filter = 
+\t\t\t\t\t\t{
+\t\t\t\t\t\t\texclude_by_default = false
+\t\t\t\t\t\t\texception_list = [  ]
+\t\t\t\t\t\t}
+\t\t\t\t\t},
+\t\t\t\t]
+\t\t\t\tleave_body_collision_unmodified = false
+\t\t\t},
+<!-- ENDIF -->
+\t\t]
+\t\tmodel_archetype = ""
+\t\tprimary_associated_entity = ""
+\t\tanim_graph_name = ""
+\t\tdocument_sub_type = "ModelDocSubType_None"
+\t}
+}
+""",
+    'vmat': """// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+\tshader "csgo_environment.vfx"
+
+\t//---- Color ----
+\tg_flModelTintAmount "1.000"
+\tg_nScaleTexCoordUByModelScaleAxis "0"
+\tg_nScaleTexCoordVByModelScaleAxis "0"
+\tg_vColorTint "[1.000000 1.000000 1.000000 0.000000]"
+
+\t//---- Fog ----
+\tg_bFogEnabled "1"
+
+\t//---- Material1 ----
+\tg_bSnowLayer1 "0"
+\tg_flTexCoordRotation1 "0.000"
+\tg_flWetnessDarkeningStrength1 "1.000"
+\tg_nUVSet1 "1"
+\tg_vTexCoordCenter1 "[0.500 0.500]"
+\tg_vTexCoordOffset1 "[0.000 0.000]"
+\tg_vTexCoordScale1 "[1.000 1.000]"
+<!-- IF AO -->
+\tTextureAmbientOcclusion1 "#$FOLDER_PATH$#/#$AO$#"
+<!-- ENDIF -->
+<!-- IF COLOR -->
+\tTextureColor1 "#$FOLDER_PATH$#/#$COLOR$#"
+<!-- ENDIF -->
+<!-- IF METALNESS -->
+\tTextureMetalness1 "#$FOLDER_PATH$#/#$METALNESS$#"
+<!-- ENDIF -->
+<!-- IF NORMAL -->
+\tTextureNormal1 "#$FOLDER_PATH$#/#$NORMAL$#"
+<!-- ENDIF -->
+<!-- IF ROUGHNESS -->
+\tTextureRoughness1 "#$FOLDER_PATH$#/#$ROUGHNESS$#"
+<!-- ENDIF -->
+<!-- IF TINTMASK -->
+\tTextureTintMask1 "#$FOLDER_PATH$#/#$TINTMASK$#"
+<!-- ENDIF -->
+
+\t//---- Texture Address Mode ----
+\tg_nTextureAddressModeU "0"
+\tg_nTextureAddressModeV "0"
+}
+""",
+    'vsndevts': """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+\t"#$ASSET_NAME$#" = 
+\t{
+\t\ttype = "csgo_mega"
+\t\tvsnd_files = 
+\t\t[
+\t\t\t"#$FOLDER_PATH$#/#$SOUND$#",
+\t\t]
+\t}
+}
+""",
+    'vsmart': """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+\t_class = "CSmartPropRoot"
+\tm_Variables = [  ]
+\tm_Children = 
+\t[
+\t\t{
+\t\t\t_class = "CSmartPropElement_Model"
+\t\t\tm_sModelName = "#$FOLDER_PATH$#/#$ASSET_NAME$#.vmdl"
+\t\t},
+\t]
+}
+"""
+}
+
+
 def perform_batch_processing(
     file_path: str,
     config_data: Optional[Dict[str, Any]] = None,
@@ -191,10 +345,14 @@ def perform_batch_processing(
                         tpl_content = f.read()
                 except Exception as e:
                     debug(f"[Batch] Failed to load reference {ref_full}: {e}")
-                    continue
-            else:
-                debug(f"[Batch] Reference file not found: {ref_path} (resolved: {ref_full})")
-                continue
+                    tpl_content = None
+
+        if not tpl_content:
+            tpl_content = DEFAULT_TEMPLATES.get(ext, "")
+
+        if not tpl_content:
+            debug(f"[Batch] No template content available for template '{template_info.get('id')}' ({ext})")
+            continue
 
         slots_def = analysis.slots if analysis else {}
         if not slots_def:
@@ -203,15 +361,18 @@ def perform_batch_processing(
             else:
                 slots_def = {'mesh': {'required': True}}
 
+        tpl_filter_mode = template_info.get('filter_mode') or settings.get('filter_mode', 'exclude')
         tpl_ignore_exts = template_info.get('ignore_extensions')
         if tpl_ignore_exts is None or tpl_ignore_exts == '':
-            tpl_ignore_exts = ignore_extensions
+            if tpl_filter_mode == settings.get('filter_mode', 'exclude'):
+                tpl_ignore_exts = ignore_extensions
+            else:
+                tpl_ignore_exts = ''
 
         tpl_ignore_list = template_info.get('ignore_list')
         if tpl_ignore_list is None or tpl_ignore_list == '':
             tpl_ignore_list = ignore_list
 
-        tpl_filter_mode = template_info.get('filter_mode') or settings.get('filter_mode', 'exclude')
         tpl_skipped_slots = template_info.get('skipped_slots') or []
 
         asset_items = match_folder_assets(
@@ -228,6 +389,17 @@ def perform_batch_processing(
 
         for item in asset_items:
             output_file_path = os.path.join(output_directory, f"{item.name}.{ext}")
+
+            # Exclude reference file if it already exists on disk in the same output directory
+            if ref_full and os.path.isfile(ref_full):
+                try:
+                    ref_norm = os.path.normpath(os.path.abspath(ref_full)).lower()
+                    out_norm = os.path.normpath(os.path.abspath(output_file_path)).lower()
+                    if ref_norm == out_norm:
+                        debug(f"[Batch] Skipping reference file from overwrite: {output_file_path}")
+                        continue
+                except Exception:
+                    pass
 
             rendered_data = render_asset_template(
                 content_template=tpl_content,
