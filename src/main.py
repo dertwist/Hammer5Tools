@@ -274,8 +274,9 @@ if __name__ == "__main__":
 
     from src.app_core import Widget, start_instance_server, QT_Stylesheet_global, check_dotnet_runtime
     from PySide6.QtWidgets import QApplication
-    from PySide6.QtCore import QTimer
+    from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
     app = QApplication(sys.argv)
     
     # Explicitly add PySide6 plugins to library path to ensure scene importers (assimp, gltf) are resolved
