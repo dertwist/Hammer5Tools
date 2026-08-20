@@ -8,9 +8,15 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QMenu,
     QDialog,
-    QDockWidget
+    QDockWidget,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QToolButton
 )
-from PySide6.QtGui import QUndoStack, QIcon, QKeySequence, QAction
+from PySide6.QtGui import QUndoStack, QIcon, QKeySequence, QAction, QPixmap
 from PySide6.QtCore import Qt
 from src.editors.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import (
@@ -25,6 +31,7 @@ from src.editors.smartprop_editor.choices import AddChoice
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.other.assettypes import check_vsmart_configuration
 from src.widgets import ErrorInfo, exception_handler
+from src.styles.common import qt_stylesheet_button
 from src.common import (
     enable_dark_title_bar,
     get_cs2_path,
@@ -51,6 +58,27 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.DocumentTabWidget.customContextMenuRequested.connect(self.show_tab_context_menu)
         self.ui.DocumentTabWidget.currentChanged.connect(self.update_menu_states)
 
+        # New Tab (+) Corner Button
+        self.new_tab_btn = QToolButton()
+        self.new_tab_btn.setText("+")
+        self.new_tab_btn.setToolTip("Create New SmartProp (Ctrl+N)")
+        self.new_tab_btn.setStyleSheet("""
+            QToolButton {
+                font: 700 12pt "Segoe UI";
+                color: #C7C7BB;
+                background: transparent;
+                border: none;
+                padding: 2px 8px;
+            }
+            QToolButton:hover {
+                color: #FFFFFF;
+                background-color: #363639;
+                border-radius: 2px;
+            }
+        """)
+        self.new_tab_btn.clicked.connect(self.create_new_file)
+        self.ui.DocumentTabWidget.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
+
         # Initialize file explorer
         self.init_explorer()
         # Hide the Explorer dock title bar (no label, no float/close buttons)
@@ -63,6 +91,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         set_qdock_tab_style(self.findChildren)
 
         self.undo_stack = QUndoStack(self)
+
+        # Build placeholder empty state view
+        self._build_empty_state()
 
         # Set initial UI state based on document availability
         self.update_placeholder_visibility()
@@ -277,11 +308,12 @@ class SmartPropEditorMainWindow(QMainWindow):
         for i in range(self.ui.DocumentTabWidget.count()):
             doc = self.ui.DocumentTabWidget.widget(i)
             if hasattr(doc, 'save_file'):
-                doc.save_file(external=False)
-                base_name = "Untitled"
-                if doc.opened_file:
-                    base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
-                self.update_document_tab_title(doc, base_name)
+                saved = doc.save_file(external=False)
+                if saved is not False:
+                    base_name = "Untitled"
+                    if doc.opened_file:
+                        base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
+                    self.update_document_tab_title(doc, base_name)
 
     def export_scene_debug(self):
         """Dump the active document's 3D viewport scene to a .glb, textures included."""
@@ -475,17 +507,66 @@ class SmartPropEditorMainWindow(QMainWindow):
         if idx >= 0:
             self.reset_document_layout(idx)
 
+    def _build_empty_state(self):
+        """
+        Builds the empty state placeholder widget when no documents are open,
+        matching the design in AssetGroup Maker.
+        """
+        self.empty_state_widget = QWidget(self.ui.centralwidget)
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(QPixmap(":/icons/tools/assettypes/vsmart_sm.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Create or open a SmartProp")
+        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("Select a .vsmart or .vdata file in the Explorer on the left, open an existing file, or create a new SmartProp.")
+        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.setAlignment(Qt.AlignCenter)
+
+        btn_open = QPushButton("Open File...")
+        btn_open.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
+        btn_open.setStyleSheet(qt_stylesheet_button)
+        btn_open.setFixedHeight(26)
+        btn_open.clicked.connect(lambda: self.open_file(external=True))
+        btn_row.addWidget(btn_open)
+
+        btn_new = QPushButton("Create New...")
+        btn_new.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        btn_new.setStyleSheet(qt_stylesheet_button)
+        btn_new.setFixedHeight(26)
+        btn_new.clicked.connect(self.create_new_file)
+        btn_row.addWidget(btn_new)
+
+        empty_layout.addLayout(btn_row)
+        self.ui.verticalLayout.addWidget(self.empty_state_widget)
+
     def update_placeholder_visibility(self):
         """
-        Updates the UI: hides DocumentTabWidget and shows placeholder_label if no documents are open.
-        Otherwise, shows DocumentTabWidget and hides placeholder_label.
+        Updates the UI: hides DocumentTabWidget and shows empty_state_widget if no documents are open.
+        Otherwise, shows DocumentTabWidget and hides empty_state_widget.
         """
         if self.ui.DocumentTabWidget.count() == 0:
             self.ui.DocumentTabWidget.hide()
-            self.ui.placeholder_label.show()
+            if hasattr(self, 'empty_state_widget') and self.empty_state_widget is not None:
+                self.empty_state_widget.show()
         else:
             self.ui.DocumentTabWidget.show()
-            self.ui.placeholder_label.hide()
+            if hasattr(self, 'empty_state_widget') and self.empty_state_widget is not None:
+                self.empty_state_widget.hide()
         self.update_menu_states()
 
     def init_explorer(self, dir: str = None, editor_name: str = None):
@@ -529,7 +610,9 @@ class SmartPropEditorMainWindow(QMainWindow):
             # Check if the tools files are prepared for vsmart compilation
             check_vsmart_configuration()
 
-            doc.save_file(external=external)
+            saved = doc.save_file(external=external)
+            if saved is False:
+                return
             base_name = "Untitled"
             if doc.opened_file:
                 base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
@@ -551,6 +634,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                     os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
                     "VSmart Files (*.vsmart *.vdata);;All Files (*)"
                 )
+                if not filename:
+                    return
             else:
                 # Get the currently selected file path from the explorer
                 if hasattr(self.mini_explorer, "get_current_path"):

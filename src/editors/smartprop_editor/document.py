@@ -1271,19 +1271,50 @@ class SmartPropDocument(QMainWindow):
                 external = True
 
         if external:
-            current_folder = self.parent.mini_explorer.get_current_folder(True)
+            start_dir = ""
+            if hasattr(self, "parent") and self.parent and hasattr(self.parent, "mini_explorer"):
+                try:
+                    folder = self.parent.mini_explorer.get_current_folder(True)
+                    if folder and os.path.exists(folder):
+                        start_dir = folder
+                except Exception:
+                    pass
+            if not start_dir:
+                try:
+                    from src.settings.common import get_addon_name
+                    from src.common import get_cs2_path
+                    cs2_path = get_cs2_path()
+                    addon_name = get_addon_name()
+                    if cs2_path and addon_name:
+                        smartprops_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name, "smartprops")
+                        addon_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name)
+                        if os.path.exists(smartprops_dir):
+                            start_dir = smartprops_dir
+                        elif os.path.exists(addon_dir):
+                            start_dir = addon_dir
+                except Exception:
+                    pass
+
             filename, _ = QFileDialog.getSaveFileName(
-                None,
+                self,
                 "Save File",
-                current_folder,
+                start_dir,
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
-        self.get_variables(self.variable_viewport.ui.variables_scrollArea)
+            if not filename:
+                return False
+
         self._flush_choices_widget_if_pending()
         content_version = self.content_version_spinbox.value()
         if filename:
             try:
-                VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
+                VsmartSaveInstance = VsmartSave(
+                    filename=filename,
+                    tree=self.ui.tree_hierarchy_widget,
+                    choices_tree=self.ui.choices_tree_widget,
+                    variables_layout=self.variable_viewport.ui.variables_scrollArea,
+                    content_version=content_version
+                )
             except Exception as e:
                 error_message = f"An error while saving Vsmart File: {e}"
                 error_details = traceback.format_exc()
@@ -1295,7 +1326,7 @@ class SmartPropDocument(QMainWindow):
                     ErrorInfo(text=error_message, details=error_details).exec_()
                 else:
                     print("Error: QApplication instance is not available.")
-                return
+                return False
 
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
@@ -1304,6 +1335,8 @@ class SmartPropDocument(QMainWindow):
             self._modified = False
             self.undo_stack.setClean()
             self._edited.emit()
+            return True
+        return False
 
     # [Choices Context Menu]
     def open_MenuChoices(self, position):
@@ -1509,8 +1542,13 @@ class SmartPropDocument(QMainWindow):
         from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
         from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value
         from src.widgets import HierarchyItemModel
-        import os
-        dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
+        current_folder = ""
+        if hasattr(self, "parent") and self.parent and hasattr(self.parent, "mini_explorer"):
+            try:
+                current_folder = self.parent.mini_explorer.get_current_folder(True) or ""
+            except Exception:
+                pass
+        dialog = BulkModelImporterDialog(self, current_folder=current_folder)
         def on_accept(files, create_ref, ref_index):
             addon_path = get_addon_dir()
             ref_id = None

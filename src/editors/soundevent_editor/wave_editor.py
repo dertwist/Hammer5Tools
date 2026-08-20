@@ -25,14 +25,16 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QFileDialog, QMessageBox, QTabWidget, QMenuBar,
     QToolBar, QToolButton, QSizePolicy, QMainWindow, QDockWidget,
+    QPushButton, QStackedWidget,
 )
 from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize
-from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush
+from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from src.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from src.widgets.explorer.main import Explorer
 from src.settings.main import get_cs2_path, get_addon_name
+from src.styles.common import qt_stylesheet_button
 
 _NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
@@ -43,6 +45,7 @@ _IC = {
     "play": _CTRL + "control_play.png",
     "pause": _CTRL + "control_pause.png",
     "stop": _CTRL + "control_stop.png",
+    "new": _CTRL + "new.png",
     "open": ":/icons/file_open_16dp.svg",
     "save": ":/icons/save_16dp.svg",
     "save_as": ":/icons/save_as_16dp.svg",
@@ -298,6 +301,7 @@ class AudioDocument(QWidget):
             self.addAction(a)
             return a
 
+        self.act_new = mk("New", lambda: self.load_blank(), _IC["new"], QKeySequence.New)
         self.act_open = mk("Open", self.open_file, _IC["open"], QKeySequence.Open)
         self.act_save = mk("Save", self.save, _IC["save"], QKeySequence("Ctrl+S"))
         self.act_save_as = mk("Save As", self.save_as, _IC["save_as"])
@@ -328,7 +332,7 @@ class AudioDocument(QWidget):
         # Categorized menus (None = separator inside a menu). The toolbar reuses
         # this structure, one group per menu with separators between groups.
         self._menus = [
-            ("File", [self.act_open, self.act_save, self.act_save_as]),
+            ("File", [self.act_new, self.act_open, self.act_save, self.act_save_as]),
             ("Edit", [self.act_undo, self.act_redo, None,
                       self.act_cut, self.act_copy, self.act_paste, None,
                       self.act_select_all]),
@@ -384,7 +388,7 @@ class AudioDocument(QWidget):
             "QToolButton:checked { background-color:#515965; }")
         # Actions excluded from the toolbar (stay accessible via menus/hotkeys)
         toolbar_excluded = {
-            self.act_open, self.act_save, self.act_save_as,
+            self.act_new, self.act_open, self.act_save, self.act_save_as,
             self.act_undo, self.act_redo,
             self.act_cut, self.act_copy, self.act_paste, self.act_select_all,
             self.act_zoom_in, self.act_zoom_out,
@@ -519,6 +523,22 @@ class AudioDocument(QWidget):
         self.status.setText(
             f"{os.path.basename(path)}  |  {dur:.2f}s  |  {sr} Hz  |  "
             f"{samples.shape[1]} ch  |  {len(cue)} marker(s)")
+
+    def load_blank(self, duration_s=1.0, sr=44100, channels=2):
+        self.stop()
+        n_samples = int(duration_s * sr)
+        self.samples = np.zeros((n_samples, channels), dtype=np.float32)
+        self.sr = sr
+        self.path = None
+        self._undo.clear()
+        self._redo.clear()
+        self._set_dirty(False)
+        self._render_dirty = True
+        self.clear_markers()
+        self._refresh_plot()
+        self.select_all()
+        self.zoom_fit()
+        self.status.setText(f"Untitled  |  {duration_s:.2f}s  |  {sr} Hz  |  {channels} ch  |  Blank")
 
     def _mono(self):
         return self.samples.mean(axis=1) if self.samples.ndim > 1 else self.samples
@@ -758,13 +778,93 @@ class AudioEditor(QMainWindow):
         self.setAcceptDrops(True)
         self.setContentsMargins(6, 6, 6, 6)  # breathing room around the main widget
 
-        # Documents live in the central tab widget
+        # Central Stack: Page 0 = Empty State, Page 1 = Document Tabs
+        self.central_stack = QStackedWidget()
+
+        # Page 0: Empty State View
+        self.empty_state_widget = QWidget()
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(QPixmap(":/icons/tools/assettypes/vmix_sm.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Open an audio file or create a new document")
+        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("Select an audio file in the Audio Explorer on the left, open an existing file, or create a new audio document.")
+        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.setAlignment(Qt.AlignCenter)
+
+        btn_open = QPushButton("Open File...")
+        btn_open.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
+        btn_open.setStyleSheet(qt_stylesheet_button)
+        btn_open.setFixedHeight(26)
+        btn_open.clicked.connect(self.open_file_dialog)
+        btn_row.addWidget(btn_open)
+
+        btn_new = QPushButton("Create New...")
+        btn_new.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        btn_new.setStyleSheet(qt_stylesheet_button)
+        btn_new.setFixedHeight(26)
+        btn_new.clicked.connect(self.new_document)
+        btn_row.addWidget(btn_new)
+
+        empty_layout.addLayout(btn_row)
+        self.central_stack.addWidget(self.empty_state_widget)
+
+        # Page 1: Multi-Document Tab Widget
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.setMovable(True)
         self.tabs.setDocumentMode(True)
         self.tabs.tabCloseRequested.connect(self._close_tab)
-        self.setCentralWidget(self.tabs)
+
+        # New Tab (+) Corner Button
+        self.new_tab_btn = QToolButton()
+        self.new_tab_btn.setText("+")
+        self.new_tab_btn.setToolTip("Create New Audio Document (Ctrl+N)")
+        self.new_tab_btn.setStyleSheet("""
+            QToolButton {
+                font: 700 12pt "Segoe UI";
+                color: #C7C7BB;
+                background: transparent;
+                border: none;
+                padding: 2px 8px;
+            }
+            QToolButton:hover {
+                color: #FFFFFF;
+                background-color: #363639;
+                border-radius: 2px;
+            }
+        """)
+        self.new_tab_btn.clicked.connect(self.new_document)
+        self.tabs.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
+
+        self.central_stack.addWidget(self.tabs)
+        self.setCentralWidget(self.central_stack)
+
+        # Shortcuts
+        new_act = QAction("New Document", self)
+        new_act.setShortcut(QKeySequence.New)
+        new_act.triggered.connect(self.new_document)
+        self.addAction(new_act)
+
+        open_act = QAction("Open Document", self)
+        open_act.setShortcut(QKeySequence.Open)
+        open_act.triggered.connect(self.open_file_dialog)
+        self.addAction(open_act)
 
         # Audio explorer in a dockable panel
         self.explorer = Explorer(
@@ -793,6 +893,31 @@ class AudioEditor(QMainWindow):
         # Match the SmartProp editor's dock/tab-bar styling
         from src.common import set_qdock_tab_style
         set_qdock_tab_style(self.findChildren)
+
+        self._update_view_stack()
+
+    def _update_view_stack(self):
+        if self.tabs.count() > 0:
+            self.central_stack.setCurrentWidget(self.tabs)
+        else:
+            self.central_stack.setCurrentWidget(self.empty_state_widget)
+
+    def new_document(self):
+        doc = AudioDocument()
+        doc.load_blank()
+        idx = self.tabs.addTab(doc, "Untitled")
+        doc.dirty_changed.connect(lambda dirty, d=doc: self._mark_tab(d, dirty))
+        self.tabs.setCurrentIndex(idx)
+        self._update_view_stack()
+
+    def open_file_dialog(self):
+        sounds_dir = self._addon_sounds_dir() or ""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Open Audio File", sounds_dir,
+            "Audio Files (*.wav *.mp3 *.flac *.aac *.m4a *.ogg *.wma);;All Files (*)"
+        )
+        if path:
+            self.open_document(path)
 
     def _addon_sounds_dir(self):
         cs2 = get_cs2_path()
@@ -824,6 +949,7 @@ class AudioEditor(QMainWindow):
             existing = getattr(widget, "path", None)
             if existing and os.path.normcase(existing) == os.path.normcase(path):
                 self.tabs.setCurrentIndex(i)
+                self._update_view_stack()
                 return
         doc = AudioDocument()
         doc.load(path)
@@ -833,6 +959,7 @@ class AudioEditor(QMainWindow):
         idx = self.tabs.addTab(doc, os.path.basename(path))
         doc.dirty_changed.connect(lambda dirty, d=doc: self._mark_tab(d, dirty))
         self.tabs.setCurrentIndex(idx)
+        self._update_view_stack()
 
     def _mark_tab(self, doc, dirty):
         """Prefix the tab title with '*' while the document has unsaved edits."""
@@ -871,6 +998,7 @@ class AudioEditor(QMainWindow):
             pass
         self.tabs.removeTab(index)
         widget.deleteLater()
+        self._update_view_stack()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():

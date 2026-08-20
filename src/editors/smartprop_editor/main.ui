@@ -37,19 +37,6 @@
       </property>
      </widget>
     </item>
-    <item>
-     <widget class="QLabel" name="placeholder_label">
-      <property name="styleSheet">
-       <string notr="true">color: gray; font-size: 13px;</string>
-      </property>
-      <property name="text">
-       <string>Open or create a new file</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QDockWidget" name="ExplorerDock">
