@@ -789,7 +789,7 @@ class AudioEditor(QMainWindow):
         empty_layout.setSpacing(12)
 
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(QPixmap(":/icons/tools/assettypes/vmix_sm.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_lbl.setPixmap(QPixmap(":/icons/tools/assettypes/vmix_lg.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         icon_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(icon_lbl)
 
