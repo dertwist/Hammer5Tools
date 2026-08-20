@@ -41,7 +41,7 @@ class Var_class_color(QWidget):
             background-color: rgb({r}, {g}, {b});
             padding: 4px;
             border: 0px;
-            border: 2px solid rgba(80, 80, 80, 100);
+            border: 2px solid rgba(94, 94, 94, 100);
         """)
 
     def on_changed(self):

@@ -17,7 +17,7 @@ class AssetManagerWidget(QWidget):
         self.setWindowTitle("Move Assets")
         self.resize(1100, 620)
         enable_dark_title_bar(self)
-        self.setStyleSheet("background-color: #151515;")
+        self.setStyleSheet("background-color: #272727;")
 
         self.sources_to_move = []
         self.pending_moves = []

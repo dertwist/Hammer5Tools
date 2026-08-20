@@ -75,17 +75,17 @@
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -119,25 +119,25 @@ QMenu::item {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
+    border-color: rgba(94, 94, 94, 255);
+    color: #e5e5e5;
 }
 QMenu::item:selected {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QWidget {
-    background-color: #151515;
+    background-color: #272727;
     outline: none;
 }
 
 QWidget:item:checked {
-    background-color: #151515;
+    background-color: #272727;
     color: white;
 }
 
 QWidget:item:selected {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
     border: 0px;
 }
@@ -145,14 +145,14 @@ QWidget:item:selected {
 
 
 QMenu {
-    background-color: #1d1d1f;
+    background-color: #2f2f31;
     color: #FFFFFF;
-    border: 1px solid #555555;
+    border: 1px solid #636363;
     /* padding-top: 5px; */
     /* padding-bottom: 5px; */
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
 }
 
 QMenu::item {
@@ -160,20 +160,20 @@ QMenu::item {
     border-top: 2px solid black;
     border: 0px;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     padding-left: 12px;
     padding-right: 12px;
-    color: #E3E3E3;
+    color: #e5e5e5;
 }
 
 QMenu::item:selected {
-    background-color: #666666;
+    background-color: #727272;
     color: #FFFFFF;
 }
 
 QMenu::separator {
     height: 1px;
-    background: #AAAAAA;
+    background: #b1b1b1;
     margin: 5px 0;
 }
 
@@ -195,35 +195,35 @@ QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height: 12px;
     padding-top: 5px;
     padding-bottom: 5px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
     padding-left: 5px;
 }
 
 QComboBox:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 
 QComboBox:pressed {
-    background-color: #2E2F30;
+    background-color: #3f4041;
     color: white;
 }
 
 QComboBox:item {
     font: 580 8pt &quot;Segoe UI&quot;;
-    color: #E3E3E3;
+    color: #e5e5e5;
     padding-left: 5px;
-    background-color: #1C1C1C;
+    background-color: #2e2e2e;
     border-style: none;
 }
 
 QComboBox::drop-down {
-    color: #E3E3E3;
+    color: #e5e5e5;
     padding: 2px;
     background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
     border-bottom: 0px solid black;
@@ -233,16 +233,16 @@ QComboBox::drop-down {
     margin-left: 5px;
     padding: 5px;
     width: 7px;
-    border-color: rgba(80, 80, 80, 255);
-    background-color: #1C1C1C;
+    border-color: rgba(94, 94, 94, 255);
+    background-color: #2e2e2e;
 }
 
 
 QComboBox QAbstractItemView {
     border: 2px solid gray;
-    border-color: rgba(80, 80, 80, 255);
-    selection-background-color: #414956;
-    background-color: #1C1C1C;
+    border-color: rgba(94, 94, 94, 255);
+    selection-background-color: #515965;
+    background-color: #2e2e2e;
 }
 
 
@@ -251,7 +251,7 @@ QComboBox QAbstractItemView::item {
     padding: 4px; /* Add padding to each item */
     padding-left: 5px;
     padding-right: 5px;
-    color: #ff8a8a8a;
+    color: #ff939393;
     border-style: none;
     border-bottom: 0.5px solid black;
     border-color: rgba(255, 255, 255, 10);
@@ -263,7 +263,7 @@ QComboBox QAbstractItemView::item:selected {
     padding: 4px; /* Add padding to each item */
     padding-left: 5px;
     padding-right: 5px;
-    background-color: #414956;
+    background-color: #515965;
     color: white;
     border: none; /* Remove border */
     outline: none; /* Remove outline */
@@ -288,17 +288,17 @@ QComboBox QAbstractItemView::item:selected {
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -322,17 +322,17 @@ QComboBox QAbstractItemView::item:selected {
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -356,17 +356,17 @@ QComboBox QAbstractItemView::item:selected {
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -392,22 +392,22 @@ QComboBox QAbstractItemView::item:selected {
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;

@@ -32,18 +32,18 @@ class Ui_Widget(object):
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
-"    border-color: rgba(50, 50, 50, 255);\n"
+"    border-color: rgba(66, 66, 66, 255);\n"
 "    padding: 8px;\n"
 "    padding-left: 6px;\n"
 "    padding-right: 6px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
+"    color: #e5e5e5;\n"
+"    background-color: #2e2e2e;\n"
 "}\n"
 "\n"
 ".QWidget::hover {\n"
 "}\n"
 ".QWidget::selected {\n"
-"    background-color: #414956;\n"
+"    background-color: #515965;\n"
 "}")
         self.verticalLayout = QVBoxLayout(Widget)
         self.verticalLayout.setSpacing(0)
@@ -59,15 +59,15 @@ class Ui_Widget(object):
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
-"    border-color: rgba(50, 50, 50, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
+"    border-color: rgba(66, 66, 66, 255);\n"
+"    color: #e5e5e5;\n"
+"    background-color: #2e2e2e;\n"
 "}\n"
 "\n"
 ".QFrame::hover {\n"
 "}\n"
 ".QFrame::selected {\n"
-"    background-color: #414956;\n"
+"    background-color: #515965;\n"
 "}")
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
@@ -89,12 +89,12 @@ class Ui_Widget(object):
         self.value = QLineEdit(self.frame)
         self.value.setObjectName(u"value")
         self.value.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
+"    border: 0px solid #d0d0d0;\n"
+"    border-color: rgba(94, 94, 94, 255);\n"
 "    border-radius: 2px;\n"
 "    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #1C1C1C;\n"
+"    color: #e5e5e5;\n"
+"background-color: #2e2e2e;\n"
 "\n"
 "}\n"
 "")
@@ -114,15 +114,15 @@ class Ui_Widget(object):
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
-"    border-color: rgba(50, 50, 50, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
+"    border-color: rgba(66, 66, 66, 255);\n"
+"    color: #e5e5e5;\n"
+"    background-color: #2e2e2e;\n"
 "}\n"
 "\n"
 ".QFrame::hover {\n"
 "}\n"
 ".QFrame::selected {\n"
-"    background-color: #414956;\n"
+"    background-color: #515965;\n"
 "}")
         self.frame_2.setFrameShape(QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Raised)
@@ -144,12 +144,12 @@ class Ui_Widget(object):
         self.model = QLineEdit(self.frame_2)
         self.model.setObjectName(u"model")
         self.model.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
+"    border: 0px solid #d0d0d0;\n"
+"    border-color: rgba(94, 94, 94, 255);\n"
 "    border-radius: 2px;\n"
 "    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #1C1C1C;\n"
+"    color: #e5e5e5;\n"
+"background-color: #2e2e2e;\n"
 "\n"
 "}\n"
 "")

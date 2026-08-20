@@ -233,7 +233,7 @@ class PopupMenu(QDialog):
         # Separator between bookmarked and regular items
         self.separator = QWidget()
         self.separator.setFixedHeight(2)
-        self.separator.setStyleSheet("background-color: #363639;")
+        self.separator.setStyleSheet("background-color: #464649;")
         self.separator.hide()
 
         # Combine everything

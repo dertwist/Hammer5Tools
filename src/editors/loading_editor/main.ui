@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(28, 28, 28);</string>
+   <string notr="true">background-color: rgb(46, 46, 46);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -171,22 +171,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -236,22 +236,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -301,21 +301,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -358,21 +358,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -414,17 +414,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -463,17 +463,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -526,22 +526,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -681,14 +681,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <string notr="true">        font: 580 10pt &quot;Segoe UI&quot;;
         border: 2px solid black;
         border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:18px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;</string>
+        color: #e5e5e5;
+        background-color: #2e2e2e;</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::StyledPanel</enum>
@@ -715,7 +715,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <item>
              <widget class="QLabel" name="svg_tips_label">
               <property name="styleSheet">
-               <string notr="true">font: 9pt &quot;Segoe UI&quot;; color: #888888; border: none; padding: 2px 4px;</string>
+               <string notr="true">font: 9pt &quot;Segoe UI&quot;; color: #929292; border: none; padding: 2px 4px;</string>
               </property>
               <property name="text">
                <string>Tips: Convert text to paths. Avoid rasterized layers.</string>
@@ -738,17 +738,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QCheckBox:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QCheckBox:pressed {
@@ -784,22 +784,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -853,13 +853,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
         font: 580 10pt &quot;Segoe UI&quot;;
         border: 2px solid black;
         border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:18px;
         padding: 4px;
         padding-left: 6px;
         padding-right: 6px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
 
 
@@ -869,19 +869,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
         font: 580 10pt &quot;Segoe UI&quot;;
         border: 2px solid black;
         border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:18px;
         padding: 4px;
         padding-left: 6px;
         padding-right: 6px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPlainTextEdit:hover {
     }
     QPlainTextEdit:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
@@ -915,22 +915,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
 
         border: 2px solid black;
         border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
+        border-color: rgba(94, 94, 94, 255);
         height:22px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
         padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
     }
     QPushButton:hover {
-        background-color: #414956;
+        background-color: #515965;
         color: white;
     }
     QPushButton:pressed {
         background-color: red;
-        background-color: #1C1C1C;
+        background-color: #2e2e2e;
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;

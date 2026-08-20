@@ -17,8 +17,8 @@ from src.common import enable_dark_title_bar
 
 class ZebraMenu(QMenu):
     """QMenu with alternating (zebra-striped) row backgrounds, since QSS has no nth-child selector for QMenu::item."""
-    _EVEN_COLOR = QColor("#1d1d1f")
-    _ODD_COLOR = QColor("#26262b")
+    _EVEN_COLOR = QColor("#2f2f31")
+    _ODD_COLOR = QColor("#37373c")
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -1409,9 +1409,9 @@ class Explorer(QMainWindow):
         frame.setObjectName("explorerOverlayPanel")
         frame.setStyleSheet(
             "QFrame#explorerOverlayPanel {"
-            "  background-color: #1C1C1C;"
+            "  background-color: #2e2e2e;"
             "  border: 2px solid black;"
-            "  border-color: rgba(80, 80, 80, 255);"
+            "  border-color: rgba(94, 94, 94, 255);"
             "  border-radius: 0px;"
             "}"
         )
@@ -1422,15 +1422,15 @@ class Explorer(QMainWindow):
         # Header row: label + close button
         header = QHBoxLayout()
         self._panel_title = QLabel("", frame)
-        self._panel_title.setStyleSheet("color: #E3E3E3; font: 580 9pt \"Segoe UI\"; font-weight: bold; background-color: transparent;")
+        self._panel_title.setStyleSheet("color: #e5e5e5; font: 580 9pt \"Segoe UI\"; font-weight: bold; background-color: transparent;")
         header.addWidget(self._panel_title)
         header.addStretch()
         close_btn = QToolButton(frame)
         close_btn.setText("✕")
         close_btn.setToolTip("Close")
         close_btn.setStyleSheet(
-            "QToolButton { color: #9D9D9D; border: none; font-size: 11px; padding: 1px 4px; background-color: transparent; }"
-            "QToolButton:hover { color: #FFFFFF; background-color: #414956; }"
+            "QToolButton { color: #a5a5a5; border: none; font-size: 11px; padding: 1px 4px; background-color: transparent; }"
+            "QToolButton:hover { color: #FFFFFF; background-color: #515965; }"
         )
         close_btn.setMaximumHeight(20)
         close_btn.clicked.connect(self._hide_panel)
@@ -1442,9 +1442,9 @@ class Explorer(QMainWindow):
         self._panel_filter.setStyleSheet(
             "QLineEdit {"
             "  font: 580 9pt \"Segoe UI\";"
-            "  background-color: #151515;"
-            "  color: #E3E3E3;"
-            "  border: 1px solid rgba(80, 80, 80, 255);"
+            "  background-color: #272727;"
+            "  color: #e5e5e5;"
+            "  border: 1px solid rgba(94, 94, 94, 255);"
             "  border-radius: 0px;"
             "  padding: 3px 6px;"
             "}"
@@ -1455,8 +1455,8 @@ class Explorer(QMainWindow):
         self._panel_list = QListWidget(frame)
         self._panel_list.setStyleSheet(
             "QListWidget {"
-            "  background-color: #1C1C1C;"
-            "  color: #E3E3E3;"
+            "  background-color: #2e2e2e;"
+            "  color: #e5e5e5;"
             "  font: 580 9pt \"Segoe UI\";"
             "  border: none;"
             "  outline: none;"
@@ -1467,11 +1467,11 @@ class Explorer(QMainWindow):
             "  border-bottom: 0.5px solid rgba(255, 255, 255, 10);"
             "}"
             "QListWidget::item:hover {"
-            "  background-color: #272729;"
-            "  color: #E3E3E3;"
+            "  background-color: #38383a;"
+            "  color: #e5e5e5;"
             "}"
             "QListWidget::item:selected {"
-            "  background-color: #414956;"
+            "  background-color: #515965;"
             "  color: white;"
             "}"
         )

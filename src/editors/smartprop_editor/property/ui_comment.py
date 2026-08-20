@@ -30,18 +30,18 @@ class Ui_Widget(object):
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
-"    border-color: rgba(50, 50, 50, 255);\n"
+"    border-color: rgba(66, 66, 66, 255);\n"
 "    padding: 8px;\n"
 "    padding-left: 6px;\n"
 "    padding-right: 6px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
+"    color: #e5e5e5;\n"
+"    background-color: #2e2e2e;\n"
 "}\n"
 "\n"
 ".QWidget::hover {\n"
 "}\n"
 ".QWidget::selected {\n"
-"    background-color: #414956;\n"
+"    background-color: #515965;\n"
 "}")
         self.verticalLayout = QVBoxLayout(Widget)
         self.verticalLayout.setSpacing(0)

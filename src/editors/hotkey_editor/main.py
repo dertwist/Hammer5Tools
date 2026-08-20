@@ -13,8 +13,8 @@ import keyvalues3 as kv3
 from src.common import editor_info, app_dir, Hotkeys_Path, user_data_dir
 
 class KeyButton(QPushButton):
-    DEFAULT_COLOR = "#ababab"
-    ACTIVE_COLOR = "#ababab"
+    DEFAULT_COLOR = "#b2b2b2"
+    ACTIVE_COLOR = "#b2b2b2"
     BUTTON_TEXT_DEFAULT = 'Press a key'
 
     def __init__(self, parent=None, name=None):
@@ -31,19 +31,19 @@ class KeyButton(QPushButton):
                 font: 580 9pt "Segoe UI";
                 border: 1px solid black;
                 border-radius: 1px;
-                border-color: rgba(80, 80, 80, 150);
+                border-color: rgba(94, 94, 94, 150);
                 height:22px;
                 padding: 4px;
                 color: {color};
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }}
             QPushButton:hover {{
-                background-color: #414956;
+                background-color: #515965;
                 color: white;
             }}
             QPushButton:pressed {{
                 background-color: red;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
                 margin: 1px 2px;
             }}
         """

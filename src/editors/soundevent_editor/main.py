@@ -204,14 +204,14 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.editor_header_frame.setObjectName("editor_header_frame")
             self.editor_header_frame.setStyleSheet("""
                 QFrame#editor_header_frame {
-                    background-color: #1C1C1C;
+                    background-color: #2e2e2e;
                     border: none;
-                    border-bottom: 2px solid rgba(80, 80, 80, 255);
+                    border-bottom: 2px solid rgba(94, 94, 94, 255);
                     border-radius: 0px;
                 }
                 QLabel {
                     font: 580 9pt "Segoe UI";
-                    color: #E3E3E3;
+                    color: #e5e5e5;
                     border: none;
                 }
             """)
@@ -231,14 +231,14 @@ class SoundEventEditorMainWindow(QMainWindow):
                 QLineEdit {
                     font: 580 9pt "Segoe UI";
                     border: 2px solid black;
-                    border-color: rgba(80, 80, 80, 255);
+                    border-color: rgba(94, 94, 94, 255);
                     border-radius: 2px;
-                    color: #E3E3E3;
-                    background-color: #1C1C1C;
+                    color: #e5e5e5;
+                    background-color: #2e2e2e;
                     padding: 2px 4px;
                 }
                 QLineEdit:focus {
-                    border-color: #414956;
+                    border-color: #515965;
                 }
             """)
             self.editor_prop_filter_edit.textChanged.connect(self.filter_editor_properties)
@@ -251,18 +251,18 @@ class SoundEventEditorMainWindow(QMainWindow):
                     font: 580 9pt "Segoe UI";
                     border: 2px solid black;
                     border-radius: 2px;
-                    border-color: rgba(80, 80, 80, 255);
+                    border-color: rgba(94, 94, 94, 255);
                     height: 22px;
                     padding: 2px 6px;
-                    color: #E3E3E3;
-                    background-color: #1C1C1C;
+                    color: #e5e5e5;
+                    background-color: #2e2e2e;
                 }
                 QPushButton:hover {
-                    background-color: #414956;
+                    background-color: #515965;
                     color: white;
                 }
                 QPushButton:pressed {
-                    background-color: #1C1C1C;
+                    background-color: #2e2e2e;
                 }
             """)
             self.save_template_btn.clicked.connect(self.save_current_soundevent_as_template)

@@ -47,7 +47,7 @@ class FindAndReplaceDialog(QDialog):
     def text_highlighter(self, text_content, text_to_find, match_case, whole_words):
         cursor = self.ui.viewport_QplainText.textCursor()
         format = QTextCharFormat()
-        format.setBackground(QColor("#414956"))
+        format.setBackground(QColor("#515965"))
 
         # Determine regex flags
         flags = 0

@@ -108,7 +108,7 @@ class PropertyColor(QWidget, PooledPropertyMixin):
                 padding:4px;
                 border:0px;
                 border: 2px solid translucent;
-                border-color: rgba(80, 80, 80, 100);
+                border-color: rgba(94, 94, 94, 100);
                 """)
             print("RGB Color:", color)
             self.color = list(color)
@@ -158,7 +158,7 @@ class PropertyColor(QWidget, PooledPropertyMixin):
             padding:4px;
             border:0px;
             border: 2px solid translucent;
-            border-color: rgba(80, 80, 80, 100);
+            border-color: rgba(94, 94, 94, 100);
             """)
         
     def change_value(self):

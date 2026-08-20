@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1273, 931)
-        MainWindow.setStyleSheet(u"QMainWindow#MainWindow { background-color: #1C1C1C; }")
+        MainWindow.setStyleSheet(u"QMainWindow#MainWindow { background-color: #2e2e2e; }")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
         icon = QIcon()
@@ -74,7 +74,7 @@ class Ui_MainWindow(object):
         self.PropertiesFrame.setObjectName(u"PropertiesFrame")
         self.PropertiesFrame.setStyleSheet(u"        QFrame#PropertiesFrame {\n"
 "            border: 2px solid black; \n"
-"            border-color: rgba(80, 80, 80, 255);\n"
+"            border-color: rgba(94, 94, 94, 255);\n"
 "        }\n"
 "        QFrame#PropertiesFrame QLabel {\n"
 "            border: 0px solid black; \n"

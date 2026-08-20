@@ -29,7 +29,7 @@ class Ui_documentation_dialog(object):
         documentation_dialog.setSizePolicy(sizePolicy)
         documentation_dialog.setMinimumSize(QSize(680, 580))
         documentation_dialog.setMaximumSize(QSize(680, 580))
-        documentation_dialog.setStyleSheet(u"background-color: #1C1C1C; color: #E3E3E3;")
+        documentation_dialog.setStyleSheet(u"background-color: #2e2e2e; color: #e5e5e5;")
         documentation_dialog.setSizeGripEnabled(False)
         documentation_dialog.setModal(False)
 
@@ -66,7 +66,7 @@ class Ui_documentation_dialog(object):
         font.setPointSize(12)
         font.setBold(True)
         self.version.setFont(font)
-        self.version.setStyleSheet(u"color: #9D9D9D;")
+        self.version.setStyleSheet(u"color: #a5a5a5;")
         self.version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.verticalLayout_3.addWidget(self.version)
 
@@ -75,7 +75,7 @@ class Ui_documentation_dialog(object):
         # Main Content Frame (Tutorials & YouTube Video Widget with sharp borders)
         self.content_frame = QFrame(documentation_dialog)
         self.content_frame.setObjectName(u"content_frame")
-        self.content_frame.setStyleSheet(u"background-color: #242424; border: 1px solid #333333; border-radius: 0px;")
+        self.content_frame.setStyleSheet(u"background-color: #363636; border: 1px solid #434343; border-radius: 0px;")
         self.content_layout = QVBoxLayout(self.content_frame)
         self.content_layout.setSpacing(10)
         self.content_layout.setContentsMargins(12, 12, 12, 12)
@@ -83,7 +83,7 @@ class Ui_documentation_dialog(object):
         # Video Card with YouTube Preview (sharp borders)
         self.video_card = QFrame(self.content_frame)
         self.video_card.setObjectName(u"video_card")
-        self.video_card.setStyleSheet(u"background-color: #1E222A; border: 1px solid #333A48; border-radius: 0px;")
+        self.video_card.setStyleSheet(u"background-color: #30343b; border: 1px solid #434a57; border-radius: 0px;")
         self.video_layout = QHBoxLayout(self.video_card)
         self.video_layout.setSpacing(12)
         self.video_layout.setContentsMargins(10, 10, 10, 10)
@@ -92,7 +92,7 @@ class Ui_documentation_dialog(object):
         self.yt_preview_label = QLabel(self.video_card)
         self.yt_preview_label.setObjectName(u"yt_preview_label")
         self.yt_preview_label.setFixedSize(QSize(264, 148))
-        self.yt_preview_label.setStyleSheet(u"border: 1px solid #3E4451; border-radius: 0px; background-color: #000000;")
+        self.yt_preview_label.setStyleSheet(u"border: 1px solid #4d535f; border-radius: 0px; background-color: #000000;")
         self.yt_preview_label.setScaledContents(True)
         self.yt_preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -124,7 +124,7 @@ class Ui_documentation_dialog(object):
         font_vdesc.setPointSize(8.5)
         self.video_desc.setFont(font_vdesc)
         self.video_desc.setWordWrap(True)
-        self.video_desc.setStyleSheet(u"color: #ABB2BF; border: none;")
+        self.video_desc.setStyleSheet(u"color: #b2b8c4; border: none;")
         self.video_info_layout.addWidget(self.video_desc)
 
         self.video_info_layout.addStretch()
@@ -161,7 +161,7 @@ class Ui_documentation_dialog(object):
         # Guides Section (sharp borders)
         self.guides_card = QFrame(self.content_frame)
         self.guides_card.setObjectName(u"guides_card")
-        self.guides_card.setStyleSheet(u"background-color: #1E1E1E; border: 1px solid #333333; border-radius: 0px;")
+        self.guides_card.setStyleSheet(u"background-color: #303030; border: 1px solid #434343; border-radius: 0px;")
         self.guides_layout = QVBoxLayout(self.guides_card)
         self.guides_layout.setSpacing(8)
         self.guides_layout.setContentsMargins(10, 10, 10, 10)
@@ -183,19 +183,19 @@ class Ui_documentation_dialog(object):
         self.btn_style = u"""
             QPushButton {
                 font: 580 9pt "Segoe UI";
-                border: 1px solid #4E5563;
+                border: 1px solid #5c636f;
                 border-radius: 0px;
                 padding: 6px 12px;
-                color: #E3E3E3;
-                background-color: #282C34;
+                color: #e5e5e5;
+                background-color: #393d44;
             }
             QPushButton:hover {
-                background-color: #3E4451;
+                background-color: #4d535f;
                 color: #FFFFFF;
                 border-color: #61AFEF;
             }
             QPushButton:pressed {
-                background-color: #1E222A;
+                background-color: #30343b;
             }
         """
 
@@ -237,7 +237,7 @@ class Ui_documentation_dialog(object):
         self.special_thanks_label.setFont(font_thanks)
         self.special_thanks_label.setTextFormat(Qt.TextFormat.RichText)
         self.special_thanks_label.setOpenExternalLinks(True)
-        self.special_thanks_label.setStyleSheet(u"color: #9D9D9D; border: none; padding: 2px;")
+        self.special_thanks_label.setStyleSheet(u"color: #a5a5a5; border: none; padding: 2px;")
         self.special_thanks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.content_layout.addWidget(self.special_thanks_label)
 
@@ -261,16 +261,16 @@ class Ui_documentation_dialog(object):
         self.dont_show_button.setStyleSheet(u"""
             QPushButton {
                 font: 500 8.5pt "Segoe UI";
-                border: 1px solid #444444;
+                border: 1px solid #535353;
                 border-radius: 0px;
                 padding: 4px 8px;
-                color: #B0B0B0;
-                background-color: #242424;
+                color: #b6b6b6;
+                background-color: #363636;
             }
             QPushButton:hover {
-                background-color: #333333;
+                background-color: #434343;
                 color: #FFFFFF;
-                border-color: #666666;
+                border-color: #727272;
             }
             QPushButton:checked {
                 background-color: #3A2323;
@@ -287,18 +287,18 @@ class Ui_documentation_dialog(object):
         self.request_a_new_feature_button.setStyleSheet(u"""
             QPushButton {
                 font: 580 9pt "Segoe UI";
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 0px;
                 padding: 4px 12px;
-                color: #E3E3E3;
-                background-color: #242424;
+                color: #e5e5e5;
+                background-color: #363636;
             }
             QPushButton:hover {
-                background-color: #414956;
+                background-color: #515965;
                 color: white;
             }
             QPushButton:pressed {
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
         """)
         icon1 = QIcon()
@@ -313,18 +313,18 @@ class Ui_documentation_dialog(object):
         self.close_button.setStyleSheet(u"""
             QPushButton {
                 font: 580 9pt "Segoe UI";
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 0px;
                 padding: 4px 14px;
-                color: #E3E3E3;
-                background-color: #242424;
+                color: #e5e5e5;
+                background-color: #363636;
             }
             QPushButton:hover {
-                background-color: #414956;
+                background-color: #515965;
                 color: white;
             }
             QPushButton:pressed {
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
         """)
         self.horizontalLayout_3.addWidget(self.close_button)

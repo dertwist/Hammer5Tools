@@ -49,7 +49,7 @@ class PropertyBrowserWidget(QWidget):
             QLabel {
                 font-weight: bold;
                 font-size: 11px;
-                color: #CCCCCC;
+                color: #d0d0d0;
                 padding-left: 2px;
             }
         """)
@@ -67,21 +67,21 @@ class PropertyBrowserWidget(QWidget):
         self.prop_list_widget.setAlternatingRowColors(True)
         self.prop_list_widget.setStyleSheet("""
             QListWidget {
-                background-color: #1C1C1C;
-                alternate-background-color: #242424;
-                border: 1px solid #333333;
+                background-color: #2e2e2e;
+                alternate-background-color: #363636;
+                border: 1px solid #434343;
                 border-radius: 2px;
-                color: #E0E0E0;
+                color: #e2e2e2;
                 font: 580 10pt "Segoe UI";
             }
             QListWidget::item {
                 padding: 2px 6px;
             }
             QListWidget::item:hover {
-                background-color: #2D333B;
+                background-color: #3e434b;
             }
             QListWidget::item:selected {
-                background-color: #3E4B5E;
+                background-color: #4d596b;
                 color: white;
             }
         """)
@@ -107,7 +107,7 @@ class PropertyBrowserWidget(QWidget):
             QLabel {
                 font-weight: bold;
                 font-size: 11px;
-                color: #CCCCCC;
+                color: #d0d0d0;
                 padding-left: 2px;
             }
         """)
@@ -150,21 +150,21 @@ class PropertyBrowserWidget(QWidget):
         self.tmpl_list_widget.setAlternatingRowColors(True)
         self.tmpl_list_widget.setStyleSheet("""
             QListWidget {
-                background-color: #1C1C1C;
-                alternate-background-color: #242424;
-                border: 1px solid #333333;
+                background-color: #2e2e2e;
+                alternate-background-color: #363636;
+                border: 1px solid #434343;
                 border-radius: 2px;
-                color: #E0E0E0;
+                color: #e2e2e2;
                 font: 580 10pt "Segoe UI";
             }
             QListWidget::item {
                 padding: 2px 6px;
             }
             QListWidget::item:hover {
-                background-color: #2D333B;
+                background-color: #3e434b;
             }
             QListWidget::item:selected {
-                background-color: #3E4B5E;
+                background-color: #4d596b;
                 color: white;
             }
         """)

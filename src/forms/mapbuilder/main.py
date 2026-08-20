@@ -621,12 +621,12 @@ class MapBuilderDialog(QMainWindow):
         self.progress_bar.setFixedHeight(14)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 2px;
                 text-align: center;
                 color: white;
                 font-size: 10px;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
             QProgressBar::chunk {
                 background-color: #1a528a;
@@ -642,12 +642,12 @@ class MapBuilderDialog(QMainWindow):
         self.total_progress_bar.setFixedHeight(14)
         self.total_progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 2px;
                 text-align: center;
                 color: white;
                 font-size: 10px;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
             QProgressBar::chunk {
                 background-color: #1a528a;
@@ -1469,15 +1469,15 @@ class MapBuilderDialog(QMainWindow):
         self._log_colored(message, '#FFAA00')
 
     def log_info(self, message: str):
-        self._log_colored(message, '#CCCCCC')
+        self._log_colored(message, '#d0d0d0')
 
     def log_separator(self, char='=', length=70):
-        self._log_colored(char * length, '#666666')
+        self._log_colored(char * length, '#727272')
 
     def _log_colored(self, message: str, color: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = OutputFormatter.parse_output_line(message)
-        timestamped_message = f'<span style="color:#808080;">[{timestamp}]</span> <span style="color:{color};">{formatted_message}</span>'
+        timestamped_message = f'<span style="color:#8a8a8a;">[{timestamp}]</span> <span style="color:{color};">{formatted_message}</span>'
         self.ui.output_list_widget.append(timestamped_message)
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
@@ -1485,7 +1485,7 @@ class MapBuilderDialog(QMainWindow):
     def add_log_message(self, message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = OutputFormatter.parse_output_line(message)
-        timestamped_message = f'<span style="color:#808080;">[{timestamp}]</span> {formatted_message}'
+        timestamped_message = f'<span style="color:#8a8a8a;">[{timestamp}]</span> {formatted_message}'
         self.ui.output_list_widget.append(timestamped_message)
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())

@@ -40,14 +40,14 @@ class ExplorerItem(QWidget):
             border-left: 0px;
             border-right: 0px;
             border-top: 0px;
-            border-color: rgba(50, 50, 50, 255);
-            color: #E3E3E3;
-            background-color: #1C1C1C;
+            border-color: rgba(66, 66, 66, 255);
+            color: #e5e5e5;
+            background-color: #2e2e2e;
         }
         .QFrame::hover {
         }
         .QFrame::selected {
-            background-color: #414956;
+            background-color: #515965;
         }""")
 
         # Add an open button to the layout

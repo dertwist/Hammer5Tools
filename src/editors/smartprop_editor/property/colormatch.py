@@ -58,21 +58,21 @@ class PropertyColorMatch(QWidget):
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:18px;
     padding: 4px;
     padding-left: 6px;
     padding-right: 6px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 QToolButton:hover {
-    background-color: #414956;
+    background-color: #515965;
     color: white;
 }
 QToolButton:pressed {
     background-color: red;
-    background-color: #1C1C1C;
+    background-color: #2e2e2e;
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;

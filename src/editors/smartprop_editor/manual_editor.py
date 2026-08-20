@@ -38,7 +38,7 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
         self.highlighting_rules = []
 
         header_fmt = QTextCharFormat()
-        header_fmt.setForeground(QColor(109, 109, 109))  # #6D6D6D
+        header_fmt.setForeground(QColor(121, 121, 121))  # #797979
         header_fmt.setFontItalic(True)
         self.highlighting_rules.append((re.compile(r'<!--.*?-->'), header_fmt))
 
@@ -259,10 +259,10 @@ class Kv3CodeEditor(QPlainTextEdit):
 
     def line_number_area_paint_event(self, event):
         painter = QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QColor(29, 29, 31))  # #1d1d1f
+        painter.fillRect(event.rect(), QColor(47, 47, 49))  # #2f2f31
 
         # Right border
-        painter.setPen(QColor(54, 54, 57))  # #363639
+        painter.setPen(QColor(70, 70, 73))  # #464649
         painter.drawLine(
             self.line_number_area.width() - 1, event.rect().top(),
             self.line_number_area.width() - 1, event.rect().bottom(),
@@ -284,10 +284,10 @@ class Kv3CodeEditor(QPlainTextEdit):
                 number = str(block_number + 1)
                 if block_number == current_line:
                     highlight_rect = QRect(0, int(top), self.line_number_area.width() - 1, height)
-                    painter.fillRect(highlight_rect, QColor(65, 73, 86, 80))
-                    painter.setPen(QColor(227, 227, 227))   # #E3E3E3
+                    painter.fillRect(highlight_rect, QColor(80, 88, 100, 80))
+                    painter.setPen(QColor(229, 229, 229))   # #e5e5e5
                 else:
-                    painter.setPen(QColor(157, 157, 157))   # #9D9D9D
+                    painter.setPen(QColor(165, 165, 165))   # #a5a5a5
                 painter.drawText(0, int(top), self.line_number_area.width() - 6, height,
                                  Qt.AlignRight | Qt.AlignVCenter, number)
 
@@ -300,7 +300,7 @@ class Kv3CodeEditor(QPlainTextEdit):
         extra = []
         if not self.isReadOnly():
             sel = QTextEdit.ExtraSelection()
-            sel.format.setBackground(QColor(64, 64, 64, 100))
+            sel.format.setBackground(QColor(79, 79, 79, 100))
             sel.format.setProperty(QTextFormat.FullWidthSelection, True)
             sel.cursor = self.textCursor()
             sel.cursor.clearSelection()
@@ -378,7 +378,7 @@ class _SearchReplaceBar(QFrame):
         
         # Style labels
         for w in (search_label, replace_label, self._match_label):
-            w.setStyleSheet("color: #E3E3E3;")
+            w.setStyleSheet("color: #e5e5e5;")
 
         for w in (replace_label, self._replace_input, self._replace_btn, self._replace_all_btn):
             replace_row.addWidget(w)
@@ -579,7 +579,7 @@ class ManualEditor(QWidget):
         bottom_layout.addStretch()
 
         self._stats_label = QLabel("")
-        self._stats_label.setStyleSheet("color: #9D9D9D; font: 9pt 'Segoe UI';")
+        self._stats_label.setStyleSheet("color: #a5a5a5; font: 9pt 'Segoe UI';")
         bottom_layout.addWidget(self._stats_label)
 
         root.addWidget(bottom_toolbar)

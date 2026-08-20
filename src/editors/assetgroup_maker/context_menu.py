@@ -29,12 +29,12 @@ class ReplacementsContextMenu:
         menu = self.widget.createStandardContextMenu()
         menu.setStyleSheet("""
             QMenu {
-                background-color: #1C1C1C;
-                color: #E3E3E3; 
-                border: 1px solid #363639; 
+                background-color: #2e2e2e;
+                color: #e5e5e5; 
+                border: 1px solid #464649; 
             }
             QMenu::item:selected {
-                background-color: #414956;
+                background-color: #515965;
             }
         """)
         menu.addSeparator()

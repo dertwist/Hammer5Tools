@@ -355,7 +355,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self._perform_pick_flag = False
 
         # Normal Render Pass
-        GL.glClearColor(0.11, 0.11, 0.11, 1.0)
+        GL.glClearColor(0.18, 0.18, 0.18, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         # Upload meshes ready on CPU and free ones the hierarchy dropped
@@ -410,7 +410,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         
         # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
         if self.isolated_element_id is not None:
-            pen = QPen(QColor("#accc8d"), 2) # isolated view highlight color
+            pen = QPen(QColor("#b3d096"), 2) # isolated view highlight color
             painter.setPen(pen)
             w = self.width()
             h = self.height()
@@ -465,18 +465,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             box_y = h - margin_bottom - box_height
             
             # Sharp stylesheet box styling:
-            # - Draw sharp background box (dark gray, #1e1e1e with 220 alpha)
+            # - Draw sharp background box (dark gray, #303030 with 220 alpha)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(30, 30, 30, 220))
+            painter.setBrush(QColor(48, 48, 48, 220))
             painter.drawRect(box_x, box_y, box_width, box_height)
             
-            # - Draw sharp 1px border (#444444)
-            painter.setPen(QPen(QColor(68, 68, 68), 1))
+            # - Draw sharp 1px border (#535353)
+            painter.setPen(QPen(QColor(83, 83, 83), 1))
             painter.setBrush(Qt.NoBrush)
             painter.drawRect(box_x, box_y, box_width, box_height)
             
             # - Draw a clean 3px left accent line
-            accent_color = QColor("#accc8d") if self.isolated_element_id is not None else QColor(0, 120, 215)
+            accent_color = QColor("#b3d096") if self.isolated_element_id is not None else QColor(0, 120, 215)
             painter.setPen(Qt.NoPen)
             painter.setBrush(accent_color)
             painter.drawRect(box_x, box_y, 3, box_height)
@@ -486,7 +486,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 if line.startswith("⚠"):
                     painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
                 elif line.startswith("Isolate Mode:"):
-                    painter.setPen(QColor("#accc8d")) # isolated view color
+                    painter.setPen(QColor("#b3d096")) # isolated view color
                 elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
                     painter.setPen(QColor(255, 165, 0)) # orange for active transforms
                 else:

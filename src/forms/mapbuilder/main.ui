@@ -449,13 +449,13 @@
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:18px;
     padding: 4px;
     padding-left: 6px;
     padding-right: 6px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 
@@ -465,13 +465,13 @@ QTextBrowser{
     font: 580 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:18px;
     padding: 4px;
     padding-left: 6px;
     padding-right: 6px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 QTextBrowser:hover {
@@ -479,7 +479,7 @@ QTextBrowser:hover {
 
 QTextBrowser:pressed {
     background-color: red;
-    background-color: #1C1C1C;
+    background-color: #2e2e2e;
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;
@@ -517,10 +517,10 @@ QTextBrowser:pressed {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:18px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 
@@ -530,10 +530,10 @@ QFram#system_monitore{
     font: 580 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
+    border-color: rgba(94, 94, 94, 255);
     height:18px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
 }
 
 QFrame#system_monitor:hover {
@@ -541,7 +541,7 @@ QFrame#system_monitor:hover {
 
 QFrame#system_monitor:pressed {
     background-color: red;
-    background-color: #1C1C1C;
+    background-color: #2e2e2e;
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;

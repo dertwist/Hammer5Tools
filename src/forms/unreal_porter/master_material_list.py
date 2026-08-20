@@ -115,7 +115,7 @@ class MasterMaterialCard(QFrame):
         self.bulk_dir = bulk_dir
         # Zebra stripe — alternate-background-color the card itself. Scoped to
         # MasterMaterialCard so it does not repaint its child widgets.
-        bg = "#1D1D1F" if parity else "#1C1C1C"
+        bg = "#2f2f31" if parity else "#2e2e2e"
         self.setStyleSheet(f"MasterMaterialCard {{ background-color: {bg}; }}")
 
         outer = QVBoxLayout(self)
@@ -130,7 +130,7 @@ class MasterMaterialCard(QFrame):
 
         count = info.get("count", len(info.get("instances", [])))
         if count <= 1:
-            title = QLabel(f"<b>{master_name}</b> <span style='color:#9D9D9D;'>(standalone material)</span>")
+            title = QLabel(f"<b>{master_name}</b> <span style='color:#a5a5a5;'>(standalone material)</span>")
         else:
             title = QLabel(f"<b>{master_name}</b> ({count} instance{'s' if count != 1 else ''})")
         head.addWidget(title)
@@ -256,12 +256,12 @@ class MasterMaterialList(QScrollArea):
         def _line():
             line = QFrame()
             line.setFrameShape(QFrame.HLine)
-            line.setStyleSheet("color: #363639;")
+            line.setStyleSheet("color: #464649;")
             return line
 
         layout.addWidget(_line(), 1)
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("color: #9D9D9D; font: 600 9pt 'Segoe UI'; background: transparent;")
+        lbl.setStyleSheet("color: #a5a5a5; font: 600 9pt 'Segoe UI'; background: transparent;")
         layout.addWidget(lbl)
         layout.addWidget(_line(), 1)
         apply_stylesheets(container)

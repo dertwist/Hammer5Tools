@@ -27,7 +27,7 @@ class DesignColors:
     BG_SURFACE = "#262828"  # Charcoal-800
 
     TEXT_PRIMARY = "#F5F5F5"  # Gray-200
-    TEXT_SECONDARY = "#A7A9A9"  # Gray-300 (dimmed)
+    TEXT_SECONDARY = "#aeb0b0"  # Gray-300 (dimmed)
 
     # Accents
     PRIMARY = "#32B8C6"  # Teal-300
@@ -41,7 +41,7 @@ class DesignColors:
     # Chart background
     CHART_BG = "#262828"
     CHART_GRID = "#3A3C3C"
-    CHART_TEXT = "#A7A9A9"
+    CHART_TEXT = "#aeb0b0"
 
 
 # Helper: safe numeric parse

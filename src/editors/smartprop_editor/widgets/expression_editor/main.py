@@ -17,10 +17,10 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
 
         # Define colors for different elements - matching project color scheme
         keyword_color = QColor(86, 156, 214)  # Blue for keywords
-        operator_color = QColor(227, 227, 227)  # Light gray for operators (matching #E3E3E3)
+        operator_color = QColor(229, 229, 229)  # Light gray for operators (matching #e5e5e5)
         number_color = QColor(181, 206, 168)  # Light green for numbers
         function_color = QColor(220, 220, 170)  # Yellow for functions
-        comment_color = QColor(109, 109, 109)  # Desaturated gray for comments (matching #6D6D6D)
+        comment_color = QColor(121, 121, 121)  # Desaturated gray for comments (matching #797979)
 
         # Type-specific colors for variables
         bool_color = QColor(86, 156, 214)  # Blue for bool
@@ -157,10 +157,10 @@ class CodeEditor(CompletingPlainTextEdit):
         painter = QPainter(self.line_number_area)
 
         # Fill background with darker color matching project theme
-        painter.fillRect(event.rect(), QColor(29, 29, 31))  # #1d1d1f - project secondary background
+        painter.fillRect(event.rect(), QColor(47, 47, 49))  # #2f2f31 - project secondary background
 
         # Draw a subtle border on the right side
-        painter.setPen(QColor(54, 54, 57))  # #363639 - project stroke color
+        painter.setPen(QColor(70, 70, 73))  # #464649 - project stroke color
         painter.drawLine(self.line_number_area.width() - 1, event.rect().top(),
                         self.line_number_area.width() - 1, event.rect().bottom())
 
@@ -185,13 +185,13 @@ class CodeEditor(CompletingPlainTextEdit):
                 if block_number == current_line:
                     # Highlight background for current line
                     highlight_rect = QRect(0, int(top), self.line_number_area.width() - 1, height)
-                    painter.fillRect(highlight_rect, QColor(65, 73, 86, 80))  # #414956 with transparency
+                    painter.fillRect(highlight_rect, QColor(80, 88, 100, 80))  # #515965 with transparency
 
                     # Use brighter color for current line number
-                    painter.setPen(QColor(227, 227, 227))  # #E3E3E3 - project primary text
+                    painter.setPen(QColor(229, 229, 229))  # #e5e5e5 - project primary text
                 else:
                     # Use muted color for other line numbers
-                    painter.setPen(QColor(157, 157, 157))  # #9D9D9D - project neutral text
+                    painter.setPen(QColor(165, 165, 165))  # #a5a5a5 - project neutral text
 
                 # Draw line number with right alignment and padding
                 painter.drawText(0, int(top), self.line_number_area.width() - 6, height,
@@ -208,7 +208,7 @@ class CodeEditor(CompletingPlainTextEdit):
         if not self.isReadOnly():
             selection = QTextEdit.ExtraSelection()
 
-            line_color = QColor(64, 64, 64, 100)  # Semi-transparent gray
+            line_color = QColor(79, 79, 79, 100)  # Semi-transparent gray
             selection.format.setBackground(line_color)
             selection.format.setProperty(QTextFormat.FullWidthSelection, True)
             selection.cursor = self.textCursor()
@@ -292,11 +292,11 @@ class ExpressionEditor(QToolButton):
         splitter = QSplitter(Qt.Horizontal)
         splitter.setStyleSheet("""
             QSplitter::handle {
-                background-color: #404040;
+                background-color: #4f4f4f;
                 width: 2px;
             }
             QSplitter::handle:hover {
-                background-color: #505050;
+                background-color: #5e5e5e;
             }
         """)
         main_layout.addWidget(splitter)
@@ -314,7 +314,7 @@ class ExpressionEditor(QToolButton):
         # QSS has no '#' line comment — '#' starts an ID selector, so the
         # commented-out declarations that used to sit here made Qt reject the
         # whole sheet ("Could not parse stylesheet of object QLabel").
-        variables_label.setStyleSheet("QLabel { color: #E3E3E3; }")
+        variables_label.setStyleSheet("QLabel { color: #e5e5e5; }")
         left_layout.addWidget(variables_label)
 
         variables_list = QListWidget()
@@ -425,8 +425,8 @@ class ExpressionEditor(QToolButton):
         right_panel = QFrame()
         right_panel.setStyleSheet("""
             QFrame {
-                background-color: #252526;
-                border: 1px solid #404040;
+                background-color: #363637;
+                border: 1px solid #4f4f4f;
                 border-radius: 4px;
             }
         """)
@@ -464,11 +464,11 @@ class ExpressionEditor(QToolButton):
         help_label.setMaximumHeight(120)
         help_label.setStyleSheet("""
             QLabel {
-                color: #CCCCCC; 
+                color: #d0d0d0; 
                 font-size: 8pt; 
                 padding: 8px;
-                background-color: #2D2D2D;
-                border: 1px solid #404040;
+                background-color: #3e3e3e;
+                border: 1px solid #4f4f4f;
                 border-radius: 3px;
                 line-height: 1.4;
             }

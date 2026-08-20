@@ -334,7 +334,7 @@ class SettingsGroup(QWidget):
         header_frame.setMaximumHeight(32)
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(8, 4, 8, 4)
-        header_frame.setStyleSheet('background-color: #1D1D1F;')
+        header_frame.setStyleSheet('background-color: #2f2f31;')
 
         self.collapse_button = QToolButton()
         self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp.svg"))
@@ -590,12 +590,12 @@ class PresetButton(QPushButton):
             self.setStyleSheet("""
                 QPushButton {
                     font-size: 12px;
-                    background-color: #1D1D1F;
+                    background-color: #2f2f31;
                     color: #c0c0c0;
-                    border: 1px solid #606060;
+                    border: 1px solid #6d6d6d;
                     border-radius: 2px;
                 }
                 QPushButton:hover {
-                    background-color: #505050;
+                    background-color: #5e5e5e;
                 }
             """)

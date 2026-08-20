@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: #1C1C1C;</string>
+   <string notr="true">background-color: #2e2e2e;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -107,7 +107,7 @@
            <item>
             <widget class="QFrame" name="properties_spacer">
              <property name="styleSheet">
-              <string notr="true">color:#bbb;
+              <string notr="true">color:#ccc;
 border: none;</string>
              </property>
              <property name="frameShape">

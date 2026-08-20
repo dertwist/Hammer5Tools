@@ -112,9 +112,9 @@ class LegacyPropertyList(QWidget):
         self._scroll.setFrameShape(QFrame.NoFrame)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._scroll.setStyleSheet("""
-            QScrollArea { background-color: #1C1C1C; border: none; }
-            QScrollBar:vertical { width: 8px; background: #1C1C1C; }
-            QScrollBar::handle:vertical { background: #444; border-radius: 0px; }
+            QScrollArea { background-color: #2e2e2e; border: none; }
+            QScrollBar:vertical { width: 8px; background: #2e2e2e; }
+            QScrollBar::handle:vertical { background: #555; border-radius: 0px; }
         """)
 
         self._container = QWidget()
@@ -123,7 +123,7 @@ class LegacyPropertyList(QWidget):
         # that PropertyFrame.paintEvent draws.
         self._container.setObjectName("propertyListContainer")
         self._container.setStyleSheet(
-            "QWidget#propertyListContainer { background-color: #1C1C1C; }"
+            "QWidget#propertyListContainer { background-color: #2e2e2e; }"
         )
         self._container_layout = QVBoxLayout(self._container)
         self._container_layout.setContentsMargins(0, 0, 0, 0)

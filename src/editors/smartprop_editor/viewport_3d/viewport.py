@@ -32,17 +32,17 @@ def _hammer_tool_icon_path(name):
 # Checked state is highlighted so the on/off state reads clearly at a glance.
 _VIEWPORT_TOGGLE_STYLE = """
 QToolButton {
-    border: 1px solid rgba(80, 80, 80, 255);
+    border: 1px solid rgba(94, 94, 94, 255);
     border-radius: 2px;
-    background-color: #1C1C1C;
+    background-color: #2e2e2e;
     padding: 1px;
 }
 QToolButton:hover {
-    background-color: #414956;
+    background-color: #515965;
 }
 QToolButton:checked {
-    background-color: #4A5A6A;
-    border-color: #accc8d;
+    background-color: #586776;
+    border-color: #b3d096;
 }
 """
 

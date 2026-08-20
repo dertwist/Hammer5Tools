@@ -228,19 +228,19 @@ class PropertyPathEditor(QWidget):
 
         # Override specific generic elements to enhance the Path Editor appearance
         dialog.setStyleSheet("""
-            QDialog { background-color: #1C1C1C; }
-            QTableWidget { background-color: #151515; color: #E3E3E3; border: none; gridline-color: #2D2D30; }
-            QHeaderView::section { background-color: #252526; color: #9D9D9D; border: none; padding: 0px; }
-            QPushButton { background-color: #333333; color: #E3E3E3; border: 1px solid #555555; border-radius: 2px; padding: 4px 12px; }
-            QPushButton:hover { background-color: #444444; }
-            QPushButton:pressed { background-color: #222222; }
-            QTableWidget QLineEdit { background-color: #252526; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 4px; }
+            QDialog { background-color: #2e2e2e; }
+            QTableWidget { background-color: #272727; color: #e5e5e5; border: none; gridline-color: #3e3e41; }
+            QHeaderView::section { background-color: #363637; color: #a5a5a5; border: none; padding: 0px; }
+            QPushButton { background-color: #434343; color: #e5e5e5; border: 1px solid #636363; border-radius: 2px; padding: 4px 12px; }
+            QPushButton:hover { background-color: #535353; }
+            QPushButton:pressed { background-color: #343434; }
+            QTableWidget QLineEdit { background-color: #363637; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 4px; }
         """)
 
         # apply_stylesheets() sets a QLineEdit-specific stylesheet directly on each field,
         # which overrides the dialog-level "QTableWidget QLineEdit" rule above. Re-apply
         # the path editor's field style directly on each cell so it actually takes effect.
-        field_style = "background-color: #151515; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 12px;"
+        field_style = "background-color: #272727; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 12px;"
         for row in range(dialog.table.rowCount()):
             for col in range(dialog.table.columnCount()):
                 field = dialog.table.cellWidget(row, col)

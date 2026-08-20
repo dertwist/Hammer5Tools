@@ -227,7 +227,7 @@ class UnrealPorterWidget(QDialog):
         self.resize(1280, 850)
         self.setMinimumSize(960, 600)
         enable_dark_title_bar(self)
-        self.setStyleSheet("background-color: #151515;")
+        self.setStyleSheet("background-color: #272727;")
 
         self.groups = {}
         self.worker = None
@@ -275,12 +275,12 @@ class UnrealPorterWidget(QDialog):
     def _setup_progress_bar_style(self):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 2px;
                 text-align: center;
                 color: white;
                 font-size: 10px;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
             QProgressBar::chunk {
                 background-color: #1a528a;

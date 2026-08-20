@@ -26,7 +26,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1179, 707)
-        MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
+        MainWindow.setStyleSheet(u"background-color: #2e2e2e;")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
         icon = QIcon()
@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
 
         self.properties_spacer = QFrame(self.scrollAreaWidgetContents)
         self.properties_spacer.setObjectName(u"properties_spacer")
-        self.properties_spacer.setStyleSheet(u"color:#bbb;\n"
+        self.properties_spacer.setStyleSheet(u"color:#ccc;\n"
 "border: none;")
         self.properties_spacer.setFrameShape(QFrame.Shape.StyledPanel)
         self.properties_spacer.setFrameShadow(QFrame.Shadow.Raised)

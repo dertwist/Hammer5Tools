@@ -40,18 +40,18 @@ class Ui_MainWindow(object):
         self.MainWindowTools_tabs.setObjectName(u"MainWindowTools_tabs")
         self.MainWindowTools_tabs.setEnabled(True)
         self.MainWindowTools_tabs.setMinimumSize(QSize(0, 0))
-        self.MainWindowTools_tabs.setStyleSheet(u"background-color: #1d1d1f;\n"
+        self.MainWindowTools_tabs.setStyleSheet(u"background-color: #2f2f31;\n"
 "QTabWidget::pane {\n"
 "    background-color: solid red;\n"
 "    border-radius: 0px;\n"
 "    border: 2px solid gray;\n"
-"    border-color: #363639;\n"
-"    background-color: #1d1d1f;\n"
+"    border-color: #464649;\n"
+"    background-color: #2f2f31;\n"
 "}\n"
 "/* ========================================================== */\n"
 "QTabBar::tab {\n"
-"    background-color: #323232;\n"
-"    color: #9A9F91;\n"
+"    background-color: #424242;\n"
+"    color: #a2a79a;\n"
 "    border-radius: 0px;\n"
 "    border-top-right-radius: 0px;\n"
 "    border-top-left-radius: 0px;\n"
@@ -65,13 +65,13 @@ class Ui_MainWindow(object):
 "    font: 700 10pt \"Segoe UI\";\n"
 "    border-left: 2px solid darkgray;\n"
 "    border-top: 0px solid darkgray;\n"
-"    border-color: #151515;\n"
-"    border-right: 2px solid rgba(80, 80, 80, 80);\n"
+"    border-color: #272727;\n"
+"    border-right: 2px solid rgba(94, 94, 94, 80);\n"
 "\n"
 "\n"
 "\n"
-"    color: #E3E3E3;\n"
-"    background-color: #151515;\n"
+"    color: #e5e5e5;\n"
+"    background-color: #272727;\n"
 "\n"
 "}\n"
 "QTabBar::tab:selected {\n"
@@ -86,10 +86,10 @@ class Ui_MainWindow(object):
 "    border-bottom: 0px solid black;\n"
 "\n"
 "    font: 700 10pt \"Segoe UI\";\n"
-"    border-color: rgba(80, 80, 80, 180);\n"
+"    border-color: rgba(94, 94, 94, 180);\n"
 "    height:20px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1d1d1f;\n"
+"    color: #e5e5e5;\n"
+"    background-color: #2f2f31;\n"
 "}")
         self.MainWindowTools_tabs.setTabsClosable(False)
         self.Loading_Editor_Tab = QWidget()
@@ -190,7 +190,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.console_label.sizePolicy().hasHeightForWidth())
         self.console_label.setSizePolicy(sizePolicy)
-        self.console_label.setStyleSheet(u"color: #9D9D9D;\n"
+        self.console_label.setStyleSheet(u"color: #a5a5a5;\n"
 "padding-left: 8px;\n"
 "padding-right: 8px;\n"
 "font: 580 9pt \"Segoe UI\";")

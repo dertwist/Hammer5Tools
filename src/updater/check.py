@@ -218,7 +218,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
                 divider.setFrameShadow(QFrame.Plain)
                 divider.setLineWidth(2)
                 divider.setFixedHeight(2)
-                divider.setStyleSheet("background-color: #323232; border: none;")
+                divider.setStyleSheet("background-color: #424242; border: none;")
                 content_layout.addWidget(divider)
     else:
         content_layout.addWidget(QLabel("No release notes found."))
@@ -272,7 +272,7 @@ class DownloadProgressDialog(QDialog):
         layout.setSpacing(12)
 
         self.status_label = QLabel("Downloading update package...")
-        self.status_label.setStyleSheet("color: #E3E3E3; font-size: 12px; font-weight: bold;")
+        self.status_label.setStyleSheet("color: #e5e5e5; font-size: 12px; font-weight: bold;")
         layout.addWidget(self.status_label)
 
         self.progress_bar = QProgressBar(self)
@@ -283,12 +283,12 @@ class DownloadProgressDialog(QDialog):
         self.progress_bar.setFixedHeight(18)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #505050;
+                border: 1px solid #5e5e5e;
                 border-radius: 2px;
                 text-align: center;
                 color: white;
                 font-size: 10px;
-                background-color: #1C1C1C;
+                background-color: #2e2e2e;
             }
             QProgressBar::chunk {
                 background-color: #1a528a;
@@ -299,7 +299,7 @@ class DownloadProgressDialog(QDialog):
         layout.addWidget(self.progress_bar)
 
         self.details_label = QLabel("Please wait while the update is downloaded...")
-        self.details_label.setStyleSheet("color: #888888; font-size: 10px;")
+        self.details_label.setStyleSheet("color: #929292; font-size: 10px;")
         layout.addWidget(self.details_label)
 
         self.progress_signal.connect(self._set_progress)

@@ -522,7 +522,7 @@ class Widget(QMainWindow):
         overlay.setObjectName("launchOverlay")
         overlay.setAttribute(Qt.WA_StyledBackground, True)
         overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        overlay.setStyleSheet("QWidget#launchOverlay { background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgba(65,73,86,0.25), stop: 0.2 rgba(65,73,86,0.40), stop: 0.8 rgba(65,73,86,0.40), stop: 1 rgba(65,73,86,0.25)); }")
+        overlay.setStyleSheet("QWidget#launchOverlay { background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgba(80, 88, 100,0.25), stop: 0.2 rgba(80, 88, 100,0.40), stop: 0.8 rgba(80, 88, 100,0.40), stop: 1 rgba(80, 88, 100,0.25)); }")
         button_width, button_height = button.width(), button.height()
         overlay.setGeometry(-button_width, 0, button_width, button_height)
         overlay.show()

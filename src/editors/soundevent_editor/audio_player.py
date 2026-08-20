@@ -67,18 +67,18 @@ def compute_peak_envelope(file_or_path, frame_ms=30):
 
 
 class DBInfoOverlay(QFrame):
-    """Floating overlay popup displaying dB Reference Guide matching #1D1D1F background styling."""
+    """Floating overlay popup displaying dB Reference Guide matching #2f2f31 background styling."""
     def __init__(self, parent=None):
         super().__init__(parent, Qt.Popup | Qt.FramelessWindowHint)
         self.setObjectName("dbInfoOverlay")
         self.setStyleSheet(
             "QFrame#dbInfoOverlay {"
-            "  background-color: #1D1D1F;"
-            "  border: 1px solid #3D3D42;"
+            "  background-color: #2f2f31;"
+            "  border: 1px solid #4d4d51;"
             "  border-radius: 4px;"
             "}"
             "QLabel {"
-            "  color: #E3E3E3;"
+            "  color: #e5e5e5;"
             "  font: 9pt \"Segoe UI\";"
             "}"
         )
@@ -97,8 +97,8 @@ class DBInfoOverlay(QFrame):
         close_btn.setText("✕")
         close_btn.setToolTip("Close")
         close_btn.setStyleSheet(
-            "QToolButton { color: #9D9D9D; border: none; font-size: 10px; background-color: transparent; padding: 2px; }"
-            "QToolButton:hover { color: #FFFFFF; background-color: #3D3D42; border-radius: 2px; }"
+            "QToolButton { color: #a5a5a5; border: none; font-size: 10px; background-color: transparent; padding: 2px; }"
+            "QToolButton:hover { color: #FFFFFF; background-color: #4d4d51; border-radius: 2px; }"
         )
         close_btn.clicked.connect(self.hide)
         header.addWidget(close_btn)
@@ -108,9 +108,9 @@ class DBInfoOverlay(QFrame):
         info_items = [
             ("0 dBFS", "Digital Maximum Ceiling (Avoid Clipping)", "#E53935"),
             ("-3 to -6 dB", "SFX Peak Target (Gunshots, Impacts, Explosions)", "#FFB300"),
-            ("-12 to -18 dB", "Nominal Operating Level (Dialogue, Footsteps)", "#4CAF50"),
+            ("-12 to -18 dB", "Nominal Operating Level (Dialogue, Footsteps)", "#5ab55e"),
             ("-24 to -18 dB", "Ambient Background / Room Tone", "#29B6F6"),
-            ("-60 dB", "Noise Floor Cutoff / Silence Level", "#8E8E93"),
+            ("-60 dB", "Noise Floor Cutoff / Silence Level", "#97979c"),
         ]
 
         for db_val, desc, color in info_items:
@@ -120,14 +120,14 @@ class DBInfoOverlay(QFrame):
             badge = QLabel(db_val, self)
             badge.setFixedWidth(84)
             badge.setStyleSheet(
-                f"background-color: #27272A; color: {color}; font-weight: bold; "
+                f"background-color: #38383b; color: {color}; font-weight: bold; "
                 f"border-radius: 3px; padding: 2px 4px; font-size: 8.5pt;"
             )
             badge.setAlignment(Qt.AlignCenter)
             row.addWidget(badge)
 
             desc_label = QLabel(desc, self)
-            desc_label.setStyleSheet("color: #CCCCCC; font-size: 8.5pt;")
+            desc_label.setStyleSheet("color: #d0d0d0; font-size: 8.5pt;")
             row.addWidget(desc_label)
 
             layout.addLayout(row)
@@ -160,8 +160,8 @@ class VUMeter(QWidget):
         p.setRenderHint(QPainter.Antialiasing, True)
         r = self.rect()
 
-        # Background (#1D1D1F)
-        p.fillRect(r, QColor(29, 29, 31))
+        # Background (#2f2f31)
+        p.fillRect(r, QColor(47, 47, 49))
 
         meter_h = 9
         meter_y = 13
@@ -265,8 +265,8 @@ class WaveformWidget(QWidget):
         w, h = self.width(), self.height()
         cy = h / 2.0
 
-        # Background (#1D1D1F)
-        p.fillRect(self.rect(), QColor(29, 29, 31))
+        # Background (#2f2f31)
+        p.fillRect(self.rect(), QColor(47, 47, 49))
 
         progress_ratio = 0.0
         if self._duration_ms > 0:
@@ -319,8 +319,8 @@ class AudioPlayer(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.setStyleSheet("QWidget { background-color: #1D1D1F; }")
-        self.ui.content.setStyleSheet("QFrame#content { background-color: #1D1D1F; border: none; }")
+        self.setStyleSheet("QWidget { background-color: #2f2f31; }")
+        self.ui.content.setStyleSheet("QFrame#content { background-color: #2f2f31; border: none; }")
 
         self.audio_player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -361,13 +361,13 @@ class AudioPlayer(QWidget):
             self.info_button.setText("ℹ")
         self.info_button.setStyleSheet(
             "QToolButton {"
-            "  background-color: #1D1D1F;"
-            "  border: 1px solid #333336;"
+            "  background-color: #2f2f31;"
+            "  border: 1px solid #434346;"
             "  border-radius: 2px;"
-            "  color: #E3E3E3;"
+            "  color: #e5e5e5;"
             "}"
             "QToolButton:hover {"
-            "  background-color: #414956;"
+            "  background-color: #515965;"
             "  color: #FFFFFF;"
             "}"
         )

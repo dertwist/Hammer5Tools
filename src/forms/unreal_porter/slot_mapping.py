@@ -36,24 +36,24 @@ from src.styles.common import (
 
 _DISABLED_STYLE_APPEND = """
 QPushButton:disabled, QToolButton:disabled {
-    background-color: #18181A;
-    color: #666666;
-    border-color: #2A2A2D;
+    background-color: #2a2a2c;
+    color: #727272;
+    border-color: #3b3b3e;
 }
 QCheckBox:disabled {
-    color: #666666;
+    color: #727272;
 }
 QRadioButton:disabled {
-    color: #666666;
+    color: #727272;
 }
 QGroupBox:disabled {
-    color: #666666;
-    border-color: #2A2A2D;
+    color: #727272;
+    border-color: #3b3b3e;
 }
 QComboBox:disabled {
-    background-color: #18181A;
-    color: #666666;
-    border-color: #2A2A2D;
+    background-color: #2a2a2c;
+    color: #727272;
+    border-color: #3b3b3e;
 }
 """
 
@@ -198,7 +198,7 @@ class _ParamRow(QFrame):
         self.thumb.setFixedSize(38, 38)
         self.thumb.setAlignment(Qt.AlignCenter)
         self.thumb.setStyleSheet(
-            "QLabel { border: 1px solid #383838; background-color: #1A1A1C; border-radius: 4px; color: #888; font-size: 9px; font-weight: bold; }"
+            "QLabel { border: 1px solid #383838; background-color: #1A1A1C; border-radius: 4px; color: #999; font-size: 9px; font-weight: bold; }"
         )
         self._load_thumbnail(bulk_dir, tex_path)
         head.addWidget(self.thumb)
@@ -424,7 +424,7 @@ class _VectorParamRow(QHBoxLayout):
         r = self.val.get("r", 1.0)
         g = self.val.get("g", 1.0)
         b = self.val.get("b", 1.0)
-        val_fmt = f"<span style='background-color:#2A2A2D; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>[{r:.2f}, {g:.2f}, {b:.2f}]</span>"
+        val_fmt = f"<span style='background-color:#3b3b3e; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>[{r:.2f}, {g:.2f}, {b:.2f}]</span>"
         label = QLabel(f"{name}  {val_fmt}")
 
         self.addWidget(self.swatch)
@@ -436,8 +436,8 @@ class _VectorParamRow(QHBoxLayout):
         g = int(self.val.get("g", 1.0) * 255)
         b = int(self.val.get("b", 1.0) * 255)
         self.swatch.setStyleSheet(
-            f"QPushButton {{ background-color: rgb({r},{g},{b}); border: 1px solid #555; border-radius: 3px; }}"
-            f"QPushButton:hover {{ border: 1px solid #888; }}"
+            f"QPushButton {{ background-color: rgb({r},{g},{b}); border: 1px solid #666; border-radius: 3px; }}"
+            f"QPushButton:hover {{ border: 1px solid #999; }}"
         )
 
     def _on_pick_color(self):
@@ -512,7 +512,7 @@ class _ParamMappingTab(QWidget):
         targets = _scalar_targets(self.shader)
         for name, val in items:
             row = QHBoxLayout()
-            val_fmt = f"<span style='background-color:#2A2A2D; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>{val:.4f}</span>"
+            val_fmt = f"<span style='background-color:#3b3b3e; color:#4EC9B0; padding:2px 6px; border-radius:3px; font-family:monospace;'>{val:.4f}</span>"
             label = QLabel(f"{name}  {val_fmt}")
             combo = QComboBox()
             for label_text, data in targets:
@@ -561,7 +561,7 @@ class _ParamMappingTab(QWidget):
         targets = _switch_targets(self.shader)
         for name, val in items:
             row = QHBoxLayout()
-            badge = "<span style='background-color:#1E3A1E; color:#4EC9B0; padding:2px 8px; border-radius:3px; font-weight:bold;'>ON</span>" if val else "<span style='background-color:#2D2D2D; color:#888888; padding:2px 8px; border-radius:3px;'>OFF</span>"
+            badge = "<span style='background-color:#1E3A1E; color:#4EC9B0; padding:2px 8px; border-radius:3px; font-weight:bold;'>ON</span>" if val else "<span style='background-color:#3e3e3e; color:#929292; padding:2px 8px; border-radius:3px;'>OFF</span>"
             label = QLabel(f"{name}  {badge}")
             combo = QComboBox()
             for label_text, data in targets:
@@ -669,7 +669,7 @@ class _FeatureInspectorWidget(QScrollArea):
             hdr = QLabel(f"<b>{title}</b>")
             hdr.setAlignment(Qt.AlignCenter)
             hdr.setStyleSheet(
-                "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 3px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+                "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 3px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
             )
             gl.addWidget(hdr)
 
@@ -876,7 +876,7 @@ class ShaderRemapperDialog(QDialog):
         tex_hdr = QLabel("<b>Texture Slot Assignments</b>")
         tex_hdr.setAlignment(Qt.AlignCenter)
         tex_hdr.setStyleSheet(
-            "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+            "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
         )
         tex_gl.addWidget(tex_hdr)
 
@@ -909,7 +909,7 @@ class ShaderRemapperDialog(QDialog):
         params_hdr = QLabel("<b>Shader Parameter Overrides</b>")
         params_hdr.setAlignment(Qt.AlignCenter)
         params_hdr.setStyleSheet(
-            "QLabel { background-color: #2D2D30; color: #E0E0E0; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
+            "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
         )
         params_gl.addWidget(params_hdr)
 

@@ -218,21 +218,21 @@ class SmartPropDocument(QMainWindow):
         self.hierarchy_add_button.setFixedHeight(BUTTON_H)
         self.hierarchy_add_button.setStyleSheet("""
             QPushButton {
-                background-color: #1C1C1C;
-                color: #E3E3E3;
-                border: 2px solid #505050;
+                background-color: #2e2e2e;
+                color: #e5e5e5;
+                border: 2px solid #5e5e5e;
                 border-radius: 0px;
                 padding: 2px 8px;
                 font: 580 9pt "Segoe UI";
             }
             QPushButton:hover {
-                background-color: #414956;
-                border-color: #6C6C6C;
+                background-color: #515965;
+                border-color: #787878;
                 color: #FFFFFF;
             }
             QPushButton:pressed {
-                background-color: #151515;
-                border-color: #505050;
+                background-color: #272727;
+                border-color: #5e5e5e;
             }
         """)
         self.hierarchy_add_button.clicked.connect(self.add_an_element)
@@ -243,18 +243,18 @@ class SmartPropDocument(QMainWindow):
         self.hierarchy_preset_button.setFixedSize(BUTTON_H, BUTTON_H)
         self.hierarchy_preset_button.setStyleSheet("""
             QPushButton {
-                background-color: #1C1C1C;
-                border: 2px solid #505050;
+                background-color: #2e2e2e;
+                border: 2px solid #5e5e5e;
                 border-radius: 0px;
                 padding: 2px;
             }
             QPushButton:hover {
-                background-color: #414956;
-                border-color: #6C6C6C;
+                background-color: #515965;
+                border-color: #787878;
             }
             QPushButton:pressed {
-                background-color: #151515;
-                border-color: #505050;
+                background-color: #272727;
+                border-color: #5e5e5e;
             }
         """)
         self.hierarchy_preset_button.clicked.connect(self.open_favorite_elements)
@@ -414,7 +414,7 @@ class SmartPropDocument(QMainWindow):
             from PySide6.QtWidgets import QVBoxLayout
             label = QLabel("3d preview for this smartprop unavalible due to using of unsupported properties and elements.")
             label.setAlignment(Qt.AlignCenter)
-            label.setStyleSheet("color: #888888; font-size: 11pt;")
+            label.setStyleSheet("color: #929292; font-size: 11pt;")
             layout = QVBoxLayout(self._viewport_3d_placeholder)
             layout.addWidget(label)
             return

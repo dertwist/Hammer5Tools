@@ -37,8 +37,8 @@ COLUMNS = ["Name", "Source", "Mod", "Size"]
 COL_NAME, COL_SOURCE, COL_MOD, COL_SIZE = range(4)
 
 _SOURCE_COLOR = {
-    SOURCE_ADDON: "#accc8d",
-    SOURCE_CORE: "#9AA0AA",
+    SOURCE_ADDON: "#b3d096",
+    SOURCE_CORE: "#a2a8b1",
 }
 
 class _FacetPopup(QFrame):
@@ -238,7 +238,7 @@ def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
     painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
     # Outer border
-    painter.setPen(QColor("#252528" if grayscaled else "#2D2D30"))
+    painter.setPen(QColor("#252528" if grayscaled else "#3e3e41"))
     inset = size // 5
     painter.drawRect(inset, inset, size - 2 * inset, size - 2 * inset)
 
@@ -288,7 +288,7 @@ def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
     painter.drawEllipse(center_x - radius, center_y - radius, radius * 2, radius * 2)
 
     # Rotating accent arc
-    pen = QPen(QColor("#accc8d"), 2.5)
+    pen = QPen(QColor("#b3d096"), 2.5)
     painter.setPen(pen)
     start_angle = int(-angle * 16)
     span_angle = int(100 * 16)
@@ -577,7 +577,7 @@ class ModelBrowserDialog(QDialog):
             row = QTreeWidgetItem([
                 entry.path, entry.source, entry.mod, _human_size(entry.size)])
             row.setData(0, _PATH_ROLE, entry.path)
-            row.setForeground(1, QColor(_SOURCE_COLOR.get(entry.source, "#E3E3E3")))
+            row.setForeground(1, QColor(_SOURCE_COLOR.get(entry.source, "#e5e5e5")))
             self.list.addTopLevelItem(row)
             if entry.path == self._selected_path:
                 selected_list_item = row

@@ -12,7 +12,7 @@ __init__). Because pooled widgets are reconfigured in place — never rebuilt �
 styling set here survives acquire/release, so it must NOT be value-dependent and
 does not need to be re-applied in reconfigure().
 
-Dark palette kept: #1C1C1C bg, #E3E3E3 text, #414956 hover, accent #accc8d.
+Dark palette kept: #2e2e2e bg, #e5e5e5 text, #515965 hover, accent #b3d096.
 """
 
 import os
@@ -55,20 +55,20 @@ LABEL_W = 150       # fixed label column width -> the two-column grid
 LOGIC_W = 70        # width of the thin inline value-mode switch
 
 # palette
-BG = "#1C1C1C"
-BG_ALT = "#232323"
-FG = "#E3E3E3"
-FG_DIM = "#9AA0AA"
-HOVER = "#414956"
-ACCENT = "#accc8d"
+BG = "#2e2e2e"
+BG_ALT = "#353535"
+FG = "#e5e5e5"
+FG_DIM = "#a2a8b1"
+HOVER = "#515965"
+ACCENT = "#b3d096"
 
 # Alternating row backgrounds (zebra striping replaces the separator line).
-# Straddle the #1C1C1C panel base: one row a little brighter, the next a little
-# darker. The old pair (#1C1C1C / #212121) was a 5-value step and read as flat.
-ROW_BG_EVEN = "#232323"
-ROW_BG_ODD = "#1D1D1F"
+# Straddle the #2e2e2e panel base: one row a little brighter, the next a little
+# darker. The old pair (#2e2e2e / #333333) was a 5-value step and read as flat.
+ROW_BG_EVEN = "#353535"
+ROW_BG_ODD = "#2f2f31"
 # Background of the property row the user has selected (copy/paste + help target).
-ROW_BG_SELECTED = "#2A2E38"
+ROW_BG_SELECTED = "#3b3f48"
 
 # Vector component tag colours (kept close to the existing H5T hues).
 VEC_XYZ = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # X / Y / Z  (red / green / blue)
@@ -96,7 +96,7 @@ def widget_qss():
     """Flat container: no padding, no border. Background is painted by the parent.
 
     ``background: transparent`` is load-bearing, not cosmetic. The application
-    stylesheet carries an unqualified ``QWidget { background-color: #151515; }``
+    stylesheet carries an unqualified ``QWidget { background-color: #272727; }``
     rule that matches every widget in the app, and QStyleSheetStyle paints it
     over anything drawn in a parent's paintEvent — which silently flattened the
     zebra stripes and the selection highlight to one colour. A rule in the
@@ -161,10 +161,10 @@ QComboBox::drop-down {
     background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
 }
 QComboBox QAbstractItemView {
-    border: 1px solid #505050; background-color: %(bg)s;
+    border: 1px solid #5e5e5e; background-color: %(bg)s;
     selection-background-color: %(hover)s; outline: 0px;
 }
-QComboBox QAbstractItemView::item { padding: 3px 6px; color: #B8B8B8; border: 0px; }
+QComboBox QAbstractItemView::item { padding: 3px 6px; color: #bebebe; border: 0px; }
 QComboBox QAbstractItemView::item:selected { background-color: %(hover)s; color: white; }
 """ % {"dim": FG_DIM, "alt": BG_ALT, "hover": HOVER, "bg": BG}
 
@@ -173,7 +173,7 @@ QComboBox QAbstractItemView::item:selected { background-color: %(hover)s; color:
 VALUE_COMBOBOX_QSS = """
 QComboBox {
     font: 8pt "Segoe UI";
-    border: 0px; border-bottom: 1px solid #3A3A3A; border-radius: 0px;
+    border: 0px; border-bottom: 1px solid #4a4a4a; border-radius: 0px;
     color: %(fg)s; background-color: %(bg)s;
     padding: 0px 4px; margin: 0px;
     min-height: 23px; max-height: 23px;
@@ -184,10 +184,10 @@ QComboBox::drop-down {
     background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
 }
 QComboBox QAbstractItemView {
-    border: 1px solid #505050; background-color: %(bg)s;
+    border: 1px solid #5e5e5e; background-color: %(bg)s;
     selection-background-color: %(hover)s; outline: 0px;
 }
-QComboBox QAbstractItemView::item { padding: 3px 6px; color: #B8B8B8; border: 0px; }
+QComboBox QAbstractItemView::item { padding: 3px 6px; color: #bebebe; border: 0px; }
 QComboBox QAbstractItemView::item:selected { background-color: %(hover)s; color: white; }
 """ % {"fg": FG, "bg": BG, "hover": HOVER}
 

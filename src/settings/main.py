@@ -52,7 +52,7 @@ class PreferencesDialog(QDialog):
         self.setWindowTitle('Settings')
         self.main_layout = QVBoxLayout(self)
         self.tabWidget = QTabWidget(self)
-        self.tabWidget.setStyleSheet("background-color: #1c1c1c;")
+        self.tabWidget.setStyleSheet("background-color: #2e2e2e;")
         self.main_layout.addWidget(self.tabWidget)
         # Create tabs and bottom action panel
         self.create_general_tab()
@@ -68,9 +68,9 @@ class PreferencesDialog(QDialog):
         divider.setFrameShape(QFrame.HLine)
         divider.setFrameShadow(QFrame.Sunken)
         divider.setLineWidth(2)
-        # Enforcing height of 2 pixels and divider color #323232
+        # Enforcing height of 2 pixels and divider color #424242
         divider.setFixedHeight(2)
-        divider.setStyleSheet("background-color: #323232; border: none;")
+        divider.setStyleSheet("background-color: #424242; border: none;")
         return divider
 
     def wrap_in_scroll_area(self, widget):

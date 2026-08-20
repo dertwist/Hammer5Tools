@@ -68,7 +68,7 @@ def _draw_disabled_frame(widget):
         GL.glBindVertexArray(0)
         GL.glUseProgram(0)
         GL.glDisable(GL.GL_DEPTH_TEST)
-        GL.glClearColor(0.11, 0.11, 0.11, 1.0)
+        GL.glClearColor(0.18, 0.18, 0.18, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
     except Exception:
         pass
@@ -76,7 +76,7 @@ def _draw_disabled_frame(widget):
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QPainter, QColor, QFont
         painter = QPainter(widget)
-        painter.setPen(QColor(170, 170, 170))
+        painter.setPen(QColor(177, 177, 177))
         painter.setFont(QFont("Segoe UI", 10))
         painter.drawText(
             widget.rect(),

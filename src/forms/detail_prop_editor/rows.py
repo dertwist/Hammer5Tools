@@ -39,11 +39,11 @@ def style_slider(float_widget):
     """
     Slider styling, identical to the SmartProp property editor's — with one
     scoped fix: the app-wide stylesheet's blanket `QWidget { background-color:
-    #151515; }` rule (src/styles/qt_global_stylesheet.py) paints straight
+    #272727; }` rule (src/styles/qt_global_stylesheet.py) paints straight
     through FloatWidget and its Slider, since neither sets its own background.
     In a normal window that's invisible against the same-coloured backdrop, but
     compact.style_slider() stretches the slider across the row, so that flat
-    #151515 shows up as a solid block sitting on top of the row's zebra stripe.
+    #272727 shows up as a solid block sitting on top of the row's zebra stripe.
     Clearing just the container backgrounds here (not the QSlider chrome, which
     still comes from the global stylesheet, keeping the handle/groove identical
     to SmartProp) lets the zebra colour show through underneath.

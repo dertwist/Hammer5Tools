@@ -26,14 +26,14 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             font: 580 8pt "Segoe UI";
             border: 0px solid black;
             border-radius: 0px;
-            border-color: rgba(80, 80, 80, 255);
+            border-color: rgba(94, 94, 94, 255);
         	border:none;
             height:18px;
             padding: 2px;
             padding-left: 0px;
             padding-right: 0px;
-            color: #E3E3E3;
-            background-color: #1C1C1C;
+            color: #e5e5e5;
+            background-color: #2e2e2e;
         }
 
         QPlainTextEdit:pressed {

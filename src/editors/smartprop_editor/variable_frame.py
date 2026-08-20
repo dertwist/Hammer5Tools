@@ -233,7 +233,7 @@ class VariableFrame(PropertyMethods, QWidget):
             'ChoiceSelectionMode', 'RadiusPlacementMode', 'DistributionMode', 'PathPositions'
         ]
 
-        target_color = color_map.get(self.var_class, '#242424')
+        target_color = color_map.get(self.var_class, '#363636')
         if self.var_class in enum_types:
             target_color = '#1D8348'
 
@@ -655,7 +655,7 @@ class CategoryFrame(VariableFrame):
 
     def update_colors(self):
         # Categories have a distinct color
-        target_color = '#2C3E50' if self.is_start else '#1C1C1C'
+        target_color = '#3d4d5e' if self.is_start else '#2e2e2e'
         style = self.ui.label.styleSheet()
         import re
         if 'background-color:' in style:
