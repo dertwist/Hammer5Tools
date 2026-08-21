@@ -425,6 +425,17 @@ class QuickVsmart:
                 "m_nElementID": next_id()
             },
             {
+                "_class": "CSmartPropVariable_Int",
+                "m_VariableName": "LodLevel",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": 0,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "LOD Level",
+                "m_nParamaterMinValue": -1,
+                "m_nParamaterMaxValue": 5,
+                "m_sModelName": "None"
+            },
+            {
                 "_class": "CSmartPropVariable_MaterialGroup",
                 "m_VariableName": "MaterialGroupName",
                 "m_bExposeAsParameter": True,
@@ -469,7 +480,7 @@ class QuickVsmart:
                     'm_bEnabled': True,
                     'm_bRigidDeformation': False,
                     'm_nElementID': next_id(),
-                    'm_nLodLevel': -1,
+                    'm_nLodLevel': {'m_SourceName': 'LodLevel'},
                     'm_sLabel': label,
                     'm_sModelName': rel_path
                 }

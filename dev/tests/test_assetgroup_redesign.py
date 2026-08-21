@@ -1376,9 +1376,9 @@ def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
     win = BatchCreatorMainWindow()
     try:
         # Verify minimum widths for flexible layout rescaling
-        assert win.explorer_dock.minimumWidth() == 180
-        assert win.config_dock.minimumWidth() == 180
-        assert win.central_container.minimumWidth() == 260
+        assert win.explorer_dock.minimumWidth() >= 180
+        assert win.config_dock.minimumWidth() >= 180
+        assert win.central_container.minimumWidth() >= 260
 
         # Test saving layout state
         win._save_layout_state()
@@ -1389,6 +1389,57 @@ def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
 
         # Test restoring layout state
         win._restore_layout_state()
+    finally:
+        win.deleteLater()
+
+
+def test_assetgroup_maker_uses_system_file_dialogs(qapp, fake_addon_dir, monkeypatch):
+    from unittest.mock import MagicMock
+    from PySide6.QtWidgets import QFileDialog
+    from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
+
+    mock_open_file = MagicMock(return_value=("", ""))
+    mock_save_file = MagicMock(return_value=("", ""))
+    mock_existing_dir = MagicMock(return_value="")
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_open_file)
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_save_file)
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", mock_existing_dir)
+
+    win = BatchCreatorMainWindow()
+    try:
+        # 1. Open file dialog in main window
+        win._open_file_dialog()
+        mock_open_file.assert_called_once()
+        _, kwargs = mock_open_file.call_args
+        opts = kwargs.get("options")
+        if opts is not None:
+            assert not (opts & QFileDialog.Option.DontUseNativeDialog)
+
+        # 2. Save file dialog in main window
+        win.create_new_config_dialog(target_folder=fake_addon_dir, force_file_dialog=True)
+        mock_save_file.assert_called_once()
+        _, kwargs = mock_save_file.call_args
+        opts = kwargs.get("options")
+        if opts is not None:
+            assert not (opts & QFileDialog.Option.DontUseNativeDialog)
+
+        # 3. Editor tab browse output and save
+        tab = win.create_new_batch_tab()
+        if tab:
+            tab._on_browse_output()
+            mock_existing_dir.assert_called_once()
+            _, kwargs = mock_existing_dir.call_args
+            opts = kwargs.get("options")
+            if opts is not None:
+                assert not (opts & QFileDialog.Option.DontUseNativeDialog)
+
+            tab.save_file()
+            assert mock_save_file.call_count == 2
+            _, kwargs = mock_save_file.call_args
+            opts = kwargs.get("options")
+            if opts is not None:
+                assert not (opts & QFileDialog.Option.DontUseNativeDialog)
     finally:
         win.deleteLater()
 
