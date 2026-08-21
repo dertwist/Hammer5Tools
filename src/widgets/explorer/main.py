@@ -985,7 +985,7 @@ class Explorer(QMainWindow):
 
             quick_vsmart_action = QAction("Quick VSmart", self)
             quick_vsmart_action.setIcon(QIcon(file_icons['.vsmart']))
-            quick_vsmart_action.triggered.connect(lambda: QuickVsmart(self.get_selected_files()))
+            quick_vsmart_action.triggered.connect(lambda checked=False, p=file_path: QuickVsmart(self.get_selected_files() or [p]))
             menu.addAction(quick_vsmart_action)
 
             if file_extension == "hbat":
