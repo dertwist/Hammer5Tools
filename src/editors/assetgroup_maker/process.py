@@ -44,7 +44,9 @@ def render_asset_template(
     asset_item: AssetGroupItem,
     relative_batch_path: str,
     replacements: Optional[List[Dict[str, str]]] = None,
-    skipped_slots: Optional[List[str]] = None
+    skipped_slots: Optional[List[str]] = None,
+    material_remaps: Optional[List[Dict[str, str]]] = None,
+    batch_directory: Optional[str] = None
 ) -> str:
     data = content_template
     if skipped_slots is None:
@@ -88,6 +90,63 @@ def render_asset_template(
         return ""
 
     data = re.sub(r'<!--\s*IF\s+([A-Za-z0-9_]+)\s*-->([\s\S]*?)<!--\s*ENDIF\s*-->', evaluate_conditional, data)
+
+    # 5. Handle MaterialGroup material remaps if present for .vmdl
+    if material_remaps:
+        # Determine active materials to remap for this specific asset
+        mesh_slot_path = asset_item.slots.get('mesh', '')
+        mesh_full = None
+        if batch_directory and mesh_slot_path:
+            mesh_full = os.path.join(batch_directory, os.path.basename(mesh_slot_path))
+            if not os.path.isfile(mesh_full):
+                mesh_full = mesh_slot_path if os.path.isabs(mesh_slot_path) and os.path.isfile(mesh_slot_path) else None
+
+        active_fbx_materials = []
+        if mesh_full and mesh_full.lower().endswith('.fbx') and os.path.isfile(mesh_full):
+            from src.editors.assetgroup_maker.analyzer import extract_fbx_materials
+            active_fbx_materials = extract_fbx_materials(mesh_full)
+
+        remap_dict = {}
+        for r in material_remaps:
+            f_m = r.get('from', '').strip()
+            t_m = r.get('to', '').strip()
+            if f_m:
+                remap_dict[f_m.lower()] = t_m
+                if f_m.lower().endswith('.vmat'):
+                    remap_dict[f_m[:-5].lower()] = t_m
+
+        remap_entries = []
+        seen_remap_from = set()
+
+        if active_fbx_materials:
+            for f_mat in active_fbx_materials:
+                f_vmat = f_mat if f_mat.lower().endswith('.vmat') else f"{f_mat}.vmat"
+                if f_vmat.lower() in seen_remap_from:
+                    continue
+                seen_remap_from.add(f_vmat.lower())
+                t_mat = remap_dict.get(f_vmat.lower(), remap_dict.get(f_mat.lower(), ""))
+                if t_mat:
+                    t_mat_clean = t_mat.replace('\\', '/')
+                    remap_entries.append(f'\t\t\t\t\t\t\t{{\n\t\t\t\t\t\t\t\tfrom = "{f_vmat}"\n\t\t\t\t\t\t\t\tto = "{t_mat_clean}"\n\t\t\t\t\t\t\t}},')
+        else:
+            for r in material_remaps:
+                f_m = r.get('from', '').strip()
+                t_m = r.get('to', '').strip()
+                if f_m and t_m:
+                    f_m_vmat = f_m if f_m.lower().endswith('.vmat') else f"{f_m}.vmat"
+                    if f_m_vmat.lower() in seen_remap_from:
+                        continue
+                    seen_remap_from.add(f_m_vmat.lower())
+                    t_m_clean = t_m.replace('\\', '/')
+                    remap_entries.append(f'\t\t\t\t\t\t\t{{\n\t\t\t\t\t\t\t\tfrom = "{f_m_vmat}"\n\t\t\t\t\t\t\t\tto = "{t_m_clean}"\n\t\t\t\t\t\t\t}},')
+
+        if remap_entries:
+            remaps_block = "remaps = \n\t\t\t\t\t\t[\n" + "\n".join(remap_entries) + "\n\t\t\t\t\t\t]"
+            if re.search(r'remaps\s*=\s*\[[\s\S]*?\]', data):
+                data = re.sub(r'remaps\s*=\s*\[[\s\S]*?\]', remaps_block, data)
+            if 'use_global_default = true' in data:
+                data = data.replace('use_global_default = true', 'use_global_default = false')
+
     return data
 
 
@@ -374,6 +433,9 @@ def perform_batch_processing(
             tpl_ignore_list = ignore_list
 
         tpl_skipped_slots = template_info.get('skipped_slots') or []
+        tpl_material_remaps = template_info.get('material_remaps')
+        if tpl_material_remaps is None and analysis and getattr(analysis, 'material_remaps', None):
+            tpl_material_remaps = analysis.material_remaps
 
         asset_items = match_folder_assets(
             directory=batch_directory,
@@ -406,7 +468,9 @@ def perform_batch_processing(
                 asset_item=item,
                 relative_batch_path=relative_batch_path,
                 replacements=rep_list,
-                skipped_slots=tpl_skipped_slots
+                skipped_slots=tpl_skipped_slots,
+                material_remaps=tpl_material_remaps,
+                batch_directory=batch_directory
             )
 
             try:

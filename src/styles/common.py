@@ -407,6 +407,7 @@ qt_stylesheet_tabbar = """
 QTabBar {
     background-color: #272727;
     qproperty-drawBase: 0;
+    qproperty-elideMode: "ElideNone";
 }
 QTabBar::tab {
     background-color: #272727;

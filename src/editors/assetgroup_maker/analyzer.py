@@ -12,6 +12,7 @@ class ReferenceAnalysisResult:
         self.asset_type = self._detect_type(reference_path)
         self.base_name = os.path.splitext(os.path.basename(reference_path))[0]
         self.slots: Dict[str, Dict] = {}
+        self.material_remaps: List[Dict[str, str]] = []
         self.replacements: Dict[str, Dict] = {}
         self.raw_content: str = ""
         self.template_content: str = ""
@@ -22,6 +23,41 @@ class ReferenceAnalysisResult:
         if ext in ('vmdl', 'vmat', 'vsmart', 'vsndevts'):
             return ext
         return 'vmdl'
+
+
+def extract_fbx_materials(file_path: str) -> List[str]:
+    """
+    Extract embedded material names from an FBX file (binary or ASCII).
+    Uses UnrealPorter's fbx_flatten.list_materials with ASCII token fallback.
+    """
+    if not file_path or not os.path.isfile(file_path):
+        return []
+    try:
+        from src.forms.unreal_porter.fbx_flatten import list_materials
+        mats = list_materials(file_path)
+        if mats:
+            return mats
+    except Exception:
+        pass
+
+    # Fallback for ASCII FBX or non-standard headers
+    try:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        text = data.decode('latin-1', errors='ignore')
+        matches = re.findall(r'Material:\s*[^,]+,\s*["\'](?:Material::)?([^"\']+)["\']', text)
+        if not matches:
+            matches = re.findall(r'Material::([a-zA-Z0-9_\-]+)', text)
+        seen = set()
+        res = []
+        for m in matches:
+            clean = m.split('\x00')[0].split('\x01')[0].strip()
+            if clean and clean not in seen and clean.lower() not in ('defaultmaterial', 'material'):
+                seen.add(clean)
+                res.append(clean)
+        return res
+    except Exception:
+        return []
 
 
 def get_addon_root_from_path(file_path: str) -> Optional[str]:
@@ -97,7 +133,7 @@ def analyze_reference_file(reference_rel_path: str, context_folder: Optional[str
     result.template_content = content
 
     if result.asset_type == 'vmdl':
-        _analyze_vmdl(result, content)
+        _analyze_vmdl(result, content, context_folder=context_folder)
     elif result.asset_type == 'vmat':
         _analyze_vmat(result, content)
     elif result.asset_type == 'vsmart':
@@ -108,7 +144,7 @@ def analyze_reference_file(reference_rel_path: str, context_folder: Optional[str
     return result
 
 
-def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
+def _analyze_vmdl(result: ReferenceAnalysisResult, content: str, context_folder: Optional[str] = None):
     """Analyze a Source 2 ModelDoc .vmdl file."""
     base = result.base_name
 
@@ -188,20 +224,53 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
             'token': f'#$LOD{idx}$#'
         }
 
-    # 3. Look for material references (e.g. global_default_material = "...crate_01.vmat")
-    mat_matches = re.findall(r'(?:material|global_default_material|m_sMaterialName)\s*=\s*["\']([^"\']+\.vmat)["\']', content, re.IGNORECASE)
+    # 3. Extract MaterialGroup remaps: { from = "mi_bark.vmat", to = "materials/.../bark.vmat" }
+    remap_matches = re.findall(r'{\s*from\s*=\s*["\']([^"\']+)["\']\s*to\s*=\s*["\']([^"\']+)["\']\s*}', content, re.IGNORECASE)
+    seen_from = set()
+    for from_mat, to_mat in remap_matches:
+        f_clean = from_mat.strip()
+        if f_clean and f_clean.lower() not in seen_from:
+            seen_from.add(f_clean.lower())
+            result.material_remaps.append({'from': f_clean, 'to': to_mat.strip()})
+
+    # 4. Research FBX materials from referenced render mesh(es)
+    all_render_meshes = [primary_mesh] + extra_meshes + lod_meshes
+    for r_mesh in all_render_meshes:
+        if not r_mesh:
+            continue
+        mesh_full = resolve_reference_full_path(r_mesh, context_folder=context_folder)
+        if mesh_full and mesh_full.lower().endswith('.fbx') and os.path.isfile(mesh_full):
+            fbx_mats = extract_fbx_materials(mesh_full)
+            for f_mat in fbx_mats:
+                f_vmat = f_mat if f_mat.lower().endswith('.vmat') else f"{f_mat}.vmat"
+                if f_vmat.lower() not in seen_from and f_mat.lower() not in seen_from:
+                    seen_from.add(f_vmat.lower())
+                    result.material_remaps.append({'from': f_vmat, 'to': ""})
+
+    # 5. Single material reference fallback (e.g. global_default_material = "...crate_01.vmat")
+    mat_matches = re.findall(r'(?:global_default_material|m_sMaterialName)\s*=\s*["\']([^"\']+\.vmat)["\']', content, re.IGNORECASE)
     for mat_path in mat_matches:
         mat_filename = os.path.basename(mat_path)
         mat_base, _ = os.path.splitext(mat_filename)
-        if base.lower() in mat_base.lower():
-            result.slots['material'] = {
-                'label': 'Material Remap',
-                'source': mat_path,
-                'filename': mat_filename,
-                'required': False,
-                'token': '#$MATERIAL$#'
-            }
+        if not result.material_remaps and (base.lower() in mat_base.lower() or mat_path):
+            result.material_remaps.append({'from': mat_filename, 'to': mat_path})
             break
+
+    # Populate material remap slots in result.slots
+    for idx, remap in enumerate(result.material_remaps):
+        slot_key = f'material_{idx}' if idx > 0 else 'material'
+        from_mat = remap.get('from', '')
+        to_mat = remap.get('to', '')
+        result.slots[slot_key] = {
+            'label': f'Material: {from_mat}',
+            'from': from_mat,
+            'to': to_mat,
+            'source': to_mat,
+            'filename': os.path.basename(to_mat) if to_mat else '',
+            'is_material_remap': True,
+            'required': False,
+            'token': f'#${slot_key.upper()}$#'
+        }
 
     _build_replacements_and_template(result)
 
@@ -210,28 +279,28 @@ def _analyze_vmat(result: ReferenceAnalysisResult, content: str):
     """Analyze a Source 2 Material .vmat file."""
     base = result.base_name
 
-    # Comprehensive CS2 shader texture map patterns (csgo_environment, csgo_complex, csgo_foliage, csgo_glass, Layer0, etc.)
+    # Comprehensive CS2 shader texture map patterns with clean names
     tex_patterns = [
         # Layer 1 / Primary Slots
-        ('color', 'Color / Albedo Map', r'([ \t]*(?:g_tColor|TextureColor|TextureDiffuse|g_tBaseColor|g_tAlbedo|g_tColorA)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('color', 'Color Map', r'([ \t]*(?:g_tColor|TextureColor|TextureDiffuse|g_tBaseColor|g_tAlbedo|g_tColorA)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('normal', 'Normal Map', r'([ \t]*(?:g_tNormal|TextureNormal|g_tNormalRoughness|g_tNormalA)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('roughness', 'Roughness Map', r'([ \t]*(?:g_tRoughness|TextureRoughness)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('metalness', 'Metalness Map', r'([ \t]*(?:g_tMetalness|TextureMetalness)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('ao', 'Ambient Occlusion Map', r'([ \t]*(?:g_tAmbientOcclusion|TextureAmbientOcclusion|g_tAO)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('orm', 'Packed ORM / Mask Map', r'([ \t]*(?:g_tORM|g_tMask|g_tMasks|g_tRMA|g_tSRM|g_tSRMH|TextureORM|TextureMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('height', 'Height / Displacement', r'([ \t]*(?:g_tHeight|TextureHeight|g_tDisplacement|TextureDisplacement)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('emissive', 'Emissive / Self-Illum', r'([ \t]*(?:g_tSelfIllumMask|TextureSelfIllumMask|g_tEmissiveMask|g_tEmission|g_tSelfIllum|TextureSelfIllum)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('opacity', 'Opacity / Translucency', r'([ \t]*(?:g_tTranslucency|TextureTranslucency|g_tOpacityMask|TextureOpacityMask|g_tAlpha|g_tTranslucencyMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('orm', 'ORM Map', r'([ \t]*(?:g_tORM|g_tMask|g_tMasks|g_tRMA|g_tSRM|g_tSRMH|TextureORM|TextureMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('height', 'Height Map', r'([ \t]*(?:g_tHeight|TextureHeight|g_tDisplacement|TextureDisplacement)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('emissive', 'Emissive Map', r'([ \t]*(?:g_tSelfIllumMask|TextureSelfIllumMask|g_tEmissiveMask|g_tEmission|g_tSelfIllum|TextureSelfIllum)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('opacity', 'Opacity Map', r'([ \t]*(?:g_tTranslucency|TextureTranslucency|g_tOpacityMask|TextureOpacityMask|g_tAlpha|g_tTranslucencyMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('tintmask', 'Tint Mask', r'([ \t]*(?:g_tTintMask|TextureTintMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('transmission', 'Transmission / SSS', r'([ \t]*(?:g_tTransmissionMask|g_tSubsurfaceColor)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('transmission', 'Transmission Map', r'([ \t]*(?:g_tTransmissionMask|g_tSubsurfaceColor)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('blendmask', 'Layer Blend Mask', r'([ \t]*(?:g_tBlendMask|g_tLayerBlendMask)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
 
         # Layer 2 Blend Slots
         ('color2', 'Layer 2 Color Map', r'([ \t]*(?:g_tColorB|g_tLayer2Color|TextureColor2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('normal2', 'Layer 2 Normal Map', r'([ \t]*(?:g_tNormalB|g_tLayer2Normal|TextureNormal2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('roughness2', 'Layer 2 Roughness', r'([ \t]*(?:g_tLayer2Roughness|TextureRoughness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('metalness2', 'Layer 2 Metalness', r'([ \t]*(?:g_tLayer2Metalness|TextureMetalness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
-        ('ao2', 'Layer 2 Ambient Occlusion', r'([ \t]*(?:g_tLayer2AmbientOcclusion|TextureAmbientOcclusion2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('roughness2', 'Layer 2 Roughness Map', r'([ \t]*(?:g_tLayer2Roughness|TextureRoughness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('metalness2', 'Layer 2 Metalness Map', r'([ \t]*(?:g_tLayer2Metalness|TextureMetalness2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
+        ('ao2', 'Layer 2 Ambient Occlusion Map', r'([ \t]*(?:g_tLayer2AmbientOcclusion|TextureAmbientOcclusion2)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
         ('orm2', 'Layer 2 ORM Map', r'([ \t]*(?:g_tLayer2ORM|TextureLayer2ORM)[0-9A-Za-z_]*\s*=?\s*(?:resource:)?["\']([^"\']+\.(?:png|tga|jpg|jpeg|exr|hdr|psd|tif|tiff))["\'])'),
 
         # Layer 3 Blend Slots

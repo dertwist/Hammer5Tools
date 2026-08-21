@@ -258,6 +258,7 @@ class PropertyFrame(QWidget):
             'm_SpecificChildIndex':    (PropertyFloat,   {'int_bool': True}),
             'm_ColorSelection':        (PropertyFloat,   {'int_bool': True}),
             'm_sModelName':            (PropertyString,  {'expression_bool': False, 'placeholder': 'models/example.vmdl', 'model_browser': True, 'filter_types': ['String', 'Model']}),
+            'm_sSmartProp':            (PropertyString,  {'expression_bool': False, 'placeholder': 'smartprops/example.vsmart', 'smartprop_browser': True, 'filter_types': ['String']}),
             'm_MaterialGroupName':     (PropertyString,  {'expression_bool': False, 'placeholder': 'Material group name'}),
             'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
             'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),

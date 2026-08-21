@@ -4,6 +4,7 @@ from src.styles.common import qt_stylesheet_tabbar
 import sys
 import os
 import subprocess
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTabBar, QDockWidget
 import threading
 import keyvalues3 as kv3
@@ -316,6 +317,7 @@ def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
         if getattr(tab_bar, "property", lambda k: None)("is_document_tab_bar"):
             continue
+        tab_bar.setElideMode(Qt.ElideNone)
         tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
 # generic functions

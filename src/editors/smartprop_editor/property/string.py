@@ -13,7 +13,23 @@ from src.editors.smartprop_editor.property import compact
 
 class PropertyString(QWidget, PooledPropertyMixin):
     edited = Signal()
-    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None, model_browser=False, parent=None):
+    def __init__(
+        self,
+        element_id_generator,
+        value_class,
+        value,
+        variables_scrollArea,
+        expression_bool=False,
+        only_string=False,
+        placeholder=None,
+        only_variable=False,
+        force_variable=False,
+        filter_types=None,
+        model_browser=False,
+        smartprop_browser=False,
+        browser_type=None,
+        parent=None,
+    ):
         super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -91,13 +107,26 @@ class PropertyString(QWidget, PooledPropertyMixin):
 
         # Asset picker. Only meaningful in String mode, so logic_switch() drives
         # its visibility alongside text_line.
-        self._model_browser = bool(model_browser)
+        if browser_type is None:
+            if model_browser:
+                browser_type = 'model'
+            elif smartprop_browser:
+                browser_type = 'smartprop'
+        self._browser_type = browser_type
+        self._model_browser = (browser_type == 'model')
+        self._smartprop_browser = (browser_type == 'smartprop')
+
         self.browse_button = QPushButton()
         self.browse_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
         self.browse_button.setFixedSize(22, 22)
-        self.browse_button.setToolTip('Browse models')
-        self.browse_button.clicked.connect(self._open_model_browser)
-        self.browse_button.setVisible(self._model_browser)
+        if self._browser_type == 'smartprop':
+            self.browse_button.setToolTip('Browse smartprops')
+        elif self._browser_type == 'model':
+            self.browse_button.setToolTip('Browse models')
+        else:
+            self.browse_button.setToolTip('Browse')
+        self.browse_button.clicked.connect(self._open_browser)
+        self.browse_button.setVisible(bool(self._browser_type))
         self.ui.layout.insertWidget(4, self.browse_button)
         if isinstance(value, dict):
             if 'm_Expression' in value:
@@ -139,7 +168,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
             only_variable=self._pool_only_variable,
             force_variable=self._pool_force_variable,
             filter_types=self._pool_filter_types,
-            model_browser=self._model_browser,
+            browser_type=self._browser_type,
         )
 
         # Compact Source2-style row.
@@ -175,13 +204,20 @@ class PropertyString(QWidget, PooledPropertyMixin):
 
         # A picked path is a literal, so the button only applies to String mode.
         if getattr(self, 'browse_button', None) is not None:
-            self.browse_button.setVisible(self._model_browser and index == 1)
+            self.browse_button.setVisible(bool(self._browser_type) and index == 1)
 
-    def _open_model_browser(self):
-        from src.widgets.model_browser import pick_model
-        path = pick_model(self, current_path=self.text_line.toPlainText().strip())
+    def _open_browser(self):
+        if self._browser_type == 'smartprop':
+            from src.widgets.model_browser import pick_smartprop
+            path = pick_smartprop(self, current_path=self.text_line.toPlainText().strip())
+        else:
+            from src.widgets.model_browser import pick_model
+            path = pick_model(self, current_path=self.text_line.toPlainText().strip())
         if path:
             self.text_line.setPlainText(path)
+
+    def _open_model_browser(self):
+        self._open_browser()
 
     def _update_display_and_value(self):
         self.logic_switch()
@@ -232,17 +268,24 @@ class PropertyString(QWidget, PooledPropertyMixin):
         force_variable=False,
         filter_types=None,
         model_browser=False,
+        smartprop_browser=False,
+        browser_type=None,
         **kwargs,
     ):
         if filter_types is None:
             filter_types = ['String', 'MaterialGroup', 'Model']
+        if browser_type is None:
+            if model_browser:
+                browser_type = 'model'
+            elif smartprop_browser:
+                browser_type = 'smartprop'
         return (
             bool(expression_bool),
             bool(only_string),
             bool(only_variable),
             bool(force_variable),
             tuple(filter_types),
-            bool(model_browser),
+            browser_type,
         )
 
     def _current_pool_key(self):
@@ -261,6 +304,8 @@ class PropertyString(QWidget, PooledPropertyMixin):
         force_variable=False,
         filter_types=None,
         model_browser=False,
+        smartprop_browser=False,
+        browser_type=None,
         **kwargs,
     ):
         children_to_block = [
@@ -286,6 +331,15 @@ class PropertyString(QWidget, PooledPropertyMixin):
             else:
                 filter_types_final = list(filter_types)
 
+            if browser_type is None:
+                if model_browser:
+                    browser_type = 'model'
+                elif smartprop_browser:
+                    browser_type = 'smartprop'
+            self._browser_type = browser_type
+            self._model_browser = (browser_type == 'model')
+            self._smartprop_browser = (browser_type == 'smartprop')
+
             self.expression_bool = expression_bool
             self.only_string = only_string
             self._pool_force_variable = bool(force_variable)
@@ -293,7 +347,6 @@ class PropertyString(QWidget, PooledPropertyMixin):
             self._pool_expression_bool = bool(expression_bool)
             self._pool_only_string = bool(only_string)
             self._pool_filter_types = list(filter_types_final)
-            self._model_browser = bool(model_browser)
 
             # Update label styling based on expression_bool (keeps column width).
             compact.style_label(
@@ -355,6 +408,14 @@ class PropertyString(QWidget, PooledPropertyMixin):
             else:
                 self.ui.logic_switch.show()
 
+            if getattr(self, 'browse_button', None) is not None:
+                if self._browser_type == 'smartprop':
+                    self.browse_button.setToolTip('Browse smartprops')
+                elif self._browser_type == 'model':
+                    self.browse_button.setToolTip('Browse models')
+                else:
+                    self.browse_button.setToolTip('Browse')
+
             # signals were blocked; ensure add-button visibility is correct.
             self.variable.update_add_button_visibility(self.variable.combobox.currentText())
 
@@ -365,7 +426,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
                 only_variable=only_variable,
                 force_variable=force_variable,
                 filter_types=filter_types_final,
-                model_browser=model_browser,
+                browser_type=browser_type,
             )
         finally:
             for c in children_to_block:

@@ -72,6 +72,7 @@ class TemplateCardWidget(QWidget):
         self.replacements: List[Dict[str, str]] = []
         self.skipped_slots: List[str] = []
         self.custom_tokens: Dict[str, str] = {}
+        self.material_remaps: List[Dict[str, str]] = []
         self._build_ui()
         self._update_slot_pills()
 
@@ -319,6 +320,7 @@ class TemplateCardWidget(QWidget):
         if dialog.exec():
             self.skipped_slots = list(dialog.skipped_slots)
             self.custom_tokens = dict(dialog.custom_tokens)
+            self.material_remaps = list(dialog.material_remaps)
             self._update_slot_pills()
             self.template_changed.emit()
             self.analysis_updated.emit(self.template_id, self.current_analysis)
@@ -385,6 +387,8 @@ class TemplateCardWidget(QWidget):
             context_folder = os.path.dirname(main_window.file_path)
 
         self.current_analysis = analyze_reference_file(ref_text, context_folder=context_folder)
+        if self.current_analysis and self.current_analysis.material_remaps:
+            self.material_remaps = list(self.current_analysis.material_remaps)
         self._update_slot_pills()
         self.analysis_updated.emit(self.template_id, self.current_analysis)
 
@@ -415,7 +419,7 @@ class TemplateCardWidget(QWidget):
         # Get active slots or fallback to standard defaults
         active_slots = {}
         if self.current_analysis and self.current_analysis.slots:
-            active_slots = self.current_analysis.slots
+            active_slots = self.current_analysis.slots.copy()
         else:
             if ext == 'vmdl':
                 active_slots = {
@@ -425,10 +429,10 @@ class TemplateCardWidget(QWidget):
                 }
             elif ext == 'vmat':
                 active_slots = {
-                    'color': {'label': 'Color / Albedo', 'required': True, 'token': '#$COLOR$#'},
+                    'color': {'label': 'Color Map', 'required': True, 'token': '#$COLOR$#'},
                     'normal': {'label': 'Normal Map', 'required': False, 'token': '#$NORMAL$#'},
-                    'roughness': {'label': 'Roughness', 'required': False, 'token': '#$ROUGHNESS$#'},
-                    'metalness': {'label': 'Metalness', 'required': False, 'token': '#$METALNESS$#'},
+                    'roughness': {'label': 'Roughness Map', 'required': False, 'token': '#$ROUGHNESS$#'},
+                    'metalness': {'label': 'Metalness Map', 'required': False, 'token': '#$METALNESS$#'},
                 }
             elif ext == 'vsndevts':
                 active_slots = {
@@ -492,7 +496,7 @@ class TemplateCardWidget(QWidget):
         # Build normalized replacements if analysis available
         reps = []
         existing_froms = set()
-        
+
         if self.current_analysis and self.current_analysis.replacements:
             for _, rep_info in self.current_analysis.replacements.items():
                 pair = rep_info.get('replacement', [])
@@ -518,6 +522,7 @@ class TemplateCardWidget(QWidget):
             'ignore_list': self.ignore_files_edit.text().strip(),
             'skipped_slots': getattr(self, 'skipped_slots', []),
             'custom_tokens': getattr(self, 'custom_tokens', {}),
+            'material_remaps': getattr(self, 'material_remaps', []),
             'replacements': reps
         }
 
@@ -526,6 +531,7 @@ class TemplateCardWidget(QWidget):
         self.replacements = list(data.get('replacements', []))
         self.skipped_slots = list(data.get('skipped_slots', []))
         self.custom_tokens = dict(data.get('custom_tokens', {}))
+        self.material_remaps = list(data.get('material_remaps', []))
         filter_mode = data.get('filter_mode', 'exclude')
         if filter_mode == 'include':
             self.filter_mode_combo.setCurrentIndex(1)
