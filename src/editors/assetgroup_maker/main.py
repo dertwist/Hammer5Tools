@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QTabBar, QToolButton, QMenu, QApplication, QStackedWidget, QFrame,
     QCheckBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QByteArray
 from PySide6.QtGui import QIcon, QAction, QKeySequence, QCloseEvent, QPixmap
 
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, get_settings_value, set_settings_value, debug
@@ -43,11 +43,29 @@ class BatchCreatorMainWindow(QMainWindow):
         self._setup_shortcuts()
         self.setAcceptDrops(True)
 
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._save_layout_state)
+
     def _build_ui(self):
         self.setWindowTitle("AssetGroup Maker")
+        self.setObjectName("BatchCreator_MainWindow")
+
+        # Set dock widget options to allow animated docking, nesting, tabbed docks
+        self.setDockOptions(
+            QMainWindow.AnimatedDocks |
+            QMainWindow.AllowNestedDocks |
+            QMainWindow.AllowTabbedDocks |
+            QMainWindow.GroupedDragging
+        )
+        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+        self.setCorner(Qt.BottomLeftCorner, Qt.LeftDockWidgetArea)
+        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
+        self.setCorner(Qt.BottomRightCorner, Qt.RightDockWidgetArea)
 
         # 1. Central Container with Stack (Empty State / Tabs)
         self.central_container = QWidget()
+        self.central_container.setMinimumWidth(260)
         central_layout = QVBoxLayout(self.central_container)
         central_layout.setContentsMargins(0, 0, 0, 0)
         central_layout.setSpacing(0)
@@ -144,6 +162,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.explorer_dock = QDockWidget("Explorer", self)
         self.explorer_dock.setObjectName("AssetGroup_ExplorerDock")
         self.explorer_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.explorer_dock.setMinimumWidth(180)
 
         explorer_dock_content = QWidget()
         explorer_dock_layout = QVBoxLayout(explorer_dock_content)
@@ -173,6 +192,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.config_dock = QDockWidget("Config Explorer", self)
         self.config_dock.setObjectName("AssetGroup_ConfigDock")
         self.config_dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.config_dock.setMinimumWidth(180)
 
         config_dock_content = QWidget()
         config_dock_layout = QVBoxLayout(config_dock_content)
@@ -220,6 +240,9 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.config_dock.setWidget(config_dock_content)
         self.addDockWidget(Qt.RightDockWidgetArea, self.config_dock)
+
+        # Restore saved dock layout or apply defaults
+        self._restore_layout_state()
 
         # Initialize view stack state
         self._update_view_stack()
@@ -528,7 +551,33 @@ class BatchCreatorMainWindow(QMainWindow):
                 results.append((name, widget.save_file))
         return results
 
+    def _save_layout_state(self):
+        try:
+            geo_hex = self.saveGeometry().toHex().data().decode('utf-8')
+            state_hex = self.saveState().toHex().data().decode('utf-8')
+            set_settings_value('AssetGroupMaker', 'geometry', geo_hex)
+            set_settings_value('AssetGroupMaker', 'window_state', state_hex)
+        except Exception as e:
+            debug(f"Error saving AssetGroupMaker layout state: {e}")
+
+    def _restore_layout_state(self):
+        try:
+            geo_hex = get_settings_value('AssetGroupMaker', 'geometry')
+            if geo_hex:
+                self.restoreGeometry(QByteArray.fromHex(geo_hex.encode('utf-8')))
+            state_hex = get_settings_value('AssetGroupMaker', 'window_state')
+            if state_hex:
+                restored = self.restoreState(QByteArray.fromHex(state_hex.encode('utf-8')))
+                if not restored:
+                    self.resizeDocks([self.explorer_dock, self.config_dock], [260, 260], Qt.Horizontal)
+            else:
+                self.resizeDocks([self.explorer_dock, self.config_dock], [260, 260], Qt.Horizontal)
+        except Exception as e:
+            debug(f"Error restoring AssetGroupMaker layout state: {e}")
+            self.resizeDocks([self.explorer_dock, self.config_dock], [260, 260], Qt.Horizontal)
+
     def closeEvent(self, event: QCloseEvent):
+        self._save_layout_state()
         if self.has_unsaved_changes():
             reply = QMessageBox.question(
                 self,
