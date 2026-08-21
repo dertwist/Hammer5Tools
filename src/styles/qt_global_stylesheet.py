@@ -472,8 +472,16 @@ QCheckBox:hover {
 
 QRadioButton {
     font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
     color: #e5e5e5;
-    padding-left: 2px;
+    background-color: #2e2e2e;
 }
 
 QRadioButton::indicator:unchecked {
@@ -772,7 +780,7 @@ QListWidget {
     border-radius: 2px;
     padding: 2px;
     color: #e5e5e5;
-    background-color: #272727;
+    background-color: #2f2f31;
     show-decoration-selected: 1;
 }
 QListWidget::item {
@@ -796,7 +804,7 @@ QListView {
     border-radius: 2px;
     padding: 2px;
     color: #e5e5e5;
-    background-color: #272727;
+    background-color: #2f2f31;
     show-decoration-selected: 1;
 }
 QListView::item {
@@ -837,6 +845,12 @@ QTableWidget::item:selected, QTableView::item:selected {
 QTableView QTableCornerButton::section {
     background-color: #2e2e2e;
     border: none;
+}
+
+
+QDialog {
+    background-color: #272727;
+    color: #e5e5e5;
 }
 
 

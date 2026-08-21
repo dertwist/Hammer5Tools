@@ -20,7 +20,9 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QLineEdit,
     QTableView,
-    QHeaderView
+    QHeaderView,
+    QSlider,
+    QDialog
 )
 import sys
 
@@ -349,6 +351,31 @@ QPlainTextEdit:pressed {
     margin-right: 0px;  /* Remove right margin */
 }"""
 
+qt_stylesheet_button_icon = """
+    /* QPushButton default and hover styles for icon buttons */
+    QPushButton, QToolButton {
+        font: 580 9pt "Segoe UI";
+        border: 1px solid #464649;
+        border-radius: 2px;
+        padding: 0px;
+        margin: 0px;
+        color: #e5e5e5;
+        background-color: #2e2e2e;
+    }
+    QPushButton:hover, QToolButton:hover {
+        background-color: #515965;
+        border-color: #515965;
+        color: white;
+    }
+    QPushButton:pressed, QToolButton:pressed {
+        background-color: #6d7882;
+    }
+    QPushButton:disabled, QToolButton:disabled {
+        background-color: #292929;
+        color: #7c7c85;
+        border-color: #3f3f42;
+    }"""
+
 qt_stylesheet_widgetlist = """
 QListWidget, QListView {
     border: 2px solid #d0d0d0;
@@ -356,10 +383,14 @@ QListWidget, QListView {
     border-radius: 2px;
     padding: 2px;
     color: #e5e5e5;
+    background-color: #2f2f31;
+    alternate-background-color: #363636;
+    font: 580 10pt "Segoe UI";
+    show-decoration-selected: 1;
 }
 
 QListWidget::item, QListView::item {
-    padding: 0px;
+    padding: 2px;
 }
 
 QListWidget::item:selected, QListView::item:selected {
@@ -369,9 +400,6 @@ QListWidget::item:selected, QListView::item:selected {
 
 QListWidget::item:hover, QListView::item:hover {
     background-color: #515965;
-}
-QLabel {
-background-color: None;
 }
 """
 
@@ -383,6 +411,7 @@ QListWidget, QListView {
     padding: 2px;
     color: #e5e5e5;
     background-color: #2f2f31;
+    alternate-background-color: #363636;
     font: 580 10pt "Segoe UI";
 }
 
@@ -454,24 +483,71 @@ from src.styles.qt_global_stylesheet import QSS_GROUPBOX as qt_stylesheet_groupb
 
 qt_stylesheet_radiobutton = """
 QRadioButton {
-    color: #e5e5e5;
     font: 580 10pt "Segoe UI";
-}
-QRadioButton::indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-}
-QRadioButton::indicator::unchecked {
-    border: 2px solid rgba(94, 94, 94, 255);
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: #e5e5e5;
     background-color: #2e2e2e;
 }
-QRadioButton::indicator:unchecked:hover {
-    background-color: #515965;
+
+QRadioButton::indicator:unchecked {
+    image: url(:/icons/radio_button_unchecked_24dp.svg);
+    width: 16px;
+    height: 16px;
 }
-QRadioButton::indicator::checked {
-    border: 2px solid #4d92c2;
-    background-color: #4d92c2;
+
+QRadioButton::indicator:checked {
+    image: url(:/icons/radio_button_checked_24dp.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QRadioButton:hover {
+    background-color: #515965;
+    color: white;
+}
+"""
+
+qt_stylesheet_slider = """
+QSlider::groove:horizontal {
+    border: 2px solid black;
+    border-color: rgba(94, 94, 94, 0);
+    height: 2px;
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+    background: #515965;
+    border: 2px solid black;
+    border-color: rgba(94, 94, 94, 255);
+    width: 6px;
+    height: 36px;  
+    margin: -17px 0; 
+}
+
+QSlider::handle:horizontal:hover {
+    background: #6d7882;
+}
+
+QSlider::sub-page:horizontal {
+    background: #35383e;
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 2px;
+}
+
+QSlider::add-page:horizontal {
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 2px;
 }
 """
 
@@ -577,23 +653,28 @@ def apply_stylesheets(parent: QWidget) -> None:
 
     The mapping below associates widget types with the corresponding internal stylesheet.
     """
+    if isinstance(parent, QDialog):
+        if not parent.styleSheet():
+            parent.setStyleSheet("QDialog { background-color: #272727; color: #e5e5e5; }")
+
     widget_styles = {
         QLabel: qt_stylesheet_classes.get('label'),
         QTreeView: qt_stylesheet_classes.get('tree'),
+        QTableView: qt_stylesheet_table,
+        QListWidget: qt_stylesheet_widgetlist,
+        QListView: qt_stylesheet_widgetlist,
+        QPlainTextEdit: qt_stylesheet_plain_text_batch_inline,
         QCheckBox: qt_stylesheet_checkbox,
+        QRadioButton: qt_stylesheet_radiobutton,
         QPushButton: qt_stylesheet_button,
         QToolButton: qt_stylesheet_toolbutton,
         QComboBox: qt_stylesheet_combobox,
-        QFrame: qt_stylesheet_smartprop_editor_frame,
-        QPlainTextEdit: qt_stylesheet_plain_text_batch_inline,
-        QListWidget: qt_stylesheet_widgetlist,
-        QListView: qt_stylesheet_widgetlist,
+        QLineEdit: qt_stylesheet_lineedit,
+        QSlider: qt_stylesheet_slider,
+        QProgressBar: qt_stylesheet_progressbar,
         QTabBar: qt_stylesheet_tabbar,
         QGroupBox: qt_stylesheet_groupbox,
-        QRadioButton: qt_stylesheet_radiobutton,
-        QProgressBar: qt_stylesheet_progressbar,
-        QLineEdit: qt_stylesheet_lineedit,
-        QTableView: qt_stylesheet_table
+        QFrame: qt_stylesheet_smartprop_editor_frame,
     }
     for widget_type, style in widget_styles.items():
         if style is None: continue
