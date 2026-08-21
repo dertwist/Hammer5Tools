@@ -589,11 +589,28 @@ class MultiTemplateManagerWidget(QWidget):
         self.ignore_panel.hide()
         main_layout.addWidget(self.ignore_panel)
 
-        # 2. Templates Cards Container
-        self.cards_layout = QVBoxLayout()
+        # 2. Templates Cards Scroll Area
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+        """)
+
+        self.scroll_content = QWidget()
+        self.scroll_content.setStyleSheet("background: transparent;")
+        self.cards_layout = QVBoxLayout(self.scroll_content)
         self.cards_layout.setContentsMargins(0, 0, 0, 0)
         self.cards_layout.setSpacing(6)
-        main_layout.addLayout(self.cards_layout)
+        self.cards_layout.setAlignment(Qt.AlignTop)
+
+        self.scroll_area.setWidget(self.scroll_content)
+        main_layout.addWidget(self.scroll_area, 1)
 
         # 3. Add Template Action Button
         add_row = QHBoxLayout()
