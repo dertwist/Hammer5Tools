@@ -32,9 +32,9 @@ class DocumentTabBar(QTabBar):
         # Embedded New Document (+) Button
         self.new_tab_btn = QToolButton(self)
         self.new_tab_btn.setObjectName("DocumentNewTabButton")
-        self.new_tab_btn.setFixedSize(22, 22)
-        self.new_tab_btn.setIconSize(QSize(16, 16))
-        self.new_tab_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
+        self.new_tab_btn.setFixedSize(18, 18)
+        self.new_tab_btn.setIconSize(QSize(11, 11))
+        self.new_tab_btn.setIcon(QIcon(":/valve_common/icons/tools/common/add_sm.png"))
         self.new_tab_btn.setToolTip("New Document (Ctrl+N)")
         self.new_tab_btn.setCursor(Qt.PointingHandCursor)
         self.new_tab_btn.setStyleSheet("""
