@@ -237,78 +237,288 @@ class QuickVsmart:
     def __init__(self, filepaths):
         if not filepaths:
             return
+        if isinstance(filepaths, str):
+            filepaths = [filepaths]
+
+        valid_paths = [p for p in filepaths if p and (p.lower().endswith('.vmdl') or p.lower().endswith('.vsmart'))]
+        if not valid_paths:
+            return
+
+        import random
+        import string
+        from src.common import generate_unique_name, editor_info
 
         addon_dir = get_addon_dir()
-        first_file = filepaths[0]
+        first_file = valid_paths[0]
         dir_path = os.path.dirname(first_file)
 
         # Determine new vsmart filename
-        if len(filepaths) == 1:
+        if len(valid_paths) == 1:
             base_name = os.path.splitext(os.path.basename(first_file))[0]
-            vsmart_name = f"{base_name}.vsmart"
         else:
             base_name = os.path.basename(dir_path)
-            vsmart_name = f"{base_name}.vsmart"
 
-        # Handle collision using generate_unique_name if available, otherwise manual check
-        from src.common import generate_unique_name
         existing_files = {f for f in os.listdir(dir_path) if f.endswith('.vsmart')}
-        vsmart_name = generate_unique_name(os.path.splitext(vsmart_name)[0], existing_files, separator="_") + ".vsmart"
+        if f"{base_name}.vsmart" in existing_files:
+            vsmart_name = generate_unique_name(base_name, {os.path.splitext(f)[0] for f in existing_files}, separator="_") + ".vsmart"
+        else:
+            vsmart_name = f"{base_name}.vsmart"
         vsmart_path = os.path.join(dir_path, vsmart_name)
 
-        children = []
         element_id = 1
+        def next_id():
+            nonlocal element_id
+            cur = element_id
+            element_id += 1
+            return cur
 
-        for path in filepaths:
-            ext = os.path.splitext(path)[1].lower()
+        def gen_hash():
+            return ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+
+        selector_hash = gen_hash()
+        transform_hash = gen_hash()
+        other_hash = gen_hash()
+
+        rel_model_paths = []
+        for path in valid_paths:
             try:
                 rel_path = os.path.relpath(path, addon_dir).replace(os.path.sep, '/')
             except Exception:
-                rel_path = path
+                rel_path = path.replace(os.path.sep, '/')
+            rel_model_paths.append((path, rel_path))
 
+        max_child_index = max(0, len(valid_paths) - 1)
+        first_model_rel = rel_model_paths[0][1] if rel_model_paths else ""
+
+        variables = [
+            # --- Category: Selector ---
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{selector_hash}_start",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "---------- Selector ----------",
+                "m_Hammer5ToolsCategoryName": "Selector",
+                "m_ReadOnlyExpression": "true"
+            },
+            {
+                "_class": "CSmartPropVariable_ChoiceSelectionMode",
+                "m_VariableName": "SelectionMode",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": "RANDOM",
+                "m_nElementID": next_id()
+            },
+            {
+                "_class": "CSmartPropVariable_Int",
+                "m_VariableName": "SpecificChildIndex",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": 0,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "Model ID",
+                "m_nParamaterMinValue": 0,
+                "m_nParamaterMaxValue": max_child_index,
+                "m_sModelName": "None",
+                "m_ReadOnlyExpression": "SelectionMode != 'SPECIFIC'"
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{selector_hash}_end",
+                "m_bExposeAsParameter": False,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "                                             ",
+                "m_Hammer5ToolsCategoryName": "New category",
+                "m_ReadOnlyExpression": "true"
+            },
+
+            # --- Category: Transform ---
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{transform_hash}_start",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "---------- Transform ----------",
+                "m_Hammer5ToolsCategoryName": "Transform",
+                "m_ReadOnlyExpression": "true"
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": "EnableRandomRotation",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "Random Rotation"
+            },
+            {
+                "_class": "CSmartPropVariable_Vector2D",
+                "m_VariableName": "RandomRotation",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": [-180.0, 180.0],
+                "m_nElementID": next_id(),
+                "m_DisplayName": "RandomRotation (X - min, Y - max)",
+                "m_sModelName": "None"
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": "EnableRandomScale",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "Random Scale"
+            },
+            {
+                "_class": "CSmartPropVariable_Float",
+                "m_VariableName": "RandomScaleMin",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": 0.8,
+                "m_nElementID": next_id(),
+                "m_flParamaterMinValue": 0.2,
+                "m_flParamaterMaxValue": 2.0,
+                "m_sModelName": "None"
+            },
+            {
+                "_class": "CSmartPropVariable_Float",
+                "m_VariableName": "RandomScaleMax",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": 1.2,
+                "m_nElementID": next_id(),
+                "m_flParamaterMinValue": 0.2,
+                "m_flParamaterMaxValue": 2.0,
+                "m_sModelName": "None"
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{transform_hash}_end",
+                "m_bExposeAsParameter": False,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "                                             ",
+                "m_Hammer5ToolsCategoryName": "New category",
+                "m_ReadOnlyExpression": "true"
+            },
+
+            # --- Category: Other ---
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{other_hash}_start",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "---------- Other ----------",
+                "m_Hammer5ToolsCategoryName": "Other",
+                "m_ReadOnlyExpression": "true"
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": "CastShadows",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": True,
+                "m_nElementID": next_id()
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": "DetailObject",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id()
+            },
+            {
+                "_class": "CSmartPropVariable_MaterialGroup",
+                "m_VariableName": "MaterialGroupName",
+                "m_bExposeAsParameter": True,
+                "m_DefaultValue": "",
+                "m_nElementID": next_id(),
+                "m_sModelName": first_model_rel
+            },
+            {
+                "_class": "CSmartPropVariable_Bool",
+                "m_VariableName": f"hammer5tools_category_{other_hash}_end",
+                "m_bExposeAsParameter": False,
+                "m_DefaultValue": False,
+                "m_nElementID": next_id(),
+                "m_DisplayName": "                                             ",
+                "m_Hammer5ToolsCategoryName": "New category",
+                "m_ReadOnlyExpression": "true"
+            }
+        ]
+
+        children = []
+        for orig_path, rel_path in rel_model_paths:
+            ext = os.path.splitext(orig_path)[1].lower()
+            label = os.path.splitext(os.path.basename(orig_path))[0]
             if ext == '.vsmart':
-                # Reference
                 element = {
                     '_class': 'CSmartPropElement_SmartProp',
                     'm_sSmartProp': rel_path,
                     'm_Modifiers': [],
                     'm_SelectionCriteria': [],
-                    'm_nElementID': element_id
+                    'm_nElementID': next_id(),
+                    'm_sLabel': label
                 }
             else:
-                # Model
                 element = {
                     '_class': 'CSmartPropElement_Model',
-                    'm_sModelName': rel_path,
+                    'm_MaterialGroupName': {'m_SourceName': 'MaterialGroupName'},
                     'm_Modifiers': [],
                     'm_SelectionCriteria': [],
-                    'm_nElementID': element_id
+                    'm_bCastShadows': {'m_SourceName': 'CastShadows'},
+                    'm_bDetailObject': {'m_SourceName': 'DetailObject'},
+                    'm_bDisableDynamicDeformable': False,
+                    'm_bEnabled': True,
+                    'm_bRigidDeformation': False,
+                    'm_nElementID': next_id(),
+                    'm_nLodLevel': -1,
+                    'm_sLabel': label,
+                    'm_sModelName': rel_path
                 }
             children.append(element)
-            element_id += 1
 
-        # Put all this to root group
-        root_group = {
-            '_class': 'CSmartPropElement_Group',
-            'm_sLabel': 'Root Group',
-            'm_Children': children,
-            'm_Modifiers': [],
+        pick_one = {
+            '_class': 'CSmartPropElement_PickOne',
+            'm_HandleColor': [125, 230, 55],
+            'm_HandleShape': 'DIAMOND',
+            'm_HandleSize': 24.0,
+            'm_Modifiers': [
+                {
+                    '_class': 'CSmartPropOperation_RandomScale',
+                    'm_bEnabled': {'m_SourceName': 'EnableRandomScale'},
+                    'm_flRandomScaleMax': {'m_SourceName': 'RandomScaleMax'},
+                    'm_flRandomScaleMin': {'m_SourceName': 'RandomScaleMin'},
+                    'm_flSnapIncrement': 0.0,
+                    'm_nElementID': next_id()
+                },
+                {
+                    '_class': 'CSmartPropOperation_RandomRotation',
+                    'm_bEnabled': {'m_SourceName': 'EnableRandomRotation'},
+                    'm_nElementID': next_id(),
+                    'm_vRandomRotationMax': {'m_Components': [0.0, {'m_Expression': 'RandomRotation.y'}, 0.0]},
+                    'm_vRandomRotationMin': {'m_Components': [0.0, {'m_Expression': 'RandomRotation.x'}, 0.0]}
+                }
+            ],
+            'm_OutputChoiceVariableName': '',
             'm_SelectionCriteria': [],
-            'm_nElementID': element_id
+            'm_SelectionMode': {'m_SourceName': 'SelectionMode'},
+            'm_SpecificChildIndex': {'m_SourceName': 'SpecificChildIndex'},
+            'm_bConfigurable': True,
+            'm_bEnabled': True,
+            'm_nElementID': next_id(),
+            'm_sLabel': 'Selector',
+            'm_vHandleOffset': {'m_Components': [0.0, -16.0, 0.0]},
+            'm_Children': children
         }
-        element_id += 1
 
-        from src.common import editor_info
         vsmart_content = {
             'generic_data_type': 'CSmartPropRoot',
-            'm_nContentVersion': 1,
-            'm_Children': [root_group],
-            'm_Variables': [],
-            'm_Choices': []
+            'm_nContentVersion': 0,
+            'm_Variables': variables,
+            'm_Choices': [],
+            'm_Children': [pick_one]
         }
         vsmart_content.update(fast_deepcopy(editor_info))
         if 'editor_info' in vsmart_content:
-            vsmart_content['editor_info']['m_nElementID'] = element_id
+            vsmart_content['editor_info']['m_nElementID'] = next_id()
 
         with open(vsmart_path, 'w') as f:
             f.write(JsonToKv3(vsmart_content))
