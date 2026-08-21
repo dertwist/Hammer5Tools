@@ -81,6 +81,8 @@ class _FacetPopup(QFrame):
         self.rows_layout.setContentsMargins(0, 0, 0, 0)
         self.rows_layout.setSpacing(0)
         layout.addWidget(self.rows_host)
+        self.setStyleSheet("QFrame { background-color: #272727; border: 1px solid #464649; }")
+        apply_stylesheets(self)
 
     def set_values(self, values: List[str]):
         self._values = list(values)
@@ -113,6 +115,7 @@ class _FacetPopup(QFrame):
             self.rows_layout.addWidget(row)
             self._rows.append((value, checkbox, row))
 
+        apply_stylesheets(self)
         self.changed.emit()
 
     def checked_values(self) -> set:
@@ -778,62 +781,6 @@ class ModelBrowserWidget(QWidget):
         return self._selected_path
 
 
-class ModelBrowserDialog(QDialog):
-    """Dialog wrapper around ModelBrowserWidget forced to .vmdl files."""
-
-    def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
-        super().__init__(parent)
-        self.setWindowTitle("Select Model")
-        self.resize(940, 720)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.browser = ModelBrowserWidget(
-            self,
-            current_path=current_path,
-            addon=addon,
-            show_accept=True,
-            auto_scan=True,
-            asset_types=[".vmdl"]
-        )
-        self.browser.accept_button.clicked.connect(self.accept)
-        self.browser.model_double_clicked.connect(lambda _: self.accept())
-        layout.addWidget(self.browser)
-
-    def selected_path(self) -> str:
-        return self.browser.selected_path()
-
-
-class SmartPropBrowserDialog(QDialog):
-    """Dialog wrapper around ModelBrowserWidget forced to .vsmart files."""
-
-    def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
-        super().__init__(parent)
-        self.setWindowTitle("Select SmartProp")
-        self.resize(940, 720)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.browser = ModelBrowserWidget(
-            self,
-            current_path=current_path,
-            addon=addon,
-            show_accept=True,
-            auto_scan=True,
-            asset_types=[".vsmart"]
-        )
-        self.browser.accept_button.clicked.connect(self.accept)
-        self.browser.model_double_clicked.connect(lambda _: self.accept())
-        layout.addWidget(self.browser)
-
-    def selected_path(self) -> str:
-        return self.browser.selected_path()
-
-
 class AssetBrowserDialog(QDialog):
     """Dialog wrapper around ModelBrowserWidget supporting multi-asset types and addon filtering."""
 
@@ -867,23 +814,39 @@ class AssetBrowserDialog(QDialog):
         self.browser.model_double_clicked.connect(lambda _: self.accept())
         layout.addWidget(self.browser)
 
+        # Apply the SmartProp editor's iconic per-widget stylesheets automatically
+        # so every caller gets consistent styling without needing to remember.
+        apply_stylesheets(self)
+
     def selected_path(self) -> str:
         return self.browser.selected_path()
 
 
-def pick_model(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
+def pick_model(parent=None, current_path: str = "", addon: str = None) -> str:
     """Open the browser and return the chosen resource path, or None if cancelled."""
-    dialog = ModelBrowserDialog(parent, current_path=current_path, addon=addon)
-    apply_stylesheets(dialog)
+    dialog = AssetBrowserDialog(
+        parent,
+        current_path=current_path,
+        addon=addon,
+        addon_only=False,
+        asset_types=[".vmdl"],
+        title="Select Model"
+    )
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None
     return None
 
 
-def pick_smartprop(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
+def pick_smartprop(parent=None, current_path: str = "", addon: str = None) -> str:
     """Open the smartprop browser and return the chosen resource path, or None if cancelled."""
-    dialog = SmartPropBrowserDialog(parent, current_path=current_path, addon=addon)
-    apply_stylesheets(dialog)
+    dialog = AssetBrowserDialog(
+        parent,
+        current_path=current_path,
+        addon=addon,
+        addon_only=False,
+        asset_types=[".vsmart"],
+        title="Select SmartProp"
+    )
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None
     return None
@@ -906,7 +869,7 @@ def pick_asset(
         asset_types=asset_types,
         title=title
     )
-    apply_stylesheets(dialog)
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None
     return None
+
