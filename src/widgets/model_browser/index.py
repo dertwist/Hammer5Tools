@@ -41,12 +41,16 @@ SOURCE_CORE = "Core"
 #: Engine content mounts, in search-path precedence order (highest first).
 GAME_MOUNTS = ("csgo", "csgo_imported", "csgo_core", "core")
 
-_INDEX_VERSION = 3  # bumped: pre-fix caches may have missing Core-mount VPK
+_INDEX_VERSION = 4  # bumped: added retail_filters for AssetBrowser
                      # entries from the setup_vrf() double-load bug (see dotnet.py)
 # Rebuild rather than trust the cache once it is a day old. A stale index is
 # only ever *missing* new models (paths are validated lazily at pick time), so
 # a coarse TTL is enough and avoids stat()ing thousands of files on open.
 _INDEX_TTL_SECONDS = 24 * 60 * 60
+
+# Module-level in-memory cache — survives across dialog opens so re-opening
+# skips both disk I/O and JSON deserialization entirely.
+_mem_cache: Optional[Dict] = None  # {"addon": str, "entries": List[ModelEntry], "time": float}
 
 
 @dataclass
@@ -300,9 +304,23 @@ def load_cached_index(
     asset_types: Optional[List[str]] = None
 ) -> Optional[List[ModelEntry]]:
     """Return a still-valid cached index, or None to force a rescan."""
+    global _mem_cache
     if addon_only:
         return None
 
+    # ── Fast path: in-memory cache (no disk I/O, no JSON parsing) ──
+    if _mem_cache is not None:
+        if (_mem_cache["addon"] == (active_addon or "")
+                and time.time() - _mem_cache["time"] < _INDEX_TTL_SECONDS):
+            entries = _mem_cache["entries"]
+            if asset_types is not None:
+                clean_types = {t.lstrip('.').lower() for t in asset_types}
+                entries = [e for e in entries if e.asset_type.lower() in clean_types]
+            return entries
+        # Stale or wrong addon — discard.
+        _mem_cache = None
+
+    # ── Slow path: disk cache ──
     cache_file = _index_cache_file()
     if not os.path.isfile(cache_file):
         return None
@@ -316,20 +334,27 @@ def load_cached_index(
         return None
     if blob.get("addon") != (active_addon or ""):
         return None
-    if time.time() - float(blob.get("built_at", 0)) > _INDEX_TTL_SECONDS:
+    built_at = float(blob.get("built_at", 0))
+    if time.time() - built_at > _INDEX_TTL_SECONDS:
         return None
 
     try:
-        entries = [ModelEntry(**row) for row in blob.get("entries", [])]
-        if asset_types is not None:
-            clean_types = {t.lstrip('.').lower() for t in asset_types}
-            entries = [e for e in entries if e.asset_type.lower() in clean_types]
-        return entries
+        all_entries = [ModelEntry(**row) for row in blob.get("entries", [])]
     except (TypeError, ValueError):
         return None
 
+    # Populate in-memory cache with the full unfiltered set.
+    _mem_cache = {"addon": active_addon or "", "entries": all_entries, "time": built_at}
+
+    if asset_types is not None:
+        clean_types = {t.lstrip('.').lower() for t in asset_types}
+        return [e for e in all_entries if e.asset_type.lower() in clean_types]
+    return all_entries
+
 
 def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) -> None:
+    global _mem_cache
+    now = time.time()
     cache_file = _index_cache_file()
     try:
         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
@@ -337,11 +362,14 @@ def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) ->
             json.dump({
                 "version": _INDEX_VERSION,
                 "addon": active_addon or "",
-                "built_at": time.time(),
+                "built_at": now,
                 "entries": [asdict(e) for e in entries],
             }, handle)
     except Exception as exc:
         print(f"[model_browser] could not write index cache: {exc}")
+
+    # Also populate the in-memory cache so re-opens are instant.
+    _mem_cache = {"addon": active_addon or "", "entries": entries, "time": now}
 
 
 class ScanSignals(QObject):
