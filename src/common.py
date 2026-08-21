@@ -221,9 +221,12 @@ if getattr(sys, 'frozen', False):
     else:
         internal_base = app_dir
 else:
-    # Dev mode: defaults are in the repo root
-    internal_base = app_dir
+    # Dev mode: defaults are in the 'Hammer5Tools' subfolder of the repo root
+    internal_base = app_dir / "Hammer5Tools"
+    if not internal_base.exists():
+        internal_base = app_dir
 
+Internal_Presets_Path = internal_base / "Presets"
 SoundEventEditor_Internal_Preset_Path = internal_base / "SoundEventEditor" / "Presets"
 SmartPropEditor_Internal_Preset_Path = internal_base / "SmartPropEditor" / "Presets"
 
@@ -240,23 +243,17 @@ def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
     """Returns a list of presets/templates from both internal and user paths."""
     presets = []
     seen_names = set()
-    
-    internal_paths = [internal_path]
-    alt_internal = app_dir / "Hammer5Tools" / "SoundEventEditor" / "Presets"
-    if alt_internal not in internal_paths:
-        internal_paths.append(alt_internal)
 
     # Internal presets (Software) - these will be updated with the app
-    for ipath in internal_paths:
-        if ipath.is_dir():
-            for file in ipath.rglob("*"):
-                if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
-                    rel_path = file.relative_to(ipath)
-                    display_name = f"{rel_path.stem}"
-                    if display_name not in seen_names:
-                        seen_names.add(display_name)
-                        presets.append({display_name: str(file.absolute())})
-                
+    if internal_path.is_dir():
+        for file in internal_path.rglob("*"):
+            if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
+                rel_path = file.relative_to(internal_path)
+                display_name = f"{rel_path.stem}"
+                if display_name not in seen_names:
+                    seen_names.add(display_name)
+                    presets.append({display_name: str(file.absolute())})
+
     # User presets - these are persistent in ~/Hammer5Tools
     if user_path.is_dir():
         for file in user_path.rglob("*"):
@@ -266,23 +263,12 @@ def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
                 if display_name not in seen_names:
                     seen_names.add(display_name)
                     presets.append({display_name: str(file.absolute())})
-                
+
     return presets
 
 def seed_user_data():
     """Seeds the user directory from bundled defaults on first launch or if files are missing."""
-    if getattr(sys, 'frozen', False):
-        meipass = getattr(sys, '_MEIPASS', None)
-        if meipass:
-            defaults_path = Path(meipass) / "defaults"
-            if not defaults_path.exists():
-                defaults_path = Path(meipass)
-        else:
-            defaults_path = app_dir
-    else:
-        # Dev mode: defaults are in the 'Hammer5Tools' subfolder of the repo root
-        defaults_path = Path(__file__).resolve().parent.parent / "Hammer5Tools"
-        
+    defaults_path = internal_base
     if not defaults_path.exists():
         return
 
