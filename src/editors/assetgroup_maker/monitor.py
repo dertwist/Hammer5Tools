@@ -22,13 +22,13 @@ except Exception:
 
 def is_watch_enabled(config_path: str) -> bool:
     """
-    Check if watch_changes is enabled for this .hbat config. Defaults to False.
+    Check if watch_changes is enabled for this .hbat config. Defaults to True.
     """
     try:
         data = load_hbat_file(config_path)
-        return bool(data.get('settings', {}).get('watch_changes', False))
+        return bool(data.get('settings', {}).get('watch_changes', True))
     except Exception:
-        return False
+        return True
 
 
 def set_watch_enabled(config_path: str, enabled: bool):
@@ -297,7 +297,7 @@ class MonitoringFileWatcher(QListWidget):
         self.reference_configs: Dict[str, set] = {}
         self.process_threads: Dict[str, StartProcess] = {}
         self.watched_directories: set = set()
-        self._global_watch_enabled: bool = False
+        self._global_watch_enabled: bool = True
 
         # Debounce timer for update delays (500ms)
         self.debounce_timer = QTimer(self)

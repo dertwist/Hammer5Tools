@@ -2,7 +2,8 @@ import os
 from typing import Dict, List, Optional, Any
 from PySide6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QLineEdit, QCheckBox, QFrame, QScrollArea, QToolButton, QMessageBox
+    QPushButton, QLineEdit, QCheckBox, QFrame, QScrollArea, QToolButton, QMessageBox,
+    QFileDialog
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
@@ -14,6 +15,9 @@ from src.styles.common import (
 )
 from src.editors.assetgroup_maker.analyzer import (
     ReferenceAnalysisResult, extract_fbx_materials, resolve_reference_full_path
+)
+from src.editors.assetgroup_maker.matcher import (
+    parse_filter_entries, matches_filter_entry
 )
 
 
@@ -30,11 +34,15 @@ class TemplateSlotMappingDialog(QDialog):
         self,
         template_data: Dict[str, Any],
         analysis: Optional[ReferenceAnalysisResult] = None,
+        context_folder: Optional[str] = None,
+        global_settings: Optional[Dict[str, Any]] = None,
         parent=None
     ):
         super().__init__(parent)
         self.template_data = template_data
         self.analysis = analysis
+        self.context_folder = context_folder or ""
+        self.global_settings = global_settings or {}
         self.skipped_slots: List[str] = list(template_data.get('skipped_slots', []))
         self.custom_tokens: Dict[str, str] = dict(template_data.get('custom_tokens', {}))
 
@@ -80,27 +88,7 @@ class TemplateSlotMappingDialog(QDialog):
         root_layout.setContentsMargins(12, 12, 12, 12)
         root_layout.setSpacing(10)
 
-        # 1. Header Frame: Template Info
-        header_frame = QFrame()
-        header_frame.setStyleSheet("""
-            QFrame {
-                background-color: #262626;
-                border: 1px solid #3E3E42;
-                border-radius: 2px;
-            }
-        """)
-        header_layout = QVBoxLayout(header_frame)
-        header_layout.setContentsMargins(10, 8, 10, 8)
-        header_layout.setSpacing(4)
-
-        ref_path = self.template_data.get('reference', '')
-        ref_lbl = QLabel(f"<b>Template Reference:</b> <span style='font-weight: normal; color: #E5E5E5;'>{ref_path if ref_path else '(None selected)'}</span>")
-        ref_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #FFFFFF;")
-        header_layout.addWidget(ref_lbl)
-
-        root_layout.addWidget(header_frame)
-
-        # 2. Main Scroll Area
+        # 1. Main Scroll Area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -215,28 +203,9 @@ class TemplateSlotMappingDialog(QDialog):
         top_row.addWidget(cb)
 
         slot_label = slot_info.get('label', slot_key)
-        is_req = slot_info.get('required', False)
-        badge_bg = "#1F2E40" if is_req else "#2A2A2E"
-        badge_border = "#4A83C9" if is_req else "#4E4E52"
-        badge_color = "#4A83C9" if is_req else "#8E8E93"
-        badge_text = "REQUIRED" if is_req else "OPTIONAL"
-
         title_lbl = QLabel(f"<b>{slot_label}</b> ({slot_key})")
         title_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
         top_row.addWidget(title_lbl)
-
-        badge_lbl = QLabel(badge_text)
-        badge_lbl.setStyleSheet(f"""
-            QLabel {{
-                background-color: {badge_bg};
-                color: {badge_color};
-                border: 1px solid {badge_border};
-                border-radius: 0px;
-                padding: 1px 5px;
-                font: 600 7.5pt 'Segoe UI';
-            }}
-        """)
-        top_row.addWidget(badge_lbl)
         top_row.addStretch(1)
 
         source_filename = slot_info.get('filename', '')
@@ -302,7 +271,7 @@ class TemplateSlotMappingDialog(QDialog):
 
         research_btn = QPushButton("Research FBX Materials")
         research_btn.setIcon(QIcon(":/valve_common/icons/tools/common/refresh.png"))
-        research_btn.setToolTip("Scan FBX mesh files to extract embedded material names")
+        research_btn.setToolTip("Scan referenced and input FBX mesh files in the asset directory to extract embedded material names")
         research_btn.setStyleSheet(qt_stylesheet_button)
         research_btn.setFixedHeight(26)
         research_btn.clicked.connect(self._research_fbx_materials)
@@ -310,7 +279,7 @@ class TemplateSlotMappingDialog(QDialog):
 
         add_remap_btn = QPushButton("+ Add Remap")
         add_remap_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
-        add_remap_btn.setToolTip("Add a new FBX material slot remap")
+        add_remap_btn.setToolTip("Add a new FBX material slot remap manually")
         add_remap_btn.setStyleSheet(qt_stylesheet_button)
         add_remap_btn.setFixedHeight(26)
         add_remap_btn.clicked.connect(lambda: self._add_material_remap_row("", ""))
@@ -332,13 +301,10 @@ class TemplateSlotMappingDialog(QDialog):
 
         self.fields_layout.addWidget(mat_section_frame)
 
-        # Populate rows
+        # Populate rows if explicitly configured (do not auto-research by default)
         if self.material_remaps:
             for remap in self.material_remaps:
                 self._add_material_remap_row(remap.get('from', ''), remap.get('to', ''))
-        else:
-            # Auto research if empty
-            self._research_fbx_materials(silent=True)
 
     def _add_material_remap_row(self, from_mat: str, to_mat: str):
         row_frame = QFrame()
@@ -353,26 +319,16 @@ class TemplateSlotMappingDialog(QDialog):
         row_layout.setContentsMargins(8, 6, 8, 6)
         row_layout.setSpacing(8)
 
-        from_label = QLabel("From (FBX):")
-        from_label.setFixedWidth(70)
-        from_label.setStyleSheet("color: #A5A5A5; font: 600 8.5pt 'Segoe UI';")
-        row_layout.addWidget(from_label)
-
         from_edit = QLineEdit(from_mat)
         from_edit.setStyleSheet(qt_stylesheet_lineedit)
         from_edit.setFixedHeight(24)
         from_edit.setPlaceholderText("material_name.vmat")
-        from_edit.setMinimumWidth(130)
+        from_edit.setMinimumWidth(140)
         row_layout.addWidget(from_edit, 1)
 
         arrow_lbl = QLabel("➔")
         arrow_lbl.setStyleSheet("color: #4A83C9; font: 700 10pt 'Segoe UI';")
         row_layout.addWidget(arrow_lbl)
-
-        to_label = QLabel("To (.vmat):")
-        to_label.setFixedWidth(65)
-        to_label.setStyleSheet("color: #A5A5A5; font: 600 8.5pt 'Segoe UI';")
-        row_layout.addWidget(to_label)
 
         to_edit = QLineEdit(to_mat)
         to_edit.setStyleSheet(qt_stylesheet_lineedit)
@@ -441,56 +397,116 @@ class TemplateSlotMappingDialog(QDialog):
             target_edit.setText(result)
 
     def _research_fbx_materials(self, silent: bool = False):
-        """Scans the template's referenced FBX mesh files and extracts all embedded materials."""
+        """Scans the template's referenced FBX mesh files and all input FBX files to extract all embedded materials."""
         ref_path = self.template_data.get('reference', '')
-        context_folder = None
-        main_win = self.window()
-        if hasattr(main_win, 'file_path') and main_win.file_path:
-            context_folder = os.path.dirname(main_win.file_path)
+        context_folder = self.context_folder
+        if not context_folder:
+            main_win = self.window()
+            if hasattr(main_win, 'file_path') and main_win.file_path:
+                target_dir = os.path.splitext(main_win.file_path)[0]
+                if os.path.isdir(target_dir):
+                    context_folder = target_dir
+                elif os.path.isdir(os.path.dirname(main_win.file_path)):
+                    context_folder = os.path.dirname(main_win.file_path)
+            elif get_addon_dir():
+                context_folder = get_addon_dir()
 
-        # Collect mesh candidates from analysis or slots
-        mesh_paths = []
+        fbx_paths_to_scan = set()
+
+        # 1. Collect mesh candidates from template analysis or slots
         if self.analysis and self.analysis.slots:
             for s_info in self.analysis.slots.values():
                 s_source = s_info.get('source', '')
                 if s_source and s_source.lower().endswith('.fbx'):
-                    mesh_paths.append(s_source)
+                    m_full = resolve_reference_full_path(s_source, context_folder=context_folder)
+                    if m_full and os.path.isfile(m_full):
+                        fbx_paths_to_scan.add(os.path.normpath(m_full))
 
-        if not mesh_paths and ref_path:
+        # 2. Collect from template reference file if VMDL or FBX
+        if ref_path:
             ref_full = resolve_reference_full_path(ref_path, context_folder=context_folder)
             if ref_full and os.path.isfile(ref_full):
-                try:
-                    with open(ref_full, 'r', encoding='utf-8', errors='replace') as f:
-                        txt = f.read()
-                    import re
-                    found = re.findall(r'filename\s*=\s*["\']([^"\']+\.fbx)["\']', txt, re.IGNORECASE)
-                    mesh_paths.extend(found)
-                except Exception:
-                    pass
+                if ref_path.lower().endswith('.fbx'):
+                    fbx_paths_to_scan.add(os.path.normpath(ref_full))
+                elif ref_path.lower().endswith('.vmdl'):
+                    try:
+                        with open(ref_full, 'r', encoding='utf-8', errors='replace') as f:
+                            txt = f.read()
+                        import re
+                        found = re.findall(r'filename\s*=\s*["\']([^"\']+\.fbx)["\']', txt, re.IGNORECASE)
+                        for f_p in found:
+                            f_full = resolve_reference_full_path(f_p, context_folder=context_folder)
+                            if f_full and os.path.isfile(f_full):
+                                fbx_paths_to_scan.add(os.path.normpath(f_full))
+                    except Exception:
+                        pass
 
-        # If reference itself is an FBX
-        if ref_path and ref_path.lower().endswith('.fbx'):
-            mesh_paths.append(ref_path)
+        # 3. Collect from all input FBX files in the asset directory (respecting template filter rules)
+        if context_folder and os.path.isdir(context_folder):
+            tpl_filter_mode = self.template_data.get('filter_mode') or self.global_settings.get('filter_mode', 'exclude')
+            tpl_ignore_exts = self.template_data.get('ignore_extensions')
+            if tpl_ignore_exts is None or tpl_ignore_exts == '':
+                tpl_ignore_exts = self.global_settings.get('ignore_extensions', '')
+            tpl_ignore_list = self.template_data.get('ignore_list')
+            if tpl_ignore_list is None or tpl_ignore_list == '':
+                tpl_ignore_list = self.global_settings.get('ignore_list', '')
+
+            ignore_extensions = parse_filter_entries(tpl_ignore_exts)
+            ignore_patterns = parse_filter_entries(tpl_ignore_list)
+
+            for root, _, files in os.walk(context_folder):
+                for f in files:
+                    if not f.lower().endswith('.fbx'):
+                        continue
+
+                    base, _ = os.path.splitext(f)
+                    b_lower = base.lower()
+
+                    # Skip physics / collision meshes
+                    if b_lower.startswith(('phys_', 'col_', 'hull_', 'physics_', 'collision_')) or any(
+                        b_lower.endswith(s) for s in ('_phys', '_col', '_hull', '_collision', '_physics')
+                    ):
+                        continue
+
+                    # Apply template ignore list / patterns
+                    if ignore_patterns and any(matches_filter_entry(f, p) for p in ignore_patterns):
+                        continue
+
+                    # Apply template filter mode / ignore extensions
+                    if tpl_filter_mode == 'exclude' and ignore_extensions:
+                        if any(matches_filter_entry(f, e) for e in ignore_extensions):
+                            continue
+                    elif tpl_filter_mode == 'include' and ignore_extensions:
+                        if not any(matches_filter_entry(f, e) for e in ignore_extensions):
+                            continue
+
+                    fbx_paths_to_scan.add(os.path.normpath(os.path.join(root, f)))
 
         existing_froms = {r['from_edit'].text().strip().lower() for r in self.mat_remap_widgets if r.get('from_edit')}
         new_found = 0
 
-        for m_path in mesh_paths:
-            m_full = resolve_reference_full_path(m_path, context_folder=context_folder)
-            if m_full and os.path.isfile(m_full):
-                fbx_mats = extract_fbx_materials(m_full)
-                for f_mat in fbx_mats:
-                    f_vmat = f_mat if f_mat.lower().endswith('.vmat') else f"{f_mat}.vmat"
-                    if f_vmat.lower() not in existing_froms and f_mat.lower() not in existing_froms:
-                        existing_froms.add(f_vmat.lower())
-                        self._add_material_remap_row(f_vmat, "")
-                        new_found += 1
+        for fbx_path in sorted(fbx_paths_to_scan):
+            fbx_mats = extract_fbx_materials(fbx_path)
+            for f_mat in fbx_mats:
+                f_vmat = f_mat if f_mat.lower().endswith('.vmat') else f"{f_mat}.vmat"
+                if f_vmat.lower() not in existing_froms and f_mat.lower() not in existing_froms:
+                    existing_froms.add(f_vmat.lower())
+                    self._add_material_remap_row(f_vmat, "")
+                    new_found += 1
 
         if not silent:
             if new_found > 0:
-                QMessageBox.information(self, "FBX Materials Researched", f"Discovered {new_found} new material slot(s) from FBX mesh files.")
+                QMessageBox.information(
+                    self,
+                    "FBX Materials Researched",
+                    f"Discovered and added {new_found} new material remap(s) from {len(fbx_paths_to_scan)} FBX file(s)."
+                )
             else:
-                QMessageBox.information(self, "FBX Materials Researched", "No new FBX materials found in referenced meshes.")
+                QMessageBox.information(
+                    self,
+                    "FBX Materials Researched",
+                    f"No new FBX materials found in {len(fbx_paths_to_scan)} referenced or input FBX meshes."
+                )
 
     def _apply_and_close(self):
         self.skipped_slots.clear()

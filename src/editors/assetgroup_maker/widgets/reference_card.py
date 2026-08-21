@@ -310,11 +310,62 @@ class TemplateCardWidget(QWidget):
     def set_can_delete(self, can_delete: bool):
         self.del_btn.setVisible(can_delete)
 
+    def get_global_settings(self) -> Dict[str, Any]:
+        """Traverse hierarchy to retrieve the active global settings dictionary."""
+        p = self.parent()
+        while p is not None:
+            if hasattr(p, 'get_data') and callable(p.get_data):
+                d = p.get_data()
+                if isinstance(d, dict) and 'settings' in d:
+                    return dict(d.get('settings', {}))
+            p = p.parent()
+        return {}
+
+    def get_context_folder(self) -> Optional[str]:
+        """Resolves the current working/asset directory from parent widgets or settings."""
+        p = self.parent()
+        while p is not None:
+            if hasattr(p, 'get_target_directory') and callable(p.get_target_directory):
+                d = p.get_target_directory()
+                if d and os.path.isdir(d):
+                    return d
+            if hasattr(p, 'file_path') and p.file_path:
+                target_dir = os.path.splitext(p.file_path)[0]
+                if os.path.isdir(target_dir):
+                    return target_dir
+                d_name = os.path.dirname(p.file_path)
+                if os.path.isdir(d_name):
+                    return d_name
+            p = p.parent()
+
+        win = self.window()
+        if win:
+            if hasattr(win, 'file_path') and win.file_path:
+                target_dir = os.path.splitext(win.file_path)[0]
+                if os.path.isdir(target_dir):
+                    return target_dir
+                d_name = os.path.dirname(win.file_path)
+                if os.path.isdir(d_name):
+                    return d_name
+            if hasattr(win, 'current_editor_tab') and callable(win.current_editor_tab):
+                tab = win.current_editor_tab()
+                if tab and hasattr(tab, 'file_path') and tab.file_path:
+                    target_dir = os.path.splitext(tab.file_path)[0]
+                    if os.path.isdir(target_dir):
+                        return target_dir
+                    d_name = os.path.dirname(tab.file_path)
+                    if os.path.isdir(d_name):
+                        return d_name
+
+        return get_addon_dir()
+
     def _open_slot_mappings_dialog(self):
         from src.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
         dialog = TemplateSlotMappingDialog(
             template_data=self.get_template_data(),
             analysis=self.current_analysis,
+            context_folder=self.get_context_folder(),
+            global_settings=self.get_global_settings(),
             parent=self
         )
         if dialog.exec():
