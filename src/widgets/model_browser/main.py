@@ -554,7 +554,10 @@ class ModelBrowserWidget(QWidget):
         discovered_types = sorted(list({f".{e.asset_type}" for e in self._entries if e.asset_type}))
         if discovered_types:
             self.type_chip.set_values(discovered_types)
-            self.type_chip.show()
+            if len(discovered_types) > 1:
+                self.type_chip.show()
+            else:
+                self.type_chip.hide()
         else:
             self.type_chip.hide()
 
@@ -776,7 +779,7 @@ class ModelBrowserWidget(QWidget):
 
 
 class ModelBrowserDialog(QDialog):
-    """Dialog wrapper around ModelBrowserWidget."""
+    """Dialog wrapper around ModelBrowserWidget forced to .vmdl files."""
 
     def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
         super().__init__(parent)
@@ -787,7 +790,42 @@ class ModelBrowserDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.browser = ModelBrowserWidget(self, current_path=current_path, addon=addon, show_accept=True, auto_scan=True)
+        self.browser = ModelBrowserWidget(
+            self,
+            current_path=current_path,
+            addon=addon,
+            show_accept=True,
+            auto_scan=True,
+            asset_types=[".vmdl"]
+        )
+        self.browser.accept_button.clicked.connect(self.accept)
+        self.browser.model_double_clicked.connect(lambda _: self.accept())
+        layout.addWidget(self.browser)
+
+    def selected_path(self) -> str:
+        return self.browser.selected_path()
+
+
+class SmartPropBrowserDialog(QDialog):
+    """Dialog wrapper around ModelBrowserWidget forced to .vsmart files."""
+
+    def __init__(self, parent=None, current_path: str = "", addon: Optional[str] = None):
+        super().__init__(parent)
+        self.setWindowTitle("Select SmartProp")
+        self.resize(940, 720)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.browser = ModelBrowserWidget(
+            self,
+            current_path=current_path,
+            addon=addon,
+            show_accept=True,
+            auto_scan=True,
+            asset_types=[".vsmart"]
+        )
         self.browser.accept_button.clicked.connect(self.accept)
         self.browser.model_double_clicked.connect(lambda _: self.accept())
         layout.addWidget(self.browser)
@@ -836,6 +874,15 @@ class AssetBrowserDialog(QDialog):
 def pick_model(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
     """Open the browser and return the chosen resource path, or None if cancelled."""
     dialog = ModelBrowserDialog(parent, current_path=current_path, addon=addon)
+    apply_stylesheets(dialog)
+    if dialog.exec() == QDialog.Accepted:
+        return dialog.selected_path() or None
+    return None
+
+
+def pick_smartprop(parent=None, current_path: str = "", addon: Optional[str] = None) -> Optional[str]:
+    """Open the smartprop browser and return the chosen resource path, or None if cancelled."""
+    dialog = SmartPropBrowserDialog(parent, current_path=current_path, addon=addon)
     apply_stylesheets(dialog)
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None

@@ -611,7 +611,9 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
                 mr = np.zeros((h, w, 4), dtype=np.uint8)
                 mr[..., 3] = 255
                 if normal_rgba is not None:
-                    mr[..., 1] = normal_rgba[..., 3]          # roughness from normal alpha
+                    # CS:GO/CS2 models often store glossiness in normal map alpha, where 0 is matte.
+                    # We invert it so 255 is matte (high roughness), preventing the plastic/glossy look.
+                    mr[..., 1] = 255 - normal_rgba[..., 3]
                 else:
                     mr[..., 1] = int(round(255 * _float_param(material, "g_flRoughness", 1.0)))
                 if metal_img is not None:

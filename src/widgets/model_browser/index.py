@@ -234,7 +234,7 @@ def scan_all(
 
     active_addon = active_addon or get_addon_name()
 
-    exts = tuple(asset_types) if asset_types else SUPPORTED_EXTENSIONS
+    exts = tuple(f".{t.lstrip('.')}" for t in asset_types) if asset_types else SUPPORTED_EXTENSIONS
 
     entries: List[ModelEntry] = []
     mount_list = active_mounts(active_addon, addon_only=addon_only)
@@ -262,8 +262,7 @@ def load_cached_index(
     asset_types: Optional[List[str]] = None
 ) -> Optional[List[ModelEntry]]:
     """Return a still-valid cached index, or None to force a rescan."""
-    # Don't use persistent model-only cache for specialized addon_only or multi-type scans
-    if addon_only or (asset_types is not None and set(asset_types) != set(SUPPORTED_EXTENSIONS)):
+    if addon_only:
         return None
 
     cache_file = _index_cache_file()
@@ -283,7 +282,11 @@ def load_cached_index(
         return None
 
     try:
-        return [ModelEntry(**row) for row in blob.get("entries", [])]
+        entries = [ModelEntry(**row) for row in blob.get("entries", [])]
+        if asset_types is not None:
+            clean_types = {t.lstrip('.').lower() for t in asset_types}
+            entries = [e for e in entries if e.asset_type.lower() in clean_types]
+        return entries
     except (TypeError, ValueError):
         return None
 
