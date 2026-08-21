@@ -789,7 +789,7 @@ class AudioEditor(QMainWindow):
         empty_layout.setSpacing(12)
 
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(QPixmap(":/icons/tools/assettypes/vmix_lg.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_lbl.setPixmap(QPixmap(":/icons/soundviewer.png").scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         icon_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(icon_lbl)
 
@@ -825,32 +825,12 @@ class AudioEditor(QMainWindow):
         self.central_stack.addWidget(self.empty_state_widget)
 
         # Page 1: Multi-Document Tab Widget
-        self.tabs = QTabWidget()
-        self.tabs.setTabsClosable(True)
-        self.tabs.setMovable(True)
-        self.tabs.setDocumentMode(True)
+        from src.widgets.document_tab import DocumentTabWidget
+        self.tabs = DocumentTabWidget()
+        self.tabs.set_new_tab_tooltip("Create New Audio Document (Ctrl+N)")
         self.tabs.tabCloseRequested.connect(self._close_tab)
-
-        # New Tab (+) Corner Button
-        self.new_tab_btn = QToolButton()
-        self.new_tab_btn.setText("+")
-        self.new_tab_btn.setToolTip("Create New Audio Document (Ctrl+N)")
-        self.new_tab_btn.setStyleSheet("""
-            QToolButton {
-                font: 700 12pt "Segoe UI";
-                color: #C7C7BB;
-                background: transparent;
-                border: none;
-                padding: 2px 8px;
-            }
-            QToolButton:hover {
-                color: #FFFFFF;
-                background-color: #363639;
-                border-radius: 2px;
-            }
-        """)
-        self.new_tab_btn.clicked.connect(self.new_document)
-        self.tabs.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
+        self.tabs.new_tab_requested.connect(self.new_document)
+        self.new_tab_btn = self.tabs.new_tab_btn
 
         self.central_stack.addWidget(self.tabs)
         self.setCentralWidget(self.central_stack)

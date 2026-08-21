@@ -5,12 +5,12 @@ import faulthandler
 import time
 import ctypes
 
-# A Qt-level abort (a slot touching a deleted C++ object, a bad paint) kills the
-# process with no Python traceback at all, which makes those reports impossible
-# to act on. This prints the native stack instead. Guarded: under pythonw and
-# some frozen builds stderr is None.
-if sys.stderr is not None:
-    faulthandler.enable()
+# Initialize COM / OLE in STA apartment mode on Windows to support native OS dialogs
+if sys.platform == "win32":
+    try:
+        ctypes.windll.ole32.OleInitialize(None)
+    except Exception:
+        pass
 
 # Configure PySide6 DLL directory and library paths for Windows
 if sys.platform == 'win32':
@@ -264,19 +264,10 @@ if __name__ == "__main__":
         existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
-    # Initialize COM / OLE in STA apartment mode on Windows to support native OS dialogs
-    if sys.platform == "win32":
-        try:
-            import ctypes
-            ctypes.windll.ole32.OleInitialize(None)
-        except Exception:
-            pass
-
     from src.app_core import Widget, start_instance_server, QT_Stylesheet_global, check_dotnet_runtime
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
-    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
     app = QApplication(sys.argv)
     
     # Explicitly add PySide6 plugins to library path to ensure scene importers (assimp, gltf) are resolved

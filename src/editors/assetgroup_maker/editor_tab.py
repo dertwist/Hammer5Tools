@@ -217,8 +217,7 @@ class EditorTabWidget(QWidget):
     def _on_browse_output(self):
         addon_dir = get_addon_dir() or ""
         chosen = QFileDialog.getExistingDirectory(
-            self, "Select Output Directory", addon_dir,
-            options=QFileDialog.Option.DontUseNativeDialog
+            self, "Select Output Directory", addon_dir
         )
         if chosen:
             if addon_dir:
@@ -310,8 +309,7 @@ class EditorTabWidget(QWidget):
         if not target_path:
             addon_dir = get_addon_dir() or ""
             target_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Batch Profile", addon_dir, "Hammer Batch (*.hbat)",
-                options=QFileDialog.Option.DontUseNativeDialog
+                self, "Save Batch Profile", addon_dir, "Hammer Batch (*.hbat)"
             )
             if not target_path:
                 return False

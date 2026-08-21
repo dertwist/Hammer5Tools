@@ -38,6 +38,7 @@ from src.common import (
     set_qdock_tab_style
 )
 
+from src.widgets.document_tab import DocumentTabBar
 cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
@@ -51,33 +52,20 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_title = update_title
         enable_dark_title_bar(self)
 
-        # Make the tab widget closable and connect to our close_document method
+        # Setup DocumentTabBar on DocumentTabWidget (supports middle-click close and adjacent Valve new-tab button)
+        self.doc_tab_bar = DocumentTabBar(self.ui.DocumentTabWidget)
+        self.doc_tab_bar.set_new_tab_tooltip("Create New SmartProp (Ctrl+N)")
+        self.doc_tab_bar.new_tab_requested.connect(self.create_new_file)
+        self.ui.DocumentTabWidget.setTabBar(self.doc_tab_bar)
         self.ui.DocumentTabWidget.setTabsClosable(True)
+        self.ui.DocumentTabWidget.setMovable(True)
+        self.ui.DocumentTabWidget.setDocumentMode(True)
         self.ui.DocumentTabWidget.tabCloseRequested.connect(self.close_document)
         self.ui.DocumentTabWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.DocumentTabWidget.customContextMenuRequested.connect(self.show_tab_context_menu)
         self.ui.DocumentTabWidget.currentChanged.connect(self.update_menu_states)
 
-        # New Tab (+) Corner Button
-        self.new_tab_btn = QToolButton()
-        self.new_tab_btn.setText("+")
-        self.new_tab_btn.setToolTip("Create New SmartProp (Ctrl+N)")
-        self.new_tab_btn.setStyleSheet("""
-            QToolButton {
-                font: 700 12pt "Segoe UI";
-                color: #C7C7BB;
-                background: transparent;
-                border: none;
-                padding: 2px 8px;
-            }
-            QToolButton:hover {
-                color: #FFFFFF;
-                background-color: #363639;
-                border-radius: 2px;
-            }
-        """)
-        self.new_tab_btn.clicked.connect(self.create_new_file)
-        self.ui.DocumentTabWidget.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
+        self.new_tab_btn = self.doc_tab_bar.new_tab_btn
 
         # Initialize file explorer
         self.init_explorer()
