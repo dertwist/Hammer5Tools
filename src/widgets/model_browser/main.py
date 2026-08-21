@@ -9,7 +9,7 @@ Mod is the only facet with real values — the content mount a model comes from.
 Hammer's Tags facet has no analogue in the Hammer5Tools index, and Asset Types
 is fixed at .vmdl, so neither gets a working chip.
 """
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from PySide6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
@@ -24,6 +24,7 @@ from src.styles.common import apply_stylesheets
 from src.editors.smartprop_editor.property import compact
 from src.widgets.model_browser.index import (
     ModelEntry, ScanWorker, ScanSignals, active_mounts, SOURCE_ADDON, SOURCE_CORE,
+    GAME_MOUNTS, get_game_entries,
 )
 from src.widgets.model_browser.thumbnails import ThumbnailService, THUMB_SIZE
 
@@ -42,6 +43,38 @@ _SOURCE_COLOR = {
     SOURCE_ADDON: "#b3d096",
     SOURCE_CORE: "#a2a8b1",
 }
+
+
+def get_saved_mod_selection(active_addon: Optional[str] = None) -> Optional[set]:
+    """Retrieve saved mod selection from settings. Returns None if not configured."""
+    from src.settings.common import get_settings_value
+    val = get_settings_value("AssetBrowser", "selected_mods", default=None)
+    if val is None:
+        return None
+    raw_list = [x.strip() for x in str(val).split(",") if x.strip()]
+    resolved = set()
+    for item in raw_list:
+        if item in ("addon", "csgo_addons") or item.startswith("csgo_addons/"):
+            if active_addon:
+                resolved.add(f"csgo_addons/{active_addon}")
+            else:
+                resolved.add("addon")
+        else:
+            resolved.add(item)
+    return resolved
+
+
+def save_saved_mod_selection(checked_mods: set, active_addon: Optional[str] = None) -> None:
+    """Save selected mods to settings."""
+    from src.settings.common import set_settings_value
+    to_save = []
+    addon_prefix = f"csgo_addons/{active_addon}" if active_addon else "csgo_addons/"
+    for mod in checked_mods:
+        if mod == "addon" or mod == addon_prefix or mod.startswith("csgo_addons/"):
+            to_save.append("addon")
+        else:
+            to_save.append(mod)
+    set_settings_value("AssetBrowser", "selected_mods", ",".join(sorted(to_save)))
 
 
 class _FacetPopup(QFrame):
@@ -84,9 +117,12 @@ class _FacetPopup(QFrame):
         self.setStyleSheet("QFrame { background-color: #272727; border: 1px solid #464649; }")
         apply_stylesheets(self)
 
-    def set_values(self, values: List[str]):
+    def set_values(self, values: List[str], checked: Optional[set] = None):
         self._values = list(values)
-        self._checked = set(values)
+        if checked is not None:
+            self._checked = set(checked) & set(values)
+        else:
+            self._checked = set(values)
 
         while self.rows_layout.count():
             child = self.rows_layout.takeAt(0)
@@ -101,7 +137,7 @@ class _FacetPopup(QFrame):
             row_layout.setSpacing(4)
 
             checkbox = QCheckBox(value)
-            checkbox.setChecked(True)
+            checkbox.setChecked(value in self._checked)
             checkbox.toggled.connect(lambda on, v=value: self._on_toggled(v, on))
             row_layout.addWidget(checkbox, 1)
 
@@ -172,8 +208,9 @@ class _FacetChip(QPushButton):
         self.clicked.connect(self._show_popup)
         self._refresh_text()
 
-    def set_values(self, values: List[str]):
-        self.popup.set_values(values)
+    def set_values(self, values: List[str], checked: Optional[set] = None):
+        self.popup.set_values(values, checked=checked)
+        self._refresh_text()
 
     def checked_values(self) -> set:
         return self.popup.checked_values()
@@ -218,6 +255,22 @@ ASSET_SM_ICONS = {
     "vpost": "://icons/tools/assettypes/generic_sm.png",
     "vmap": "://icons/tools/assettypes/map_sm.png",
     "vtex": "://icons/tools/assettypes/texture_sm.png",
+}
+
+_SM_QICON_CACHE = {}
+
+
+def _get_sm_icon(asset_type: str) -> QIcon:
+    clean = (asset_type or "generic").lower()
+    if clean not in _SM_QICON_CACHE:
+        icon_path = ASSET_SM_ICONS.get(clean, "://icons/tools/assettypes/generic_sm.png")
+        _SM_QICON_CACHE[clean] = QIcon(icon_path)
+    return _SM_QICON_CACHE[clean]
+
+
+_SOURCE_QCOLOR = {
+    SOURCE_ADDON: QColor("#b3d096"),
+    SOURCE_CORE: QColor("#a2a8b1"),
 }
 
 
@@ -352,6 +405,7 @@ class ModelBrowserWidget(QWidget):
         self._has_scanned = False
         self._addon_only = addon_only
         self._asset_types = asset_types
+        self._game_scanned = False
 
         if not addon:
             from src.settings.common import get_addon_name
@@ -470,7 +524,7 @@ class ModelBrowserWidget(QWidget):
         row.addStretch(1)
 
         self.mod_chip = _FacetChip("Mods")
-        self.mod_chip.changed.connect(self._apply_filter)
+        self.mod_chip.changed.connect(self._on_mod_chip_changed)
         row.addWidget(self.mod_chip)
 
         self.type_chip = _FacetChip("Asset Types")
@@ -532,11 +586,36 @@ class ModelBrowserWidget(QWidget):
             CS2Netcon.send(f"open_asset {clean_path}")
 
     def _start_scan(self, use_cache: bool = True):
-        from PySide6.QtCore import QThreadPool
         self._has_scanned = True
         self.status_label.setText("Scanning…")
         self.refresh_button.setEnabled(False)
 
+        # Check if saved mod selection only selects addon (no game mounts)
+        scan_addon_only = self._addon_only
+        if not scan_addon_only:
+            saved = get_saved_mod_selection(self._addon)
+            if saved is not None:
+                has_game = any(m in saved for m in GAME_MOUNTS)
+                if not has_game:
+                    scan_addon_only = True
+
+        self._game_scanned = not scan_addon_only
+
+        # Fast path: if index is already in memory cache and use_cache is True,
+        # load synchronously to avoid thread dispatch latency.
+        from src.widgets.model_browser.index import is_index_cached, scan_all
+        if use_cache and is_index_cached(self._addon, addon_only=scan_addon_only):
+            entries = scan_all(
+                self._addon,
+                addon_only=scan_addon_only,
+                asset_types=self._asset_types,
+                use_game_cache=True,
+                use_addon_cache=True
+            )
+            self._on_scan_finished(entries)
+            return
+
+        from PySide6.QtCore import QThreadPool
         self._scan_signals = ScanSignals()
         self._scan_signals.finished.connect(self._on_scan_finished, Qt.QueuedConnection)
         QThreadPool.globalInstance().start(
@@ -544,7 +623,7 @@ class ModelBrowserWidget(QWidget):
                 self._addon,
                 self._scan_signals,
                 use_cache=use_cache,
-                addon_only=self._addon_only,
+                addon_only=scan_addon_only,
                 asset_types=self._asset_types
             )
         )
@@ -552,7 +631,15 @@ class ModelBrowserWidget(QWidget):
     def _on_scan_finished(self, entries: list):
         self._entries = entries
         self.refresh_button.setEnabled(True)
-        self.mod_chip.set_values(active_mounts(self._addon, addon_only=self._addon_only))
+
+        saved_mods = None
+        if not self._addon_only:
+            saved_mods = get_saved_mod_selection(self._addon)
+
+        self.mod_chip.set_values(
+            active_mounts(self._addon, addon_only=self._addon_only),
+            checked=saved_mods
+        )
 
         discovered_types = sorted(list({f".{e.asset_type}" for e in self._entries if e.asset_type}))
         if discovered_types:
@@ -565,6 +652,48 @@ class ModelBrowserWidget(QWidget):
             self.type_chip.hide()
 
         self._apply_filter()
+
+    def _on_mod_chip_changed(self):
+        checked_mods = self.mod_chip.checked_values()
+        if not self._addon_only:
+            save_saved_mod_selection(checked_mods, self._addon)
+
+            # If user checked any game mount, but game entries weren't loaded yet
+            if not self._game_scanned and any(m in checked_mods for m in GAME_MOUNTS):
+                self._load_game_entries()
+
+        self._apply_filter()
+
+    def _load_game_entries(self):
+        """Dynamically load and merge game mount entries into self._entries."""
+        from src.settings.main import get_cs2_path
+        from src.widgets.model_browser.index import get_game_entries
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            return
+        game_entries = get_game_entries(cs2_path, use_cache=True)
+        if self._asset_types:
+            clean_types = {t.lstrip('.').lower() for t in self._asset_types}
+            game_entries = [e for e in game_entries if e.asset_type.lower() in clean_types]
+
+        seen = {e.path.lower() for e in self._entries}
+        new_entries = list(self._entries)
+        for e in game_entries:
+            key = e.path.lower()
+            if key not in seen:
+                seen.add(key)
+                new_entries.append(e)
+
+        self._entries = new_entries
+        self._game_scanned = True
+
+        discovered_types = sorted(list({f".{e.asset_type}" for e in self._entries if e.asset_type}))
+        if discovered_types:
+            self.type_chip.set_values(discovered_types)
+            if len(discovered_types) > 1:
+                self.type_chip.show()
+            else:
+                self.type_chip.hide()
 
     def _apply_filter(self, *_):
         raw = self.filter_edit.text().strip().lower().replace("\\", "/")
@@ -608,11 +737,14 @@ class ModelBrowserWidget(QWidget):
         self.grid.clear()
         self.list.clear()
 
+        item_size = QSize(self._thumb_size + 16, self._thumb_size + 38)
         self.grid.setIconSize(QSize(self._thumb_size, self._thumb_size))
-        self.grid.setGridSize(QSize(self._thumb_size + 16, self._thumb_size + 38))
+        self.grid.setGridSize(item_size)
 
         selected_grid_item = None
         selected_list_item = None
+        tree_rows = []
+        default_color = QColor("#e5e5e5")
 
         for entry in self._visible:
             placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)
@@ -621,20 +753,23 @@ class ModelBrowserWidget(QWidget):
             item.setData(_PATH_ROLE, entry.path)
             item.setToolTip(f"{entry.path}\n{entry.mod} · {entry.source}")
             item.setTextAlignment(Qt.AlignHCenter | Qt.AlignTop)
-            item.setSizeHint(QSize(self._thumb_size + 16, self._thumb_size + 38))
+            item.setSizeHint(item_size)
             self.grid.addItem(item)
             if entry.path == self._selected_path:
                 selected_grid_item = item
 
             row = QTreeWidgetItem([
-                entry.path, entry.source, entry.mod, _human_size(entry.size)])
+                entry.path, entry.source, entry.mod, _human_size(entry.size)
+            ])
             row.setData(0, _PATH_ROLE, entry.path)
-            sm_icon = ASSET_SM_ICONS.get(entry.asset_type.lower(), "://icons/tools/assettypes/generic_sm.png")
-            row.setIcon(0, QIcon(sm_icon))
-            row.setForeground(1, QColor(_SOURCE_COLOR.get(entry.source, "#e5e5e5")))
-            self.list.addTopLevelItem(row)
+            row.setIcon(0, _get_sm_icon(entry.asset_type))
+            row.setForeground(1, _SOURCE_QCOLOR.get(entry.source, default_color))
+            tree_rows.append(row)
             if entry.path == self._selected_path:
                 selected_list_item = row
+
+        if tree_rows:
+            self.list.addTopLevelItems(tree_rows)
 
         for column, width in enumerate((0, 90, 150, 90)):
             if width:
@@ -780,6 +915,38 @@ class ModelBrowserWidget(QWidget):
     def selected_path(self) -> str:
         return self._selected_path
 
+    def set_current_path(self, current_path: str):
+        self._set_selected(current_path)
+
+        # Scroll to selected item in grid and list
+        selected_grid_item = None
+        for index in range(self.grid.count()):
+            item = self.grid.item(index)
+            if item.data(_PATH_ROLE) == self._selected_path:
+                selected_grid_item = item
+                break
+
+        selected_list_item = None
+        for index in range(self.list.topLevelItemCount()):
+            item = self.list.topLevelItem(index)
+            if item.data(0, _PATH_ROLE) == self._selected_path:
+                selected_list_item = item
+                break
+
+        if selected_grid_item is not None:
+            self.grid.setCurrentItem(selected_grid_item)
+            self.grid.scrollToItem(selected_grid_item, QAbstractItemView.PositionAtCenter)
+        else:
+            self.grid.clearSelection()
+
+        if selected_list_item is not None:
+            self.list.setCurrentItem(selected_list_item)
+            self.list.scrollToItem(selected_list_item, QAbstractItemView.PositionAtCenter)
+        else:
+            self.list.clearSelection()
+
+        self._schedule_thumbnails()
+
 
 class AssetBrowserDialog(QDialog):
     """Dialog wrapper around ModelBrowserWidget supporting multi-asset types and addon filtering."""
@@ -822,10 +989,61 @@ class AssetBrowserDialog(QDialog):
         return self.browser.selected_path()
 
 
-def pick_model(parent=None, current_path: str = "", addon: str = None) -> str:
-    """Open the browser and return the chosen resource path, or None if cancelled."""
+_DIALOG_CACHE: Dict[tuple, AssetBrowserDialog] = {}
+
+
+def clear_dialog_cache():
+    """Clear all pre-cached dialog instances."""
+    global _DIALOG_CACHE
+    _DIALOG_CACHE.clear()
+
+
+def _get_cached_dialog(
+    parent=None,
+    current_path: str = "",
+    addon: Optional[str] = None,
+    addon_only: bool = False,
+    asset_types: Optional[List[str]] = None,
+    title: str = "Select Asset"
+) -> AssetBrowserDialog:
+    """Get or create a pre-cached AssetBrowserDialog for instant reopening."""
+    global _DIALOG_CACHE
+    try:
+        from shiboken6 import isValid
+    except Exception:
+        isValid = lambda obj: True
+
+    if not addon:
+        from src.settings.common import get_addon_name
+        addon = get_addon_name()
+
+    types_key = tuple(sorted(asset_types)) if asset_types else ()
+    cache_key = (addon or "", addon_only, types_key)
+
+    dialog = _DIALOG_CACHE.get(cache_key)
+    if dialog is not None and isValid(dialog):
+        dialog.setWindowTitle(title)
+        if parent is not None:
+            dialog.setParent(parent, dialog.windowFlags())
+        dialog.browser.set_current_path(current_path)
+        return dialog
+
     dialog = AssetBrowserDialog(
-        parent,
+        parent=parent,
+        current_path=current_path,
+        addon=addon,
+        addon_only=addon_only,
+        asset_types=asset_types,
+        title=title
+    )
+    _DIALOG_CACHE[cache_key] = dialog
+    return dialog
+
+
+def pick_model(parent=None, current_path: str = "", addon: str = None) -> Optional[str]:
+    """Open the browser and return the chosen resource path, or None if cancelled."""
+    dialog = _get_cached_dialog(
+        parent=parent,
         current_path=current_path,
         addon=addon,
         addon_only=False,
@@ -837,10 +1055,10 @@ def pick_model(parent=None, current_path: str = "", addon: str = None) -> str:
     return None
 
 
-def pick_smartprop(parent=None, current_path: str = "", addon: str = None) -> str:
+def pick_smartprop(parent=None, current_path: str = "", addon: str = None) -> Optional[str]:
     """Open the smartprop browser and return the chosen resource path, or None if cancelled."""
-    dialog = AssetBrowserDialog(
-        parent,
+    dialog = _get_cached_dialog(
+        parent=parent,
         current_path=current_path,
         addon=addon,
         addon_only=False,
@@ -861,8 +1079,8 @@ def pick_asset(
     title: str = "Select Asset"
 ) -> Optional[str]:
     """Open the asset browser dialog and return chosen resource path, or None if cancelled."""
-    dialog = AssetBrowserDialog(
-        parent,
+    dialog = _get_cached_dialog(
+        parent=parent,
         current_path=current_path,
         addon=addon,
         addon_only=addon_only,
