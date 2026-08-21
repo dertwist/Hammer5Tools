@@ -1327,6 +1327,73 @@ def test_preview_equals_output_11_assets(fake_addon_dir):
     assert len(created_files) == 9
 
 
+def test_editor_tab_splitter_and_scroll_bar(qapp, fake_addon_dir):
+    from PySide6.QtWidgets import QSplitter, QScrollArea
+    from PySide6.QtCore import Qt
+
+    crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
+    hbat_path = os.path.join(crate_dir, "test_splitter.hbat")
+
+    tab = EditorTabWidget(file_path=hbat_path)
+    try:
+        # Check splitter existence and properties
+        assert hasattr(tab, "splitter")
+        assert isinstance(tab.splitter, QSplitter)
+        assert tab.splitter.orientation() == Qt.Vertical
+        assert tab.splitter.childrenCollapsible() is False
+        assert tab.splitter.count() == 2
+        assert tab.splitter.widget(0) == tab.template_manager
+        assert tab.splitter.widget(1) == tab.asset_table
+
+        # Check template manager scroll area
+        tm = tab.template_manager
+        assert hasattr(tm, "scroll_area")
+        assert isinstance(tm.scroll_area, QScrollArea)
+        assert tm.scroll_area.widgetResizable() is True
+        assert tm.scroll_content is not None
+        assert tm.cards_layout is not None
+
+        # Add multiple templates to test scrolling container
+        card1 = tm.add_template({"id": "t1", "extension": "vmat", "reference": "materials/test.vmat"})
+        card2 = tm.add_template({"id": "t2", "extension": "vsmart", "reference": "smartprops/test.vsmart"})
+        assert len(tm.template_cards) >= 3
+        assert tm.cards_layout.count() >= 3
+
+        # Test splitter moved callback saves state
+        tab._on_splitter_moved(300, 0)
+        from src.settings.main import get_settings_value
+        saved_state = get_settings_value("AssetGroupMaker", "editor_splitter_state")
+        assert saved_state is not None
+        assert len(saved_state) > 0
+    finally:
+        tab.deleteLater()
+
+
+def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
+    from PySide6.QtCore import Qt
+    from src.settings.main import get_settings_value, set_settings_value
+
+    win = BatchCreatorMainWindow()
+    try:
+        # Verify minimum widths for flexible layout rescaling
+        assert win.explorer_dock.minimumWidth() == 180
+        assert win.config_dock.minimumWidth() == 180
+        assert win.central_container.minimumWidth() == 260
+
+        # Test saving layout state
+        win._save_layout_state()
+        geo = get_settings_value("AssetGroupMaker", "geometry")
+        state = get_settings_value("AssetGroupMaker", "window_state")
+        assert geo is not None
+        assert state is not None
+
+        # Test restoring layout state
+        win._restore_layout_state()
+    finally:
+        win.deleteLater()
+
+
+
 
 
 
