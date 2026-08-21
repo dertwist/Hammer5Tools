@@ -6,11 +6,9 @@ from src.widgets import exception_handler
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
-from src.common import Presets_Path
-from src.common import enable_dark_title_bar
+from src.common import Presets_Path, Internal_Presets_Path, enable_dark_title_bar, app_dir
 from src.dotnet import extract_vmap_thumbnail
 from PySide6.QtGui import QPixmap
-from src.common import Presets_Path, app_dir
 import binascii
 
 # noinspection PyTypeChecker
@@ -26,7 +24,7 @@ class Create_addon_Dialog(QDialog):
         self._invalid_input_shown = False
 
         # Search for presets in both user data and internal app directory
-        self.presets_roots = [Presets_Path, app_dir / "Presets"]
+        self.presets_roots = [Presets_Path, Internal_Presets_Path, app_dir / "Presets"]
         seen_presets = set()
         
         for presets_path in self.presets_roots:
