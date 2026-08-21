@@ -10,7 +10,7 @@ from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 
 from src.settings.main import get_addon_dir, debug
-from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
+from src.styles.common import qt_stylesheet_button_icon, qt_stylesheet_widgetlist
 from src.editors.assetgroup_maker.process import StartProcess
 from src.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
 from src.settings.common import get_settings_value
@@ -135,12 +135,16 @@ class FileItemWidget(QWidget):
         self.watch_enabled = is_watch_enabled(self.file_path)
         self.setup_ui()
 
+    def sizeHint(self) -> QSize:
+        hint = super().sizeHint()
+        return QSize(hint.width(), max(hint.height(), 28))
+
     def setup_ui(self):
         """
         Set up the user interface for the file item widget.
         """
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 2, 4, 2)
         layout.setSpacing(2)
 
         addon_dir = get_addon_dir()
@@ -149,42 +153,38 @@ class FileItemWidget(QWidget):
         text = '/'.join(path_parts[-2:]) if len(path_parts) >= 2 else relative_path
 
         self.label = QLabel(text)
+        self.label.setStyleSheet("background: transparent;")
         self.setToolTip(self.file_path)
 
         button_size = QSize(22, 22)
+        icon_size = QSize(16, 16)
 
         self.watch_button = QPushButton()
         self.watch_button.setFixedSize(button_size)
-        self.watch_button.setStyleSheet(qt_stylesheet_button)
+        self.watch_button.setIconSize(icon_size)
+        self.watch_button.setStyleSheet(qt_stylesheet_button_icon)
         self.update_watch_ui(self.watch_enabled)
 
         self.play_button = QPushButton()
         self.open_button = QPushButton()
         self.open_ref_button = QPushButton()
 
-        self.play_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
-        self.open_button.setIcon(QIcon(":/valve_common/icons/tools/common/edit.png"))
-        self.open_ref_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
-
-        self.play_button.setStyleSheet(qt_stylesheet_button)
-        self.open_button.setStyleSheet(qt_stylesheet_button)
-        self.open_ref_button.setStyleSheet(qt_stylesheet_button)
-
-        self.play_button.setToolTip("Process batch file")
-        self.open_button.setToolTip("Open config in editor")
-        self.open_ref_button.setToolTip("Open reference asset in CS2 Tools")
-
-        self.play_button.setFixedSize(button_size)
-        self.open_button.setFixedSize(button_size)
-        self.open_ref_button.setFixedSize(button_size)
+        for btn, icon, tip in [
+            (self.play_button, ":/valve_common/icons/tools/common/control_play.png", "Process batch file"),
+            (self.open_button, ":/valve_common/icons/tools/common/edit.png", "Open config in editor"),
+            (self.open_ref_button, ":/valve_common/icons/tools/common/browse.png", "Open reference asset in CS2 Tools"),
+        ]:
+            btn.setFixedSize(button_size)
+            btn.setIconSize(icon_size)
+            btn.setIcon(QIcon(icon))
+            btn.setStyleSheet(qt_stylesheet_button_icon)
+            btn.setToolTip(tip)
 
         layout.addWidget(self.label, 1)
         layout.addWidget(self.watch_button)
         layout.addWidget(self.play_button)
         layout.addWidget(self.open_button)
         layout.addWidget(self.open_ref_button)
-
-        self.setLayout(layout)
 
         self.watch_button.clicked.connect(self.toggle_watch)
         self.play_button.clicked.connect(self.start_process)
@@ -305,6 +305,7 @@ class MonitoringFileWatcher(QListWidget):
         self.debounce_timer.setInterval(500)
         self.debounce_timer.timeout.connect(self.update_file_list)
 
+        self.setAlternatingRowColors(True)
         self.initialize_watcher()
         self.setStyleSheet(qt_stylesheet_widgetlist)
 

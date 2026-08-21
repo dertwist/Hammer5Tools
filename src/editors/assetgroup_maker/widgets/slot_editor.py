@@ -55,7 +55,23 @@ class TemplateSlotMappingDialog(QDialog):
         ref_name = os.path.basename(ref) if ref else "Untitled"
 
         self.setWindowTitle(f"Template Slot Mappings — {ref_name} ({ext})")
-        self.setMinimumWidth(620)
+        self.setWindowIcon(QIcon(":/icons/appicon.ico"))
+        self.setWindowFlags(
+            Qt.Window
+            | Qt.WindowTitleHint
+            | Qt.WindowSystemMenuHint
+            | Qt.WindowMinMaxButtonsHint
+            | Qt.WindowCloseButtonHint
+        )
+        self.setSizeGripEnabled(True)
+        self.setMinimumSize(700, 420)
+        self.resize(880, 580)
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1e1e1e;
+                color: #E5E5E5;
+            }
+        """)
         self._build_ui()
         apply_stylesheets(self)
 
@@ -68,8 +84,8 @@ class TemplateSlotMappingDialog(QDialog):
         header_frame = QFrame()
         header_frame.setStyleSheet("""
             QFrame {
-                background-color: #2E2E2E;
-                border: 1px solid #464649;
+                background-color: #262626;
+                border: 1px solid #3E3E42;
                 border-radius: 2px;
             }
         """)
@@ -78,13 +94,9 @@ class TemplateSlotMappingDialog(QDialog):
         header_layout.setSpacing(4)
 
         ref_path = self.template_data.get('reference', '')
-        ref_lbl = QLabel(f"<b>Template Reference:</b> {ref_path if ref_path else '(None selected)'}")
-        ref_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        ref_lbl = QLabel(f"<b>Template Reference:</b> <span style='font-weight: normal; color: #E5E5E5;'>{ref_path if ref_path else '(None selected)'}</span>")
+        ref_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #FFFFFF;")
         header_layout.addWidget(ref_lbl)
-
-        desc_lbl = QLabel("Configure slot token mappings, research FBX materials, and swap target .vmat paths.")
-        desc_lbl.setStyleSheet("font: 580 8.5pt 'Segoe UI'; color: #A5A5A5;")
-        header_layout.addWidget(desc_lbl)
 
         root_layout.addWidget(header_frame)
 
@@ -92,8 +104,10 @@ class TemplateSlotMappingDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
 
         self.fields_container = QWidget()
+        self.fields_container.setStyleSheet("background: transparent;")
         self.fields_layout = QVBoxLayout(self.fields_container)
         self.fields_layout.setContentsMargins(0, 0, 0, 0)
         self.fields_layout.setSpacing(10)
@@ -162,6 +176,7 @@ class TemplateSlotMappingDialog(QDialog):
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setStyleSheet(qt_stylesheet_button)
         cancel_btn.setFixedHeight(28)
+        cancel_btn.setMinimumWidth(80)
         cancel_btn.clicked.connect(self.reject)
         btn_row.addWidget(cancel_btn)
 
@@ -169,6 +184,7 @@ class TemplateSlotMappingDialog(QDialog):
         apply_btn.setIcon(QIcon(":/valve_common/icons/tools/common/save.png"))
         apply_btn.setStyleSheet(qt_stylesheet_button)
         apply_btn.setFixedHeight(28)
+        apply_btn.setMinimumWidth(140)
         apply_btn.clicked.connect(self._apply_and_close)
         btn_row.addWidget(apply_btn)
 
@@ -178,8 +194,8 @@ class TemplateSlotMappingDialog(QDialog):
         row_frame = QFrame()
         row_frame.setStyleSheet("""
             QFrame {
-                background-color: #272727;
-                border: 1px solid #464649;
+                background-color: #252527;
+                border: 1px solid #3E3E42;
                 border-radius: 2px;
             }
         """)
@@ -200,7 +216,9 @@ class TemplateSlotMappingDialog(QDialog):
 
         slot_label = slot_info.get('label', slot_key)
         is_req = slot_info.get('required', False)
-        badge_color = "#4A83C9" if is_req else "#757575"
+        badge_bg = "#1F2E40" if is_req else "#2A2A2E"
+        badge_border = "#4A83C9" if is_req else "#4E4E52"
+        badge_color = "#4A83C9" if is_req else "#8E8E93"
         badge_text = "REQUIRED" if is_req else "OPTIONAL"
 
         title_lbl = QLabel(f"<b>{slot_label}</b> ({slot_key})")
@@ -210,9 +228,9 @@ class TemplateSlotMappingDialog(QDialog):
         badge_lbl = QLabel(badge_text)
         badge_lbl.setStyleSheet(f"""
             QLabel {{
-                background-color: #2D333F;
+                background-color: {badge_bg};
                 color: {badge_color};
-                border: 1px solid {badge_color};
+                border: 1px solid {badge_border};
                 border-radius: 0px;
                 padding: 1px 5px;
                 font: 600 7.5pt 'Segoe UI';
@@ -259,8 +277,8 @@ class TemplateSlotMappingDialog(QDialog):
         mat_section_frame = QFrame()
         mat_section_frame.setStyleSheet("""
             QFrame {
-                background-color: #262626;
-                border: 1px solid #464649;
+                background-color: #252527;
+                border: 1px solid #3E3E42;
                 border-radius: 2px;
             }
         """)
@@ -286,7 +304,7 @@ class TemplateSlotMappingDialog(QDialog):
         research_btn.setIcon(QIcon(":/valve_common/icons/tools/common/refresh.png"))
         research_btn.setToolTip("Scan FBX mesh files to extract embedded material names")
         research_btn.setStyleSheet(qt_stylesheet_button)
-        research_btn.setFixedHeight(24)
+        research_btn.setFixedHeight(26)
         research_btn.clicked.connect(self._research_fbx_materials)
         header_row.addWidget(research_btn)
 
@@ -294,7 +312,7 @@ class TemplateSlotMappingDialog(QDialog):
         add_remap_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
         add_remap_btn.setToolTip("Add a new FBX material slot remap")
         add_remap_btn.setStyleSheet(qt_stylesheet_button)
-        add_remap_btn.setFixedHeight(24)
+        add_remap_btn.setFixedHeight(26)
         add_remap_btn.clicked.connect(lambda: self._add_material_remap_row("", ""))
         header_row.addWidget(add_remap_btn)
 
@@ -410,22 +428,17 @@ class TemplateSlotMappingDialog(QDialog):
             frame.deleteLater()
 
     def _on_browse_vmat(self, target_edit: QLineEdit):
-        from src.widgets.model_browser.main import AssetBrowserDialog
-        addon_name = get_addon_name()
-
-        dialog = AssetBrowserDialog(
+        from src.widgets.model_browser import pick_asset
+        result = pick_asset(
             self,
             current_path=target_edit.text().strip(),
-            addon=addon_name,
+            addon=get_addon_name(),
             addon_only=False,
             asset_types=[".vmat"],
             title="Select Material (.vmat)"
         )
-        apply_stylesheets(dialog)
-        if dialog.exec() == QDialog.Accepted:
-            selected = dialog.selected_path()
-            if selected:
-                target_edit.setText(selected)
+        if result:
+            target_edit.setText(result)
 
     def _research_fbx_materials(self, silent: bool = False):
         """Scans the template's referenced FBX mesh files and extracts all embedded materials."""

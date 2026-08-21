@@ -26,7 +26,7 @@ class DragDropReferenceLineEdit(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.setPlaceholderText("Select or drop a reference file (.vmdl, .vmat, .vsmart, .vsndevts)...")
+        self.setPlaceholderText("Select or drop a reference file (.vmdl, .vsmart, .vmat, .vtex)...")
         self.setStyleSheet(qt_stylesheet_lineedit)
 
     def dragEnterEvent(self, event: QDropEvent):
@@ -326,24 +326,18 @@ class TemplateCardWidget(QWidget):
             self.analysis_updated.emit(self.template_id, self.current_analysis)
 
     def _on_asset_browser_clicked(self):
-        from src.widgets.model_browser.main import AssetBrowserDialog
+        from src.widgets.model_browser import pick_asset
         from src.settings.main import get_addon_name
-
-        addon_name = get_addon_name()
-        dialog = AssetBrowserDialog(
+        result = pick_asset(
             self,
             current_path=self.ref_edit.text().strip(),
-            addon=addon_name,
+            addon=get_addon_name(),
             addon_only=True,
-            asset_types=[".vmdl", ".vmat", ".vsmart", ".vsndevts", ".vdata", ".vpcf"],
+            asset_types=[".vmdl", ".vsmart", ".vmat", ".vtex"],
             title="Select Reference Template Asset"
         )
-        apply_stylesheets(dialog)
-        from PySide6.QtWidgets import QDialog
-        if dialog.exec() == QDialog.Accepted:
-            selected = dialog.selected_path()
-            if selected:
-                self.set_reference_path(selected)
+        if result:
+            self.set_reference_path(result)
 
     def _on_browse_clicked(self):
         addon_dir = get_addon_dir() or ""
@@ -351,7 +345,7 @@ class TemplateCardWidget(QWidget):
             self,
             "Select Reference Template Asset",
             addon_dir,
-            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)"
+            "Valve Assets (*.vmdl *.vsmart *.vmat *.vtex);;All Files (*.*)"
         )
         if file_path:
             self.set_reference_path(file_path)
