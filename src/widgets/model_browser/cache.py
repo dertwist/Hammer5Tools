@@ -45,6 +45,10 @@ def cache_root() -> str:
 
 
 def index_file() -> str:
+    return os.path.join(cache_root(), "game_index.json")
+
+
+def legacy_index_file() -> str:
     return os.path.join(cache_root(), "model_index.json")
 
 
@@ -54,7 +58,7 @@ def thumbnail_dir() -> str:
 
 def cache_targets() -> List[str]:
     """Every path clear_cache() would remove, whether or not it exists."""
-    return [index_file(), thumbnail_dir()]
+    return [index_file(), legacy_index_file(), thumbnail_dir()]
 
 
 def cache_size() -> Tuple[int, int]:
@@ -85,6 +89,18 @@ def clear_cache() -> Tuple[int, int, List[str]]:
     Returns (bytes_freed, files_removed, errors). Size is measured before the
     delete, so a partial failure still reports what was actually there.
     """
+    try:
+        from src.widgets.model_browser.index import invalidate_all_caches
+        invalidate_all_caches()
+    except Exception:
+        pass
+
+    try:
+        from src.widgets.model_browser.main import clear_dialog_cache
+        clear_dialog_cache()
+    except Exception:
+        pass
+
     total_bytes, file_count = cache_size()
     errors: List[str] = []
 

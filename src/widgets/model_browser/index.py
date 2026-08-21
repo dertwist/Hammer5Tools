@@ -15,15 +15,10 @@ Deliberately *not* included: other addons under csgo_addons/. They are not on
 the active addon's search path, so a model picked from one would fail to resolve
 at compile time.
 
-Each mount contributes from three places — content/<mount> (source .vmdl),
-game/<mount> (loose compiled .vmdl_c), and game/<mount>'s VPKs. Every entry is
-keyed by its *game-relative* resource path ("models/props/foo.vmdl") because
-that is what gets written into a .vsmart / .vdata field; the on-disk location
-only matters for thumbnail generation and mtime-based cache busting.
-
-Scanning is done off the GUI thread (ScanWorker) and the result is memo-ised to
-disk, since the VPKs alone contribute several thousand entries and walking them
-takes long enough to stall a dialog open.
+Addon assets are scanned fresh on every asset browser opening so new or modified
+user files are always up to date. Game directories and VPKs are scanned only on
+the first opening in the session (or loaded from persistent cache) and cached in
+memory for subsequent openings.
 """
 import os
 import json
@@ -41,16 +36,66 @@ SOURCE_CORE = "Core"
 #: Engine content mounts, in search-path precedence order (highest first).
 GAME_MOUNTS = ("csgo", "csgo_imported", "csgo_core", "core")
 
-_INDEX_VERSION = 4  # bumped: added retail_filters for AssetBrowser
-                     # entries from the setup_vrf() double-load bug (see dotnet.py)
+_INDEX_VERSION = 5  # bumped: split session game cache from addon assets
 # Rebuild rather than trust the cache once it is a day old. A stale index is
 # only ever *missing* new models (paths are validated lazily at pick time), so
 # a coarse TTL is enough and avoids stat()ing thousands of files on open.
 _INDEX_TTL_SECONDS = 24 * 60 * 60
 
-# Module-level in-memory cache — survives across dialog opens so re-opening
-# skips both disk I/O and JSON deserialization entirely.
-_mem_cache: Optional[Dict] = None  # {"addon": str, "entries": List[ModelEntry], "time": float}
+# Module-level in-memory cache for game directories (CS2 core mounts + VPKs)
+# Survives across dialog opens in the session so re-opening skips scanning game
+# directories and VPKs entirely.
+_game_cache: Optional[List['ModelEntry']] = None
+_game_cache_cs2_path: Optional[str] = None
+_game_cache_time: float = 0.0
+
+# Module-level in-memory cache for active addon assets
+# Survives across dialog opens in the session so re-opening skips walking
+# the addon directory tree repeatedly.
+_addon_cache: Dict[str, List['ModelEntry']] = {}
+_addon_cache_time: Dict[str, float] = {}
+
+
+def invalidate_game_cache() -> None:
+    """Clear the session-level in-memory cache of game directories."""
+    global _game_cache, _game_cache_cs2_path, _game_cache_time
+    _game_cache = None
+    _game_cache_cs2_path = None
+    _game_cache_time = 0.0
+
+
+def invalidate_addon_cache(addon_name: Optional[str] = None) -> None:
+    """Clear the session in-memory cache for addon assets."""
+    global _addon_cache, _addon_cache_time
+    if addon_name:
+        for k in list(_addon_cache.keys()):
+            if k.endswith(f":{addon_name}"):
+                _addon_cache.pop(k, None)
+                _addon_cache_time.pop(k, None)
+    else:
+        _addon_cache.clear()
+        _addon_cache_time.clear()
+
+
+def invalidate_all_caches() -> None:
+    """Clear all in-memory caches (game and addon)."""
+    invalidate_game_cache()
+    invalidate_addon_cache()
+
+
+def is_index_cached(active_addon: Optional[str] = None, addon_only: bool = False) -> bool:
+    """Check if all necessary entries are already in memory cache."""
+    global _game_cache, _addon_cache
+    from src.settings.main import get_cs2_path, get_addon_name
+    cs2_path = get_cs2_path()
+    if not cs2_path:
+        return False
+    active_addon = active_addon or get_addon_name()
+    addon_cached = f"{cs2_path}:{active_addon}" in _addon_cache
+    if addon_only:
+        return addon_cached
+    game_cached = _game_cache is not None and _game_cache_cs2_path == cs2_path
+    return addon_cached and game_cached
 
 
 @dataclass
@@ -119,6 +164,7 @@ def _get_system_filters(cs2_path: str) -> List[str]:
     except Exception:
         pass
     return filters
+
 
 SUPPORTED_EXTENSIONS = (".vmdl", ".vmat", ".vsmart", ".vsndevts", ".vdata", ".vpcf", ".vpost", ".vmap", ".vtex")
 
@@ -250,6 +296,71 @@ def _scan_mount(
     return entries
 
 
+def scan_addon_mount(
+    cs2_path: str,
+    addon_name: str,
+    extensions: Optional[tuple] = None,
+    system_filters: Optional[List[str]] = None,
+    use_cache: bool = True
+) -> List[ModelEntry]:
+    """Scan active addon content and game directories for loose assets (no VPKs)."""
+    global _addon_cache, _addon_cache_time
+
+    cache_key = f"{cs2_path}:{addon_name}"
+    if use_cache and cache_key in _addon_cache:
+        cached_entries = _addon_cache[cache_key]
+        if extensions:
+            exts_clean = {e.lstrip('.').lower() for e in extensions}
+            return [e for e in cached_entries if e.asset_type.lower() in exts_clean]
+        return list(cached_entries)
+
+    mount = f"csgo_addons/{addon_name}"
+    raw_entries = _scan_mount(
+        cs2_path, mount, source=SOURCE_ADDON, extensions=SUPPORTED_EXTENSIONS, scan_vpk=False, system_filters=system_filters
+    )
+    # Deduplicate: source files from content/ take precedence over compiled game/
+    seen = set()
+    unique = []
+    for entry in raw_entries:
+        key = entry.path.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(entry)
+
+    _addon_cache[cache_key] = unique
+    _addon_cache_time[cache_key] = time.time()
+
+    if extensions:
+        exts_clean = {e.lstrip('.').lower() for e in extensions}
+        return [e for e in unique if e.asset_type.lower() in exts_clean]
+    return list(unique)
+
+
+def scan_game_mounts(
+    cs2_path: str,
+    extensions: Optional[tuple] = None,
+    system_filters: Optional[List[str]] = None
+) -> List[ModelEntry]:
+    """Scan all standard CS2 game mounts (content, game, and VPKs)."""
+    exts = tuple(extensions) if extensions else SUPPORTED_EXTENSIONS
+    entries: List[ModelEntry] = []
+    for mount in GAME_MOUNTS:
+        entries += _scan_mount(
+            cs2_path, mount, source=SOURCE_CORE, extensions=exts, scan_vpk=True, system_filters=system_filters
+        )
+
+    seen = set()
+    unique = []
+    for entry in entries:
+        key = entry.path.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(entry)
+    return unique
+
+
 def active_mounts(active_addon: Optional[str] = None, addon_only: bool = False) -> List[str]:
     """The mounts on the active search path."""
     mounts = []
@@ -260,67 +371,8 @@ def active_mounts(active_addon: Optional[str] = None, addon_only: bool = False) 
     return mounts
 
 
-def scan_all(
-    active_addon: Optional[str] = None,
-    addon_only: bool = False,
-    asset_types: Optional[List[str]] = None
-) -> List[ModelEntry]:
-    """Build the full index. Blocking — call from ScanWorker, not the GUI thread."""
-    from src.settings.main import get_cs2_path, get_addon_name
-
-    cs2_path = get_cs2_path()
-    if not cs2_path:
-        return []
-
-    system_filters = _get_system_filters(cs2_path)
-
-    active_addon = active_addon or get_addon_name()
-
-    exts = tuple(f".{t.lstrip('.')}" for t in asset_types) if asset_types else SUPPORTED_EXTENSIONS
-
-    entries: List[ModelEntry] = []
-    mount_list = active_mounts(active_addon, addon_only=addon_only)
-    for mount in mount_list:
-        source = SOURCE_ADDON if mount.startswith("csgo_addons/") else SOURCE_CORE
-        # Only scan VPKs if we are including game mounts (not addon only)
-        entries += _scan_mount(cs2_path, mount, source, extensions=exts, scan_vpk=(not addon_only), system_filters=system_filters)
-
-    seen = set()
-    unique = []
-    for entry in entries:
-        key = entry.path.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(entry)
-
-    unique.sort(key=lambda e: e.path.lower())
-    return unique
-
-
-def load_cached_index(
-    active_addon: Optional[str],
-    addon_only: bool = False,
-    asset_types: Optional[List[str]] = None
-) -> Optional[List[ModelEntry]]:
-    """Return a still-valid cached index, or None to force a rescan."""
-    global _mem_cache
-    if addon_only:
-        return None
-
-    # ── Fast path: in-memory cache (no disk I/O, no JSON parsing) ──
-    if _mem_cache is not None:
-        if (_mem_cache["addon"] == (active_addon or "")
-                and time.time() - _mem_cache["time"] < _INDEX_TTL_SECONDS):
-            entries = _mem_cache["entries"]
-            if asset_types is not None:
-                clean_types = {t.lstrip('.').lower() for t in asset_types}
-                entries = [e for e in entries if e.asset_type.lower() in clean_types]
-            return entries
-        # Stale or wrong addon — discard.
-        _mem_cache = None
-
-    # ── Slow path: disk cache ──
+def load_cached_game_index(cs2_path: str) -> Optional[List[ModelEntry]]:
+    """Return still-valid cached game entries from disk, or None."""
     cache_file = _index_cache_file()
     if not os.path.isfile(cache_file):
         return None
@@ -332,28 +384,20 @@ def load_cached_index(
 
     if blob.get("version") != _INDEX_VERSION:
         return None
-    if blob.get("addon") != (active_addon or ""):
+    if blob.get("cs2_path", "").lower() != (cs2_path or "").lower():
         return None
     built_at = float(blob.get("built_at", 0))
     if time.time() - built_at > _INDEX_TTL_SECONDS:
         return None
 
     try:
-        all_entries = [ModelEntry(**row) for row in blob.get("entries", [])]
+        return [ModelEntry(**row) for row in blob.get("entries", [])]
     except (TypeError, ValueError):
         return None
 
-    # Populate in-memory cache with the full unfiltered set.
-    _mem_cache = {"addon": active_addon or "", "entries": all_entries, "time": built_at}
 
-    if asset_types is not None:
-        clean_types = {t.lstrip('.').lower() for t in asset_types}
-        return [e for e in all_entries if e.asset_type.lower() in clean_types]
-    return all_entries
-
-
-def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) -> None:
-    global _mem_cache
+def save_cached_game_index(cs2_path: str, entries: List[ModelEntry]) -> None:
+    """Save game directory entries to disk cache."""
     now = time.time()
     cache_file = _index_cache_file()
     try:
@@ -361,15 +405,126 @@ def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) ->
         with open(cache_file, "w", encoding="utf-8") as handle:
             json.dump({
                 "version": _INDEX_VERSION,
-                "addon": active_addon or "",
+                "cs2_path": cs2_path or "",
                 "built_at": now,
                 "entries": [asdict(e) for e in entries],
             }, handle)
     except Exception as exc:
-        print(f"[model_browser] could not write index cache: {exc}")
+        print(f"[model_browser] could not write game index cache: {exc}")
 
-    # Also populate the in-memory cache so re-opens are instant.
-    _mem_cache = {"addon": active_addon or "", "entries": entries, "time": now}
+
+def get_game_entries(
+    cs2_path: str,
+    use_cache: bool = True,
+    system_filters: Optional[List[str]] = None
+) -> List[ModelEntry]:
+    """Get game directory entries, utilizing in-memory session cache and disk cache."""
+    global _game_cache, _game_cache_cs2_path, _game_cache_time
+
+    if use_cache:
+        # Fast path 1: Session in-memory cache
+        if (
+            _game_cache is not None
+            and _game_cache_cs2_path == cs2_path
+            and (time.time() - _game_cache_time < _INDEX_TTL_SECONDS)
+        ):
+            return _game_cache
+
+        # Fast path 2: Disk cache
+        cached = load_cached_game_index(cs2_path)
+        if cached is not None:
+            _game_cache = cached
+            _game_cache_cs2_path = cs2_path
+            _game_cache_time = time.time()
+            return _game_cache
+
+    # Slow path: Rescan game mounts from disk + VPKs
+    game_entries = scan_game_mounts(cs2_path, extensions=SUPPORTED_EXTENSIONS, system_filters=system_filters)
+    save_cached_game_index(cs2_path, game_entries)
+
+    _game_cache = game_entries
+    _game_cache_cs2_path = cs2_path
+    _game_cache_time = time.time()
+    return _game_cache
+
+
+def scan_all(
+    active_addon: Optional[str] = None,
+    addon_only: bool = False,
+    asset_types: Optional[List[str]] = None,
+    use_game_cache: bool = True,
+    use_addon_cache: bool = True
+) -> List[ModelEntry]:
+    """Build or combine the asset index. Blocking — call from ScanWorker, not the GUI thread."""
+    from src.settings.main import get_cs2_path, get_addon_name
+
+    cs2_path = get_cs2_path()
+    if not cs2_path:
+        return []
+
+    system_filters = _get_system_filters(cs2_path)
+    active_addon = active_addon or get_addon_name()
+    exts = tuple(f".{t.lstrip('.')}" for t in asset_types) if asset_types else SUPPORTED_EXTENSIONS
+
+    addon_entries: List[ModelEntry] = []
+    if active_addon:
+        addon_entries = scan_addon_mount(
+            cs2_path, active_addon, extensions=exts, system_filters=system_filters, use_cache=use_addon_cache
+        )
+
+    if addon_only:
+        entries = addon_entries
+    else:
+        game_entries = get_game_entries(cs2_path, use_cache=use_game_cache, system_filters=system_filters)
+        if asset_types:
+            clean_types = {t.lstrip('.').lower() for t in asset_types}
+            game_entries = [e for e in game_entries if e.asset_type.lower() in clean_types]
+
+        seen = set()
+        merged = []
+        for e in addon_entries:
+            key = e.path.lower()
+            if key not in seen:
+                seen.add(key)
+                merged.append(e)
+        for e in game_entries:
+            key = e.path.lower()
+            if key not in seen:
+                seen.add(key)
+                merged.append(e)
+        entries = merged
+
+    entries.sort(key=lambda e: e.path.lower())
+    return entries
+
+
+def load_cached_index(
+    active_addon: Optional[str],
+    addon_only: bool = False,
+    asset_types: Optional[List[str]] = None
+) -> Optional[List[ModelEntry]]:
+    """Legacy helper: return cached index if available."""
+    if addon_only:
+        return None
+    from src.settings.main import get_cs2_path
+    cs2_path = get_cs2_path()
+    if not cs2_path:
+        return None
+    cached = load_cached_game_index(cs2_path)
+    if cached is None:
+        return None
+    if asset_types is not None:
+        clean_types = {t.lstrip('.').lower() for t in asset_types}
+        return [e for e in cached if e.asset_type.lower() in clean_types]
+    return cached
+
+
+def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) -> None:
+    """Legacy helper: save entries to cache."""
+    from src.settings.main import get_cs2_path
+    cs2_path = get_cs2_path()
+    if cs2_path:
+        save_cached_game_index(cs2_path, entries)
 
 
 class ScanSignals(QObject):
@@ -404,14 +559,13 @@ class ScanWorker(QRunnable):
     def run(self):
         entries: List[ModelEntry] = []
         try:
-            if self.use_cache and not self.addon_only:
-                cached = load_cached_index(self.active_addon, addon_only=self.addon_only, asset_types=self.asset_types)
-                if cached is not None:
-                    self._emit(cached)
-                    return
-            entries = scan_all(self.active_addon, addon_only=self.addon_only, asset_types=self.asset_types)
-            if not self.addon_only and not self.asset_types:
-                save_cached_index(self.active_addon, entries)
+            entries = scan_all(
+                self.active_addon,
+                addon_only=self.addon_only,
+                asset_types=self.asset_types,
+                use_game_cache=self.use_cache,
+                use_addon_cache=self.use_cache
+            )
         except Exception as exc:
             print(f"[model_browser] scan failed: {exc}")
         self._emit(entries)

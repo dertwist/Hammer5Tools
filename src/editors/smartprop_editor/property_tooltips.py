@@ -254,22 +254,10 @@ property_tooltips = {
         "description": "Places a model as the child of an element.",
         "image": r"src/images/help/img_placeholder.png",
     },
-    "CSmartPropElement_ModifyState": {
-        "description": "An element which is used to apply a set of modifiers to the state of its parent.",
-        "image": r"src/images/help/modify_state.jpg",
-    },
-    "ModifyState": {
-        "description": "An element which is used to apply a set of modifiers to the state of its parent.",
-        "image": r"src/images/help/modify_state.jpg",
-    },
-    "Element_ModifyState": {
-        "description": "An element which is used to apply a set of modifiers to the state of its parent.",
-        "image": r"src/images/help/modify_state.jpg",
-    },
-    "Modify State": {
-        "description": "An element which is used to apply a set of modifiers to the state of its parent.",
-        "image": r"src/images/help/modify_state.jpg",
-    },
+    "CSmartPropElement_ModifyState": "An element which is used to apply a set of modifiers to the state of its parent.",
+    "ModifyState": "An element which is used to apply a set of modifiers to the state of its parent.",
+    "Element_ModifyState": "An element which is used to apply a set of modifiers to the state of its parent.",
+    "Modify State": "An element which is used to apply a set of modifiers to the state of its parent.",
     "CSmartPropElement_PickOne": {
         "description": "An element which selects a single choice from its set of child choices.",
         "image": r"src/images/help/pick_one.jpg",
@@ -310,36 +298,24 @@ property_tooltips = {
     "Element_PlaceOnMesh": "Place Children on Mesh Components.",
     "CSmartPropElement_PlaceOnPath": {
         "description": "An element which places an instance of its child elements at a specified interval along a path.",
-        "image": r"src/images/help/place_on_path.jpg",
+        "image": r"src/images/help/place_on_path.png",
     },
     "PlaceOnPath": {
         "description": "An element which places an instance of its child elements at a specified interval along a path.",
-        "image": r"src/images/help/place_on_path.jpg",
+        "image": r"src/images/help/place_on_path.png",
     },
     "Element_PlaceOnPath": {
         "description": "An element which places an instance of its child elements at a specified interval along a path.",
-        "image": r"src/images/help/place_on_path.jpg",
+        "image": r"src/images/help/place_on_path.png",
     },
     "Place On Path": {
         "description": "An element which places an instance of its child elements at a specified interval along a path.",
-        "image": r"src/images/help/place_on_path.jpg",
+        "image": r"src/images/help/place_on_path.png",
     },
-    "CSmartPropElement_PropDynamic": {
-        "description": "Places a prop dynamic entity.",
-        "image": r"src/images/help/prop_dynamic.jpg",
-    },
-    "PropDynamic": {
-        "description": "Places a prop dynamic entity.",
-        "image": r"src/images/help/prop_dynamic.jpg",
-    },
-    "Element_PropDynamic": {
-        "description": "Places a prop dynamic entity.",
-        "image": r"src/images/help/prop_dynamic.jpg",
-    },
-    "Prop Dynamic": {
-        "description": "Places a prop dynamic entity.",
-        "image": r"src/images/help/prop_dynamic.jpg",
-    },
+    "CSmartPropElement_PropDynamic": "Places a prop dynamic entity.",
+    "PropDynamic": "Places a prop dynamic entity.",
+    "Element_PropDynamic": "Places a prop dynamic entity.",
+    "Prop Dynamic": "Places a prop dynamic entity.",
     "CSmartPropElement_PropPhysics": {
         "description": "Places a prop physics entity.",
         "image": r"src/images/help/prop_physics.png",
