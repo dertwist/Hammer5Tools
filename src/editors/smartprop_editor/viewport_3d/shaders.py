@@ -139,7 +139,10 @@ vec3 CalculateLighting(vec3 albedo, vec3 normal, vec3 viewVector, float roughnes
     float specAngle = saturate(dot(viewVector, vReflectionDirWs));
     // Rougher surfaces spread the highlight and dim it.
     float specPower = mix(4.0, 80.0, 1.0 - roughness);
-    float flFakeSpecularLighting = pow(specAngle, specPower) * (1.0 - roughness) * 0.35;
+    // Square (1.0 - roughness) to suppress specular strongly on mid-roughness surfaces
+    // to match Hammer's unlit viewport which renders clothes and skin very matte.
+    float specMask = (1.0 - roughness) * (1.0 - roughness);
+    float flFakeSpecularLighting = pow(specAngle, specPower) * specMask * 0.25;
     specOut = flFakeSpecularLighting;
 
     // Hemispheric ambient (weights from Source Z-up mapped to GL Y-up).

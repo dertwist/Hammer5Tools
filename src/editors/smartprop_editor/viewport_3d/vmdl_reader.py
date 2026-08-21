@@ -307,6 +307,7 @@ def _index_array(index_buffer) -> np.ndarray:
 _TEX_BASE = ("g_tColor", "g_tColor1", "g_tColor2", "g_tColor3", "g_tColor0", "g_tColorA")
 _TEX_NORMAL = ("g_tNormal", "g_tNormal1", "g_tNormal2", "g_tNormal3", "g_tNormal0", "g_tNormalA")
 _TEX_METAL = ("g_tMetalness", "g_tMetalness1", "g_tMetalness2", "g_tMetalness3", "g_tMetalness0")
+_TEX_ROUGHNESS = ("g_tRoughness", "g_tRoughness1", "g_tRoughness2", "g_tRoughness3", "g_tRoughness0")
 _TEX_AO = ("g_tAmbientOcclusion", "g_tAmbientOcclusion1", "g_tAmbientOcclusion2")
 _TEX_EMISSIVE = ("g_tSelfIllumMask", "g_tEmissiveMask", "g_tSelfIllum")
 
@@ -605,17 +606,26 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
 
             metal_path = _texture_path(textures, _TEX_METAL)
             metal_img = _decode_texture(loader, metal_path, max_dim) if metal_path else None
-            if normal_rgba is not None or metal_img is not None:
-                reference = normal_rgba if normal_rgba is not None else metal_img
+            
+            rough_path = _texture_path(textures, _TEX_ROUGHNESS)
+            rough_img = _decode_texture(loader, rough_path, max_dim) if rough_path else None
+            
+            if normal_rgba is not None or metal_img is not None or rough_img is not None:
+                reference = normal_rgba if normal_rgba is not None else (rough_img if rough_img is not None else metal_img)
                 h, w = reference.shape[0], reference.shape[1]
                 mr = np.zeros((h, w, 4), dtype=np.uint8)
                 mr[..., 3] = 255
-                if normal_rgba is not None:
+                
+                if rough_img is not None:
+                    rough = rough_img if rough_img.shape[:2] == (h, w) else _nearest_resize(rough_img, h, w)
+                    mr[..., 1] = rough[..., 0]
+                elif normal_rgba is not None:
                     # CS:GO/CS2 models often store glossiness in normal map alpha, where 0 is matte.
                     # We invert it so 255 is matte (high roughness), preventing the plastic/glossy look.
                     mr[..., 1] = 255 - normal_rgba[..., 3]
                 else:
                     mr[..., 1] = int(round(255 * _float_param(material, "g_flRoughness", 1.0)))
+                
                 if metal_img is not None:
                     metal = metal_img if metal_img.shape[:2] == (h, w) else _nearest_resize(metal_img, h, w)
                     mr[..., 2] = metal[..., 0]

@@ -86,11 +86,42 @@ def _rel_resource_path(abs_path: str, content_root: str) -> Optional[str]:
     return rel.replace("\\", "/")
 
 
+def _get_system_filters(cs2_path: str) -> List[str]:
+    """Extract AssetBrowser retail_filters from csgo/gameinfo.gi."""
+    filters = []
+    if not cs2_path:
+        return filters
+    gameinfo_path = os.path.join(cs2_path, "game", "csgo", "gameinfo.gi")
+    if not os.path.isfile(gameinfo_path):
+        return filters
+    try:
+        with open(gameinfo_path, "r", encoding="utf-8", errors="ignore") as f:
+            in_asset_browser = False
+            for line in f:
+                line_stripped = line.strip()
+                if line_stripped == "AssetBrowser":
+                    in_asset_browser = True
+                elif in_asset_browser:
+                    if line_stripped == "{":
+                        continue
+                    if line_stripped == "}":
+                        break
+                    if line_stripped.startswith("retail_filter"):
+                        parts = line_stripped.split()
+                        if len(parts) >= 2:
+                            val = parts[1].strip('"').lower()
+                            if val:
+                                filters.append(val)
+    except Exception:
+        pass
+    return filters
+
 SUPPORTED_EXTENSIONS = (".vmdl", ".vmat", ".vsmart", ".vsndevts", ".vdata", ".vpcf", ".vpost", ".vmap", ".vtex")
 
 
 def _scan_disk_tree(
-    root: str, source: str, mod: str, extensions: Optional[tuple] = None, is_compiled: bool = False
+    root: str, source: str, mod: str, extensions: Optional[tuple] = None, is_compiled: bool = False,
+    system_filters: Optional[List[str]] = None
 ) -> List[ModelEntry]:
     """Collect assets under <root> matching extensions."""
     entries = []
@@ -121,6 +152,8 @@ def _scan_disk_tree(
             rel = _rel_resource_path(abs_path, root)
             if rel is None:
                 continue
+            if system_filters and any(rel.lower().startswith(f) for f in system_filters):
+                continue
             if rel.endswith("_c"):
                 rel = rel[:-2]
             clean_type = matched_ext.lstrip('.').lower()
@@ -135,7 +168,7 @@ def _scan_disk_tree(
     return entries
 
 
-def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple] = None) -> List[ModelEntry]:
+def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple] = None, system_filters: Optional[List[str]] = None) -> List[ModelEntry]:
     """Enumerate assets inside a mount's VPKs via ValvePak."""
     vpk_paths = sorted(glob.glob(os.path.join(game_root, "*_dir.vpk")))
     if not vpk_paths:
@@ -174,6 +207,8 @@ def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple
                     directory = str(entry.DirectoryName or "").replace("\\", "/")
                     filename = f"{entry.FileName}.{raw_ext}"
                     rel = f"{directory}/{filename}" if directory else filename
+                    if system_filters and any(rel.lower().startswith(f) for f in system_filters):
+                        continue
                     try:
                         size = int(entry.TotalLength)
                     except Exception:
@@ -194,19 +229,20 @@ def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple
 
 
 def _scan_mount(
-    cs2_path: str, mount: str, source: str, extensions: Optional[tuple] = None, scan_vpk: bool = True
+    cs2_path: str, mount: str, source: str, extensions: Optional[tuple] = None, scan_vpk: bool = True,
+    system_filters: Optional[List[str]] = None
 ) -> List[ModelEntry]:
     """Collect one content mount from content, game, and VPKs."""
     entries: List[ModelEntry] = []
     entries += _scan_disk_tree(
-        os.path.join(cs2_path, "content", mount), source, mount, extensions=extensions, is_compiled=False
+        os.path.join(cs2_path, "content", mount), source, mount, extensions=extensions, is_compiled=False, system_filters=system_filters
     )
     game_root = os.path.join(cs2_path, "game", mount)
     entries += _scan_disk_tree(
-        game_root, source, mount, extensions=extensions, is_compiled=True
+        game_root, source, mount, extensions=extensions, is_compiled=True, system_filters=system_filters
     )
     if scan_vpk:
-        entries += _scan_vpks(game_root, source, mount, extensions=extensions)
+        entries += _scan_vpks(game_root, source, mount, extensions=extensions, system_filters=system_filters)
     return entries
 
 
@@ -232,6 +268,8 @@ def scan_all(
     if not cs2_path:
         return []
 
+    system_filters = _get_system_filters(cs2_path)
+
     active_addon = active_addon or get_addon_name()
 
     exts = tuple(f".{t.lstrip('.')}" for t in asset_types) if asset_types else SUPPORTED_EXTENSIONS
@@ -241,7 +279,7 @@ def scan_all(
     for mount in mount_list:
         source = SOURCE_ADDON if mount.startswith("csgo_addons/") else SOURCE_CORE
         # Only scan VPKs if we are including game mounts (not addon only)
-        entries += _scan_mount(cs2_path, mount, source, extensions=exts, scan_vpk=(not addon_only))
+        entries += _scan_mount(cs2_path, mount, source, extensions=exts, scan_vpk=(not addon_only), system_filters=system_filters)
 
     seen = set()
     unique = []
