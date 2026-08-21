@@ -427,11 +427,7 @@ class ModelBrowserWidget(QWidget):
         title = QLabel("Filter")
         row.addWidget(title)
 
-        clear = QPushButton("✕")
-        clear.setFixedWidth(22)
-        clear.setToolTip("Clear filter")
-        clear.clicked.connect(lambda: self.filter_edit.clear())
-        row.addWidget(clear)
+
 
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter by name or folder…")

@@ -124,34 +124,15 @@ class BatchCreatorMainWindow(QMainWindow):
         self.central_stack.addWidget(self.empty_state_widget)
 
         # Page 1: Multi-Document Tab Widget
-        self.tab_widget = QTabWidget()
-        self.tab_widget.setTabsClosable(True)
-        self.tab_widget.setMovable(True)
+        from src.widgets.document_tab import DocumentTabWidget
+        self.tab_widget = DocumentTabWidget()
+        self.tab_widget.set_new_tab_tooltip("Create New Batch Profile (Ctrl+N)")
         self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab_widget.customContextMenuRequested.connect(self._show_tab_context_menu)
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
-
-        # New Tab (+) Corner Button
-        self.new_tab_btn = QToolButton()
-        self.new_tab_btn.setText("+")
-        self.new_tab_btn.setToolTip("Create New Batch Profile (Ctrl+N)")
-        self.new_tab_btn.setStyleSheet("""
-            QToolButton {
-                font: 700 12pt "Segoe UI";
-                color: #C7C7BB;
-                background: transparent;
-                border: none;
-                padding: 2px 8px;
-            }
-            QToolButton:hover {
-                color: #FFFFFF;
-                background-color: #363639;
-                border-radius: 2px;
-            }
-        """)
-        self.new_tab_btn.clicked.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
-        self.tab_widget.setCornerWidget(self.new_tab_btn, Qt.TopRightCorner)
+        self.tab_widget.new_tab_requested.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
+        self.new_tab_btn = self.tab_widget.new_tab_btn
 
         self.central_stack.addWidget(self.tab_widget)
         central_layout.addWidget(self.central_stack, 1)
@@ -367,8 +348,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 self,
                 "Create New Batch Profile (.hbat)",
                 default_target,
-                "Hammer Batch (*.hbat)",
-                options=QFileDialog.Option.DontUseNativeDialog
+                "Hammer Batch (*.hbat)"
             )
             if file_path:
                 if not file_path.lower().endswith(".hbat"):
@@ -442,8 +422,7 @@ class BatchCreatorMainWindow(QMainWindow):
     def _open_file_dialog(self):
         addon_dir = get_addon_dir() or self.explorer_directory
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Batch Profile", addon_dir, "Hammer Batch (*.hbat);;All Files (*.*)",
-            options=QFileDialog.Option.DontUseNativeDialog
+            self, "Open Batch Profile", addon_dir, "Hammer Batch (*.hbat);;All Files (*.*)"
         )
         if file_path:
             self.open_filepath(file_path)

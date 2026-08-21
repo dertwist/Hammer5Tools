@@ -349,8 +349,7 @@ class TemplateCardWidget(QWidget):
             self,
             "Select Reference Template Asset",
             addon_dir,
-            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)",
-            options=QFileDialog.Option.DontUseNativeDialog
+            "Valve Assets (*.vmdl *.vmat *.vsmart *.vsndevts *.vdata *.vpcf);;All Files (*.*)"
         )
         if file_path:
             self.set_reference_path(file_path)
@@ -380,7 +379,12 @@ class TemplateCardWidget(QWidget):
             self.analysis_updated.emit(self.template_id, None)
             return
 
-        self.current_analysis = analyze_reference_file(ref_text)
+        context_folder = None
+        main_window = self.window()
+        if hasattr(main_window, 'file_path') and main_window.file_path:
+            context_folder = os.path.dirname(main_window.file_path)
+
+        self.current_analysis = analyze_reference_file(ref_text, context_folder=context_folder)
         self._update_slot_pills()
         self.analysis_updated.emit(self.template_id, self.current_analysis)
 
@@ -487,11 +491,21 @@ class TemplateCardWidget(QWidget):
 
         # Build normalized replacements if analysis available
         reps = []
+        existing_froms = set()
+        
         if self.current_analysis and self.current_analysis.replacements:
             for _, rep_info in self.current_analysis.replacements.items():
                 pair = rep_info.get('replacement', [])
                 if len(pair) >= 2:
                     reps.append({'from': pair[0], 'to': pair[1]})
+                    existing_froms.add(pair[0])
+
+        # Preserve any manual replacements the user added in the .hbat config
+        for r in getattr(self, 'replacements', []):
+            if isinstance(r, dict) and 'from' in r and 'to' in r:
+                if r['from'] not in existing_froms:
+                    reps.append({'from': r['from'], 'to': r['to']})
+                    existing_froms.add(r['from'])
 
         filter_mode = "include" if "Include" in self.filter_mode_combo.currentText() else "exclude"
 
@@ -504,7 +518,7 @@ class TemplateCardWidget(QWidget):
             'ignore_list': self.ignore_files_edit.text().strip(),
             'skipped_slots': getattr(self, 'skipped_slots', []),
             'custom_tokens': getattr(self, 'custom_tokens', {}),
-            'replacements': reps if reps else self.replacements
+            'replacements': reps
         }
 
     def set_template_data(self, data: Dict[str, Any]):

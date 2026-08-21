@@ -239,12 +239,17 @@ class FileItemWidget(QWidget):
             )
         else:
             self.open_reference_requested.emit(asset_path)
-            curr = self.parent()
+            curr = self.parentWidget() if hasattr(self, 'parentWidget') else self.parent()
             while curr is not None:
                 if hasattr(curr, 'update_title') and callable(curr.update_title):
                     curr.update_title(text=f"Opened reference asset [{asset_path}] in CS2 Tools")
                     break
-                curr = curr.parent() if hasattr(curr, 'parent') else None
+                if hasattr(curr, 'parentWidget') and callable(curr.parentWidget):
+                    curr = curr.parentWidget()
+                elif hasattr(curr, 'parent'):
+                    curr = curr.parent() if callable(curr.parent) else curr.parent
+                else:
+                    curr = None
 
     def contextMenuEvent(self, event):
         """

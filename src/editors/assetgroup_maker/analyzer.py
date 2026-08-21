@@ -119,6 +119,7 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
     collision_mesh = phys_blocks[0] if phys_blocks else None
     primary_mesh = render_blocks[0] if render_blocks else None
     lod_meshes = []
+    extra_meshes = []
 
     # 2. General scan if explicit blocks didn't catch both
     all_mesh_matches = re.findall(r'filename\s*=\s*["\']([^"\']+\.(?:fbx|obj|dmx))["\']', content, re.IGNORECASE)
@@ -140,6 +141,8 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
         else:
             if not primary_mesh:
                 primary_mesh = mesh_path
+            elif mesh_path not in extra_meshes and mesh_path != primary_mesh:
+                extra_meshes.append(mesh_path)
 
     # Fallback if primary wasn't found but meshes exist
     if not primary_mesh and all_mesh_matches:
@@ -153,6 +156,16 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str):
             'filename': os.path.basename(primary_mesh),
             'required': True,
             'token': '#$MESH$#'
+        }
+
+    for idx, extra_path in enumerate(extra_meshes, start=1):
+        slot_key = f'mesh_{idx}'
+        result.slots[slot_key] = {
+            'label': f'Extra Mesh {idx}',
+            'source': extra_path,
+            'filename': os.path.basename(extra_path),
+            'required': False,
+            'token': f'#$MESH_{idx}$#'
         }
 
     if collision_mesh:

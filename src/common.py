@@ -45,7 +45,7 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
-app_version = '5.6.6'
+app_version = '5.7.0'
 
 def _version_txt() -> list[str]:
     """[version, channel] from version.txt next to the frozen exe; [] when run from source.
@@ -328,6 +328,8 @@ default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/'
 
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
+        if getattr(tab_bar, "property", lambda k: None)("is_document_tab_bar"):
+            continue
         tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
 # generic functions
