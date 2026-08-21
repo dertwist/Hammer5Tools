@@ -24,7 +24,7 @@ class BatchCreatorMainWindow(QMainWindow):
     - Left Dock: Addon Explorer with "New config for selected folder" button at bottom
     - Center Area: Multi-Document Tab System + Empty State Placeholder ("Create config for asset folder or open a config")
       with Save & Watch the changes inside each individual document footer
-    - Right Dock: Config Explorer (Monitored .hbat files) with search filter, global "Watch the changes" toggle, and "+ New Config..." button
+    - Right Dock: Config Explorer (Monitored .hbat files) with search filter and "+ New Config..." button
     """
 
     def __init__(self, parent: Optional[QMainWindow] = None, update_title: Optional[callable] = None):
@@ -194,20 +194,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.monitoring_list.watch_status_changed.connect(self._on_monitor_watch_status_changed)
         config_dock_layout.addWidget(self.monitoring_list, 1)
 
-        # Bottom section: Global Watch Changes checkbox and + New Config... button
+        # Bottom section: + New Config... button
         cfg_bottom_layout = QVBoxLayout()
         cfg_bottom_layout.setContentsMargins(0, 2, 0, 0)
         cfg_bottom_layout.setSpacing(4)
-
-        self.global_watch_cb = QCheckBox("Watch the changes")
-        self.global_watch_cb.setStyleSheet(qt_stylesheet_checkbox)
-        self.global_watch_cb.setToolTip("Globally enable or pause watching all monitored batch configs")
-        saved_global_watch = get_settings_value('AssetGroupMaker', 'global_watch_changes')
-        is_global_watch = (saved_global_watch == 'true')
-        self.global_watch_cb.setChecked(is_global_watch)
-        self.monitoring_list.set_global_watch_enabled(is_global_watch)
-        self.global_watch_cb.toggled.connect(self._on_global_watch_toggled)
-        cfg_bottom_layout.addWidget(self.global_watch_cb)
 
         self.new_cfg_btn = QPushButton("New Config...")
         self.new_cfg_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
@@ -254,10 +244,6 @@ class BatchCreatorMainWindow(QMainWindow):
             self.central_stack.setCurrentWidget(self.tab_widget)
         else:
             self.central_stack.setCurrentWidget(self.empty_state_widget)
-
-    def _on_global_watch_toggled(self, checked: bool):
-        set_settings_value('AssetGroupMaker', 'global_watch_changes', 'true' if checked else 'false')
-        self.monitoring_list.set_global_watch_enabled(checked)
 
     def _on_monitor_watch_status_changed(self, file_path: str, enabled: bool):
         norm = os.path.normpath(file_path)

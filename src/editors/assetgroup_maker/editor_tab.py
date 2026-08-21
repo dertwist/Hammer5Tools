@@ -120,7 +120,7 @@ class EditorTabWidget(QWidget):
         self.watch_changes_cb = QCheckBox("Watch the changes")
         self.watch_changes_cb.setStyleSheet(qt_stylesheet_checkbox)
         self.watch_changes_cb.setToolTip("Automatically monitor asset files and live-update batch configuration on changes")
-        self.watch_changes_cb.setChecked(False)
+        self.watch_changes_cb.setChecked(True)
         self.watch_changes_cb.setFixedHeight(28)
         self.watch_changes_cb.toggled.connect(self._on_watch_changes_toggled)
         action_row.addWidget(self.watch_changes_cb)
@@ -201,7 +201,7 @@ class EditorTabWidget(QWidget):
             custom_out = ''
         self.custom_output_edit.setText(custom_out)
         self.watch_changes_cb.blockSignals(True)
-        self.watch_changes_cb.setChecked(default.get('settings', {}).get('watch_changes', False))
+        self.watch_changes_cb.setChecked(default.get('settings', {}).get('watch_changes', True))
         self.watch_changes_cb.blockSignals(False)
         self.refresh_matching()
         self._dirty = False
@@ -239,6 +239,19 @@ class EditorTabWidget(QWidget):
                 self._mark_dirty()
                 return
 
+    def get_target_directory(self) -> str:
+        """Returns the resolved target asset directory for this editor tab."""
+        target_dir = ""
+        if self.file_path:
+            target_dir = os.path.splitext(self.file_path)[0]
+            if not os.path.isdir(target_dir):
+                target_dir = os.path.dirname(self.file_path)
+
+        if not target_dir and get_addon_dir():
+            target_dir = get_addon_dir()
+
+        return target_dir
+
     def refresh_matching(self):
         """Scans the target directory and matches assets across all active templates."""
         data = self.template_manager.get_data()
@@ -248,14 +261,7 @@ class EditorTabWidget(QWidget):
 
         self.asset_table.set_slots_definition(slots_map)
 
-        target_dir = ""
-        if self.file_path:
-            target_dir = os.path.splitext(self.file_path)[0]
-            if not os.path.isdir(target_dir):
-                target_dir = os.path.dirname(self.file_path)
-
-        if not target_dir and get_addon_dir():
-            target_dir = get_addon_dir()
+        target_dir = self.get_target_directory()
 
         items = match_multi_template_folder_assets(
             directory=target_dir,
@@ -291,7 +297,7 @@ class EditorTabWidget(QWidget):
                 custom_out = ''
             self.custom_output_edit.setText(custom_out)
 
-            watch_val = settings.get('watch_changes', False)
+            watch_val = settings.get('watch_changes', True)
             self.watch_changes_cb.blockSignals(True)
             self.watch_changes_cb.setChecked(bool(watch_val))
             self.watch_changes_cb.blockSignals(False)

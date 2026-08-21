@@ -9,7 +9,7 @@ from src.settings.main import debug
 DEFAULT_FILE_TEMPLATE: Dict[str, Any] = {
     'version': 3,
     'settings': {
-        'watch_changes': False,
+        'watch_changes': True,
         'filter_mode': 'exclude',
         'ignore_extensions': 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr',
         'ignore_list': '',
@@ -106,7 +106,7 @@ def convert_legacy_hbat_to_v3(legacy_data: Dict[str, Any]) -> Dict[str, Any]:
     v3_data: Dict[str, Any] = {
         'version': 3,
         'settings': {
-            'watch_changes': False,
+            'watch_changes': True,
             'ignore_extensions': 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr',
             'ignore_list': '',
             'custom_output': 'relative_path',
@@ -118,7 +118,7 @@ def convert_legacy_hbat_to_v3(legacy_data: Dict[str, Any]) -> Dict[str, Any]:
 
     process = legacy_data.get('process', {})
     if process:
-        v3_data['settings']['watch_changes'] = bool(process.get('watch_changes', False))
+        v3_data['settings']['watch_changes'] = bool(process.get('watch_changes', True))
         v3_data['settings']['ignore_extensions'] = process.get(
             'ignore_extensions',
             'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'
@@ -262,7 +262,7 @@ def save_hbat_file(file_path: str, data: Dict[str, Any]) -> bool:
         save_data = {
             'version': 3,
             'settings': {
-                'watch_changes': bool(settings_in.get('watch_changes', False)),
+                'watch_changes': bool(settings_in.get('watch_changes', True)),
                 'filter_mode': str(settings_in.get('filter_mode', 'exclude')),
                 'ignore_extensions': str(settings_in.get('ignore_extensions', '')),
                 'ignore_list': str(settings_in.get('ignore_list', '')),
