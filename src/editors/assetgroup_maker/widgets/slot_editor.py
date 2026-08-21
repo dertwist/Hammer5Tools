@@ -95,7 +95,10 @@ class TemplateSlotMappingDialog(QDialog):
                 slots_def = {
                     'mesh': {'label': 'Render Mesh (LOD0)', 'required': True, 'token': '#$MESH$#'},
                     'collision': {'label': 'Collision Hull (Physics)', 'required': False, 'token': '#$COLLISION$#'},
-                    'lod1': {'label': 'LOD 1 Mesh', 'required': False, 'token': '#$LOD1$#'}
+                    'lod1': {'label': 'LOD 1 Mesh', 'required': False, 'token': '#$LOD1$#'},
+                    'lod2': {'label': 'LOD 2 Mesh', 'required': False, 'token': '#$LOD2$#'},
+                    'lod3': {'label': 'LOD 3 Mesh', 'required': False, 'token': '#$LOD3$#'},
+                    'material': {'label': 'Material Remap', 'required': False, 'token': '#$MATERIAL$#'},
                 }
             elif ext == 'vmat':
                 slots_def = {
@@ -107,6 +110,12 @@ class TemplateSlotMappingDialog(QDialog):
                     'orm': {'label': 'Packed ORM Map', 'required': False, 'token': '#$ORM$#'},
                     'height': {'label': 'Height / Displacement', 'required': False, 'token': '#$HEIGHT$#'},
                     'emissive': {'label': 'Emissive / Self-Illum', 'required': False, 'token': '#$EMISSIVE$#'},
+                    'tintmask': {'label': 'Tint Mask', 'required': False, 'token': '#$TINTMASK$#'},
+                    'opacity': {'label': 'Opacity / Translucency', 'required': False, 'token': '#$OPACITY$#'},
+                }
+            elif ext == 'vsndevts':
+                slots_def = {
+                    'sound': {'label': 'Audio File', 'required': True, 'token': '#$SOUND$#'}
                 }
             else:
                 slots_def = {

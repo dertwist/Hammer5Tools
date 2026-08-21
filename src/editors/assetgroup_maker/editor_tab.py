@@ -2,12 +2,15 @@ import os
 from typing import Optional, Dict, List, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QFileDialog, QMessageBox, QFrame, QCheckBox
+    QFileDialog, QMessageBox, QFrame, QCheckBox, QSplitter
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QByteArray
 from PySide6.QtGui import QIcon
 
-from src.settings.main import get_addon_dir, get_cs2_path, get_addon_name, debug
+from src.settings.main import (
+    get_addon_dir, get_cs2_path, get_addon_name, debug,
+    get_settings_value, set_settings_value
+)
 from src.editors.assetgroup_maker.widgets.reference_card import MultiTemplateManagerWidget
 from src.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
 from src.editors.assetgroup_maker.matcher import match_multi_template_folder_assets, AssetGroupItem
@@ -45,13 +48,27 @@ class EditorTabWidget(QWidget):
         root.setContentsMargins(6, 6, 6, 6)
         root.setSpacing(6)
 
-        # 1. Top Multi-Template Manager (Cards + Global Ignore Settings + Add Template button)
+        # Splitter dividing Template Manager and Asset Table
+        self.splitter = QSplitter(Qt.Vertical, self)
+        self.splitter.setObjectName("AssetGroup_EditorSplitter")
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setHandleWidth(4)
+
+        # 1. Top Multi-Template Manager (Cards in ScrollArea + Global Ignore Settings + Add Template button)
         self.template_manager = MultiTemplateManagerWidget(self)
-        root.addWidget(self.template_manager)
+        self.splitter.addWidget(self.template_manager)
 
         # 2. Center Asset Table
         self.asset_table = AssetTableWidget(self)
-        root.addWidget(self.asset_table, 1)
+        self.splitter.addWidget(self.asset_table)
+
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
+
+        self._restore_splitter_state()
+        self.splitter.splitterMoved.connect(self._on_splitter_moved)
+
+        root.addWidget(self.splitter, 1)
 
         # 3. Bottom Action Footer
         footer_frame = QFrame()
@@ -135,6 +152,23 @@ class EditorTabWidget(QWidget):
         root.addWidget(footer_frame)
 
         apply_stylesheets(self)
+
+    def _restore_splitter_state(self):
+        saved_state = get_settings_value('AssetGroupMaker', 'editor_splitter_state')
+        if saved_state:
+            try:
+                self.splitter.restoreState(QByteArray.fromHex(saved_state.encode('utf-8')))
+                return
+            except Exception as e:
+                debug(f"Error restoring editor splitter state: {e}")
+        self.splitter.setSizes([220, 480])
+
+    def _on_splitter_moved(self, pos: int, index: int):
+        try:
+            state_hex = self.splitter.saveState().toHex().data().decode('utf-8')
+            set_settings_value('AssetGroupMaker', 'editor_splitter_state', state_hex)
+        except Exception as e:
+            debug(f"Error saving editor splitter state: {e}")
 
     def _connect_signals(self):
         self.template_manager.data_changed.connect(self._on_template_data_changed)
