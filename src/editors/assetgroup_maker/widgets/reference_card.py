@@ -70,7 +70,10 @@ class TemplateCardWidget(QWidget):
         self.template_id = template_id
         self.current_analysis: Optional[ReferenceAnalysisResult] = None
         self.replacements: List[Dict[str, str]] = []
+        self.skipped_slots: List[str] = []
+        self.custom_tokens: Dict[str, str] = {}
         self._build_ui()
+        self._update_slot_pills()
 
     def _build_ui(self):
         main_layout = QVBoxLayout(self)
@@ -201,7 +204,6 @@ class TemplateCardWidget(QWidget):
         self.edit_slots_btn.clicked.connect(self._open_slot_mappings_dialog)
         self.slots_layout.addWidget(self.edit_slots_btn)
 
-        self.slots_container.hide()
         card_layout.addWidget(self.slots_container)
 
         # Collapsible Per-Template Filter / Ignore Settings
@@ -373,9 +375,8 @@ class TemplateCardWidget(QWidget):
     def _analyze_current_reference(self):
         ref_text = self.ref_edit.text().strip()
         if not ref_text:
-            self.type_badge.hide()
-            self.slots_container.hide()
             self.current_analysis = None
+            self._update_slot_pills()
             self.analysis_updated.emit(self.template_id, None)
             return
 
@@ -384,18 +385,22 @@ class TemplateCardWidget(QWidget):
         self.analysis_updated.emit(self.template_id, self.current_analysis)
 
     def _update_slot_pills(self):
-        if not self.current_analysis:
-            self.slots_container.hide()
-            self.type_badge.hide()
-            return
-
         type_names = {
             'vmdl': 'ModelDoc (.vmdl)',
             'vmat': 'Material (.vmat)',
             'vsmart': 'SmartProp (.vsmart)',
             'vsndevts': 'SoundEvent (.vsndevts)'
         }
-        self.type_badge.setText(type_names.get(self.current_analysis.asset_type, f".{self.current_analysis.asset_type}"))
+
+        ext = "vmdl"
+        if self.current_analysis and self.current_analysis.asset_type:
+            ext = self.current_analysis.asset_type
+        else:
+            ref = self.ref_edit.text().strip()
+            if ref:
+                ext = os.path.splitext(ref)[1].lstrip('.').lower() or "vmdl"
+
+        self.type_badge.setText(type_names.get(ext, f".{ext}"))
         self.type_badge.show()
 
         while self.slot_pills_layout.count():
@@ -403,41 +408,66 @@ class TemplateCardWidget(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
-        if self.current_analysis.slots:
-            for slot_key, slot_info in self.current_analysis.slots.items():
-                label_text = slot_info.get('label', slot_key)
-                filename = slot_info.get('filename', '')
-
-                is_skipped = hasattr(self, 'skipped_slots') and slot_key in self.skipped_slots
-                if is_skipped:
-                    pill = QLabel(f"<s>{label_text}</s> <span style='color:#EF5350;'>(Skipped)</span>")
-                    pill.setStyleSheet("""
-                        QLabel {
-                            background-color: #242424;
-                            color: #777777;
-                            border: 1px dashed #555555;
-                            border-radius: 0px;
-                            padding: 2px 6px;
-                            font: 580 8.5pt 'Segoe UI';
-                        }
-                    """)
-                else:
-                    pill = QLabel(f"<b>{label_text}:</b> {filename}")
-                    pill.setStyleSheet("""
-                        QLabel {
-                            background-color: #2F2F31;
-                            color: #E5E5E5;
-                            border: 1px solid #464649;
-                            border-radius: 0px;
-                            padding: 2px 6px;
-                            font: 580 8.5pt 'Segoe UI';
-                        }
-                    """)
-                self.slot_pills_layout.addWidget(pill)
-
-            self.slots_container.show()
+        # Get active slots or fallback to standard defaults
+        active_slots = {}
+        if self.current_analysis and self.current_analysis.slots:
+            active_slots = self.current_analysis.slots
         else:
-            self.slots_container.hide()
+            if ext == 'vmdl':
+                active_slots = {
+                    'mesh': {'label': 'Render Mesh (LOD0)', 'required': True, 'token': '#$MESH$#'},
+                    'collision': {'label': 'Collision Hull (Physics)', 'required': False, 'token': '#$COLLISION$#'},
+                    'lod1': {'label': 'LOD 1 Mesh', 'required': False, 'token': '#$LOD1$#'},
+                }
+            elif ext == 'vmat':
+                active_slots = {
+                    'color': {'label': 'Color / Albedo', 'required': True, 'token': '#$COLOR$#'},
+                    'normal': {'label': 'Normal Map', 'required': False, 'token': '#$NORMAL$#'},
+                    'roughness': {'label': 'Roughness', 'required': False, 'token': '#$ROUGHNESS$#'},
+                    'metalness': {'label': 'Metalness', 'required': False, 'token': '#$METALNESS$#'},
+                }
+            elif ext == 'vsndevts':
+                active_slots = {
+                    'sound': {'label': 'Audio File', 'required': True, 'token': '#$SOUND$#'}
+                }
+            else:
+                active_slots = {
+                    'model': {'label': 'Primary Model', 'required': True, 'token': '#$MODEL$#'}
+                }
+
+        for slot_key, slot_info in active_slots.items():
+            label_text = slot_info.get('label', slot_key)
+            filename = slot_info.get('filename', '')
+
+            is_skipped = hasattr(self, 'skipped_slots') and slot_key in self.skipped_slots
+            if is_skipped:
+                pill = QLabel(f"<s>{label_text}</s> <span style='color:#EF5350;'>(Skipped)</span>")
+                pill.setStyleSheet("""
+                    QLabel {
+                        background-color: #242424;
+                        color: #777777;
+                        border: 1px dashed #555555;
+                        border-radius: 0px;
+                        padding: 2px 6px;
+                        font: 580 8.5pt 'Segoe UI';
+                    }
+                """)
+            else:
+                display_txt = f"<b>{label_text}:</b> {filename}" if filename else f"<b>{label_text}</b>"
+                pill = QLabel(display_txt)
+                pill.setStyleSheet("""
+                    QLabel {
+                        background-color: #2F2F31;
+                        color: #E5E5E5;
+                        border: 1px solid #464649;
+                        border-radius: 0px;
+                        padding: 2px 6px;
+                        font: 580 8.5pt 'Segoe UI';
+                    }
+                """)
+            self.slot_pills_layout.addWidget(pill)
+
+        self.slots_container.show()
 
     def _open_in_cs2(self):
         ref_text = self.ref_edit.text().strip()
