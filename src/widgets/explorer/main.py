@@ -1135,7 +1135,12 @@ class Explorer(QMainWindow):
             if hasattr(curr, 'BatchCreator_MainWindow') and curr.BatchCreator_MainWindow is not None:
                 curr.BatchCreator_MainWindow.open_filepath(filepath)
                 return
-            curr = curr.parent() if hasattr(curr, 'parent') else None
+            if hasattr(curr, 'parentWidget') and callable(curr.parentWidget):
+                curr = curr.parentWidget()
+            elif hasattr(curr, 'parent'):
+                curr = curr.parent() if callable(curr.parent) else curr.parent
+            else:
+                curr = None
         if parent and hasattr(parent, 'BatchCreator_MainWindow'):
             parent.BatchCreator_MainWindow.open_filepath(filepath)
 
@@ -1166,7 +1171,12 @@ class Explorer(QMainWindow):
                 if hasattr(curr, 'update_title') and callable(curr.update_title):
                     curr.update_title(text=f"Opened reference asset [{asset_path}] in CS2 Tools")
                     break
-                curr = curr.parent() if hasattr(curr, 'parent') else None
+                if hasattr(curr, 'parentWidget') and callable(curr.parentWidget):
+                    curr = curr.parentWidget()
+                elif hasattr(curr, 'parent'):
+                    curr = curr.parent() if callable(curr.parent) else curr.parent
+                else:
+                    curr = None
 
     def open_vsmart(self, filepath):
         parent = self.parent()
@@ -1178,7 +1188,12 @@ class Explorer(QMainWindow):
             elif hasattr(curr, 'SmartPropEditorMainWindow') and curr.SmartPropEditorMainWindow is not None:
                 curr.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
                 return
-            curr = curr.parent() if hasattr(curr, 'parent') else None
+            if hasattr(curr, 'parentWidget') and callable(curr.parentWidget):
+                curr = curr.parentWidget()
+            elif hasattr(curr, 'parent'):
+                curr = curr.parent() if callable(curr.parent) else curr.parent
+            else:
+                curr = None
         if parent and hasattr(parent, 'SmartPropEditorMainWindow') and parent.SmartPropEditorMainWindow:
             parent.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
 
@@ -1192,7 +1207,12 @@ class Explorer(QMainWindow):
             elif hasattr(curr, 'SoundEventEditorMainWindow') and curr.SoundEventEditorMainWindow is not None:
                 curr.SoundEventEditorMainWindow.load_soundevents(filepath=filepath)
                 return
-            curr = curr.parent() if hasattr(curr, 'parent') else None
+            if hasattr(curr, 'parentWidget') and callable(curr.parentWidget):
+                curr = curr.parentWidget()
+            elif hasattr(curr, 'parent'):
+                curr = curr.parent() if callable(curr.parent) else curr.parent
+            else:
+                curr = None
         if parent and hasattr(parent, 'SoundEventEditorMainWindow') and parent.SoundEventEditorMainWindow:
             parent.SoundEventEditorMainWindow.load_soundevents(filepath=filepath)
 
