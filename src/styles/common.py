@@ -404,43 +404,47 @@ background-color: None;
 """
 
 qt_stylesheet_tabbar = """
-QTabBar::tab {
-    background-color: #424242;
-    color: #a2a79a;
-    border-radius: 0px;
-    border-top-right-radius: 0px;
-    border-top-left-radius: 0px;
-    padding: 2px;
-    margin: 0px;
-    padding-left:8px;
-    padding-right: 8px;
-
-    border-top: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 580 10pt "Segoe UI";
-    border-left: 2px solid darkgray;
-    border-top: 0px solid darkgray;
-    border-color: #272727;
-    border-right: 2px solid rgba(94, 94, 94, 80);
-
-
-
-    color: #e5e5e5;
+QTabBar {
     background-color: #272727;
-
+    qproperty-drawBase: 0;
+}
+QTabBar::tab {
+    background-color: #272727;
+    color: #a5a5a5;
+    border-radius: 0px;
+    padding: 4px 10px;
+    margin: 0px;
+    font: 580 9pt "Segoe UI";
+    border: 1px solid transparent;
+    border-bottom: 1px solid #464649;
+    border-right: 1px solid rgba(94, 94, 94, 80);
+}
+QTabBar::tab:hover:!selected {
+    background-color: #363637;
+    color: #FFFFFF;
 }
 QTabBar::tab:selected {
-    border-radius: 0px;
-
-    border-color: rgba(94, 94, 94, 180);
-    color: #e5e5e5;
+    border: 1px solid #464649;
+    border-top: 2px solid #4a83c9;
+    border-bottom: 1px solid #2f2f31;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    color: #FFFFFF;
     background-color: #2f2f31;
-    border-top: 0px solid gray;
-
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(94, 94, 94, 255);
+    margin-bottom: -1px;
+}
+QTabBar::close-button {
+    image: url(:/icons/valve_style/tab-closebutton.png);
+    subcontrol-position: right;
+    margin: 1px 1px 1px 4px;
+}
+QTabBar::close-button:hover {
+    image: url(:/icons/valve_style/tab-closebutton-hovered.png);
+}
+QTabBar::close-button:pressed {
+    image: url(:/icons/valve_style/tab-closebutton-selected-hovered.png);
 }
 """
 

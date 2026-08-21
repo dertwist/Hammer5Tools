@@ -146,6 +146,7 @@ QTabWidget::pane {
     border: 1px solid #464649;
     background-color: #2f2f31;
     border-radius: 0px;
+    top: -1px;
 }
 
 QTabWidget#MainWindowTools_tabs::pane {
@@ -159,14 +160,14 @@ QTabBar {
 
 QTabBar::tab {
     background-color: #272727;
-    color: #e5e5e5;
+    color: #a5a5a5;
     border-radius: 0px;
     padding: 4px 10px;
     margin: 0px;
-    font: 580 10pt "Segoe UI";
-    border: 2px solid #272727;
-    border-bottom: none;
-    border-right: 2px solid rgba(94, 94, 94, 80);
+    font: 580 9pt "Segoe UI";
+    border: 1px solid transparent;
+    border-bottom: 1px solid #464649;
+    border-right: 1px solid rgba(94, 94, 94, 80);
 }
 
 QTabBar::tab:hover:!selected {
@@ -175,24 +176,47 @@ QTabBar::tab:hover:!selected {
 }
 
 QTabBar::tab:selected {
-    border: 2px solid rgba(94, 94, 94, 255);
-    border-bottom: none;
+    border: 1px solid #464649;
+    border-top: 2px solid #4a83c9;
+    border-bottom: 1px solid #2f2f31;
     border-top-left-radius: 2px;
     border-top-right-radius: 2px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
-    color: #e5e5e5;
+    color: #FFFFFF;
     background-color: #2f2f31;
+    margin-bottom: -1px;
 }
 
 QTabBar::close-button {
     image: url(:/icons/valve_style/tab-closebutton.png);
     subcontrol-position: right;
-    margin: 2px;
+    margin: 1px 1px 1px 4px;
 }
 
 QTabBar::close-button:hover {
     image: url(:/icons/valve_style/tab-closebutton-hovered.png);
+}
+
+QTabBar::close-button:pressed {
+    image: url(:/icons/valve_style/tab-closebutton-selected-hovered.png);
+}
+
+QToolButton#DocumentNewTabButton {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 1px;
+    margin: 0px;
+}
+
+QToolButton#DocumentNewTabButton:hover {
+    background-color: #363639;
+    border: 1px solid #464649;
+}
+
+QToolButton#DocumentNewTabButton:pressed {
+    background-color: #464649;
 }
 
 /* ========================================================== */
@@ -443,6 +467,30 @@ QCheckBox::indicator:checked {
 QCheckBox:hover {
     background-color: #515965;
     color: white;
+}
+
+QRadioButton {
+    font: 580 10pt "Segoe UI";
+    color: #e5e5e5;
+    padding-left: 2px;
+}
+
+QRadioButton::indicator:unchecked {
+    image: url(://icons/radio_button_unchecked_24dp.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QRadioButton::indicator:checked {
+    image: url(://icons/radio_button_checked_24dp.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QRadioButton:hover {
+    background-color: #515965;
+    color: white;
+    border-radius: 2px;
 }
 
 
@@ -723,6 +771,8 @@ QListWidget {
     border-radius: 2px;
     padding: 2px;
     color: #e5e5e5;
+    background-color: #272727;
+    show-decoration-selected: 1;
 }
 QListWidget::item {
     padding: 2px;
@@ -730,7 +780,7 @@ QListWidget::item {
 }
 QListWidget::item:selected {
     background-color: #515965;
-    color:white;
+    color: white;
 }
 
 QListWidget::item:hover {
@@ -745,6 +795,8 @@ QListView {
     border-radius: 2px;
     padding: 2px;
     color: #e5e5e5;
+    background-color: #272727;
+    show-decoration-selected: 1;
 }
 QListView::item {
     padding: 0px;
@@ -1035,7 +1087,7 @@ QTreeView {
     border-radius: 1px;
     border-color: rgba(94, 94, 94, 255);
     font: 580 10pt "Segoe UI";
-    background-color: #3a3a3a; /* Background color for the tree view */
+    background-color: #272727;
     alternate-background-color: #ff363636;
 }
 
