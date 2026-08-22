@@ -57,14 +57,14 @@ class CompletionUtils:
             'GridPlacementMode': ['SEGMENT', 'FILL'],
             'GridOriginMode': ['CENTER', 'CORNER'],
             'PickMode': ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],
-            'ScaleMode': ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'],
+            'ScaleMode': ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMIZE'],
             'TraceNoHit': ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'],
             'ApplyColorMode': ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'],
             'ChoiceSelectionMode': ['RANDOM', 'FIRST', 'SPECIFIC'],
             'RadiusPlacementMode': ['SPHERE', 'CIRCLE'],
             'DistributionMode': ['RANDOM', 'REGULAR'],
             'PathPositions': ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'],
-            'Direction': ['RANDOM', 'REGULAR'],
+            'Direction': ['FORWARD', 'LEFT', 'UP'],
         }
         return elements_dict.get(var_type, [])
 

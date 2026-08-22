@@ -24,7 +24,7 @@ Supported
   sin cos tan asin acos atan atan2 sqrt pow floor ceil round
   deg2rad rad2deg (+ Hammer aliases Deg2rad / Rad2deg / Tan / Sin / Cos)
 * context functions: InstanceIndex() InstanceCount() RandomInt(a,b)
-  RandomFloat(a,b) LinearScale(v,inLo,inHi,outLo,outHi)
+  RandomFloat(a,b) LinearScale(v,inLo,inHi,outLo,outHi) / LinearScale() (returns linear scale factor)
 * bare names resolve to variable values from the eval context; unknown names -> 0
 
 The public entry point never raises: any parse/eval failure returns ``default``.
@@ -227,6 +227,7 @@ class _NullContext:
 
     instance_index = 0
     instance_count = 1
+    linear_scale = 1.0
 
     def __init__(self):
         self.rng = random.Random(0)
@@ -274,8 +275,8 @@ def _var_value(ctx, name):
 
 def _linear_scale(a, ctx=None):
     # LinearScale(value, inLo, inHi, outLo, outHi) -> remap; degrade gracefully.
-    # With no args, Source 2 returns the instance's normalized position along the
-    # placement (0..1); approximate that from the context's instance index.
+    # With no args, returns the linear scale factor of the placement (default 1.0)
+    # or ctx.linear_scale if set.
     if len(a) >= 5:
         value, in_lo, in_hi, out_lo, out_hi = a[:5]
         if in_hi == in_lo:
@@ -288,9 +289,9 @@ def _linear_scale(a, ctx=None):
             return 0.0
         return (value - in_lo) / (in_hi - in_lo)
     if not a:
-        if ctx is not None and ctx.instance_count > 1:
-            return ctx.instance_index / (ctx.instance_count - 1)
-        return 0.0
+        if ctx is not None and getattr(ctx, "linear_scale", None) is not None:
+            return float(ctx.linear_scale)
+        return 1.0
     return a[0]
 
 

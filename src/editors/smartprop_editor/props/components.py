@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QScrollArea,
     QSizePolicy,
+    QToolButton,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -139,6 +140,7 @@ class ElementRowWidget(QFrame):
     row rather than living inside a HierarchyTreeWidget."""
 
     selected = Signal(object)  # ComponentRef
+    addNoteRequested = Signal(object)  # ComponentRef
 
     SELECTION_COLOR = "#5d6066"
     HOVER_COLOR = "#43464d"
@@ -177,6 +179,7 @@ class ElementRowWidget(QFrame):
         self.lbl_id.setFont(font_id)
         self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #6d6d6d; }")
         layout.addWidget(self.lbl_id)
+        layout.addStretch(1)
 
         self._update_appearance()
 
@@ -245,7 +248,8 @@ class ElementRowWidget(QFrame):
         menu = QMenu(self)
         act_copy = QAction("Copy Component", self)
         menu.addAction(act_copy)
-        if menu.exec_(event.globalPos()) == act_copy:
+        action = menu.exec_(event.globalPos())
+        if action == act_copy:
             self.selected.emit(self.ref)  # select first so ComponentList._copy_component has the right ref
             parent = self.parent()
             if isinstance(parent, ComponentList):
@@ -395,6 +399,7 @@ class ComponentList(QWidget):
     """Section 1 component list widget."""
 
     componentSelected = Signal(object)  # ComponentRef or None when empty
+    addNoteRequested = Signal(object)   # ComponentRef
 
     def __init__(self, document=None, parent=None):
         super().__init__(parent)
@@ -424,6 +429,7 @@ class ComponentList(QWidget):
         # Row 0: the element itself.
         self.elem_row = ElementRowWidget(ComponentRef(None, "element", -1), self.container_widget)
         self.elem_row.selected.connect(self._on_elem_selected)
+        self.elem_row.addNoteRequested.connect(self.addNoteRequested)
         self.container_layout.addWidget(self.elem_row)
 
         # Category headers — plain divider bars with Add/Paste. The collapsible

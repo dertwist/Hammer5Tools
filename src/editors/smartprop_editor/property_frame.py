@@ -24,7 +24,6 @@ from src.editors.smartprop_editor.property.material_group_choices import Propert
 from src.editors.smartprop_editor.property.variable import PropertyVariableOutput
 from src.editors.smartprop_editor.objects import surfaces_list
 from src.editors.smartprop_editor.property.set_variable import PropertyVariableValue
-from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
 from src.editors.smartprop_editor.property.path_editor import PropertyPathEditor
@@ -61,7 +60,7 @@ class PropertyFrame(QWidget):
         'FitOnLine': ['m_nReferenceID', 'm_bEnabled', 'm_vStart', 'm_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'],
         'PickOne': ['m_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'],
         'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_bDisableDynamicDeformable', 'm_nLodLevel', 'm_nDetailObjectFadeLevel', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
-        'ModelEntity': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
+        'ModelEntity': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_MaterialGroupName', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
         'BendDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vOrigin', 'm_vAngles', 'm_vSize', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'],
         'PropPhysics': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_MaterialGroupName', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode', 'm_bStartAsleep'],
         'PropDynamic': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_MaterialGroupName', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
@@ -104,7 +103,6 @@ class PropertyFrame(QWidget):
         'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
         'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
         'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
-        'Comment': ['m_bEnabled', 'm_Comment'],
         'Expression': ['m_bEnabled', 'm_Expression'],
         'Probability': ['m_bEnabled', 'm_flProbability'],
         'SurfaceAngle': ['m_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'],
@@ -158,7 +156,7 @@ class PropertyFrame(QWidget):
             cls._PROPERTY_WORKER_POOL = pool
         return cls._PROPERTY_WORKER_POOL
 
-    _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED'})
+    _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED', 'm_sNote', 'm_Comment', 'm_sComment', 'note', '_comment'})
 
     # Rows built per event-loop tick. Small enough that a tick stays well under
     # a frame, large enough that a typical element finishes in a handful of them.
@@ -174,7 +172,7 @@ class PropertyFrame(QWidget):
     _COMBOBOX_SUBSTRING_RULES = (
         ('m_SurfacePropertyOverride', [list(d.keys())[0] for d in surfaces_list], ['SurfaceProperty']),
         ('m_nPickMode', ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'], ['PickMode']),
-        ('m_nScaleMode', ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'], ['ScaleMode']),
+        ('m_nScaleMode', ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMIZE'], ['ScaleMode']),
         ('m_CoordinateSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_DirectionSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['DirectionSpace']),
         ('m_GridPlacementMode', ['SEGMENT', 'FILL'], ['GridPlacementMode']),
@@ -182,13 +180,14 @@ class PropertyFrame(QWidget):
         ('m_GridOriginMode', ['CENTER', 'CORNER'], ['GridOriginMode']),
         ('m_nNoHitResult', ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], ['TraceNoHit']),
         ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC'], ['ChoiceSelectionMode']),
-        ('m_PlacementMode', ['SPHERE', 'CIRCLE', 'RING'], ['RadiusPlacementMode']),
-        ('m_DistributionMode', ['RANDOM', 'UNIFORM'], ['DistributionMode']),
+        ('m_PlacementMode', ['SPHERE', 'CIRCLE'], ['RadiusPlacementMode']),
+        ('m_DistributionMode', ['RANDOM', 'REGULAR'], ['DistributionMode']),
+        ('m_DirectionVector', ['FORWARD', 'LEFT', 'UP'], ['Direction']),
         ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_sPhysicsType', ['normal', 'multiplayer'], ['String']),
         ('m_nDetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
         ('m_RotationAxes', ['X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'], ['Axes']),
-        ('m_HandleShape', ['SQUARE', 'DIAMOND', 'CIRCLE'], ['HandleShape']),
+        ('m_HandleShape', ['NONE', 'SQUARE', 'CIRCLE', 'DIAMOND'], ['HandleShape']),
         ('m_nDeformableAttachmentMode', ['RELATIVE', 'SNAP', 'STIFFEN'], ['SmartPropDeformableAttachMode_t']),
         ('m_nDeformableOrientationMode', ['NONE', 'FORWARD_NORMAL', 'UP_NORMAL', 'BACKWARD_NORMAL', 'MAINTAIN_OFFSET'], ['SmartPropDeformableOrientMode_t']),
         ('m_PointSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
@@ -218,7 +217,6 @@ class PropertyFrame(QWidget):
     _PREFIX_DISPATCH: list = []
 
     # Exact-match dispatch: maps value_class -> (WidgetClass, extra_kwargs_dict)
-    # PropertyComment is NOT in this dict ΓÇö handled separately (different signature)
     _EXACT_PROP_DISPATCH = None  # populated lazily by _resolve_dispatch()
     _DISPATCH_RESOLVED = False
 
@@ -773,11 +771,6 @@ class PropertyFrame(QWidget):
                 value_class=value_class,
                 variables_scrollArea=self.variables_scrollArea,
             )
-            add_instance()
-            return
-
-        if 'm_Comment' in value_class:
-            property_instance = PropertyComment(value=val, value_class=value_class)
             add_instance()
             return
 

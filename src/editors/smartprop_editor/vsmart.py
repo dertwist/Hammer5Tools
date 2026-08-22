@@ -169,6 +169,38 @@ def serialization_hierarchy_items(item, data=None):
         print(f"Error in serialization: {e}")
 
     return data
+def migrate_legacy_comments(data: dict):
+    """Migrate legacy m_Comment / Hammer5Tools_Comment into m_sNote."""
+    if not isinstance(data, dict):
+        return
+    # Check if this item has legacy comment keys
+    if not data.get("m_sNote"):
+        for k in ("m_Comment", "m_sComment", "note", "_comment"):
+            val = data.get(k)
+            if val and str(val).strip():
+                data["m_sNote"] = str(val).strip()
+                break
+
+    # Clean legacy comment keys
+    for k in ("m_Comment", "m_sComment", "note", "_comment"):
+        data.pop(k, None)
+
+    # Clean legacy Hammer5Tools_Comment modifiers / criteria
+    for array_key in ("m_Modifiers", "m_SelectionCriteria"):
+        arr = data.get(array_key)
+        if isinstance(arr, list):
+            cleaned = []
+            for item in arr:
+                if isinstance(item, dict):
+                    if item.get("_class") == "Hammer5Tools_Comment":
+                        cmt = item.get("m_Comment") or item.get("m_sComment") or item.get("note") or item.get("_comment")
+                        if cmt and not data.get("m_sNote"):
+                            data["m_sNote"] = str(cmt).strip()
+                    else:
+                        migrate_legacy_comments(item)
+                        cleaned.append(item)
+            data[array_key] = cleaned
+
 @exception_handler
 def deserialize_hierarchy_item(m_Children, element_id_generator=None):
     """Convert JSON-like hierarchy into tree items recursively."""
@@ -177,6 +209,7 @@ def deserialize_hierarchy_item(m_Children, element_id_generator=None):
         if key != "m_Children":
             item_value.update({key: m_Children[key]})
 
+    migrate_legacy_comments(item_value)
     item_value = element_id_generator.update_child_value(item_value, force=True)
     element_id = element_id_generator.get_key(item_value)
     
@@ -251,6 +284,7 @@ class VsmartOpen:
                         item_class = item.get("_class")
                         value_dict = item.copy()
                         value_dict.pop("m_Children", None)
+                        migrate_legacy_comments(value_dict)
                         if self.next_element_id is None:
                             update_value_ElementID(value_dict)
                             value_dict = update_child_ElementID_value(value_dict)
