@@ -271,9 +271,15 @@ class PropertyFrame(QWidget):
             'm_OutputVariableMaxX':    (PropertyVariableOutput,  {}),
             'm_OutputVariableMinX':    (PropertyVariableOutput,  {}),
             'm_OutputVariable':        (PropertyVariableOutput,  {}),
-            'm_OutputChoiceVariableName': (PropertyVariableOutput, {}),
+            'm_PathName':              (PropertyString,  {'expression_bool': False, 'placeholder': 'Path name'}),
+            'm_flSpacing':             (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flOffsetAlongPath':     (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_vPathOffset':           (PropertyVector3D, {}),
+            'm_vUpDirection':          (PropertyVector3D, {}),
             'm_DefaultPath':           (PropertyPathEditor,           {}),
             'm_DefaultPathInWorldSpace': (PropertyBool,               {}),
+            'm_bUseFixedUpDirection':  (PropertyBool,                 {}),
+            'm_bUseProjectedDistance': (PropertyBool,                 {}),
             '_WARN_NOT_VERIFIED':      (PropertyWarning,              {}),
         }
 
