@@ -17,7 +17,9 @@ from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
 from src.editors.smartprop_editor.viewport_3d.engine.context import EvalContext
 from src.editors.smartprop_editor.viewport_3d.engine.variables import build_variable_map
 from src.editors.smartprop_editor.viewport_3d.engine.process import extract_widget_specs
-from src.editors.smartprop_editor.viewport_3d.engine.modifier_evaluator import evaluate_element_modifiers
+from src.editors.smartprop_editor.viewport_3d.engine.modifier_evaluator import (
+    evaluate_element_modifiers, evaluate_single_modifier
+)
 from src.editors.smartprop_editor.viewport_3d.crash_guard import gl_guard
 from src.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
@@ -84,6 +86,7 @@ def safe_normal_matrix(model_matrix):
 
 class SmartProp3DRenderArea(QOpenGLWidget):
     elementClicked = Signal(int)
+    gizmoModeChanged = Signal(object)
 
     def __init__(self, document=None, parent=None):
         super().__init__(parent)
@@ -1223,7 +1226,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         Returns True when the scene was rebuilt (the caller can skip its own
         gizmo sync — update_viewport() already did it).
         """
-        target = self._selected_id if (self.dynamic_isolation and self._selected_id) else None
+        if not self.dynamic_isolation:
+            return False
+        target = self._selected_id if self._selected_id else None
         if target == self.isolated_element_id:
             return False
         self.isolated_element_id = target
@@ -1235,7 +1240,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def set_dynamic_isolation(self, enabled: bool):
         """Enable/disable selection-following isolation (clears it when off)."""
         self.dynamic_isolation = bool(enabled)
-        self._follow_selection_isolation()
+        if not self.dynamic_isolation:
+            self.isolated_element_id = None
+            self.isolated_element_name = ""
+            self.update_viewport()
+        else:
+            self._follow_selection_isolation()
 
     @gl_guard("event")
     def highlight_element(self, element_id: int):
@@ -1369,22 +1379,54 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     changed_keys = []
                     if "position" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Translate", "m_vPosition")
+                        M_prior = self._evaluate_modifiers_prior_to(data, mod, parent_world_matrix)
+                        space = str(mod.get("m_CoordinateSpace") or "ELEMENT").upper()
+
+                        if space in ("WORLD", "PARENT"):
+                            M_prior_pos, _, _ = decompose_trs(M_prior)
+                            target_mod_pos = [
+                                float(target_local_pos[0] - M_prior_pos[0]),
+                                float(target_local_pos[1] - M_prior_pos[1]),
+                                float(target_local_pos[2] - M_prior_pos[2]),
+                            ]
+                        else:
+                            try:
+                                M_prior_inv = np.linalg.inv(M_prior)
+                            except np.linalg.LinAlgError:
+                                M_prior_inv = np.eye(4, dtype=np.float32)
+                            p_homo = np.array([target_local_pos[0], target_local_pos[1], target_local_pos[2], 1.0], dtype=np.float32)
+                            target_mod_pos = [float(x) for x in (p_homo @ M_prior_inv)[:3]]
+
                         avail = self._vector_axis_availability(mod.get("m_vPosition"))
                         axes = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
-                                self._set_vector_component(mod, "m_vPosition", i, target_local_pos[i], target_local_pos)
+                                self._set_vector_component(mod, "m_vPosition", i, target_mod_pos[i], target_mod_pos)
                         changed_keys.append(f"m_Modifiers[{data['m_Modifiers'].index(mod)}].m_vPosition")
-                        self.current_transform_text = f"Translate: X: {target_local_pos[0]:.2f}, Y: {target_local_pos[1]:.2f}, Z: {target_local_pos[2]:.2f}"
+                        self.current_transform_text = f"Translate: X: {target_mod_pos[0]:.2f}, Y: {target_mod_pos[1]:.2f}, Z: {target_mod_pos[2]:.2f}"
                     elif "rotation" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
+                        M_prior = self._evaluate_modifiers_prior_to(data, mod, parent_world_matrix)
+                        space = str(mod.get("m_CoordinateSpace") or "ELEMENT").upper()
+
+                        _, rot_prior, _ = decompose_trs(M_prior)
+                        R_prior = rotation_matrix_euler(*rot_prior)
+                        R_target = rotation_matrix_euler(*target_local_rot)
+
+                        if space in ("WORLD", "PARENT"):
+                            R_mod = R_prior.T @ R_target
+                        else:
+                            R_mod = R_target @ R_prior.T
+
+                        _, target_mod_rot, _ = decompose_trs(R_mod)
+
                         avail = self._vector_axis_availability(mod.get("m_vRotation"))
                         axes = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
-                                self._set_vector_component(mod, "m_vRotation", i, target_local_rot[i], target_local_rot)
+                                self._set_vector_component(mod, "m_vRotation", i, target_mod_rot[i], target_mod_rot)
                         changed_keys.append(f"m_Modifiers[{data['m_Modifiers'].index(mod)}].m_vRotation")
-                        self.current_transform_text = f"Rotate: Pitch: {target_local_rot[0]:.2f}, Yaw: {target_local_rot[1]:.2f}, Roll: {target_local_rot[2]:.2f}"
+                        self.current_transform_text = f"Rotate: Pitch: {target_mod_rot[0]:.2f}, Yaw: {target_mod_rot[1]:.2f}, Roll: {target_mod_rot[2]:.2f}"
                     elif "scale" in delta and (axis_idx is not None or is_center):
                         changed_keys.extend(self._apply_scale_delta(data, axis_idx, target_local_scale, uniform=is_center))
                         if is_center:
@@ -1407,7 +1449,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
                     # Update widgets for the dragged element itself
                     eid = data.get("m_nElementID", 0)
-                    self._replace_element_widgets(eid, new_widgets)
+                    self._replace_element_widgets(eid, new_widgets, data=data)
 
                     # Update all descendant transforms and their visual widgets immediately
                     self._update_subtree_transforms(item, M_actual_world)
@@ -1463,14 +1505,21 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     @gl_guard("event")
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_W:
+        if event.key() == Qt.Key_Q:
+            self.gizmo.set_mode(GizmoMode.NONE)
+            self.gizmoModeChanged.emit(GizmoMode.NONE)
+            self.update()
+        elif event.key() == Qt.Key_W:
             self.gizmo.set_mode(GizmoMode.TRANSLATE)
+            self.gizmoModeChanged.emit(GizmoMode.TRANSLATE)
             self.update()
         elif event.key() == Qt.Key_E:
             self.gizmo.set_mode(GizmoMode.ROTATE)
+            self.gizmoModeChanged.emit(GizmoMode.ROTATE)
             self.update()
         elif event.key() == Qt.Key_R:
             self.gizmo.set_mode(GizmoMode.SCALE)
+            self.gizmoModeChanged.emit(GizmoMode.SCALE)
             self.update()
         elif event.key() == Qt.Key_F:
             # Frame the current selection (or the whole scene if nothing selected).
@@ -1584,6 +1633,33 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         }
 
     # Data modifier helpers
+    def _evaluate_modifiers_prior_to(self, data, target_mod, parent_world_matrix):
+        """Evaluate modifiers on data that occur BEFORE target_mod.
+
+        Returns 4x4 float32 matrix M_prior representing the local transform
+        accumulated before target_mod is applied.
+        """
+        M_prior = np.eye(4, dtype=np.float32)
+        modifiers = data.get("m_Modifiers")
+        if not isinstance(modifiers, list):
+            return M_prior
+
+        ctx = self._eval_context
+        eid = int(data.get("m_nElementID", 0) or 0)
+        inst_idx = getattr(ctx, "instance_index", 0) or 0
+        state_map = {}
+
+        for mod in modifiers:
+            if not isinstance(mod, dict):
+                continue
+            if mod is target_mod:
+                break
+            M_prior, _ = evaluate_single_modifier(
+                mod, M_prior, parent_world_matrix, ctx,
+                state_map=state_map, eid=eid, inst_idx=inst_idx
+            )
+        return M_prior
+
     @staticmethod
     def _find_modifier(data, class_name):
         """Return the first modifier dict of the given class, or None."""
@@ -1609,7 +1685,30 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         mod = {"_class": class_name, "m_bEnabled": True}
         if vector_key is not None:
             mod[vector_key] = {"m_Components": [0.0, 0.0, 0.0]}
-        modifiers.append(mod)
+
+        # Maintain canonical TRS (Translate -> Rotate -> Scale) modifier order
+        if class_name in ("CSmartPropOperation_Translate", "Translate"):
+            insert_idx = len(modifiers)
+            for idx, m in enumerate(modifiers):
+                if isinstance(m, dict) and m.get("_class") in (
+                    "CSmartPropOperation_Rotate", "Rotate",
+                    "CSmartPropOperation_Scale", "Scale"
+                ):
+                    insert_idx = idx
+                    break
+            modifiers.insert(insert_idx, mod)
+        elif class_name in ("CSmartPropOperation_Rotate", "Rotate"):
+            insert_idx = len(modifiers)
+            for idx, m in enumerate(modifiers):
+                if isinstance(m, dict) and m.get("_class") in (
+                    "CSmartPropOperation_Scale", "Scale"
+                ):
+                    insert_idx = idx
+                    break
+            modifiers.insert(insert_idx, mod)
+        else:
+            modifiers.append(mod)
+
         return mod
 
     def _set_vector_component(self, container, key, axis_idx, value, full_vector):
@@ -1763,11 +1862,43 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             print(f"[SmartProp3D] Failed to build variable map: {e}")
         return EvalContext(variables=variables)
 
-    def _replace_element_widgets(self, eid, new_widgets):
-        """Replace all visual widgets belonging to element `eid` with `new_widgets`."""
-        if not eid:
-            return
-        self._widget_infos = [w for w in self._widget_infos if w.get("element_id") != eid]
+    def _replace_element_widgets(self, eid, new_widgets, data=None):
+        """Replace all visual widgets belonging to element `eid` (and its modifiers) with `new_widgets`."""
+        eids_to_remove = set()
+        if eid is not None:
+            eids_to_remove.add(eid)
+            try:
+                eids_to_remove.add(int(eid))
+            except (ValueError, TypeError):
+                pass
+            eids_to_remove.add(str(eid))
+
+        for w in new_widgets:
+            wid = w.get("element_id")
+            if wid is not None:
+                eids_to_remove.add(wid)
+                try:
+                    eids_to_remove.add(int(wid))
+                except (ValueError, TypeError):
+                    pass
+                eids_to_remove.add(str(wid))
+
+        if isinstance(data, dict):
+            for mod in data.get("m_Modifiers", []):
+                if isinstance(mod, dict):
+                    mid = mod.get("m_nElementID")
+                    if mid is not None:
+                        eids_to_remove.add(mid)
+                        try:
+                            eids_to_remove.add(int(mid))
+                        except (ValueError, TypeError):
+                            pass
+                        eids_to_remove.add(str(mid))
+
+        self._widget_infos = [
+            w for w in self._widget_infos
+            if w.get("element_id") not in eids_to_remove
+        ]
         self._widget_infos.extend(new_widgets)
 
     def _collect_widgets(self, data, world_pos, world_rot, world_matrix):
@@ -2806,6 +2937,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     info["scale"] = world_scale
                     info["world_matrix"] = model_world_matrix
                     info["parent_world_matrix"] = parent_world_matrix
-                self._replace_element_widgets(eid, widgets)
+                self._replace_element_widgets(eid, widgets, data=data)
 
             self._update_subtree_transforms(child, world_matrix, ctx=child_ctx)

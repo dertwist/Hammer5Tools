@@ -214,6 +214,10 @@ class SmartPropPropertyPanel(QWidget):
             self.property_list.set_components([])
             self.help_panel.clear_help()
 
+    @property
+    def selected_ref(self) -> ComponentRef | None:
+        return self.components_list.selected_ref
+
     def selected_refs(self) -> list[ComponentRef]:
         return self.components_list.selected_refs()
 

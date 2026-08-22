@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QLabel,
-    QToolButton, QSizePolicy,
+    QToolButton, QSizePolicy, QButtonGroup,
 )
 
 from src.editors.smartprop_editor.viewport_3d.render_area import SmartProp3DRenderArea
@@ -26,6 +26,12 @@ def _hammer_tool_icon_path(name):
     return os.path.join(
         get_cs2_path(), "game", "core", "tools", "images", "hammer", name
     )
+
+
+def _modeldoc_tool_icon_path(name):
+    """Absolute path to a ModelDoc manipulation icon."""
+    src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    return os.path.join(src_dir, "icons", "tools", "modeldoc_editor", name)
 
 
 # Toggle-button styling for the compact icon toggles in the viewport toolbar.
@@ -72,6 +78,48 @@ class SmartProp3DViewport(QWidget):
         tb_layout = QHBoxLayout(toolbar)
         tb_layout.setContentsMargins(8, 0, 8, 0)
         tb_layout.setSpacing(8)
+
+        # Transform mode tool buttons (Select Q, Move W, Rotate E, Scale R)
+        self.mode_button_group = QButtonGroup(self)
+        self.mode_button_group.setExclusive(True)
+
+        self.btn_select = self._make_toggle_button(
+            tooltip="Select (Q)",
+            icon_off=_modeldoc_tool_icon_path("manipulation_none.png"),
+            icon_on=_modeldoc_tool_icon_path("manipulation_none_active.png"),
+        )
+        self.btn_translate = self._make_toggle_button(
+            tooltip="Translate / Move (W)",
+            icon_off=_modeldoc_tool_icon_path("manipulation_translate.png"),
+            icon_on=_modeldoc_tool_icon_path("manipulation_translate_active.png"),
+        )
+        self.btn_rotate = self._make_toggle_button(
+            tooltip="Rotate (E)",
+            icon_off=_modeldoc_tool_icon_path("manipulation_rotate.png"),
+            icon_on=_modeldoc_tool_icon_path("manipulation_rotate_active.png"),
+        )
+        self.btn_scale = self._make_toggle_button(
+            tooltip="Scale (R)",
+            icon_off=_modeldoc_tool_icon_path("manipulation_scale.png"),
+            icon_on=_modeldoc_tool_icon_path("manipulation_scale_active.png"),
+        )
+
+        self.mode_button_group.addButton(self.btn_select, GizmoMode.NONE)
+        self.mode_button_group.addButton(self.btn_translate, GizmoMode.TRANSLATE)
+        self.mode_button_group.addButton(self.btn_rotate, GizmoMode.ROTATE)
+        self.mode_button_group.addButton(self.btn_scale, GizmoMode.SCALE)
+
+        self.btn_translate.setChecked(True)
+
+        self.btn_select.clicked.connect(lambda: self._set_gizmo_mode(GizmoMode.NONE))
+        self.btn_translate.clicked.connect(lambda: self._set_gizmo_mode(GizmoMode.TRANSLATE))
+        self.btn_rotate.clicked.connect(lambda: self._set_gizmo_mode(GizmoMode.ROTATE))
+        self.btn_scale.clicked.connect(lambda: self._set_gizmo_mode(GizmoMode.SCALE))
+
+        tb_layout.addWidget(self.btn_select)
+        tb_layout.addWidget(self.btn_translate)
+        tb_layout.addWidget(self.btn_rotate)
+        tb_layout.addWidget(self.btn_scale)
 
         # Display Groups toggle — single-state Hammer "solids" icon.
         self.groups_check = self._make_toggle_button(
@@ -158,6 +206,7 @@ class SmartProp3DViewport(QWidget):
 
         self.render_area = SmartProp3DRenderArea(document=document, parent=self)
         self.render_area.elementClicked.connect(self.elementClicked.emit)
+        self.render_area.gizmoModeChanged.connect(self._sync_gizmo_mode_button)
         # Expanding (with no minimum) lets the viewport claim available space by
         # default yet still be dragged arbitrarily narrow.
         self.render_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -226,8 +275,21 @@ class SmartProp3DViewport(QWidget):
         self.render_area.show_widgets = bool(checked)
         self.render_area.update()
 
+    def _sync_gizmo_mode_button(self, mode: GizmoMode):
+        """Synchronize toolbar button checked state with the active GizmoMode."""
+        btn_map = {
+            GizmoMode.NONE: self.btn_select,
+            GizmoMode.TRANSLATE: self.btn_translate,
+            GizmoMode.ROTATE: self.btn_rotate,
+            GizmoMode.SCALE: self.btn_scale,
+        }
+        btn = btn_map.get(mode)
+        if btn and not btn.isChecked():
+            btn.setChecked(True)
+
     def _set_gizmo_mode(self, mode: GizmoMode):
         self.render_area.gizmo.set_mode(mode)
+        self._sync_gizmo_mode_button(mode)
         self.render_area.update()
 
     def fit_view(self):
@@ -240,9 +302,10 @@ class SmartProp3DViewport(QWidget):
         self.render_area.highlight_element(element_id)
 
     def keyPressEvent(self, event):
-        # Forward transform-mode keys (W/E/R) and the frame-selection key (F) to
+        # Forward transform-mode keys (Q/W/E/R) and the frame-selection key (F) to
         # the render area.
-        if event.key() in (Qt.Key_W, Qt.Key_E, Qt.Key_R, Qt.Key_F):
+        if event.key() in (Qt.Key_Q, Qt.Key_W, Qt.Key_E, Qt.Key_R, Qt.Key_F):
             self.render_area.keyPressEvent(event)
         else:
             super().keyPressEvent(event)
+

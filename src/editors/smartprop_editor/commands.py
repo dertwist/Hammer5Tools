@@ -279,10 +279,12 @@ class PropertySnapshotCommand(QUndoCommand):
                 result.add(k)
         return frozenset(result)
 
+    _INTERNAL_KEYS = frozenset({'_class', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED'})
+
     @staticmethod
     def _label_for_keys(keys, old_data=None, new_data=None):
         """Build a human-readable history label from the set of change discriminators."""
-        content = keys - {'_class', 'm_nElementID', '_WARN_NOT_VERIFIED'}
+        content = keys - PropertySnapshotCommand._INTERNAL_KEYS
         
         # Check if this is a modifier/criteria list change (add, remove, reorder)
         list_keys = set()

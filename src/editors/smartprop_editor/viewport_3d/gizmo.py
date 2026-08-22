@@ -45,7 +45,11 @@ class GizmoAxis:
     X = "x"
     Y = "y"
     Z = "z"
-    CENTER = "center"   # uniform-scale handle at the axes' origin (Scale mode only)
+    XY = "xy"          # Planar translation in XY plane (normal Z, blue)
+    XZ = "xz"          # Planar translation in XZ plane (normal Y, green)
+    YZ = "yz"          # Planar translation in YZ plane (normal X, red)
+    SCREEN = "screen"  # Screen-plane translation (center circle/dot handle in Translate mode)
+    CENTER = "center"  # Uniform-scale handle at the axes' origin (Scale mode only)
 
 
 # Axis colors (Red for X, Green for Y, Blue for Z)
@@ -53,38 +57,38 @@ AXIS_COLORS = {
     GizmoAxis.X: np.array([0.9, 0.2, 0.2], dtype=np.float32),
     GizmoAxis.Y: np.array([0.2, 0.8, 0.2], dtype=np.float32),
     GizmoAxis.Z: np.array([0.3, 0.4, 0.9], dtype=np.float32),
+    GizmoAxis.XY: np.array([0.3, 0.4, 0.9], dtype=np.float32),  # Normal is Z (Blue)
+    GizmoAxis.XZ: np.array([0.2, 0.8, 0.2], dtype=np.float32),  # Normal is Y (Green)
+    GizmoAxis.YZ: np.array([0.9, 0.2, 0.2], dtype=np.float32),  # Normal is X (Red)
+    GizmoAxis.SCREEN: np.array([0.92, 0.92, 0.92], dtype=np.float32),
 }
 
 AXIS_HIGHLIGHT_COLORS = {
     GizmoAxis.X: np.array([1.0, 0.6, 0.2], dtype=np.float32),
     GizmoAxis.Y: np.array([0.6, 1.0, 0.2], dtype=np.float32),
     GizmoAxis.Z: np.array([0.2, 0.6, 1.0], dtype=np.float32),
+    GizmoAxis.XY: np.array([0.4, 0.7, 1.0], dtype=np.float32),
+    GizmoAxis.XZ: np.array([0.6, 1.0, 0.4], dtype=np.float32),
+    GizmoAxis.YZ: np.array([1.0, 0.5, 0.5], dtype=np.float32),
+    GizmoAxis.SCREEN: np.array([1.0, 1.0, 1.0], dtype=np.float32),
 }
 
-# Hover/active handles use a single bright yellow across all axes — the standard
-# Unity/Blender convention that reads instantly as "this is the handle you'll
-# grab", regardless of the axis's own colour.
+# Hover/active handles use bright yellow across all axes
 AXIS_HOVER_COLOR = np.array([1.0, 0.9, 0.2], dtype=np.float32)
 
-# Grayscale color for an axis the gizmo cannot manipulate on the current
-# object — i.e. the value is bound to a variable/expression, or the transform
-# channel does not exist and can't be created (e.g. scale on an element with no
-# model scale).  Such axes render dim/gray and ignore hover + clicks.
+# Grayscale color for disabled axes
 AXIS_DISABLED_COLOR = np.array([0.42, 0.42, 0.42], dtype=np.float32)
 
-# Uniform-scale center handle (the small cube where the three scale axes meet).
-# Dragging it scales every axis together.  Neutral by default, yellow on hover.
+# Uniform-scale center handle (Scale mode only)
 CENTER_COLOR = np.array([0.88, 0.88, 0.88], dtype=np.float32)
 CENTER_HIGHLIGHT_COLOR = np.array([1.0, 0.85, 0.2], dtype=np.float32)
 
-# Translate arrows are 1.5x longer than the base gizmo size.
-TRANSLATE_LENGTH_SCALE = 1.5
-# Size of the Scale-mode end cubes, as a fraction of the gizmo size (1.5x the
-# original 0.08).
+# Translate arrows length multiplier
+TRANSLATE_LENGTH_SCALE = 1.45
+# Size of the Scale-mode end cubes
 SCALE_CUBE_SIZE = 0.12
 
 # Map Source 2 axes directions to OpenGL space
-# S2 is Z-up: S2 X -> GL X [1, 0, 0], S2 Y -> GL -Z [0, 0, -1], S2 Z -> GL Y [0, 1, 0]
 AXIS_DIRECTIONS = {
     GizmoAxis.X: np.array([1.0, 0.0, 0.0], dtype=np.float32),
     GizmoAxis.Y: np.array([0.0, 0.0, -1.0], dtype=np.float32),
@@ -93,13 +97,7 @@ AXIS_DIRECTIONS = {
 
 
 def project_to_screen(world_pos, view_matrix, proj_matrix, w, h):
-    """Project a 3D GL world space point to 2D screen coordinates.
-
-    view_matrix / proj_matrix are row-vector style (pre-transposed for GL_FALSE
-    upload), so the correct clip position is the row-vector chain
-    ``pos @ view @ proj`` — not ``proj @ view @ pos``, which would transform by
-    the transposes and land the point in the wrong place.
-    """
+    """Project a 3D GL world space point to 2D screen coordinates."""
     pos_h = np.append(world_pos, 1.0)
     clip_pos = pos_h @ view_matrix @ proj_matrix
     if abs(clip_pos[3]) > 1e-6:
@@ -109,6 +107,23 @@ def project_to_screen(world_pos, view_matrix, proj_matrix, w, h):
     sx = (ndc[0] + 1.0) * 0.5 * w
     sy = (1.0 - ndc[1]) * 0.5 * h
     return np.array([sx, sy], dtype=np.float32)
+
+
+def screen_to_world_ray(sx, sy, w, h, view_matrix, proj_matrix, camera_pos):
+    """Convert screen coordinates to a world ray (origin, direction)."""
+    ndc_x = (2.0 * sx / max(w, 1)) - 1.0
+    ndc_y = 1.0 - (2.0 * sy / max(h, 1))
+
+    inv_proj = np.linalg.inv(proj_matrix).T
+    inv_view = np.linalg.inv(view_matrix).T
+
+    clip = np.array([ndc_x, ndc_y, -1.0, 1.0], dtype=np.float32)
+    eye_pos = inv_proj @ clip
+    eye_pos = np.array([eye_pos[0], eye_pos[1], -1.0, 0.0], dtype=np.float32)
+
+    world_dir = inv_view @ eye_pos
+    direction = _normalize(world_dir[:3])
+    return camera_pos.copy(), direction
 
 
 class Gizmo:
@@ -127,16 +142,16 @@ class Gizmo:
         self.active_axis: str = GizmoAxis.NONE
         self._dragging = False
         self._drag_start_pos = None
+        self._drag_start_gl_pos = None
         self._drag_start_value = None
+        self._drag_plane_start_hit = None
+        self._accumulated_angle = 0.0
+        self._last_angle = None
 
-        # Per-mode, per-axis availability.  An axis is unavailable (rendered
-        # gray and non-interactive) when its value is bound to a variable or
-        # expression, or when the transform channel can't be manipulated for the
-        # selected element.  Defaults to fully available.
+        # Per-mode, per-axis availability
         self.axis_availability = {
             GizmoMode.TRANSLATE: {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True},
             GizmoMode.ROTATE:    {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True},
-            # Scale also has a CENTER handle for uniform (all-axis) scaling.
             GizmoMode.SCALE:     {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True, GizmoAxis.CENTER: True},
         }
 
@@ -153,6 +168,12 @@ class Gizmo:
         self._cube_vao = 0
         self._cube_vbo = 0
         self._cube_vertex_count = 0
+        self._plane_vao = 0
+        self._plane_vbo = 0
+        self._plane_vertex_count = 0
+        self._screen_ring_vao = 0
+        self._screen_ring_vbo = 0
+        self._screen_ring_vertex_count = 0
         self._initialized = False
 
         self.coordinate_space = "World"  # "World" | "Local" | "Screen"
@@ -164,6 +185,13 @@ class Gizmo:
         self.camera_right = np.array([1.0, 0.0, 0.0], dtype=np.float32)
         self.camera_up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
         self.camera_forward = np.array([0.0, 0.0, -1.0], dtype=np.float32)
+
+    def get_gizmo_scale(self, camera_pos: np.ndarray, gl_pos: Optional[np.ndarray] = None) -> float:
+        """Calculate gizmo scale in world units to maintain a constant screen-space size."""
+        if gl_pos is None:
+            gl_pos = self._get_gl_position()
+        dist = float(np.linalg.norm(camera_pos - gl_pos))
+        return max(dist * (0.08 / 1.5), 1e-4)
 
     def get_axis_direction(self, axis_name: str) -> np.ndarray:
         """Get the direction of the given axis in GL space."""
@@ -180,7 +208,7 @@ class Gizmo:
                 "z": self.camera_forward,
             }[axis_name]
             return _normalize(gl_dir)
-        else: # World
+        else:  # World
             return {
                 "x": np.array([1.0, 0.0, 0.0], dtype=np.float32),
                 "y": np.array([0.0, 0.0, -1.0], dtype=np.float32),
@@ -201,7 +229,7 @@ class Gizmo:
             }[axis_name]
             s2_dir = (SOURCE2_TO_GL @ np.append(gl_dir, 0.0))[:3]
             return _normalize(s2_dir)
-        else: # World
+        else:  # World
             return {
                 "x": np.array([1.0, 0.0, 0.0], dtype=np.float32),
                 "y": np.array([0.0, 1.0, 0.0], dtype=np.float32),
@@ -223,12 +251,7 @@ class Gizmo:
         self.hover_axis = GizmoAxis.NONE
 
     def set_axis_availability(self, availability: dict):
-        """Update which axes can be manipulated.
-
-        ``availability`` is keyed by :class:`GizmoMode` then :class:`GizmoAxis`,
-        e.g. ``{GizmoMode.TRANSLATE: {"x": True, "y": False, "z": True}}``.
-        Modes/axes not present keep their current value.
-        """
+        """Update which axes can be manipulated."""
         for mode, axes in availability.items():
             if mode in self.axis_availability and isinstance(axes, dict):
                 for axis, enabled in axes.items():
@@ -236,10 +259,20 @@ class Gizmo:
                         self.axis_availability[mode][axis] = bool(enabled)
 
     def is_axis_available(self, axis_name: str, mode: Optional[GizmoMode] = None) -> bool:
-        """Return whether the given axis can be dragged in the given mode
-        (defaults to the current mode)."""
+        """Return whether the given axis can be dragged in the given mode."""
         m = self.mode if mode is None else mode
-        return self.axis_availability.get(m, {}).get(axis_name, True)
+        avail_map = self.axis_availability.get(m, {})
+        if axis_name == GizmoAxis.XY:
+            return avail_map.get(GizmoAxis.X, True) and avail_map.get(GizmoAxis.Y, True)
+        elif axis_name == GizmoAxis.XZ:
+            return avail_map.get(GizmoAxis.X, True) and avail_map.get(GizmoAxis.Z, True)
+        elif axis_name == GizmoAxis.YZ:
+            return avail_map.get(GizmoAxis.Y, True) and avail_map.get(GizmoAxis.Z, True)
+        elif axis_name == GizmoAxis.SCREEN:
+            return (avail_map.get(GizmoAxis.X, True) or
+                    avail_map.get(GizmoAxis.Y, True) or
+                    avail_map.get(GizmoAxis.Z, True))
+        return avail_map.get(axis_name, True)
 
     def init_geometry(self):
         """Create GPU geometry for gizmo handles. Must be called in GL context."""
@@ -259,7 +292,7 @@ class Gizmo:
         GL.glBindVertexArray(0)
         self._arrow_vertex_count = len(arrow_verts)
 
-        # Plain shaft geometry (used by the Scale gizmo, no arrowhead)
+        # Plain shaft geometry (Scale mode)
         shaft_verts = self._build_shaft_vertices()
         self._shaft_vao = GL.glGenVertexArrays(1)
         self._shaft_vbo = GL.glGenBuffers(1)
@@ -271,7 +304,7 @@ class Gizmo:
         GL.glBindVertexArray(0)
         self._shaft_vertex_count = len(shaft_verts)
 
-        # Ring geometry
+        # 3D solid ring band geometry
         ring_verts = self._build_ring_vertices()
         self._ring_vao = GL.glGenVertexArrays(1)
         self._ring_vbo = GL.glGenBuffers(1)
@@ -283,7 +316,7 @@ class Gizmo:
         GL.glBindVertexArray(0)
         self._ring_vertex_count = len(ring_verts)
 
-        # Scale cube geometry
+        # Cube geometry (Scale ends and center)
         cube_verts = self._build_cube_vertices()
         self._cube_vao = GL.glGenVertexArrays(1)
         self._cube_vbo = GL.glGenBuffers(1)
@@ -295,15 +328,34 @@ class Gizmo:
         GL.glBindVertexArray(0)
         self._cube_vertex_count = len(cube_verts)
 
+        # Planar quad geometry (Translate dual-axis handles)
+        plane_verts = self._build_plane_vertices()
+        self._plane_vao = GL.glGenVertexArrays(1)
+        self._plane_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._plane_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._plane_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, plane_verts.nbytes, plane_verts, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
+        self._plane_vertex_count = len(plane_verts)
+
+        # Center screen ring geometry (Translate screen-plane handle)
+        screen_ring_verts = self._build_screen_ring_vertices()
+        self._screen_ring_vao = GL.glGenVertexArrays(1)
+        self._screen_ring_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._screen_ring_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._screen_ring_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, screen_ring_verts.nbytes, screen_ring_verts, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
+        self._screen_ring_vertex_count = len(screen_ring_verts)
+
         self._initialized = True
 
     def _get_gl_position(self):
-        """Map S2 position to GL space.
-
-        SOURCE2_TO_GL is written pre-transposed for GL_FALSE render chains, so a
-        direct column-vector point transform must use its transpose to land on
-        the same GL location the models are drawn at.
-        """
+        """Map S2 position to GL space."""
         pos_h = np.append(self.position, 1.0)
         gl_pos = SOURCE2_TO_GL.T @ pos_h
         return gl_pos[:3]
@@ -315,10 +367,6 @@ class Gizmo:
 
         from OpenGL import GL
 
-        # Bind the gizmo program before touching its uniforms — otherwise
-        # glGetUniformLocation resolves against the gizmo program while a
-        # *different* program is still current, and glUniform* raises
-        # GL_INVALID_OPERATION.  Upload view/projection once here.
         GL.glUseProgram(shader_program)
         GL.glUniformMatrix4fv(
             GL.glGetUniformLocation(shader_program, "uView"), 1, GL.GL_FALSE, view_matrix
@@ -327,42 +375,17 @@ class Gizmo:
             GL.glGetUniformLocation(shader_program, "uProjection"), 1, GL.GL_FALSE, proj_matrix
         )
 
-        # Clear only the depth buffer so the gizmo gets a fresh depth range: it
-        # always draws on top of the scene, yet with the depth test still enabled
-        # its own parts occlude each other correctly (crossing rings / arrows read
-        # as solid 3D instead of a flat draw-order stack).  The gizmo is the last
-        # thing rendered each frame, so wiping depth here is safe.  Depth writes
-        # must be on for glClear(DEPTH) to take effect, so enable them first.
         GL.glDepthMask(GL.GL_TRUE)
         GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
         GL.glEnable(GL.GL_DEPTH_TEST)
-        # Force solid fill regardless of the viewport's shading mode (e.g.
-        # Wireframe), so the gizmo never inherits a leftover GL_LINE polygon
-        # mode from the model render pass.
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
-        gl_pos = self._get_gl_position()
-        dist = np.linalg.norm(camera_pos - gl_pos)
-        gizmo_scale = max(dist * 0.06, 5.0)
+        if self._dragging and self._drag_start_gl_pos is not None and self.mode in (GizmoMode.ROTATE, GizmoMode.SCALE):
+            gl_pos = self._drag_start_gl_pos
+        else:
+            gl_pos = self._get_gl_position()
+        gizmo_scale = self.get_gizmo_scale(camera_pos, gl_pos)
 
-        # Build the space-orientation matrix that carries the gizmo handles from
-        # World orientation into the active coordinate space.
-        #
-        # Each handle is first aimed by ``axis_rot`` at its *World* GL direction
-        # (X -> +X, Y -> -Z, Z -> +Y — i.e. the rows of SOURCE2_TO_GL), NOT the
-        # GL standard basis.  R_space must therefore map those World directions
-        # onto the per-space GL directions returned by ``get_axis_direction`` so
-        # every handle is rendered exactly where ``hit_test`` probes for it.
-        #
-        # With W = SOURCE2_TO_GL's 3x3 (rows = the World axis directions) and T
-        # the target frame (rows = this space's GL axis dirs), the row-vector
-        # requirement ``W @ R_space == T`` solves to ``R_space = W^-1 @ T``,
-        # which is ``W.T @ T`` because W is orthonormal.
-        #
-        # The previous code filled R_space's rows straight from the space basis
-        # (gl_x/gl_y/gl_z), ignoring axis_rot's Y->-Z / Z->+Y remap.  That drew
-        # the Local/Screen Y and Z handles along the wrong directions, so they
-        # rendered away from where hit_test looked and could never be grabbed.
         R_space = np.eye(4, dtype=np.float32)
         if self.coordinate_space in ("Local", "Screen"):
             T = np.array([
@@ -373,29 +396,20 @@ class Gizmo:
             W = SOURCE2_TO_GL[:3, :3]
             R_space[:3, :3] = W.T @ T
 
+        # 1. Render single-axis handles (Arrows / Rings / Shafts)
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
             available = self.is_axis_available(axis_name)
             is_active = available and (axis_name == self.active_axis)
             is_hover = available and (axis_name == self.hover_axis and not self._dragging)
 
             if not available:
-                # Grayscale = this axis can't be manipulated on this object.
                 color = AXIS_DISABLED_COLOR
             elif is_active or is_hover:
                 color = AXIS_HOVER_COLOR
             else:
                 color = AXIS_COLORS[axis_name]
 
-            # Model matrix.  These builders are row-vector style and the matrix is
-            # uploaded with GL_FALSE, so the chain must be written scale-first /
-            # translate-last (same convention as the model render chain).  Writing
-            # it translate-first pushes the translation innermost, which scales and
-            # rotates gl_pos itself and flings the gizmo far from the model — making
-            # it impossible to click/drag.
             axis_rot = self._axis_rotation_matrix(axis_name)
-            # Translate handles are 1.5x longer than the others.  axis_rot aims
-            # local +Y at the axis, so stretching local Y lengthens the arrow
-            # along its axis without thickening it (X/Z stay at gizmo_scale).
             length_factor = TRANSLATE_LENGTH_SCALE if self.mode == GizmoMode.TRANSLATE else 1.0
             model = (
                 scale_matrix(gizmo_scale, gizmo_scale * length_factor, gizmo_scale)
@@ -435,10 +449,7 @@ class Gizmo:
                 GL.glBindVertexArray(self._shaft_vao)
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._shaft_vertex_count)
                 GL.glBindVertexArray(0)
-                # Cube at end.  Same scale-first / translate-last convention: shrink
-                # the unit cube, push it out along local +Y by gizmo_scale (axis_rot
-                # then aims local +Y at the axis direction), rotate, then translate
-                # to the gizmo origin — placing it at the shaft tip.
+                # Scale end cube
                 end_model = (
                     scale_matrix(SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale)
                     @ translation_matrix(0.0, gizmo_scale, 0.0)
@@ -454,9 +465,94 @@ class Gizmo:
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._cube_vertex_count)
                 GL.glBindVertexArray(0)
 
-        # Uniform-scale center cube at the origin (Scale mode only).  Drawn once,
-        # after the axes, so it sits on top where the three shafts meet.
-        if self.mode == GizmoMode.SCALE:
+        # 2. Render Planar & Screen handles in Translate mode
+        if self.mode == GizmoMode.TRANSLATE:
+            dir_x = self.get_axis_direction(GizmoAxis.X)
+            dir_y = self.get_axis_direction(GizmoAxis.Y)
+            dir_z = self.get_axis_direction(GizmoAxis.Z)
+
+            plane_configs = [
+                (GizmoAxis.XY, dir_x, dir_y, dir_z, GizmoAxis.XY),  # Blue
+                (GizmoAxis.XZ, dir_x, dir_z, dir_y, GizmoAxis.XZ),  # Green
+                (GizmoAxis.YZ, dir_y, dir_z, dir_x, GizmoAxis.YZ),  # Red
+            ]
+
+            for p_name, u_dir, v_dir, n_dir, c_key in plane_configs:
+                p_avail = self.is_axis_available(p_name)
+                p_active = p_avail and (self.active_axis == p_name)
+                p_hover = p_avail and (self.hover_axis == p_name and not self._dragging)
+
+                if not p_avail:
+                    p_color = AXIS_DISABLED_COLOR
+                    p_alpha = 0.25
+                elif p_active or p_hover:
+                    p_color = AXIS_HOVER_COLOR
+                    p_alpha = 0.95
+                else:
+                    p_color = AXIS_COLORS[c_key]
+                    p_alpha = 0.55
+
+                M_plane = np.eye(4, dtype=np.float32)
+                M_plane[0, :3] = u_dir * gizmo_scale
+                M_plane[1, :3] = v_dir * gizmo_scale
+                M_plane[2, :3] = n_dir * gizmo_scale
+                M_plane[3, :3] = gl_pos
+
+                GL.glUniformMatrix4fv(
+                    GL.glGetUniformLocation(shader_program, "uModel"),
+                    1, GL.GL_FALSE, M_plane
+                )
+                GL.glUniform3fv(
+                    GL.glGetUniformLocation(shader_program, "uColor"),
+                    1, p_color
+                )
+                GL.glUniform1f(
+                    GL.glGetUniformLocation(shader_program, "uAlpha"),
+                    p_alpha
+                )
+                GL.glBindVertexArray(self._plane_vao)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._plane_vertex_count)
+                GL.glBindVertexArray(0)
+
+            # Center Screen-Plane Handle (circle/ring facing camera)
+            s_avail = self.is_axis_available(GizmoAxis.SCREEN)
+            s_active = s_avail and (self.active_axis == GizmoAxis.SCREEN)
+            s_hover = s_avail and (self.hover_axis == GizmoAxis.SCREEN and not self._dragging)
+
+            if not s_avail:
+                s_color = AXIS_DISABLED_COLOR
+                s_alpha = 0.25
+            elif s_active or s_hover:
+                s_color = AXIS_HOVER_COLOR
+                s_alpha = 1.0
+            else:
+                s_color = AXIS_COLORS[GizmoAxis.SCREEN]
+                s_alpha = 0.85
+
+            M_screen = np.eye(4, dtype=np.float32)
+            M_screen[0, :3] = self.camera_right * gizmo_scale
+            M_screen[1, :3] = self.camera_up * gizmo_scale
+            M_screen[2, :3] = self.camera_forward * gizmo_scale
+            M_screen[3, :3] = gl_pos
+
+            GL.glUniformMatrix4fv(
+                GL.glGetUniformLocation(shader_program, "uModel"),
+                1, GL.GL_FALSE, M_screen
+            )
+            GL.glUniform3fv(
+                GL.glGetUniformLocation(shader_program, "uColor"),
+                1, s_color
+            )
+            GL.glUniform1f(
+                GL.glGetUniformLocation(shader_program, "uAlpha"),
+                s_alpha
+            )
+            GL.glBindVertexArray(self._screen_ring_vao)
+            GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._screen_ring_vertex_count)
+            GL.glBindVertexArray(0)
+
+        # 3. Render Uniform-scale center cube (Scale mode only)
+        elif self.mode == GizmoMode.SCALE:
             center_available = self.is_axis_available(GizmoAxis.CENTER)
             c_active = center_available and (self.active_axis == GizmoAxis.CENTER)
             c_hover = center_available and (self.hover_axis == GizmoAxis.CENTER and not self._dragging)
@@ -487,35 +583,42 @@ class Gizmo:
         GL.glEnable(GL.GL_DEPTH_TEST)
 
     def hit_test(self, ray_origin, ray_dir, camera_pos) -> str:
-        """Test if a ray hits any gizmo axis. Returns axis name or GizmoAxis.NONE."""
+        """Test if a ray hits any gizmo axis/handle. Returns axis name or GizmoAxis.NONE."""
         if not self.visible or self.mode == GizmoMode.NONE:
             return GizmoAxis.NONE
 
         gl_pos = self._get_gl_position()
-        dist = np.linalg.norm(camera_pos - gl_pos)
-        gizmo_scale = max(dist * 0.06, 5.0)
+        gizmo_scale = self.get_gizmo_scale(camera_pos, gl_pos)
 
-        # Rotate handles are rings perpendicular to their axis, so they need a
-        # ring/plane hit test — probing a straight axis line (as Translate/Scale
-        # do) would miss the ring everywhere it's actually drawn.
+        # 1. Rotate mode: ring plane test
         if self.mode == GizmoMode.ROTATE:
             return self._hit_test_rings(ray_origin, ray_dir, gl_pos, gizmo_scale)
 
-        # In Scale mode the center cube (uniform scale) wins near the origin —
-        # tested first because the three axis shafts also start there.
+        # 2. Scale mode center handle
         if self.mode == GizmoMode.SCALE and self.is_axis_available(GizmoAxis.CENTER):
-            if self._ray_point_distance(ray_origin, ray_dir, gl_pos) < gizmo_scale * 0.16:
+            if self._ray_point_distance(ray_origin, ray_dir, gl_pos) < gizmo_scale * 0.18:
                 return GizmoAxis.CENTER
 
-        # Translate arrows are rendered 1.5x longer, so probe that far too.
+        # 3. Translate mode: Screen center handle & Planar handles
+        if self.mode == GizmoMode.TRANSLATE:
+            # Screen handle (center circle)
+            if self.is_axis_available(GizmoAxis.SCREEN):
+                if self._ray_point_distance(ray_origin, ray_dir, gl_pos) < gizmo_scale * 0.16:
+                    return GizmoAxis.SCREEN
+
+            # Planar rectangle handles (XY, XZ, YZ)
+            plane_hit = self._hit_test_planes(ray_origin, ray_dir, gl_pos, gizmo_scale)
+            if plane_hit != GizmoAxis.NONE:
+                return plane_hit
+
+        # 4. Single-axis handles (Arrows / Scale shafts)
         axis_len = gizmo_scale * (TRANSLATE_LENGTH_SCALE if self.mode == GizmoMode.TRANSLATE else 1.0)
-        threshold = gizmo_scale * 0.15  # Hit radius
+        threshold = gizmo_scale * 0.15
 
         best_axis = GizmoAxis.NONE
         best_dist = float('inf')
 
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
-            # Unavailable (grayed) axes are inert — they can't be hovered or grabbed.
             if not self.is_axis_available(axis_name):
                 continue
             axis_dir = self.get_axis_direction(axis_name)
@@ -529,14 +632,47 @@ class Gizmo:
 
         return best_axis
 
-    def _hit_test_rings(self, ray_origin, ray_dir, gl_pos, gizmo_scale) -> str:
-        """Hit test the three rotation rings.
+    def _hit_test_planes(self, ray_origin, ray_dir, gl_pos, gizmo_scale) -> str:
+        """Hit test the 3 dual-axis planar handles (XY, XZ, YZ)."""
+        dir_x = self.get_axis_direction(GizmoAxis.X)
+        dir_y = self.get_axis_direction(GizmoAxis.Y)
+        dir_z = self.get_axis_direction(GizmoAxis.Z)
 
-        Each ring is the circle of radius ``gizmo_scale`` centred at ``gl_pos``
-        lying in the plane whose normal is the axis direction.  For each ring we
-        intersect the ray with that plane and measure how far the hit point is
-        from the ring circle; the closest ring within tolerance wins.
-        """
+        plane_configs = [
+            (GizmoAxis.XY, dir_x, dir_y, dir_z),
+            (GizmoAxis.XZ, dir_x, dir_z, dir_y),
+            (GizmoAxis.YZ, dir_y, dir_z, dir_x),
+        ]
+
+        min_u, max_u = 0.22 * gizmo_scale, 0.58 * gizmo_scale
+        min_v, max_v = 0.22 * gizmo_scale, 0.58 * gizmo_scale
+
+        best_plane = GizmoAxis.NONE
+        best_t = float('inf')
+
+        for p_name, u_dir, v_dir, n_dir in plane_configs:
+            if not self.is_axis_available(p_name):
+                continue
+            denom = float(np.dot(ray_dir, n_dir))
+            if abs(denom) < 1e-6:
+                continue
+            t = float(np.dot(gl_pos - ray_origin, n_dir)) / denom
+            if t <= 0.0 or t >= best_t:
+                continue
+
+            hit = ray_origin + ray_dir * t
+            rel = hit - gl_pos
+            du = float(np.dot(rel, u_dir))
+            dv = float(np.dot(rel, v_dir))
+
+            if min_u <= du <= max_u and min_v <= dv <= max_v:
+                best_t = t
+                best_plane = p_name
+
+        return best_plane
+
+    def _hit_test_rings(self, ray_origin, ray_dir, gl_pos, gizmo_scale) -> str:
+        """Hit test the three rotation rings."""
         radius = gizmo_scale
         tol = gizmo_scale * 0.18
         best_axis = GizmoAxis.NONE
@@ -548,10 +684,10 @@ class Gizmo:
             normal = self.get_axis_direction(axis_name)
             denom = float(np.dot(ray_dir, normal))
             if abs(denom) < 1e-6:
-                continue  # ray parallel to the ring's plane — skip (edge-on)
+                continue
             t = float(np.dot(gl_pos - ray_origin, normal)) / denom
             if t <= 0.0:
-                continue  # plane is behind the camera
+                continue
             hit = ray_origin + ray_dir * t
             ring_dist = abs(float(np.linalg.norm(hit - gl_pos)) - radius)
             if ring_dist < tol and ring_dist < best_dist:
@@ -561,79 +697,146 @@ class Gizmo:
         return best_axis
 
     def begin_drag(self, axis: str, screen_pos: Tuple[float, float]):
-        """Start dragging the gizmo along an axis."""
-        # Defensive: never start a drag on a grayed-out (unavailable) axis.
+        """Start dragging the gizmo along an axis or handle."""
         if axis == GizmoAxis.NONE or not self.is_axis_available(axis):
             return
         self.active_axis = axis
         self._dragging = True
         self._drag_start_pos = screen_pos
+        self._drag_start_gl_pos = self._get_gl_position().copy()
         self._drag_start_value = {
             GizmoMode.TRANSLATE: self.position.copy(),
             GizmoMode.ROTATE: self.rotation.copy(),
             GizmoMode.SCALE: self.scale_val.copy(),
         }.get(self.mode)
+        self._accumulated_angle = 0.0
+        self._last_angle = None
+        self._drag_plane_start_hit = None
 
     def update_drag(self, screen_pos: Tuple[float, float], view_matrix, proj_matrix, w, h, camera_pos) -> Optional[dict]:
-        """Update the drag and return the new transform delta, or None."""
+        """Update the drag and return the new transform delta dict, or None."""
         if not self._dragging or self.active_axis == GizmoAxis.NONE:
             return None
 
         dx = screen_pos[0] - self._drag_start_pos[0]
         dy = screen_pos[1] - self._drag_start_pos[1]
+        gl_pos = self._drag_start_gl_pos if self._drag_start_gl_pos is not None else self._get_gl_position()
+        gizmo_scale = self.get_gizmo_scale(camera_pos, gl_pos)
 
         if self.mode == GizmoMode.TRANSLATE:
-            gl_pos = self._get_gl_position()
-            axis_dir_GL = self.get_axis_direction(self.active_axis)
-            dist = np.linalg.norm(camera_pos - gl_pos)
-            gizmo_scale = max(dist * 0.06, 5.0)
+            # 1. Screen-plane Translation (Center circle handle)
+            if self.active_axis == GizmoAxis.SCREEN:
+                p0_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
+                p_r = project_to_screen(gl_pos + self.camera_right * gizmo_scale, view_matrix, proj_matrix, w, h)
+                p_u = project_to_screen(gl_pos + self.camera_up * gizmo_scale, view_matrix, proj_matrix, w, h)
 
-            # Project endpoints of axis line onto screen
-            p0_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
-            p1_screen = project_to_screen(gl_pos + axis_dir_GL * gizmo_scale, view_matrix, proj_matrix, w, h)
+                len_r = np.linalg.norm(p_r - p0_screen)
+                len_u = np.linalg.norm(p_u - p0_screen)
+                scale_r = gizmo_scale / max(len_r, 1.0)
+                scale_u = gizmo_scale / max(len_u, 1.0)
 
-            screen_dir = p1_screen - p0_screen
-            screen_dir_len = np.linalg.norm(screen_dir)
-            if screen_dir_len < 1.0:
-                return None
+                gl_delta = (dx * scale_r) * self.camera_right - (dy * scale_u) * self.camera_up
+                s2_delta = (SOURCE2_TO_GL @ np.append(gl_delta, 0.0))[:3]
 
-            screen_dir_norm = screen_dir / screen_dir_len
-            mouse_delta = np.array([dx, dy], dtype=np.float32)
-            drag_amount = np.dot(mouse_delta, screen_dir_norm)
+                if self.snapping_enabled and self.grid_step > 0.0:
+                    s2_delta = np.array([round(val / self.grid_step) * self.grid_step for val in s2_delta], dtype=np.float32)
 
-            # Pixels to GL units
-            gl_delta_val = drag_amount * (gizmo_scale / screen_dir_len)
+                new_pos = self._drag_start_value + s2_delta
+                return {"position": new_pos.tolist()}
 
-            # Move along the active axis in Source 2 space
-            s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
-            new_pos = self._drag_start_value + gl_delta_val * s2_axis_dir
+            # 2. Planar Translation (XY, XZ, YZ rectangles)
+            elif self.active_axis in (GizmoAxis.XY, GizmoAxis.XZ, GizmoAxis.YZ):
+                dir_x = self.get_axis_direction(GizmoAxis.X)
+                dir_y = self.get_axis_direction(GizmoAxis.Y)
+                dir_z = self.get_axis_direction(GizmoAxis.Z)
+                s2_x = self.get_s2_axis_direction(GizmoAxis.X)
+                s2_y = self.get_s2_axis_direction(GizmoAxis.Y)
+                s2_z = self.get_s2_axis_direction(GizmoAxis.Z)
 
-            if self.snapping_enabled and self.grid_step > 0.0:
-                new_pos = np.array([round(val / self.grid_step) * self.grid_step for val in new_pos], dtype=np.float32)
+                configs = {
+                    GizmoAxis.XY: (dir_x, dir_y, dir_z, s2_x, s2_y),
+                    GizmoAxis.XZ: (dir_x, dir_z, dir_y, s2_x, s2_z),
+                    GizmoAxis.YZ: (dir_y, dir_z, dir_x, s2_y, s2_z),
+                }
+                u_dir, v_dir, n_dir, s2_u, s2_v = configs[self.active_axis]
 
-            return {"position": new_pos.tolist()}
+                # Raycast onto the plane
+                r0_org, r0_dir = screen_to_world_ray(self._drag_start_pos[0], self._drag_start_pos[1], w, h, view_matrix, proj_matrix, camera_pos)
+                r1_org, r1_dir = screen_to_world_ray(screen_pos[0], screen_pos[1], w, h, view_matrix, proj_matrix, camera_pos)
+
+                denom0 = float(np.dot(r0_dir, n_dir))
+                denom1 = float(np.dot(r1_dir, n_dir))
+
+                if abs(denom0) > 1e-5 and abs(denom1) > 1e-5:
+                    t0 = float(np.dot(gl_pos - r0_org, n_dir)) / denom0
+                    t1 = float(np.dot(gl_pos - r1_org, n_dir)) / denom1
+                    hit0 = r0_org + r0_dir * t0
+                    hit1 = r1_org + r1_dir * t1
+                    gl_delta = hit1 - hit0
+
+                    delta_u = float(np.dot(gl_delta, u_dir))
+                    delta_v = float(np.dot(gl_delta, v_dir))
+                else:
+                    # Fallback to screen projection
+                    delta_u = dx * 0.05 * gizmo_scale
+                    delta_v = -dy * 0.05 * gizmo_scale
+
+                if self.snapping_enabled and self.grid_step > 0.0:
+                    delta_u = round(delta_u / self.grid_step) * self.grid_step
+                    delta_v = round(delta_v / self.grid_step) * self.grid_step
+
+                new_pos = self._drag_start_value + delta_u * s2_u + delta_v * s2_v
+                return {"position": new_pos.tolist()}
+
+            # 3. Single-axis Translation (X, Y, Z arrows)
+            else:
+                axis_dir_GL = self.get_axis_direction(self.active_axis)
+
+                p0_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
+                p1_screen = project_to_screen(gl_pos + axis_dir_GL * gizmo_scale, view_matrix, proj_matrix, w, h)
+
+                screen_dir = p1_screen - p0_screen
+                screen_dir_len = np.linalg.norm(screen_dir)
+                if screen_dir_len < 1.0:
+                    return None
+
+                screen_dir_norm = screen_dir / screen_dir_len
+                mouse_delta = np.array([dx, dy], dtype=np.float32)
+                drag_amount = float(np.dot(mouse_delta, screen_dir_norm))
+
+                # Pixels to GL units
+                gl_delta_val = drag_amount * (gizmo_scale / screen_dir_len)
+
+                if self.snapping_enabled and self.grid_step > 0.0:
+                    gl_delta_val = round(gl_delta_val / self.grid_step) * self.grid_step
+
+                s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
+                new_pos = self._drag_start_value + gl_delta_val * s2_axis_dir
+
+                return {"position": new_pos.tolist()}
 
         elif self.mode == GizmoMode.ROTATE:
-            gl_pos = self._get_gl_position()
             center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
 
             x0 = self._drag_start_pos[0] - center_screen[0]
             y0 = self._drag_start_pos[1] - center_screen[1]
-            x1 = screen_pos[0] - center_screen[0]
-            y1 = screen_pos[1] - center_screen[1]
+            x_curr = screen_pos[0] - center_screen[0]
+            y_curr = screen_pos[1] - center_screen[1]
 
             len0 = math.hypot(x0, y0)
-            len1 = math.hypot(x1, y1)
-            if len0 < 1e-3 or len1 < 1e-3:
+            len_curr = math.hypot(x_curr, y_curr)
+            if len0 < 1e-3 or len_curr < 1e-3:
                 return None
 
-            angle0 = math.atan2(y0, x0)
-            angle1 = math.atan2(y1, x1)
+            curr_angle = math.atan2(y_curr, x_curr)
+            if self._last_angle is None:
+                self._last_angle = math.atan2(y0, x0)
 
-            delta_angle = angle1 - angle0
-            # Normalize to [-pi, pi] to avoid jump across boundary
-            delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi
-            angle_deg = math.degrees(delta_angle)
+            # Continuous multi-turn incremental delta
+            step_angle = curr_angle - self._last_angle
+            step_angle = (step_angle + math.pi) % (2.0 * math.pi) - math.pi
+            self._accumulated_angle += step_angle
+            self._last_angle = curr_angle
 
             # Determine rotation sign dynamically from screen-space
             axis_dir_GL = self.get_axis_direction(self.active_axis)
@@ -641,44 +844,64 @@ class Gizmo:
             facing = float(np.dot(axis_dir_GL, view_dir))
             sign = 1.0 if facing > 0 else -1.0
 
-            total_angle_deg = angle_deg * sign
+            total_angle_deg = math.degrees(self._accumulated_angle) * sign
 
             if self.snapping_enabled and self.rotation_step > 0.0:
                 total_angle_deg = round(total_angle_deg / self.rotation_step) * self.rotation_step
 
-            # Build rotation delta in Source 2 space.  ``get_s2_axis_direction``
-            # returns the drag axis already expressed in *world* S2 coordinates
-            # for every space (Local -> the object's local axis rotated into
-            # world; Screen -> the camera axis in world; World -> the world
-            # axis), so R_delta is a world-frame rotation in all three cases.
             s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
             R_delta = rotation_matrix_axis_angle(s2_axis_dir, total_angle_deg)
-
-            # Composition.  In this row-vector chain a world-frame rotation is
-            # applied *after* the object's current orientation, i.e. the delta
-            # is projected onto the existing transform as ``R_start @ R_delta``.
-            # This holds for World and Screen too — the earlier
-            # ``R_delta @ R_start`` branch rotated about the axis in the
-            # object's local frame, so World/Screen rotations drifted off the
-            # picked axis as soon as the object already carried a rotation.
             R_start = rotation_matrix_euler(*self._drag_start_value)
             R_new = R_start @ R_delta
 
-            # Decompose back to Euler
             _, new_rot, _ = decompose_trs(R_new)
             return {"rotation": new_rot}
 
         elif self.mode == GizmoMode.SCALE:
-            # Scale proportional to drag
-            factor = 1.0 + (dx - dy) * 0.005
-            factor = max(0.01, factor)
-            new_scale = self._drag_start_value.copy()
             if self.active_axis == GizmoAxis.CENTER:
-                new_scale = new_scale * factor
+                # Uniform scale based on distance from gizmo center
+                center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
+                d0 = math.hypot(self._drag_start_pos[0] - center_screen[0], self._drag_start_pos[1] - center_screen[1])
+                d1 = math.hypot(screen_pos[0] - center_screen[0], screen_pos[1] - center_screen[1])
+                if d0 > 10.0:
+                    factor = max(0.01, d1 / d0)
+                else:
+                    factor = max(0.01, 1.0 + (dx - dy) * 0.005)
+
+                if self.snapping_enabled:
+                    snap_step = 0.25 if self.grid_step >= 8.0 else 0.1
+                    factor = max(snap_step, round(factor / snap_step) * snap_step)
+
+                new_scale = self._drag_start_value * factor
+                return {"scale": new_scale.tolist()}
             else:
+                # Single-axis scale along screen direction
+                axis_dir_GL = self.get_axis_direction(self.active_axis)
+                p0_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
+                p1_screen = project_to_screen(gl_pos + axis_dir_GL * gizmo_scale, view_matrix, proj_matrix, w, h)
+
+                screen_dir = p1_screen - p0_screen
+                screen_dir_len = np.linalg.norm(screen_dir)
+                if screen_dir_len < 1.0:
+                    return None
+
+                screen_dir_norm = screen_dir / screen_dir_len
+                mouse_delta = np.array([dx, dy], dtype=np.float32)
+                drag_amount = float(np.dot(mouse_delta, screen_dir_norm))
+
+                factor = max(0.01, 1.0 + drag_amount / screen_dir_len)
+
                 axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
-                new_scale[axis_idx] *= factor
-            return {"scale": new_scale.tolist()}
+                new_scale = self._drag_start_value.copy()
+
+                if self.snapping_enabled:
+                    snap_step = 0.25 if self.grid_step >= 8.0 else 0.1
+                    raw_val = new_scale[axis_idx] * factor
+                    new_scale[axis_idx] = max(snap_step, round(raw_val / snap_step) * snap_step)
+                else:
+                    new_scale[axis_idx] *= factor
+
+                return {"scale": new_scale.tolist()}
 
         return None
 
@@ -687,7 +910,11 @@ class Gizmo:
         self._dragging = False
         self.active_axis = GizmoAxis.NONE
         self._drag_start_pos = None
+        self._drag_start_gl_pos = None
         self._drag_start_value = None
+        self._drag_plane_start_hit = None
+        self._accumulated_angle = 0.0
+        self._last_angle = None
 
     @property
     def is_dragging(self):
@@ -695,7 +922,7 @@ class Gizmo:
 
     @staticmethod
     def _cylinder_side(y0, y1, r0, r1, segments=12):
-        """Build a solid tapered cylinder (frustum) side wall between y0 and y1. Rendered as GL_TRIANGLES."""
+        """Build a solid tapered cylinder side wall between y0 and y1. Rendered as GL_TRIANGLES."""
         verts = []
         for i in range(segments):
             a1 = 2.0 * math.pi * i / segments
@@ -726,9 +953,9 @@ class Gizmo:
     @staticmethod
     def _build_arrow_vertices() -> np.ndarray:
         """Build a solid arrow (shaft cylinder + cone head) along +Y (unit length). Rendered as GL_TRIANGLES."""
-        segments = 12
+        segments = 14
         shaft_radius = 0.035
-        head_radius = 0.09
+        head_radius = 0.095
         shaft_top = 0.75
         tip_y = 1.15
 
@@ -741,25 +968,59 @@ class Gizmo:
     @staticmethod
     def _build_shaft_vertices() -> np.ndarray:
         """Build a solid thin cylinder shaft along +Y (unit length), no head. Rendered as GL_TRIANGLES."""
-        segments = 10
+        segments = 12
         radius = 0.035
         return np.array(Gizmo._cylinder_side(0.0, 1.0, radius, radius, segments), dtype=np.float32)
 
     @staticmethod
-    def _build_ring_vertices(segments=48) -> np.ndarray:
-        """Build a solid flat ring band on the XZ plane (unit outer radius). Rendered as GL_TRIANGLES."""
-        outer_r = 1.0
-        inner_r = 0.92
+    def _build_ring_vertices(segments=64) -> np.ndarray:
+        """Build a solid 3D ring band on the XZ plane. Rendered as GL_TRIANGLES."""
+        outer_r = 1.03
+        inner_r = 0.95
+        half_h = 0.018
         verts = []
         for i in range(segments):
             a1 = 2.0 * math.pi * i / segments
             a2 = 2.0 * math.pi * (i + 1) / segments
-            o1 = [outer_r * math.cos(a1), 0.0, outer_r * math.sin(a1)]
-            o2 = [outer_r * math.cos(a2), 0.0, outer_r * math.sin(a2)]
-            i1 = [inner_r * math.cos(a1), 0.0, inner_r * math.sin(a1)]
-            i2 = [inner_r * math.cos(a2), 0.0, inner_r * math.sin(a2)]
-            verts.extend([i1, o1, o2])
-            verts.extend([i1, o2, i2])
+            cos1, sin1 = math.cos(a1), math.sin(a1)
+            cos2, sin2 = math.cos(a2), math.sin(a2)
+
+            # Top face (+Y)
+            verts.extend([
+                [inner_r * cos1,  half_h, inner_r * sin1],
+                [outer_r * cos1,  half_h, outer_r * sin1],
+                [outer_r * cos2,  half_h, outer_r * sin2],
+                [inner_r * cos1,  half_h, inner_r * sin1],
+                [outer_r * cos2,  half_h, outer_r * sin2],
+                [inner_r * cos2,  half_h, inner_r * sin2],
+            ])
+            # Bottom face (-Y)
+            verts.extend([
+                [inner_r * cos1, -half_h, inner_r * sin1],
+                [outer_r * cos2, -half_h, outer_r * sin2],
+                [outer_r * cos1, -half_h, outer_r * sin1],
+                [inner_r * cos1, -half_h, inner_r * sin1],
+                [inner_r * cos2, -half_h, inner_r * sin2],
+                [outer_r * cos2, -half_h, outer_r * sin2],
+            ])
+            # Outer wall
+            verts.extend([
+                [outer_r * cos1, -half_h, outer_r * sin1],
+                [outer_r * cos2, -half_h, outer_r * sin2],
+                [outer_r * cos2,  half_h, outer_r * sin2],
+                [outer_r * cos1, -half_h, outer_r * sin1],
+                [outer_r * cos2,  half_h, outer_r * sin2],
+                [outer_r * cos1,  half_h, outer_r * sin1],
+            ])
+            # Inner wall
+            verts.extend([
+                [inner_r * cos1, -half_h, inner_r * sin1],
+                [inner_r * cos2,  half_h, inner_r * sin2],
+                [inner_r * cos2, -half_h, inner_r * sin2],
+                [inner_r * cos1, -half_h, inner_r * sin1],
+                [inner_r * cos1,  half_h, inner_r * sin1],
+                [inner_r * cos2,  half_h, inner_r * sin2],
+            ])
         return np.array(verts, dtype=np.float32)
 
     @staticmethod
@@ -777,6 +1038,53 @@ class Gizmo:
         return np.array(faces, dtype=np.float32)
 
     @staticmethod
+    def _build_plane_vertices() -> np.ndarray:
+        """Build a planar quad in local XY plane with double-sided triangles."""
+        u0, u1 = 0.28, 0.55
+        v0, v1 = 0.28, 0.55
+        verts = [
+            # Front side
+            [u0, v0, 0.0], [u1, v0, 0.0], [u1, v1, 0.0],
+            [u0, v0, 0.0], [u1, v1, 0.0], [u0, v1, 0.0],
+            # Back side
+            [u0, v0, 0.0], [u1, v1, 0.0], [u1, v0, 0.0],
+            [u0, v0, 0.0], [u0, v1, 0.0], [u1, v1, 0.0],
+        ]
+        return np.array(verts, dtype=np.float32)
+
+    @staticmethod
+    def _build_screen_ring_vertices(segments=32) -> np.ndarray:
+        """Build a flat circular ring facing camera in local XY plane."""
+        outer_r = 0.14
+        inner_r = 0.08
+        verts = []
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            cos1, sin1 = math.cos(a1), math.sin(a1)
+            cos2, sin2 = math.cos(a2), math.sin(a2)
+
+            # Front side
+            verts.extend([
+                [inner_r * cos1, inner_r * sin1, 0.0],
+                [outer_r * cos1, outer_r * sin1, 0.0],
+                [outer_r * cos2, outer_r * sin2, 0.0],
+                [inner_r * cos1, inner_r * sin1, 0.0],
+                [outer_r * cos2, outer_r * sin2, 0.0],
+                [inner_r * cos2, inner_r * sin2, 0.0],
+            ])
+            # Back side
+            verts.extend([
+                [inner_r * cos1, inner_r * sin1, 0.0],
+                [outer_r * cos2, outer_r * sin2, 0.0],
+                [outer_r * cos1, outer_r * sin1, 0.0],
+                [inner_r * cos1, inner_r * sin1, 0.0],
+                [inner_r * cos2, inner_r * sin2, 0.0],
+                [outer_r * cos2, outer_r * sin2, 0.0],
+            ])
+        return np.array(verts, dtype=np.float32)
+
+    @staticmethod
     def _axis_rotation_matrix(axis_name: str) -> np.ndarray:
         """Return a rotation matrix that maps +Y to the given axis direction."""
         m = np.eye(4, dtype=np.float32)
@@ -785,10 +1093,7 @@ class Gizmo:
             m[0, 0], m[0, 1] = 0.0, -1.0
             m[1, 0], m[1, 1] = 1.0, 0.0
         elif axis_name == GizmoAxis.Y:
-            # Rotate +90° around X to point +Y → -Z (S2 Y in GL space), matching
-            # AXIS_DIRECTIONS[Y] = (0, 0, -1).  The opposite sign renders the Y
-            # handle on +Z while hit_test probes the -Z segment, so the visible
-            # handle can't be grabbed.
+            # Rotate +90° around X to point +Y → -Z (S2 Y in GL space)
             m[1, 1], m[1, 2] = 0.0, -1.0
             m[2, 1], m[2, 2] = 1.0, 0.0
         elif axis_name == GizmoAxis.Z:
@@ -798,7 +1103,7 @@ class Gizmo:
 
     @staticmethod
     def _ray_point_distance(ray_origin, ray_dir, point) -> float:
-        """Closest distance between a ray and a point (for the center handle)."""
+        """Closest distance between a ray and a point."""
         denom = float(np.dot(ray_dir, ray_dir))
         if denom < 1e-10:
             return float('inf')
@@ -832,3 +1137,5 @@ class Gizmo:
         closest_line = line_start + v * t
 
         return float(np.linalg.norm(closest_ray - closest_line))
+
+
