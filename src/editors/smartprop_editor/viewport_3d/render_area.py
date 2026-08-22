@@ -24,7 +24,8 @@ from src.editors.smartprop_editor.viewport_3d.shaders import (
     GRID_VERTEX_SHADER, GRID_FRAGMENT_SHADER,
     GIZMO_VERTEX_SHADER, GIZMO_FRAGMENT_SHADER,
     WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER,
-    OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER
+    OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER,
+    LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER
 )
 
 
@@ -140,7 +141,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.current_transform_text = None
 
         # Scene Data (populated from document tree)
-        self._model_infos = {}  # id -> info dict
+        self._model_infos = {}  # id -> info dict (primary entry per element id)
+        self._model_instances = []  # list of all individual model instances to render
+        self._path_infos = []  # list of PlaceOnPath curve and control point data
 
         # SmartProp evaluation engine — resolves expression/variable bindings and
         # emits the locator/rotator/pickone preview widgets.  Rebuilt each
@@ -171,6 +174,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._gizmo_program = 0
         self._wireframe_program = 0
         self._outline_program = 0
+        self._locator_program = 0
 
         self._grid_vao = 0
         self._grid_vbo = 0
@@ -180,15 +184,33 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._dot_vbo = 0
         self._fs_vao = 0  # empty VAO for the fullscreen-triangle outline pass
 
-        # Preview-widget geometry (locator axis cross, rotator circle + radius
-        # handle, pickone square).  Built in initializeGL, drawn with the gizmo
-        # shader during the widget pass.
+        # Preview-widget GPU resources
+        self._locator_vao = 0
+        self._locator_vbo = 0
+        self._locator_vertex_count = 0
+
+        self._rotator_ring_vao = 0
+        self._rotator_ring_vbo = 0
+        self._rotator_ring_vertex_count = 0
+        self._rotator_needle_vao = 0
+        self._rotator_tab_vao = 0
+
+        self._sizer_arrow_vao = 0
+        self._sizer_arrow_vbo = 0
+        self._sizer_arrow_vertex_count = 0
+
+        self._pickone_sq_frame_vao = 0
+        self._pickone_sq_fill_vao = 0
+        self._pickone_dia_frame_vao = 0
+        self._pickone_dia_fill_vao = 0
+
         self._circle_vao = 0
         self._circle_count = 0
-        self._radius_vao = 0
-        self._axis_vao = 0
-        self._square_vao = 0
-        self._diamond_vao = 0
+        self._circle_fill_vao = 0
+        self._circle_fill_count = 0
+
+        self._dynamic_vao = 0
+        self._dynamic_vbo = 0
 
         # Selection outline appearance.  The selected element's silhouette is
         # traced with a constant-width outline instead of a full-surface fill.
@@ -240,10 +262,20 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._gizmo_program = link_program(GIZMO_VERTEX_SHADER, GIZMO_FRAGMENT_SHADER)
         self._wireframe_program = link_program(WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER)
         self._outline_program = link_program(OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER)
+        self._locator_program = link_program(LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER)
 
         # Empty VAO required by core profile to issue the attribute-less
         # fullscreen-triangle draw in the selection outline pass.
         self._fs_vao = GL.glGenVertexArrays(1)
+
+        # Dynamic reusable VAO/VBO for immediate streaming lines/polygons
+        self._dynamic_vao = GL.glGenVertexArrays(1)
+        self._dynamic_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._dynamic_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dynamic_vbo)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
 
         # Initialize Grid Geometry
         size = 25000.0
@@ -398,6 +430,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if self.show_widgets and self._widget_infos:
             self._render_widgets(view, proj)
 
+        # 2d. Render path curves and control point markers for PlaceOnPath elements.
+        if self._path_infos:
+            self._render_paths(view, proj)
+
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
 
         # 4. Draw 2D HUD/Overlay
@@ -426,7 +462,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             hud_lines.append(f"Isolate Mode: {isolated_name}")
             
         # Line: Object count
-        num_models = sum(1 for info in self._model_infos.values() if not info.get("is_dot"))
+        rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+        num_models = sum(1 for info in rendered_pool if not info.get("is_dot"))
         hud_lines.append(f"Objects: {num_models}")
         
         # Line: Active transformation details
@@ -553,7 +590,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # off so they composite correctly.
         transparent_items = []
 
-        for eid, info in self._model_infos.items():
+        rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+        for info in rendered_pool:
+            eid = info.get("id", 0)
             if mask_id is not None and eid != mask_id:
                 continue
 
@@ -574,12 +613,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # GL_FALSE row-vector chain, so it is used as-is here (NOT .T).  Adding
             # a .T flips Source Z-up to GL -Y, sinking models below the grid and
             # mirroring the scene.
-            model_matrix = (
-                scale_matrix(*scale)
-                @ rotation_matrix_euler(*rot)
-                @ translation_matrix(*pos)
-                @ SOURCE2_TO_GL
-            )
+            if "world_matrix" in info:
+                model_matrix = info["world_matrix"] @ SOURCE2_TO_GL
+            else:
+                model_matrix = (
+                    scale_matrix(*scale)
+                    @ rotation_matrix_euler(*rot)
+                    @ translation_matrix(*pos)
+                    @ SOURCE2_TO_GL
+                )
 
             is_dot = info.get("is_dot", False)
             if is_dot:
@@ -1059,9 +1101,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     @gl_guard("event")
     def fit_view(self):
         """Zoom and position camera to fit all models in scene."""
-        if not self._model_infos:
+        pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+        if not pool:
             return
-        bbox_min, bbox_max, has_bounds = self._compute_bounds(self._model_infos.values())
+        bbox_min, bbox_max, has_bounds = self._compute_bounds(pool)
         if has_bounds:
             self.camera.fit_to_bounds(bbox_min, bbox_max)
             self.update()
@@ -1072,9 +1115,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         Fits the selected element if one is selected; otherwise frames the whole
         scene, matching the behaviour users expect from Blender/Hammer.
         """
-        sel = self._model_infos.get(self._selected_id)
-        if sel is not None:
-            bbox_min, bbox_max, has_bounds = self._compute_bounds([sel])
+        pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+        matching = [inst for inst in pool if inst.get("id") == self._selected_id]
+        if not matching and self._selected_id in self._model_infos:
+            matching = [self._model_infos[self._selected_id]]
+        if matching:
+            bbox_min, bbox_max, has_bounds = self._compute_bounds(matching)
             if has_bounds:
                 self.camera.fit_to_bounds(bbox_min, bbox_max)
                 self.update()
@@ -1104,6 +1150,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         "CSmartPropElement_PickOne",
         "CSmartPropElement_SmartProp",
         "CSmartPropElement_FitOnLine",
+        "CSmartPropElement_PlaceOnPath",
         "CSmartPropElement_ModifyState",
     })
 
@@ -1111,6 +1158,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def update_viewport(self):
         """Rebuild the scene models list from the current document tree."""
         self._model_infos.clear()
+        self._model_instances = []
+        self._path_infos = []
         self._widget_infos = []
         self._warn_unsupported = set()
         self._eval_context = self._build_eval_context()
@@ -1135,9 +1184,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._nested_vsmart_stack = []
         self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
 
+        self._model_instances = list(models_info)
         for info in models_info:
             eid = info.get("id", 0)
-            self._model_infos[eid] = info
+            if eid > 0 and eid not in self._model_infos:
+                self._model_infos[eid] = info
 
         # Unload any cached models the hierarchy no longer references so the
         # viewport's memory footprint follows the tree (GPU frees happen on the
@@ -1151,7 +1202,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # removed from the tree is reclaimed by the next unisolated rebuild.
         if self.isolated_element_id is None:
             referenced_paths = {
-                info.get("path", "") for info in self._model_infos.values() if info.get("path")
+                info.get("path", "") for info in self._model_instances if info.get("path")
             }
             self.mesh_cache.prune(referenced_paths)
 
@@ -1356,7 +1407,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     info["rotation"] = actual_world_rot
                     info["scale"] = actual_world_scale
 
-                    # Update all descendant transforms immediately so they follow the group smoothly
+                    # Update widgets for the dragged element itself
+                    eid = data.get("m_nElementID", 0)
+                    self._update_element_widgets(eid, actual_world_pos, actual_world_rot, M_actual_world)
+
+                    # Update all descendant transforms and their visual widgets immediately
                     self._update_subtree_transforms(item, M_actual_world)
 
                     # Update gizmo position/rotation/scale from the refreshed cache
@@ -1398,6 +1453,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # Push changes to undo stack
             if self.document and hasattr(self.document, "_gizmo_commit_drag"):
                 self.document._gizmo_commit_drag()
+            self.update_viewport()
         self._action = None
         self.current_transform_text = None
         self.update()
@@ -1693,7 +1749,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         return eval_ctx.resolve_string(val, default)
 
     def _get_local_transform(self, data, ctx=None):
-        """Extract local pos, rot, scale from the element's data dictionary."""
+        """Extract local pos, rot, scale from the element's data dictionary and modifiers."""
         local_pos   = [0.0, 0.0, 0.0]
         local_rot   = [0.0, 0.0, 0.0]
         local_scale = [1.0, 1.0, 1.0]
@@ -1702,20 +1758,58 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return local_pos, local_rot, local_scale
 
         eval_ctx = ctx or self._eval_context
+        inst_idx = getattr(eval_ctx, "instance_index", 0) or 0
+        eid = int(data.get("m_nElementID", 0) or 0)
 
         for mod in data.get("m_Modifiers", []) or []:
             if not isinstance(mod, dict):
                 continue
+            if mod.get("m_bEnabled", True) is False or mod.get("m_bEnabled") == "false":
+                continue
             cls = mod.get("_class", "")
-            if cls == "CSmartPropOperation_Translate" and "m_vPosition" in mod:
+            if cls in ("CSmartPropOperation_Translate", "Translate") and "m_vPosition" in mod:
                 comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0], ctx=eval_ctx)
                 local_pos = [local_pos[i] + comp[i] for i in range(3)]
-            elif cls == "CSmartPropOperation_Rotate" and "m_vRotation" in mod:
+            elif cls in ("CSmartPropOperation_SetPosition", "SetPosition") and "m_vPosition" in mod:
+                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0], ctx=eval_ctx)
+                local_pos = list(comp)
+            elif cls in ("CSmartPropOperation_Rotate", "Rotate") and "m_vRotation" in mod:
                 comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0], ctx=eval_ctx)
                 local_rot = [local_rot[i] + comp[i] for i in range(3)]
-            elif cls == "CSmartPropOperation_Scale" and "m_flScale" in mod:
+            elif cls in ("CSmartPropOperation_SetOrientation", "SetOrientation") and "m_vRotation" in mod:
+                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0], ctx=eval_ctx)
+                local_rot = list(comp)
+            elif cls in ("CSmartPropOperation_ResetRotation", "ResetRotation"):
+                local_rot = [0.0, 0.0, 0.0]
+            elif cls in ("CSmartPropOperation_Scale", "Scale") and "m_flScale" in mod:
                 s = eval_ctx.resolve_scalar(mod["m_flScale"], 1.0)
                 local_scale = [local_scale[i] * s for i in range(3)]
+            elif cls in ("CSmartPropOperation_ResetScale", "ResetScale"):
+                local_scale = [1.0, 1.0, 1.0]
+            elif cls in ("CSmartPropOperation_RandomOffset", "RandomOffset"):
+                min_v = self._get_vector(mod.get("m_vRandomPositionMin"), [0.0, 0.0, 0.0], ctx=eval_ctx)
+                max_v = self._get_vector(mod.get("m_vRandomPositionMax"), [0.0, 0.0, 0.0], ctx=eval_ctx)
+                for i in range(3):
+                    h = ((eid * 374761393 + inst_idx * 668265263 + i * 964729 + 11) & 0x7FFFFFFF)
+                    h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
+                    t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
+                    local_pos[i] += min_v[i] + t * (max_v[i] - min_v[i])
+            elif cls in ("CSmartPropOperation_RandomRotation", "RandomRotation"):
+                min_v = self._get_vector(mod.get("m_vRandomRotationMin"), [0.0, 0.0, 0.0], ctx=eval_ctx)
+                max_v = self._get_vector(mod.get("m_vRandomRotationMax"), [0.0, 0.0, 0.0], ctx=eval_ctx)
+                for i in range(3):
+                    h = ((eid * 374761393 + inst_idx * 668265263 + i * 964729 + 101) & 0x7FFFFFFF)
+                    h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
+                    t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
+                    local_rot[i] += min_v[i] + t * (max_v[i] - min_v[i])
+            elif cls in ("CSmartPropOperation_RandomScale", "RandomScale"):
+                min_s = eval_ctx.resolve_scalar(mod.get("m_flRandomScaleMin"), 1.0)
+                max_s = eval_ctx.resolve_scalar(mod.get("m_flRandomScaleMax"), 1.0)
+                h = ((eid * 374761393 + inst_idx * 668265263 + 202) & 0x7FFFFFFF)
+                h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
+                t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
+                s_factor = min_s + t * (max_s - min_s)
+                local_scale = [local_scale[i] * s_factor for i in range(3)]
 
         element_class = data.get("_class", "")
         if element_class == "CSmartPropElement_Model":
@@ -1749,21 +1843,226 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         return EvalContext(variables=variables)
 
     def _collect_widgets(self, data, world_pos, world_rot, world_matrix):
-        """Extract locator/rotator/pickone widget specs for an element and place
+        """Extract locator/rotator/sizer/pickone widget specs for an element and place
         them into world space (Source 2) for the widget render pass."""
         try:
             specs = extract_widget_specs(data, self._eval_context)
         except Exception:
             return
+        eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
         for spec in specs:
-            offset = spec.get("offset", [0.0, 0.0, 0.0])
-            p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
-            # world_matrix is row-vector (point @ M): local Source 2 -> world Source 2.
-            world_offset = (p @ world_matrix)[:3]
+            wtype = spec.get("type")
             info = dict(spec)
-            info["position"] = [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])]
-            info["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
+            info["element_id"] = eid
+            if wtype == "sizer":
+                info["world_matrix"] = np.array(world_matrix, dtype=np.float32)
+                info["position"] = [float(world_pos[0]), float(world_pos[1]), float(world_pos[2])]
+                info["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
+            else:
+                offset = spec.get("offset", [0.0, 0.0, 0.0])
+                p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
+                # world_matrix is row-vector (point @ M): local Source 2 -> world Source 2.
+                world_offset = (p @ world_matrix)[:3]
+                info["position"] = [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])]
+                info["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
             self._widget_infos.append(info)
+
+    def _update_element_widgets(self, eid, world_pos, world_rot, world_matrix):
+        """Update the world transform of all visual widgets belonging to element `eid`."""
+        if not eid or not self._widget_infos:
+            return
+        for w in self._widget_infos:
+            if w.get("element_id") == eid:
+                wtype = w.get("type")
+                if wtype == "sizer":
+                    w["world_matrix"] = np.array(world_matrix, dtype=np.float32)
+                    w["position"] = [float(world_pos[0]), float(world_pos[1]), float(world_pos[2])]
+                    w["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
+                else:
+                    offset = w.get("offset", [0.0, 0.0, 0.0])
+                    p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
+                    world_offset = (p @ world_matrix)[:3]
+                    w["position"] = [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])]
+                    w["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
+
+    @staticmethod
+    def _build_locator_vertices():
+        """Build 3D faceted locator geometry for the 6 axes (+/- X Red, +/- Y Green, +/- Z Blue).
+        Returns a float32 numpy array with [x, y, z, nx, ny, nz, r, g, b] per vertex.
+        """
+        def build_axis_arm(D, U, V, color, L_pos=1.0, d_shoulder=0.60, r_pos=0.22, L_neg=0.70, r_neg=0.20):
+            origin = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+            s0 = d_shoulder * D + r_pos * U
+            s1 = d_shoulder * D + r_pos * V
+            s2 = d_shoulder * D - r_pos * U
+            s3 = d_shoulder * D - r_pos * V
+            tip = L_pos * D
+
+            # Positive pointed arrowhead arm (8 triangles)
+            pos_faces = [
+                (origin, s1, s0),
+                (origin, s2, s1),
+                (origin, s3, s2),
+                (origin, s0, s3),
+                (tip, s0, s1),
+                (tip, s1, s2),
+                (tip, s2, s3),
+                (tip, s3, s0),
+            ]
+
+            # Negative flat-capped prism arm (6 triangles: 4 sides + 2 end cap)
+            e0 = -L_neg * D + r_neg * U
+            e1 = -L_neg * D + r_neg * V
+            e2 = -L_neg * D - r_neg * U
+            e3 = -L_neg * D - r_neg * V
+
+            neg_faces = [
+                # 4 long side facets from origin to end cap
+                (origin, e0, e1),
+                (origin, e1, e2),
+                (origin, e2, e3),
+                (origin, e3, e0),
+                # Flat diamond end cap
+                (e0, e2, e1),
+                (e0, e3, e2),
+            ]
+
+            verts = []
+            for tri in pos_faces + neg_faces:
+                v0, v1, v2 = tri
+                e_1 = v1 - v0
+                e_2 = v2 - v0
+                n = np.cross(e_1, e_2)
+                norm_len = np.linalg.norm(n)
+                if norm_len > 1e-6:
+                    n = n / norm_len
+                else:
+                    n = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+                for v in (v0, v1, v2):
+                    verts.extend([v[0], v[1], v[2], n[0], n[1], n[2], color[0], color[1], color[2]])
+            return verts
+
+        X_D = np.array([1, 0, 0], dtype=np.float32)
+        X_U = np.array([0, 1, 0], dtype=np.float32)
+        X_V = np.array([0, 0, 1], dtype=np.float32)
+        red = [0.85, 0.12, 0.12]
+
+        Y_D = np.array([0, 1, 0], dtype=np.float32)
+        Y_U = np.array([0, 0, 1], dtype=np.float32)
+        Y_V = np.array([1, 0, 0], dtype=np.float32)
+        green = [0.0, 0.85, 0.0]
+
+        Z_D = np.array([0, 0, 1], dtype=np.float32)
+        Z_U = np.array([1, 0, 0], dtype=np.float32)
+        Z_V = np.array([0, 1, 0], dtype=np.float32)
+        blue = [0.0, 0.16, 0.78]
+
+        all_verts = []
+        all_verts.extend(build_axis_arm(X_D, X_U, X_V, red))
+        all_verts.extend(build_axis_arm(Y_D, Y_U, Y_V, green))
+        all_verts.extend(build_axis_arm(Z_D, Z_U, Z_V, blue))
+        return np.array(all_verts, dtype=np.float32)
+
+    @staticmethod
+    def _build_sizer_arrow_vertices(length=14.0, shaft_r=0.7, head_len=7.0, head_r=2.5, segments=12):
+        """Build an arrow pointing along +Z (Source 2 up) with shaft and cone head."""
+        verts = []
+        shaft_len = max(0.0, length - head_len)
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            p0a = [shaft_r * math.cos(a1), shaft_r * math.sin(a1), 0.0]
+            p0b = [shaft_r * math.cos(a2), shaft_r * math.sin(a2), 0.0]
+            p1a = [shaft_r * math.cos(a1), shaft_r * math.sin(a1), shaft_len]
+            p1b = [shaft_r * math.cos(a2), shaft_r * math.sin(a2), shaft_len]
+            verts.extend([p0a, p0b, p1a])
+            verts.extend([p0b, p1b, p1a])
+        cone_base_z = shaft_len
+        cone_tip = [0.0, 0.0, length]
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            c1 = [head_r * math.cos(a1), head_r * math.sin(a1), cone_base_z]
+            c2 = [head_r * math.cos(a2), head_r * math.sin(a2), cone_base_z]
+            verts.extend([[0.0, 0.0, cone_base_z], c2, c1])
+            verts.extend([cone_tip, c1, c2])
+        return np.array(verts, dtype=np.float32)
+
+    @staticmethod
+    def _build_rotator_ring_vertices(segments=64, inner_r=0.90, outer_r=1.0, height=0.04):
+        """Build a 3D extruded circular ring band with top, bottom, outer, and inner cylindrical walls."""
+        verts = []
+        hz = height * 0.5
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            c1, s1 = math.cos(a1), math.sin(a1)
+            c2, s2 = math.cos(a2), math.sin(a2)
+
+            # Top ring (z = +hz)
+            it1 = [inner_r * c1, inner_r * s1, hz]
+            it2 = [inner_r * c2, inner_r * s2, hz]
+            ot1 = [outer_r * c1, outer_r * s1, hz]
+            ot2 = [outer_r * c2, outer_r * s2, hz]
+            verts.extend([it1, ot1, ot2, it1, ot2, it2])
+
+            # Bottom ring (z = -hz)
+            ib1 = [inner_r * c1, inner_r * s1, -hz]
+            ib2 = [inner_r * c2, inner_r * s2, -hz]
+            ob1 = [outer_r * c1, outer_r * s1, -hz]
+            ob2 = [outer_r * c2, outer_r * s2, -hz]
+            verts.extend([ib1, ob2, ob1, ib1, ib2, ob2])
+
+            # Outer cylindrical wall (r = outer_r)
+            verts.extend([ot1, ob1, ob2, ot1, ob2, ot2])
+
+            # Inner cylindrical wall (r = inner_r)
+            verts.extend([it1, it2, ib2, it1, ib2, ib1])
+
+        return np.array(verts, dtype=np.float32)
+
+    @staticmethod
+    def _build_rotator_tab_vertices(cx=0.95, w=0.09, h=0.07, depth=0.06):
+        """Build a 3D box tab on the ring centered around (cx, 0, 0)."""
+        x0, x1 = cx - w * 0.5, cx + w * 0.5
+        y0, y1 = -h * 0.5, h * 0.5
+        z0, z1 = -depth * 0.5, depth * 0.5
+
+        c000 = [x0, y0, z0]
+        c100 = [x1, y0, z0]
+        c110 = [x1, y1, z0]
+        c010 = [x0, y1, z0]
+        c001 = [x0, y0, z1]
+        c101 = [x1, y0, z1]
+        c111 = [x1, y1, z1]
+        c011 = [x0, y1, z1]
+
+        faces = [
+            # Top (+Z)
+            c001, c101, c111, c001, c111, c011,
+            # Bottom (-Z)
+            c000, c110, c100, c000, c010, c110,
+            # Outer (+X)
+            c100, c110, c111, c100, c111, c101,
+            # Inner (-X)
+            c000, c011, c010, c000, c001, c011,
+            # Side (+Y)
+            c010, c110, c111, c010, c111, c011,
+            # Side (-Y)
+            c000, c101, c100, c000, c001, c101,
+        ]
+        return np.array(faces, dtype=np.float32)
+
+    def _draw_dynamic_verts(self, arr, mode):
+        """Draw dynamic vertex array using reusable GL buffers."""
+        from OpenGL import GL
+        if len(arr) == 0:
+            return
+        GL.glBindVertexArray(self._dynamic_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dynamic_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, arr.nbytes, arr, GL.GL_DYNAMIC_DRAW)
+        GL.glDrawArrays(mode, 0, len(arr))
+        GL.glBindVertexArray(0)
 
     def _init_widget_geometry(self):
         """Build the static GPU geometry for the preview widgets."""
@@ -1781,53 +2080,69 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glBindVertexArray(0)
             return vao
 
-        # Unit circle in the Source 2 XY plane (normal +Z), drawn as GL_LINE_LOOP.
+        # 1. 3D Faceted Locator (198 vertices with pos, normal, color)
+        locator_verts = self._build_locator_vertices()
+        self._locator_vao = GL.glGenVertexArrays(1)
+        self._locator_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._locator_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._locator_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, locator_verts.nbytes, locator_verts, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 36, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glVertexAttribPointer(1, 3, GL.GL_FLOAT, GL.GL_FALSE, 36, GL.ctypes.c_void_p(12))
+        GL.glEnableVertexAttribArray(1)
+        GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, GL.GL_FALSE, 36, GL.ctypes.c_void_p(24))
+        GL.glEnableVertexAttribArray(2)
+        GL.glBindVertexArray(0)
+        self._locator_vertex_count = len(locator_verts) // 9
+
+        # 2. Rotator Widget Geometry (3D ring band + radial needle + 3D box tab)
+        ring_verts = self._build_rotator_ring_vertices(segments=64, inner_r=0.90, outer_r=1.0, height=0.04)
+        self._rotator_ring_vao = make_vao(ring_verts)
+        self._rotator_ring_vertex_count = len(ring_verts)
+
+        self._rotator_needle_vao = make_vao([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        self._rotator_tab_vao = make_vao(self._build_rotator_tab_vertices(cx=0.95, w=0.09, h=0.07, depth=0.06))
+
+        # 3. Sizer Widget Arrow Geometry (along +Z)
+        sizer_arrow_verts = self._build_sizer_arrow_vertices(length=14.0, shaft_r=0.7, head_len=7.0, head_r=2.5, segments=12)
+        self._sizer_arrow_vao = make_vao(sizer_arrow_verts)
+        self._sizer_arrow_vertex_count = len(sizer_arrow_verts)
+
+        # 4. PickOne Handles
+        # SQUARE: Outer frame + inset filled square
+        self._pickone_sq_frame_vao = make_vao([
+            [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [-0.5, 0.5, 0.0],
+        ])
+        self._pickone_sq_fill_vao = make_vao([
+            [-0.26, -0.26, 0.0], [0.26, -0.26, 0.0], [0.26, 0.26, 0.0],
+            [-0.26, -0.26, 0.0], [0.26, 0.26, 0.0], [-0.26, 0.26, 0.0],
+        ])
+
+        # DIAMOND: Elongated diamond rhombus shape
+        self._pickone_dia_frame_vao = make_vao([
+            [0.0, 0.55, 0.0], [0.28, 0.0, 0.0], [0.0, -0.55, 0.0], [-0.28, 0.0, 0.0],
+        ])
+        self._pickone_dia_fill_vao = make_vao([
+            [0.0, 0.55, 0.0], [0.28, 0.0, 0.0], [0.0, -0.55, 0.0],
+            [0.0, 0.55, 0.0], [0.0, -0.55, 0.0], [-0.28, 0.0, 0.0],
+        ])
+
+        # CIRCLE: Outer ring (radius 0.5) + concentric inner disc (radius 0.3)
         segments = 48
-        circle = [[math.cos(2.0 * math.pi * i / segments),
-                   math.sin(2.0 * math.pi * i / segments), 0.0]
-                  for i in range(segments)]
+        circle = [[0.5 * math.cos(2.0 * math.pi * i / segments), 0.5 * math.sin(2.0 * math.pi * i / segments), 0.0] for i in range(segments)]
         self._circle_vao = make_vao(circle)
         self._circle_count = segments
 
-        # Radius handle line from centre to the +X edge of the circle.
-        self._radius_vao = make_vao([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
-
-        # Axis cross: three unit segments (Source 2 X, Y, Z), drawn per-colour.
-        self._axis_vao = make_vao([
-            [0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0], [0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0], [0.0, 0.0, 1.0],
-        ])
-
-        # PickOne handles: SQUARE and DIAMOND outlines in the Source 2 XY plane
-        # (the CIRCLE shape reuses the rotator circle VAO).
-        self._square_vao = make_vao([
-            [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [-0.5, 0.5, 0.0],
-        ])
-        self._diamond_vao = make_vao([
-            [0.0, 0.5, 0.0], [0.5, 0.0, 0.0], [0.0, -0.5, 0.0], [-0.5, 0.0, 0.0],
-        ])
-
-        # Filled (solid) versions of the PickOne handles, drawn as GL_TRIANGLES /
-        # GL_TRIANGLE_FAN so the camera-facing markers read as solid overlays.
-        self._square_fill_vao = make_vao([
-            [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0],
-            [-0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [-0.5, 0.5, 0.0],
-        ])
-        self._diamond_fill_vao = make_vao([
-            [0.0, 0.5, 0.0], [0.5, 0.0, 0.0], [0.0, -0.5, 0.0],
-            [0.0, 0.5, 0.0], [0.0, -0.5, 0.0], [-0.5, 0.0, 0.0],
-        ])
-        # Circle fill as a triangle fan: centre + the rim ring (closed).
-        fan = [[0.0, 0.0, 0.0]] + [
-            [math.cos(2.0 * math.pi * i / segments), math.sin(2.0 * math.pi * i / segments), 0.0]
+        circle_inner = [[0.0, 0.0, 0.0]] + [
+            [0.30 * math.cos(2.0 * math.pi * i / segments), 0.30 * math.sin(2.0 * math.pi * i / segments), 0.0]
             for i in range(segments + 1)
         ]
-        self._circle_fill_vao = make_vao(fan)
-        self._circle_fill_count = len(fan)
+        self._circle_fill_vao = make_vao(circle_inner)
+        self._circle_fill_count = len(circle_inner)
 
     def _render_widgets(self, view, proj):
-        """Draw all collected preview widgets with the gizmo shader (unlit, on top)."""
+        """Draw all collected preview widgets."""
         from OpenGL import GL
         if not self._gizmo_program:
             return
@@ -1836,7 +2151,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
         GL.glDisable(GL.GL_DEPTH_TEST)
-        # Blend on for the semi-transparent PickOne handle fills.
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
@@ -1848,7 +2162,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             try:
                 wtype = w.get("type")
                 if wtype == "locator":
-                    self._draw_locator_widget(prog, w)
+                    self._draw_locator_widget(view, proj, w)
+                    GL.glUseProgram(prog)
+                    GL.glDisable(GL.GL_DEPTH_TEST)
+                elif wtype == "sizer":
+                    self._draw_sizer_widget(prog, w)
                 elif wtype == "rotator":
                     self._draw_rotator_widget(prog, w)
                 elif wtype == "pickone":
@@ -1858,85 +2176,267 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glBindVertexArray(0)
         GL.glEnable(GL.GL_DEPTH_TEST)
 
+    def _render_paths(self, view, proj):
+        """Draw PlaceOnPath spline curves and control points in the viewport."""
+        from OpenGL import GL
+        if not self._path_infos or not self._wireframe_program:
+            return
+
+        prog = self._wireframe_program
+        GL.glUseProgram(prog)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, SOURCE2_TO_GL)
+
+        GL.glEnable(GL.GL_BLEND)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+
+        for path_info in self._path_infos:
+            path_id = path_info.get("id", 0)
+            is_selected = (self._selected_id == path_id)
+            curve = path_info.get("curve", [])
+
+            # 1. Spline Curve Line
+            if len(curve) >= 2:
+                color = np.array([0.15, 0.95, 1.0] if is_selected else [0.95, 0.60, 0.20], dtype=np.float32)
+                GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, color)
+                try:
+                    GL.glLineWidth(3.0 if is_selected else 2.0)
+                except Exception:
+                    pass
+                curve_arr = np.array(curve, dtype=np.float32)
+                self._draw_dynamic_verts(curve_arr, GL.GL_LINE_STRIP)
+
+            # 2. Control Point Markers (small 3D cross / diamond at each control point)
+            ctrl_pts = path_info.get("control_points", [])
+            if ctrl_pts:
+                marker_color = np.array([0.25, 1.0, 1.0] if is_selected else [1.0, 0.75, 0.30], dtype=np.float32)
+                GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, marker_color)
+                cross_lines = []
+                s = 4.0
+                for pt in ctrl_pts:
+                    px, py, pz = float(pt[0]), float(pt[1]), float(pt[2])
+                    cross_lines.extend([
+                        [px - s, py, pz], [px + s, py, pz],
+                        [px, py - s, pz], [px, py + s, pz],
+                        [px, py, pz - s], [px, py, pz + s],
+                    ])
+                if cross_lines:
+                    self._draw_dynamic_verts(np.array(cross_lines, dtype=np.float32), GL.GL_LINES)
+
+        GL.glBindVertexArray(0)
+
     def _set_widget_uniforms(self, prog, model_matrix, color, alpha=1.0):
         from OpenGL import GL
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
         GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, np.asarray(color, dtype=np.float32))
         GL.glUniform1f(GL.glGetUniformLocation(prog, "uAlpha"), float(alpha))
 
-    def _draw_locator_widget(self, prog, w):
+    def _draw_locator_widget(self, view, proj, w):
+        """Draw 3D faceted locator matching Hammer 5 reference visuals."""
         from OpenGL import GL
+        if not self._locator_program or not self._locator_vao:
+            return
         pos = w.get("position", [0.0, 0.0, 0.0])
         rot = w.get("rotation", [0.0, 0.0, 0.0])
-        size = float(w.get("scale", 1.0)) * 16.0
+        size = float(w.get("scale", 1.0)) * 8.0
         model = (
             scale_matrix(size, size, size)
             @ rotation_matrix_euler(*rot)
             @ translation_matrix(*pos)
             @ SOURCE2_TO_GL
         )
-        GL.glBindVertexArray(self._axis_vao)
-        for i, color in enumerate(((0.9, 0.25, 0.25), (0.25, 0.85, 0.3), (0.35, 0.45, 0.95))):
-            self._set_widget_uniforms(prog, model, color)
-            GL.glDrawArrays(GL.GL_LINES, i * 2, 2)
+        norm_mat = safe_normal_matrix(model)
+
+        prog = self._locator_program
+        GL.glUseProgram(prog)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniformMatrix3fv(GL.glGetUniformLocation(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
+        GL.glUniform3fv(GL.glGetUniformLocation(prog, "uCameraPos"), 1, self.camera.position)
+        GL.glUniform1f(GL.glGetUniformLocation(prog, "uAlpha"), 1.0)
+
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glDepthFunc(GL.GL_LEQUAL)
+        GL.glBindVertexArray(self._locator_vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._locator_vertex_count)
+        GL.glBindVertexArray(0)
+
+    def _draw_sizer_widget(self, prog, w):
+        """Draw adaptive sizer (3D volume box, 2D plane, or 1D line) with face handle arrows."""
+        from OpenGL import GL
+        min_b = w.get("min_bounds", [0.0, 0.0, 0.0])
+        max_b = w.get("max_bounds", [0.0, 0.0, 0.0])
+        handles = w.get("handles", {})
+        active_axes = w.get("active_axes", {"x": True, "y": True, "z": True})
+        world_matrix = w.get("world_matrix", np.eye(4, dtype=np.float32))
+
+        min_x, min_y, min_z = float(min_b[0]), float(min_b[1]), float(min_b[2])
+        max_x, max_y, max_z = float(max_b[0]), float(max_b[1]), float(max_b[2])
+
+        active_count = sum(1 for a in ("x", "y", "z") if active_axes.get(a))
+        if active_count == 0:
+            return
+
+        model = world_matrix @ SOURCE2_TO_GL
+
+        fill_color = [0.22, 0.65, 0.95]
+        outline_color = [0.35, 0.85, 1.0]
+
+        # 1. Geometry rendering
+        if active_count == 3:
+            c000 = [min_x, min_y, min_z]
+            c100 = [max_x, min_y, min_z]
+            c110 = [max_x, max_y, min_z]
+            c010 = [min_x, max_y, min_z]
+            c001 = [min_x, min_y, max_z]
+            c101 = [max_x, min_y, max_z]
+            c111 = [max_x, max_y, max_z]
+            c011 = [min_x, max_y, max_z]
+
+            faces = [
+                c000, c100, c110, c000, c110, c010,
+                c001, c011, c111, c001, c111, c101,
+                c000, c001, c101, c000, c101, c100,
+                c010, c110, c111, c010, c111, c011,
+                c000, c010, c011, c000, c011, c001,
+                c100, c101, c111, c100, c111, c110,
+            ]
+            face_arr = np.array(faces, dtype=np.float32)
+
+            lines = [
+                c000, c100, c100, c110, c110, c010, c010, c000,
+                c001, c101, c101, c111, c111, c011, c011, c001,
+                c000, c001, c100, c101, c110, c111, c010, c011,
+            ]
+            line_arr = np.array(lines, dtype=np.float32)
+
+            self._set_widget_uniforms(prog, model, fill_color, alpha=0.30)
+            self._draw_dynamic_verts(face_arr, GL.GL_TRIANGLES)
+
+            self._set_widget_uniforms(prog, model, outline_color, alpha=0.95)
+            self._draw_dynamic_verts(line_arr, GL.GL_LINES)
+
+        elif active_count == 2:
+            if not active_axes.get("x"):
+                p0, p1, p2, p3 = [min_x, min_y, min_z], [min_x, max_y, min_z], [min_x, max_y, max_z], [min_x, min_y, max_z]
+            elif not active_axes.get("y"):
+                p0, p1, p2, p3 = [min_x, min_y, min_z], [max_x, min_y, min_z], [max_x, min_y, max_z], [min_x, min_y, max_z]
+            else:
+                p0, p1, p2, p3 = [min_x, min_y, min_z], [max_x, min_y, min_z], [max_x, max_y, min_z], [min_x, max_y, min_z]
+
+            faces = [p0, p1, p2, p0, p2, p3]
+            lines = [p0, p1, p1, p2, p2, p3, p3, p0]
+            self._set_widget_uniforms(prog, model, fill_color, alpha=0.35)
+            self._draw_dynamic_verts(np.array(faces, dtype=np.float32), GL.GL_TRIANGLES)
+            self._set_widget_uniforms(prog, model, outline_color, alpha=0.95)
+            self._draw_dynamic_verts(np.array(lines, dtype=np.float32), GL.GL_LINES)
+
+        elif active_count == 1:
+            if active_axes.get("x"):
+                p0, p1 = [min_x, 0.0, 0.0], [max_x, 0.0, 0.0]
+            elif active_axes.get("y"):
+                p0, p1 = [0.0, min_y, 0.0], [0.0, max_y, 0.0]
+            else:
+                p0, p1 = [0.0, 0.0, min_z], [0.0, 0.0, max_z]
+            lines = [p0, p1]
+            self._set_widget_uniforms(prog, model, outline_color, alpha=1.0)
+            self._draw_dynamic_verts(np.array(lines, dtype=np.float32), GL.GL_LINES)
+
+        # 2. Draw Handle Arrows on configured faces
+        mid_x = (min_x + max_x) * 0.5
+        mid_y = (min_y + max_y) * 0.5
+        mid_z = (min_z + max_z) * 0.5
+
+        arrow_defs = [
+            ("max_x", [max_x, mid_y, mid_z], rotation_matrix_euler(90.0, 0.0, 0.0), [0.90, 0.15, 0.15]),
+            ("min_x", [min_x, mid_y, mid_z], rotation_matrix_euler(-90.0, 0.0, 0.0), [0.90, 0.15, 0.15]),
+            ("max_y", [mid_x, max_y, mid_z], rotation_matrix_euler(0.0, 0.0, -90.0), [0.15, 0.85, 0.20]),
+            ("min_y", [mid_x, min_y, mid_z], rotation_matrix_euler(0.0, 0.0, 90.0), [0.15, 0.85, 0.20]),
+            ("max_z", [mid_x, mid_y, max_z], np.eye(4, dtype=np.float32), [0.15, 0.35, 0.95]),
+            ("min_z", [mid_x, mid_y, min_z], rotation_matrix_euler(180.0, 0.0, 0.0), [0.15, 0.35, 0.95]),
+        ]
+
+        for hkey, hpos, hrot, hcolor in arrow_defs:
+            if handles.get(hkey):
+                arrow_model = (
+                    hrot
+                    @ translation_matrix(*hpos)
+                    @ world_matrix
+                    @ SOURCE2_TO_GL
+                )
+                self._set_widget_uniforms(prog, arrow_model, hcolor, alpha=1.0)
+                GL.glBindVertexArray(self._sizer_arrow_vao)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._sizer_arrow_vertex_count)
 
     def _draw_rotator_widget(self, prog, w):
+        """Draw 3D rotator with wide ring band, initial angle spoke needle, and handle tab."""
         from OpenGL import GL
         pos = w.get("position", [0.0, 0.0, 0.0])
         radius = float(w.get("radius", 16.0))
         axis = w.get("axis", [0.0, 0.0, 1.0])
-        color = w.get("color", [0.85, 0.85, 0.2])
+        angle_deg = float(w.get("angle", 0.0))
+        color = w.get("color", [0.72, 0.74, 0.48])
+
         align = self._rotation_align_z_to(axis)
-        model = (
+        base_model = (
             scale_matrix(radius, radius, radius)
             @ align
             @ translation_matrix(*pos)
             @ SOURCE2_TO_GL
         )
-        self._set_widget_uniforms(prog, model, color)
-        GL.glBindVertexArray(self._circle_vao)
-        GL.glDrawArrays(GL.GL_LINE_LOOP, 0, self._circle_count)
-        GL.glBindVertexArray(self._radius_vao)
+
+        # 1. Draw solid 3D ring band
+        self._set_widget_uniforms(prog, base_model, color, alpha=0.88)
+        GL.glBindVertexArray(self._rotator_ring_vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._rotator_ring_vertex_count)
+
+        # 2. Needle spoke line at initial angle
+        needle_rot = rotation_matrix_euler(0.0, 0.0, angle_deg)
+        needle_model = needle_rot @ base_model
+        yellow = [0.95, 0.90, 0.10]
+        self._set_widget_uniforms(prog, needle_model, yellow, alpha=1.0)
+        GL.glBindVertexArray(self._rotator_needle_vao)
         GL.glDrawArrays(GL.GL_LINES, 0, 2)
 
+        # 3. Handle marker tab at the ring edge (3D box, 12 triangles = 36 verts)
+        self._set_widget_uniforms(prog, needle_model, yellow, alpha=0.95)
+        GL.glBindVertexArray(self._rotator_tab_vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36)
+
     def _draw_pickone_widget(self, prog, w):
+        """Draw PickOne billboard handle with camera-distance adaptive scaling."""
         from OpenGL import GL
         pos = w.get("position", [0.0, 0.0, 0.0])
         size = float(w.get("size", 8.0))
         color = w.get("color", [0.6, 0.6, 0.6])
         shape = str(w.get("shape", "SQUARE")).upper()
 
-        # Camera-facing billboard: map the handle's local XY plane onto the
-        # camera's right/up axes so the marker always faces the viewer and reads
-        # as an overlay from any orbit angle (instead of going edge-on in the
-        # fixed Source-2 XY plane).  The matrix is built directly in GL space
-        # (rows = basis vectors, last row = translation — the row-vector /
-        # GL_FALSE convention used throughout), so no SOURCE2_TO_GL tail here.
+        gl_pos = (SOURCE2_TO_GL.T @ np.array([pos[0], pos[1], pos[2], 1.0], dtype=np.float32))[:3]
+        dist = float(np.linalg.norm(self.camera.position - gl_pos))
+        screen_scale = max(dist * 0.013, 1.6) * (size / 8.0)
+
         R = np.asarray(self.camera.right_vector, dtype=np.float32)
         U = np.asarray(self.camera.up_vector, dtype=np.float32)
         F = np.cross(R, U)
-        gl_pos = (SOURCE2_TO_GL.T @ np.array([pos[0], pos[1], pos[2], 1.0], dtype=np.float32))[:3]
-        # The circle geometry has radius 1.0 while the square/diamond span ±0.5,
-        # so halve the circle's scale to keep every shape the same nominal size.
-        shape_scale = size * (0.5 if shape == "CIRCLE" else 1.0)
         model = np.eye(4, dtype=np.float32)
-        model[0, :3] = R * shape_scale
-        model[1, :3] = U * shape_scale
-        model[2, :3] = F * shape_scale
+        model[0, :3] = R * screen_scale
+        model[1, :3] = U * screen_scale
+        model[2, :3] = F * screen_scale
         model[3, :3] = gl_pos
 
         if shape == "CIRCLE":
             fill_vao, fill_mode, fill_count = self._circle_fill_vao, GL.GL_TRIANGLE_FAN, self._circle_fill_count
             line_vao, line_count = self._circle_vao, self._circle_count
         elif shape == "DIAMOND":
-            fill_vao, fill_mode, fill_count = self._diamond_fill_vao, GL.GL_TRIANGLES, 6
-            line_vao, line_count = self._diamond_vao, 4
+            fill_vao, fill_mode, fill_count = self._pickone_dia_fill_vao, GL.GL_TRIANGLES, 6
+            line_vao, line_count = self._pickone_dia_frame_vao, 4
         else:  # SQUARE (default)
-            fill_vao, fill_mode, fill_count = self._square_fill_vao, GL.GL_TRIANGLES, 6
-            line_vao, line_count = self._square_vao, 4
+            fill_vao, fill_mode, fill_count = self._pickone_sq_fill_vao, GL.GL_TRIANGLES, 6
+            line_vao, line_count = self._pickone_sq_frame_vao, 4
 
-        # Solid (semi-transparent) fill so it reads as an overlay, then a crisp
-        # full-opacity outline of the same colour on top.
+        # Inset solid fill + crisp outline frame
         self._set_widget_uniforms(prog, model, color, alpha=0.55)
         GL.glBindVertexArray(fill_vao)
         GL.glDrawArrays(fill_mode, 0, fill_count)
@@ -2129,6 +2629,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "position":            world_pos,
                 "rotation":            world_rot,
                 "scale":               world_scale,
+                "world_matrix":        world_matrix,
                 "parent_world_matrix": parent_world_matrix,
                 "data":                data,
                 "is_dot":              not bool(model_path)
@@ -2136,6 +2637,33 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # Collect preview widgets (locator / rotator / pickone) for this element.
         self._collect_widgets(data, world_pos, world_rot, world_matrix)
+
+        # PlaceOnPath element support inside dict traversal
+        if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
+            from src.editors.smartprop_editor.viewport_3d.engine.path_evaluator import (
+                sample_place_on_path, matches_path_selection_criteria
+            )
+            path_result = sample_place_on_path(data, eval_ctx, world_matrix)
+            self._path_infos.append({
+                "id": eid,
+                "curve": path_result["curve_samples"],
+                "control_points": path_result["control_points"],
+                "world_matrix": world_matrix,
+            })
+            children = data.get("m_Children", [])
+            if isinstance(children, list):
+                for inst in path_result["instances"]:
+                    inst_idx = inst["index"]
+                    inst_count = inst["count"]
+                    inst_matrix = inst["world_matrix"]
+                    inst_ctx = eval_ctx.with_instance(instance_index=inst_idx, instance_count=inst_count)
+                    for child_data in children:
+                        if isinstance(child_data, dict):
+                            if not matches_path_selection_criteria(child_data, inst_idx, inst_count, inst_ctx):
+                                continue
+                            child_ctx = self._derive_child_context(data, child_data, inst_ctx)
+                            self._traverse_vsmart_dict(child_data, models_list, inst_matrix, context_addon, ctx=child_ctx)
+            return
 
         # Traverse children
         children = data.get("m_Children", [])
@@ -2169,6 +2697,34 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             parent_world_matrix = np.eye(4, dtype=np.float32)
         eval_ctx = ctx or self._eval_context
 
+        # Get parent info to see if we should restrict child traversal (e.g. for PickOne)
+        parent_data = item.data(0, Qt.UserRole)
+        parent_data = dict(parent_data) if parent_data is not None else {}
+        parent_class = parent_data.get("_class", "")
+
+        child_indices = list(range(item.childCount()))
+        bypass_pickone = (self.isolated_element_id is not None and not is_in_isolated_subtree)
+
+        if parent_class == "CSmartPropElement_PickOne" and not bypass_pickone:
+            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
+            selected_idx = 0
+            if selection_mode in ("SPECIFIC", "SPECIFIC_CHILD"):
+                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
+                try:
+                    selected_idx = int(float(str(eval_ctx.resolve_scalar(specific_idx_val, 0.0))))
+                except (ValueError, TypeError):
+                    selected_idx = 0
+            if item.childCount() > 0:
+                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
+                child_indices = [selected_idx]
+            else:
+                child_indices = []
+
+        for idx in child_indices:
+            child = item.child(idx)
+            self._traverse_tree_node(child, parent_data, models_list, parent_world_matrix, is_in_isolated_subtree, eval_ctx)
+
+    def _traverse_tree_node(self, child, parent_data, models_list, parent_world_matrix, is_in_isolated_subtree, eval_ctx):
         # Resolve context addon from opened file
         context_addon = None
         if self.document and getattr(self.document, "opened_file", None):
@@ -2178,117 +2734,104 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if addon_match:
                 context_addon = addon_match.group(1)
 
-        # Get parent info to see if we should restrict child traversal (e.g. for PickOne)
-        parent_data = item.data(0, Qt.UserRole)
-        parent_data = dict(parent_data) if parent_data is not None else {}
-        parent_class = parent_data.get("_class", "")
+        data = child.data(0, Qt.UserRole)
+        data = dict(data) if data is not None else {}
 
-        child_indices = list(range(item.childCount()))
+        eid = data.get("m_nElementID", 0)
+        node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
+        if node_is_isolated_start:
+            self.isolated_element_name = child.text(0)
+        current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
 
-        bypass_pickone = (self.isolated_element_id is not None and not is_in_isolated_subtree)
+        is_ancestor = False
+        if self.isolated_element_id is not None and not current_in_isolated:
+            is_ancestor = self._is_element_in_tree(child, self.isolated_element_id)
+            if not is_ancestor:
+                return
 
-        if parent_class == "CSmartPropElement_PickOne" and not bypass_pickone:
-            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
-            selected_idx = 0
-            if selection_mode == "SPECIFIC" or selection_mode == "SPECIFIC_CHILD":
-                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
-                if isinstance(specific_idx_val, (int, float)):
-                    selected_idx = int(specific_idx_val)
-                elif isinstance(specific_idx_val, str):
-                    try:
-                        selected_idx = int(float(specific_idx_val))
-                    except ValueError:
-                        selected_idx = 0
-                elif isinstance(specific_idx_val, dict) and "m_Expression" in specific_idx_val:
-                    try:
-                        selected_idx = int(float(specific_idx_val["m_Expression"]))
-                    except:
-                        selected_idx = 0
-                else:
-                    selected_idx = 0
-            else:
-                selected_idx = 0
+        # Don't display elements if they are disabled
+        is_enabled = data.get("m_bEnabled", True)
+        if is_enabled is False or is_enabled == "false":
+            if not (node_is_isolated_start or is_ancestor):
+                return
 
-            if item.childCount() > 0:
-                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
-                child_indices = [selected_idx]
-            else:
-                child_indices = []
+        child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
+        local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
 
-        for idx in child_indices:
-            child = item.child(idx)
-            data = child.data(0, Qt.UserRole)
-            data = dict(data) if data is not None else {}
+        # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
+        local_matrix = (
+            scale_matrix(*local_scale)
+            @ rotation_matrix_euler(*local_rot)
+            @ translation_matrix(*local_pos)
+        )
 
-            eid = data.get("m_nElementID", 0)
-            node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
-            if node_is_isolated_start:
-                self.isolated_element_name = child.text(0)
-            current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
+        # Compose with parent
+        world_matrix = local_matrix @ parent_world_matrix
+        world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
-            is_ancestor = False
-            if self.isolated_element_id is not None and not current_in_isolated:
-                is_ancestor = self._is_element_in_tree(child, self.isolated_element_id)
-                if not is_ancestor:
-                    continue
+        element_class = data.get("_class", "")
+        # Flag element types the viewport can't fully preview.
+        if (element_class.startswith("CSmartPropElement_")
+                and element_class not in self._SUPPORTED_ELEMENT_CLASSES):
+            self._warn_unsupported.add(element_class.replace("CSmartPropElement_", ""))
+        model_path = ""
+        if element_class in ("CSmartPropElement_Model",
+                             "CSmartPropElement_ModelEntity",
+                             "CSmartPropElement_PropPhysics",
+                             "CSmartPropElement_PropDynamic"):
+            model_path = self._get_string(data.get("m_sModelName", ""), ctx=child_ctx)
 
-            # Don't display elements if they are disabled
-            is_enabled = data.get("m_bEnabled", True)
-            if is_enabled is False or is_enabled == "false":
-                if not (node_is_isolated_start or is_ancestor):
-                    continue
-
-            child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
-            local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
-
-            # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
-            local_matrix = (
-                scale_matrix(*local_scale)
-                @ rotation_matrix_euler(*local_rot)
-                @ translation_matrix(*local_pos)
-            )
-
-            # Compose with parent
-            world_matrix = local_matrix @ parent_world_matrix
-
-            world_pos, world_rot, world_scale = decompose_trs(world_matrix)
-
-            element_class = data.get("_class", "")
-            # Flag element types the viewport can't fully preview.
-            if (element_class.startswith("CSmartPropElement_")
-                    and element_class not in self._SUPPORTED_ELEMENT_CLASSES):
-                self._warn_unsupported.add(element_class.replace("CSmartPropElement_", ""))
-            model_path = ""
-            if element_class in ("CSmartPropElement_Model",
-                                 "CSmartPropElement_ModelEntity",
-                                 "CSmartPropElement_PropPhysics",
-                                 "CSmartPropElement_PropDynamic"):
-                model_path = self._get_string(data.get("m_sModelName", ""), ctx=child_ctx)
-
-            # If this is a nested smart prop element, load and traverse it!
-            if element_class == "CSmartPropElement_SmartProp":
-                smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=child_ctx)
-                if smartprop_path:
-                    if self.isolated_element_id is None or current_in_isolated:
-                        self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
-
-            if eid > 0:
+        # If this is a nested smart prop element, load and traverse it!
+        if element_class == "CSmartPropElement_SmartProp":
+            smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=child_ctx)
+            if smartprop_path:
                 if self.isolated_element_id is None or current_in_isolated:
-                    models_list.append({
-                        "id":                  eid,
-                        "path":                model_path,
-                        "position":            world_pos,
-                        "rotation":            world_rot,
-                        "scale":               world_scale,
-                        "parent_world_matrix": parent_world_matrix,
-                        "data":                data,
-                        "is_dot":              not bool(model_path)
-                    })
+                    self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
+        if eid > 0:
             if self.isolated_element_id is None or current_in_isolated:
-                self._collect_widgets(data, world_pos, world_rot, world_matrix)
+                models_list.append({
+                    "id":                  eid,
+                    "path":                model_path,
+                    "position":            world_pos,
+                    "rotation":            world_rot,
+                    "scale":               world_scale,
+                    "world_matrix":        world_matrix,
+                    "parent_world_matrix": parent_world_matrix,
+                    "data":                data,
+                    "is_dot":              not bool(model_path)
+                })
 
-            self._traverse_tree(child, models_list, world_matrix, current_in_isolated, ctx=child_ctx)
+        if self.isolated_element_id is None or current_in_isolated:
+            self._collect_widgets(data, world_pos, world_rot, world_matrix)
+
+        # PlaceOnPath handling
+        if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
+            from src.editors.smartprop_editor.viewport_3d.engine.path_evaluator import (
+                sample_place_on_path, matches_path_selection_criteria
+            )
+            path_result = sample_place_on_path(data, child_ctx, world_matrix)
+            self._path_infos.append({
+                "id": eid,
+                "curve": path_result["curve_samples"],
+                "control_points": path_result["control_points"],
+                "world_matrix": world_matrix,
+            })
+            for inst in path_result["instances"]:
+                inst_idx = inst["index"]
+                inst_count = inst["count"]
+                inst_matrix = inst["world_matrix"]
+                inst_ctx = child_ctx.with_instance(instance_index=inst_idx, instance_count=inst_count)
+                for c_idx in range(child.childCount()):
+                    subchild = child.child(c_idx)
+                    subdata = subchild.data(0, Qt.UserRole)
+                    subdata = dict(subdata) if subdata is not None else {}
+                    if not matches_path_selection_criteria(subdata, inst_idx, inst_count, inst_ctx):
+                        continue
+                    self._traverse_tree_node(subchild, data, models_list, inst_matrix, current_in_isolated, inst_ctx)
+            return
+
+        self._traverse_tree(child, models_list, world_matrix, current_in_isolated, ctx=child_ctx)
 
     def _update_subtree_transforms(self, item, parent_world_matrix, ctx=None):
         """Recursively update the world transforms of all descendants in self._model_infos."""
@@ -2351,11 +2894,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             eid = data.get("m_nElementID", 0)
-            if eid > 0 and eid in self._model_infos:
-                info = self._model_infos[eid]
-                info["position"] = world_pos
-                info["rotation"] = world_rot
-                info["scale"] = world_scale
-                info["parent_world_matrix"] = parent_world_matrix
+            if eid > 0:
+                if eid in self._model_infos:
+                    info = self._model_infos[eid]
+                    info["position"] = world_pos
+                    info["rotation"] = world_rot
+                    info["scale"] = world_scale
+                    info["parent_world_matrix"] = parent_world_matrix
+                self._update_element_widgets(eid, world_pos, world_rot, world_matrix)
 
             self._update_subtree_transforms(child, world_matrix, ctx=child_ctx)
