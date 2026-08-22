@@ -9,10 +9,11 @@ widgets (locators / rotators / PickOne handles) that Hammer draws in-viewport.
 Preview-only — nothing here changes how ``.vsmart`` files are authored or saved.
 
 Modules:
-    expression  -- safe evaluator for the SmartProp expression language.
-    context     -- EvalContext: resolves any value form to a number / vector.
-    variables   -- builds the variable name -> typed-default map from a document.
-    process     -- extracts widget display specs from element data.
+    expression          -- safe evaluator for the SmartProp expression language.
+    context             -- EvalContext: resolves any value form to a number / vector.
+    variables           -- builds the variable name -> typed-default map from a document.
+    modifier_evaluator  -- sequential modifier evaluation and widget extraction.
+    process             -- extracts widget display specs from element data.
 """
 
 from src.editors.smartprop_editor.viewport_3d.engine.expression import (
@@ -21,6 +22,9 @@ from src.editors.smartprop_editor.viewport_3d.engine.expression import (
 from src.editors.smartprop_editor.viewport_3d.engine.context import EvalContext
 from src.editors.smartprop_editor.viewport_3d.engine.variables import (
     build_variable_map, build_variable_map_from_raw, coerce_value,
+)
+from src.editors.smartprop_editor.viewport_3d.engine.modifier_evaluator import (
+    evaluate_element_modifiers, evaluate_single_modifier, resolve_color,
 )
 from src.editors.smartprop_editor.viewport_3d.engine.process import (
     extract_widget_specs,
@@ -33,5 +37,8 @@ __all__ = [
     "build_variable_map",
     "build_variable_map_from_raw",
     "coerce_value",
+    "evaluate_element_modifiers",
+    "evaluate_single_modifier",
+    "resolve_color",
     "extract_widget_specs",
 ]

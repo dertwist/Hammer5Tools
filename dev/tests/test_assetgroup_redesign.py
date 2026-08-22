@@ -233,13 +233,14 @@ def test_editor_tab_widget(qapp, fake_addon_dir):
         assert tab.custom_output_edit.text() == ""
         assert tab.save_btn is not None
         assert tab.watch_changes_cb is not None
-        assert tab.watch_changes_cb.isChecked() is False
+        assert tab.watch_changes_cb.isChecked() is True
         assert len(tab.template_manager.template_cards) >= 1
 
         first_card = tab.template_manager.template_cards[0]
         first_card.set_reference_path("models/props/crate/box_01.vmdl")
         assert first_card.ref_edit.text() == "models/props/crate/box_01.vmdl"
 
+        tab.watch_changes_cb.setChecked(False)
         tab.watch_changes_cb.setChecked(True)
         tab.save_file()
         assert os.path.isfile(hbat_path)
@@ -260,7 +261,6 @@ def test_main_window_layout_and_empty_state(qapp, fake_addon_dir):
         assert win.config_dock is not None
         assert win.new_cfg_for_folder_btn is not None
         assert win.new_cfg_btn is not None
-        assert win.global_watch_cb is not None
         assert win.monitoring_list is not None
 
         # When no tabs are open, empty state widget should be active
@@ -309,6 +309,8 @@ def test_file_item_watch_button_and_global_watch(qapp, fake_addon_dir):
 
     watcher = MonitoringFileWatcher(fake_addon_dir)
     try:
+        assert watcher.is_global_watch_enabled() is True
+        watcher.set_global_watch_enabled(False)
         assert watcher.is_global_watch_enabled() is False
         watcher.set_global_watch_enabled(True)
         assert watcher.is_global_watch_enabled() is True

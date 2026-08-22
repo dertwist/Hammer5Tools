@@ -17,6 +17,7 @@ from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
 from src.editors.smartprop_editor.viewport_3d.engine.context import EvalContext
 from src.editors.smartprop_editor.viewport_3d.engine.variables import build_variable_map
 from src.editors.smartprop_editor.viewport_3d.engine.process import extract_widget_specs
+from src.editors.smartprop_editor.viewport_3d.engine.modifier_evaluator import evaluate_element_modifiers
 from src.editors.smartprop_editor.viewport_3d.crash_guard import gl_guard
 from src.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
@@ -1394,22 +1395,19 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     item.setData(0, Qt.UserRole, data)
 
                     # 5. Reconstruct the actual world transform from what was written
-                    actual_local_pos, actual_local_rot, actual_local_scale = self._get_local_transform(data)
-                    M_actual_local = (
-                        scale_matrix(*actual_local_scale)
-                        @ rotation_matrix_euler(*actual_local_rot)
-                        @ translation_matrix(*actual_local_pos)
+                    M_actual_local, M_actual_world, M_actual_model, new_widgets = evaluate_element_modifiers(
+                        data, self._eval_context, parent_world_matrix
                     )
-                    M_actual_world = M_actual_local @ parent_world_matrix
-                    actual_world_pos, actual_world_rot, actual_world_scale = decompose_trs(M_actual_world)
+                    actual_world_pos, actual_world_rot, actual_world_scale = decompose_trs(M_actual_model)
 
                     info["position"] = actual_world_pos
                     info["rotation"] = actual_world_rot
                     info["scale"] = actual_world_scale
+                    info["world_matrix"] = M_actual_model
 
                     # Update widgets for the dragged element itself
                     eid = data.get("m_nElementID", 0)
-                    self._update_element_widgets(eid, actual_world_pos, actual_world_rot, M_actual_world)
+                    self._replace_element_widgets(eid, new_widgets)
 
                     # Update all descendant transforms and their visual widgets immediately
                     self._update_subtree_transforms(item, M_actual_world)
@@ -1750,86 +1748,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     def _get_local_transform(self, data, ctx=None):
         """Extract local pos, rot, scale from the element's data dictionary and modifiers."""
-        local_pos   = [0.0, 0.0, 0.0]
-        local_rot   = [0.0, 0.0, 0.0]
-        local_scale = [1.0, 1.0, 1.0]
-
-        if not isinstance(data, dict):
-            return local_pos, local_rot, local_scale
-
         eval_ctx = ctx or self._eval_context
-        inst_idx = getattr(eval_ctx, "instance_index", 0) or 0
-        eid = int(data.get("m_nElementID", 0) or 0)
-
-        for mod in data.get("m_Modifiers", []) or []:
-            if not isinstance(mod, dict):
-                continue
-            if mod.get("m_bEnabled", True) is False or mod.get("m_bEnabled") == "false":
-                continue
-            cls = mod.get("_class", "")
-            if cls in ("CSmartPropOperation_Translate", "Translate") and "m_vPosition" in mod:
-                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0], ctx=eval_ctx)
-                local_pos = [local_pos[i] + comp[i] for i in range(3)]
-            elif cls in ("CSmartPropOperation_SetPosition", "SetPosition") and "m_vPosition" in mod:
-                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0], ctx=eval_ctx)
-                local_pos = list(comp)
-            elif cls in ("CSmartPropOperation_Rotate", "Rotate") and "m_vRotation" in mod:
-                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0], ctx=eval_ctx)
-                local_rot = [local_rot[i] + comp[i] for i in range(3)]
-            elif cls in ("CSmartPropOperation_SetOrientation", "SetOrientation") and "m_vRotation" in mod:
-                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0], ctx=eval_ctx)
-                local_rot = list(comp)
-            elif cls in ("CSmartPropOperation_ResetRotation", "ResetRotation"):
-                local_rot = [0.0, 0.0, 0.0]
-            elif cls in ("CSmartPropOperation_Scale", "Scale") and "m_flScale" in mod:
-                s = eval_ctx.resolve_scalar(mod["m_flScale"], 1.0)
-                local_scale = [local_scale[i] * s for i in range(3)]
-            elif cls in ("CSmartPropOperation_ResetScale", "ResetScale"):
-                local_scale = [1.0, 1.0, 1.0]
-            elif cls in ("CSmartPropOperation_RandomOffset", "RandomOffset"):
-                min_v = self._get_vector(mod.get("m_vRandomPositionMin"), [0.0, 0.0, 0.0], ctx=eval_ctx)
-                max_v = self._get_vector(mod.get("m_vRandomPositionMax"), [0.0, 0.0, 0.0], ctx=eval_ctx)
-                for i in range(3):
-                    h = ((eid * 374761393 + inst_idx * 668265263 + i * 964729 + 11) & 0x7FFFFFFF)
-                    h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
-                    t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
-                    local_pos[i] += min_v[i] + t * (max_v[i] - min_v[i])
-            elif cls in ("CSmartPropOperation_RandomRotation", "RandomRotation"):
-                min_v = self._get_vector(mod.get("m_vRandomRotationMin"), [0.0, 0.0, 0.0], ctx=eval_ctx)
-                max_v = self._get_vector(mod.get("m_vRandomRotationMax"), [0.0, 0.0, 0.0], ctx=eval_ctx)
-                for i in range(3):
-                    h = ((eid * 374761393 + inst_idx * 668265263 + i * 964729 + 101) & 0x7FFFFFFF)
-                    h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
-                    t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
-                    local_rot[i] += min_v[i] + t * (max_v[i] - min_v[i])
-            elif cls in ("CSmartPropOperation_RandomScale", "RandomScale"):
-                min_s = eval_ctx.resolve_scalar(mod.get("m_flRandomScaleMin"), 1.0)
-                max_s = eval_ctx.resolve_scalar(mod.get("m_flRandomScaleMax"), 1.0)
-                h = ((eid * 374761393 + inst_idx * 668265263 + 202) & 0x7FFFFFFF)
-                h = ((h ^ (h >> 13)) * 1274126177) & 0x7FFFFFFF
-                t = (h ^ (h >> 16)) / float(0x7FFFFFFF)
-                s_factor = min_s + t * (max_s - min_s)
-                local_scale = [local_scale[i] * s_factor for i in range(3)]
-
-        element_class = data.get("_class", "")
-        if element_class == "CSmartPropElement_Model":
-            if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0, ctx=eval_ctx)
-                local_scale = [local_scale[i] * comp[i] for i in range(3)]
-            elif data.get("m_flUniformModelScale") is not None:
-                s = eval_ctx.resolve_scalar(data["m_flUniformModelScale"], 1.0)
-                local_scale = [local_scale[i] * s for i in range(3)]
-        elif element_class in ("CSmartPropElement_ModelEntity",
-                               "CSmartPropElement_PropPhysics",
-                               "CSmartPropElement_PropDynamic"):
-            if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0, ctx=eval_ctx)
-                local_scale = [local_scale[i] * comp[i] for i in range(3)]
-            elif data.get("m_flUniformModelScale") is not None:
-                s = eval_ctx.resolve_scalar(data["m_flUniformModelScale"], 1.0)
-                local_scale = [local_scale[i] * s for i in range(3)]
-
-        return local_pos, local_rot, local_scale
+        local_matrix, _, _, _ = evaluate_element_modifiers(data, eval_ctx)
+        return decompose_trs(local_matrix)
 
     # SmartProp evaluation engine integration + preview widgets
     def _build_eval_context(self):
@@ -1841,6 +1762,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         except Exception as e:
             print(f"[SmartProp3D] Failed to build variable map: {e}")
         return EvalContext(variables=variables)
+
+    def _replace_element_widgets(self, eid, new_widgets):
+        """Replace all visual widgets belonging to element `eid` with `new_widgets`."""
+        if not eid:
+            return
+        self._widget_infos = [w for w in self._widget_infos if w.get("element_id") != eid]
+        self._widget_infos.extend(new_widgets)
 
     def _collect_widgets(self, data, world_pos, world_rot, world_matrix):
         """Extract locator/rotator/sizer/pickone widget specs for an element and place
@@ -2594,18 +2522,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 and nested_class not in self._SUPPORTED_ELEMENT_CLASSES):
             self._warn_unsupported.add(nested_class.replace("CSmartPropElement_", ""))
 
-        local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=eval_ctx)
-
-        local_matrix = (
-            scale_matrix(*local_scale)
-            @ rotation_matrix_euler(*local_rot)
-            @ translation_matrix(*local_pos)
+        local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
+            data, eval_ctx, parent_world_matrix
         )
-
-        # Compose with parent
-        world_matrix = local_matrix @ parent_world_matrix
-
-        world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+        world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
 
         element_class = data.get("_class", "")
         model_path = ""
@@ -2629,14 +2549,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "position":            world_pos,
                 "rotation":            world_rot,
                 "scale":               world_scale,
-                "world_matrix":        world_matrix,
+                "world_matrix":        model_world_matrix,
                 "parent_world_matrix": parent_world_matrix,
                 "data":                data,
                 "is_dot":              not bool(model_path)
             })
 
-        # Collect preview widgets (locator / rotator / pickone) for this element.
-        self._collect_widgets(data, world_pos, world_rot, world_matrix)
+        # Collect preview widgets (locator / rotator / sizer / pickone) for this element.
+        self._widget_infos.extend(widgets)
 
         # PlaceOnPath element support inside dict traversal
         if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
@@ -2756,18 +2676,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 return
 
         child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
-        local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
-
-        # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
-        local_matrix = (
-            scale_matrix(*local_scale)
-            @ rotation_matrix_euler(*local_rot)
-            @ translation_matrix(*local_pos)
+        local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
+            data, child_ctx, parent_world_matrix
         )
-
-        # Compose with parent
-        world_matrix = local_matrix @ parent_world_matrix
-        world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+        world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
 
         element_class = data.get("_class", "")
         # Flag element types the viewport can't fully preview.
@@ -2796,14 +2708,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     "position":            world_pos,
                     "rotation":            world_rot,
                     "scale":               world_scale,
-                    "world_matrix":        world_matrix,
+                    "world_matrix":        model_world_matrix,
                     "parent_world_matrix": parent_world_matrix,
                     "data":                data,
                     "is_dot":              not bool(model_path)
                 })
 
         if self.isolated_element_id is None or current_in_isolated:
-            self._collect_widgets(data, world_pos, world_rot, world_matrix)
+            self._widget_infos.extend(widgets)
 
         # PlaceOnPath handling
         if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
@@ -2880,18 +2792,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 continue
 
             child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
-            local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
-
-            local_matrix = (
-                scale_matrix(*local_scale)
-                @ rotation_matrix_euler(*local_rot)
-                @ translation_matrix(*local_pos)
+            local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
+                data, child_ctx, parent_world_matrix
             )
-
-            # Compose with parent
-            world_matrix = local_matrix @ parent_world_matrix
-
-            world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+            world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
 
             eid = data.get("m_nElementID", 0)
             if eid > 0:
@@ -2900,7 +2804,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     info["position"] = world_pos
                     info["rotation"] = world_rot
                     info["scale"] = world_scale
+                    info["world_matrix"] = model_world_matrix
                     info["parent_world_matrix"] = parent_world_matrix
-                self._update_element_widgets(eid, world_pos, world_rot, world_matrix)
+                self._replace_element_widgets(eid, widgets)
 
             self._update_subtree_transforms(child, world_matrix, ctx=child_ctx)
