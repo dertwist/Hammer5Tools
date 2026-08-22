@@ -46,7 +46,7 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
-app_version = '5.7.1'
+app_version = '5.8.0'
 
 def _version_txt() -> list[str]:
     """[version, channel] from version.txt next to the frozen exe; [] when run from source.
