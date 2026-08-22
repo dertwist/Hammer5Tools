@@ -10,7 +10,11 @@ from typing import Any
 
 from PySide6.QtCore import Qt
 
-_CONTAINER = {"modifier": "m_Modifiers", "criterion": "m_SelectionCriteria"}
+_CONTAINER = {
+    "modifier": "m_Modifiers",
+    "criterion": "m_SelectionCriteria",
+    "selection_criteria": "m_SelectionCriteria",
+}
 
 # 'm_Modifiers[2].m_flAmount' / 'm_SelectionCriteria[0]' — same shape document.py parses.
 _DIFF_KEY_RE = re.compile(r"^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$")

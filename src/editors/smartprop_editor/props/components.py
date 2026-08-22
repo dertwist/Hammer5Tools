@@ -46,7 +46,12 @@ from PySide6.QtWidgets import (
 )
 
 from src.common import fast_deepcopy
-from src.editors.smartprop_editor._common import get_clean_class_name
+from src.editors.smartprop_editor._common import (
+    get_clean_class_name,
+    CLIPBOARD_PREFIX,
+    CLIPBOARD_BATCH_PREFIX,
+    parse_component_clipboard,
+)
 from src.editors.smartprop_editor.commands import PropertySnapshotCommand
 from src.widgets.widgets import make_composite_icon
 from src.editors.smartprop_editor.objects import (
@@ -63,9 +68,6 @@ from src.widgets.tree import HierarchyTreeWidget
 from src.settings.main import get_settings_bool
 
 
-# Clipboard string pattern for SmartProp property items
-CLIPBOARD_PREFIX = "hammer5tools:smartprop_editor_property"
-CLIPBOARD_BATCH_PREFIX = "hammer5tools:smartprop_editor_property_batch"
 
 
 def get_summary_hint(data: dict) -> str:
@@ -729,9 +731,10 @@ class ComponentList(QWidget):
         if not self.tree_item or not item_dicts:
             return
 
+        norm_group = "modifier" if group_type == "modifier" else "criterion"
         old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
         new_data = fast_deepcopy(old_data)
-        container_key = "m_Modifiers" if group_type == "modifier" else "m_SelectionCriteria"
+        container_key = "m_Modifiers" if norm_group == "modifier" else "m_SelectionCriteria"
         arr = new_data.setdefault(container_key, [])
 
         doc_gen = getattr(self.document, "element_id_generator", None) if self.document else None
@@ -758,7 +761,7 @@ class ComponentList(QWidget):
 
             curr_insert = target_idx + offset
             arr.insert(curr_insert, new_comp)
-            added_refs.append(ComponentRef(self.tree_item, group_type, curr_insert))
+            added_refs.append(ComponentRef(self.tree_item, norm_group, curr_insert))
 
         self.tree_item.setData(0, Qt.UserRole, new_data)
         self._push_snapshot_command(old_data, new_data)
@@ -777,34 +780,15 @@ class ComponentList(QWidget):
         if not self.tree_item:
             return
         clip_text = QApplication.clipboard().text()
-        pasted_dicts = []
+        clip_group, pasted_dicts = parse_component_clipboard(clip_text)
+        if not pasted_dicts or not clip_group:
+            return
 
-        if clip_text.startswith(CLIPBOARD_PREFIX):
-            parts = clip_text.split(";;")
-            if len(parts) >= 4:
-                clip_group = parts[3]
-                if clip_group == target_group or (target_group in ("selection_criteria", "criterion") and clip_group in ("selection_criteria", "criterion")) or (target_group == "modifier" and clip_group == "modifier"):
-                    try:
-                        val_dict = ast.literal_eval(parts[2])
-                        if isinstance(val_dict, dict):
-                            pasted_dicts.append(val_dict)
-                    except Exception:
-                        pass
-        elif clip_text.startswith(CLIPBOARD_BATCH_PREFIX):
-            parts = clip_text.split(";;")
-            if len(parts) >= 4:
-                clip_group = parts[3]
-                if clip_group == target_group or (target_group in ("selection_criteria", "criterion") and clip_group in ("selection_criteria", "criterion")) or (target_group == "modifier" and clip_group == "modifier"):
-                    try:
-                        val_list = ast.literal_eval(parts[2])
-                        if isinstance(val_list, list):
-                            pasted_dicts.extend([d for d in val_list if isinstance(d, dict)])
-                    except Exception:
-                        pass
+        target_norm = "modifier" if target_group in ("modifier", "modifiers", "operators") else "criterion"
+        clip_norm = "modifier" if clip_group in ("modifier", "modifiers", "operators") else "criterion"
 
-        if pasted_dicts:
-            group_type = "modifier" if target_group == "modifier" else "criterion"
-            self._add_component_dicts(group_type, pasted_dicts, insert_after_idx=insert_after_idx)
+        if target_norm == clip_norm:
+            self._add_component_dicts(target_norm, pasted_dicts, insert_after_idx=insert_after_idx)
 
     # ── Copy / Cut / Duplicate ───────────────────────────────────────────────
 
@@ -835,13 +819,18 @@ class ComponentList(QWidget):
         if not isinstance(data, dict):
             return
 
+        valid_refs = [r for r in refs if r is not None]
+        if not valid_refs:
+            return
+
+        valid_refs = sorted(valid_refs, key=lambda x: getattr(x, 'index', 0))
         target_dicts = []
         group_type = "modifier"
-        for ref in refs:
+        for ref in valid_refs:
             target = ref.target(data)
             if target:
                 target_dicts.append(target)
-                group_type = "modifier" if ref.kind == "modifier" else ("selection_criteria" if ref.kind == "criterion" else "element")
+                group_type = "modifier" if ref.kind == "modifier" else ("selection_criteria" if ref.kind in ("criterion", "selection_criteria") else "element")
 
         if not target_dicts:
             return
@@ -939,7 +928,10 @@ class ComponentList(QWidget):
         act_cut = menu.addAction("Cut (Ctrl+X)")
 
         clip_text = QApplication.clipboard().text()
-        has_clip = clip_text.startswith(CLIPBOARD_PREFIX) or clip_text.startswith(CLIPBOARD_BATCH_PREFIX)
+        clip_group, comp_dicts = parse_component_clipboard(clip_text)
+        target_norm = "modifier" if tree is self.modifiers_tree else "criterion"
+        clip_norm = "modifier" if clip_group == "modifier" else ("criterion" if clip_group == "selection_criteria" else None)
+        has_clip = bool(comp_dicts and target_norm == clip_norm)
         act_paste = menu.addAction("Paste (Ctrl+V)")
         act_paste.setEnabled(has_clip)
 

@@ -57,4 +57,61 @@ def is_category_widget(widget) -> bool:
         return True
     return False
 
+
+# Clipboard string patterns for SmartProp components (modifiers, selection criteria)
+CLIPBOARD_PREFIX = "hammer5tools:smartprop_editor_property"
+CLIPBOARD_BATCH_PREFIX = "hammer5tools:smartprop_editor_property_batch"
+
+
+def parse_component_clipboard(clip_text: str) -> tuple[str | None, list[dict]]:
+    """Parse clipboard text containing single or batch SmartProp component data.
+
+    Returns:
+        (group_type, list_of_dicts) where group_type is 'modifier' or 'selection_criteria',
+        or (None, []) if the clipboard format is invalid.
+    """
+    if not clip_text or not isinstance(clip_text, str):
+        return None, []
+
+    is_batch = clip_text.startswith(CLIPBOARD_BATCH_PREFIX + ";;")
+    is_single = clip_text.startswith(CLIPBOARD_PREFIX + ";;")
+
+    if not (is_batch or is_single):
+        return None, []
+
+    prefix = CLIPBOARD_BATCH_PREFIX if is_batch else CLIPBOARD_PREFIX
+    body = clip_text[len(prefix) + 2:]
+
+    try:
+        header, rest = body.split(";;", 1)
+        payload_str, raw_group = rest.rsplit(";;", 1)
+    except ValueError:
+        return None, []
+
+    raw_group = raw_group.strip()
+    if raw_group in ("modifier", "modifiers", "operators"):
+        group_type = "modifier"
+    elif raw_group in ("selection_criteria", "criterion", "criteria"):
+        group_type = "selection_criteria"
+    else:
+        group_type = raw_group
+
+    try:
+        import ast
+        evaluated = ast.literal_eval(payload_str)
+    except Exception:
+        return None, []
+
+    if is_batch:
+        if isinstance(evaluated, list):
+            dicts = [d for d in evaluated if isinstance(d, dict)]
+            if dicts:
+                return group_type, dicts
+    else:
+        if isinstance(evaluated, dict):
+            return group_type, [evaluated]
+
+    return None, []
+
+
 
