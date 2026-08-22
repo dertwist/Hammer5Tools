@@ -623,6 +623,13 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
     if not isinstance(item_data, dict):
         return base_icon
 
+    has_item_note = False
+    try:
+        from src.editors.smartprop_editor.note_utils import has_note
+        has_item_note = has_note(item_data)
+    except Exception:
+        pass
+
     enabled_val = item_data.get("m_bEnabled", True)
     is_disabled = False
     is_expression = False
@@ -631,15 +638,21 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
         is_disabled = not enabled_val
     elif isinstance(enabled_val, dict):
         is_expression = True
-        if "m_bEnabled" in enabled_val and isinstance(enabled_val["m_bEnabled"], bool):
-            is_disabled = not enabled_val["m_bEnabled"]
-    elif isinstance(enabled_val, str):
-        if enabled_val.lower() in ("false", "0"):
+        inner_val = enabled_val.get("m_bEnabled")
+        if isinstance(inner_val, bool):
+            is_disabled = not inner_val
+        elif isinstance(inner_val, str) and inner_val.lower() in ("false", "0"):
             is_disabled = True
-        elif enabled_val.lower() not in ("true", "1"):
+    elif isinstance(enabled_val, str):
+        enabled_str = enabled_val.strip()
+        if enabled_str.lower() in ("false", "0"):
+            is_disabled = True
+        elif enabled_str.lower() not in ("true", "1"):
             is_expression = True
+    elif enabled_val == 0:
+        is_disabled = True
 
-    if not is_disabled and not is_expression:
+    if not is_disabled and not is_expression and not has_item_note:
         return base_icon
 
     from PySide6.QtGui import QPixmap, QImage, QColor, QIcon, QPainter
@@ -653,18 +666,40 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
     if pixmap.isNull():
         return base_icon
 
-    image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
+    if is_disabled:
+        image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
+        for y in range(image.height()):
+            for x in range(image.width()):
+                color = image.pixelColor(x, y)
+                if color.alpha() > 0:
+                    gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+                    color.setRgb(gray, gray, gray, int(color.alpha() * 0.75))
+                    image.setPixelColor(x, y, color)
+        res_pixmap = QPixmap.fromImage(image)
+    else:
+        res_pixmap = QPixmap(pixmap)
 
-    for y in range(image.height()):
-        for x in range(image.width()):
-            color = image.pixelColor(x, y)
-            if color.alpha() > 0:
-                gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
-                color.setRgb(gray, gray, gray, color.alpha())
-                image.setPixelColor(x, y, color)
+    painter = None
+    overlay_size = max(int(icon_size * 0.65), 10)
 
-    res_pixmap = QPixmap.fromImage(image)
+    # 1. Note badge (bottom-right corner) — painted first
+    if has_item_note:
+        try:
+            from src.styles.property_icons import IconCache
+            note_icon = IconCache.get_note_icon()
+            if note_icon and not note_icon.isNull():
+                note_pm = note_icon.pixmap(overlay_size, overlay_size)
+                if not note_pm.isNull():
+                    if painter is None:
+                        painter = QPainter(res_pixmap)
+                        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+                    note_x = icon_size - overlay_size
+                    note_y = icon_size - overlay_size
+                    painter.drawPixmap(note_x, note_y, note_pm)
+        except Exception:
+            pass
 
+    # 2. Expression constraint badge — painted on top of note badge
     if is_expression:
         import os
         if overlay_path is None or not os.path.exists(str(overlay_path)):
@@ -688,11 +723,17 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
         if overlay_path and os.path.exists(str(overlay_path)):
             overlay_pm = QPixmap(str(overlay_path))
             if not overlay_pm.isNull():
-                painter = QPainter(res_pixmap)
-                overlay_size = max(int(icon_size * 0.65), 10)
+                if painter is None:
+                    painter = QPainter(res_pixmap)
+                    painter.setRenderHint(QPainter.SmoothPixmapTransform)
                 scaled_overlay = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                painter.drawPixmap(icon_size - overlay_size, icon_size - overlay_size, scaled_overlay)
-                painter.end()
+                # When note badge is also present, display expression badge on top (top-right), otherwise bottom-right
+                expr_x = icon_size - overlay_size
+                expr_y = 0 if has_item_note else (icon_size - overlay_size)
+                painter.drawPixmap(expr_x, expr_y, scaled_overlay)
+
+    if painter is not None:
+        painter.end()
 
     return QIcon(res_pixmap)
 
@@ -702,11 +743,11 @@ NO_CHILDREN_CLASSES = ("Model", "SmartProp", "ModifyState", "PropPhysics", "Prop
 
 
 def add_error_badge(icon, size: int = 18):
-    """Overlay a small error badge on the bottom-right corner of ``icon``."""
+    """Overlay a small error badge on the top-right corner of ``icon``."""
     if icon is None or icon.isNull():
         return icon
     from PySide6.QtGui import QPixmap, QPainter, QIcon
-    from PySide6.QtCore import QSize
+    from PySide6.QtCore import QSize, Qt
 
     sizes = icon.availableSizes()
     size_obj = sizes[0] if sizes else QSize(size, size)
@@ -721,9 +762,10 @@ def add_error_badge(icon, size: int = 18):
 
     result = QPixmap(pixmap)
     painter = QPainter(result)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
     overlay_size = max(int(icon_size * 0.65), 10)
     scaled = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    painter.drawPixmap(icon_size - overlay_size, icon_size - overlay_size, scaled)
+    painter.drawPixmap(0, 0, scaled)
     painter.end()
     return QIcon(result)
 

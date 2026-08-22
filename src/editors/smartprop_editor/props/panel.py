@@ -177,20 +177,32 @@ class SmartPropPropertyPanel(QWidget):
         self.splitter.addWidget(self.property_list)
         self.splitter.addWidget(self.help_panel)
 
-        # Allow HelpPanel (index 1) to be collapsed down to 0
+        # Allow HelpPanel (index 1) to be collapsed down to 0, PropertyList never collapsed
+        self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, True)
 
         # Stretch factors: properties get the room, help strip stays preferred
         self.splitter.setStretchFactor(0, 1)
         self.splitter.setStretchFactor(1, 0)
-        self.splitter.setSizes([420, 80])
+        self.splitter.setSizes([600, 110])
 
         root.addWidget(self.components_list, 0)
         root.addWidget(self.splitter, 1)
 
         # ── Wire signals ───────────────────────────────────────────────────
         self.components_list.componentSelected.connect(self._on_component_selected)
+        self.components_list.addNoteRequested.connect(self._on_add_note_requested)
         self.property_list.propertySelected.connect(self.help_panel.set_property_help)
+        self.help_panel.noteEdited.connect(self._on_note_edited)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not getattr(self, "_splitter_initialized", False):
+            self._splitter_initialized = True
+            total_h = self.height()
+            help_h = 110
+            prop_h = max(100, total_h - help_h)
+            self.splitter.setSizes([prop_h, help_h])
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -216,6 +228,9 @@ class SmartPropPropertyPanel(QWidget):
             )
             if structural:
                 self.components_list.rebuild()
+            selected = self.components_list.selected_ref
+            if selected is not None:
+                self.help_panel.set_component_help(selected)
         self.property_list.apply_external_data(item, new_data, changed_keys)
 
     # ── Internal slots ──────────────────────────────────────────────────────
@@ -229,3 +244,49 @@ class SmartPropPropertyPanel(QWidget):
         refs = self.components_list.selected_refs()
         self.property_list.set_components(refs)
         self.help_panel.set_component_help(ref)
+
+    def _on_add_note_requested(self, ref: ComponentRef):
+        self.help_panel.open_note(ref)
+
+    def _on_note_edited(self, ref: ComponentRef, note_text: str):
+        if self.document is None or ref.item is None:
+            return
+        item = ref.item
+        from src.common import fast_deepcopy
+        old_data = fast_deepcopy(item.data(0, Qt.UserRole))
+        if not isinstance(old_data, dict):
+            return
+        new_data = fast_deepcopy(old_data)
+        target = ref.target(new_data)
+        if not isinstance(target, dict):
+            return
+
+        from src.editors.smartprop_editor.note_utils import set_note
+        set_note(target, note_text)
+
+        if new_data == old_data:
+            return
+
+        item.setData(0, Qt.UserRole, new_data)
+
+        # Update Section 1 headers/rows
+        if self.components_list and self.components_list.tree_item is item:
+            if ref.kind == "element":
+                self.components_list.elem_row.update_data(new_data)
+            else:
+                self.components_list.modifiers_tree.viewport().update()
+                self.components_list.criteria_tree.viewport().update()
+
+        # Update main hierarchy tree
+        if hasattr(self.document, "ui") and hasattr(self.document.ui, "tree_hierarchy_widget"):
+            tree = self.document.ui.tree_hierarchy_widget
+            if hasattr(tree, "viewport"):
+                tree.viewport().update()
+
+        self.document._modified = True
+        self.document._edited.emit()
+
+        stack = getattr(self.document, "undo_stack", None)
+        if stack is not None and not getattr(self.document, "_property_undo_guard", 0):
+            from src.editors.smartprop_editor.commands import PropertySnapshotCommand
+            stack.push(PropertySnapshotCommand(self.document, item, old_data, new_data))

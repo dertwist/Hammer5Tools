@@ -23,7 +23,7 @@ from src.editors.smartprop_editor.viewport_3d.engine.expression import evaluate_
 
 class EvalContext:
     def __init__(self, variables=None, instance_index=0, instance_count=1,
-                 seed=0, overrides=None):
+                 seed=0, overrides=None, linear_scale=1.0):
         # name -> typed value (bool / int / float / list / str)
         self.variables = dict(variables) if variables else {}
         # live preview overrides (reserved for a future editable panel)
@@ -31,11 +31,25 @@ class EvalContext:
         self.instance_index = int(instance_index)
         self.instance_count = int(instance_count)
         self.rng = random.Random(seed)
+        self.linear_scale = float(linear_scale)
         # Source 2 resolves variable names case-insensitively — real files bind
         # the same variable as e.g. "Sizer_X" and "sizer_x" — so keep lowercase
         # maps for a fallback lookup.
         self._lower_vars = self._build_lower(self.variables)
         self._lower_overrides = self._build_lower(self.overrides)
+
+    def with_instance(self, instance_index=None, instance_count=None, linear_scale=None):
+        """Return a copy of this context with updated instance or linear scale info."""
+        ctx = EvalContext(
+            variables=self.variables,
+            instance_index=self.instance_index if instance_index is None else instance_index,
+            instance_count=self.instance_count if instance_count is None else instance_count,
+            seed=0,
+            overrides=self.overrides,
+            linear_scale=self.linear_scale if linear_scale is None else linear_scale,
+        )
+        ctx.rng = self.rng
+        return ctx
 
     @staticmethod
     def _build_lower(d):
@@ -166,7 +180,7 @@ class EvalContext:
             if "m_SourceName" in value:
                 return self._var_vector(value["m_SourceName"], d)
             if "m_Expression" in value:
-                s = evaluate_expression(value["m_Expression"], self, 0.0)
+                s = evaluate_expression(value["m_Expression"], self, d[0] if d else 0.0)
                 return [s, s, s]
             return [float(x) for x in d[:3]]
         if isinstance(value, (int, float, bool)):

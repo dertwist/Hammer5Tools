@@ -1017,7 +1017,7 @@ class SmartPropDocument(QMainWindow):
         operators_and_filters = operators_list + filters_list
         elements_in_popupmenu = []
         exists_classes = []
-        force_items_names = ["SetVariable", "SaveState", 'Comment', 'Translate', 'Rotate']
+        force_items_names = ["SetVariable", "SaveState", 'Translate', 'Rotate']
         force_items = []
         for item in operators_and_filters:
             for key in item.keys():
@@ -1068,7 +1068,7 @@ class SmartPropDocument(QMainWindow):
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
-        force_items_names = ['Comment']
+        force_items_names = []
         force_items = []
 
         for item in selection_criteria_list:

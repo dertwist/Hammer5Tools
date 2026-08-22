@@ -1103,6 +1103,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         "CSmartPropElement_Group",
         "CSmartPropElement_PickOne",
         "CSmartPropElement_SmartProp",
+        "CSmartPropElement_FitOnLine",
+        "CSmartPropElement_ModifyState",
     })
 
     @gl_guard("event")
@@ -1661,7 +1663,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         return False
 
     # Tree traversal (extracted from old viewport_3d.py)
-    def _get_vector(self, val, default, component_default=0.0):
+    def _get_vector(self, val, default, component_default=0.0, ctx=None):
         """Resolve a vector value to three floats.
 
         ``component_default`` is used for components the viewport can't evaluate
@@ -1675,20 +1677,22 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Delegate every value form (literal / m_Components / m_SourceName variable
         # / m_Expression) to the evaluation engine.  Unresolvable components fall
         # back to ``component_default`` (0.0 for pos/rot, 1.0 for scale).
-        return self._eval_context.resolve_vector(
+        eval_ctx = ctx or self._eval_context
+        return eval_ctx.resolve_vector(
             val, [component_default, component_default, component_default]
         )
 
-    def _get_string(self, val, default=""):
+    def _get_string(self, val, default="", ctx=None):
         """Resolve a string value, returning a plain string.
 
         Handles cases where properties (like model paths) are bound to a variable
         (``{m_SourceName: ...}``) or an expression, delegating to the evaluation
         engine so a bound model path reads the variable's default value.
         """
-        return self._eval_context.resolve_string(val, default)
+        eval_ctx = ctx or self._eval_context
+        return eval_ctx.resolve_string(val, default)
 
-    def _get_local_transform(self, data):
+    def _get_local_transform(self, data, ctx=None):
         """Extract local pos, rot, scale from the element's data dictionary."""
         local_pos   = [0.0, 0.0, 0.0]
         local_rot   = [0.0, 0.0, 0.0]
@@ -1697,36 +1701,38 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if not isinstance(data, dict):
             return local_pos, local_rot, local_scale
 
+        eval_ctx = ctx or self._eval_context
+
         for mod in data.get("m_Modifiers", []) or []:
             if not isinstance(mod, dict):
                 continue
             cls = mod.get("_class", "")
             if cls == "CSmartPropOperation_Translate" and "m_vPosition" in mod:
-                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0])
+                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0], ctx=eval_ctx)
                 local_pos = [local_pos[i] + comp[i] for i in range(3)]
             elif cls == "CSmartPropOperation_Rotate" and "m_vRotation" in mod:
-                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0])
+                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0], ctx=eval_ctx)
                 local_rot = [local_rot[i] + comp[i] for i in range(3)]
             elif cls == "CSmartPropOperation_Scale" and "m_flScale" in mod:
-                s = self._eval_context.resolve_scalar(mod["m_flScale"], 1.0)
+                s = eval_ctx.resolve_scalar(mod["m_flScale"], 1.0)
                 local_scale = [local_scale[i] * s for i in range(3)]
 
         element_class = data.get("_class", "")
         if element_class == "CSmartPropElement_Model":
             if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0)
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0, ctx=eval_ctx)
                 local_scale = [local_scale[i] * comp[i] for i in range(3)]
             elif data.get("m_flUniformModelScale") is not None:
-                s = self._eval_context.resolve_scalar(data["m_flUniformModelScale"], 1.0)
+                s = eval_ctx.resolve_scalar(data["m_flUniformModelScale"], 1.0)
                 local_scale = [local_scale[i] * s for i in range(3)]
         elif element_class in ("CSmartPropElement_ModelEntity",
                                "CSmartPropElement_PropPhysics",
                                "CSmartPropElement_PropDynamic"):
             if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0)
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0, ctx=eval_ctx)
                 local_scale = [local_scale[i] * comp[i] for i in range(3)]
             elif data.get("m_flUniformModelScale") is not None:
-                s = self._eval_context.resolve_scalar(data["m_flUniformModelScale"], 1.0)
+                s = eval_ctx.resolve_scalar(data["m_flUniformModelScale"], 1.0)
                 local_scale = [local_scale[i] * s for i in range(3)]
 
         return local_pos, local_rot, local_scale
@@ -2040,9 +2046,42 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         finally:
             stack.pop()
 
-    def _traverse_vsmart_dict(self, data, models_list, parent_world_matrix=None, context_addon=None):
+    def _derive_child_context(self, parent_data, child_data, current_ctx):
+        """Compute child eval context, e.g. calculating linear_scale if parent is FitOnLine."""
+        if not isinstance(parent_data, dict):
+            return current_ctx
+        parent_class = parent_data.get("_class", "")
+        if parent_class == "CSmartPropElement_FitOnLine":
+            v_start = self._get_vector(parent_data.get("m_vStart"), [0.0, 0.0, 0.0], ctx=current_ctx)
+            v_end = self._get_vector(parent_data.get("m_vEnd"), [0.0, 0.0, 0.0], ctx=current_ctx)
+            dx = v_end[0] - v_start[0]
+            dy = v_end[1] - v_start[1]
+            dz = v_end[2] - v_start[2]
+            line_len = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+            linear_scale = 1.0
+            if isinstance(child_data, dict):
+                for crit in child_data.get("m_SelectionCriteria", []) or []:
+                    if isinstance(crit, dict) and crit.get("_class") == "CSmartPropSelectionCriteria_LinearLength":
+                        base_len = current_ctx.resolve_scalar(crit.get("m_flLength"), 0.0)
+                        if base_len > 0 and line_len > 0:
+                            scale = line_len / base_len
+                            if crit.get("m_bAllowScale", True):
+                                min_len = current_ctx.resolve_scalar(crit.get("m_flMinLength"), 0.0)
+                                max_len = current_ctx.resolve_scalar(crit.get("m_flMaxLength"), 0.0)
+                                if min_len > 0:
+                                    scale = max(scale, min_len / base_len)
+                                if max_len > 0:
+                                    scale = min(scale, max_len / base_len)
+                            linear_scale = scale
+                            break
+            return current_ctx.with_instance(instance_index=0, linear_scale=linear_scale)
+        return current_ctx
+
+    def _traverse_vsmart_dict(self, data, models_list, parent_world_matrix=None, context_addon=None, ctx=None):
         if parent_world_matrix is None:
             parent_world_matrix = np.eye(4, dtype=np.float32)
+        eval_ctx = ctx or self._eval_context
 
         # Handle enabling
         is_enabled = data.get("m_bEnabled", True)
@@ -2055,7 +2094,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 and nested_class not in self._SUPPORTED_ELEMENT_CLASSES):
             self._warn_unsupported.add(nested_class.replace("CSmartPropElement_", ""))
 
-        local_pos, local_rot, local_scale = self._get_local_transform(data)
+        local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=eval_ctx)
 
         local_matrix = (
             scale_matrix(*local_scale)
@@ -2074,11 +2113,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                              "CSmartPropElement_ModelEntity",
                              "CSmartPropElement_PropPhysics",
                              "CSmartPropElement_PropDynamic"):
-            model_path = self._get_string(data.get("m_sModelName", ""))
+            model_path = self._get_string(data.get("m_sModelName", ""), ctx=eval_ctx)
 
         # Nested smart prop support inside dict traversal
         if element_class == "CSmartPropElement_SmartProp":
-            smartprop_path = self._get_string(data.get("m_sSmartProp", ""))
+            smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=eval_ctx)
             if smartprop_path:
                 self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
@@ -2122,11 +2161,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         for idx in child_indices:
             child_data = children[idx]
             if isinstance(child_data, dict):
-                self._traverse_vsmart_dict(child_data, models_list, world_matrix, context_addon)
+                child_ctx = self._derive_child_context(data, child_data, eval_ctx)
+                self._traverse_vsmart_dict(child_data, models_list, world_matrix, context_addon, ctx=child_ctx)
 
-    def _traverse_tree(self, item, models_list, parent_world_matrix=None, is_in_isolated_subtree=False):
+    def _traverse_tree(self, item, models_list, parent_world_matrix=None, is_in_isolated_subtree=False, ctx=None):
         if parent_world_matrix is None:
             parent_world_matrix = np.eye(4, dtype=np.float32)
+        eval_ctx = ctx or self._eval_context
 
         # Resolve context addon from opened file
         context_addon = None
@@ -2197,7 +2238,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 if not (node_is_isolated_start or is_ancestor):
                     continue
 
-            local_pos, local_rot, local_scale = self._get_local_transform(data)
+            child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
+            local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
 
             # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
             local_matrix = (
@@ -2221,11 +2263,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                                  "CSmartPropElement_ModelEntity",
                                  "CSmartPropElement_PropPhysics",
                                  "CSmartPropElement_PropDynamic"):
-                model_path = self._get_string(data.get("m_sModelName", ""))
+                model_path = self._get_string(data.get("m_sModelName", ""), ctx=child_ctx)
 
             # If this is a nested smart prop element, load and traverse it!
             if element_class == "CSmartPropElement_SmartProp":
-                smartprop_path = self._get_string(data.get("m_sSmartProp", ""))
+                smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=child_ctx)
                 if smartprop_path:
                     if self.isolated_element_id is None or current_in_isolated:
                         self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
@@ -2246,10 +2288,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if self.isolated_element_id is None or current_in_isolated:
                 self._collect_widgets(data, world_pos, world_rot, world_matrix)
 
-            self._traverse_tree(child, models_list, world_matrix, current_in_isolated)
+            self._traverse_tree(child, models_list, world_matrix, current_in_isolated, ctx=child_ctx)
 
-    def _update_subtree_transforms(self, item, parent_world_matrix):
+    def _update_subtree_transforms(self, item, parent_world_matrix, ctx=None):
         """Recursively update the world transforms of all descendants in self._model_infos."""
+        eval_ctx = ctx or self._eval_context
         parent_data = item.data(0, Qt.UserRole)
         parent_data = dict(parent_data) if parent_data is not None else {}
         parent_class = parent_data.get("_class", "")
@@ -2293,7 +2336,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if is_enabled is False or is_enabled == "false":
                 continue
 
-            local_pos, local_rot, local_scale = self._get_local_transform(data)
+            child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
+            local_pos, local_rot, local_scale = self._get_local_transform(data, ctx=child_ctx)
 
             local_matrix = (
                 scale_matrix(*local_scale)
@@ -2314,4 +2358,4 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 info["scale"] = world_scale
                 info["parent_world_matrix"] = parent_world_matrix
 
-            self._update_subtree_transforms(child, world_matrix)
+            self._update_subtree_transforms(child, world_matrix, ctx=child_ctx)

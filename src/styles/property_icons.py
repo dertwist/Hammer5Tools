@@ -68,6 +68,50 @@ class IconCache:
         return cls._cache[cache_key]
 
     @classmethod
+    def get_note_icon(cls) -> QIcon:
+        """Get cached icon for notes from modeldoc_editor icons."""
+        cache_key = "node_note"
+        if cache_key not in cls._cache:
+            import os
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "icons",
+                    "tools",
+                    "modeldoc_editor",
+                    "outliner_node_note.png",
+                )
+            )
+            if os.path.exists(path):
+                cls._cache[cache_key] = QIcon(path)
+            else:
+                cls._cache[cache_key] = cls._create_icon("N", QColor("#F4D03F"), 24)
+        return cls._cache[cache_key]
+
+    @classmethod
+    def get_add_note_icon(cls) -> QIcon:
+        """Get cached icon for add note action."""
+        cache_key = "action_add_note"
+        if cache_key not in cls._cache:
+            import os
+            path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "icons",
+                    "tools",
+                    "modeldoc_editor",
+                    "add_note.png",
+                )
+            )
+            if os.path.exists(path):
+                cls._cache[cache_key] = QIcon(path)
+            else:
+                cls._cache[cache_key] = cls.get_note_icon()
+        return cls._cache[cache_key]
+
+    @classmethod
     def get_property_icon(cls, type_str: str) -> QIcon:
         """Get cached property icon or create if not exists"""
         cache_key = f"property_{type_str}"
