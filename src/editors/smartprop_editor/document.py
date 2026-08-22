@@ -1658,6 +1658,10 @@ class SmartPropDocument(QMainWindow):
         if not self._viewport_3d:
             return
 
+        # If dynamic isolation was active, uncheck it so manual isolation takes over
+        if hasattr(self._viewport_3d, 'isolate_check') and self._viewport_3d.isolate_check.isChecked():
+            self._viewport_3d.isolate_check.setChecked(False)
+
         render_area = self._viewport_3d.render_area
         current_item = self.ui.tree_hierarchy_widget.currentItem()
 

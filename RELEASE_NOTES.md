@@ -1,13 +1,9 @@
-## SmartProp Editor
-* **Path Preview in 3D**: Full real-time preview for **Place on Path** elements with smooth curve paths, spacing controls, and placement rules.
-* **3D Viewport Handlers**: Added visual 3D Locators, Rotators, and Sizers with live orientation axes and custom colors. <img width="842" height="574" alt="image" src="https://github.com/user-attachments/assets/6c5cfe21-7d61-43af-8d74-7dffdfb7af4e" />
+## SmartProp Editor — 3D Viewport & Gizmo Updates
 
-
-
-* **Accurate Modifier Previews**: Modifiers now evaluate step-by-step just like Hammer, ensuring exact positioning, rotations, and scales.
-* **Element Notes**: Easily add notes and reminders to any element with quick editing, popup dialogs, and visual note badges. <img width="661" height="1190" alt="image" src="https://github.com/user-attachments/assets/3b13059f-8438-4fd8-8fff-f3baa02e06e5" />
-
-* **Nested Variable Support**: Variables and math expressions now resolve smoothly across all nested elements and child groups.
-
-## AssetGroup Maker
-* **Automatic File Watching**: Enabled live file monitoring by default so batch configurations stay up to date as assets change.
+* **Dynamic Gizmo Scaling**: The 3D transform gizmo now maintains a constant, comfortable screen size at any zoom level.
+* **Dual-Axis & Screen Translation**: Added a center dot handle for screen-plane movement and planar rectangles (`XY`, `XZ`, `YZ`) for dual-axis translation.
+* **Local Space Translation**: Moving objects in Local coordinate space now accurately follows rotated local axes.
+* **Smooth Multi-Turn Rotation**: Continuous 360°+ rotation tracking without flipping or jumping bugs, with rock-solid drag stability.
+* **Toolbar Mode Buttons**: Added quick-toggle tool buttons on the 3D viewport toolbar for **Select (Q)**, **Move (W)**, **Rotate (E)**, and **Scale (R)**.
+* **Clean Drag Feedback**: Resolved handle ghosting so preview widgets (rotator rings, locators) update cleanly in real-time during manipulation.
+* **Smart Modifier Placement**: Translation modifiers are automatically placed before rotations so objects rotate in-place around their local position.

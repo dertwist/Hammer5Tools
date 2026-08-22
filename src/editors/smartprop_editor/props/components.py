@@ -486,6 +486,12 @@ class ComponentList(QWidget):
         if self.tree_item is not None:
             self._select_ref(ComponentRef(self.tree_item, "element", -1), emit_signal=True)
 
+    @property
+    def selected_ref(self) -> ComponentRef | None:
+        """Return the primary selected ComponentRef, or None."""
+        refs = self.selected_refs()
+        return refs[0] if refs else None
+
     def selected_refs(self) -> list[ComponentRef]:
         """Return list of currently selected ComponentRef objects, read live
         from whichever surface (element row / either tree) currently holds
