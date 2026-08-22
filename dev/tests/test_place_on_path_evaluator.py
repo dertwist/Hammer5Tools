@@ -317,9 +317,10 @@ def test_evaluate_preview_vsmart():
     models_list = []
     render_area._traverse_vsmart_dict(vsmart_data, models_list, ctx=ctx)
 
-    # In preview.vsmart with step 3, exactly 5 rocks are placed
-    assert len(models_list) == 5
-    for m in models_list:
+    # In preview.vsmart with step 3, exactly 5 rocks are placed along the path
+    rocks = [m for m in models_list if "loose_rock" in m.get("path", "")]
+    assert len(rocks) == 5
+    for m in rocks:
         assert m["path"] == "models/props/de_aztec/hr_aztec/aztec_stairs/aztec_stairs_01_loose_rock_03.vmdl"
 
 

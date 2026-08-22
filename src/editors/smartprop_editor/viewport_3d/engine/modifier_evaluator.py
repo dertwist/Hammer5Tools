@@ -364,29 +364,7 @@ def evaluate_element_modifiers(data, ctx, parent_world_matrix=None, state_map=No
     local_matrix = np.eye(4, dtype=np.float32)
     widgets = []
 
-    # 1. PickOne Element Handle (defined at element level)
-    if element_class == "CSmartPropElement_PickOne":
-        handle_offset = data.get("m_vHandleOfffset")
-        if handle_offset is None:
-            handle_offset = data.get("m_vHandleOffset")
-        offset = ctx.resolve_vector(handle_offset, [0.0, 0.0, 0.0])
-        p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
-        world_offset = (p @ parent_world_matrix)[:3]
-        wpos, wrot, _ = decompose_trs(parent_world_matrix)
-
-        widgets.append({
-            "type": "pickone",
-            "element_id": eid,
-            "offset": offset,
-            "position": [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])],
-            "rotation": [float(wrot[0]), float(wrot[1]), float(wrot[2])],
-            "size": max(1.0, ctx.resolve_scalar(data.get("m_HandleSize"), 8.0)),
-            "color": resolve_color(data.get("m_HandleColor"), ctx, [0.6, 0.6, 0.6]),
-            "shape": str(data.get("m_HandleShape") or "SQUARE").upper(),
-            "name": str(data.get("m_OutputChoiceVariableName") or ""),
-        })
-
-    # 2. Sequential evaluation of m_Modifiers
+    # 1. Sequential evaluation of m_Modifiers
     modifiers = data.get("m_Modifiers")
     if isinstance(modifiers, list):
         for mod in modifiers:
@@ -399,8 +377,31 @@ def evaluate_element_modifiers(data, ctx, parent_world_matrix=None, state_map=No
             if widget_spec is not None:
                 widgets.append(widget_spec)
 
-    # 3. Compute final world matrix for children
+    # 2. Compute final world matrix for the element and its children
     world_matrix = local_matrix @ parent_world_matrix
+
+    # 3. PickOne Element Handle (positioned in the element's evaluated world frame)
+    if element_class == "CSmartPropElement_PickOne":
+        handle_offset = data.get("m_vHandleOfffset")
+        if handle_offset is None:
+            handle_offset = data.get("m_vHandleOffset")
+        offset = ctx.resolve_vector(handle_offset, [0.0, 0.0, 0.0])
+        p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
+        world_offset = (p @ world_matrix)[:3]
+        wpos, wrot, _ = decompose_trs(world_matrix)
+
+        widgets.append({
+            "type": "pickone",
+            "element_id": eid,
+            "offset": offset,
+            "world_matrix": np.array(world_matrix, dtype=np.float32),
+            "position": [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])],
+            "rotation": [float(wrot[0]), float(wrot[1]), float(wrot[2])],
+            "size": max(1.0, ctx.resolve_scalar(data.get("m_HandleSize"), 8.0)),
+            "color": resolve_color(data.get("m_HandleColor"), ctx, [0.6, 0.6, 0.6]),
+            "shape": str(data.get("m_HandleShape") or "SQUARE").upper(),
+            "name": str(data.get("m_OutputChoiceVariableName") or ""),
+        })
 
     # 4. Model-level scale (applies to model instance geometry only)
     model_scale = [1.0, 1.0, 1.0]
