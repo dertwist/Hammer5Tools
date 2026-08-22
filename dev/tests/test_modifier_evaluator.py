@@ -306,3 +306,31 @@ def test_render_area_vsmart_traversal_user_case():
     assert sizer_widget["type"] == "sizer"
     assert sizer_widget["element_id"] == 4
     np.testing.assert_allclose(sizer_widget["position"], [0.0, 0.0, 0.0], atol=1e-4)
+
+
+def test_pickone_with_translate_modifier():
+    """Verify PickOne handle is positioned using the element's evaluated transform."""
+    ctx = EvalContext()
+    data = {
+        "_class": "CSmartPropElement_PickOne",
+        "m_HandleShape": "SQUARE",
+        "m_nElementID": 26,
+        "m_Modifiers": [
+            {
+                "_class": "CSmartPropOperation_Translate",
+                "m_nElementID": 27,
+                "m_vPosition": {
+                    "m_Components": [60.16254425, -2.00215483, 0.0]
+                }
+            }
+        ]
+    }
+    local_mat, world_mat, model_mat, widgets = evaluate_element_modifiers(data, ctx)
+
+    assert len(widgets) == 1
+    pickone = widgets[0]
+    assert pickone["type"] == "pickone"
+    assert pickone["element_id"] == 26
+    assert pickone["shape"] == "SQUARE"
+    np.testing.assert_allclose(pickone["position"], [60.16254425, -2.00215483, 0.0], atol=1e-4)
+
