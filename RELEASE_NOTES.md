@@ -1,9 +1,9 @@
 ## SmartProp Editor
-* **PlaceOnPath 3D Evaluation**: Real-time Catmull-Rom spline curve interpolation, instance spacing, and selection criteria matching in the 3D viewport.
-* **Sequential Modifier Evaluation**: Strict Source 2 sequential modifier execution with active coordinate frame tracking for gizmos and sub-elements.
-* **3D Editing Gizmos & Widgets**: Visual 3D rendering for Locator, Rotator, and Sizer widgets with interactive axes and custom color overrides.
-* **Element Notes**: Added note annotations (`m_sNote`) with inline/popup note editor, visual badge indicators, and automatic migration of legacy comments.
-* **Expression & Context Scope**: Variable scope propagation and dynamic expression evaluation across nested SmartProp hierarchies.
+* **Path Preview in 3D**: Full real-time preview for **Place on Path** elements with smooth curve paths, spacing controls, and placement rules.
+* **3D Viewport Gizmos**: Added visual 3D Locators, Rotators, and Sizers with live orientation axes and custom colors.
+* **Accurate Modifier Previews**: Modifiers now evaluate step-by-step just like Hammer, ensuring exact positioning, rotations, and scales.
+* **Element Notes**: Easily add notes and reminders to any element with quick editing, popup dialogs, and visual note badges.
+* **Nested Variable Support**: Variables and math expressions now resolve smoothly across all nested elements and child groups.
 
 ## AssetGroup Maker
-* **Auto-Watch Changes**: Enabled automatic change detection and file monitoring by default for batch configurations.
+* **Automatic File Watching**: Enabled live file monitoring by default so batch configurations stay up to date as assets change.
