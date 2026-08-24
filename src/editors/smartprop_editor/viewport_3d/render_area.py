@@ -1229,8 +1229,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return fallback_models
 
         try:
+            document = self.document.build_smartprop_document()
             result = CoreBridge.instance().evaluate_smartprop(
-                self.document.build_smartprop_document()
+                document,
+                nested_documents=self._collect_nested_smartprops(document),
             )
         except Exception as error:
             self._warn_unsupported.add(f"Core evaluation unavailable: {error}")
@@ -1293,6 +1295,69 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if info.get("path") and info.get("id") not in evaluated_ids
         ]
         return presentation_only + evaluated + unresolved_nested
+
+    def _collect_nested_smartprops(self, document):
+        """Load the nested SmartProp graph for the Core resolver payload."""
+        import os
+        import re
+
+        from src.common import Kv3ToJson
+        from src.settings.main import get_addon_name, get_cs2_path
+
+        cs2_path = get_cs2_path()
+        default_addon = get_addon_name()
+        if not (cs2_path and default_addon):
+            return {}
+
+        documents = {}
+        visited = set()
+
+        def load(resource_path, context_addon):
+            addon = context_addon or default_addon
+            normalized_path = resource_path.replace("\\", "/").lstrip("/")
+            addon_match = re.search(
+                r"(?:^|/)csgo_addons/([^/]+)/(.*)$",
+                normalized_path,
+                re.IGNORECASE,
+            )
+            if addon_match:
+                addon = addon_match.group(1)
+                normalized_path = addon_match.group(2)
+
+            full_path = os.path.join(
+                cs2_path,
+                "content",
+                "csgo_addons",
+                addon,
+                normalized_path,
+            )
+            visit_key = os.path.normcase(os.path.normpath(full_path))
+            if visit_key in visited or not os.path.isfile(full_path):
+                return
+            visited.add(visit_key)
+
+            with open(full_path, "r", encoding="utf-8") as nested_file:
+                content = nested_file.read()
+            content = re.sub(re.compile(r"= resource_name:"), "= ", content)
+            content = content.replace("null,", "")
+            nested_document = Kv3ToJson(content)
+            documents[resource_path] = nested_document
+            scan(nested_document, addon)
+
+        def scan(value, context_addon=default_addon):
+            if isinstance(value, dict):
+                if value.get("_class") == "CSmartPropElement_SmartProp":
+                    resource_path = self._get_string(value.get("m_sSmartProp", ""))
+                    if resource_path:
+                        load(resource_path, context_addon)
+                for child_value in value.values():
+                    scan(child_value, context_addon)
+            elif isinstance(value, list):
+                for child_value in value:
+                    scan(child_value, context_addon)
+
+        scan(document)
+        return documents
 
     def _follow_selection_isolation(self):
         """Point the isolation at the current selection while dynamic mode is on.

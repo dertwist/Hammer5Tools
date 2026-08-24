@@ -64,4 +64,38 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Models[0].ElementId).IsEqualTo(9);
         await Assert.That(result.Models[0].ModelName).IsEqualTo("models/roundtrip.vmdl");
     }
+
+    [Test]
+    public async Task ResolvesNestedSmartPropDocuments()
+    {
+        const string root = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_SmartProp",
+                "m_nElementID": 4,
+                "m_sSmartProp": "smartprops/nested.vsmart"
+              }]
+            }
+            """;
+        const string nested = """
+            {
+              "smartprops/nested.vsmart": {
+                "generic_data_type": "CSmartPropRoot",
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 8,
+                  "m_sModelName": "models/nested.vmdl"
+                }]
+              }
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(root, nested);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(1);
+        await Assert.That(result.Models[0].ElementId).IsEqualTo(8);
+        await Assert.That(result.Models[0].ModelName).IsEqualTo("models/nested.vmdl");
+    }
 }

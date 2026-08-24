@@ -126,13 +126,23 @@ class CoreBridge:
         )
         return float(SmartPropExpression.Evaluate(expression, context, float(default)))
 
-    def evaluate_smartprop(self, document: Mapping) -> SmartPropEvaluation:
+    def evaluate_smartprop(
+        self,
+        document: Mapping,
+        *,
+        nested_documents: Mapping[str, Mapping] | None = None,
+    ) -> SmartPropEvaluation:
         """Evaluates an uncompiled SmartProp document through Hammer5Tools Core and VRF."""
         self._ensure_loaded()
 
         from Hammer5Tools.Core.SmartProps import SmartPropEvaluator
 
-        result = SmartPropEvaluator.EvaluateJson(json.dumps(document, separators=(",", ":")))
+        document_json = json.dumps(document, separators=(",", ":"))
+        if nested_documents is None:
+            result = SmartPropEvaluator.EvaluateJson(document_json)
+        else:
+            nested_json = json.dumps(nested_documents, separators=(",", ":"))
+            result = SmartPropEvaluator.EvaluateJson(document_json, nested_json)
         models = tuple(self._convert_smartprop_model(model) for model in result.Models)
         diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
         return SmartPropEvaluation(models, diagnostics)

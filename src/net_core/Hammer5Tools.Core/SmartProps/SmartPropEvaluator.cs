@@ -19,7 +19,31 @@ public static class SmartPropEvaluator
 
         try
         {
-            return Evaluate(SmartPropJsonConverter.Convert(json));
+            return Evaluate(SmartPropJsonConverter.Convert(json), null);
+        }
+        catch (JsonException exception)
+        {
+            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+                CoreDiagnosticSeverity.Error,
+                "smartprop.invalid_json",
+                exception.Message)]);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates a JSON SmartProp document with nested documents keyed by resource path.
+    /// </summary>
+    public static SmartPropEvaluationResult EvaluateJson(string json, string nestedDocumentsJson)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentNullException.ThrowIfNull(nestedDocumentsJson);
+
+        try
+        {
+            var nestedDocuments = ReadNestedDocuments(nestedDocumentsJson);
+            return Evaluate(
+                SmartPropJsonConverter.Convert(json),
+                path => nestedDocuments.GetValueOrDefault(NormalizeResourcePath(path)));
         }
         catch (JsonException exception)
         {
@@ -40,7 +64,7 @@ public static class SmartPropEvaluator
         try
         {
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
-            return Evaluate(KVDocumentExtensions.ParseKV3(stream).Root);
+            return Evaluate(KVDocumentExtensions.ParseKV3(stream).Root, null);
         }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException)
         {
@@ -51,9 +75,11 @@ public static class SmartPropEvaluator
         }
     }
 
-    private static SmartPropEvaluationResult Evaluate(ValveKeyValue.KVObject root)
+    private static SmartPropEvaluationResult Evaluate(
+        ValveKeyValue.KVObject root,
+        Func<string, ValveKeyValue.KVObject?>? nestedPropResolver)
     {
-        var result = SmartPropEvaluation.Evaluate(root);
+        var result = SmartPropEvaluation.Evaluate(root, nestedPropResolver);
         var models = result.Models.Select(model => new EvaluatedSmartPropModel(
             model.ElementId,
             model.ModelName,
@@ -62,4 +88,19 @@ public static class SmartPropEvaluator
             model.TintColor)).ToArray();
         return new SmartPropEvaluationResult(models, []);
     }
+
+    private static Dictionary<string, ValveKeyValue.KVObject> ReadNestedDocuments(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        var nestedDocuments = new Dictionary<string, ValveKeyValue.KVObject>(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in document.RootElement.EnumerateObject())
+        {
+            nestedDocuments[NormalizeResourcePath(property.Name)] =
+                SmartPropJsonConverter.Convert(property.Value.GetRawText());
+        }
+        return nestedDocuments;
+    }
+
+    private static string NormalizeResourcePath(string path)
+        => path.Replace('\\', '/').TrimStart('/');
 }
