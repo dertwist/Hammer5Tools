@@ -3,7 +3,7 @@
 Applies a deterministic old->new color mapping (calibrated against a
 Photoshop-brightened reference screenshot: new = old + 0.08 * (255 - old),
 with the two dominant colors snapped to measured pixel values) to every
-hex literal and rgb()/rgba()/QColor() triplet in src/**.py and src/**.ui.
+hex literal and rgb()/rgba()/QColor() triplet in the GUI Python and UI files.
 
 Only exact matches of CHROME colors are replaced; semantic colors
 (syntax highlighting, type badges, meters, gizmo axes, icon fills) are
@@ -22,7 +22,7 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SRC = REPO / "src"
+SRC = REPO / "Hammer5ToolsGUI" / "hammer5tools_gui"
 
 # Files whose colors are semantic (meaning-carrying) and must not shift,
 # plus files that only contain colors the exact-match table never targets.

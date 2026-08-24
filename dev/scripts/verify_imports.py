@@ -5,8 +5,8 @@ package that is not in requirements.txt (e.g. an IDE-autocompleted
 ``win32comext``) builds fine and crashes on first launch. Run this after
 ``pip install -r requirements.txt`` and before the build.
 
-Static only: it parses ``src/`` with ast and resolves each top-level import
-root against the installed environment, without executing app code.
+Static only: it parses the GUI and Python Core roots with ast and resolves each
+top-level import root against the installed environment, without executing app code.
 """
 import ast
 import importlib.util
@@ -15,7 +15,14 @@ import sys
 
 REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CUR_DIR = REPO_DIR
-SRC_DIR = os.path.join(REPO_DIR, 'src')
+SOURCE_DIRS = (
+    os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'hammer5tools_gui'),
+    os.path.join(REPO_DIR, 'Hammer5ToolsCore', 'Python', 'hammer5tools_core'),
+)
+IMPORT_ROOTS = (
+    os.path.join(REPO_DIR, 'Hammer5ToolsGUI'),
+    os.path.join(REPO_DIR, 'Hammer5ToolsCore', 'Python'),
+)
 
 # .NET assemblies pythonnet materialises at runtime after clr.AddReference().
 # They never exist as Python packages, so no static check can resolve them.
@@ -25,10 +32,10 @@ CLR_ASSEMBLIES = {'System', 'Datamodel', 'SourcePorter', 'UnrealBridge', 'ValveR
 def local_names() -> set:
     """Top-level names importable from the repo itself.
 
-    The spec builds with pathex=['.', 'src'], so both roots are on sys.path.
+    The release build adds both separated Python roots to ``sys.path``.
     """
     names = set()
-    for root in (CUR_DIR, SRC_DIR):
+    for root in (CUR_DIR, *IMPORT_ROOTS):
         for entry in os.listdir(root):
             if entry.endswith('.py'):
                 names.add(entry[:-3])
@@ -99,33 +106,32 @@ def main() -> int:
     skip = local_names() | set(sys.stdlib_module_names) | CLR_ASSEMBLIES
     checked, missing = {}, []
 
-    for dirpath, dirnames, filenames in os.walk(SRC_DIR):
-        dirnames[:] = [d for d in dirnames if d not in ('__pycache__', 'net_core')]
-        for filename in filenames:
-            if not filename.endswith('.py'):
-                continue
-            path = os.path.join(dirpath, filename)
-            with open(path, encoding='utf-8-sig') as f:
-                source = f.read()
-            try:
-                tree = ast.parse(source, filename=path)
-            except SyntaxError as e:
-                missing.append(f"{os.path.relpath(path, CUR_DIR)}:{e.lineno}: syntax error: {e.msg}")
-                continue
-            for root, lineno, guarded in import_roots(tree):
-                if root in skip or guarded:
+    for source_dir in SOURCE_DIRS:
+        for dirpath, dirnames, filenames in os.walk(source_dir):
+            dirnames[:] = [d for d in dirnames if d != '__pycache__']
+            for filename in filenames:
+                if not filename.endswith('.py'):
                     continue
-                # A module sitting next to this file: importable both frozen
-                # (its package dir lands on sys.path) and under pytest.
-                if os.path.exists(os.path.join(dirpath, root + '.py')) or os.path.isdir(
-                    os.path.join(dirpath, root)
-                ):
+                path = os.path.join(dirpath, filename)
+                with open(path, encoding='utf-8-sig') as f:
+                    source = f.read()
+                try:
+                    tree = ast.parse(source, filename=path)
+                except SyntaxError as e:
+                    missing.append(f"{os.path.relpath(path, CUR_DIR)}:{e.lineno}: syntax error: {e.msg}")
                     continue
-                if checked.setdefault(root, resolvable(root)):
-                    continue
-                missing.append(
-                    f"{os.path.relpath(path, CUR_DIR)}:{lineno}: cannot resolve '{root}'"
-                )
+                for root, lineno, guarded in import_roots(tree):
+                    if root in skip or guarded:
+                        continue
+                    if os.path.exists(os.path.join(dirpath, root + '.py')) or os.path.isdir(
+                        os.path.join(dirpath, root)
+                    ):
+                        continue
+                    if checked.setdefault(root, resolvable(root)):
+                        continue
+                    missing.append(
+                        f"{os.path.relpath(path, CUR_DIR)}:{lineno}: cannot resolve '{root}'"
+                    )
 
     if missing:
         print(f"Unresolvable imports ({len(missing)}):", file=sys.stderr)

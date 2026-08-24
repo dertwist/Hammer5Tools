@@ -12,6 +12,14 @@ IGNORED_FOLDERS = ["venv", "__pycache__", "build", "dist"]
 def compile_ui(ui_file: str, out_file: str) -> None:
     try:
         subprocess.run(['pyside6-uic', ui_file, '-o', out_file], check=True)
+        with open(out_file, encoding='utf-8') as generated_file:
+            generated = generated_file.read()
+        generated = generated.replace(
+            'import resources_rc',
+            'from hammer5tools_gui import resources_rc',
+        )
+        with open(out_file, 'w', encoding='utf-8', newline='\n') as generated_file:
+            generated_file.write(generated)
         print(f"Compiled {ui_file} -> {out_file}")
     except subprocess.CalledProcessError as e:
         print(f"Failed to compile {ui_file}: {e}")
@@ -51,7 +59,7 @@ def main(directory: str) -> None:
         print(f"'{directory}' does not exist.")
         sys.exit(1)
 
-    source_directory = os.path.join(directory, "src")
+    source_directory = os.path.join(directory, "Hammer5ToolsGUI", "hammer5tools_gui")
     if not os.path.isdir(source_directory):
         source_directory = directory
     ui_files = find_ui_files(source_directory)

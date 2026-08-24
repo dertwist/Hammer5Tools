@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Hammer5Tools.Core</RootNamespace>
+    <AssemblyName>Hammer5Tools.Core</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <AnalysisMode Condition="'$(Configuration)' == 'Release'">All</AnalysisMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
+    <PackageReference Include="ValvePak" Version="5.0.2.177" />
+    <PackageReference Include="SkiaSharp" Version="4.151.1" />
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ValveResourceFormat">
+      <HintPath>..\external\ValveResourceFormat.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Numerics" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,82 @@
+from hammer5tools_gui.editors.smartprop_editor.property.ui_comparison import Ui_Widget
+import ast
+from hammer5tools_gui.widgets.completer.main import CompletingPlainTextEdit
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
+from PySide6.QtCore import Signal
+from hammer5tools_gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from hammer5tools_gui.editors.smartprop_editor.completion_utils import CompletionUtils
+
+
+class PropertyComparison(QWidget):
+    edited = Signal()
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
+        super().__init__()
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
+        self.setAcceptDrops(False)
+        self.value_class = value_class
+        self.value = value
+        self.variables_scrollArea = variables_scrollArea
+
+
+        print(value_class)
+        # Variable setup
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_name=self.value_class, element_id_generator=element_id_generator)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable)
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.variable_frame = QWidget()
+        self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
+        self.ui.layout_2.insertWidget(1, self.variable_frame)
+
+        # Name
+        self.m_value = CompletingPlainTextEdit()
+        self.m_value.completion_tail = ''
+        self.m_value.setPlaceholderText('Value')
+        self.ui.layout_2.insertWidget(4, self.m_value)
+
+        if isinstance(value, dict):
+            if 'm_Name' in value:
+                name_value = value['m_Name']
+                self.variable.combobox.set_variable(str(name_value))
+            if 'm_Value' in value:
+                self.m_value.setPlainText(str(value['m_Value']))
+            if 'm_Comparison' in value:
+                self.ui.comparison.setCurrentText(str(value['m_Comparison']))
+
+        self.ui.comparison.currentTextChanged.connect(self.on_changed)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.m_value.textChanged.connect(self.on_changed)
+
+        self.on_changed()
+
+
+    def on_changed(self):
+        # Setup type-aware completer without filters
+        CompletionUtils.setup_completer_for_widget(
+            self.m_value,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='comparison'
+        )
+        
+        self.change_value()
+        self.edited.emit()
+        
+    def change_value(self):
+        # Default
+        var_value = self.m_value.toPlainText()
+        try:
+            var_value = ast.literal_eval(var_value)
+        except:
+            pass
+
+        self.value = {self.value_class: {'m_Name': self.variable.combobox.get_variable(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
+
+    def get_variables(self, search_term=None):
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)

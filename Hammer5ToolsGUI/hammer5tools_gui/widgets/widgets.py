@@ -1,0 +1,992 @@
+try:
+    from .common import *
+except:
+    from common import *
+from PySide6.QtWidgets import (
+    QWidget,
+    QLineEdit,
+    QHBoxLayout,
+    QVBoxLayout,
+    QSlider,
+    QSpacerItem,
+    QSizePolicy,
+)
+from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
+from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer
+import math
+
+# QSlider positions are 32-bit ints; clamp derived slider ranges/positions to
+# this so large user-entered values never overflow (the widget's stored float
+# value keeps full precision regardless of the slider position).
+_INT32_MAX = 2147483647
+_INT32_MIN = -2147483648
+
+
+def _clamp_int32(value):
+    return max(_INT32_MIN, min(_INT32_MAX, int(value)))
+
+
+def _make_double_validator(bottom, top, decimals, parent=None):
+    """Create a QDoubleValidator that always uses '.' as decimal separator
+    and never produces scientific notation, regardless of system locale.
+
+    Pass decimals < 0 (or None) to remove the fractional-digit limit entirely,
+    so values like 3.43543453453534 are accepted verbatim."""
+    v = QDoubleValidator(parent)
+    v.setRange(bottom, top)
+    if decimals is not None and decimals >= 0:
+        v.setDecimals(decimals)
+    else:
+        # No practical limit on fractional digits.
+        v.setDecimals(1000)
+    v.setLocale(QLocale.c())
+    v.setNotation(QDoubleValidator.StandardNotation)
+    return v
+
+
+class _NumericLineEdit(QLineEdit):
+    """QLineEdit that converts comma keystrokes to dots for numeric input.
+    This ensures that the numpad comma (common on European keyboards) works
+    as a decimal separator regardless of system locale."""
+    def keyPressEvent(self, event):
+        if event.text() == ',':
+            dot_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Period, event.modifiers(), '.')
+            super().keyPressEvent(dot_event)
+            return
+        super().keyPressEvent(event)
+
+
+# Generic widgets
+class Spacer(QWidget):
+    def __init__(self):
+        """Spacer widget, can be hidden or shown"""
+        super().__init__()
+
+        spacer_layout = QHBoxLayout()
+        spacer_layout.setContentsMargins(0,0,0,0)
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacer_layout.addSpacerItem(spacer_item)
+        self.setLayout(spacer_layout)
+        self.setStyleSheet('border:None;')
+        self.setContentsMargins(0,0,0,0)
+# Property widgets
+
+class _UndoAwareSlider(QSlider):
+    """QSlider subclass that emits a signal BEFORE valueChanged on mouse press.
+
+    Qt's default signal order on a track-click is:
+        valueChanged → sliderPressed
+    This is a problem because the undo snapshot must be captured before the
+    first valueChanged.  We fix this by emitting ``pre_press`` from
+    ``mousePressEvent`` before calling the base implementation.
+    """
+    pre_press = Signal()   # fires before valueChanged on any mouse interaction
+
+    def mousePressEvent(self, event):
+        self.pre_press.emit()
+        super().mousePressEvent(event)
+
+
+class FloatWidget(QWidget):
+    edited = Signal(float)
+    slider_pressed = Signal()   # emitted once when the user begins dragging the slider
+    committed = Signal()        # emitted once when the user releases the slider (one undo entry)
+
+    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = -1, value_step: float = 1, slider_scale: int = 5):
+        """Float widget is a widget with a spin box and a slider that are synchronized.
+           The widget returns a float value (or a rounded integer if int_output is True).
+           If lock_range is enabled and slider_range is provided (non [0,0]), the user cannot
+           set values below slider_range[0] or above slider_range[1].
+        """
+        super().__init__()
+
+        # Variables
+        self.int_output = int_output
+        self.value = value
+        self.only_positive = only_positive
+        self.slider_scale = slider_scale
+        self.lock_range = lock_range
+        self.slider_range = slider_range
+        self._programmatic_set = False  # flag to suppress deferred commit during set_value
+
+        # Deferred commit timer — waits for a pause in typing before emitting edited.
+        # This prevents emitting partial values like "1" when the user is typing "1.4".
+        self._commit_timer = QTimer(self)
+        self._commit_timer.setSingleShot(True)
+        self._commit_timer.setInterval(600)
+        self._commit_timer.timeout.connect(self._deferred_commit)
+
+        # Editline setup (replacing QDoubleSpinBox)
+        self.SpinBox = _NumericLineEdit()
+        self.SpinBox.setMaximumWidth(64)
+        self.SpinBox.setValidator(_make_double_validator(0 if self.only_positive else -1e18, 1e18, digits, self))
+        self.SpinBox.setText(str(value) if int_output else f"{value:.4f}".rstrip('0').rstrip('.'))
+        self.SpinBox.editingFinished.connect(self._on_editing_finished)
+        self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
+        self.SpinBox.setStyleSheet('padding: 2px;')
+        # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
+        if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
+            self.SpinBox.setValidator(_make_double_validator(self.slider_range[0], self.slider_range[1], digits, self))
+
+        # Slider setup
+        self.Slider = _UndoAwareSlider()
+        self.Slider.wheelEvent = lambda event: None
+        self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
+        # Range setup: if slider_range is default (0,0) then use dynamic scaling.
+        if self.slider_range[0] == 0 and self.slider_range[1] == 0:
+            try:
+                text_current = self.SpinBox.text().replace(',', '.')
+                value_current = float(text_current)
+            except ValueError:
+                value_current = 0.0
+            self.Slider.setMaximum(_clamp_int32(abs(value_current) * self.slider_scale * 100 + 1000))
+            if self.only_positive:
+                self.Slider.setMinimum(0)
+            else:
+                self.Slider.setMinimum(_clamp_int32(-abs(value_current) * self.slider_scale * 100 - 1000))
+        else:
+            self.Slider.setMinimum(_clamp_int32(self.slider_range[0] * 100))
+            self.Slider.setMaximum(_clamp_int32(self.slider_range[1] * 100))
+        # pre_press fires from mousePressEvent BEFORE valueChanged — guarantees
+        # the undo snapshot is captured before the first value change.
+        self.Slider.pre_press.connect(self._on_slider_pressed)
+        self.Slider.valueChanged.connect(self.on_Slider_updated)
+        self.Slider.sliderReleased.connect(self._on_slider_released)
+
+        # Layout setup
+        layout = QVBoxLayout() if vertical else QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        if vertical:
+            layout.addWidget(self.Slider, alignment=Qt.AlignCenter)
+            layout.addWidget(self.SpinBox, alignment=Qt.AlignCenter)
+        else:
+            layout.addWidget(self.SpinBox)
+            layout.addWidget(self.Slider)
+        if spacer_enable:
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.setLayout(layout)
+        if vertical:
+            self.setFixedWidth(96)
+        # Initial sync (programmatic, no need to emit to parent)
+        self._sync_value_from_spinbox()
+
+    # Method to change text color if needed
+    def set_color(self, color):
+        self.SpinBox.setStyleSheet(f"color: {color};")
+
+    def _on_slider_pressed(self):
+        """Called from pre_press (before valueChanged). Emit slider_pressed exactly once."""
+        self.slider_pressed.emit()
+
+    def _on_slider_released(self):
+        """Emit committed once at the end of a drag gesture."""
+        self.committed.emit()
+
+    def _on_spinbox_text_changed(self):
+        """Called on every keystroke. Silently syncs value + slider without emitting edited,
+        then starts/restarts the deferred commit timer so the value is committed
+        after a brief typing pause."""
+        if self.SpinBox.hasAcceptableInput():
+            self._sync_value_from_spinbox()
+            # Restart the deferred commit timer only during real user typing,
+            # not during programmatic set_value calls.
+            if not self._programmatic_set:
+                self._commit_timer.start()
+
+    def _on_editing_finished(self):
+        """Called when user presses Enter or the SpinBox loses focus.
+        Immediately commits the current value."""
+        self._commit_timer.stop()
+        self._sync_value_from_spinbox()
+        self.edited.emit(self.value)
+
+    def _deferred_commit(self):
+        """Called by the commit timer after a typing pause. Emits the edited signal
+        so the parent can see the final typed value."""
+        self.edited.emit(self.value)
+
+    def _sync_value_from_spinbox(self):
+        """Parse the spinbox text, update self.value and sync the slider position.
+        Does NOT emit the edited signal — callers decide when to emit."""
+        try:
+            text = self.SpinBox.text().replace(',', '.')
+            value = float(text)
+        except ValueError:
+            value = 0.0
+        if self.int_output:
+            value = round(value)
+        # Adjust slider range only if lock_range is not enabled and using dynamic scaling.
+        if not self.lock_range:
+            if value > self.Slider.maximum() / 100 or value < self.Slider.minimum() / 100:
+                if self.only_positive:
+                    self.Slider.setMinimum(0)
+                else:
+                    self.Slider.setMinimum(_clamp_int32(-abs(value) * self.slider_scale * 100 - 1000))
+                self.Slider.setMaximum(_clamp_int32(abs(value) * self.slider_scale * 100 + 1000))
+        # Block slider signals to avoid double-emit when syncing slider to spinbox
+        self.Slider.blockSignals(True)
+        self.Slider.setValue(_clamp_int32(value * 100))
+        self.Slider.blockSignals(False)
+        self.value = value
+
+    # Legacy alias kept for any external callers.
+    def on_SpinBox_updated(self):
+        """Sync value from spinbox and emit edited. Called from editingFinished and
+        as a compatibility shim for callers that relied on the old all-in-one method."""
+        self._sync_value_from_spinbox()
+        self.edited.emit(self.value)
+
+    # Handler when the slider is updated
+    def on_Slider_updated(self):
+        value = self.Slider.value() / 100
+        if self.int_output:
+            value = round(value)
+        # Block spinbox signals to avoid re-entrant emit when syncing text
+        self.SpinBox.blockSignals(True)
+        display = str(int(value)) if self.int_output else f"{value:.4f}".rstrip('0').rstrip('.')
+        self.SpinBox.setText(display)
+        self.SpinBox.blockSignals(False)
+        self.value = value
+        self.edited.emit(value)
+
+    # Programmatically set the value without emitting edited
+    def set_value(self, value):
+        self._programmatic_set = True
+        self._commit_timer.stop()
+        self.SpinBox.blockSignals(True)
+        if isinstance(value, float) and not self.int_output:
+            display = f"{value:.4f}".rstrip('0').rstrip('.')
+        else:
+            display = str(value)
+        self.SpinBox.setText(display)
+        self.SpinBox.blockSignals(False)
+        self._sync_value_from_spinbox()
+        self._programmatic_set = False
+
+
+class BoxSlider(QWidget):
+    edited = Signal(float)
+    slider_pressed = Signal()   # emitted once when the user begins a drag gesture
+    committed = Signal()        # emitted once when the user releases the drag
+
+    STYLE = """
+    QLineEdit {
+        background-color: #2e2e2e;
+        color: #e5e5e5;
+        border: none;
+        padding: 0px;
+        selection-background-color: #515965;
+        font: 580 10pt "Segoe UI";
+    }
+    """
+
+    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0, only_positive=False, lock_range=False,
+                 digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
+        super().__init__()
+
+        # Initialize properties
+        self.int_output = int_output
+        self.min_value, self.max_value = slider_range
+        self.value = value
+        self.only_positive = only_positive
+        self.lock_range = lock_range
+        self.digits = digits
+        self.value_step = value_step
+        self.slider_scale = slider_scale
+        self.sensitivity = sensitivity
+
+        # Handle infinite range
+        if slider_range == [0, 0]:
+            self.min_value = -math.inf
+            self.max_value = math.inf
+
+        # State tracking
+        self.in_edit_mode = False
+        self.dragging = False
+        self.last_drag_x = 0
+
+        # Size constraints
+        self.min_height = 30
+        self.min_width = 60
+        self.preferred_height = 32
+
+        self.setup_ui()
+        self.set_value(self.value)
+
+    def setup_ui(self):
+        """Initialize and configure UI components"""
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.setMinimumSize(self.min_width, self.min_height)
+
+        self.edit_box = _NumericLineEdit(self)
+        self.edit_box.hide()
+        self.edit_box.setValidator(_make_double_validator(self.min_value, self.max_value, self.digits, self))
+        self.edit_box.returnPressed.connect(self.finish_edit)
+        self.edit_box.installEventFilter(self)
+
+        self.update_slider_rect()
+        self.setStyleSheet(self.STYLE)
+        self.installEventFilter(self)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.edit_box.setFocusPolicy(Qt.StrongFocus)
+
+        # Ensure proper stacking order - edit box should be on top when visible
+        self.edit_box.raise_()
+
+    def update_slider_rect(self):
+        """Update the slider rectangle based on current widget size"""
+        padding = 1
+        self.slider_rect = QRect(padding, padding, self.width() - 2 * padding, self.height() - 2 * padding)
+
+    def resizeEvent(self, event):
+        """Handle widget resize events"""
+        super().resizeEvent(event)
+        self.update_slider_rect()
+        if self.in_edit_mode:
+            self.edit_box.setGeometry(self.slider_rect)
+
+    def sizeHint(self):
+        """Provide size hint for layout management"""
+        return QSize(max(self.minimumWidth(), 120), self.preferred_height)
+
+    def minimumSizeHint(self):
+        """Provide minimum size hint for layout management"""
+        return QSize(self.min_width, self.min_height)
+
+    def eventFilter(self, obj, event):
+        """Handle various widget events"""
+        # Allow exiting edit mode when the edit_box loses focus
+        if obj == self.edit_box and event.type() == QEvent.FocusOut and self.in_edit_mode:
+            self.finish_edit()
+            return False
+
+        if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
+            clicked_widget = QApplication.widgetAt(event.globalPos())
+            if clicked_widget not in (self, self.edit_box):
+                self.finish_edit()
+                return True
+
+        if isinstance(obj, QWidget) and obj == self:
+            if event.type() == QEvent.MouseButtonDblClick and not self.in_edit_mode:
+                self.enter_edit_mode()
+                return True
+            if not self.in_edit_mode:
+                if event.type() == QEvent.MouseButtonPress:
+                    self.start_drag(event.x())
+                    return True
+                elif event.type() == QEvent.MouseMove and self.dragging:
+                    self.update_value_by_drag(event.x())
+                    return True
+                elif event.type() == QEvent.MouseButtonRelease and self.dragging:
+                    self.finish_drag()
+                    return True
+
+        return super(BoxSlider, self).eventFilter(obj, event)
+
+    def paintEvent(self, event):
+        """Draw the widget"""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw background
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#2e2e2e"))
+        painter.drawRect(self.rect())
+
+        # Draw border
+        painter.setPen(QPen(QColor("#464649")))
+        painter.drawRect(self.slider_rect)
+
+        # Draw text
+        painter.setPen(QColor("#e5e5e5"))
+        value_text = f"{int(self.value) if self.int_output else self.value:.{self.digits}f}"
+        painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
+
+    def enter_edit_mode(self):
+        """Enter text editing mode"""
+        self.in_edit_mode = True
+        self.edit_box.setText(f"{self.value:.{self.digits}f}")
+        self.edit_box.setGeometry(self.slider_rect)
+        self.edit_box.show()
+        self.edit_box.raise_()  # Ensure edit box is on top
+        self.edit_box.selectAll()
+        self.edit_box.setFocus()
+        self.update()
+
+    def finish_edit(self):
+        """Exit text editing mode"""
+        if self.in_edit_mode:
+            try:
+                # Replace comma with dot to address keyboard input issues
+                text = self.edit_box.text().replace(',', '.')
+                new_value = float(text)
+                if self.int_output:
+                    new_value = round(new_value)
+                self.set_value(new_value)
+            except ValueError:
+                pass
+            self.in_edit_mode = False
+            self.edit_box.hide()
+            self.setFocus()
+            self.update()
+
+    def start_drag(self, x):
+        """Start drag operation"""
+        if not self.in_edit_mode:
+            self.dragging = True
+            self.last_drag_x = x
+            self.slider_pressed.emit()
+
+    def update_value_by_drag(self, x):
+        """Update value based on drag movement"""
+        if not self.in_edit_mode:
+            delta = x - self.last_drag_x
+            self.last_drag_x = x
+
+            adjusted_sensitivity = self.value_step * self.sensitivity * self.slider_scale
+
+            new_value = self.value + (delta * adjusted_sensitivity)
+
+            if self.int_output:
+                new_value = round(new_value)
+
+            self.set_value(new_value)
+
+    def finish_drag(self):
+        """End drag operation"""
+        self.dragging = False
+        self.committed.emit()
+
+    def set_value(self, value):
+        """Set widget value with constraints"""
+        value = float(value)
+
+        if not math.isinf(self.max_value) and (self.min_value != 0 or self.max_value != 0 or self.lock_range):
+            value = max(self.min_value, min(value, self.max_value))
+
+        if self.only_positive:
+            value = max(0, value)
+
+        if self.int_output:
+            value = round(value)
+
+        self.value = value
+        self.edited.emit(self.value)
+        self.update()
+
+    def wheelEvent(self, event):
+        """Handle mouse wheel events - disabled to prevent accidental changes"""
+        event.ignore()
+
+
+class LegacyWidget(QWidget):
+    edited = Signal(str)
+
+    def __init__(self, value: str = None, spacer_enable: bool = True):
+        """Initialize the LegacyWidget with a given value."""
+        super().__init__()
+        self.isdict = False
+
+        self.edit_line = QLineEdit()
+        self.edit_line.textChanged.connect(self.on_editline_updated)
+
+        # Layout initialization
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.edit_line)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+
+        self.set_value(value)
+
+    def on_editline_updated(self):
+        """Handle updates to the edit line."""
+        value = self.edit_line.text()
+        try:
+            value = ast.literal_eval(value)
+        except:
+            pass
+        self.edited.emit(value)
+
+    def set_value(self, value):
+        """Set the value of the edit line."""
+        if isinstance(value, dict):
+            self.isdict = True
+            self.edit_line.setText(str(value))
+        elif isinstance(value, str):
+            self.isdict = False
+            self.edit_line.setText(value)
+        else:
+            # raise ValueError("Value must be a string or a dictionary.")
+            self.isdict = False
+            self.edit_line.setText(str(value))
+
+class BoolWidget(QWidget):
+    edited = Signal(bool)
+
+    def __init__(self, value: bool = None, spacer_enable: bool = True):
+        """Initialize the LegacyWidget with a given value."""
+        super().__init__()
+
+        # Init checkbox
+        self.checkbox = QCheckBox()
+        self.checkbox.stateChanged.connect(self.on_updated)
+        self.checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkbox.setMinimumWidth(72)
+        # Layout initialization
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.checkbox)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+
+        # Set initial value
+        if value is None:
+            value = False
+        self.set_value(value)
+
+    def on_updated(self):
+        """Handle updates to the edit line."""
+        value = self.checkbox.isChecked()
+        # Updating text in the checkbox
+        self.set_value(value)
+        self.edited.emit(value)
+    def get_value(self):
+        """Getting value form the checkbox"""
+        return self.checkbox.isChecked()
+
+    def set_value(self, value):
+        """Set value as text for checkbox"""
+        self.checkbox.setChecked(value)
+        self.checkbox.setText(str(value))
+
+
+# Combobox
+class ComboboxDynamicItems(QComboBox):
+    clicked = Signal()
+
+    def __init__(self, parent=None, items: list =None, use_search:bool = False):
+        """Combobox that updates it's items when user clicked on it"""
+        super().__init__(parent)
+        # self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
+        self.setStyleSheet(qt_stylesheet_combobox)
+        self.items = items if items is not None else []
+        self.WheelEnabled = False
+
+    def updateItems(self):
+        current = self.currentText()
+        self.clear()
+        self.addItems(self.items)
+        if current in self.items:
+            self.setCurrentText(current)
+
+    def showPopup(self):
+        self.clicked.emit()
+        self.updateItems()
+        super().showPopup()
+
+
+    def wheelEvent(self, event):
+        event.ignore()
+
+class ComboboxTreeChild(ComboboxDynamicItems):
+    """Shows a tree child as items """
+    def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
+        super().__init__(parent)
+        self.layout = layout
+        self.root = root
+        self.items = None
+
+    def updateItems(self):
+        self.items = self.get_child(self.root)
+        current = self.currentText()
+        self.clear()
+        self.addItems(self.items)
+        if current in self.items:
+            self.setCurrentText(current)
+
+    def get_child(self, parent_item):
+        data_out = []
+        for i in range(parent_item.childCount()):
+            child_item = parent_item.child(i)
+            data_out.append(child_item.text(0))
+
+        return data_out
+
+def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18):
+    if base_icon is None or base_icon.isNull():
+        return base_icon
+    if not isinstance(item_data, dict):
+        return base_icon
+
+    has_item_note = False
+    try:
+        from hammer5tools_gui.editors.smartprop_editor.note_utils import has_note
+        has_item_note = has_note(item_data)
+    except Exception:
+        pass
+
+    enabled_val = item_data.get("m_bEnabled", True)
+    is_disabled = False
+    is_expression = False
+
+    if isinstance(enabled_val, bool):
+        is_disabled = not enabled_val
+    elif isinstance(enabled_val, dict):
+        is_expression = True
+        inner_val = enabled_val.get("m_bEnabled")
+        if isinstance(inner_val, bool):
+            is_disabled = not inner_val
+        elif isinstance(inner_val, str) and inner_val.lower() in ("false", "0"):
+            is_disabled = True
+    elif isinstance(enabled_val, str):
+        enabled_str = enabled_val.strip()
+        if enabled_str.lower() in ("false", "0"):
+            is_disabled = True
+        elif enabled_str.lower() not in ("true", "1"):
+            is_expression = True
+    elif enabled_val == 0:
+        is_disabled = True
+
+    if not is_disabled and not is_expression and not has_item_note:
+        return base_icon
+
+    from PySide6.QtGui import QPixmap, QImage, QColor, QIcon, QPainter
+    from PySide6.QtCore import QSize, Qt
+
+    sizes = base_icon.availableSizes()
+    size_obj = sizes[0] if sizes else QSize(size, size)
+    icon_size = max(size_obj.width(), size_obj.height(), size)
+
+    pixmap = base_icon.pixmap(icon_size, icon_size)
+    if pixmap.isNull():
+        return base_icon
+
+    if is_disabled:
+        image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
+        for y in range(image.height()):
+            for x in range(image.width()):
+                color = image.pixelColor(x, y)
+                if color.alpha() > 0:
+                    gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+                    color.setRgb(gray, gray, gray, int(color.alpha() * 0.75))
+                    image.setPixelColor(x, y, color)
+        res_pixmap = QPixmap.fromImage(image)
+    else:
+        res_pixmap = QPixmap(pixmap)
+
+    painter = None
+    overlay_size = max(int(icon_size * 0.65), 10)
+
+    # 1. Note badge (bottom-right corner) — painted first
+    if has_item_note:
+        try:
+            from hammer5tools_gui.styles.property_icons import IconCache
+            note_icon = IconCache.get_note_icon()
+            if note_icon and not note_icon.isNull():
+                note_pm = note_icon.pixmap(overlay_size, overlay_size)
+                if not note_pm.isNull():
+                    if painter is None:
+                        painter = QPainter(res_pixmap)
+                        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+                    note_x = icon_size - overlay_size
+                    note_y = icon_size - overlay_size
+                    painter.drawPixmap(note_x, note_y, note_pm)
+        except Exception:
+            pass
+
+    # 2. Expression constraint badge — painted on top of note badge
+    if is_expression:
+        import os
+        if overlay_path is None or not os.path.exists(str(overlay_path)):
+            default_overlay = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "icons", "tools", "pet", "func_constraint.png")
+            )
+            if os.path.exists(default_overlay):
+                overlay_path = default_overlay
+            else:
+                try:
+                    from hammer5tools_gui.common import app_dir
+                    cand1 = os.path.normpath(os.path.join(app_dir, "src", "icons", "tools", "pet", "func_constraint.png"))
+                    cand2 = os.path.normpath(os.path.join(app_dir, "icons", "tools", "pet", "func_constraint.png"))
+                    if os.path.exists(cand1):
+                        overlay_path = cand1
+                    elif os.path.exists(cand2):
+                        overlay_path = cand2
+                except Exception:
+                    pass
+
+        if overlay_path and os.path.exists(str(overlay_path)):
+            overlay_pm = QPixmap(str(overlay_path))
+            if not overlay_pm.isNull():
+                if painter is None:
+                    painter = QPainter(res_pixmap)
+                    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+                scaled_overlay = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                # When note badge is also present, display expression badge on top (top-right), otherwise bottom-right
+                expr_x = icon_size - overlay_size
+                expr_y = 0 if has_item_note else (icon_size - overlay_size)
+                painter.drawPixmap(expr_x, expr_y, scaled_overlay)
+
+    if painter is not None:
+        painter.end()
+
+    return QIcon(res_pixmap)
+
+
+#: Element classes that are leaf-only in the CS2 SmartProp format — m_Children must stay empty.
+NO_CHILDREN_CLASSES = ("Model", "SmartProp", "ModifyState", "PropPhysics", "PropDynamic")
+
+
+def add_error_badge(icon, size: int = 18):
+    """Overlay a small error badge on the top-right corner of ``icon``."""
+    if icon is None or icon.isNull():
+        return icon
+    from PySide6.QtGui import QPixmap, QPainter, QIcon
+    from PySide6.QtCore import QSize, Qt
+
+    sizes = icon.availableSizes()
+    size_obj = sizes[0] if sizes else QSize(size, size)
+    icon_size = max(size_obj.width(), size_obj.height(), size)
+
+    pixmap = icon.pixmap(icon_size, icon_size)
+    if pixmap.isNull():
+        return icon
+    overlay_pm = QPixmap(":/icons/tools/common/icon_error_sm.png")
+    if overlay_pm.isNull():
+        return icon
+
+    result = QPixmap(pixmap)
+    painter = QPainter(result)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    overlay_size = max(int(icon_size * 0.65), 10)
+    scaled = overlay_pm.scaled(overlay_size, overlay_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    painter.drawPixmap(0, 0, scaled)
+    painter.end()
+    return QIcon(result)
+
+
+class HierarchyItemModel(QTreeWidgetItem):
+    def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None, show_id:bool=True, icon=None):
+        super().__init__(parent)
+        self.show_id = show_id
+
+        # Set text for name, class, and id
+        self.setText(0, str(_name))
+        if icon is not None:
+            self.setIcon(0, icon)
+        if _class is not None:
+            self.setText(2, str(_class))
+            if _class == 'Category':
+                self.seticon_folder()
+            elif _class == 'Group':
+                self.seticon_group()
+            elif _class == 'Model':
+                self.seticon_vmdl()
+            elif _class == 'SmartProp':
+                self.seticon_vsmart()
+            else:
+                self.seticon_generic()
+            self._apply_child_lock_flag(_class)
+        if self.show_id:
+            if _id is not None:
+                self.setText(3, str(_id))
+
+        # Store data in UserRole of column 0 for performance
+        if _data is not None:
+            self.setData(0, Qt.UserRole, _data)
+
+        # Initially set editable flags only on the first column
+        self.setFlags(self.flags() | Qt.ItemIsEditable)
+
+        # Set up custom colors and font for specific columns
+        self.custom_colors = {
+            2: QColor("#a5a5a5"),
+            3: QColor("#a5a5a5"),
+        }
+        self.background_colors = {
+            0: QColor("#f0f0f0"),  # Light grey background in column 0
+        }
+        self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
+
+    def update_icon(self):
+        _class = self.text(2)
+        print(_class)
+        if _class is not None:
+            self.setText(2, str(_class))
+            if _class == 'Category':
+                self.seticon_folder()
+            elif _class == 'Group':
+                self.seticon_group()
+            elif _class == 'Model':
+                self.seticon_vmdl()
+            elif _class == 'SmartProp':
+                self.seticon_vsmart()
+            else:
+                self.seticon_generic()
+            self._apply_child_lock_flag(_class)
+
+    def _apply_child_lock_flag(self, _class):
+        """Model/SmartProp elements are leaf-only — refuse drops that would parent onto them.
+
+        Above/below drops (reordering as a sibling) are unaffected since those target this
+        item's parent, not this item.
+        """
+        if _class in NO_CHILDREN_CLASSES:
+            self.setFlags(self.flags() & ~Qt.ItemIsDropEnabled)
+        else:
+            self.setFlags(self.flags() | Qt.ItemIsDropEnabled)
+
+    def violates_child_lock(self):
+        """True if this is a Model/SmartProp element that already has children (soft-lock,
+        not enforced retroactively — e.g. loaded from a file authored outside this tool)."""
+        return self.text(2) in NO_CHILDREN_CLASSES and self.childCount() > 0
+
+
+    def _get_gray_icon(self, icon):
+        if getattr(self, "_last_normal_icon", None) == icon:
+            return self._last_gray_icon
+
+        from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
+        from PySide6.QtCore import QSize
+        sizes = icon.availableSizes()
+        size = sizes[0] if sizes else QSize(16, 16)
+        pixmap = icon.pixmap(size)
+        if pixmap.isNull():
+            return icon
+        image = pixmap.toImage()
+        for y in range(image.height()):
+            for x in range(image.width()):
+                color = image.pixelColor(x, y)
+                if color.alpha() > 0:
+                    gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+                    color.setRgb(gray, gray, gray, color.alpha())
+                    image.setPixelColor(x, y, color)
+        gray_icon = QIcon(QPixmap.fromImage(image))
+        self._last_normal_icon = icon
+        self._last_gray_icon = gray_icon
+        return gray_icon
+
+    def data(self, column, role):
+        # Provide data from UserRole for column 0
+        if column == 0 and role == Qt.UserRole:
+            return super().data(0, Qt.UserRole)
+
+        # Check if enabled
+        item_data = super().data(0, Qt.UserRole)
+        is_enabled = True
+        if isinstance(item_data, dict):
+            val = item_data.get("m_bEnabled")
+            if val is False or val == "false":
+                is_enabled = False
+            elif isinstance(val, dict) and val.get("m_bEnabled") is False:
+                is_enabled = False
+
+        if role == Qt.ForegroundRole:
+            if not is_enabled:
+                return QColor("#777777")  # Dim gray for disabled elements
+            if column in self.custom_colors:
+                return self.custom_colors[column]
+
+        if role == Qt.DecorationRole and column == 0:
+            normal_icon = super().data(0, Qt.DecorationRole)
+            if normal_icon is not None and isinstance(item_data, dict):
+                normal_icon = make_composite_icon(normal_icon, item_data)
+            if normal_icon is not None and self.violates_child_lock():
+                normal_icon = add_error_badge(normal_icon)
+            return normal_icon
+
+        if role == Qt.ToolTipRole and column == 0 and self.violates_child_lock():
+            return "Models and Smartprop elements cannot have any child elements."
+
+        if role == Qt.BackgroundRole and column in self.background_colors:
+            return self.background_colors[column]
+        if role == Qt.FontRole and column == 0:
+            return self.custom_font
+
+        return super().data(column, role)
+
+    def set_editable(self, editable):
+        if editable:
+            self.setFlags(self.flags() | Qt.ItemIsEditable)
+        else:
+            self.setFlags(self.flags() & ~Qt.ItemIsEditable)
+
+    def seticon_folder(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/folder_16dp.svg"))
+
+    def seticon_object(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/deployed_code_24dp.png"))
+
+    def seticon_polyline(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/polyline_24dp.png"))
+
+    def seticon_vmdl(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/model_sm.png"))
+
+    def seticon_vsmart(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/vsmart_sm.png"))
+
+    def seticon_abc(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/abc_sm.png"))
+
+    def seticon_generic(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/generic_sm.png"))
+
+    def seticon_group(self):
+        from PySide6.QtGui import QIcon
+        self.setIcon(0, QIcon(":/icons/tools/assettypes/animation_group_sm.png"))
+
+def on_three_hierarchyitem_clicked(item, column):
+    """Set item as editable if clicked on the first column; otherwise, make it non-editable."""
+    if column == 0:
+        item.set_editable(True)
+    else:
+        item.set_editable(False)
+
+
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+import sys
+
+class WidgetsShowcaseWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Widgets Showcase")
+        self.setGeometry(100, 100, 400, 300)
+
+        # Main widget and layout
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+
+        # Add FloatWidget to the layout
+        self.float_test = FloatWidget(vertical=True)
+        main_layout.addWidget(self.float_test)
+
+
+        self.float_test_2 = FloatWidget(spacer_enable=False)
+        main_layout.addWidget(self.float_test_2)
+
+        self.float_test_3 = BoxSlider()
+        main_layout.addWidget(self.float_test_3)
+
+        self.setCentralWidget(main_widget)
+
+def main():
+    app = QApplication(sys.argv)
+    window = WidgetsShowcaseWindow()
+    window.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()

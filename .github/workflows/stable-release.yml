@@ -49,11 +49,11 @@ jobs:
           # Pinned: CUE4Parse master restructured CUE4Parse_Conversion.Landscape
           # into Exporters/Dto. Bump only together with Program.cs.
           git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          dotnet publish src/net_core/UnrealBridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath="${{ github.workspace }}/../CUE4Parse" -p:CUE4PARSE_SKIP_NATIVE=true -o src/net_core/UnrealBridge/publish
+          dotnet publish Hammer5ToolsCore/CSharp/UnrealBridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath="${{ github.workspace }}/../CUE4Parse" -p:CUE4PARSE_SKIP_NATIVE=true -o Hammer5ToolsCore/CSharp/UnrealBridge/publish
 
       - name: Build SourcePorter Core
         run: |
-          dotnet publish src/net_core/SourcePorter.Core/SourcePorter.Core.csproj -c Release -r win-x64 --self-contained false -o src/net_core/SourcePorter.Core/publish
+          dotnet publish Hammer5ToolsCore/CSharp/SourcePorter.Core/SourcePorter.Core.csproj -c Release -r win-x64 --self-contained false -o Hammer5ToolsCore/CSharp/SourcePorter.Core/publish
 
       - name: Build All
 
@@ -81,7 +81,7 @@ jobs:
         run: |
           $required = @(
             'Hammer5Tools\Hammer5Tools.exe',
-            'Hammer5Tools\app\Hammer5Tools_Core.exe',
+            'Hammer5Tools\app\Hammer5ToolsGUI.exe',
             'Hammer5Tools\app\runtime'
           )
           foreach ($path in $required) {
@@ -91,7 +91,7 @@ jobs:
       - name: Read app version
         id: version
         run: |
-          $ver = python -c "from src.common import app_version; print(app_version)"
+          $ver = python -c "import json; print(json.load(open('version.json'))['version'])"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
           # Line 2 is the build channel; get_build_channel() reads it to decide the
           # default for "Receive dev versions" on a fresh install.
@@ -115,7 +115,7 @@ jobs:
 
       - name: Velopack Pack
         run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md --framework net10.0-x64-desktop
+          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon Hammer5ToolsGUI/hammer5tools_gui/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md --framework net10.0-x64-desktop
 
       - name: Velopack Upload
         run: |

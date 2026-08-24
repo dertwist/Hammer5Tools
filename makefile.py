@@ -5,36 +5,44 @@ import shutil
 import zipfile
 import subprocess
 import argparse
+import json
 from typing import List, Set
 from tabulate import tabulate
-from src.common import app_version
 import re
 import sys
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 
-external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external"
+with open(os.path.join(cur_dir, 'version.json'), encoding='utf-8') as version_file:
+    app_version = json.load(version_file)['version']
+
+gui_python_root = os.path.join(cur_dir, 'Hammer5ToolsGUI')
+gui_root = os.path.join(gui_python_root, 'hammer5tools_gui')
+core_python_root = os.path.join(cur_dir, 'Hammer5ToolsCore', 'Python')
+core_csharp_root = os.path.join(cur_dir, 'Hammer5ToolsCore', 'CSharp')
+external_root = os.path.join(core_csharp_root, 'external')
+external = f"--add-data={external_root};external"
 print(f"External path: {external}")
 
 # Path to your .NET DLLs
 dotnet_dlls = [
-    ("Datamodel.NET.dll", "src\\external"),
-    ("ValveKeyValue.dll", "src\\external"),
-    ("ValvePak.dll", "src\\external"),
-    ("ValveResourceFormat.dll", "src\\external"),
-    ("ZstdSharp.dll", "src\\external"),
-    ("K4os.Compression.LZ4.dll", "src\\external"),
-    ("SharpZstd.Interop.dll", "src\\external"),
-    ("SkiaSharp.dll", "src\\external"),
-    ("System.IO.Hashing.dll", "src\\external"),
-    ("TinyBCSharp.dll", "src\\external"),
-    ("TinyEXR.NET.dll", "src\\external"),
+    ("Datamodel.NET.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("ValveKeyValue.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("ValvePak.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("ValveResourceFormat.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("ZstdSharp.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("K4os.Compression.LZ4.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("SharpZstd.Interop.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("SkiaSharp.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("System.IO.Hashing.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("TinyBCSharp.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("TinyEXR.NET.dll", "Hammer5ToolsCore\\CSharp\\external"),
     # Added with VRF 19.x (net10.0): compressed-mesh / newer resource support.
-    ("TinyEXRNative.dll", "src\\external"),
-    ("Blake3.dll", "src\\external"),
-    ("blake3_dotnet.dll", "src\\external"),
-    ("Vortice.SPIRV.dll", "src\\external"),
-    ("Vortice.SpirvCross.dll", "src\\external"),
-    ("spirv-cross.dll", "src\\external"),
+    ("TinyEXRNative.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("Blake3.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("blake3_dotnet.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("Vortice.SPIRV.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("Vortice.SpirvCross.dll", "Hammer5ToolsCore\\CSharp\\external"),
+    ("spirv-cross.dll", "Hammer5ToolsCore\\CSharp\\external"),
 ]
 
 
@@ -229,18 +237,18 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         _generate_pycparser_tables()
         tables = find_pycparser_tables()
 
-    runtime_config_dir = os.path.join(cur_dir, 'src', 'external', 'dotnet')
+    runtime_config_dir = os.path.join(external_root, 'dotnet')
     runtime_config_path = os.path.join(runtime_config_dir, 'Hammer5Tools.runtimeconfig.json')
     if channel == 'stable':
         generate_runtime_config(runtime_config_dir)
 
-    # H5T.UnrealBridge & SourcePorter.Core — built under src/net_core.
-    unreal_bridge_publish = os.path.join(cur_dir, 'src', 'net_core', 'UnrealBridge', 'publish')
+    # H5T.UnrealBridge & SourcePorter.Core are built under Hammer5ToolsCore/CSharp.
+    unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
     if not os.path.exists(unreal_bridge_publish):
         unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
 
-    source_porter_project = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'SourcePorter.Core.csproj')
-    source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'publish')
+    source_porter_project = os.path.join(core_csharp_root, 'SourcePorter.Core', 'SourcePorter.Core.csproj')
+    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
     if os.path.exists(source_porter_project):
         subprocess.run([
             'dotnet', 'publish', source_porter_project,
@@ -257,7 +265,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
-        '--name=Hammer5Tools_Core',
+        '--name=Hammer5ToolsGUI',
         '--contents-directory=runtime',
         '--noupx',
         '--distpath=out_hammer5tools',
@@ -271,10 +279,11 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--onedir',
         '--windowed',
 
-        '--paths=.;src',
-        '--hidden-import=resources_rc',
-        '--hidden-import=widgets',
-        '--collect-all=src',
+        f'--paths={gui_python_root}',
+        f'--paths={core_python_root}',
+        '--hidden-import=hammer5tools_gui.resources_rc',
+        '--collect-all=hammer5tools_gui',
+        '--collect-all=hammer5tools_core',
         '--collect-all=keyvalues3',
         '--collect-all=OpenGL',
         '--collect-submodules=pycparser',
@@ -287,10 +296,11 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--hidden-import=clr_loader',
         '--collect-submodules=clr_loader',
         '--optimize=0',
-        '--icon=src/appicon.ico',
-        '--add-data=src/appicon.ico;.',
-        '--add-data=src/images;images/',
-        '--add-data=src/styles;styles/',
+        f'--icon={os.path.join(gui_root, "appicon.ico")}',
+        f'--add-data={os.path.join(gui_root, "appicon.ico")};.',
+        f'--add-data={os.path.join(gui_root, "images")};images/',
+        f'--add-data={os.path.join(gui_root, "styles")};styles/',
+        f'--add-data={os.path.join(cur_dir, "version.json")};.',
         *[
             f'--add-data={os.path.join(cur_dir, "Hammer5Tools", folder)};defaults/{folder}'
             for folder in ('Hotkeys', 'Presets', 'SmartPropEditor', 'SoundEventEditor')
@@ -307,10 +317,10 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--add-data={bspsrc_dir};tools/bspsrc' if os.path.exists(bspsrc_dir) else '',
         f'--add-data={import_scripts_dir};tools/import_scripts' if os.path.exists(import_scripts_dir) else '',
         f'--add-data={ue_scripts_dir};tools/ue_scripts' if os.path.exists(ue_scripts_dir) else '',
-        *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
+        *( [f'--add-binary={os.path.join(external_root, dll)};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
         f'--add-data={runtime_config_path};dotnet' if channel == 'stable' and os.path.exists(runtime_config_path) else '',
-        'src/main.py'
+        os.path.join(gui_root, 'main.py')
     ]
     pyinstaller_cmd = [arg for arg in pyinstaller_cmd if arg]
 
@@ -321,7 +331,15 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
             f'--add-data={yacctab_path};pycparser',
         ]
     
-    subprocess.run(pyinstaller_cmd, check=True)
+    build_environment = os.environ.copy()
+    existing_python_path = build_environment.get('PYTHONPATH')
+    python_roots = os.pathsep.join((gui_python_root, core_python_root))
+    build_environment['PYTHONPATH'] = (
+        python_roots + os.pathsep + existing_python_path
+        if existing_python_path
+        else python_roots
+    )
+    subprocess.run(pyinstaller_cmd, check=True, env=build_environment)
 
 
 def stage_three_root_bundle(pyi_output: str, bundle_root: str) -> None:
@@ -340,10 +358,10 @@ def stage_three_root_bundle(pyi_output: str, bundle_root: str) -> None:
         shutil.move(source, app_root)
     except Exception:
         shutil.copytree(source, app_root)
-    executable = os.path.join(app_root, 'Hammer5Tools_Core.exe')
+    executable = os.path.join(app_root, 'Hammer5ToolsGUI.exe')
     runtime = os.path.join(app_root, 'runtime')
     if not os.path.isfile(executable) or not os.path.isdir(runtime):
-        raise RuntimeError("Staged bundle does not contain app/Hammer5Tools_Core.exe and app/runtime")
+        raise RuntimeError("Staged bundle does not contain app/Hammer5ToolsGUI.exe and app/runtime")
 
 
 
@@ -384,7 +402,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
 
     # Three-root layout: immutable app payload, bundled runtime, mutable userdata.
     # PyInstaller places its dependency payload under app/runtime.
-    pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools_Core')
+    pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5ToolsGUI')
     if os.path.exists(pyi_output):
         stage_three_root_bundle(pyi_output, bundle_root)
         _safe_rmtree(os.path.join(cur_dir, 'out_hammer5tools'))
@@ -449,7 +467,7 @@ def main() -> None:
             # Phase 0: Cleanup
             bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
             if os.path.exists(bundle_root):
-                for item in ['app', 'runtime', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal']:
+                for item in ['app', 'runtime', 'Hammer5Tools.exe', 'Hammer5ToolsGUI.exe', 'fileedit.exe', '_internal']:
                     path = os.path.join(bundle_root, item)
                     if os.path.exists(path):
                         if os.path.isdir(path): shutil.rmtree(path)
@@ -459,7 +477,7 @@ def main() -> None:
             build_hammer5_tools(fast=args.fast, channel=channel)
             
             # 2. Build C++ Launcher
-            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
+            build_cpp("Hammer5ToolsLauncher", os.path.join(cur_dir, "Hammer5ToolsLauncher"), "Hammer5Tools")
             
             # Verify Launcher exists
             launcher_path = os.path.join(bundle_root, "Hammer5Tools.exe")
