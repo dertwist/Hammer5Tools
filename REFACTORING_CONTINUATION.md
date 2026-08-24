@@ -2,6 +2,12 @@
 
 This document is the restart point for continuing the refactor on another computer. The authoritative long-term roadmap remains the local `docs/REFACTORING_PLAN.md`; this tracked handoff records the current repository state and the next executable work.
 
+## Current Status (2026-08-24)
+
+Phases 1 through 4 are complete on the `refactoring` branch. Phase 3 now has Core-owned VMAP rewriting/writing, compiled model/material/texture reading, VPK access, compiled sound decoding, and SoundEvent KV3 extraction. Phase 4 reduced the affected editors to presentation adapters: the SmartProp viewport converts immutable Core buffers to NumPy/OpenGL data, and SoundEvent widgets retain only browsing, playback, caching, dialogs, and export choices. Obsolete GUI sound-decoding helpers were removed from `src/dotnet.py`.
+
+Do not implement Phase 5 from this handoff without first reviewing the launcher boundary below.
+
 ## Resume State
 
 - Repository: `https://github.com/dertwist/Hammer5Tools.git`
@@ -80,9 +86,9 @@ c7d99275 feat(smartprop): resolve nested documents in core
 7726e6e4 refactor(smartprop): make core evaluation authoritative
 ```
 
-## Phase 3: Current Work
+## Phase 3: Complete
 
-Phase 3 is in progress. Do not mark it complete until its exit criterion is true: VMAP and resource workflows must have no GUI-to-VRF dependency and must preserve current file behavior.
+Phase 3 is complete. VMAP and resource workflows no longer expose VRF, ValvePak, or KeyValues2 domain objects to GUI modules.
 
 ### Completed Phase 3 Work
 
@@ -247,11 +253,11 @@ Everything else should be removed or explicitly justified in `ARCHITECTURE.md`.
 
 - [x] Asset Manager VMAP reference rewriting is Core-owned and prefix-safe.
 - [x] Unreal Porter VMAP writing is Core-owned and fixture-tested.
-- [ ] SmartProp viewport model/material/texture parsing is Core-owned.
-- [ ] SoundEvent compiled resource extraction is Core-owned.
-- [ ] GUI modules do not import VRF, ValvePak, KeyValues2, or raw managed domain namespaces.
-- [ ] `CoreBridge` returns Python-native typed models and diagnostics.
-- [ ] No competing VMAP parser or resource evaluator exists.
+- [x] SmartProp viewport model/material/texture parsing is Core-owned.
+- [x] SoundEvent compiled resource extraction is Core-owned.
+- [x] GUI modules do not import VRF, ValvePak, KeyValues2, or raw managed domain namespaces.
+- [x] `CoreBridge` returns Python-native typed models and diagnostics.
+- [x] No competing VMAP parser or resource evaluator exists.
 - [ ] Relevant Python tests pass.
 - [ ] Hammer5Tools Core Release build and TUnit tests pass.
 - [ ] SourcePorter Core Release build and xUnit tests pass.
@@ -301,14 +307,27 @@ The full `net_core.sln` currently includes `UnrealBridge`, whose build requires 
 - Add parity tests before deleting a working implementation.
 - Push each completed, validated slice to `origin/refactoring` so work remains portable between computers.
 
-## After Phase 3
+## Phase 4: Complete
 
-Continue the authoritative plan in order:
+- SmartProp model loading is a small Core adapter; background jobs, caching, and GPU ownership remain in `mesh_cache.py`.
+- SoundEvent explorers use `CoreBridge` and `VpkIndex` directly and no longer instantiate interop/extractor objects.
+- Dead `decode_vsnd` and `extract_vsnd_file` compatibility functions were removed from `src/dotnet.py`.
+- Core ownership and bridge APIs are documented in `ARCHITECTURE.md`.
 
-1. Phase 4: editor simplification.
-2. Phase 5: C++ launcher.
-3. Phase 6: three-root structure, shipping, and supervised GUI lifecycle.
-4. Phase 7: cross-language naming and style alignment.
-5. Phase 8: NativeAOT transport replacing Python.NET.
+## Phase 5: Planned C++ Launcher Changes
+
+Phase 5 will refactor the existing `launcher/` into a deliberately small Windows lifecycle host. It must not absorb editor or domain behavior.
+
+1. Define a versioned launcher-to-GUI startup contract covering original arguments, working directory, addon/open-file requests, and a ready/failed status channel.
+2. Move first-instance arbitration into the launcher. A second launch will forward its normalized request to the running instance and exit; Python's `QLocalSocket` preflight and `QLocalServer` ownership will then be removed after compatibility tests pass.
+3. Start the packaged Python GUI as a supervised child process with explicit executable/runtime discovery, quoted Unicode-safe arguments, inherited environment policy, and deterministic exit-code propagation.
+4. Add native crash capture for launcher failures and child startup/early-exit failures. Preserve Python exception reporting for faults after the GUI is running; do not duplicate editor-level error dialogs in C++.
+5. Move only update-startup/install-hook dispatch needed before Python starts into the launcher. Update discovery, release notes, user prompts, and progress UI remain in Python until a later lifecycle phase deliberately changes them.
+6. Add launcher tests for argument forwarding, stale-instance recovery, concurrent starts, paths containing spaces/non-ASCII characters, missing GUI/runtime, child exit codes, and installer/update hook dispatch.
+7. Update packaging so the launcher is the installed entry point while direct Python startup remains available for development.
+
+Phase 5 exit criterion: one native process owns startup, single-instance handoff, early crash reporting, and update startup; the Python GUI owns all windows and application behavior and can still be run directly in development.
+
+After Phase 5, continue with Phase 6 (three-root structure, shipping, and supervised GUI lifecycle), Phase 7 (cross-language naming/style), and Phase 8 (NativeAOT transport replacing Python.NET).
 
 Do not begin the Phase 6 folder cutover while VMAP/resource ownership is still split across GUI and Core.

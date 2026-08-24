@@ -105,11 +105,15 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`CoreBridge.read_valve_map()`**: Loads the SourcePorter implementation of the shared VMAP reader and returns Python-native nodes, entities, asset references, and preview thumbnails. Loading Screen, Cleanup, Create Addon, and SmartProp hierarchy import consume this API instead of loading KeyValues2 or traversing Datamodel objects directly.
 - **`CoreBridge.rewrite_vmap_references()`**: Rewrites VMAP body and prefix asset-reference paths through SourcePorter Core and returns a Python-native changed/diagnostics result. Asset Manager uses this API instead of loading Datamodel objects directly.
 - **`CoreBridge.write_unreal_map()`**: Sends typed primitive Unreal placements to the SourcePorter Core writer. Python prepares transforms, asset paths, and import accounting; Core owns VMAP skeletons, native entities, SmartProps, decals, encoding, and saving.
+- **`CoreBridge.read_compiled_model()`**: Returns Python-native geometry, material, and RGBA texture data decoded by Core. The SmartProp viewport retains background scheduling, NumPy containers, caching, and OpenGL upload only.
+- **`CoreBridge.read_compiled_resource()`**: Returns decoded sound bytes or SoundEvent KV3 text with a format tag. SoundEvent widgets retain browsing, playback, cache, dialogs, and export presentation.
 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
 - **`CoreResult<T>` / `CoreDiagnostic`**: Typed operation-result and diagnostic contracts shared by future Core features.
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.
+- **`Resources.CompiledModelReader`**: Owns compiled model, material, texture, skin-group, geometry, and preview texture decoding through ValveResourceFormat and returns immutable primitive contracts.
+- **`Resources.CompiledResourceReader`**: Owns compiled sound and SoundEvent extraction from `VpkIndex`, returning decoded bytes and format metadata with structured diagnostics.
 - **`Vmap.IValveMapReader` / `ValveMapDocument` / `ValveMapNode`**: Shared UI-neutral, read-only VMAP contracts. `SourcePorter.Core.Vmap.ValveMapReader` implements them by projecting the existing authoritative `VmapDocument`; consumers must not introduce another VMAP parser.
 - **`VmapReferenceRewriter`**: Rewrites string paths in the authoritative VMAP document and preserves the binary DMX prefix block, including `map_asset_references`, when saving.
 - **`UnrealMapWriter`**: Accepts typed Unreal placement requests and writes binary VMAPs, including native point entities, SmartProp nodes, and half-edge decal overlays, with text fallback and structured diagnostics.
