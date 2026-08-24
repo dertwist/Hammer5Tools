@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Optional
 
-import vpk
 from PySide6.QtCore import (
     Qt, QAbstractListModel, QModelIndex,
     QSize, QSortFilterProxyModel, QThread, Signal,
@@ -18,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.common import Kv3ToJson, SoundEventEditor_path
-from src.dotnet import DotNetInterop, VPKExtractor
+from src.bridge.core import CoreBridge
 from src.settings.main import get_cs2_path, debug
 from src.styles.common import qt_stylesheet_widgetlist2
 from src.editors.soundevent_editor.thread_parking import park
@@ -69,50 +68,10 @@ def extract_vsndevts_file(
     output_folder: Optional[str] = None,
 ) -> Optional[str]:
     debug(f"[vsndevts] Extracting {inner_path}")
-    if not hasattr(extract_vsndevts_file, "_interop"):
-        extract_vsndevts_file._interop = DotNetInterop()
-    interop = extract_vsndevts_file._interop
-    interop._init_pythonnet()
-
-    import System
-    from System.IO import MemoryStream
-
-    if not hasattr(extract_vsndevts_file, "_extractor"):
-        extract_vsndevts_file._extractor = VPKExtractor(interop)
-        extract_vsndevts_file._extractor._ensure_vrf_loaded()
-    extractor = extract_vsndevts_file._extractor
-
-    data = extractor.extract_file(_get_vpk_path(), inner_path)
-    if data is None:
+    result = CoreBridge.instance().read_compiled_resource(_get_vpk_path(), inner_path, soundevents=True)
+    if result is None:
         return None
-    if not isinstance(data, bytes):
-        data = bytes(data)
-
-    Resource, _, _, FileExtract, _, _ = extractor._vrf_types
-    resource = System.Activator.CreateInstance(Resource)
-    ms = MemoryStream(data)
-    try:
-        resource.Read(ms)
-        if not hasattr(extract_vsndevts_file, "_extract_method"):
-            extract_vsndevts_file._extract_method = next(
-                (m for m in FileExtract.GetMethods() if m.Name == "Extract"), None
-            )
-        extract_method = extract_vsndevts_file._extract_method
-        if extract_method is None:
-            return None
-        params = extract_method.GetParameters()
-        args = System.Array.CreateInstance(System.Object, len(params))
-        args[0] = resource
-        for i in range(1, len(params)):
-            args[i] = None
-        content_file = extract_method.Invoke(None, args)
-        if not content_file or not getattr(content_file, 'Data', None):
-            return None
-        kv3_text = bytes(content_file.Data).decode("utf-8", errors="replace")
-    finally:
-        ms.Dispose()
-        if hasattr(resource, 'Dispose'):
-            resource.Dispose()
+    kv3_text = result.data.decode("utf-8", errors="replace")
 
     if not export:
         return kv3_text
@@ -190,8 +149,9 @@ class SoundEventLoaderThread(QThread):
         seen: set = set()
         paths: List[str] = []
         try:
-            with vpk.open(_get_vpk_path()) as pak:
-                for fp in pak:
+            with CoreBridge.instance().create_vpk_index() as index:
+                index.mount(_get_vpk_path())
+                for fp, _ in index.entries((".vsndevts",)):
                     if self._stopped:
                         break
                     if 'vsndevts_c' not in fp:

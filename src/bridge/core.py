@@ -107,6 +107,13 @@ class CompiledModelData:
 
 
 @dataclass(frozen=True)
+class CompiledResourceData:
+    data: bytes
+    format: str
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ValveMapEntity:
     """Python-native entity projected from an uncompiled Valve map."""
 
@@ -356,6 +363,24 @@ class CoreBridge:
         reader = System.Activator.CreateInstance(reader_type, game_directory, active_addon)
         result = reader.ReadMaterialGroups(resource_path, context_addon)
         return tuple(str(value) for value in result.Value) if bool(result.IsSuccess) else ()
+
+    def read_compiled_resource(self, vpk_path: str, resource_path: str, *, soundevents: bool = False) -> CompiledResourceData | None:
+        """Reads and decodes a compiled sound or SoundEvent through Core."""
+        self._ensure_loaded()
+        index_type = self._assembly.GetType("Hammer5Tools.Core.Resources.VpkIndex")
+        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledResourceReader")
+        import System
+        index = System.Activator.CreateInstance(index_type)
+        try:
+            index.MountVpk(vpk_path)
+            reader = System.Activator.CreateInstance(reader_type, index)
+            result = reader.ReadSoundEvents(resource_path) if soundevents else reader.ReadSound(resource_path)
+            if not bool(result.IsSuccess) or result.Value is None:
+                return None
+            diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+            return CompiledResourceData(bytes(result.Value.Data), str(result.Value.Format), diagnostics)
+        finally:
+            index.Dispose()
 
     @classmethod
     def _compiled_material(cls, material) -> CompiledMaterialData:

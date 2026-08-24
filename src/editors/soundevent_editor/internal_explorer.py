@@ -1,6 +1,5 @@
 from src.property.methods import QDrag
 import os
-import vpk
 import time
 from PySide6.QtWidgets import (
     QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox,
@@ -12,7 +11,7 @@ from PySide6.QtGui import QGuiApplication
 from src.settings.main import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_path
 from src.widgets import exception_handler
-from src.dotnet import extract_vsnd_file, decode_vsnd
+from src.bridge.core import CoreBridge
 from src.editors.soundevent_editor.thread_parking import park
 
 # pak01_dir.vpk is global CS2 content, identical for every addon. Scan it once
@@ -35,9 +34,10 @@ class VPKLoaderThread(QThread):
     def run(self):
         try:
             path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-            with vpk.open(path) as pak1:
+            with CoreBridge.instance().create_vpk_index() as index:
+                index.mount(path)
                 folders = []
-                for filepath in pak1:
+                for filepath, _ in index.entries((".vsnd",)):
                     if self._stopped:
                         return
                     if 'vsnd_c' in filepath and 'sounds' in filepath:
@@ -60,9 +60,9 @@ class VSNDDecodeThread(QThread):
 
     def run(self):
         try:
-            data, ext = decode_vsnd(vpk_path=self.pak_path, vpk_file=self.internal_path)
-            if data is not None:
-                self.decoded.emit(data, ext)
+            result = CoreBridge.instance().read_compiled_resource(self.pak_path, self.internal_path)
+            if result is not None:
+                self.decoded.emit(result.data, result.format)
             else:
                 debug(f"Failed to decode {self.internal_path}")
         except Exception as e:
@@ -249,11 +249,13 @@ class InternalSoundFileExplorer(QTreeWidget):
                 internal_path = os.path.join(
                     'sounds', rel.replace('vsnd', 'vsnd_c')
                 ).replace('/', '\\')
-                out = extract_vsnd_file(
-                    vpk_path=pak1, vpk_file=internal_path,
-                    output_folder=dest, export=True,
-                )
-                if out:
+                result = CoreBridge.instance().read_compiled_resource(pak1, internal_path)
+                if result is not None:
+                    output_path = os.path.join(dest, internal_path.replace('\\', os.sep))[:-2]
+                    output_path = os.path.splitext(output_path)[0] + '.' + result.format
+                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                    with open(output_path, 'wb') as stream:
+                        stream.write(result.data)
                     done += 1
         finally:
             QApplication.restoreOverrideCursor()
