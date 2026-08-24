@@ -155,16 +155,45 @@ def format_crash_report(exc_type, exc, tb, thread_name=None):
 
 def _install_crash_handler():
     def hook(exc_type, exc, tb):
-        details = format_crash_report(exc_type, exc, tb)
+        try:
+            details = format_crash_report(exc_type, exc, tb)
+        except Exception:
+            import traceback
+            details = f"Fatal unhandled exception: {exc_type}: {exc}\n{''.join(traceback.format_exception(exc_type, exc, tb))}"
 
-        # stderr is None under pythonw / frozen builds without a console.
-        if sys.stderr is not None:
-            sys.__excepthook__(exc_type, exc, tb)
+        # 1. Write to persistent crash log files
+        try:
+            from hammer5tools_core.runtime_paths import resolve_runtime_paths
+            paths = resolve_runtime_paths()
+            logs_dir = paths.user_data_root / "logs"
+        except Exception:
+            from pathlib import Path
+            logs_dir = Path.home() / "Hammer5Tools" / "logs"
 
-        # Show the ErrorInfo dialog so the user can see/report the crash.
+        try:
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            with open(logs_dir / "crash.log", "a", encoding="utf-8") as f:
+                f.write(details + "\n\n" + "=" * 80 + "\n\n")
+            with open(logs_dir / "last_crash.txt", "w", encoding="utf-8") as f:
+                f.write(details)
+        except Exception:
+            pass
+
+        # 2. Write to stderr (and flush) so the launcher or console stream captures it
+        try:
+            if sys.stderr is not None:
+                sys.stderr.write(details + "\n")
+                sys.stderr.flush()
+        except Exception:
+            pass
+
+        # 3. Show dialog to user
+        dialog_shown = False
         try:
             from PySide6.QtWidgets import QApplication
             app = QApplication.instance()
+            if app is None:
+                app = QApplication(sys.argv)
             if app is not None:
                 from hammer5tools_gui.widgets.common import ErrorInfo
                 dialog = ErrorInfo(
@@ -173,9 +202,19 @@ def _install_crash_handler():
                     title="Crash Report",
                 )
                 dialog.exec()
+                dialog_shown = True
         except Exception:
-            # Last resort — never let the dialog code itself prevent shutdown.
             pass
+
+        if not dialog_shown and sys.platform == "win32":
+            try:
+                import ctypes
+                summary = f"Hammer 5 Tools encountered an unhandled error:\n\n{exc_type.__name__}: {exc}\n\n{details}"
+                if len(summary) > 2048:
+                    summary = summary[:2000] + "\n\n... [truncated, see crash.log for full details]"
+                ctypes.windll.user32.MessageBoxW(None, summary, "Hammer 5 Tools Crash", 0x10)
+            except Exception:
+                pass
 
     sys.excepthook = hook
 
@@ -212,15 +251,6 @@ if __name__ == "__main__":
             install_job_object()
         except Exception as e:
             print(f"Error installing job object: {e}")
-
-    # Velopack's startup runner terminates source launches when no installed
-    # updater is present. Installer hooks below still run in every environment.
-    if getattr(sys, "frozen", False):
-        try:
-            import velopack
-            velopack.App().run()
-        except Exception:
-            pass
 
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)

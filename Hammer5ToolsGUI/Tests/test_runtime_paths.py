@@ -1,3 +1,5 @@
+import importlib
+import sys
 from pathlib import Path
 
 from hammer5tools_core.runtime_paths import resolve_runtime_paths
@@ -28,3 +30,45 @@ def test_development_roots_keep_mutable_data_out_of_source_package(monkeypatch):
 
     assert paths.install_root == Path(__file__).resolve().parents[2]
     assert paths.user_data_root == paths.install_root / "userdata_dev"
+
+
+def test_frozen_common_resolves_paths_without_error(monkeypatch, tmp_path):
+    install = tmp_path / "installed"
+    monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))
+    monkeypatch.setenv("H5T_APP_ROOT", str(install / "app"))
+    monkeypatch.setenv("H5T_RUNTIME_ROOT", str(install / "app" / "runtime"))
+    monkeypatch.setenv("H5T_USER_DATA_ROOT", str(tmp_path / "userdata"))
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+
+    import hammer5tools_gui.common
+    importlib.reload(hammer5tools_gui.common)
+
+    assert hammer5tools_gui.common.app_dir == (install / "app").resolve()
+    assert hammer5tools_gui.common.user_data_dir == (tmp_path / "userdata").resolve()
+
+
+def test_crash_handler_writes_crash_logs(monkeypatch, tmp_path):
+    install = tmp_path / "installed"
+    user_data = tmp_path / "userdata"
+    monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))
+    monkeypatch.setenv("H5T_USER_DATA_ROOT", str(user_data))
+
+    from hammer5tools_gui.main import _install_crash_handler
+
+    _install_crash_handler()
+
+    try:
+        raise ValueError("Simulated failure for crash report test")
+    except ValueError:
+        exc_type, exc_val, exc_tb = sys.exc_info()
+        monkeypatch.setattr("ctypes.windll.user32.MessageBoxW", lambda *args: 0, raising=False)
+        from hammer5tools_gui.widgets import common as widget_common
+        monkeypatch.setattr(widget_common.ErrorInfo, "exec", lambda self: 0, raising=False)
+        sys.excepthook(exc_type, exc_val, exc_tb)
+
+    logs_dir = user_data / "logs"
+    assert (logs_dir / "crash.log").exists()
+    assert (logs_dir / "last_crash.txt").exists()
+    content = (logs_dir / "last_crash.txt").read_text(encoding="utf-8")
+    assert "Simulated failure for crash report test" in content
+    assert "ValueError" in content

@@ -46,6 +46,7 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
+from hammer5tools_core.runtime_paths import resolve_runtime_paths
 from hammer5tools_core.version import APP_VERSION
 
 
@@ -59,7 +60,6 @@ def _version_txt() -> list[str]:
     """
     try:
         if getattr(sys, 'frozen', False):
-            from hammer5tools_core.runtime_paths import resolve_runtime_paths
             vtxt = resolve_runtime_paths().install_root / 'version.txt'
             if vtxt.exists():
                 return [l.strip() for l in vtxt.read_text(encoding='utf-8-sig').splitlines()]
@@ -167,7 +167,6 @@ def get_app_paths() -> tuple[Path, Path]:
     app_dir: The folder containing the executable.
     user_data_dir: Persistent folder for user data (survives updates).
     """
-    from hammer5tools_core.runtime_paths import resolve_runtime_paths
     runtime_paths = resolve_runtime_paths()
     if os.environ.get("H5T_INSTALL_ROOT"):
         return runtime_paths.app_root, runtime_paths.user_data_root

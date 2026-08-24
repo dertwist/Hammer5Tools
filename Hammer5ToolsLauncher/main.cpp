@@ -151,16 +151,64 @@ std::wstring ChildArguments(const std::vector<std::wstring>& arguments)
     return result;
 }
 
+std::wstring ReadFileAsString(const fs::path& filePath)
+{
+    try
+    {
+        std::ifstream stream(filePath, std::ios::binary);
+        if (!stream.is_open())
+            return {};
+        std::string bytes((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+        while (!bytes.empty() && (bytes.back() == '\r' || bytes.back() == '\n' || bytes.back() == ' ' || bytes.back() == '\t'))
+            bytes.pop_back();
+        if (bytes.empty())
+            return {};
+        const auto size = MultiByteToWideChar(CP_UTF8, 0, bytes.data(), static_cast<int>(bytes.size()), nullptr, 0);
+        if (size > 0)
+        {
+            std::wstring result(size, L'\0');
+            MultiByteToWideChar(CP_UTF8, 0, bytes.data(), static_cast<int>(bytes.size()), result.data(), size);
+            return result;
+        }
+        return std::wstring(bytes.begin(), bytes.end());
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+
+std::wstring ReadErrorDetails(const fs::path& directory)
+{
+    const auto lastCrash = directory / "last_crash.txt";
+    const auto stderrLog = directory / "gui_stderr.log";
+
+    auto content = ReadFileAsString(lastCrash);
+    if (content.empty())
+        content = ReadFileAsString(stderrLog);
+
+    return content;
+}
+
 int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& arguments,
            const fs::path& installRoot, const fs::path& appRoot, const fs::path& runtimeRoot)
 {
+    const auto logsDirectory = installRoot / "userdata" / "logs";
+    try
+    {
+        fs::create_directories(logsDirectory);
+        fs::remove(logsDirectory / "last_crash.txt");
+        fs::remove(logsDirectory / "gui_stderr.log");
+    }
+    catch (...) {}
+
     SECURITY_ATTRIBUTES handoffSecurity{sizeof(handoffSecurity), nullptr, TRUE};
     const auto handoff = CreateEventW(&handoffSecurity, TRUE, FALSE, nullptr);
     if (handoff == nullptr)
     {
         const auto message = L"Could not create the Hammer5Tools GUI handoff. Windows error "
             + std::to_wstring(GetLastError()) + L".";
-        Log(installRoot / "userdata" / "logs", message);
+        Log(logsDirectory, message);
         MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
         return 2;
     }
@@ -178,19 +226,44 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     if (!childArguments.empty()) commandLine += L" " + childArguments;
     std::vector<wchar_t> mutableCommand(commandLine.begin(), commandLine.end());
     mutableCommand.push_back(L'\0');
+
+    SECURITY_ATTRIBUTES stdErrSa{sizeof(stdErrSa), nullptr, TRUE};
+    const auto stdErrPath = logsDirectory / "gui_stderr.log";
+    const auto stdErrHandle = CreateFileW(
+        stdErrPath.c_str(),
+        GENERIC_WRITE | GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        &stdErrSa,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+    );
+
     STARTUPINFOW startup{sizeof(startup)};
+    if (stdErrHandle != INVALID_HANDLE_VALUE)
+    {
+        startup.dwFlags |= STARTF_USESTDHANDLES;
+        startup.hStdError = stdErrHandle;
+        startup.hStdOutput = stdErrHandle;
+        startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    }
+
     PROCESS_INFORMATION process{};
     const auto startedAt = GetTickCount64();
     if (!CreateProcessW(executable.c_str(), mutableCommand.data(), nullptr, nullptr, TRUE, 0, nullptr,
                         appRoot.c_str(), &startup, &process))
     {
         const auto errorCode = GetLastError();
+        if (stdErrHandle != INVALID_HANDLE_VALUE)
+            CloseHandle(stdErrHandle);
         CloseHandle(handoff);
         const auto message = L"Could not start the Hammer5Tools GUI. Windows error " + std::to_wstring(errorCode) + L".";
-        Log(installRoot / "userdata" / "logs", message);
+        Log(logsDirectory, message);
         MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
         return 2;
     }
+    if (stdErrHandle != INVALID_HANDLE_VALUE)
+        CloseHandle(stdErrHandle);
     CloseHandle(handoff);
     CloseHandle(process.hThread);
     while (GetTickCount64() - startedAt < 10000)
@@ -199,7 +272,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
             break;
         if (WaitNamedPipeW(PipeName().c_str(), 100))
         {
-            Log(installRoot / "userdata" / "logs", L"GUI startup completed and IPC is ready.");
+            Log(logsDirectory, L"GUI startup completed and IPC is ready.");
             break;
         }
         Sleep(50);
@@ -211,10 +284,22 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     if (exitCode != 0 && exitCode != RestartExitCode)
     {
         const auto duringStartup = GetTickCount64() - startedAt < 10000;
-        const auto message = duringStartup
+        auto message = duringStartup
             ? L"Hammer5Tools exited during startup with code " + std::to_wstring(exitCode) + L"."
             : L"Hammer5ToolsGUI.exe exited unexpectedly with code " + std::to_wstring(exitCode) + L".";
-        Log(installRoot / "userdata" / "logs", message);
+
+        const auto errorDetails = ReadErrorDetails(logsDirectory);
+        if (!errorDetails.empty())
+        {
+            auto displayDetails = errorDetails;
+            if (displayDetails.size() > 2000)
+                displayDetails = displayDetails.substr(0, 1950) + L"\n... [truncated, see logs for full details]";
+            message += L"\n\n" + displayDetails;
+        }
+
+        message += L"\n\nLog folder:\n" + logsDirectory.wstring();
+
+        Log(logsDirectory, message);
         MessageBoxW(nullptr, message.c_str(),
                     duringStartup ? L"Hammer 5 Tools Startup Failure" : L"Hammer 5 Tools Crash",
                     MB_OK | MB_ICONERROR);
