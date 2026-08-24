@@ -16,8 +16,32 @@ namespace fs = std::filesystem;
 
 namespace
 {
-constexpr auto PipeName = L"\\\\.\\pipe\\Hammer5ToolsIPC";
-constexpr auto MutexName = L"Local\\Hammer5Tools.Launcher.Instance.v1";
+constexpr auto DefaultPipeName = L"\\\\.\\pipe\\Hammer5ToolsIPC";
+constexpr auto DefaultMutexName = L"Local\\Hammer5Tools.Launcher.Instance.v1";
+constexpr DWORD RestartExitCode = 75;
+
+std::wstring EnvironmentOrDefault(const wchar_t* name, const wchar_t* fallback)
+{
+    const auto size = GetEnvironmentVariableW(name, nullptr, 0);
+    if (size == 0)
+        return fallback;
+    std::wstring value(size, L'\0');
+    GetEnvironmentVariableW(name, value.data(), size);
+    value.resize(size - 1);
+    return value;
+}
+
+const std::wstring& PipeName()
+{
+    static const auto value = EnvironmentOrDefault(L"H5T_IPC_PIPE", DefaultPipeName);
+    return value;
+}
+
+const std::wstring& MutexName()
+{
+    static const auto value = EnvironmentOrDefault(L"H5T_INSTANCE_MUTEX", DefaultMutexName);
+    return value;
+}
 
 fs::path ExecutablePath()
 {
@@ -40,7 +64,7 @@ void Log(const fs::path& directory, const std::wstring& message)
 
 bool SendRequest(const std::string& message)
 {
-    const auto pipe = CreateFileW(PipeName, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    const auto pipe = CreateFileW(PipeName().c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     if (pipe == INVALID_HANDLE_VALUE)
         return false;
     DWORD written = 0;
@@ -57,7 +81,7 @@ bool SendRequestWithRetry(const std::string& message, DWORD timeoutMilliseconds)
     {
         if (SendRequest(message))
             return true;
-        WaitNamedPipeW(PipeName, 100);
+        WaitNamedPipeW(PipeName().c_str(), 100);
         Sleep(50);
     }
     while (GetTickCount64() < deadline);
@@ -126,7 +150,7 @@ std::wstring ChildArguments(const std::vector<std::wstring>& arguments)
     return result;
 }
 
-int RunGui(const fs::path& executable, const std::vector<std::wstring>& arguments,
+int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& arguments,
            const fs::path& installRoot, const fs::path& appRoot, const fs::path& runtimeRoot)
 {
     SetEnvironmentVariableW(L"H5T_LAUNCHER_OWNS_INSTANCE", L"1");
@@ -156,7 +180,7 @@ int RunGui(const fs::path& executable, const std::vector<std::wstring>& argument
     {
         if (WaitForSingleObject(process.hProcess, 0) == WAIT_OBJECT_0)
             break;
-        if (WaitNamedPipeW(PipeName, 100))
+        if (WaitNamedPipeW(PipeName().c_str(), 100))
         {
             Log(installRoot / "userdata" / "logs", L"GUI startup completed and IPC is ready.");
             break;
@@ -200,7 +224,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     if (SendRequest(message))
         return 0;
 
-    const auto mutex = CreateMutexW(nullptr, TRUE, MutexName);
+    const auto mutex = CreateMutexW(nullptr, TRUE, MutexName().c_str());
     if (mutex == nullptr)
         return 1;
     if (GetLastError() == ERROR_ALREADY_EXISTS)
@@ -233,7 +257,14 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
                     L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
         return 2;
     }
-    const auto exitCode = RunGui(guiExecutable, arguments, installRoot, guiExecutable.parent_path(), runtimeRoot);
+    auto childArguments = arguments;
+    auto exitCode = RunGuiOnce(guiExecutable, childArguments, installRoot, guiExecutable.parent_path(), runtimeRoot);
+    while (exitCode == RestartExitCode)
+    {
+        Log(installRoot / "userdata" / "logs", L"Restart requested by GUI.");
+        childArguments.clear();
+        exitCode = RunGuiOnce(guiExecutable, childArguments, installRoot, guiExecutable.parent_path(), runtimeRoot);
+    }
     ReleaseMutex(mutex);
     CloseHandle(mutex);
     return exitCode;
