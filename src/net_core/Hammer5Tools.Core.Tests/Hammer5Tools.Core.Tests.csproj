@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\..\Hammer5Tools\SmartPropEditor\Presets\examples\example_expressions.vsmart"
+          Link="Fixtures\example_expressions.vsmart"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

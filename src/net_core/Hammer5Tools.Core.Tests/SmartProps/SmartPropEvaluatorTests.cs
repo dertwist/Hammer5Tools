@@ -100,4 +100,20 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Models[0].ElementId).IsEqualTo(8);
         await Assert.That(result.Models[0].ModelName).IsEqualTo("models/nested.vmdl");
     }
+
+    [Test]
+    public async Task ProductionFixturePreservesEvaluationAcrossSerialization()
+    {
+        var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "example_expressions.vsmart");
+        var sourceText = await File.ReadAllTextAsync(fixturePath);
+
+        var json = SmartPropDocumentSerializer.DeserializeText(sourceText);
+        var serializedText = SmartPropDocumentSerializer.SerializeJson(json);
+        var sourceResult = SmartPropEvaluator.EvaluateText(sourceText);
+        var serializedResult = SmartPropEvaluator.EvaluateText(serializedText);
+
+        await Assert.That(sourceResult.Diagnostics).IsEmpty();
+        await Assert.That(serializedResult.Diagnostics).IsEmpty();
+        await Assert.That(serializedResult.Models).Count().IsEqualTo(sourceResult.Models.Count);
+    }
 }
