@@ -38,6 +38,48 @@ public sealed class SmartPropExpressionTests
     }
 
     [Test]
+    [Arguments("true || RandomInt(1, 10)", 1.0f)]
+    [Arguments("false && RandomInt(1, 10)", 0.0f)]
+    [Arguments("true ? 4 : !false", 4.0f)]
+    public async Task ParsesShortCircuitedLogicalOperands(string expression, float expected)
+    {
+        await Assert.That(SmartPropExpression.Evaluate(expression)).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task OnlyEvaluatesTheSelectedTernaryBranch()
+    {
+        var trueContext = new SmartPropContext(randomSeed: 42);
+        var falseContext = new SmartPropContext(randomSeed: 42);
+        var directContext = new SmartPropContext(randomSeed: 42);
+
+        var whenTrue = SmartPropExpression.Evaluate(
+            "true ? RandomInt(1, 100) : RandomInt(1, 100)",
+            trueContext);
+        var whenFalse = SmartPropExpression.Evaluate(
+            "false ? RandomInt(1, 100) : RandomInt(1, 100)",
+            falseContext);
+        var directValue = SmartPropExpression.Evaluate("RandomInt(1, 100)", directContext);
+
+        await Assert.That(whenTrue).IsEqualTo(directValue);
+        await Assert.That(whenFalse).IsEqualTo(directValue);
+    }
+
+    [Test]
+    public async Task DoesNotAdvanceRandomStateForShortCircuitedOperands()
+    {
+        var shortCircuitContext = new SmartPropContext(randomSeed: 42);
+        var directContext = new SmartPropContext(randomSeed: 42);
+
+        SmartPropExpression.Evaluate("true || RandomInt(1, 100)", shortCircuitContext);
+        SmartPropExpression.Evaluate("false && RandomInt(1, 100)", shortCircuitContext);
+        var nextValue = SmartPropExpression.Evaluate("RandomInt(1, 100)", shortCircuitContext);
+        var directValue = SmartPropExpression.Evaluate("RandomInt(1, 100)", directContext);
+
+        await Assert.That(nextValue).IsEqualTo(directValue);
+    }
+
+    [Test]
     public async Task ResolvesNestedValueForms()
     {
         var context = new SmartPropContext(values: new Dictionary<string, SmartPropValue>

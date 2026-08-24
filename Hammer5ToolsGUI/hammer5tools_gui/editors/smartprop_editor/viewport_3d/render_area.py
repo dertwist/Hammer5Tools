@@ -14,12 +14,6 @@ from PySide6.QtWidgets import QApplication
 from hammer5tools_gui.editors.smartprop_editor.viewport_3d.camera import Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix, decompose_trs
 from hammer5tools_gui.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
 from hammer5tools_gui.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
-from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.context import EvalContext
-from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.variables import build_variable_map
-from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.process import extract_widget_specs
-from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.modifier_evaluator import (
-    evaluate_element_modifiers, evaluate_single_modifier
-)
 from hammer5tools_gui.editors.smartprop_editor.viewport_3d.crash_guard import gl_guard
 from hammer5tools_gui.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
@@ -154,7 +148,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # SmartProp evaluation engine — resolves expression/variable bindings and
         # emits the locator/rotator/pickone preview widgets.  Rebuilt each
         # update_viewport() from the document's variable defaults.
-        self._eval_context = EvalContext()
         self._widget_infos = []  # list of resolved widget dicts to draw
 
         # Preview-accuracy warnings surfaced in the HUD, rebuilt each
@@ -1168,7 +1161,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._path_infos = []
         self._widget_infos = []
         self._warn_unsupported = set()
-        self._eval_context = self._build_eval_context()
 
         if not self.document:
             self.update()
@@ -1186,10 +1178,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self.isolated_element_id = None
                 self.isolated_element_name = ""
 
-        models_info = []
-        self._nested_vsmart_stack = []
-        self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
-        models_info = self._apply_core_evaluation(models_info, tree_widget.invisibleRootItem())
+        models_info = self._apply_core_evaluation(tree_widget.invisibleRootItem())
 
         self._model_instances = list(models_info)
         for info in models_info:
@@ -1223,12 +1212,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         self.update()
 
-    def _apply_core_evaluation(self, fallback_models, root_item):
-        """Apply authoritative VRF placements while retaining UI-only element dots."""
-        presentation_only = [info for info in fallback_models if not info.get("path")]
+    def _apply_core_evaluation(self, root_item):
+        """Build the scene exclusively from authoritative Core placements."""
         if not hasattr(self.document, "build_smartprop_document"):
             self._warn_unsupported.add("Hammer5Tools Core document snapshot unavailable")
-            return presentation_only
+            return []
 
         try:
             document = self.document.build_smartprop_document()
@@ -1238,11 +1226,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             )
         except Exception as error:
             self._warn_unsupported.add(f"Core evaluation unavailable: {error}")
-            return presentation_only
+            return []
 
         if result.diagnostics:
             self._warn_unsupported.update(result.diagnostics)
-            return presentation_only
+            return []
 
         data_by_id = {}
 
@@ -1256,18 +1244,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         collect_data(root_item)
 
-        fallback_by_id = {}
-        for info in fallback_models:
-            if info.get("path"):
-                fallback_by_id.setdefault(info.get("id", 0), []).append(info)
-
         evaluated = []
-        occurrences = {}
         for model in result.models:
-            occurrence = occurrences.get(model.element_id, 0)
-            occurrences[model.element_id] = occurrence + 1
-            fallback = fallback_by_id.get(model.element_id, [])
-            template = fallback[occurrence] if occurrence < len(fallback) else {}
             world_matrix = np.asarray(model.transform, dtype=np.float32).reshape((4, 4))
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
             evaluated.append({
@@ -1277,16 +1255,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "rotation": world_rot,
                 "scale": world_scale,
                 "world_matrix": world_matrix,
-                "parent_world_matrix": template.get(
-                    "parent_world_matrix", np.eye(4, dtype=np.float32)
-                ),
-                "data": data_by_id.get(model.element_id, template.get("data", {})),
+                "parent_world_matrix": np.eye(4, dtype=np.float32),
+                "data": data_by_id.get(model.element_id, {}),
                 "is_dot": False,
                 "material_group": model.material_group,
                 "tint_color": model.tint_color,
             })
 
-        return presentation_only + evaluated
+        return evaluated
 
     def _collect_nested_smartprops(self, document):
         """Load the nested SmartProp graph for the Core resolver payload."""
@@ -1338,15 +1314,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         def scan(value, context_addon=default_addon):
             if isinstance(value, dict):
-                if value.get("_class") == "CSmartPropElement_SmartProp":
-                    resource_path = self._get_string(value.get("m_sSmartProp", ""))
-                    if resource_path:
-                        load(resource_path, context_addon)
                 for child_value in value.values():
                     scan(child_value, context_addon)
             elif isinstance(value, list):
                 for child_value in value:
                     scan(child_value, context_addon)
+            elif isinstance(value, str) and value.lower().endswith(".vsmart"):
+                load(value, context_addon)
 
         scan(document)
         return documents
@@ -1567,31 +1541,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
                     item.setData(0, Qt.UserRole, data)
 
-                    # 5. Reconstruct the actual world transform from what was written
-                    M_actual_local, M_actual_world, M_actual_model, new_widgets = evaluate_element_modifiers(
-                        data, self._eval_context, parent_world_matrix
-                    )
-                    actual_world_pos, actual_world_rot, actual_world_scale = decompose_trs(M_actual_model)
-
-                    info["position"] = actual_world_pos
-                    info["rotation"] = actual_world_rot
-                    info["scale"] = actual_world_scale
-                    info["world_matrix"] = M_actual_model
-
-                    # Update widgets for the dragged element itself
-                    eid = data.get("m_nElementID", 0)
-                    self._replace_element_widgets(eid, new_widgets, data=data)
-
-                    # Update all descendant transforms and their visual widgets immediately
-                    self._update_subtree_transforms(item, M_actual_world)
-
-                    # Update gizmo position/rotation/scale from the refreshed cache
-                    self.gizmo.set_transform(info["position"], info["rotation"], info["scale"])
-
                     # Live-refresh the touched Property panel value widgets so the
                     # fields track the gizmo drag smoothly (not just on release).
                     if changed_keys and hasattr(self.document, "ui") and hasattr(self.document.ui, "PropertiesFrame"):
                         self.document.update_property_frame_values(data, changed_keys)
+
+                    # Core is the only transform evaluator. Rebuild from its
+                    # primitive placements after writing the editor values.
+                    self.update_viewport()
 
             self._last_mouse_pos = pos
             self.update()
@@ -1765,31 +1722,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     # Data modifier helpers
     def _evaluate_modifiers_prior_to(self, data, target_mod, parent_world_matrix):
-        """Evaluate modifiers on data that occur BEFORE target_mod.
-
-        Returns 4x4 float32 matrix M_prior representing the local transform
-        accumulated before target_mod is applied.
-        """
-        M_prior = np.eye(4, dtype=np.float32)
-        modifiers = data.get("m_Modifiers")
-        if not isinstance(modifiers, list):
-            return M_prior
-
-        ctx = self._eval_context
-        eid = int(data.get("m_nElementID", 0) or 0)
-        inst_idx = getattr(ctx, "instance_index", 0) or 0
-        state_map = {}
-
-        for mod in modifiers:
-            if not isinstance(mod, dict):
-                continue
-            if mod is target_mod:
-                break
-            M_prior, _ = evaluate_single_modifier(
-                mod, M_prior, parent_world_matrix, ctx,
-                state_map=state_map, eid=eid, inst_idx=inst_idx
-            )
-        return M_prior
+        """Return the UI editing basis without evaluating domain modifiers."""
+        return np.eye(4, dtype=np.float32)
 
     @staticmethod
     def _find_modifier(data, class_name):
@@ -1945,117 +1879,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             except ValueError:
                 return False
         return False
-
-    # Tree traversal (extracted from old viewport_3d.py)
-    def _get_vector(self, val, default, component_default=0.0, ctx=None):
-        """Resolve a vector value to three floats.
-
-        ``component_default`` is used for components the viewport can't evaluate
-        (variable/expression bindings, unparseable literals).  It is 0.0 for
-        position/rotation, but callers pass 1.0 for *scale* so a model bound to an
-        unevaluable scale expression previews at natural size instead of
-        collapsing to a zero-scale (invisible, and singular-matrix) transform.
-        """
-        if val is None:
-            return default
-        # Delegate every value form (literal / m_Components / m_SourceName variable
-        # / m_Expression) to the evaluation engine.  Unresolvable components fall
-        # back to ``component_default`` (0.0 for pos/rot, 1.0 for scale).
-        eval_ctx = ctx or self._eval_context
-        return eval_ctx.resolve_vector(
-            val, [component_default, component_default, component_default]
-        )
-
-    def _get_string(self, val, default="", ctx=None):
-        """Resolve a string value, returning a plain string.
-
-        Handles cases where properties (like model paths) are bound to a variable
-        (``{m_SourceName: ...}``) or an expression, delegating to the evaluation
-        engine so a bound model path reads the variable's default value.
-        """
-        eval_ctx = ctx or self._eval_context
-        return eval_ctx.resolve_string(val, default)
-
-    def _get_local_transform(self, data, ctx=None):
-        """Extract local pos, rot, scale from the element's data dictionary and modifiers."""
-        eval_ctx = ctx or self._eval_context
-        local_matrix, _, _, _ = evaluate_element_modifiers(data, eval_ctx)
-        return decompose_trs(local_matrix)
-
-    # SmartProp evaluation engine integration + preview widgets
-    def _build_eval_context(self):
-        """Construct an EvalContext from the document's variable defaults."""
-        variables = {}
-        try:
-            if self.document is not None:
-                variables = build_variable_map(self.document)
-        except Exception as e:
-            print(f"[SmartProp3D] Failed to build variable map: {e}")
-        return EvalContext(variables=variables)
-
-    def _replace_element_widgets(self, eid, new_widgets, data=None):
-        """Replace all visual widgets belonging to element `eid` (and its modifiers) with `new_widgets`."""
-        eids_to_remove = set()
-        if eid is not None:
-            eids_to_remove.add(eid)
-            try:
-                eids_to_remove.add(int(eid))
-            except (ValueError, TypeError):
-                pass
-            eids_to_remove.add(str(eid))
-
-        for w in new_widgets:
-            wid = w.get("element_id")
-            if wid is not None:
-                eids_to_remove.add(wid)
-                try:
-                    eids_to_remove.add(int(wid))
-                except (ValueError, TypeError):
-                    pass
-                eids_to_remove.add(str(wid))
-
-        if isinstance(data, dict):
-            for mod in data.get("m_Modifiers", []):
-                if isinstance(mod, dict):
-                    mid = mod.get("m_nElementID")
-                    if mid is not None:
-                        eids_to_remove.add(mid)
-                        try:
-                            eids_to_remove.add(int(mid))
-                        except (ValueError, TypeError):
-                            pass
-                        eids_to_remove.add(str(mid))
-
-        self._widget_infos = [
-            w for w in self._widget_infos
-            if w.get("element_id") not in eids_to_remove
-        ]
-        self._widget_infos.extend(new_widgets)
-
-    def _collect_widgets(self, data, world_pos, world_rot, world_matrix):
-        """Extract locator/rotator/sizer/pickone widget specs for an element and place
-        them into world space (Source 2) for the widget render pass."""
-        try:
-            specs = extract_widget_specs(data, self._eval_context)
-        except Exception:
-            return
-        eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
-        for spec in specs:
-            wtype = spec.get("type")
-            info = dict(spec)
-            info["element_id"] = eid
-            if wtype == "sizer":
-                info["world_matrix"] = np.array(world_matrix, dtype=np.float32)
-                info["position"] = [float(world_pos[0]), float(world_pos[1]), float(world_pos[2])]
-                info["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
-            else:
-                offset = spec.get("offset", [0.0, 0.0, 0.0])
-                p = np.array([offset[0], offset[1], offset[2], 1.0], dtype=np.float32)
-                # world_matrix is row-vector (point @ M): local Source 2 -> world Source 2.
-                world_offset = (p @ world_matrix)[:3]
-                info["position"] = [float(world_offset[0]), float(world_offset[1]), float(world_offset[2])]
-                info["rotation"] = [float(world_rot[0]), float(world_rot[1]), float(world_rot[2])]
-            self._widget_infos.append(info)
 
     def _update_element_widgets(self, eid, world_pos, world_rot, world_matrix):
         """Update the world transform of all visual widgets belonging to element `eid`."""
@@ -2657,417 +2480,3 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         R = np.eye(3) + vx + vx @ vx * ((1.0 - c) / (s * s))
         M[:3, :3] = R.T.astype(np.float32)  # transpose for the row-vector chain
         return M
-
-    # Hard cap on nested smart-prop recursion depth. Real nesting is only ever a
-    # handful deep; anything past this is a runaway (typically a self-referential
-    # prop) that would otherwise exhaust the call stack and crash the app.
-    _MAX_NESTED_VSMART_DEPTH = 16
-
-    def _load_and_traverse_nested_vsmart(self, smartprop_path, models_list, world_matrix, context_addon=None):
-        import os
-        import re
-        from hammer5tools_gui.settings.main import get_addon_name, get_cs2_path
-        cs2_path = get_cs2_path()
-        addon = context_addon or get_addon_name()
-        if not (cs2_path and addon):
-            return
-
-        addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + smartprop_path.replace('\\', '/'), re.IGNORECASE)
-        if addon_match:
-            addon = addon_match.group(1)
-            smartprop_path = addon_match.group(2)
-
-        full_vsmart_path = os.path.join(cs2_path, 'content', 'csgo_addons', addon, smartprop_path.replace('\\', '/').strip('/'))
-
-        # Cycle / depth guard: a smart prop that references itself (directly, or
-        # through a chain of other props) would recurse until the stack blows and
-        # the whole program crashes. Track the files currently being expanded and
-        # refuse to re-enter one already open; cap total depth as a backstop.
-        stack = getattr(self, "_nested_vsmart_stack", None)
-        if stack is None:
-            stack = self._nested_vsmart_stack = []
-        if getattr(self, "_warned_cyclic_smartprops", None) is None:
-            self._warned_cyclic_smartprops = set()
-        norm_key = os.path.normcase(os.path.normpath(full_vsmart_path))
-        if norm_key in stack:
-            if norm_key not in self._warned_cyclic_smartprops:
-                self._warned_cyclic_smartprops.add(norm_key)
-                print(f"[SmartPropEditor] Skipping self-referential smart prop (cycle): {smartprop_path}")
-            return
-        if len(stack) >= self._MAX_NESTED_VSMART_DEPTH:
-            if norm_key not in self._warned_cyclic_smartprops:
-                self._warned_cyclic_smartprops.add(norm_key)
-                print(f"[SmartPropEditor] Nested smart prop depth limit "
-                      f"({self._MAX_NESTED_VSMART_DEPTH}) reached; stopping at {smartprop_path}")
-            return
-
-        if not os.path.exists(full_vsmart_path):
-            return
-
-        stack.append(norm_key)
-        try:
-            # Read + KV3-parse only when the file actually changed.  Every
-            # update_viewport() re-walks the whole hierarchy — and in dynamic
-            # isolation mode that is once per selection change — so without this
-            # each nested prop pays a disk read and a full KV3 parse per rebuild.
-            cache = getattr(self, "_nested_vsmart_cache", None)
-            if cache is None:
-                cache = self._nested_vsmart_cache = {}
-            mtime = os.path.getmtime(full_vsmart_path)
-            cached = cache.get(norm_key)
-            if cached is not None and cached[0] == mtime:
-                vsmart_data = cached[1]
-            else:
-                with open(full_vsmart_path, "r") as f:
-                    content = f.read()
-                content = re.sub(re.compile(r"= resource_name:"), "= ", content)
-                content = content.replace("null,", "")
-                from hammer5tools_gui.common import Kv3ToJson
-                vsmart_data = Kv3ToJson(content)
-                cache[norm_key] = (mtime, vsmart_data)
-
-            # Traverse a copy: the element dicts end up in _model_infos, where the
-            # gizmo/modifier helpers write into them.  The cached parse has to stay
-            # pristine — it stands in for the file on disk.
-            import copy
-            self._traverse_vsmart_dict(copy.deepcopy(vsmart_data), models_list, world_matrix, addon)
-        except Exception as e:
-            print(f"[SmartPropEditor] Failed to load/traverse nested smart prop {smartprop_path}: {e}")
-        finally:
-            stack.pop()
-
-    def _derive_child_context(self, parent_data, child_data, current_ctx):
-        """Compute child eval context, e.g. calculating linear_scale if parent is FitOnLine."""
-        if not isinstance(parent_data, dict):
-            return current_ctx
-        parent_class = parent_data.get("_class", "")
-        if parent_class == "CSmartPropElement_FitOnLine":
-            v_start = self._get_vector(parent_data.get("m_vStart"), [0.0, 0.0, 0.0], ctx=current_ctx)
-            v_end = self._get_vector(parent_data.get("m_vEnd"), [0.0, 0.0, 0.0], ctx=current_ctx)
-            dx = v_end[0] - v_start[0]
-            dy = v_end[1] - v_start[1]
-            dz = v_end[2] - v_start[2]
-            line_len = math.sqrt(dx * dx + dy * dy + dz * dz)
-
-            linear_scale = 1.0
-            if isinstance(child_data, dict):
-                for crit in child_data.get("m_SelectionCriteria", []) or []:
-                    if isinstance(crit, dict) and crit.get("_class") == "CSmartPropSelectionCriteria_LinearLength":
-                        base_len = current_ctx.resolve_scalar(crit.get("m_flLength"), 0.0)
-                        if base_len > 0 and line_len > 0:
-                            scale = line_len / base_len
-                            if crit.get("m_bAllowScale", True):
-                                min_len = current_ctx.resolve_scalar(crit.get("m_flMinLength"), 0.0)
-                                max_len = current_ctx.resolve_scalar(crit.get("m_flMaxLength"), 0.0)
-                                if min_len > 0:
-                                    scale = max(scale, min_len / base_len)
-                                if max_len > 0:
-                                    scale = min(scale, max_len / base_len)
-                            linear_scale = scale
-                            break
-            return current_ctx.with_instance(instance_index=0, linear_scale=linear_scale)
-        return current_ctx
-
-    def _traverse_vsmart_dict(self, data, models_list, parent_world_matrix=None, context_addon=None, ctx=None):
-        if parent_world_matrix is None:
-            parent_world_matrix = np.eye(4, dtype=np.float32)
-        eval_ctx = ctx or self._eval_context
-
-        # Handle enabling
-        is_enabled = data.get("m_bEnabled", True)
-        if is_enabled is False or is_enabled == "false":
-            return
-
-        # Same preview-accuracy warnings as the tree traversal, for nested props.
-        nested_class = data.get("_class", "")
-        if (nested_class.startswith("CSmartPropElement_")
-                and nested_class not in self._SUPPORTED_ELEMENT_CLASSES):
-            self._warn_unsupported.add(nested_class.replace("CSmartPropElement_", ""))
-
-        local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
-            data, eval_ctx, parent_world_matrix
-        )
-        world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
-
-        element_class = data.get("_class", "")
-        model_path = ""
-        if element_class in ("CSmartPropElement_Model",
-                             "CSmartPropElement_ModelEntity",
-                             "CSmartPropElement_PropPhysics",
-                             "CSmartPropElement_PropDynamic"):
-            model_path = self._get_string(data.get("m_sModelName", ""), ctx=eval_ctx)
-
-        # Nested smart prop support inside dict traversal
-        if element_class == "CSmartPropElement_SmartProp":
-            smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=eval_ctx)
-            if smartprop_path:
-                self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
-
-        eid = data.get("m_nElementID", 0)
-        if eid > 0 and model_path:
-            models_list.append({
-                "id":                  eid,
-                "path":                model_path,
-                "position":            world_pos,
-                "rotation":            world_rot,
-                "scale":               world_scale,
-                "world_matrix":        model_world_matrix,
-                "parent_world_matrix": parent_world_matrix,
-                "data":                data,
-                "is_dot":              not bool(model_path)
-            })
-
-        # Collect preview widgets (locator / rotator / sizer / pickone) for this element.
-        self._widget_infos.extend(widgets)
-
-        # PlaceOnPath element support inside dict traversal
-        if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
-            from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.path_evaluator import (
-                sample_place_on_path, matches_path_selection_criteria
-            )
-            path_result = sample_place_on_path(data, eval_ctx, world_matrix)
-            self._path_infos.append({
-                "id": eid,
-                "curve": path_result["curve_samples"],
-                "control_points": path_result["control_points"],
-                "world_matrix": world_matrix,
-            })
-            children = data.get("m_Children", [])
-            if isinstance(children, list):
-                for inst in path_result["instances"]:
-                    inst_idx = inst["index"]
-                    inst_count = inst["count"]
-                    inst_matrix = inst["world_matrix"]
-                    inst_ctx = eval_ctx.with_instance(instance_index=inst_idx, instance_count=inst_count)
-                    for child_data in children:
-                        if isinstance(child_data, dict):
-                            if not matches_path_selection_criteria(child_data, inst_idx, inst_count, inst_ctx):
-                                continue
-                            child_ctx = self._derive_child_context(data, child_data, inst_ctx)
-                            self._traverse_vsmart_dict(child_data, models_list, inst_matrix, context_addon, ctx=child_ctx)
-            return
-
-        # Traverse children
-        children = data.get("m_Children", [])
-        if not isinstance(children, list):
-            children = []
-
-        child_indices = list(range(len(children)))
-        if element_class == "CSmartPropElement_PickOne":
-            selection_mode = data.get("m_SelectionMode", "RANDOM")
-            selected_idx = 0
-            if selection_mode in ("SPECIFIC", "SPECIFIC_CHILD"):
-                specific_idx_val = data.get("m_SpecificChildIndex", 0)
-                try:
-                    selected_idx = int(float(str(specific_idx_val)))
-                except ValueError:
-                    selected_idx = 0
-            if len(children) > 0:
-                selected_idx = max(0, min(selected_idx, len(children) - 1))
-                child_indices = [selected_idx]
-            else:
-                child_indices = []
-
-        for idx in child_indices:
-            child_data = children[idx]
-            if isinstance(child_data, dict):
-                child_ctx = self._derive_child_context(data, child_data, eval_ctx)
-                self._traverse_vsmart_dict(child_data, models_list, world_matrix, context_addon, ctx=child_ctx)
-
-    def _traverse_tree(self, item, models_list, parent_world_matrix=None, is_in_isolated_subtree=False, ctx=None):
-        if parent_world_matrix is None:
-            parent_world_matrix = np.eye(4, dtype=np.float32)
-        eval_ctx = ctx or self._eval_context
-
-        # Get parent info to see if we should restrict child traversal (e.g. for PickOne)
-        parent_data = item.data(0, Qt.UserRole)
-        parent_data = dict(parent_data) if parent_data is not None else {}
-        parent_class = parent_data.get("_class", "")
-
-        child_indices = list(range(item.childCount()))
-        bypass_pickone = (self.isolated_element_id is not None and not is_in_isolated_subtree)
-
-        if parent_class == "CSmartPropElement_PickOne" and not bypass_pickone:
-            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
-            selected_idx = 0
-            if selection_mode in ("SPECIFIC", "SPECIFIC_CHILD"):
-                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
-                try:
-                    selected_idx = int(float(str(eval_ctx.resolve_scalar(specific_idx_val, 0.0))))
-                except (ValueError, TypeError):
-                    selected_idx = 0
-            if item.childCount() > 0:
-                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
-                child_indices = [selected_idx]
-            else:
-                child_indices = []
-
-        for idx in child_indices:
-            child = item.child(idx)
-            self._traverse_tree_node(child, parent_data, models_list, parent_world_matrix, is_in_isolated_subtree, eval_ctx)
-
-    def _traverse_tree_node(self, child, parent_data, models_list, parent_world_matrix, is_in_isolated_subtree, eval_ctx):
-        # Resolve context addon from opened file
-        context_addon = None
-        if self.document and getattr(self.document, "opened_file", None):
-            import re
-            opened_path = self.document.opened_file.replace('\\', '/')
-            addon_match = re.search(r'/csgo_addons/([^/]+)/', opened_path, re.IGNORECASE)
-            if addon_match:
-                context_addon = addon_match.group(1)
-
-        data = child.data(0, Qt.UserRole)
-        data = dict(data) if data is not None else {}
-
-        eid = data.get("m_nElementID", 0)
-        node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
-        if node_is_isolated_start:
-            self.isolated_element_name = child.text(0)
-        current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
-
-        is_ancestor = False
-        if self.isolated_element_id is not None and not current_in_isolated:
-            is_ancestor = self._is_element_in_tree(child, self.isolated_element_id)
-            if not is_ancestor:
-                return
-
-        # Don't display elements if they are disabled
-        is_enabled = data.get("m_bEnabled", True)
-        if is_enabled is False or is_enabled == "false":
-            if not (node_is_isolated_start or is_ancestor):
-                return
-
-        child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
-        local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
-            data, child_ctx, parent_world_matrix
-        )
-        world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
-
-        element_class = data.get("_class", "")
-        # Flag element types the viewport can't fully preview.
-        if (element_class.startswith("CSmartPropElement_")
-                and element_class not in self._SUPPORTED_ELEMENT_CLASSES):
-            self._warn_unsupported.add(element_class.replace("CSmartPropElement_", ""))
-        model_path = ""
-        if element_class in ("CSmartPropElement_Model",
-                             "CSmartPropElement_ModelEntity",
-                             "CSmartPropElement_PropPhysics",
-                             "CSmartPropElement_PropDynamic"):
-            model_path = self._get_string(data.get("m_sModelName", ""), ctx=child_ctx)
-
-        # If this is a nested smart prop element, load and traverse it!
-        if element_class == "CSmartPropElement_SmartProp":
-            smartprop_path = self._get_string(data.get("m_sSmartProp", ""), ctx=child_ctx)
-            if smartprop_path:
-                if self.isolated_element_id is None or current_in_isolated:
-                    self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
-
-        if eid > 0:
-            if self.isolated_element_id is None or current_in_isolated:
-                models_list.append({
-                    "id":                  eid,
-                    "path":                model_path,
-                    "position":            world_pos,
-                    "rotation":            world_rot,
-                    "scale":               world_scale,
-                    "world_matrix":        model_world_matrix,
-                    "parent_world_matrix": parent_world_matrix,
-                    "data":                data,
-                    "is_dot":              not bool(model_path)
-                })
-
-        if self.isolated_element_id is None or current_in_isolated:
-            self._widget_infos.extend(widgets)
-
-        # PlaceOnPath handling
-        if element_class in ("CSmartPropElement_PlaceOnPath", "PlaceOnPath"):
-            from hammer5tools_gui.editors.smartprop_editor.viewport_3d.engine.path_evaluator import (
-                sample_place_on_path, matches_path_selection_criteria
-            )
-            path_result = sample_place_on_path(data, child_ctx, world_matrix)
-            self._path_infos.append({
-                "id": eid,
-                "curve": path_result["curve_samples"],
-                "control_points": path_result["control_points"],
-                "world_matrix": world_matrix,
-            })
-            for inst in path_result["instances"]:
-                inst_idx = inst["index"]
-                inst_count = inst["count"]
-                inst_matrix = inst["world_matrix"]
-                inst_ctx = child_ctx.with_instance(instance_index=inst_idx, instance_count=inst_count)
-                for c_idx in range(child.childCount()):
-                    subchild = child.child(c_idx)
-                    subdata = subchild.data(0, Qt.UserRole)
-                    subdata = dict(subdata) if subdata is not None else {}
-                    if not matches_path_selection_criteria(subdata, inst_idx, inst_count, inst_ctx):
-                        continue
-                    self._traverse_tree_node(subchild, data, models_list, inst_matrix, current_in_isolated, inst_ctx)
-            return
-
-        self._traverse_tree(child, models_list, world_matrix, current_in_isolated, ctx=child_ctx)
-
-    def _update_subtree_transforms(self, item, parent_world_matrix, ctx=None):
-        """Recursively update the world transforms of all descendants in self._model_infos."""
-        eval_ctx = ctx or self._eval_context
-        parent_data = item.data(0, Qt.UserRole)
-        parent_data = dict(parent_data) if parent_data is not None else {}
-        parent_class = parent_data.get("_class", "")
-
-        child_indices = list(range(item.childCount()))
-
-        if parent_class == "CSmartPropElement_PickOne":
-            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
-            selected_idx = 0
-            if selection_mode == "SPECIFIC" or selection_mode == "SPECIFIC_CHILD":
-                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
-                if isinstance(specific_idx_val, (int, float)):
-                    selected_idx = int(specific_idx_val)
-                elif isinstance(specific_idx_val, str):
-                    try:
-                        selected_idx = int(float(specific_idx_val))
-                    except ValueError:
-                        selected_idx = 0
-                elif isinstance(specific_idx_val, dict) and "m_Expression" in specific_idx_val:
-                    try:
-                        selected_idx = int(float(specific_idx_val["m_Expression"]))
-                    except:
-                        selected_idx = 0
-                else:
-                    selected_idx = 0
-            else:
-                selected_idx = 0
-
-            if item.childCount() > 0:
-                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
-                child_indices = [selected_idx]
-            else:
-                child_indices = []
-
-        for idx in child_indices:
-            child = item.child(idx)
-            data = child.data(0, Qt.UserRole)
-            data = dict(data) if data is not None else {}
-
-            is_enabled = data.get("m_bEnabled", True)
-            if is_enabled is False or is_enabled == "false":
-                continue
-
-            child_ctx = self._derive_child_context(parent_data, data, eval_ctx)
-            local_matrix, world_matrix, model_world_matrix, widgets = evaluate_element_modifiers(
-                data, child_ctx, parent_world_matrix
-            )
-            world_pos, world_rot, world_scale = decompose_trs(model_world_matrix)
-
-            eid = data.get("m_nElementID", 0)
-            if eid > 0:
-                if eid in self._model_infos:
-                    info = self._model_infos[eid]
-                    info["position"] = world_pos
-                    info["rotation"] = world_rot
-                    info["scale"] = world_scale
-                    info["world_matrix"] = model_world_matrix
-                    info["parent_world_matrix"] = parent_world_matrix
-                self._replace_element_widgets(eid, widgets, data=data)
-
-            self._update_subtree_transforms(child, world_matrix, ctx=child_ctx)

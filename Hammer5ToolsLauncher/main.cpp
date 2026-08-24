@@ -6,6 +6,7 @@
 #include "request.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -153,7 +154,20 @@ std::wstring ChildArguments(const std::vector<std::wstring>& arguments)
 int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& arguments,
            const fs::path& installRoot, const fs::path& appRoot, const fs::path& runtimeRoot)
 {
+    SECURITY_ATTRIBUTES handoffSecurity{sizeof(handoffSecurity), nullptr, TRUE};
+    const auto handoff = CreateEventW(&handoffSecurity, TRUE, FALSE, nullptr);
+    if (handoff == nullptr)
+    {
+        const auto message = L"Could not create the Hammer5Tools GUI handoff. Windows error "
+            + std::to_wstring(GetLastError()) + L".";
+        Log(installRoot / "userdata" / "logs", message);
+        MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
+        return 2;
+    }
+
     SetEnvironmentVariableW(L"H5T_LAUNCHER_OWNS_INSTANCE", L"1");
+    const auto handoffValue = std::to_wstring(reinterpret_cast<std::uintptr_t>(handoff));
+    SetEnvironmentVariableW(L"H5T_LAUNCHER_HANDOFF", handoffValue.c_str());
     SetEnvironmentVariableW(L"H5T_INSTALL_ROOT", installRoot.c_str());
     SetEnvironmentVariableW(L"H5T_APP_ROOT", appRoot.c_str());
     SetEnvironmentVariableW(L"H5T_RUNTIME_ROOT", runtimeRoot.c_str());
@@ -167,14 +181,17 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     STARTUPINFOW startup{sizeof(startup)};
     PROCESS_INFORMATION process{};
     const auto startedAt = GetTickCount64();
-    if (!CreateProcessW(executable.c_str(), mutableCommand.data(), nullptr, nullptr, FALSE, 0, nullptr,
+    if (!CreateProcessW(executable.c_str(), mutableCommand.data(), nullptr, nullptr, TRUE, 0, nullptr,
                         appRoot.c_str(), &startup, &process))
     {
-        const auto message = L"Could not start the Hammer5Tools GUI. Windows error " + std::to_wstring(GetLastError()) + L".";
+        const auto errorCode = GetLastError();
+        CloseHandle(handoff);
+        const auto message = L"Could not start the Hammer5Tools GUI. Windows error " + std::to_wstring(errorCode) + L".";
         Log(installRoot / "userdata" / "logs", message);
         MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
         return 2;
     }
+    CloseHandle(handoff);
     CloseHandle(process.hThread);
     while (GetTickCount64() - startedAt < 10000)
     {
@@ -191,11 +208,16 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     DWORD exitCode = 1;
     GetExitCodeProcess(process.hProcess, &exitCode);
     CloseHandle(process.hProcess);
-    if (exitCode != 0 && GetTickCount64() - startedAt < 10000)
+    if (exitCode != 0 && exitCode != RestartExitCode)
     {
-        const auto message = L"Hammer5Tools exited during startup with code " + std::to_wstring(exitCode) + L".";
+        const auto duringStartup = GetTickCount64() - startedAt < 10000;
+        const auto message = duringStartup
+            ? L"Hammer5Tools exited during startup with code " + std::to_wstring(exitCode) + L"."
+            : L"Hammer5ToolsGUI.exe exited unexpectedly with code " + std::to_wstring(exitCode) + L".";
         Log(installRoot / "userdata" / "logs", message);
-        MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Startup Failure", MB_OK | MB_ICONERROR);
+        MessageBoxW(nullptr, message.c_str(),
+                    duringStartup ? L"Hammer 5 Tools Startup Failure" : L"Hammer 5 Tools Crash",
+                    MB_OK | MB_ICONERROR);
     }
     return static_cast<int>(exitCode);
 }
@@ -246,14 +268,12 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 
     const auto appRoot = installRoot / "app";
     const auto runtimeRoot = appRoot / "runtime";
-    auto guiExecutable = appRoot / "Hammer5ToolsGUI.exe";
-    if (!fs::exists(guiExecutable))
-        guiExecutable = installRoot / "Hammer5ToolsGUI.exe";
+    const auto guiExecutable = appRoot / "Hammer5ToolsGUI.exe";
     if (!fs::exists(guiExecutable))
     {
         ReleaseMutex(mutex);
         CloseHandle(mutex);
-        MessageBoxW(nullptr, L"Hammer5ToolsGUI.exe is missing from the application root.",
+        MessageBoxW(nullptr, L"app\\Hammer5ToolsGUI.exe is missing from the application payload.",
                     L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
         return 2;
     }

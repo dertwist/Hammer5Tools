@@ -225,6 +225,14 @@ if __name__ == "__main__":
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)
 
+    from hammer5tools_gui.lifecycle import require_launcher_for_frozen_build
+    try:
+        require_launcher_for_frozen_build()
+    except RuntimeError as error:
+        if sys.platform == "win32":
+            ctypes.windll.user32.MessageBoxW(None, str(error), "Hammer 5 Tools", 0x10)
+        sys.exit(2)
+
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output')
@@ -249,7 +257,8 @@ if __name__ == "__main__":
     from hammer5tools_gui.ipc.protocol import IPCMessage, IPCCommand
     INSTANCE_KEY = "Hammer5ToolsIPC"
 
-    launcher_owns_instance = os.environ.get("H5T_LAUNCHER_OWNS_INSTANCE") == "1"
+    from hammer5tools_gui.lifecycle import launcher_supervises_process
+    launcher_owns_instance = launcher_supervises_process()
     existing_socket = QLocalSocket()
     existing_socket.connectToServer(INSTANCE_KEY)
     if not launcher_owns_instance and existing_socket.waitForConnected(500):

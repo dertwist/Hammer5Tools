@@ -2,36 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // PyCharm: compile_ui  (compiles .ui -> .py)
-            "name": "compile_ui",
+            "name": "main",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/compile_ui.py",
+            "program": "${workspaceFolder}/Hammer5ToolsGUI/hammer5tools_gui/main.py",
             "python": "${workspaceFolder}/.venv/Scripts/python.exe",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI;${workspaceFolder}/Hammer5ToolsCore/Python;${workspaceFolder}",
                 "PYTHONUNBUFFERED": "1"
             }
         },
         {
-            // PyCharm: main
-            "name": "main",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/hammer5tools",
-            "preLaunchTask": "build-sourceporter",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}",
-                "PYTHONUNBUFFERED": "1"
-            }
-        },
-        {
-            // PyCharm: makefile
             "name": "makefile",
             "type": "debugpy",
             "request": "launch",
@@ -40,52 +23,12 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI;${workspaceFolder}/Hammer5ToolsCore/Python;${workspaceFolder}",
                 "PYTHONUNBUFFERED": "1"
             },
             "args": [
-                "--build-all",
-                "--archive"
+                "--build-all"
             ]
-        },
-        {
-            "name": "Python: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}",
-                "PYTHONUNBUFFERED": "1"
-            }
-        },
-        {
-            "name": "Start Test SmartProp Properties",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/editors/smartprop_editor/property/main.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/hammer5tools",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}",
-                "PYTHONUNBUFFERED": "1"
-            },
-            "args": [
-                "--dev"
-            ]
-        }
-    ],
-    "compounds": [
-        {
-            // PyCharm: Start  (compile_ui + main)
-            "name": "Start",
-            "configurations": [
-                "compile_ui",
-                "main"
-            ],
-            "stopAll": true
         }
     ]
 }

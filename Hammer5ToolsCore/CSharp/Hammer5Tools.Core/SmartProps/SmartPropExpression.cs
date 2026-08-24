@@ -31,48 +31,57 @@ public static class SmartPropExpression
         public float Parse()
         {
             Token = Lexer.Next();
-            var value = ParseTernary();
+            var value = ParseTernary(true);
             Expect(TokenKind.End);
             return value;
         }
 
-        private float ParseTernary()
+        private float ParseTernary(bool evaluate)
         {
-            var condition = ParseOr();
+            var condition = ParseOr(evaluate);
             if (!Accept("?"))
                 return condition;
 
-            var whenTrue = ParseTernary();
+            var conditionIsTrue = evaluate && IsTrue(condition);
+            var whenTrue = ParseTernary(conditionIsTrue);
             Expect(":");
-            var whenFalse = ParseTernary();
-            return IsTrue(condition) ? whenTrue : whenFalse;
+            var whenFalse = ParseTernary(evaluate && !conditionIsTrue);
+            return conditionIsTrue ? whenTrue : whenFalse;
         }
 
-        private float ParseOr()
+        private float ParseOr(bool evaluate)
         {
-            var value = ParseAnd();
+            var value = ParseAnd(evaluate);
             while (Accept("||"))
-                value = IsTrue(value) || IsTrue(ParseAnd()) ? 1.0f : 0.0f;
+            {
+                var valueIsTrue = evaluate && IsTrue(value);
+                var right = ParseAnd(evaluate && !valueIsTrue);
+                value = evaluate && (valueIsTrue || IsTrue(right)) ? 1.0f : 0.0f;
+            }
             return value;
         }
 
-        private float ParseAnd()
+        private float ParseAnd(bool evaluate)
         {
-            var value = ParseComparison();
+            var value = ParseComparison(evaluate);
             while (Accept("&&"))
-                value = IsTrue(value) && IsTrue(ParseComparison()) ? 1.0f : 0.0f;
+            {
+                var valueIsTrue = evaluate && IsTrue(value);
+                var right = ParseComparison(evaluate && valueIsTrue);
+                value = evaluate && valueIsTrue && IsTrue(right) ? 1.0f : 0.0f;
+            }
             return value;
         }
 
-        private float ParseComparison()
+        private float ParseComparison(bool evaluate)
         {
-            var value = ParseAdditive();
+            var value = ParseAdditive(evaluate);
             while (Token.Value is "==" or "!=" or "<" or ">" or "<=" or ">=")
             {
                 var operation = Token.Value;
                 Next();
-                var right = ParseAdditive();
-                value = operation switch
+                var right = ParseAdditive(evaluate);
+                value = !evaluate ? 0.0f : operation switch
                 {
                     "==" => value == right ? 1.0f : 0.0f,
                     "!=" => value != right ? 1.0f : 0.0f,
@@ -85,27 +94,28 @@ public static class SmartPropExpression
             return value;
         }
 
-        private float ParseAdditive()
+        private float ParseAdditive(bool evaluate)
         {
-            var value = ParseMultiplicative();
+            var value = ParseMultiplicative(evaluate);
             while (Token.Value is "+" or "-")
             {
                 var operation = Token.Value;
                 Next();
-                value = operation == "+" ? value + ParseMultiplicative() : value - ParseMultiplicative();
+                var right = ParseMultiplicative(evaluate);
+                value = !evaluate ? 0.0f : operation == "+" ? value + right : value - right;
             }
             return value;
         }
 
-        private float ParseMultiplicative()
+        private float ParseMultiplicative(bool evaluate)
         {
-            var value = ParseUnary();
+            var value = ParseUnary(evaluate);
             while (Token.Value is "*" or "/" or "%")
             {
                 var operation = Token.Value;
                 Next();
-                var right = ParseUnary();
-                value = operation switch
+                var right = ParseUnary(evaluate);
+                value = !evaluate ? 0.0f : operation switch
                 {
                     "*" => value * right,
                     "/" when right != 0.0f => value / right,
@@ -116,29 +126,32 @@ public static class SmartPropExpression
             return value;
         }
 
-        private float ParseUnary()
+        private float ParseUnary(bool evaluate)
         {
             if (Accept("-"))
-                return -ParseUnary();
+                return -ParseUnary(evaluate);
             if (Accept("+"))
-                return ParseUnary();
+                return ParseUnary(evaluate);
             if (Accept("!"))
-                return IsTrue(ParseUnary()) ? 0.0f : 1.0f;
-            return ParsePrimary();
+            {
+                var value = ParseUnary(evaluate);
+                return evaluate && !IsTrue(value) ? 1.0f : 0.0f;
+            }
+            return ParsePrimary(evaluate);
         }
 
-        private float ParsePrimary()
+        private float ParsePrimary(bool evaluate)
         {
             if (Token.Kind == TokenKind.Number)
             {
                 var value = float.Parse(Token.Value, System.Globalization.CultureInfo.InvariantCulture);
                 Next();
-                return value;
+                return evaluate ? value : 0.0f;
             }
 
             if (Accept("("))
             {
-                var value = ParseTernary();
+                var value = ParseTernary(evaluate);
                 Expect(")");
                 return value;
             }
@@ -149,7 +162,7 @@ public static class SmartPropExpression
             var name = Token.Value;
             Next();
             if (Accept("("))
-                return Call(name);
+                return Call(name, evaluate);
 
             if (Accept("."))
             {
@@ -165,10 +178,10 @@ public static class SmartPropExpression
                     _ => throw new InvalidOperationException(),
                 };
                 Next();
-                return context.GetVectorComponent(name, component);
+                return evaluate ? context.GetVectorComponent(name, component) : 0.0f;
             }
 
-            return name.ToUpperInvariant() switch
+            return !evaluate ? 0.0f : name.ToUpperInvariant() switch
             {
                 "TRUE" => 1.0f,
                 "FALSE" => 0.0f,
@@ -178,16 +191,19 @@ public static class SmartPropExpression
             };
         }
 
-        private float Call(string name)
+        private float Call(string name, bool evaluate)
         {
             var arguments = new List<float>();
             if (!Accept(")"))
             {
                 do
-                    arguments.Add(ParseTernary());
+                    arguments.Add(ParseTernary(evaluate));
                 while (Accept(","));
                 Expect(")");
             }
+
+            if (!evaluate)
+                return 0.0f;
 
             return name.ToUpperInvariant() switch
             {

@@ -102,6 +102,56 @@ public sealed class SmartPropEvaluatorTests
     }
 
     [Test]
+    public async Task HonorsTheConfiguredNestedResourceDepth()
+    {
+        const string root = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_SmartProp",
+                "m_nElementID": 4,
+                "m_sSmartProp": "smartprops/nested.vsmart"
+              }]
+            }
+            """;
+        const string nested = """
+            {
+              "smartprops/nested.vsmart": {
+                "generic_data_type": "CSmartPropRoot",
+                "m_Children": [{
+                  "_class": "CSmartPropElement_SmartProp",
+                  "m_nElementID": 8,
+                  "m_sSmartProp": "smartprops/leaf.vsmart"
+                }]
+              },
+              "smartprops/leaf.vsmart": {
+                "generic_data_type": "CSmartPropRoot",
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 12,
+                  "m_sModelName": "models/leaf.vmdl"
+                }]
+              }
+            }
+            """;
+        var options = new SmartPropEvaluationOptions(maximumDepth: 1);
+
+        var result = SmartPropEvaluator.EvaluateJson(root, nested, options);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).IsEmpty();
+    }
+
+    [Test]
+    public async Task RejectsNonPositiveNestedResourceDepth()
+    {
+        var options = new SmartPropEvaluationOptions(maximumDepth: 0);
+
+        await Assert.That(() => SmartPropEvaluator.EvaluateJson("{}", options))
+            .Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
     public async Task ProductionFixturePreservesEvaluationAcrossSerialization()
     {
         var fixturePath = Directory.GetFiles(

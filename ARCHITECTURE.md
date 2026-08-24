@@ -11,9 +11,10 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`_handle_velopack_hook(argv)`**: Intercepts Velopack/Squirrel installation, update, or uninstallation arguments (`--velopack-install`, `--velopack-uninstall`) to run background file tasks without starting the PySide GUI.
 
 ### Native Lifecycle Host (`Hammer5ToolsLauncher/`)
-- **`Hammer5Tools.exe`**: Installed entry point. It handles installer hooks, owns the process-lifetime instance mutex, forwards versioned requests to the GUI IPC server, supervises `app/Hammer5ToolsGUI.exe`, and reports startup failures.
+- **`Hammer5Tools.exe`**: The only supported installed entry point. It handles installer hooks, owns the process-lifetime instance mutex, forwards versioned requests to the GUI IPC server, supervises `app/Hammer5ToolsGUI.exe`, and reports abnormal child exits throughout the application lifetime.
 - **`request.hpp` / `request.cpp`**: UI-neutral launcher protocol parsing, Windows argument quoting, path normalization, and JSON serialization. Protocol version 1 carries command, target file, editor type, original arguments, and working directory.
 - Direct `Hammer5ToolsGUI/hammer5tools_gui/main.py` startup remains supported for development. When `H5T_LAUNCHER_OWNS_INSTANCE=1`, Python skips duplicate instance arbitration but still owns the IPC server and all request handling.
+- The packaged GUI requires an inherited launcher handoff handle and refuses direct execution. `app/Hammer5ToolsGUI.exe` is an internal implementation detail and must not be used for shortcuts or file associations.
 - Exit code `75` is the supervised restart contract. The launcher starts a clean GUI process without replaying the original open/quick-action arguments; all other child exit codes are propagated.
 
 ### Application Orchestrator (`Hammer5ToolsGUI/hammer5tools_gui/app_core.py`)
@@ -45,10 +46,10 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### KeyValues3 Parser Engine (`keyvalues3/`)
 - Native Python KV3 encoder/decoder handling text representation, type headers (`<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-3596-4313-a41f-70c3226768f9} -->`), and type annotations.
 
-### SmartProp Preview Domain (`Hammer5ToolsGUI/hammer5tools_gui/editors/smartprop_editor/viewport_3d/engine/`)
-- **`EvalContext`**: Resolves SmartProp variables, expressions, scalar values, vectors, and preview-instance state.
-- **`evaluate_expression()`**: Safely evaluates the supported Source 2 SmartProp expression subset without Python `eval`.
-- **`modifier_evaluator.py` / `path_evaluator.py`**: Applies preview modifiers and path-placement behavior. These are the source behavior for the forthcoming `Hammer5Tools.Core/SmartProps` migration; Qt widgets must not become dependencies of that Core implementation.
+### SmartProp Preview Boundary
+- SmartProp parsing, variables, expressions, choices, modifiers, transforms, nested resources, and placement evaluation are owned by `Hammer5Tools.Core/SmartProps`.
+- The viewport consumes immutable primitive model placements through `CoreBridge`; it owns camera, selection, gizmo input, caching, NumPy conversion, and OpenGL upload only.
+- There is no production Python SmartProp evaluator or fallback path.
 
 ---
 
@@ -98,16 +99,21 @@ This document provides a concise indexation of the modules, classes, functions, 
 
 ## 5. System Interop & Build Pipeline
 
-### .NET / C# Interop (`Hammer5ToolsCore/Python/hammer5tools_core/dotnet.py`)
+### Managed .NET Interop (`Hammer5ToolsCore/Python/hammer5tools_core/dotnet.py`)
 - **`check_dotnet_runtime()` -> `bool`**: Checks for required .NET runtimes.
-- **`DotNetManager`**: Interop wrapper utilizing `pythonnet` to invoke C# DLL binaries in `Hammer5ToolsCore/CSharp/external/`.
+- **`DotNetManager`**: Interop wrapper utilizing `pythonnet` for managed features that have not moved to a native ABI. SmartProp operations do not use this path.
+
+### Native Core Interop (`Hammer5ToolsCore/CSharp/Hammer5Tools.Native/`)
+- **`Hammer5Tools.Native.dll`**: NativeAOT shared library exposing ABI version 1 for SmartProp evaluation, expression preview, serialization, and deserialization.
+- **`hammer5tools.h`**: Stable C declarations. Requests and responses use explicit UTF-8 buffers; library-owned output is released with `h5t_core_release`.
+- **`SmartPropNativeClient`** (`Hammer5ToolsCore/Python/hammer5tools_core/native.py`): Thin `ctypes` marshaling client with no domain behavior and strict ABI-version validation.
 
 ### Core Bridge (`Hammer5ToolsCore/Python/hammer5tools_core/bridge/`)
-- **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once, translates load failures, and exposes a read-only contract probe.
+- **`CoreBridge`**: Process-wide Python adapter over the NativeAOT SmartProp ABI and the remaining managed Core contracts.
 - **`VpkIndex`**: Python-native disposable wrapper for Core VPK lookup, reads, and entry enumeration; UI code must use this instead of direct ValvePak imports. Model Browser VPK scanning consumes this contract.
-- **`CoreBridge.evaluate_smartprop_expression()`**: Python-native SmartProp expression entry point; Core namespaces remain inside the bridge.
-- **`CoreBridge.evaluate_smartprop()`**: Converts editor document dictionaries and nested document graphs to Core input and returns Python-native evaluated models and diagnostics. These VRF-produced placements are authoritative; Python retains only editor handles, gizmo interaction, path drawing, and element-dot presentation.
-- **`CoreBridge.serialize_smartprop()`**: Sends editor document snapshots to the Core-owned VRF KV3 serializer.
+- **`CoreBridge.evaluate_smartprop_expression()`**: Sends primitive expression context through the NativeAOT ABI.
+- **`CoreBridge.evaluate_smartprop()`**: Sends editor document dictionaries and nested document graphs through NativeAOT and returns Python-native evaluated models and diagnostics. These Core placements are authoritative.
+- **`CoreBridge.serialize_smartprop()` / `deserialize_smartprop()`**: Use the NativeAOT ABI for Core-owned VRF KV3 conversion.
 - **`CoreBridge.read_valve_map()`**: Loads the SourcePorter implementation of the shared VMAP reader and returns Python-native nodes, entities, asset references, and preview thumbnails. Loading Screen, Cleanup, Create Addon, and SmartProp hierarchy import consume this API instead of loading KeyValues2 or traversing Datamodel objects directly.
 - **`CoreBridge.rewrite_vmap_references()`**: Rewrites VMAP body and prefix asset-reference paths through SourcePorter Core and returns a Python-native changed/diagnostics result. Asset Manager uses this API instead of loading Datamodel objects directly.
 - **`CoreBridge.write_unreal_map()`**: Sends typed primitive Unreal placements to the SourcePorter Core writer. Python prepares transforms, asset paths, and import accounting; Core owns VMAP skeletons, native entities, SmartProps, decals, encoding, and saving.
@@ -124,8 +130,8 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`Vmap.IValveMapReader` / `ValveMapDocument` / `ValveMapNode`**: Shared UI-neutral, read-only VMAP contracts. `SourcePorter.Core.Vmap.ValveMapReader` implements them by projecting the existing authoritative `VmapDocument`; consumers must not introduce another VMAP parser.
 - **`VmapReferenceRewriter`**: Rewrites string paths in the authoritative VMAP document and preserves the binary DMX prefix block, including `map_asset_references`, when saving.
 - **`UnrealMapWriter`**: Accepts typed Unreal placement requests and writes binary VMAPs, including native point entities, SmartProp nodes, and half-edge decal overlays, with text fallback and structured diagnostics.
-- **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution for the staged SmartProp migration.
-- **`SmartProps.SmartPropEvaluator`**: Converts uncompiled editor document data to VRF evaluation input and maps placed models to Hammer5Tools-owned results and diagnostics.
+- **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution.
+- **`SmartProps.SmartPropEvaluator`**: Authoritative evaluator adapter with bounded recursion, bounded placement results, nested-resource resolution, and structured diagnostics.
 - **`SmartProps.SmartPropDocumentSerializer`**: Serializes editor document data with VRF's public KeyValues3 writer; serializer output is parsed and evaluated in Core round-trip tests.
 - **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project Hammer5ToolsCore/CSharp/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.
 

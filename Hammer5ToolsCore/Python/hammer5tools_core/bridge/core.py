@@ -151,8 +151,9 @@ class CoreBridge:
 
     _instance: Optional[CoreBridge] = None
 
-    def __init__(self, interop=None) -> None:
+    def __init__(self, interop=None, native_client=None) -> None:
         self._interop = interop or DotNetInterop()
+        self._native_client = native_client
         self._assembly = None
         self._source_porter_assembly = None
 
@@ -202,73 +203,52 @@ class CoreBridge:
         linear_scale: float = 1.0,
         default: float = 0.0,
     ) -> float:
-        """Evaluates a SmartProp expression with Python-native context values."""
-        self._ensure_loaded()
-
-        from System import Single
-        from System.Collections.Generic import Dictionary
-        from System.Numerics import Vector4
-        from Hammer5Tools.Core.SmartProps import SmartPropContext, SmartPropExpression
-
-        scalar_values = Dictionary[str, Single]()
-        for name, value in (variables or {}).items():
-            scalar_values.Add(name, float(value))
-
-        vector_values = Dictionary[str, Vector4]()
-        for name, value in (vectors or {}).items():
-            components = [float(component) for component in value[:4]]
-            components.extend([0.0] * (4 - len(components)))
-            vector_values.Add(name, Vector4(*components))
-
-        context = SmartPropContext(
-            scalar_values,
-            vector_values,
-            instance_index,
-            instance_count,
-            random_seed,
-            linear_scale,
-            None,
+        """Evaluates a SmartProp expression through the NativeAOT Core ABI."""
+        return self._smartprop_native().evaluate_expression(
+            expression,
+            variables=dict(variables or {}),
+            vectors={name: list(value) for name, value in (vectors or {}).items()},
+            instance_index=instance_index,
+            instance_count=instance_count,
+            random_seed=random_seed,
+            linear_scale=linear_scale,
+            default=default,
         )
-        return float(SmartPropExpression.Evaluate(expression, context, float(default)))
 
     def evaluate_smartprop(
         self,
         document: Mapping,
         *,
         nested_documents: Mapping[str, Mapping] | None = None,
+        maximum_depth: int = 32,
+        maximum_models: int = 100_000,
+        cancellation=None,
     ) -> SmartPropEvaluation:
-        """Evaluates an uncompiled SmartProp document through Hammer5Tools Core and VRF."""
-        self._ensure_loaded()
-
-        from Hammer5Tools.Core.SmartProps import SmartPropEvaluator
-
-        document_json = json.dumps(document, separators=(",", ":"))
-        if nested_documents is None:
-            result = SmartPropEvaluator.EvaluateJson(document_json)
-        else:
-            nested_json = json.dumps(nested_documents, separators=(",", ":"))
-            result = SmartPropEvaluator.EvaluateJson(document_json, nested_json)
-        models = tuple(self._convert_smartprop_model(model) for model in result.Models)
-        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        """Evaluates an uncompiled SmartProp document through the NativeAOT Core ABI."""
+        result = self._smartprop_native().evaluate(
+            dict(document),
+            None if nested_documents is None else dict(nested_documents),
+            maximum_depth=maximum_depth,
+            maximum_models=maximum_models,
+            cancellation=cancellation,
+        )
+        models = tuple(self._convert_native_smartprop_model(model) for model in result["models"])
+        diagnostics = tuple(
+            f"{item['code']}: {item['message']}" for item in result["diagnostics"]
+        )
         return SmartPropEvaluation(models, diagnostics)
 
+    def create_smartprop_cancellation(self):
+        """Create a cooperative cancellation handle for SmartProp evaluation."""
+        return self._smartprop_native().create_cancellation()
+
     def serialize_smartprop(self, document: Mapping) -> str:
-        """Serializes an uncompiled SmartProp document as KeyValues3 text."""
-        self._ensure_loaded()
-
-        from Hammer5Tools.Core.SmartProps import SmartPropDocumentSerializer
-
-        return str(SmartPropDocumentSerializer.SerializeJson(
-            json.dumps(document, separators=(",", ":")),
-        ))
+        """Serializes an uncompiled SmartProp document through the NativeAOT Core ABI."""
+        return self._smartprop_native().serialize(dict(document))
 
     def deserialize_smartprop(self, text: str) -> dict:
-        """Parses KeyValues3 SmartProp text into a Python-native document."""
-        self._ensure_loaded()
-
-        from Hammer5Tools.Core.SmartProps import SmartPropDocumentSerializer
-
-        return json.loads(str(SmartPropDocumentSerializer.DeserializeText(text)))
+        """Parses KeyValues3 SmartProp text through the NativeAOT Core ABI."""
+        return self._smartprop_native().deserialize(text)
 
     def read_valve_map(self, path: str) -> ValveMapDocument:
         """Reads a VMAP through SourcePorter's shared Core reader contract."""
@@ -409,6 +389,24 @@ class CoreBridge:
         tint_color = None if tint is None else (float(tint.X), float(tint.Y), float(tint.Z), float(tint.W))
         material_group = None if model.MaterialGroup is None else str(model.MaterialGroup)
         return SmartPropModel(int(model.ElementId), str(model.ModelName), transform, material_group, tint_color)
+
+    @staticmethod
+    def _convert_native_smartprop_model(model: Mapping) -> SmartPropModel:
+        tint = model.get("tintColor")
+        return SmartPropModel(
+            int(model["elementId"]),
+            str(model["modelName"]),
+            tuple(float(value) for value in model["transform"]),
+            model.get("materialGroup"),
+            None if tint is None else tuple(float(value) for value in tint),
+        )
+
+    def _smartprop_native(self):
+        if self._native_client is None:
+            from hammer5tools_core.native import SmartPropNativeClient
+
+            self._native_client = SmartPropNativeClient()
+        return self._native_client
 
     @staticmethod
     def _convert_valve_map_entity(entity) -> ValveMapEntity:

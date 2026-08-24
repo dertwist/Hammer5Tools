@@ -91,43 +91,56 @@ def test_smartprop_models_are_converted_without_core_types():
     )
 
 
-def test_smartprop_serializer_uses_python_native_document(monkeypatch):
+def test_smartprop_evaluation_passes_bounded_options():
     captured = {}
 
-    class FakeSerializer:
-        @staticmethod
-        def SerializeJson(value):
-            captured["json"] = value
+    class FakeNative:
+        def evaluate(self, document, nested_documents, **options):
+            captured["document"] = document
+            captured["nested_documents"] = nested_documents
+            captured["options"] = options
+            return {"models": [], "diagnostics": []}
+
+    bridge = CoreBridge(FakeInterop(), native_client=FakeNative())
+
+    result = bridge.evaluate_smartprop(
+        {"m_Children": []},
+        nested_documents={"smartprops/nested.vsmart": {"m_Children": []}},
+        maximum_depth=7,
+    )
+
+    assert result.models == ()
+    assert result.diagnostics == ()
+    assert captured["document"] == {"m_Children": []}
+    assert captured["nested_documents"] == {
+        "smartprops/nested.vsmart": {"m_Children": []}
+    }
+    assert captured["options"]["maximum_depth"] == 7
+
+
+def test_smartprop_serializer_uses_python_native_document():
+    captured = {}
+
+    class FakeNative:
+        def serialize(self, value):
+            captured["document"] = value
             return "<!-- kv3 -->"
 
-    bridge = CoreBridge(FakeInterop())
-    bridge._assembly = object()
-    monkeypatch.setitem(
-        __import__("sys").modules,
-        "Hammer5Tools.Core.SmartProps",
-        SimpleNamespace(SmartPropDocumentSerializer=FakeSerializer),
-    )
+    bridge = CoreBridge(FakeInterop(), native_client=FakeNative())
 
     text = bridge.serialize_smartprop({"m_Children": []})
 
     assert text == "<!-- kv3 -->"
-    assert captured["json"] == '{"m_Children":[]}'
+    assert captured["document"] == {"m_Children": []}
 
 
-def test_smartprop_deserializer_returns_python_native_document(monkeypatch):
-    class FakeSerializer:
-        @staticmethod
-        def DeserializeText(value):
+def test_smartprop_deserializer_returns_python_native_document():
+    class FakeNative:
+        def deserialize(self, value):
             assert value == "<!-- kv3 -->"
-            return '{"m_Children":[]}'
+            return {"m_Children": []}
 
-    bridge = CoreBridge(FakeInterop())
-    bridge._assembly = object()
-    monkeypatch.setitem(
-        __import__("sys").modules,
-        "Hammer5Tools.Core.SmartProps",
-        SimpleNamespace(SmartPropDocumentSerializer=FakeSerializer),
-    )
+    bridge = CoreBridge(FakeInterop(), native_client=FakeNative())
 
     document = bridge.deserialize_smartprop("<!-- kv3 -->")
 

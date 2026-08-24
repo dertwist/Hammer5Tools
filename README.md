@@ -82,7 +82,7 @@ Hammer 5 Tools builds upon several open-source libraries, tools, and frameworks:
 *   **[PyOpenGL](https://pyopengl.sourceforge.net/) & [PyQtGraph](https://www.pyqtgraph.org/)**: 3D viewport rendering for models and real-time hardware performance telemetry visualization.
 *   **[Velopack](https://velopack.io/)**: Installer and dynamic auto-update framework for desktop applications.
 *   **[keyvalues3](https://github.com/kristiker/keyvalues3)**: Python library for reading and writing Valve's KeyValues3 (KV3) format.
-*   **[pythonnet](https://pythonnet.github.io/)**: Managed .NET CLR interop layer enabling Python to directly call C# assemblies.
+*   **[pythonnet](https://pythonnet.github.io/)**: Managed .NET CLR interop for remaining non-SmartProp Core features. SmartProp evaluation and serialization use the bundled NativeAOT C ABI.
 *   **[SkiaSharp](https://github.com/mono/SkiaSharp)**: Cross-platform 2D graphics API for asset texture rendering and image processing.
 *   **[ValveResourceFormat (VRF / Source2Viewer)](https://github.com/ValveResourceFormat/ValveResourceFormat)**: C# library for parsing, decompiling, and inspecting Valve Source 2 resources, VPK archives (`ValvePak`), and KeyValues formats (`ValveKeyValue`).
 *   **[CUE4Parse](https://github.com/FabianFG/CUE4Parse)**: C# parser library for Unreal Engine packages.

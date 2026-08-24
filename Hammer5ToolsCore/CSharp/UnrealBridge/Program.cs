@@ -304,7 +304,7 @@ static class Program
         double fwdZ = axLen > 1e-6 ? M[2, 0] / sx : 0.0;
 
         double rgtZ = sy > 1e-6 ? M[2, 1] / sy : 0.0;
-        double upZ  = sz > 1e-6 ? M[2, 2] / sz : 1.0;
+        double upZ = sz > 1e-6 ? M[2, 2] / sz : 1.0;
         double rgtX = sy > 1e-6 ? M[0, 1] / sy : 0.0;
         double rgtY = sy > 1e-6 ? M[1, 1] / sy : 1.0;
 
