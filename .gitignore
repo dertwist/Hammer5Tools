@@ -138,12 +138,14 @@ docs
 # .NET (net_core) — built by CI and makefile.py, never committed.
 
 # Negate the global *.core (line ~5) and *.sln (line ~50) rules so they don't
-# swallow the SourcePorter.Core library source and the solution file. With
+# swallow the .NET library sources and solution file. With
 # core.ignorecase=true the directory name matched the *.core glob, which had
 # silently kept the entire SourcePorter.Core tree out of git. Last-match-wins,
 # so these re-inclusions override the broader patterns above.
 !src/net_core/SourcePorter.Core/
 !src/net_core/SourcePorter.Core/**
+!src/net_core/Hammer5Tools.Core/
+!src/net_core/Hammer5Tools.Core/**
 !src/net_core/net_core.sln
 
 # Build artifacts (mirrors the local src/net_core/UnrealBridge/.gitignore).
@@ -153,5 +155,6 @@ src/net_core/**/bin/
 src/net_core/**/obj/
 src/net_core/**/publish/
 src/net_core/**/TestResults/
+TestResults/
 /SoundEventEditor/*
 Hammer5Tools/userdata

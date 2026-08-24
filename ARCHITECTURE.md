@@ -96,6 +96,10 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`check_dotnet_runtime()` -> `bool`**: Checks for required .NET runtimes.
 - **`DotNetManager`**: Interop wrapper utilizing `pythonnet` to invoke C# DLL binaries in `src/external/`.
 
+### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
+- **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
+- **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project src/net_core/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.
+
 ### Auto-Updater (`src/updater/`)
 - **`check_updates()`**: Asynchronous update checker using Velopack package releases.
 - **`src/updater/attachment_preview.py`**: Attachment extraction from markdown/HTML/assets, asynchronous image caching, thumbnail preview cards, animated GIF playback, and integration with SmartProp Editor's `HelpImageDialog` for full-size viewing.

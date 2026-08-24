@@ -1,6 +1,6 @@
 <Project>
 
-  <!-- Shared settings for every project in net_core -->
+  <!-- Shared settings for every project in net_core. -->
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -8,6 +8,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
     <Product>Hammer5Tools.NetCore</Product>
     <Company>dertwist</Company>

@@ -54,7 +54,7 @@ Follow the applicable VRF conventions for all new or migrated C# code:
 ## Before Finishing
 
 1. Keep the change small and modular; update architecture documentation when ownership or public contracts change.
-2. Build the project being changed while iterating. For a completed .NET change, run Release build, `dotnet format`, and relevant `dotnet test` suites.
+2. Build the project being changed while iterating. For a completed .NET change, run Release build, `dotnet format`, and relevant test suites. Run new TUnit core suites with `dotnet run --project <test-project>` until the legacy xUnit suite is migrated to Microsoft Testing Platform.
 3. Run affected Python tests for Python or bridge changes.
 4. Remove debug logging and commented-out code introduced by the change.
 5. Use focused Conventional Commits. Do not include AI agent names in branches, commits, or credits.
