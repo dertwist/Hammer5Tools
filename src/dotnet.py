@@ -13,23 +13,16 @@ from pathlib import Path
 from typing import Optional, Tuple, Any
 import unittest
 import binascii
-from PySide6.QtWidgets import QMessageBox
 
 tests_path = Path(__file__).parent.parent / 'tests'
 RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
 
 #: Private AssemblyLoadContext for the ValveResourceFormat assembly set.
 #
-# VRF (src/external) and SourcePorter.Core (src/net_core/.../publish) are built
-# against *different, incompatible* versions of the same dependencies —
-# ValveKeyValue 0.70 vs 0.20, System.IO.Hashing 10 vs 9 — and ValvePak /
-# Datamodel.NET ship in both folders. A load context resolves by simple name,
-# so both sets cannot share one: LoadFromAssemblyPath throws FileLoadException
-# ("Assembly with same name is already loaded") for the second folder, and even
-# if it didn't, whichever loaded first would win and the other would bind
-# against the wrong version (MissingMethodException). Giving VRF its own
-# context keeps them apart. SourcePorter.Core stays in the default context
-# because porter_client imports its namespaces through pythonnet.
+# VRF is bundled independently from the .NET Core publish output. A load context
+# resolves dependencies by simple name, so the two groups must remain isolated
+# until their full dependency graphs are verified as interchangeable. The Core
+# stays in the default context because Python.NET imports its public namespaces.
 VRF_ALC = "Hammer5Tools.Vrf"
 
 # (context, path) -> Assembly, so a repeat load is a dict hit. setup_vrf() /
@@ -90,6 +83,7 @@ class DotNetPaths:
         self.tiny_bc_sharp = base_dir / 'TinyBCSharp.dll'
         self.tiny_exr_net = base_dir / 'TinyEXR.NET.dll'
         self.source_porter_core = self._find_source_porter_core(base_dir)
+        self.hammer5tools_core = self._find_hammer5tools_core(base_dir)
 
     def _find_source_porter_core(self, base_dir: Path) -> Path:
         env = os.environ.get("H5T_SOURCE_PORTER_CORE")
@@ -111,6 +105,25 @@ class DotNetPaths:
         if existing:
             return max(existing, key=lambda p: p.stat().st_mtime)
         return base_dir / 'SourcePorter.Core.dll'
+
+    def _find_hammer5tools_core(self, base_dir: Path) -> Path:
+        env = os.environ.get("H5T_CORE_DLL")
+        if env and Path(env).is_file():
+            return Path(env)
+
+        net_core = Path(__file__).parent / 'net_core'
+        candidates = [
+            net_core / 'SourcePorter.Core' / 'publish' / 'Hammer5Tools.Core.dll',
+            net_core / 'Hammer5Tools.Core' / 'publish' / 'Hammer5Tools.Core.dll',
+            net_core / 'Hammer5Tools.Core' / 'bin' / 'Release' / 'Hammer5Tools.Core.dll',
+            net_core / 'Hammer5Tools.Core' / 'bin' / 'Debug' / 'Hammer5Tools.Core.dll',
+            base_dir / 'Hammer5Tools.Core.dll',
+            Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'Hammer5Tools.Core.dll',
+        ]
+        existing = [candidate for candidate in candidates if candidate.is_file()]
+        if existing:
+            return max(existing, key=lambda candidate: candidate.stat().st_mtime)
+        return base_dir / 'Hammer5Tools.Core.dll'
 
 
 class DotNetInterop:
@@ -318,6 +331,24 @@ class DotNetInterop:
 
         sp_assembly = System.Reflection.Assembly.LoadFrom(str(sp_dll))
         return sp_assembly
+
+    def setup_hammer5tools_core(self):
+        """Load the Hammer5Tools Core public API into Python.NET's default context."""
+        self._init_pythonnet()
+
+        core_dll = self.paths.hammer5tools_core
+        if not core_dll.exists():
+            raise FileNotFoundError(f"Hammer5Tools.Core.dll assembly not found: {core_dll}")
+
+        for dependency in ("Blake3.dll", "System.IO.Hashing.dll", "ValvePak.dll"):
+            path = core_dll.parent / dependency
+            if path.is_file():
+                _load_into_default_alc(path)
+
+        _load_into_default_alc(core_dll)
+
+        import System
+        return System.Reflection.Assembly.LoadFrom(str(core_dll))
 
 
 class VPKExtractor:
@@ -548,6 +579,8 @@ class DotNetRuntimeChecker:
     def _show_download_dialog(self):
         """Show dialog to download .NET runtime."""
         try:
+            from PySide6.QtWidgets import QMessageBox
+
             latest_version = self._get_latest_version()
             download_url = self._get_download_url(latest_version)
 
@@ -862,5 +895,3 @@ if __name__ == "__main__":
             print(f"Self-check skipped: file {vpk_file} not found in VPK")
     else:
         print("Self-check skipped: CS2 or pak01_dir.vpk not found")
-
-

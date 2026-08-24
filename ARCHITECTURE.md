@@ -96,6 +96,10 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`check_dotnet_runtime()` -> `bool`**: Checks for required .NET runtimes.
 - **`DotNetManager`**: Interop wrapper utilizing `pythonnet` to invoke C# DLL binaries in `src/external/`.
 
+### Core Bridge (`src/bridge/`)
+- **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once.
+- **`VpkIndex`**: Python-native disposable wrapper for Core VPK and loose-file lookup; UI code must use this instead of direct ValvePak imports.
+
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.

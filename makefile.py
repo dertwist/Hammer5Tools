@@ -239,7 +239,15 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     if not os.path.exists(unreal_bridge_publish):
         unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
 
+    source_porter_project = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'SourcePorter.Core.csproj')
     source_porter_publish = os.path.join(cur_dir, 'src', 'net_core', 'SourcePorter.Core', 'publish')
+    if os.path.exists(source_porter_project):
+        subprocess.run([
+            'dotnet', 'publish', source_porter_project,
+            '--configuration', 'Release',
+            '--output', source_porter_publish,
+            '--no-self-contained',
+        ], check=True)
     bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
     bspsrc_exe = os.path.join(bspsrc_dir, 'bspsrc.exe')
     if not os.path.exists(bspsrc_exe):
@@ -464,4 +472,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

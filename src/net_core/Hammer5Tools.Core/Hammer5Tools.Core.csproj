@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Hammer5Tools.Core</RootNamespace>
     <AssemblyName>Hammer5Tools.Core</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
     <AnalysisMode Condition="'$(Configuration)' == 'Release'">All</AnalysisMode>
