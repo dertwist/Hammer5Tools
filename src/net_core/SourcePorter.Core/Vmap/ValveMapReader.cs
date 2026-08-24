@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 
 using Datamodel;
 using Hammer5Tools.Core.Vmap;
@@ -18,7 +19,8 @@ public sealed class ValveMapReader : IValveMapReader
         var document = VmapDocument.LoadInMemory(path);
         var world = ConvertNode(document.World);
         var nodes = Traverse(world).ToArray();
-        return new ValveMapDocument(document.Path, world, nodes);
+        var entities = ReadEntities(world).ToArray();
+        return new ValveMapDocument(document.Path, world, nodes, entities);
     }
 
     private static ValveMapNode ConvertNode(Element element)
@@ -36,6 +38,15 @@ public sealed class ValveMapReader : IValveMapReader
                     children.AddRange(childArray.Select(ConvertNode));
                     break;
                 case null:
+                    break;
+                case Vector2 vector:
+                    properties[name] = FormattableString.Invariant($"{vector.X} {vector.Y}");
+                    break;
+                case Vector3 vector:
+                    properties[name] = FormattableString.Invariant($"{vector.X} {vector.Y} {vector.Z}");
+                    break;
+                case Vector4 vector:
+                    properties[name] = FormattableString.Invariant($"{vector.X} {vector.Y} {vector.Z} {vector.W}");
                     break;
                 case IFormattable formattable:
                     properties[name] = formattable.ToString(null, CultureInfo.InvariantCulture);
@@ -58,6 +69,25 @@ public sealed class ValveMapReader : IValveMapReader
             {
                 yield return descendant;
             }
+        }
+    }
+
+    private static IEnumerable<ValveMapEntity> ReadEntities(ValveMapNode world)
+    {
+        foreach (var node in Traverse(world))
+        {
+            var entityProperties = node.Children.FirstOrDefault(child =>
+                child.Properties.ContainsKey("classname"));
+            if (entityProperties is null)
+            {
+                continue;
+            }
+
+            yield return new ValveMapEntity(
+                entityProperties.Properties["classname"],
+                node.Properties.GetValueOrDefault("origin"),
+                node.Properties.GetValueOrDefault("angles"),
+                entityProperties.Properties);
         }
     }
 }

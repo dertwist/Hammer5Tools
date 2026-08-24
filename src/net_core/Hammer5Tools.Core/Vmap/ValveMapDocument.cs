@@ -6,4 +6,5 @@ namespace Hammer5Tools.Core.Vmap;
 public sealed record ValveMapDocument(
     string Path,
     ValveMapNode World,
-    IReadOnlyList<ValveMapNode> Nodes);
+    IReadOnlyList<ValveMapNode> Nodes,
+    IReadOnlyList<ValveMapEntity> Entities);

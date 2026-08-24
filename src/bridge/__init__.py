@@ -6,6 +6,8 @@ from src.bridge.core import (
     CoreStatus,
     SmartPropEvaluation,
     SmartPropModel,
+    ValveMapDocument,
+    ValveMapEntity,
     VpkIndex,
 )
 
@@ -15,5 +17,7 @@ __all__ = [
     "CoreStatus",
     "SmartPropEvaluation",
     "SmartPropModel",
+    "ValveMapDocument",
+    "ValveMapEntity",
     "VpkIndex",
 ]

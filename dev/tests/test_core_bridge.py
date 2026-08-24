@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from src.bridge.core import CoreBridge, SmartPropModel, VpkIndex
+from src.bridge.core import CoreBridge, SmartPropModel, ValveMapEntity, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
@@ -132,6 +132,28 @@ def test_smartprop_deserializer_returns_python_native_document(monkeypatch):
     document = bridge.deserialize_smartprop("<!-- kv3 -->")
 
     assert document == {"m_Children": []}
+
+
+def test_valve_map_entities_are_converted_without_core_types():
+    properties = [
+        SimpleNamespace(Key="classname", Value="point_camera"),
+        SimpleNamespace(Key="targetname", Value="camera"),
+    ]
+    entity = SimpleNamespace(
+        ClassName="point_camera",
+        Origin="1 2 3",
+        Angles=None,
+        Properties=properties,
+    )
+
+    converted = CoreBridge._convert_valve_map_entity(entity)
+
+    assert converted == ValveMapEntity(
+        "point_camera",
+        "1 2 3",
+        None,
+        {"classname": "point_camera", "targetname": "camera"},
+    )
 
 
 class FakeVpkIndex:

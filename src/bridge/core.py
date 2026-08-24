@@ -42,6 +42,24 @@ class SmartPropEvaluation:
     diagnostics: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class ValveMapEntity:
+    """Python-native entity projected from an uncompiled Valve map."""
+
+    class_name: str
+    origin: str | None
+    angles: str | None
+    properties: dict[str, str]
+
+
+@dataclass(frozen=True)
+class ValveMapDocument:
+    """Python-native read-only Valve map projection."""
+
+    path: str
+    entities: tuple[ValveMapEntity, ...]
+
+
 class CoreBridge:
     """Owns one initialized connection to Hammer5Tools.Core for a process."""
 
@@ -50,6 +68,7 @@ class CoreBridge:
     def __init__(self, interop=None) -> None:
         self._interop = interop or DotNetInterop()
         self._assembly = None
+        self._source_porter_assembly = None
 
     @classmethod
     def instance(cls) -> CoreBridge:
@@ -165,6 +184,20 @@ class CoreBridge:
 
         return json.loads(str(SmartPropDocumentSerializer.DeserializeText(text)))
 
+    def read_valve_map(self, path: str) -> ValveMapDocument:
+        """Reads a VMAP through SourcePorter's shared Core reader contract."""
+        assembly = self._ensure_source_porter_loaded()
+        reader_type = assembly.GetType("SourcePorter.Core.Vmap.ValveMapReader")
+        if reader_type is None:
+            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.ValveMapReader")
+
+        import System
+
+        reader = System.Activator.CreateInstance(reader_type)
+        document = reader.Read(path)
+        entities = tuple(self._convert_valve_map_entity(entity) for entity in document.Entities)
+        return ValveMapDocument(str(document.Path), entities)
+
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:
         matrix = model.Transform
@@ -174,6 +207,13 @@ class CoreBridge:
         material_group = None if model.MaterialGroup is None else str(model.MaterialGroup)
         return SmartPropModel(int(model.ElementId), str(model.ModelName), transform, material_group, tint_color)
 
+    @staticmethod
+    def _convert_valve_map_entity(entity) -> ValveMapEntity:
+        properties = {str(item.Key): str(item.Value) for item in entity.Properties}
+        origin = None if entity.Origin is None else str(entity.Origin)
+        angles = None if entity.Angles is None else str(entity.Angles)
+        return ValveMapEntity(str(entity.ClassName), origin, angles, properties)
+
     def _ensure_loaded(self) -> None:
         if self._assembly is not None:
             return
@@ -182,6 +222,16 @@ class CoreBridge:
             self._assembly = self._interop.setup_hammer5tools_core()
         except Exception as error:
             raise CoreBridgeError(f"Hammer5Tools Core is unavailable: {error}") from error
+
+    def _ensure_source_porter_loaded(self):
+        if self._source_porter_assembly is not None:
+            return self._source_porter_assembly
+
+        try:
+            self._source_porter_assembly = self._interop.setup_source_porter()
+            return self._source_porter_assembly
+        except Exception as error:
+            raise CoreBridgeError(f"SourcePorter Core is unavailable: {error}") from error
 
 
 class VpkIndex:
