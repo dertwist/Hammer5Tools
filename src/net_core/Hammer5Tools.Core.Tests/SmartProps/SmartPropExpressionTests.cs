@@ -36,4 +36,21 @@ public sealed class SmartPropExpressionTests
     {
         await Assert.That(SmartPropExpression.Evaluate("1 + )", defaultValue: 9.0f)).IsEqualTo(9.0f);
     }
+
+    [Test]
+    public async Task ResolvesNestedValueForms()
+    {
+        var context = new SmartPropContext(values: new Dictionary<string, SmartPropValue>
+        {
+            ["Scale"] = SmartPropValue.FromExpression("InstanceIndex() * 2"),
+            ["Size"] = SmartPropValue.FromVariable("Scale"),
+        }, instanceIndex: 3);
+        var vector = SmartPropValue.FromComponents([
+            SmartPropValue.FromVariable("Size"),
+            SmartPropValue.FromExpression("4 + 1"),
+        ]);
+
+        await Assert.That(context.ResolveScalar(SmartPropValue.FromVariable("Size"))).IsEqualTo(6.0f);
+        await Assert.That(context.ResolveVector(vector)).IsEqualTo(new Vector3(6.0f, 5.0f, 0.0f));
+    }
 }

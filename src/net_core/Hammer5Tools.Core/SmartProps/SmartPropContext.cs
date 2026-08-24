@@ -9,6 +9,7 @@ public sealed class SmartPropContext
 {
     private readonly Dictionary<string, float> Variables;
     private readonly Dictionary<string, Vector4> Vectors;
+    private readonly Dictionary<string, SmartPropValue> Values;
     private uint RandomState;
 
     /// <summary>
@@ -20,7 +21,8 @@ public sealed class SmartPropContext
         int instanceIndex = 0,
         int instanceCount = 1,
         int randomSeed = 0,
-        float linearScale = 1.0f)
+        float linearScale = 1.0f,
+        IReadOnlyDictionary<string, SmartPropValue>? values = null)
     {
         Variables = variables is null
             ? new(StringComparer.OrdinalIgnoreCase)
@@ -28,6 +30,9 @@ public sealed class SmartPropContext
         Vectors = vectors is null
             ? new(StringComparer.OrdinalIgnoreCase)
             : new(vectors, StringComparer.OrdinalIgnoreCase);
+        Values = values is null
+            ? new(StringComparer.OrdinalIgnoreCase)
+            : new(values, StringComparer.OrdinalIgnoreCase);
         RandomState = (uint)randomSeed;
         InstanceIndex = instanceIndex;
         InstanceCount = instanceCount;
@@ -50,6 +55,28 @@ public sealed class SmartPropContext
     public float LinearScale { get; }
 
     internal float GetVariable(string name) => Variables.TryGetValue(name, out var value) ? value : 0.0f;
+
+    /// <summary>
+    /// Resolves a numeric literal, variable, expression, or component value.
+    /// </summary>
+    public float ResolveScalar(SmartPropValue? value, float defaultValue = 0.0f) => ResolveScalar(value, defaultValue, 0);
+
+    /// <summary>
+    /// Resolves a SmartProp value to a three-component vector.
+    /// </summary>
+    public Vector3 ResolveVector(SmartPropValue? value, Vector3 defaultValue = default)
+    {
+        if (value?.Components is { Count: > 0 } components)
+        {
+            return new(
+                ResolveComponent(components, 0, defaultValue.X),
+                ResolveComponent(components, 1, defaultValue.Y),
+                ResolveComponent(components, 2, defaultValue.Z));
+        }
+
+        var scalar = ResolveScalar(value, defaultValue.X);
+        return new(scalar);
+    }
 
     internal float GetVectorComponent(string name, int component)
     {
@@ -79,5 +106,36 @@ public sealed class SmartPropContext
     {
         RandomState = (RandomState * 1_664_525) + 1_013_904_223;
         return RandomState / (float)uint.MaxValue;
+    }
+
+    private float ResolveScalar(SmartPropValue? value, float defaultValue, int depth)
+    {
+        if (value is null || depth > 32)
+            return defaultValue;
+
+        return value.Kind switch
+        {
+            SmartPropValueKind.Literal => value.Literal,
+            SmartPropValueKind.Expression => SmartPropExpression.Evaluate(value.Text, this, defaultValue),
+            SmartPropValueKind.Components when value.Components is { Count: > 0 } components => ResolveScalar(components[0], defaultValue, depth + 1),
+            SmartPropValueKind.Variable when value.Text is not null => ResolveVariable(value.Text, defaultValue, depth + 1),
+            _ => defaultValue,
+        };
+    }
+
+    private float ResolveComponent(IReadOnlyList<SmartPropValue> components, int index, float defaultValue)
+    {
+        return index < components.Count ? ResolveScalar(components[index], defaultValue, 0) : defaultValue;
+    }
+
+    private float ResolveVariable(string name, float defaultValue, int depth)
+    {
+        if (Values.TryGetValue(name, out var value))
+            return ResolveScalar(value, defaultValue, depth);
+        if (Variables.TryGetValue(name, out var scalar))
+            return scalar;
+        if (Vectors.TryGetValue(name, out var vector))
+            return vector.X;
+        return defaultValue;
     }
 }

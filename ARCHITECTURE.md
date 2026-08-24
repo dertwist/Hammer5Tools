@@ -103,7 +103,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.
-- **`SmartProps.SmartPropExpression` / `SmartPropContext`**: UI-neutral numeric expression evaluation and placement-variable context for the staged SmartProp migration.
+- **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution for the staged SmartProp migration.
 - **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project src/net_core/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.
 
 ### Auto-Updater (`src/updater/`)
