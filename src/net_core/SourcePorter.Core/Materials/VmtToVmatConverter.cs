@@ -129,11 +129,11 @@ public sealed class VmtToVmatConverter
         var transform = MaterialValues.TexTransform.Parse(val);
 
         if (transform.Scale != (1f, 1f)
-            && MaterialValues.FixVector($"{transform.Scale.X} {transform.Scale.Y}", addAlpha: false) is { } scale)
+            && MaterialValues.FixVector(FormattableString.Invariant($"{transform.Scale.X} {transform.Scale.Y}"), addAlpha: false) is { } scale)
             vmat.Set(vmatKey + "Scale", scale);
 
         if (transform.Translate != (0f, 0f)
-            && MaterialValues.FixVector($"{transform.Translate.X} {transform.Translate.Y}", addAlpha: false) is { } offset)
+            && MaterialValues.FixVector(FormattableString.Invariant($"{transform.Translate.X} {transform.Translate.Y}"), addAlpha: false) is { } offset)
             vmat.Set(vmatKey + "Offset", offset);
     }
 

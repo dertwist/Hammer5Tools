@@ -41,14 +41,16 @@ public class VmtToVmatConverterTests
     [Fact]
     public void Basetexturetransform_translate_becomes_offset()
     {
-        var vmat = Convert("""
+        var vmt = VmtFile.Parse("""
             "LightmappedGeneric"
             {
                 "$basetexture" "metal/wall"
                 "$basetexturetransform" "scale 1 1 translate .5 .25"
             }
             """);
+        var vmat = new VmtToVmatConverter().Convert(vmt);
 
+        Assert.Equal("scale 1 1 translate 0.5 0.25", vmt["$basetexturetransform"]);
         Assert.Null(vmat.Get("g_vTexCoordScale")); // scale was 1 1
         Assert.Equal("[0.500000 0.250000]", vmat.Get("g_vTexCoordOffset"));
     }

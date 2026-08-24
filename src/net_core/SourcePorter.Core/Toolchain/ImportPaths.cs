@@ -1,11 +1,8 @@
 namespace SourcePorter.Core.Toolchain;
 
 /// <summary>
-/// Reproduces the path derivation from the top of <c>import_map_community.py</c>.
-/// Given the S2 gameinfo dir (e.g. <c>…\game\csgo</c>) and the addon name, it
-/// computes the addon's game and content roots by the same string substitution
-/// the Python performs, then exposes the per-map artifact paths the importer
-/// reads and writes.
+/// Derives add-on game and content paths from an S2 gameinfo directory and map
+/// name, then exposes the per-map artifact paths the importer reads and writes.
 /// </summary>
 public sealed class ImportPaths
 {
@@ -15,13 +12,10 @@ public sealed class ImportPaths
         Addon = addon;
         MapName = mapName;
 
-        // s2gameaddondir = "game\csgo_addons\" + s2addon
-        var s2GameAddonDir = $@"game\csgo_addons\{addon}";
-        // s2gameaddon = s2gamecsgo.replace("game\csgo", s2gameaddondir)
-        S2GameAddon = s2GameInfoDir.Replace(@"game\csgo", s2GameAddonDir);
-        // s2contentcsgo = s2gameaddon.replace("game\csgo_addons", "content\csgo_addons")
-        S2ContentCsgo = S2GameAddon.Replace(@"game\csgo_addons", @"content\csgo_addons");
-        // s2contentcsgoimported = s2contentcsgo
+        var gameRoot = Directory.GetParent(s2GameInfoDir)?.Parent?.FullName
+            ?? throw new ArgumentException("S2 gameinfo directory must be inside a game directory.", nameof(s2GameInfoDir));
+        S2GameAddon = Path.Combine(gameRoot, "game", "csgo_addons", addon);
+        S2ContentCsgo = Path.Combine(gameRoot, "content", "csgo_addons", addon);
         S2ContentCsgoImported = S2ContentCsgo;
     }
 

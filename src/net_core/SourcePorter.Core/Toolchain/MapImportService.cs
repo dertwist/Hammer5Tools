@@ -98,90 +98,90 @@ public sealed partial class MapImportService
         try
         {
 
-        var paths = new ImportPaths(project.S2GameInfoDir, addon, originalMapName);
+            var paths = new ImportPaths(project.S2GameInfoDir, addon, originalMapName);
 
-        // VALVE_NO_AUTO_P4=1 so the p4 libs run disconnected (utlc.SaveEnv).
-        var env = new Dictionary<string, string> { ["VALVE_NO_AUTO_P4"] = "1" };
+            // VALVE_NO_AUTO_P4=1 so the p4 libs run disconnected (utlc.SaveEnv).
+            var env = new Dictionary<string, string> { ["VALVE_NO_AUTO_P4"] = "1" };
 
-        // Guide §-1.1: disable vpk.signatures for the run (restored on dispose) so
-        // source1import can read the CS:GO pak01.vpk.
-        using var signatures = new VpkSignaturesGuard(_tools.VpkSignatures, Emit);
-        ReportSignatures(signatures, "import");
+            // Guide §-1.1: disable vpk.signatures for the run (restored on dispose) so
+            // source1import can read the CS:GO pak01.vpk.
+            using var signatures = new VpkSignaturesGuard(_tools.VpkSignatures, Emit);
+            ReportSignatures(signatures, "import");
 
-        // Terrain fix: -usebsp makes source1import shell out to vbsp to clean up the
-        // geometry (displacements/terrain), but it passes the content path to vbsp
-        // UNQUOTED — a space in the install path ("Counter-Strike Global Offensive")
-        // splits the argument, so vbsp prints usage, never runs, and the map falls back
-        // to broken vmf-only geo. Hand source1import the 8.3 short path (no spaces) so
-        // the path survives intact down to vbsp.
-        if ((project.Import.UseBsp || project.Import.UseBspNoMergeInstances) && s1Content.Contains(' '))
-            s1Content = ResolveSpaceFreeContentDir(s1Content);
+            // Terrain fix: -usebsp makes source1import shell out to vbsp to clean up the
+            // geometry (displacements/terrain), but it passes the content path to vbsp
+            // UNQUOTED — a space in the install path ("Counter-Strike Global Offensive")
+            // splits the argument, so vbsp prints usage, never runs, and the map falls back
+            // to broken vmf-only geo. Hand source1import the 8.3 short path (no spaces) so
+            // the path survives intact down to vbsp.
+            if ((project.Import.UseBsp || project.Import.UseBspNoMergeInstances) && s1Content.Contains(' '))
+                s1Content = ResolveSpaceFreeContentDir(s1Content);
 
-        // Sync custom unpacked assets into the CS:GO game directory so source1import
-        // resolves texture dimensions natively during the map import pass.
-        SyncStagedContentToCsgoDir(s1Content, s1Game);
-        var depsGameDir = PrepareDepsGameDir(s1Game, s1Content);
+            // Sync custom unpacked assets into the CS:GO game directory so source1import
+            // resolves texture dimensions natively during the map import pass.
+            SyncStagedContentToCsgoDir(s1Content, s1Game);
+            var depsGameDir = PrepareDepsGameDir(s1Game, s1Content);
 
-        // --- import vmf -> vmap (built once with the ORIGINAL map name, reused for the re-import) ---
-        // source1import's -usebsp passes (instance merge, then vbsp geo cleanup) can each
-        // access-violate on some maps (after the .vmap is written but before the refs list).
-        // RunMapImportAsync degrades the BSP mode step by step (merge → no-merge → vmf-only) on
-        // that crash and returns the mode that imported, so the step-5 re-import reuses it.
-        // The map VMF import requires the real csgo gameinfo dir (s1Game) so CVMFtoVMAP calculates
-        // the target addon vmap path correctly.
-        var bspMode = await RunMapImportAsync(
-            s1Game, s1Content, addon, originalMapName, InitialBspMode(project.Import), env, ct);
-        var importArgs = BuildMapImportArgs(s1Game, s1Content, addon, originalMapName, bspMode);
+            // --- import vmf -> vmap (built once with the ORIGINAL map name, reused for the re-import) ---
+            // source1import's -usebsp passes (instance merge, then vbsp geo cleanup) can each
+            // access-violate on some maps (after the .vmap is written but before the refs list).
+            // RunMapImportAsync degrades the BSP mode step by step (merge → no-merge → vmf-only) on
+            // that crash and returns the mode that imported, so the step-5 re-import reuses it.
+            // The map VMF import requires the real csgo gameinfo dir (s1Game) so CVMFtoVMAP calculates
+            // the target addon vmap path correctly.
+            var bspMode = await RunMapImportAsync(
+                s1Game, s1Content, addon, originalMapName, InitialBspMode(project.Import), env, ct);
+            var importArgs = BuildMapImportArgs(s1Game, s1Content, addon, originalMapName, bspMode);
 
-        // replace 'instance' paths with 'prefab'
-        paths.SwitchInstancesToPrefabs();
+            // replace 'instance' paths with 'prefab'
+            paths.SwitchInstancesToPrefabs();
 
-        if (project.Import.SkipDeps)
-        {
-            Emit("Skip dependencies is ON — no materials or models were imported. " +
-                 "The map will be missing them; re-import with dependencies enabled for a complete addon.");
-        }
-
-        if (!project.Import.SkipDeps)
-        {
-            // Use whichever refs file source1import actually wrote (_prefab_refs.txt
-            // when -usebsp merged instances, else plain _refs.txt) and derive the
-            // mdl/new-refs names from the SAME base so the steps line up.
-            var refsFile = paths.ResolveRefsFile();
-            if (refsFile is null)
+            if (project.Import.SkipDeps)
             {
-                Emit("WARNING: source1import produced no refs file — dependencies (materials/models) were not imported.");
+                Emit("Skip dependencies is ON — no materials or models were imported. " +
+                     "The map will be missing them; re-import with dependencies enabled for a complete addon.");
             }
-            else
+
+            if (!project.Import.SkipDeps)
             {
-                Emit($"Importing dependencies from {Path.GetFileName(refsFile)}");
-                if (!_compileAssets)
-                    Emit("Compile Assets is off — importing asset sources only; skipping resourcecompiler. Enable 'Compile Assets' to compile materials/models.");
+                // Use whichever refs file source1import actually wrote (_prefab_refs.txt
+                // when -usebsp merged instances, else plain _refs.txt) and derive the
+                // mdl/new-refs names from the SAME base so the steps line up.
+                var refsFile = paths.ResolveRefsFile();
+                if (refsFile is null)
+                {
+                    Emit("WARNING: source1import produced no refs file — dependencies (materials/models) were not imported.");
+                }
+                else
+                {
+                    Emit($"Importing dependencies from {Path.GetFileName(refsFile)}");
+                    if (!_compileAssets)
+                        Emit("Compile Assets is off — importing asset sources only; skipping resourcecompiler. Enable 'Compile Assets' to compile materials/models.");
 
-                // We strip out models as they go through the new importer last.
-                StripMdlsFromRefs(refsFile);
+                    // We strip out models as they go through the new importer last.
+                    StripMdlsFromRefs(refsFile);
 
-                var mdlList = refsFile.Replace("_refs.txt", "_mdl_lst.txt");
-                var newRefs = refsFile.Replace("_refs.txt", "_new_refs.txt");
+                    var mdlList = refsFile.Replace("_refs.txt", "_mdl_lst.txt");
+                    var newRefs = refsFile.Replace("_refs.txt", "_new_refs.txt");
 
-                // now import mdls (as modeldoc), and their materials
-                await ImportAndCompileMapMdlsAsync(mdlList, paths, s1Game, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
+                    // now import mdls (as modeldoc), and their materials
+                    await ImportAndCompileMapMdlsAsync(mdlList, paths, s1Game, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
 
-                // import refs (excluding mdls)
-                await ImportAndCompileMapRefsAsync(newRefs, paths, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
+                    // import refs (excluding mdls)
+                    await ImportAndCompileMapRefsAsync(newRefs, paths, s1Content, depsGameDir, addon, env, ct, project.Import.UseFilelist);
 
-                // quick import vmf again, now that dependencies (materials especially) are compiled
-                await RunAsync(_tools.Source1Import, "source1import.exe", importArgs, env, ct,
-                    standardInput: ConfirmIfNotCsgo(s1Game));
+                    // quick import vmf again, now that dependencies (materials especially) are compiled
+                    await RunAsync(_tools.Source1Import, "source1import.exe", importArgs, env, ct,
+                        standardInput: ConfirmIfNotCsgo(s1Game));
+                }
             }
-        }
 
-        // explicit copy of main .vmap to game maps if not already there (it can only be compiled from there)
-        if (!File.Exists(paths.ContentMainVmap) && File.Exists(paths.ImportedMainVmap))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(paths.ContentMainVmap)!);
-            File.Copy(paths.ImportedMainVmap, paths.ContentMainVmap, overwrite: true);
-        }
+            // explicit copy of main .vmap to game maps if not already there (it can only be compiled from there)
+            if (!File.Exists(paths.ContentMainVmap) && File.Exists(paths.ImportedMainVmap))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(paths.ContentMainVmap)!);
+                File.Copy(paths.ImportedMainVmap, paths.ContentMainVmap, overwrite: true);
+            }
 
         }
         finally
@@ -306,11 +306,11 @@ public sealed partial class MapImportService
     /// custom-content gameinfo (it lives in the <c>&lt;map&gt;</c>-named staged content root).
     /// Returns the stdin answer (<c>"y"</c>) for that case so the run doesn't hang, else null.
     /// </summary>
-    internal static string? ConfirmIfNotCsgo(string gameInfoDir) =>
-        string.Equals(Path.GetFileName(gameInfoDir.TrimEnd(Path.DirectorySeparatorChar, '/')), "csgo",
-            StringComparison.OrdinalIgnoreCase)
-            ? null
-            : "y\n";
+    internal static string? ConfirmIfNotCsgo(string gameInfoDir)
+    {
+        var leaf = gameInfoDir.TrimEnd('\\', '/').Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+        return string.Equals(leaf, "csgo", StringComparison.OrdinalIgnoreCase) ? null : "y\n";
+    }
 
     /// <summary>
     /// Imports an explicit set of Source 1 models (<c>.mdl</c>) and materials (<c>.vmt</c>)

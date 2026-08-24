@@ -96,6 +96,9 @@ public class VpkSignaturesGuardTests
     [Fact]
     public void Locked_file_does_not_throw_and_reports_locked()
     {
+        if (!OperatingSystem.IsWindows())
+            return;
+
         // Reproduces the reported failure: a process (e.g. CS2) holds vpk.signatures open
         // with an exclusive lock, so File.Move would throw "the process cannot access the
         // file…". The guard must record Locked instead of aborting the whole import.

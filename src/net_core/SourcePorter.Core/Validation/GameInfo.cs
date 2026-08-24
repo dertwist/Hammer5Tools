@@ -25,16 +25,16 @@ public static class GameInfo
 
             using var stream = File.OpenRead(gameInfoPath);
             var serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-            var root = serializer.Deserialize(stream);
+            var root = serializer.Deserialize(stream).Root;
 
             var fileSystem = FindChild(root, "FileSystem");
             var searchPaths = fileSystem is null ? null : FindChild(fileSystem, "SearchPaths");
             if (searchPaths is null)
                 return dirs;
 
-            foreach (var entry in searchPaths)
+            foreach (var (_, value) in searchPaths)
             {
-                var dir = NormalizeSearchDir(entry.Value?.ToString());
+                var dir = NormalizeSearchDir(value.ToString());
                 if (dir is not null && !dirs.Contains(dir, StringComparer.OrdinalIgnoreCase))
                     dirs.Add(dir);
             }
@@ -66,6 +66,12 @@ public static class GameInfo
         return segment is "" or "." ? null : segment;
     }
 
-    private static KVObject? FindChild(KVObject obj, string name) =>
-        obj.FirstOrDefault(child => string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase));
+    private static KVObject? FindChild(KVObject obj, string name)
+    {
+        foreach (var (key, value) in obj)
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                return value;
+
+        return null;
+    }
 }

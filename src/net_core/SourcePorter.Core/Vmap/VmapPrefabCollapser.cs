@@ -78,6 +78,8 @@ public static class VmapPrefabCollapser
                     if (child is null)
                         continue;
                     var imported = main.Model.ImportElement(child, DM.ImportRecursionMode.Recursive, DM.ImportOverwriteMode.All);
+                    if (imported is null)
+                        continue;
                     children.Add(imported);
                     count++;
                 }
@@ -187,12 +189,15 @@ public static class VmapPrefabCollapser
     /// </summary>
     private static string? ResolveSubMap(string targetPath, string contentRoot)
     {
-        var relative = targetPath.Replace('/', '\\').TrimStart('\\');
-        var direct = System.IO.Path.Combine(contentRoot, relative);
+        var segments = targetPath.Trim().TrimStart('\\', '/').Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0)
+            return null;
+
+        var direct = System.IO.Path.Combine([contentRoot, .. segments]);
         if (File.Exists(direct))
             return direct;
 
-        var byName = System.IO.Path.Combine(contentRoot, "maps", System.IO.Path.GetFileName(relative));
+        var byName = System.IO.Path.Combine(contentRoot, "maps", segments[^1]);
         return File.Exists(byName) ? byName : null;
     }
 }

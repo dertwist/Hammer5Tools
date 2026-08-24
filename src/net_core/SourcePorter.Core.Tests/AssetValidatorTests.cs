@@ -1,7 +1,7 @@
 using Datamodel;
-using DM = Datamodel.Datamodel;
 using SourcePorter.Core.Domain;
 using SourcePorter.Core.Validation;
+using DM = Datamodel.Datamodel;
 
 namespace SourcePorter.Core.Tests;
 

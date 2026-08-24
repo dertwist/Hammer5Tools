@@ -93,18 +93,18 @@ public static class Cs2InstallLocator
             {
                 using var stream = File.OpenRead(vdf);
                 var serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-                var root = serializer.Deserialize(stream);
+                var root = serializer.Deserialize(stream).Root;
 
                 foreach (var entry in root)
                 {
-                    var path = Child(entry, "path")?.Value?.ToString();
+                    var path = Child(entry.Value, "path")?.ToString();
                     if (string.IsNullOrWhiteSpace(path))
                         continue;
                     path = path.Replace('/', '\\');
 
-                    var apps = Child(entry, "apps");
+                    var apps = Child(entry.Value, "apps");
                     var hasCs2 = apps is not null &&
-                                 apps.Any(a => a.Name == Cs2AppId.ToString());
+                                 apps.Any(a => a.Key == Cs2AppId.ToString());
                     (hasCs2 ? ownsCs2 : others).Add(path);
                 }
             }
@@ -121,6 +121,12 @@ public static class Cs2InstallLocator
                       .Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
-    private static KVObject? Child(KVObject obj, string name) =>
-        obj.FirstOrDefault(child => string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase));
+    private static KVObject? Child(KVObject obj, string name)
+    {
+        foreach (var (key, value) in obj)
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                return value;
+
+        return null;
+    }
 }

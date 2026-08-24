@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>SourcePorter.Core</RootNamespace>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -11,31 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--
-      VPK archive reader and KeyValues (KV1/KV3) reader used by the asset
-      validator. Versions are the newest that still target net8.0/netstandard
-      (ValveKeyValue >= 0.21 and newer ValvePak require the .NET 10 SDK; bump
-      both together with TargetFramework once net10 SDK is installed).
-    -->
-    <PackageReference Include="ValvePak" Version="4.0.0.142" />
-    <PackageReference Include="ValveKeyValue" Version="0.20.0.417" />
+    <!-- VPK and KeyValues readers used by asset validation and VMAP tooling. -->
+    <PackageReference Include="ValvePak" Version="5.0.2.177" />
+    <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
 
-    <!--
-      Datamodel (DMX) reader/writer for the uncompiled .vmap graph used by the
-      post-import Vmap/ tools (collapse prefabs, skybox template) — the same
-      package VRF uses for .vmap serialization. KeyValues2 0.8.0 targets net9.0
-      (NOT net10), so unlike the ValveKeyValue/ValvePak pins above it is
-      compatible with the current net9 TFM and does not gate on the net10 SDK.
-    -->
+    <!-- Datamodel (DMX) reader/writer for the uncompiled VMAP graph. -->
     <PackageReference Include="KeyValues2" Version="0.8.0" />
 
-    <!--
-      Reads the Steam install path from the registry to auto-detect the CS2
-      install (Cs2InstallLocator). The registry APIs ship in the Windows
-      desktop targeting pack only, so the net9.0 (non -windows) TFM needs this
-      compat package. 5.0.0 is the last standalone release (netstandard2.0).
-    -->
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

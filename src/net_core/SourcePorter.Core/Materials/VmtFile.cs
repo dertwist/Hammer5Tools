@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 namespace SourcePorter.Core.Materials;
@@ -16,6 +17,7 @@ namespace SourcePorter.Core.Materials;
 /// </summary>
 public sealed class VmtFile
 {
+    private static readonly Regex BareFraction = new(@"(?<![\w.])([+-]?)\.(\d+)(?![\w.])", RegexOptions.Compiled);
     private readonly Dictionary<string, string> _kv = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The resolved shader name, lower-cased (e.g. <c>lightmappedgeneric</c>).</summary>
@@ -61,12 +63,13 @@ public sealed class VmtFile
     /// drives <see cref="IsToolMaterial"/>.</summary>
     public static VmtFile Parse(string text, Func<string, string?>? includeResolver = null, string? sourcePath = null)
     {
-        var root = Deserialize(text);
+        var document = Deserialize(text);
         var vmt = new VmtFile { SourcePath = sourcePath };
-        if (root is null)
+        if (document is null)
             return vmt;
 
-        var shader = NormalizeShader(root.Name);
+        var root = document.Root;
+        var shader = NormalizeShader(document.Name);
 
         // A "patch" material is a thin override of an included base material.
         if (shader == "patch")
@@ -116,13 +119,13 @@ public sealed class VmtFile
         }
     }
 
-    private static void AddScalar(Dictionary<string, string> kv, KVObject entry)
+    private static void AddScalar(Dictionary<string, string> kv, KeyValuePair<string, KVObject> entry)
     {
         // Skip nested blocks (proxies, DirectX-level subkeys, etc.) — the mapping is scalar-only.
         if (entry.Value.ValueType == KVValueType.Collection)
             return;
 
-        var key = entry.Name.ToLowerInvariant();
+        var key = entry.Key.ToLowerInvariant();
 
         // "?$key" platform-conditional keys keep only the key after '?'.
         var q = key.IndexOf('?');
@@ -146,11 +149,12 @@ public sealed class VmtFile
         return s;
     }
 
-    private static KVObject? Deserialize(string text)
+    private static KVDocument? Deserialize(string text)
     {
         try
         {
-            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
+            var normalized = BareFraction.Replace(text, "${1}0.${2}");
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(normalized));
             return KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream);
         }
         catch (Exception ex) when (ex is KeyValueException or IOException or InvalidDataException)
@@ -161,21 +165,21 @@ public sealed class VmtFile
 
     private static KVObject? FindChild(KVObject parent, string name)
     {
-        if (parent.Value.ValueType != KVValueType.Collection)
+        if (parent.ValueType != KVValueType.Collection)
             return null;
-        foreach (var child in parent)
-            if (string.Equals(child.Name, name, StringComparison.OrdinalIgnoreCase))
-                return child;
+        foreach (var (key, value) in parent)
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                return value;
         return null;
     }
 
     private static string? ScalarValue(KVObject parent, string name)
     {
         var child = FindChild(parent, name);
-        if (child is null && parent.Value.ValueType == KVValueType.Collection)
-            foreach (var c in parent)
-                if (string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase) && c.Value.ValueType != KVValueType.Collection)
-                    return c.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return child?.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (child is null && parent.ValueType == KVValueType.Collection)
+            foreach (var (key, value) in parent)
+                if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase) && value.ValueType != KVValueType.Collection)
+                    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return child?.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 }

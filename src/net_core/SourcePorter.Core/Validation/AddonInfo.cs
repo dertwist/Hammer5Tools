@@ -1,5 +1,5 @@
-using ValveKeyValue;
 using System.Linq;
+using ValveKeyValue;
 
 namespace SourcePorter.Core.Validation;
 
@@ -16,12 +16,12 @@ public static class AddonInfo
 
             using var stream = File.OpenRead(addonInfoPath);
             var serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
-            var root = serializer.Deserialize(stream);
-            if (root is null)
-                return null;
+            var root = serializer.Deserialize(stream).Root;
+            foreach (var (key, value) in root)
+                if (string.Equals(key, "addontitle", StringComparison.OrdinalIgnoreCase))
+                    return value.ToString();
 
-            var titleChild = root.Children?.FirstOrDefault(c => string.Equals(c.Name, "addontitle", StringComparison.OrdinalIgnoreCase));
-            return titleChild?.Value?.ToString();
+            return null;
         }
         catch
         {

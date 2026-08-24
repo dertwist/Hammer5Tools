@@ -60,7 +60,7 @@ public sealed partial class LogCompactor
                 case "vmat": yield return $"  Ported {name}.vmat"; break;
                 case "vmdl": yield return $"  Ported {name}.vmdl"; break;
                 case "vmap": yield return $"  Imported map {name}.vmap"; break;
-                // tga / psd / raw: intermediate texture sources — drop.
+                    // tga / psd / raw: intermediate texture sources — drop.
             }
             yield break;
         }
