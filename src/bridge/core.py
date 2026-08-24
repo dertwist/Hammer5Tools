@@ -61,6 +61,52 @@ class UnrealMapWriteResult:
 
 
 @dataclass(frozen=True)
+class CompiledTextureData:
+    width: int
+    height: int
+    rgba: bytes
+
+
+@dataclass(frozen=True)
+class CompiledMaterialData:
+    name: str
+    textures: tuple[CompiledTextureData | None, ...]
+    base_color_factor: tuple[float, ...]
+    metallic_factor: float
+    roughness_factor: float
+    emissive_factor: tuple[float, ...]
+    alpha_mode: str
+    alpha_cutoff: float
+    double_sided: bool
+    wrap_u: int
+    wrap_v: int
+    uv_set: int
+    uv_scale: tuple[float, ...]
+    uv_offset: tuple[float, ...]
+    uv_center: tuple[float, ...]
+    uv_rotation: float
+
+
+@dataclass(frozen=True)
+class CompiledSubMeshData:
+    index_offset: int
+    index_count: int
+    material: CompiledMaterialData
+
+
+@dataclass(frozen=True)
+class CompiledModelData:
+    vertices: tuple[float, ...]
+    normals: tuple[float, ...]
+    uvs: tuple[float, ...]
+    indices: tuple[int, ...]
+    bounds_minimum: tuple[float, ...]
+    bounds_maximum: tuple[float, ...]
+    submeshes: tuple[CompiledSubMeshData, ...]
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ValveMapEntity:
     """Python-native entity projected from an uncompiled Valve map."""
 
@@ -281,6 +327,54 @@ class CoreBridge:
             int(value.EncodingVersion),
             diagnostics,
         )
+
+    def read_compiled_model(self, game_directory: str, active_addon: str, resource_path: str,
+                            *, context_addon: str | None = None, maximum_texture_dimension: int = 1024,
+                            base_color_only: bool = False, skin: int = 0) -> CompiledModelData | None:
+        """Reads a compiled model into Python-native immutable data."""
+        self._ensure_loaded()
+        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledModelReader")
+        import System
+        reader = System.Activator.CreateInstance(reader_type, game_directory, active_addon)
+        result = reader.Read(resource_path, context_addon, maximum_texture_dimension, base_color_only, skin)
+        if not bool(result.IsSuccess) or result.Value is None:
+            return None
+        model = result.Value
+        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        return CompiledModelData(
+            tuple(float(value) for value in model.Vertices), tuple(float(value) for value in model.Normals),
+            tuple(float(value) for value in model.Uvs), tuple(int(value) for value in model.Indices),
+            self._vector(model.BoundsMinimum, 3), self._vector(model.BoundsMaximum, 3),
+            tuple(CompiledSubMeshData(int(item.IndexOffset), int(item.IndexCount), self._compiled_material(item.Material))
+                  for item in model.SubMeshes), diagnostics)
+
+    def read_compiled_model_material_groups(self, game_directory: str, active_addon: str,
+                                            resource_path: str, context_addon: str | None = None) -> tuple[str, ...]:
+        self._ensure_loaded()
+        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledModelReader")
+        import System
+        reader = System.Activator.CreateInstance(reader_type, game_directory, active_addon)
+        result = reader.ReadMaterialGroups(resource_path, context_addon)
+        return tuple(str(value) for value in result.Value) if bool(result.IsSuccess) else ()
+
+    @classmethod
+    def _compiled_material(cls, material) -> CompiledMaterialData:
+        return CompiledMaterialData(
+            str(material.Name), tuple(cls._compiled_texture(getattr(material, name)) for name in
+                                      ("BaseColor", "Normal", "MetallicRoughness", "AmbientOcclusion", "Emissive")),
+            cls._vector(material.BaseColorFactor, 4), float(material.MetallicFactor), float(material.RoughnessFactor),
+            cls._vector(material.EmissiveFactor, 3), str(material.AlphaMode), float(material.AlphaCutoff),
+            bool(material.DoubleSided), int(material.WrapU), int(material.WrapV), int(material.UvSet),
+            cls._vector(material.UvScale, 2), cls._vector(material.UvOffset, 2),
+            cls._vector(material.UvCenter, 2), float(material.UvRotation))
+
+    @staticmethod
+    def _compiled_texture(texture) -> CompiledTextureData | None:
+        return None if texture is None else CompiledTextureData(int(texture.Width), int(texture.Height), bytes(texture.Rgba))
+
+    @staticmethod
+    def _vector(value, count: int) -> tuple[float, ...]:
+        return tuple(float(getattr(value, component)) for component in "XYZW"[:count])
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:
