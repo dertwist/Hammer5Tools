@@ -7,4 +7,5 @@ public sealed record ValveMapDocument(
     string Path,
     ValveMapNode World,
     IReadOnlyList<ValveMapNode> Nodes,
-    IReadOnlyList<ValveMapEntity> Entities);
+    IReadOnlyList<ValveMapEntity> Entities,
+    IReadOnlyList<string> AssetReferences);

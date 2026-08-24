@@ -58,6 +58,7 @@ class ValveMapDocument:
 
     path: str
     entities: tuple[ValveMapEntity, ...]
+    asset_references: tuple[str, ...]
 
 
 class CoreBridge:
@@ -196,7 +197,8 @@ class CoreBridge:
         reader = System.Activator.CreateInstance(reader_type)
         document = reader.Read(path)
         entities = tuple(self._convert_valve_map_entity(entity) for entity in document.Entities)
-        return ValveMapDocument(str(document.Path), entities)
+        asset_references = tuple(str(reference) for reference in document.AssetReferences)
+        return ValveMapDocument(str(document.Path), entities, asset_references)
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:

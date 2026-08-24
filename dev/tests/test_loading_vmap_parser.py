@@ -18,6 +18,7 @@ def test_parse_returns_point_camera_presentation_data(monkeypatch):
             ),
             ValveMapEntity("light_environment", None, None, {}),
         ),
+        (),
     )
 
     class FakeBridge:

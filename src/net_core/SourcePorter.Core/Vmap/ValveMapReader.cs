@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.Numerics;
 
@@ -20,7 +21,8 @@ public sealed class ValveMapReader : IValveMapReader
         var world = ConvertNode(document.World);
         var nodes = Traverse(world).ToArray();
         var entities = ReadEntities(world).ToArray();
-        return new ValveMapDocument(document.Path, world, nodes, entities);
+        var assetReferences = ReadAssetReferences(document.Model).ToArray();
+        return new ValveMapDocument(document.Path, world, nodes, entities, assetReferences);
     }
 
     private static ValveMapNode ConvertNode(Element element)
@@ -88,6 +90,24 @@ public sealed class ValveMapReader : IValveMapReader
                 node.Properties.GetValueOrDefault("origin"),
                 node.Properties.GetValueOrDefault("angles"),
                 entityProperties.Properties);
+        }
+    }
+
+    private static IEnumerable<string> ReadAssetReferences(Datamodel.Datamodel model)
+    {
+        if (!model.PrefixAttributes.TryGetValue("map_asset_references", out var value)
+            || value is string
+            || value is not IEnumerable references)
+        {
+            yield break;
+        }
+
+        foreach (var reference in references)
+        {
+            if (reference is not null)
+            {
+                yield return reference.ToString() ?? string.Empty;
+            }
         }
     }
 }

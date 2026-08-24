@@ -30,6 +30,7 @@ public sealed class ValveMapReaderTests
             Assert.Equal("point_camera", projectedEntity.ClassName);
             Assert.Equal("1 2 3", projectedEntity.Origin);
             Assert.Equal("camera", projectedEntity.Properties["targetname"]);
+            Assert.Equal(["materials/example.vmat", "models/example.vmdl"], result.AssetReferences);
             Assert.Equal(timestamp, File.GetLastWriteTimeUtc(path));
         }
         finally
@@ -41,6 +42,11 @@ public sealed class ValveMapReaderTests
     private static void WriteMap(string path)
     {
         var model = new DM("vmap", 29);
+        model.PrefixAttributes["map_asset_references"] = new[]
+        {
+            "materials/example.vmat",
+            "models/example.vmdl",
+        };
         var root = new Element(model, "", null, "CMapRootElement");
         model.Root = root;
         var world = new Element(model, "", null, "CMapWorld");
