@@ -16,6 +16,8 @@ def test_launcher_roots_are_authoritative(monkeypatch, tmp_path):
     assert paths.app_root == (install / "application").resolve()
     assert paths.runtime_root == (install / "application" / "runtime").resolve()
     assert paths.user_data_root == (tmp_path / "data").resolve()
+    assert paths.runtime_resource("tools", "tool.exe") == paths.runtime_root / "tools" / "tool.exe"
+    assert paths.application_resource("icon.ico") == paths.app_root / "icon.ico"
 
 
 def test_development_roots_keep_mutable_data_out_of_source_package(monkeypatch):

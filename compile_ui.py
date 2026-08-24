@@ -6,7 +6,7 @@ from typing import List
 from tqdm import tqdm
 from threading import Lock
 
-IGNORED_FOLDERS = ["venv", "__pycache__"]
+IGNORED_FOLDERS = ["venv", "__pycache__", "build", "dist"]
 
 
 def compile_ui(ui_file: str, out_file: str) -> None:
@@ -51,7 +51,10 @@ def main(directory: str) -> None:
         print(f"'{directory}' does not exist.")
         sys.exit(1)
 
-    ui_files = find_ui_files(directory)
+    source_directory = os.path.join(directory, "src")
+    if not os.path.isdir(source_directory):
+        source_directory = directory
+    ui_files = find_ui_files(source_directory)
     if not ui_files:
         print("No .ui files found.")
         return
@@ -80,12 +83,9 @@ def main(directory: str) -> None:
     print("All .ui files compiled successfully.")
 
     # Compile resources.qrc if present in the directory
-    directory_root = os.path.join(directory)
-    directory = os.path.join(directory_root, 'src')
-
-    qrc_path = os.path.join(directory, "resources.qrc")
+    qrc_path = os.path.join(source_directory, "resources.qrc")
     if os.path.isfile(qrc_path):
-        out_rc = os.path.join(directory, 'resources_rc.py')
+        out_rc = os.path.join(source_directory, 'resources_rc.py')
         compile_qrc(qrc_path, out_rc)
 
 if __name__ == "__main__":

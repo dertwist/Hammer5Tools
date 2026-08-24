@@ -56,7 +56,8 @@ def _version_txt() -> list[str]:
     """
     try:
         if getattr(sys, 'frozen', False):
-            vtxt = Path(sys.executable).parent / 'version.txt'
+            from src.runtime_paths import resolve_runtime_paths
+            vtxt = resolve_runtime_paths().install_root / 'version.txt'
             if vtxt.exists():
                 return [l.strip() for l in vtxt.read_text(encoding='utf-8-sig').splitlines()]
     except Exception:
@@ -218,14 +219,10 @@ SmartPropEditor_User_Preset_Path = SmartPropEditor_Preset_Path
 
 # Bundled presets (read-only, updated with app)
 if getattr(sys, 'frozen', False):
-    # PyInstaller bundles defaults into sys._MEIPASS/defaults
-    meipass = getattr(sys, '_MEIPASS', None)
-    if meipass:
-        internal_base = Path(meipass) / "defaults"
-        if not internal_base.exists():
-             internal_base = Path(meipass)
-    else:
-        internal_base = app_dir
+    runtime_paths = resolve_runtime_paths()
+    internal_base = runtime_paths.runtime_resource("defaults")
+    if not internal_base.exists():
+        internal_base = runtime_paths.runtime_root
 else:
     # Dev mode: defaults are in the 'Hammer5Tools' subfolder of the repo root
     internal_base = app_dir / "Hammer5Tools"

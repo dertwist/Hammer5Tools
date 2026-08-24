@@ -75,6 +75,18 @@ jobs:
           }
           Pop-Location
 
+      - name: Validate three-root bundle
+        shell: pwsh
+        run: |
+          $required = @(
+            'Hammer5Tools\Hammer5Tools.exe',
+            'Hammer5Tools\app\Hammer5Tools_Core.exe',
+            'Hammer5Tools\app\runtime'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing packaged runtime path: $path" }
+          }
+
       - name: Read app version
         id: version
         run: |

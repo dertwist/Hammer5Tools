@@ -15,6 +15,14 @@ class RuntimePaths:
     runtime_root: Path
     user_data_root: Path
 
+    def runtime_resource(self, *parts: str) -> Path:
+        """Return a resource inside the immutable bundled runtime."""
+        return self.runtime_root.joinpath(*parts)
+
+    def application_resource(self, *parts: str) -> Path:
+        """Return a resource shipped beside the GUI executable."""
+        return self.app_root.joinpath(*parts)
+
 
 def resolve_runtime_paths() -> RuntimePaths:
     """Resolve launcher-provided roots with safe packaged/development fallbacks."""

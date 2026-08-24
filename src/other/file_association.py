@@ -16,13 +16,12 @@ def get_fileedit_path():
 def get_smartprop_icon_path():
     """Returns the absolute path to smartprop.ico."""
     if getattr(sys, 'frozen', False):
-        # In frozen builds, it should be in the app root or defaults
-        base_dir = Path(sys.executable).parent
-        # Try several common locations
+        paths = resolve_runtime_paths()
         candidates = [
-            base_dir / "app" / "icons" / "smartprop.ico",
-            base_dir / "icons" / "smartprop.ico",
-            base_dir / "defaults" / "icons" / "smartprop.ico"
+            paths.application_resource("icons", "smartprop.ico"),
+            paths.runtime_resource("icons", "smartprop.ico"),
+            paths.runtime_resource("src", "icons", "smartprop.ico"),
+            paths.runtime_resource("defaults", "icons", "smartprop.ico"),
         ]
         for c in candidates:
             if c.exists():
@@ -35,13 +34,12 @@ def get_smartprop_icon_path():
 def get_vsnd_icon_path():
     """Returns the absolute path to vsnd.ico."""
     if getattr(sys, 'frozen', False):
-        # In frozen builds, it should be in the app root or defaults
-        base_dir = Path(sys.executable).parent
-        # Try several common locations
+        paths = resolve_runtime_paths()
         candidates = [
-            base_dir / "app" / "icons" / "vsnd.ico",
-            base_dir / "icons" / "vsnd.ico",
-            base_dir / "defaults" / "icons" / "vsnd.ico"
+            paths.application_resource("icons", "vsnd.ico"),
+            paths.runtime_resource("icons", "vsnd.ico"),
+            paths.runtime_resource("src", "icons", "vsnd.ico"),
+            paths.runtime_resource("defaults", "icons", "vsnd.ico"),
         ]
         for c in candidates:
             if c.exists():

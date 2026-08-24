@@ -291,7 +291,11 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
         '--add-data=src/styles;styles/',
-        '--add-data=Hammer5Tools;defaults/',
+        *[
+            f'--add-data={os.path.join(cur_dir, "Hammer5Tools", folder)};defaults/{folder}'
+            for folder in ('Hotkeys', 'Presets', 'SmartPropEditor', 'SoundEventEditor')
+            if os.path.isdir(os.path.join(cur_dir, 'Hammer5Tools', folder))
+        ],
         '--exclude-module=PyQt5',
         '--exclude-module=numba',
         '--exclude-module=scipy',
@@ -318,6 +322,28 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         ]
     
     subprocess.run(pyinstaller_cmd, check=True)
+
+
+def stage_three_root_bundle(pyi_output: str, bundle_root: str) -> None:
+    """Stage a PyInstaller onedir output under the immutable application root."""
+    source = os.path.realpath(pyi_output)
+    destination_root = os.path.realpath(bundle_root)
+    if not os.path.isdir(source):
+        raise FileNotFoundError(f"PyInstaller output is missing: {source}")
+    if source == destination_root or destination_root.startswith(source + os.sep):
+        raise ValueError("Bundle root must not be inside the PyInstaller output")
+    os.makedirs(destination_root, exist_ok=True)
+    app_root = os.path.join(destination_root, 'app')
+    if os.path.exists(app_root):
+        shutil.rmtree(app_root)
+    try:
+        shutil.move(source, app_root)
+    except Exception:
+        shutil.copytree(source, app_root)
+    executable = os.path.join(app_root, 'Hammer5Tools_Core.exe')
+    runtime = os.path.join(app_root, 'runtime')
+    if not os.path.isfile(executable) or not os.path.isdir(runtime):
+        raise RuntimeError("Staged bundle does not contain app/Hammer5Tools_Core.exe and app/runtime")
 
 
 
@@ -360,12 +386,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     # PyInstaller places its dependency payload under app/runtime.
     pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools_Core')
     if os.path.exists(pyi_output):
-        app_root = os.path.join(bundle_root, 'app')
-        _safe_rmtree(app_root)
-        try:
-            shutil.move(pyi_output, app_root)
-        except Exception:
-            shutil.copytree(pyi_output, app_root)
+        stage_three_root_bundle(pyi_output, bundle_root)
         _safe_rmtree(os.path.join(cur_dir, 'out_hammer5tools'))
 
     # Ensure data folders are present in bundle_root (they should be if it's the source folder)

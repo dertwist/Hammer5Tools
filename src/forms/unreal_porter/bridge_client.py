@@ -66,7 +66,8 @@ def _candidate_bridge_paths():
     yield root / "src" / "external" / "unreal_bridge" / "H5T.UnrealBridge.dll"
     # Frozen (PyInstaller) bundle
     if getattr(sys, "frozen", False):
-        yield Path(sys._MEIPASS) / "unreal_bridge" / "H5T.UnrealBridge.dll"
+        from src.runtime_paths import resolve_runtime_paths
+        yield resolve_runtime_paths().runtime_resource("unreal_bridge", "H5T.UnrealBridge.dll")
 
 
 def find_bridge_dll() -> Optional[str]:

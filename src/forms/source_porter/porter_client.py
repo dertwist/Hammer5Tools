@@ -225,11 +225,11 @@ class PorterThread(QThread):
 
             # Locate bspsrc.exe
             root = Path(__file__).resolve().parents[3]
+            from src.runtime_paths import resolve_runtime_paths
+            runtime_paths = resolve_runtime_paths()
             bspsrc_candidates = [
                 root / "tools" / "bspsrc" / "bspsrc.exe",
-                Path(sys.executable).parent / "tools" / "bspsrc" / "bspsrc.exe",
-                Path(sys.executable).parent / "app" / "tools" / "bspsrc" / "bspsrc.exe",
-                Path(getattr(sys, "_MEIPASS", "")) / "tools" / "bspsrc" / "bspsrc.exe",
+                runtime_paths.runtime_resource("tools", "bspsrc", "bspsrc.exe"),
             ]
             bspsrc_location = None
             for candidate in bspsrc_candidates:

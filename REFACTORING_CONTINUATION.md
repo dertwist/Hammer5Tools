@@ -4,9 +4,9 @@ This document is the restart point for continuing the refactor on another comput
 
 ## Current Status (2026-08-24)
 
-Phases 1 through 4 are complete on the `refactoring` branch. Phase 3 now has Core-owned VMAP rewriting/writing, compiled model/material/texture reading, VPK access, compiled sound decoding, and SoundEvent KV3 extraction. Phase 4 reduced the affected editors to presentation adapters: the SmartProp viewport converts immutable Core buffers to NumPy/OpenGL data, and SoundEvent widgets retain only browsing, playback, caching, dialogs, and export choices. Obsolete GUI sound-decoding helpers were removed from `src/dotnet.py`.
+Phases 1 through 6 are complete on the `refactoring` branch. Phase 3 has Core-owned VMAP and compiled-resource workflows. Phase 4 reduced affected editors to presentation adapters. Phase 5 established the native launcher lifecycle host. Phase 6 established and package-tested the install/application/runtime/userdata layout.
 
-Do not implement Phase 5 from this handoff without first reviewing the launcher boundary below.
+Phases 5 and 6 are complete. Continue with Phase 7 only after reviewing the ownership and runtime boundaries below.
 
 ## Resume State
 
@@ -314,7 +314,7 @@ The full `net_core.sln` currently includes `UnrealBridge`, whose build requires 
 - Dead `decode_vsnd` and `extract_vsnd_file` compatibility functions were removed from `src/dotnet.py`.
 - Core ownership and bridge APIs are documented in `ARCHITECTURE.md`.
 
-## Phase 5: Planned C++ Launcher Changes
+## Phase 5: Complete — C++ Launcher
 
 Phase 5 will refactor the existing `launcher/` into a deliberately small Windows lifecycle host. It must not absorb editor or domain behavior.
 
@@ -328,25 +328,32 @@ Phase 5 will refactor the existing `launcher/` into a deliberately small Windows
 
 Phase 5 exit criterion: one native process owns startup, single-instance handoff, early crash reporting, and update startup; the Python GUI owns all windows and application behavior and can still be run directly in development.
 
-### Phase 5 Progress
+### Phase 5 Result
 
 - Added launcher protocol version 1 with normalized commands, target paths, working directory, and original arguments.
 - Added native process-lifetime instance arbitration, retrying request forwarding, and abandoned-instance recovery.
 - The launcher now supervises the GUI, propagates exit codes, detects IPC readiness, and logs/displays early startup failures.
 - Installer hooks remain native; update discovery and UI remain in Python.
 - Python skips its duplicate preflight only when explicitly launched by the native host, while direct development startup remains compatible.
-- Added native contract tests and Python protocol compatibility tests.
+- Added native contract tests, a real process-level named-pipe forwarding test, and Python protocol compatibility tests.
+- Added supervised restart through exit code 75 and deterministic normal-shutdown exit propagation.
+- Validated packaged GUI bootstrap (`--help`) and native installer-hook execution from the installed layout.
+- A separate control pipe is unnecessary: child process state provides failure status and named-pipe availability is the readiness boundary.
 
-Remaining Phase 5 work is packaged end-to-end smoke testing, concurrent-process integration coverage, and deciding whether a dedicated ready/failed control pipe is needed beyond process/IPC readiness monitoring.
+Phase 5 exit criterion is satisfied: the native process owns startup, instance arbitration, forwarding, early failure reporting, restart, installer hooks, and child supervision while Python owns all windows and application behavior.
 
-## Phase 6: Started
+## Phase 6: Complete — Runtime Layout and Shipping
 
 - Added a centralized install/application/runtime/userdata path contract in `src/runtime_paths.py`.
 - Packaging now stages the immutable GUI in `app/`, with PyInstaller dependencies in `app/runtime/`; the launcher remains at the install root and user data remains in `userdata/`.
 - File associations resolve the launcher from the install root rather than assuming it is beside the frozen Python executable.
 - Environment-provided roots are covered by regression tests, with a repository-local development fallback.
+- Migrated bundled .NET, Core assemblies, Unreal bridge, BSP tool, UE export script, defaults, version, icons, and file associations onto the root contract. `_MEIPASS` remains only inside the centralized frozen fallback.
+- CI validates the three required shipping paths before Velopack packaging.
+- Repeated full development package builds pass without recursively ingesting prior package output; UI compilation is source-scoped and defaults are explicitly staged.
+- Packaged launcher bootstrap and installer hooks pass locally with exit code 0.
 
-Remaining Phase 6 work includes a full packaged migration test, auditing remaining `sys._MEIPASS` and executable-relative lookups onto the root contract, shipping/update migration compatibility, and completing supervised shutdown/restart behavior.
+Phase 6 exit criterion is satisfied: shipping has distinct launcher/install, immutable application/runtime, and mutable user-data roots; package/update entry points use that layout; and the GUI lifecycle is supervised.
 
 After Phase 5, continue with Phase 6 (three-root structure, shipping, and supervised GUI lifecycle), Phase 7 (cross-language naming/style), and Phase 8 (NativeAOT transport replacing Python.NET).
 

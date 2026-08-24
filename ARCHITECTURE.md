@@ -14,6 +14,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`Hammer5Tools.exe`**: Installed entry point. It handles installer hooks, owns the process-lifetime instance mutex, forwards versioned requests to the GUI IPC server, supervises `app/Hammer5Tools_Core.exe`, and reports startup failures.
 - **`request.hpp` / `request.cpp`**: UI-neutral launcher protocol parsing, Windows argument quoting, path normalization, and JSON serialization. Protocol version 1 carries command, target file, editor type, original arguments, and working directory.
 - Direct `src/main.py` startup remains supported for development. When `H5T_LAUNCHER_OWNS_INSTANCE=1`, Python skips duplicate instance arbitration but still owns the IPC server and all request handling.
+- Exit code `75` is the supervised restart contract. The launcher starts a clean GUI process without replaying the original open/quick-action arguments; all other child exit codes are propagated.
 
 ### Application Orchestrator (`src/app_core.py`)
 - **`AppCore` Class** (`QMainWindow`): Primary application controller managing main UI state, docking layouts, local IPC server, system tray icon, file watching, and standalone editor instances.
@@ -132,6 +133,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **Application root**: Immutable packaged GUI payload under `app/`.
 - **Runtime root**: PyInstaller and bundled dependency payload under `app/runtime/`.
 - The launcher exports these roots through `H5T_INSTALL_ROOT`, `H5T_APP_ROOT`, `H5T_RUNTIME_ROOT`, and `H5T_USER_DATA_ROOT`. Development startup resolves all code roots to the repository and uses `userdata_dev/`.
+- Bundled .NET, SourcePorter, Unreal bridge, BSP, UE export, defaults, version, icon, and file-association lookups resolve through this contract. Direct `_MEIPASS` access is isolated to the frozen fallback inside `runtime_paths.py`.
 
 ### Auto-Updater (`src/updater/`)
 - **`check_updates()`**: Asynchronous update checker using Velopack package releases.

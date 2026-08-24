@@ -92,6 +92,7 @@ class DotNetPaths:
 
         # Search SourcePorter.Core publish output or local base directory
         net_core = Path(__file__).parent / 'net_core'
+        from src.runtime_paths import resolve_runtime_paths
         candidates = [
             net_core / 'SourcePorter.Core' / 'publish' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
@@ -101,7 +102,7 @@ class DotNetPaths:
             net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'SourcePorter.Core.dll',
             base_dir / 'SourcePorter.Core.dll',
-            Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'SourcePorter.Core.dll',
+            resolve_runtime_paths().runtime_resource('source_porter', 'SourcePorter.Core.dll'),
         ]
         existing = [c for c in candidates if c.is_file()]
         if existing:
@@ -114,13 +115,14 @@ class DotNetPaths:
             return Path(env)
 
         net_core = Path(__file__).parent / 'net_core'
+        from src.runtime_paths import resolve_runtime_paths
         candidates = [
             net_core / 'SourcePorter.Core' / 'publish' / 'Hammer5Tools.Core.dll',
             net_core / 'Hammer5Tools.Core' / 'publish' / 'Hammer5Tools.Core.dll',
             net_core / 'Hammer5Tools.Core' / 'bin' / 'Release' / 'Hammer5Tools.Core.dll',
             net_core / 'Hammer5Tools.Core' / 'bin' / 'Debug' / 'Hammer5Tools.Core.dll',
             base_dir / 'Hammer5Tools.Core.dll',
-            Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'Hammer5Tools.Core.dll',
+            resolve_runtime_paths().runtime_resource('source_porter', 'Hammer5Tools.Core.dll'),
         ]
         existing = [candidate for candidate in candidates if candidate.is_file()]
         if existing:
@@ -149,7 +151,8 @@ class DotNetInterop:
 
             # Check for bundled runtime in frozen (PyInstaller) state
             if getattr(sys, 'frozen', False):
-                bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
+                from src.runtime_paths import resolve_runtime_paths
+                bundled_dotnet = str(resolve_runtime_paths().runtime_resource('dotnet'))
                 if os.path.exists(bundled_dotnet):
                     # Set DOTNET_ROOT to help clr_loader find the bundled runtime
                     os.environ["DOTNET_ROOT"] = bundled_dotnet
@@ -511,7 +514,8 @@ class DotNetRuntimeChecker:
         """Check if compatible .NET runtime is installed."""
         # 1. Check for bundled runtime first (in frozen state)
         if getattr(sys, 'frozen', False):
-            bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
+            from src.runtime_paths import resolve_runtime_paths
+            bundled_dotnet = str(resolve_runtime_paths().runtime_resource('dotnet'))
             if self._bundled_runtime_is_complete(bundled_dotnet):
                 return True
 

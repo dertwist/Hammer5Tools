@@ -12,7 +12,13 @@ import glob
 import subprocess
 from pathlib import Path
 
-_EXPORT_SCRIPT = Path(__file__).resolve().parents[3] / "tools" / "ue_scripts" / "export_assets.py"
+from src.runtime_paths import resolve_runtime_paths
+
+
+def _export_script() -> Path:
+    paths = resolve_runtime_paths()
+    bundled = paths.runtime_resource("tools", "ue_scripts", "export_assets.py")
+    return bundled if bundled.is_file() else paths.install_root / "tools" / "ue_scripts" / "export_assets.py"
 
 
 class UeExportError(RuntimeError):
@@ -79,9 +85,10 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     if not output_dir:
         raise UeExportError("An output folder is required.")
 
-    if not _EXPORT_SCRIPT.is_file():
+    export_script = _export_script()
+    if not export_script.is_file():
         raise UeExportError(
-            f"Export script missing: {_EXPORT_SCRIPT}\nThe build is incomplete — reinstall Hammer5Tools."
+            f"Export script missing: {export_script}\nThe build is incomplete — reinstall Hammer5Tools."
         )
 
     editor_cmd = find_editor_cmd(engine_root)
@@ -97,7 +104,7 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
 
     cmd = [
         editor_cmd, uproject,
-        "-run=pythonscript", f"-script={_EXPORT_SCRIPT}",
+        "-run=pythonscript", f"-script={export_script}",
         "-unattended", "-nopause", "-nosplash", "-log",
     ]
     output_lines = []
