@@ -103,12 +103,14 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`CoreBridge.evaluate_smartprop()`**: Converts editor document dictionaries and nested document graphs to Core input and returns Python-native evaluated models and diagnostics. These VRF-produced placements are authoritative; Python retains only editor handles, gizmo interaction, path drawing, and element-dot presentation.
 - **`CoreBridge.serialize_smartprop()`**: Sends editor document snapshots to the Core-owned VRF KV3 serializer.
 - **`CoreBridge.read_valve_map()`**: Loads the SourcePorter implementation of the shared VMAP reader and returns Python-native nodes, entities, asset references, and preview thumbnails. Loading Screen, Cleanup, Create Addon, and SmartProp hierarchy import consume this API instead of loading KeyValues2 or traversing Datamodel objects directly.
+- **`CoreBridge.rewrite_vmap_references()`**: Rewrites VMAP body and prefix asset-reference paths through SourcePorter Core and returns a Python-native changed/diagnostics result. Asset Manager uses this API instead of loading Datamodel objects directly.
 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
 - **`CoreResult<T>` / `CoreDiagnostic`**: Typed operation-result and diagnostic contracts shared by future Core features.
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.
 - **`Vmap.IValveMapReader` / `ValveMapDocument` / `ValveMapNode`**: Shared UI-neutral, read-only VMAP contracts. `SourcePorter.Core.Vmap.ValveMapReader` implements them by projecting the existing authoritative `VmapDocument`; consumers must not introduce another VMAP parser.
+- **`VmapReferenceRewriter`**: Rewrites string paths in the authoritative VMAP document and preserves the binary DMX prefix block, including `map_asset_references`, when saving.
 - **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution for the staged SmartProp migration.
 - **`SmartProps.SmartPropEvaluator`**: Converts uncompiled editor document data to VRF evaluation input and maps placed models to Hammer5Tools-owned results and diagnostics.
 - **`SmartProps.SmartPropDocumentSerializer`**: Serializes editor document data with VRF's public KeyValues3 writer; serializer output is parsed and evaluated in Core round-trip tests.

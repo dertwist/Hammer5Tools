@@ -43,6 +43,14 @@ class SmartPropEvaluation:
 
 
 @dataclass(frozen=True)
+class VmapRewriteResult:
+    """Python-native result of rewriting VMAP asset references."""
+
+    changed: bool
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ValveMapEntity:
     """Python-native entity projected from an uncompiled Valve map."""
 
@@ -225,6 +233,22 @@ class CoreBridge:
             thumbnail,
             thumbnail_format,
         )
+
+    def rewrite_vmap_references(self, path: str, renames: Mapping[str, str]) -> VmapRewriteResult:
+        """Rewrites VMAP body and prefix references through SourcePorter Core."""
+        assembly = self._ensure_source_porter_loaded()
+        rewriter_type = assembly.GetType("SourcePorter.Core.Vmap.VmapReferenceRewriter")
+        if rewriter_type is None:
+            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.VmapReferenceRewriter")
+
+        from System.Collections.Generic import Dictionary
+
+        native_renames = Dictionary[str, str]()
+        for old_path, new_path in renames.items():
+            native_renames.Add(old_path, new_path)
+        result = rewriter_type.GetMethod("Rewrite").Invoke(None, [path, native_renames])
+        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        return VmapRewriteResult(bool(result.Value), diagnostics)
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:

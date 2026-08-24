@@ -95,6 +95,7 @@ Phase 3 is in progress. Do not mark it complete until its exit criterion is true
 - Migrated SmartProp “Import VMAP into hierarchy” to Python-native Core node projections.
 - Added Core VPK entry enumeration and migrated Model Browser VPK scanning.
 - Removed the replaced Python VMAP readers from `src/dotnet.py`.
+- Moved Asset Manager VMAP reference rewriting into `SourcePorter.Core.Vmap.VmapReferenceRewriter`, including prefix-safe output and Python-native bridge diagnostics.
 
 Key commits:
 
@@ -112,6 +113,8 @@ fa88844e refactor(resources): route VPK scans through core
 Complete Phase 3 in the following order. Keep each item as a focused Conventional Commit.
 
 ### 1. Asset Manager VMAP Reference Writer
+
+Completed in this continuation slice. The remaining items below are still pending.
 
 Current direct dependency:
 
@@ -239,7 +242,7 @@ Everything else should be removed or explicitly justified in `ARCHITECTURE.md`.
 
 ## Phase 3 Exit Checklist
 
-- [ ] Asset Manager VMAP reference rewriting is Core-owned and prefix-safe.
+- [x] Asset Manager VMAP reference rewriting is Core-owned and prefix-safe.
 - [ ] Unreal Porter VMAP writing is Core-owned and fixture-tested.
 - [ ] SmartProp viewport model/material/texture parsing is Core-owned.
 - [ ] SoundEvent compiled resource extraction is Core-owned.
