@@ -157,6 +157,14 @@ class CoreBridge:
             json.dumps(document, separators=(",", ":")),
         ))
 
+    def deserialize_smartprop(self, text: str) -> dict:
+        """Parses KeyValues3 SmartProp text into a Python-native document."""
+        self._ensure_loaded()
+
+        from Hammer5Tools.Core.SmartProps import SmartPropDocumentSerializer
+
+        return json.loads(str(SmartPropDocumentSerializer.DeserializeText(text)))
+
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:
         matrix = model.Transform

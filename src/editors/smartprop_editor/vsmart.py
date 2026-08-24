@@ -252,7 +252,11 @@ class VsmartOpen:
         """Open file data, restore references, and populate tree and choices."""
         data = self.load_file(self.filename)
         data = self.fix_format(data)
-        data = Kv3ToJson(data)
+        try:
+            from src.bridge import CoreBridge
+            data = CoreBridge.instance().deserialize_smartprop(data)
+        except Exception:
+            data = Kv3ToJson(data)
         debug(f"Loaded data:\n{data}")
         restore_reference_objects(data)
         self.variables = data.get("m_Variables", None)

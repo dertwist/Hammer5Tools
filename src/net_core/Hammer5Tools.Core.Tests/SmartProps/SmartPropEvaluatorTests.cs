@@ -55,10 +55,12 @@ public sealed class SmartPropEvaluatorTests
             """;
 
         var text = SmartPropDocumentSerializer.SerializeJson(json);
+        var roundTripJson = SmartPropDocumentSerializer.DeserializeText(text);
         var result = SmartPropEvaluator.EvaluateText(text);
 
         await Assert.That(text).Contains("CSmartPropRoot");
         await Assert.That(text).Contains("_class");
+        await Assert.That(roundTripJson).Contains("models/roundtrip.vmdl");
         await Assert.That(result.Diagnostics).IsEmpty();
         await Assert.That(result.Models).Count().IsEqualTo(1);
         await Assert.That(result.Models[0].ElementId).IsEqualTo(9);

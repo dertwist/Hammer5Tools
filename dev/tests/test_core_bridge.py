@@ -114,6 +114,26 @@ def test_smartprop_serializer_uses_python_native_document(monkeypatch):
     assert captured["json"] == '{"m_Children":[]}'
 
 
+def test_smartprop_deserializer_returns_python_native_document(monkeypatch):
+    class FakeSerializer:
+        @staticmethod
+        def DeserializeText(value):
+            assert value == "<!-- kv3 -->"
+            return '{"m_Children":[]}'
+
+    bridge = CoreBridge(FakeInterop())
+    bridge._assembly = object()
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "Hammer5Tools.Core.SmartProps",
+        SimpleNamespace(SmartPropDocumentSerializer=FakeSerializer),
+    )
+
+    document = bridge.deserialize_smartprop("<!-- kv3 -->")
+
+    assert document == {"m_Children": []}
+
+
 class FakeVpkIndex:
     def __init__(self):
         self.PackageCount = 0
