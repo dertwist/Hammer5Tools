@@ -100,7 +100,8 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once, translates load failures, and exposes a read-only contract probe.
 - **`VpkIndex`**: Python-native disposable wrapper for Core VPK and loose-file lookup; UI code must use this instead of direct ValvePak imports.
 - **`CoreBridge.evaluate_smartprop_expression()`**: Python-native SmartProp expression entry point; Core namespaces remain inside the bridge.
-- **`CoreBridge.evaluate_smartprop()`**: Converts editor document dictionaries to Core input and returns Python-native evaluated models and diagnostics.
+- **`CoreBridge.evaluate_smartprop()`**: Converts editor document dictionaries to Core input and returns Python-native evaluated models and diagnostics. The SmartProp viewport uses these VRF-produced model placements while retaining Python only for editor handles, nested-file resolution, and compatibility fallback.
+- **`CoreBridge.serialize_smartprop()`**: Sends editor document snapshots to the Core-owned VRF KV3 serializer.
 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
@@ -108,6 +109,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.
 - **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution for the staged SmartProp migration.
 - **`SmartProps.SmartPropEvaluator`**: Converts uncompiled editor document data to VRF evaluation input and maps placed models to Hammer5Tools-owned results and diagnostics.
+- **`SmartProps.SmartPropDocumentSerializer`**: Serializes editor document data with VRF's public KeyValues3 writer; serializer output is parsed and evaluated in Core round-trip tests.
 - **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project src/net_core/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.
 
 ### Auto-Updater (`src/updater/`)

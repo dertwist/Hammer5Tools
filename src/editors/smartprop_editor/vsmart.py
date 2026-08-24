@@ -369,7 +369,7 @@ class VsmartOpen:
                 self.fix_names(child_item)
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None, content_version=None):
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None, content_version=None, write_file=True):
         self.filename = filename
         self.tree = tree
         self.variables_layout = variables_layout
@@ -378,7 +378,9 @@ class VsmartSave:
         self.var_data = self.save_variables()
         self.content_version = content_version
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
-        self.save_file()
+        self.document_data = self.build_document()
+        if write_file:
+            self.save_file()
 
     def get_variables(self, layout, only_names=False):
         if layout is None:
@@ -483,8 +485,8 @@ class VsmartSave:
             variables_.append(var_dict)
         return variables_
 
-    def save_file(self):
-        """Save file while processing references and merging reference objects."""
+    def build_document(self):
+        """Build a JSON-compatible SmartProp document from the editor state."""
         out_data = {"generic_data_type": "CSmartPropRoot", "m_nContentVersion": self.content_version}
         editor_info["editor_info"].update({"m_nElementID": get_ElementID_last()})
         out_data.update(editor_info)
@@ -499,10 +501,21 @@ class VsmartSave:
             out_data["m_ReferenceObjects"] = {}
             for ref_uuid, ref_obj_data in self.ref_objects.items():
                 out_data["m_ReferenceObjects"][ref_uuid] = ref_obj_data
-        if get_settings_bool("SmartPropEditor", "export_properties_in_one_line", True):
-            k3_data = JsonToKv3(out_data, disable_line_value_length_limit_keys=disable_line_value_length_limit_keys)
-        else:
-            k3_data = JsonToKv3(out_data)
+        return out_data
+
+    def save_file(self):
+        """Save the current document through the .NET SmartProp serializer."""
+        out_data = self.document_data
+        try:
+            from src.bridge import CoreBridge
+            k3_data = CoreBridge.instance().serialize_smartprop(out_data)
+        except Exception:
+            # Keep saving available on systems where the optional .NET runtime
+            # cannot be initialized; packaging normally provides the Core.
+            if get_settings_bool("SmartPropEditor", "export_properties_in_one_line", True):
+                k3_data = JsonToKv3(out_data, disable_line_value_length_limit_keys=disable_line_value_length_limit_keys)
+            else:
+                k3_data = JsonToKv3(out_data)
         with open(self.filename, "w") as file:
             file.write(k3_data)
 

@@ -91,6 +91,29 @@ def test_smartprop_models_are_converted_without_core_types():
     )
 
 
+def test_smartprop_serializer_uses_python_native_document(monkeypatch):
+    captured = {}
+
+    class FakeSerializer:
+        @staticmethod
+        def SerializeJson(value):
+            captured["json"] = value
+            return "<!-- kv3 -->"
+
+    bridge = CoreBridge(FakeInterop())
+    bridge._assembly = object()
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "Hammer5Tools.Core.SmartProps",
+        SimpleNamespace(SmartPropDocumentSerializer=FakeSerializer),
+    )
+
+    text = bridge.serialize_smartprop({"m_Children": []})
+
+    assert text == "<!-- kv3 -->"
+    assert captured["json"] == '{"m_Children":[]}'
+
+
 class FakeVpkIndex:
     def __init__(self):
         self.PackageCount = 0

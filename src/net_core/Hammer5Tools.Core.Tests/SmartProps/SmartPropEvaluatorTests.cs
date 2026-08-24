@@ -37,4 +37,31 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Diagnostics).Count().IsEqualTo(1);
         await Assert.That(result.Diagnostics[0].Code).IsEqualTo("smartprop.invalid_json");
     }
+
+    [Test]
+    public async Task SerializedDocumentRoundTripsThroughVrfParser()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [
+                {
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 9,
+                  "m_sModelName": "models/roundtrip.vmdl"
+                }
+              ]
+            }
+            """;
+
+        var text = SmartPropDocumentSerializer.SerializeJson(json);
+        var result = SmartPropEvaluator.EvaluateText(text);
+
+        await Assert.That(text).Contains("CSmartPropRoot");
+        await Assert.That(text).Contains("_class");
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(1);
+        await Assert.That(result.Models[0].ElementId).IsEqualTo(9);
+        await Assert.That(result.Models[0].ModelName).IsEqualTo("models/roundtrip.vmdl");
+    }
 }

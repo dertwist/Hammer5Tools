@@ -1256,6 +1256,19 @@ class SmartPropDocument(QMainWindow):
             QTimer.singleShot(0, self._edited.emit)
 
     # [Save File]
+    def build_smartprop_document(self):
+        """Return the current editor state as a JSON-compatible SmartProp document."""
+        self._flush_choices_widget_if_pending()
+        serializer = VsmartSave(
+            filename="",
+            tree=self.ui.tree_hierarchy_widget,
+            choices_tree=self.ui.choices_tree_widget,
+            variables_layout=self.variable_viewport.ui.variables_scrollArea,
+            content_version=self.content_version_spinbox.value(),
+            write_file=False,
+        )
+        return serializer.document_data
+
     def save_file(self, external=False):
         if external:
             if not self.opened_file:

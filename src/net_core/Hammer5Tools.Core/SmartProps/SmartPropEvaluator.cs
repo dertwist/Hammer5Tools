@@ -1,7 +1,7 @@
 using System.Text.Json;
 
-using ValveKeyValue;
 using ValveResourceFormat.ResourceTypes.SmartProps;
+using ValveResourceFormat.Serialization.KeyValues;
 
 namespace Hammer5Tools.Core.SmartProps;
 
@@ -19,16 +19,7 @@ public static class SmartPropEvaluator
 
         try
         {
-            using var document = JsonDocument.Parse(json);
-            var root = ConvertValue(document.RootElement);
-            var result = SmartPropEvaluation.Evaluate(root);
-            var models = result.Models.Select(model => new EvaluatedSmartPropModel(
-                model.ElementId,
-                model.ModelName,
-                model.Transform,
-                model.MaterialGroup,
-                model.TintColor)).ToArray();
-            return new SmartPropEvaluationResult(models, []);
+            return Evaluate(SmartPropJsonConverter.Convert(json));
         }
         catch (JsonException exception)
         {
@@ -39,37 +30,36 @@ public static class SmartPropEvaluator
         }
     }
 
-    private static KVObject ConvertValue(JsonElement element)
+    /// <summary>
+    /// Evaluates an uncompiled SmartProp document encoded as KeyValues3 text.
+    /// </summary>
+    public static SmartPropEvaluationResult EvaluateText(string text)
     {
-        return element.ValueKind switch
-        {
-            JsonValueKind.Object => ConvertObject(element),
-            JsonValueKind.Array => ConvertArray(element),
-            JsonValueKind.String => new KVObject(element.GetString() ?? string.Empty),
-            JsonValueKind.Number when element.TryGetInt32(out var value) => new KVObject(value),
-            JsonValueKind.Number => new KVObject(element.GetSingle()),
-            JsonValueKind.True => new KVObject(true),
-            JsonValueKind.False => new KVObject(false),
-            _ => new KVObject(string.Empty),
-        };
-    }
+        ArgumentNullException.ThrowIfNull(text);
 
-    private static KVObject ConvertObject(JsonElement element)
-    {
-        var result = KVObject.Collection();
-        foreach (var property in element.EnumerateObject())
+        try
         {
-            var name = property.Name == "_class" ? "generic_data_type" : property.Name;
-            result[name] = ConvertValue(property.Value);
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
+            return Evaluate(KVDocumentExtensions.ParseKV3(stream).Root);
         }
-        return result;
+        catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException)
+        {
+            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+                CoreDiagnosticSeverity.Error,
+                "smartprop.invalid_kv3",
+                exception.Message)]);
+        }
     }
 
-    private static KVObject ConvertArray(JsonElement element)
+    private static SmartPropEvaluationResult Evaluate(ValveKeyValue.KVObject root)
     {
-        var result = KVObject.Array(element.GetArrayLength());
-        foreach (var item in element.EnumerateArray())
-            result.Add(ConvertValue(item));
-        return result;
+        var result = SmartPropEvaluation.Evaluate(root);
+        var models = result.Models.Select(model => new EvaluatedSmartPropModel(
+            model.ElementId,
+            model.ModelName,
+            model.Transform,
+            model.MaterialGroup,
+            model.TintColor)).ToArray();
+        return new SmartPropEvaluationResult(models, []);
     }
 }

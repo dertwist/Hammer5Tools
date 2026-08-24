@@ -31,6 +31,8 @@ from src.editors.smartprop_editor.viewport_3d.shaders import (
     LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER
 )
 
+from src.bridge import CoreBridge
+
 
 def compile_shader(shader_type, source):
     from OpenGL import GL
@@ -1187,6 +1189,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         models_info = []
         self._nested_vsmart_stack = []
         self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
+        models_info = self._apply_core_evaluation(models_info, tree_widget.invisibleRootItem())
 
         self._model_instances = list(models_info)
         for info in models_info:
@@ -1219,6 +1222,77 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.gizmo.hide()
 
         self.update()
+
+    def _apply_core_evaluation(self, fallback_models, root_item):
+        """Apply VRF model placements while retaining UI-only preview handles."""
+        if not hasattr(self.document, "build_smartprop_document"):
+            return fallback_models
+
+        try:
+            result = CoreBridge.instance().evaluate_smartprop(
+                self.document.build_smartprop_document()
+            )
+        except Exception as error:
+            self._warn_unsupported.add(f"Core evaluation unavailable: {error}")
+            return fallback_models
+
+        if result.diagnostics:
+            self._warn_unsupported.update(result.diagnostics)
+            return fallback_models
+
+        data_by_id = {}
+
+        def collect_data(item):
+            for index in range(item.childCount()):
+                child = item.child(index)
+                data = child.data(0, Qt.UserRole)
+                if isinstance(data, dict):
+                    data_by_id[data.get("m_nElementID", 0)] = data
+                collect_data(child)
+
+        collect_data(root_item)
+
+        fallback_by_id = {}
+        presentation_only = []
+        for info in fallback_models:
+            if info.get("path"):
+                fallback_by_id.setdefault(info.get("id", 0), []).append(info)
+            else:
+                presentation_only.append(info)
+
+        evaluated = []
+        occurrences = {}
+        for model in result.models:
+            occurrence = occurrences.get(model.element_id, 0)
+            occurrences[model.element_id] = occurrence + 1
+            fallback = fallback_by_id.get(model.element_id, [])
+            template = fallback[occurrence] if occurrence < len(fallback) else {}
+            world_matrix = np.asarray(model.transform, dtype=np.float32).reshape((4, 4))
+            world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+            evaluated.append({
+                "id": model.element_id,
+                "path": model.model_name,
+                "position": world_pos,
+                "rotation": world_rot,
+                "scale": world_scale,
+                "world_matrix": world_matrix,
+                "parent_world_matrix": template.get(
+                    "parent_world_matrix", np.eye(4, dtype=np.float32)
+                ),
+                "data": data_by_id.get(model.element_id, template.get("data", {})),
+                "is_dot": False,
+                "material_group": model.material_group,
+                "tint_color": model.tint_color,
+            })
+
+        # Nested SmartProps still use the renderer's file resolver until the Core
+        # bridge accepts a resolver payload. Preserve only those model instances.
+        evaluated_ids = {model.element_id for model in result.models}
+        unresolved_nested = [
+            info for info in fallback_models
+            if info.get("path") and info.get("id") not in evaluated_ids
+        ]
+        return presentation_only + evaluated + unresolved_nested
 
     def _follow_selection_isolation(self):
         """Point the isolation at the current selection while dynamic mode is on.

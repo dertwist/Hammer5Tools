@@ -137,6 +137,16 @@ class CoreBridge:
         diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
         return SmartPropEvaluation(models, diagnostics)
 
+    def serialize_smartprop(self, document: Mapping) -> str:
+        """Serializes an uncompiled SmartProp document as KeyValues3 text."""
+        self._ensure_loaded()
+
+        from Hammer5Tools.Core.SmartProps import SmartPropDocumentSerializer
+
+        return str(SmartPropDocumentSerializer.SerializeJson(
+            json.dumps(document, separators=(",", ":")),
+        ))
+
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:
         matrix = model.Transform
