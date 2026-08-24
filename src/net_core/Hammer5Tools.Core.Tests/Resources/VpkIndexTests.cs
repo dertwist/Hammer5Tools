@@ -37,6 +37,10 @@ public sealed class VpkIndexTests
             await Assert.That(index.TryReadBytes("materials/archive.vmat_c")).IsEquivalentTo(archiveContents);
             await Assert.That(index.TryGetLooseRoot("materials/loose.vmat_c")).IsEqualTo(looseRoot);
             await Assert.That(index.TryReadBytes("materials/loose.vmat_c")).IsEquivalentTo(looseContents);
+            var entries = index.EnumerateEntries([".vmat"]);
+            await Assert.That(entries).Count().IsEqualTo(1);
+            await Assert.That(entries[0].Path).IsEqualTo("materials/archive.vmat");
+            await Assert.That(entries[0].Size).IsEqualTo(archiveContents.Length);
         }
         finally
         {

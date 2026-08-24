@@ -109,6 +109,47 @@ public sealed class VpkIndex : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Enumerates mounted VPK entries whose paths end with one of the supplied suffixes.
+    /// </summary>
+    public IReadOnlyList<VpkEntry> EnumerateEntries(IReadOnlyCollection<string> suffixes)
+    {
+        ArgumentNullException.ThrowIfNull(suffixes);
+
+        var normalizedSuffixes = suffixes
+            .Select(suffix => suffix.StartsWith('.') ? suffix : $".{suffix}")
+            .ToArray();
+        var results = new List<VpkEntry>();
+        foreach (var package in packages)
+        {
+            if (package.Entries is null)
+            {
+                continue;
+            }
+            foreach (var entries in package.Entries.Values)
+            {
+                foreach (var entry in entries)
+                {
+                    var directory = entry.DirectoryName?.Replace('\\', '/').Trim('/') ?? string.Empty;
+                    var path = string.IsNullOrEmpty(directory)
+                        ? $"{entry.FileName}.{entry.TypeName}"
+                        : $"{directory}/{entry.FileName}.{entry.TypeName}";
+                    var sourcePath = path.EndsWith("_c", StringComparison.OrdinalIgnoreCase)
+                        ? path[..^2]
+                        : path;
+                    if (normalizedSuffixes.Length > 0
+                        && !normalizedSuffixes.Any(suffix =>
+                            sourcePath.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+                    results.Add(new VpkEntry(sourcePath, entry.TotalLength));
+                }
+            }
+        }
+        return results;
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {

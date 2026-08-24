@@ -98,7 +98,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 
 ### Core Bridge (`src/bridge/`)
 - **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once, translates load failures, and exposes a read-only contract probe.
-- **`VpkIndex`**: Python-native disposable wrapper for Core VPK and loose-file lookup; UI code must use this instead of direct ValvePak imports.
+- **`VpkIndex`**: Python-native disposable wrapper for Core VPK lookup, reads, and entry enumeration; UI code must use this instead of direct ValvePak imports. Model Browser VPK scanning consumes this contract.
 - **`CoreBridge.evaluate_smartprop_expression()`**: Python-native SmartProp expression entry point; Core namespaces remain inside the bridge.
 - **`CoreBridge.evaluate_smartprop()`**: Converts editor document dictionaries and nested document graphs to Core input and returns Python-native evaluated models and diagnostics. These VRF-produced placements are authoritative; Python retains only editor handles, gizmo interaction, path drawing, and element-dot presentation.
 - **`CoreBridge.serialize_smartprop()`**: Sends editor document snapshots to the Core-owned VRF KV3 serializer.

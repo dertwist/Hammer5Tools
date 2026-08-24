@@ -225,56 +225,31 @@ def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple
         return []
 
     exts = tuple(extensions) if extensions else SUPPORTED_EXTENSIONS
-    bucket_keys = [ext.lstrip('.') + "_c" for ext in exts]
-
     entries: List[ModelEntry] = []
     try:
-        from src.dotnet import DotNetInterop
+        from src.bridge import CoreBridge
 
-        interop = DotNetInterop()
-        _, _, _, _, _, Package = interop.setup_vrf()
-        import System
+        with CoreBridge.instance().create_vpk_index() as index:
+            for vpk_path in vpk_paths:
+                index.mount(vpk_path)
+            for rel, size in index.entries(exts):
+                rel = rel.replace("\\", "/")
+                if system_filters and any(rel.lower().startswith(f) for f in system_filters):
+                    continue
+                filename = os.path.basename(rel)
+                raw_ext = os.path.splitext(rel)[1].lstrip(".").lower()
+                entries.append(ModelEntry(
+                    path=rel,
+                    name=filename,
+                    source=source,
+                    mod=mod,
+                    fs_path="",
+                    size=size,
+                    asset_type=raw_ext,
+                ))
     except Exception as exc:
-        print(f"[model_browser] VRF unavailable, skipping VPK scan: {exc}")
+        print(f"[model_browser] Core VPK index unavailable, skipping VPK scan: {exc}")
         return []
-
-    for vpk_path in vpk_paths:
-        package = None
-        try:
-            package = System.Activator.CreateInstance(Package)
-            package.Read(vpk_path)
-
-            for b_key in bucket_keys:
-                try:
-                    bucket = package.Entries[b_key]
-                except Exception:
-                    continue
-                if bucket is None:
-                    continue
-
-                raw_ext = b_key[:-2]  # strip _c
-                for entry in bucket:
-                    directory = str(entry.DirectoryName or "").replace("\\", "/")
-                    filename = f"{entry.FileName}.{raw_ext}"
-                    rel = f"{directory}/{filename}" if directory else filename
-                    if system_filters and any(rel.lower().startswith(f) for f in system_filters):
-                        continue
-                    try:
-                        size = int(entry.TotalLength)
-                    except Exception:
-                        size = 0
-                    entries.append(ModelEntry(
-                        path=rel, name=filename, source=source, mod=mod,
-                        fs_path="", size=size, asset_type=raw_ext,
-                    ))
-        except Exception as exc:
-            print(f"[model_browser] VPK scan failed for {vpk_path}: {exc}")
-        finally:
-            if package is not None and hasattr(package, "Dispose"):
-                try:
-                    package.Dispose()
-                except Exception:
-                    pass
     return entries
 
 

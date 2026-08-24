@@ -177,8 +177,24 @@ class FakeVpkIndex:
     def Dispose(self):
         self.disposed = True
 
+    def EnumerateEntries(self, suffixes):
+        return [SimpleNamespace(Path="models/example.vmdl", Size=42)]
 
-def test_vpk_index_converts_core_results_to_python_values():
+
+def test_vpk_index_converts_core_results_to_python_values(monkeypatch):
+    class FakeList(list):
+        @classmethod
+        def __class_getitem__(cls, item):
+            return cls
+
+        def Add(self, value):
+            self.append(value)
+
+    import sys
+    monkeypatch.setitem(sys.modules, "System", SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "System.Collections", SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "System.Collections.Generic", SimpleNamespace(List=FakeList))
+
     native = FakeVpkIndex()
     index = VpkIndex(native)
 
@@ -190,6 +206,7 @@ def test_vpk_index_converts_core_results_to_python_values():
     assert index.read_bytes("present.txt") == b"data"
     assert index.read_bytes("missing.txt") is None
     assert native.roots == ["content"]
+    assert index.entries((".vmdl",)) == (("models/example.vmdl", 42),)
 
 
 def test_vpk_index_rejects_calls_after_close():

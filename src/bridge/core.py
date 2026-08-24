@@ -279,6 +279,20 @@ class VpkIndex:
         data = self._index.TryReadBytes(path)
         return None if data is None else bytes(data)
 
+    def entries(self, suffixes: Sequence[str] = ()) -> tuple[tuple[str, int], ...]:
+        """Returns Python-native paths and sizes from mounted VPK archives."""
+        self._require_open()
+
+        from System.Collections.Generic import List
+
+        native_suffixes = List[str]()
+        for suffix in suffixes:
+            native_suffixes.Add(suffix)
+        return tuple(
+            (str(entry.Path), int(entry.Size))
+            for entry in self._index.EnumerateEntries(native_suffixes)
+        )
+
     def close(self) -> None:
         """Releases archive handles. The bridge remains usable for new indexes."""
         if self._index is not None:
