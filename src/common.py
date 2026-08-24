@@ -46,7 +46,7 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
-app_version = '5.8.1'
+app_version = '6.0.0'
 
 def _version_txt() -> list[str]:
     """[version, channel] from version.txt next to the frozen exe; [] when run from source.
@@ -63,8 +63,8 @@ def _version_txt() -> list[str]:
         pass
     return []
 
-# Frozen builds report the packed version, so dev builds show 5.6.0-dev.226 rather
-# than a bare 5.6.0 that is indistinguishable from stable. Running from source
+# Frozen builds report the packed version, so dev builds show 6.0.0-dev.226 rather
+# than a bare 6.0.0 that is indistinguishable from stable. Running from source
 # keeps the literal above, which is what CI reads to compute the pack version.
 _vlines = _version_txt()
 if _vlines and _vlines[0]:
@@ -95,7 +95,7 @@ def get_update_options():
     Velopack options for the current channel.
 
     AllowVersionDowngrade must be on whenever dev is involved: a dev build is a
-    semver pre-release (5.6.0-dev.2) which sorts BELOW the stable 5.6.0, so
+    semver pre-release (6.0.0-dev.2) which sorts BELOW the stable 6.0.0, so
     without it Velopack reports "no update" for every dev release, and a user on
     a dev build could never fall back to stable.
     """

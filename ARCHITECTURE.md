@@ -31,7 +31,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 
 ### Common Helpers (`src/common.py`)
 - **`generate_unique_name(base_name, existing_names, separator="_")` -> `str`**: Generates non-conflicting names by incrementing numeric suffixes (`_01`, `_02`).
-- **`app_version`**: Global application version string (e.g., `'5.5.1'`).
+- **`app_version`**: Global application version string (currently `'6.0.0'`).
 - **`JsonToKv3(json_data)` -> `str`**: Serializes Python dictionary/JSON structures into Valve KeyValues3 (KV3) format.
 - **`compile(file_path)`**: Calls `resourcecompiler.exe` for CS2 assets (`.vsmart`, `.vsndevts`, `.vmap`).
 - **`get_counter_strike_path_from_registry()` / `get_steam_install_path()`**: Locates Steam installation directories and CS2 game paths via Windows Registry.
