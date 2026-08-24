@@ -7,11 +7,15 @@ import os
 import shutil
 import time
 import signal
-import winsound
 import re
 from pathlib import Path
 from datetime import datetime
 from dataclasses import fields
+
+try:
+    import winsound
+except ImportError:
+    winsound = None
 from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
     QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow, QLabel
@@ -1331,7 +1335,8 @@ class MapBuilderDialog(QMainWindow):
                         self.log_phase(f'Average time per map: {self.format_time(avg_time)}')
 
             self.log_separator('=', 80)
-            winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
+            if winsound is not None:
+                winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
 
             settings = self.settings_panel.get_settings()
 

@@ -22,7 +22,10 @@ from src.common import discord_feedback_channel
 from logging import error
 import traceback, ctypes
 from src.common import enable_dark_title_bar
-import winsound
+try:
+    import winsound
+except ImportError:
+    winsound = None
 
 
 class ErrorInfo(QDialog):
@@ -39,7 +42,9 @@ class ErrorInfo(QDialog):
         self.details = details
         self.dont_show_setting = dont_show_setting
 
-        if is_warning:
+        if winsound is None:
+            pass
+        elif is_warning:
             winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
         else:
             winsound.MessageBeep(winsound.MB_ICONHAND)

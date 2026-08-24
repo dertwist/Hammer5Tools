@@ -200,12 +200,14 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error installing job object: {e}")
 
-    # Velopack official startup runner
-    try:
-        import velopack
-        velopack.App().run()
-    except Exception:
-        pass
+    # Velopack's startup runner terminates source launches when no installed
+    # updater is present. Installer hooks below still run in every environment.
+    if getattr(sys, "frozen", False):
+        try:
+            import velopack
+            velopack.App().run()
+        except Exception:
+            pass
 
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)

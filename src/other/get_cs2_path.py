@@ -1,18 +1,29 @@
-import winreg, os, re
+import os
+import re
+
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
+
 def get_steam_install_path():
     """
     Retrieve the Steam installation path from the Windows Registry.
     """
+    if winreg is None:
+        return None
+
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam") as key:
             steam_path, _ = winreg.QueryValueEx(key, "InstallPath")
             return steam_path
-    except WindowsError:
+    except OSError:
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam") as key:
                 steam_path, _ = winreg.QueryValueEx(key, "InstallPath")
                 return steam_path
-        except WindowsError as e:
+        except OSError as e:
             print(f"Error reading Steam install path: {e}")
             return None
 

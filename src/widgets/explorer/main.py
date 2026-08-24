@@ -1,7 +1,10 @@
 import os
 import re
 import shutil
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
     QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget, QApplication
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
@@ -158,6 +161,9 @@ def get_default_application(file_extension):
     Get the default application associated with a file extension on Windows.
     Returns the application name and path, or None if not found.
     """
+    if winreg is None:
+        return None
+
     try:
         # Remove the dot from extension if present
         if file_extension.startswith('.'):

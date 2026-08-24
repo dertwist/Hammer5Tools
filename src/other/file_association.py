@@ -1,8 +1,12 @@
 import os
 import sys
-import winreg
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
+
+try:
+    import winreg
+except ImportError:
+    winreg = None
 
 def get_fileedit_path():
     """Returns the absolute path to the main Hammer5Tools.exe launcher."""
@@ -62,6 +66,9 @@ def check_association(extension):
         prog_id (str): The ProgID associated with the extension, or None.
         is_us (bool): True if it's already associated with Hammer5Tools.
     """
+    if winreg is None:
+        return None, False
+
     if not extension.startswith('.'):
         extension = '.' + extension
         
@@ -77,6 +84,9 @@ def check_association(extension):
 
 def register_extension(extension, prog_id, description, icon_path, open_cmd):
     """Registers a file extension in the registry."""
+    if winreg is None:
+        return False
+
     if not extension.startswith('.'):
         extension = '.' + extension
         
