@@ -4,11 +4,8 @@ Hammer 5 Tools is a Counter-Strike 2 desktop toolkit. The target design is a PyS
 
 ## Read First
 
-Before changing code, read:
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership and existing APIs.
 - [STYLESHEET.md](STYLESHEET.md) before changing any UI.
-- [ConventionalCommits.md](ConventionalCommits.md) before creating a branch or commit.
+- Use `codebase-memory-mcp` (`search_graph`, `get_architecture`, `trace_path`) to find existing modules, classes, and call chains before writing new code — this repo has no separate static code-index doc; the graph is the source of truth and won't go stale.
 
 ## Architecture
 
@@ -16,45 +13,48 @@ Before changing code, read:
 C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> external libraries
 ```
 
-- The launcher owns startup, single-instance IPC handoff, crash reporting, and update startup only.
-- The GUI owns windows, widgets, layouts, styling, input, and presentation state.
-- The core owns Source 2 parsing, resource and VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic.
-- The core must never depend on the GUI or launcher. The GUI must not directly use VRF, parse Source 2 formats, or duplicate a core evaluator.
-- `src/net_core/SourcePorter.Core` remains authoritative for its existing features until a deliberate migration or shared abstraction replaces it. Do not create competing implementations.
+- `Hammer5ToolsLauncher/`: startup, single-instance IPC handoff, crash reporting, update startup only.
+- `Hammer5ToolsGUI/`: windows, widgets, layouts, styling, input, presentation state. Must not parse Source 2 formats or duplicate a core evaluator — go through `CoreBridge` (`hammer5tools_core/bridge/`).
+- `Hammer5ToolsCore/CSharp/Hammer5Tools.Core`: Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic. Never depends on GUI or launcher.
+- `Hammer5ToolsCore/CSharp/Hammer5Tools.Native`: NativeAOT ABI exposing Core to Python via `ctypes` (`hammer5tools_core/native.py`).
+- `src/net_core/SourcePorter.Core` stays authoritative for its existing features until a deliberate migration replaces it — do not create competing implementations.
 - Consume external libraries as dependencies; keep Hammer5Tools behavior in Hammer5Tools-owned code.
-
-## Project Layout
-
-- `src/`: Python application, editors, widgets, styles, and bridge adapters.
-- `src/net_core/`: .NET libraries and tests. New shared domain code belongs in `Hammer5Tools.Core`.
-- `src/external/`: packaged third-party assemblies; do not edit vendor code for product behavior.
 - `dev/tests/`: Python regression and characterization tests.
-- `makefile.py`: build and packaging entry point. `src/common.py` owns the application version.
+- `makefile.py`: build and packaging entry point; `src/common.py`/root `version.json` own the application version.
+
+## Before Writing New Code
+
+**Adding a feature or function:**
+1. Is something similar already implemented in this project?
+2. Do existing functions/utilities already cover this?
+3. Does a new method actually earn its place, or should an existing one be extended instead?
+
+**Adding or reaching for a library:**
+1. Does the project already have a dependency that does this?
+2. How heavy is this dependency (size, transitive deps, install cost)?
+3. If you'd only use a handful of functions from a large library, would a smaller focused library — or a few lines of your own code — serve better?
 
 ## .NET Style
 
-Follow the applicable VRF conventions for all new or migrated C# code:
-
-- Use the latest supported .NET, nullable references, file-scoped namespaces, four spaces, LF line endings, final newlines, and Allman braces.
-- Use `var` for locals; collection expressions; pattern matching and switch expressions; null-coalescing and throw expressions; string interpolation; `MathF`; `using` declarations; and early returns where they clarify flow.
-- Use expression bodies for properties, indexers, and accessors; use block bodies for methods and constructors.
-- Sort `using` directives with `System` first and remove unused directives. Do not use `this.` unless it resolves ambiguity.
-- Use PascalCase for types, members, and private fields; camelCase for locals and parameters; `I`-prefixed PascalCase for interfaces. Namespaces loosely follow folders.
-- Prefer exact names such as `Reader`, `Writer`, `Evaluator`, `Context`, `Document`, or `Service`; avoid vague `Manager`, `Handler`, and `Controller` names.
-- Seal internal types when appropriate. Public core APIs need concise XML documentation; use `<inheritdoc/>` where it adds nothing.
-- Comments explain non-obvious reasons, workarounds, or TODOs—not the code. New C# comments must be plain ASCII and must not narrate changes, sessions, or external format provenance.
+Follow VRF conventions for all new or migrated C# code: latest supported .NET, nullable references, file-scoped namespaces, 4 spaces, LF, final newlines, Allman braces. `var` for locals; collection expressions; pattern matching/switch expressions; null-coalescing/throw expressions; string interpolation; `MathF`; `using` declarations; early returns. Expression bodies for properties/indexers/accessors, block bodies for methods/constructors. `System` usings first, remove unused. PascalCase types/members/private fields, camelCase locals/parameters, `I`-prefixed interfaces. Prefer exact names (`Reader`, `Writer`, `Evaluator`, `Context`, `Document`, `Service`) over `Manager`/`Handler`/`Controller`. Seal internal types when appropriate; concise XML docs on public core APIs. Comments explain non-obvious reasons only, plain ASCII, no narration of changes/sessions.
 
 ## Python and UI Rules
 
-- Keep Python domain-free as core APIs become available: use bridge adapters rather than exposing .NET namespaces or assembly loading to editors.
-- Keep UI code to view composition, binding, input routing, dialogs, rendering, and user feedback.
+- Keep Python domain-free: use bridge adapters (`CoreBridge`) rather than exposing .NET namespaces or assembly loading to editors.
+- UI code is view composition, binding, input routing, dialogs, rendering, and user feedback only.
 - Use the global style system in `src/styles/`; no hard-coded inline palettes. Follow [STYLESHEET.md](STYLESHEET.md).
-- Preserve existing behavior while migrating. Add characterization tests or fixtures before moving uncovered behavior.
+- Preserve existing behavior while migrating. Add characterization tests/fixtures before moving uncovered behavior.
+
+## Commits & Branches
+
+Conventional Commits: `type(scope): description`, e.g. `feat(smartprop): add vector scaling support`, `fix(soundevent): resolve path normalization`. Breaking change: `!` before the colon or a `BREAKING CHANGE:` footer. Keep commits short and focused on one change.
+
+**MUST NOT** mention AI coding agents (Claude, Codex, Gemini, ChatGPT, or any other AI agent name) in branch names, commit messages, PR descriptions, or contribution credits.
 
 ## Before Finishing
 
-1. Keep the change small and modular; update architecture documentation when ownership or public contracts change.
-2. Build the project being changed while iterating. For a completed .NET change, run Release build, `dotnet format`, and relevant test suites. Run new TUnit core suites with `dotnet run --project <test-project>` until the legacy xUnit suite is migrated to Microsoft Testing Platform.
+1. Keep the change small and modular; update this file when module ownership or public contracts change.
+2. Build the project being changed while iterating. For a completed .NET change: Release build, `dotnet format`, relevant test suites. Run new TUnit core suites with `dotnet run --project <test-project>` until the legacy xUnit suite is migrated to Microsoft Testing Platform.
 3. Run affected Python tests for Python or bridge changes.
 4. Remove debug logging and commented-out code introduced by the change.
 5. Use focused Conventional Commits. Do not include AI agent names in branches, commits, or credits.

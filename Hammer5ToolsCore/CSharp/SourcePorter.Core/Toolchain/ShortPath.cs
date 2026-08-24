@@ -8,7 +8,7 @@ namespace SourcePorter.Core.Toolchain;
 /// <c>source1import</c> a space-free content dir when <c>-usebsp</c> is on: the tool
 /// passes that path to <c>vbsp.exe</c> <b>unquoted</b>, so a space in the install path
 /// (e.g. <i>"Counter-Strike Global Offensive"</i>) splits the argument, vbsp never runs,
-/// and the map falls back to broken vmf-only geometry (see ARCHITECTURE.md §4).
+/// and the map falls back to broken vmf-only geometry.
 /// </summary>
 internal static class ShortPath
 {

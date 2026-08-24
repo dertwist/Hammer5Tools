@@ -11,7 +11,7 @@ namespace SourcePorter.Core.Toolchain;
 /// same order, with the same arguments and the same model/material/2-UV handling
 /// — only the console-input gate and the <c>| tee</c> logging are replaced
 /// (confirmation is handled by the UI; output is captured via
-/// <see cref="ProcessRunner"/>). See ARCHITECTURE.md §"Toolchain orchestration".
+/// <see cref="ProcessRunner"/>).
 /// </summary>
 public sealed partial class MapImportService
 {

@@ -6,7 +6,7 @@ namespace SourcePorter.Core.Vmap;
 /// <summary>
 /// A loaded uncompiled CS2 <c>.vmap</c> — a Datamodel/DMX graph serialised as
 /// KeyValues2/binary, read and written via the <c>KeyValues2</c> package (the same
-/// serializer the Source 2 Viewer uses; see ARCHITECTURE.md §5). Wraps the underlying
+/// serializer the Source 2 Viewer uses). Wraps the underlying
 /// <see cref="DM"/> with the vmap-specific navigation the post-import tools need — the
 /// world entity and its child-node array — and preserves the file's original
 /// encoding+version on save so CS2/Hammer still read it.
