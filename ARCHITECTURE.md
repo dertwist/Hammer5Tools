@@ -99,6 +99,7 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### Core Bridge (`src/bridge/`)
 - **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once.
 - **`VpkIndex`**: Python-native disposable wrapper for Core VPK and loose-file lookup; UI code must use this instead of direct ValvePak imports.
+- **`CoreBridge.evaluate_smartprop_expression()`**: Python-native SmartProp expression entry point; Core namespaces remain inside the bridge.
 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.

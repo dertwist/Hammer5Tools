@@ -1,6 +1,17 @@
 from src.bridge.core import VpkIndex
 
 
+def test_core_bridge_is_a_process_singleton():
+    from src.bridge.core import CoreBridge
+
+    original = CoreBridge._instance
+    try:
+        CoreBridge._instance = None
+        assert CoreBridge.instance() is CoreBridge.instance()
+    finally:
+        CoreBridge._instance = original
+
+
 class FakeVpkIndex:
     def __init__(self):
         self.PackageCount = 0

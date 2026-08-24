@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Optional
 
 from src.dotnet import DotNetInterop
@@ -25,8 +26,7 @@ class CoreBridge:
 
     def create_vpk_index(self) -> VpkIndex:
         """Creates a Core-owned VPK index without exposing C# namespaces to callers."""
-        if self._assembly is None:
-            self._assembly = self._interop.setup_hammer5tools_core()
+        self._ensure_loaded()
 
         index_type = self._assembly.GetType("Hammer5Tools.Core.Resources.VpkIndex")
         if index_type is None:
@@ -34,6 +34,51 @@ class CoreBridge:
 
         import System
         return VpkIndex(System.Activator.CreateInstance(index_type))
+
+    def evaluate_smartprop_expression(
+        self,
+        expression: str,
+        *,
+        variables: Mapping[str, float] | None = None,
+        vectors: Mapping[str, Sequence[float]] | None = None,
+        instance_index: int = 0,
+        instance_count: int = 1,
+        random_seed: int = 0,
+        linear_scale: float = 1.0,
+        default: float = 0.0,
+    ) -> float:
+        """Evaluates a SmartProp expression with Python-native context values."""
+        self._ensure_loaded()
+
+        from System import Single
+        from System.Collections.Generic import Dictionary
+        from System.Numerics import Vector4
+        from Hammer5Tools.Core.SmartProps import SmartPropContext, SmartPropExpression
+
+        scalar_values = Dictionary[str, Single]()
+        for name, value in (variables or {}).items():
+            scalar_values.Add(name, float(value))
+
+        vector_values = Dictionary[str, Vector4]()
+        for name, value in (vectors or {}).items():
+            components = [float(component) for component in value[:4]]
+            components.extend([0.0] * (4 - len(components)))
+            vector_values.Add(name, Vector4(*components))
+
+        context = SmartPropContext(
+            scalar_values,
+            vector_values,
+            instance_index,
+            instance_count,
+            random_seed,
+            linear_scale,
+            None,
+        )
+        return float(SmartPropExpression.Evaluate(expression, context, float(default)))
+
+    def _ensure_loaded(self) -> None:
+        if self._assembly is None:
+            self._assembly = self._interop.setup_hammer5tools_core()
 
 
 class VpkIndex:
