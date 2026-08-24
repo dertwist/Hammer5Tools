@@ -23,11 +23,14 @@ class IPCCommand(Enum):
 
 class IPCMessage:
     """Factory for creating and parsing IPC messages."""
+
+    PROTOCOL_VERSION = 1
     
     @staticmethod
     def create_show():
         """Create a message to show/focus the main window."""
-        return json.dumps({"command": IPCCommand.SHOW_WINDOW.value})
+        return json.dumps({"protocol_version": IPCMessage.PROTOCOL_VERSION,
+                           "command": IPCCommand.SHOW_WINDOW.value})
     
     @staticmethod
     def create_open_file(file_path, editor_type="smartprop"):
@@ -38,6 +41,7 @@ class IPCMessage:
             editor_type: Type of editor (smartprop, soundevent, etc.)
         """
         return json.dumps({
+            "protocol_version": IPCMessage.PROTOCOL_VERSION,
             "command": IPCCommand.OPEN_FILE.value,
             "file_path": file_path,
             "editor_type": editor_type
@@ -52,6 +56,7 @@ class IPCMessage:
             editor_type: Type of editor where the file is open
         """
         return json.dumps({
+            "protocol_version": IPCMessage.PROTOCOL_VERSION,
             "command": IPCCommand.FOCUS_FILE.value,
             "file_path": file_path,
             "editor_type": editor_type
@@ -67,6 +72,7 @@ class IPCMessage:
             addon_hint: Optional addon name hint extracted from path
         """
         msg = {
+            "protocol_version": IPCMessage.PROTOCOL_VERSION,
             "command": command.value,
             "file_path": file_path
         }
@@ -85,7 +91,13 @@ class IPCMessage:
             Dictionary with command and parameters, or None if invalid
         """
         try:
-            return json.loads(message_bytes.decode('utf-8'))
+            message = json.loads(message_bytes.decode('utf-8'))
+            if not isinstance(message, dict):
+                return None
+            version = message.get("protocol_version", 0)
+            if version not in (0, IPCMessage.PROTOCOL_VERSION):
+                return None
+            return message
         except (json.JSONDecodeError, UnicodeDecodeError):
             # Fallback for legacy "show" message (backward compatibility)
             try:

@@ -126,6 +126,7 @@ build_test
 build_cpp_Hammer5ToolsHandler
 out_hammer5tools
 build_cpp_fileedit
+/build_cpp_*/
 dist_hammer5tools
 *.exe
 !tools/bspsrc/bspsrc.exe

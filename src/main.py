@@ -236,9 +236,10 @@ if __name__ == "__main__":
     from src.ipc.protocol import IPCMessage, IPCCommand
     INSTANCE_KEY = "Hammer5ToolsIPC"
 
+    launcher_owns_instance = os.environ.get("H5T_LAUNCHER_OWNS_INSTANCE") == "1"
     existing_socket = QLocalSocket()
     existing_socket.connectToServer(INSTANCE_KEY)
-    if existing_socket.waitForConnected(500):
+    if not launcher_owns_instance and existing_socket.waitForConnected(500):
         # Found existing instance, send command and exit
         if args.create_vmdl:
             message = IPCMessage.create_quick_action(IPCCommand.CREATE_VMDL, os.path.abspath(args.create_vmdl))

@@ -894,6 +894,7 @@ def start_instance_server(widget):
     from src.ipc.server_utils import set_ipc_server
     server = QLocalServer()
     set_ipc_server(server)
-    if server.listen(INSTANCE_KEY):
-        server.newConnection.connect(lambda: handle_new_connection(server, widget))
+    if not server.listen(INSTANCE_KEY):
+        raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
+    server.newConnection.connect(lambda: handle_new_connection(server, widget))
     return server
