@@ -98,6 +98,8 @@ class DotNetPaths:
             net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net10.0' / 'SourcePorter.Core.dll',
             net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net10.0' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'SourcePorter.Core.dll',
+            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'SourcePorter.Core.dll',
             base_dir / 'SourcePorter.Core.dll',
             Path(getattr(sys, "_MEIPASS", "")) / 'source_porter' / 'SourcePorter.Core.dll',
         ]

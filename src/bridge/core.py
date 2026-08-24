@@ -51,6 +51,16 @@ class VmapRewriteResult:
 
 
 @dataclass(frozen=True)
+class UnrealMapWriteResult:
+    """Python-native result of writing normalized Unreal placements."""
+
+    placement_count: int
+    encoding: str | None
+    encoding_version: int | None
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ValveMapEntity:
     """Python-native entity projected from an uncompiled Valve map."""
 
@@ -249,6 +259,28 @@ class CoreBridge:
         result = rewriter_type.GetMethod("Rewrite").Invoke(None, [path, native_renames])
         diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
         return VmapRewriteResult(bool(result.Value), diagnostics)
+
+    def write_unreal_map(self, path: str, request: Mapping) -> UnrealMapWriteResult:
+        """Writes typed primitive Unreal placements through SourcePorter Core."""
+        assembly = self._ensure_source_porter_loaded()
+        writer_type = assembly.GetType("SourcePorter.Core.Vmap.UnrealMapWriter")
+        if writer_type is None:
+            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.UnrealMapWriter")
+
+        result = writer_type.GetMethod("WriteJson").Invoke(
+            None,
+            [json.dumps(request, separators=(",", ":")), path],
+        )
+        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        value = result.Value
+        if value is None:
+            return UnrealMapWriteResult(0, None, None, diagnostics)
+        return UnrealMapWriteResult(
+            int(value.PlacementCount),
+            str(value.Encoding),
+            int(value.EncodingVersion),
+            diagnostics,
+        )
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:

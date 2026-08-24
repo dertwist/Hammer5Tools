@@ -96,6 +96,7 @@ Phase 3 is in progress. Do not mark it complete until its exit criterion is true
 - Added Core VPK entry enumeration and migrated Model Browser VPK scanning.
 - Removed the replaced Python VMAP readers from `src/dotnet.py`.
 - Moved Asset Manager VMAP reference rewriting into `SourcePorter.Core.Vmap.VmapReferenceRewriter`, including prefix-safe output and Python-native bridge diagnostics.
+- Moved Unreal Porter VMAP construction and saving into `SourcePorter.Core.Vmap.UnrealMapWriter`; Python now supplies typed primitive placements and retains import accounting only.
 
 Key commits:
 
@@ -141,6 +142,8 @@ refactor(vmap): move reference rewriting to core
 ```
 
 ### 2. Unreal Porter VMAP Writer
+
+Completed in this continuation. Characterization covers props, transforms, SmartProps, skip accounting, decals, and binary output.
 
 Current direct dependency:
 
@@ -243,7 +246,7 @@ Everything else should be removed or explicitly justified in `ARCHITECTURE.md`.
 ## Phase 3 Exit Checklist
 
 - [x] Asset Manager VMAP reference rewriting is Core-owned and prefix-safe.
-- [ ] Unreal Porter VMAP writing is Core-owned and fixture-tested.
+- [x] Unreal Porter VMAP writing is Core-owned and fixture-tested.
 - [ ] SmartProp viewport model/material/texture parsing is Core-owned.
 - [ ] SoundEvent compiled resource extraction is Core-owned.
 - [ ] GUI modules do not import VRF, ValvePak, KeyValues2, or raw managed domain namespaces.
