@@ -39,10 +39,10 @@ This document provides a concise indexation of the modules, classes, functions, 
 ### KeyValues3 Parser Engine (`keyvalues3/`)
 - Native Python KV3 encoder/decoder handling text representation, type headers (`<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-3596-4313-a41f-70c3226768f9} -->`), and type annotations.
 
-### SmartProp Data Layer (`src/smartprop/`)
-- **`SmartPropElement`**: Base class representing SmartProp hierarchical nodes (models, choices, filters, placement groups).
-- **`SmartPropVariable`**: Class modeling configurable SmartProp parameters (Boolean, Int, Float, String, Vector3, Color, Material).
-- **`SmartPropParser`**: Serializes and deserializes `.vsmart` files to/from python objects with KV3 structure preservation.
+### SmartProp Preview Domain (`src/editors/smartprop_editor/viewport_3d/engine/`)
+- **`EvalContext`**: Resolves SmartProp variables, expressions, scalar values, vectors, and preview-instance state.
+- **`evaluate_expression()`**: Safely evaluates the supported Source 2 SmartProp expression subset without Python `eval`.
+- **`modifier_evaluator.py` / `path_evaluator.py`**: Applies preview modifiers and path-placement behavior. These are the source behavior for the forthcoming `Hammer5Tools.Core/SmartProps` migration; Qt widgets must not become dependencies of that Core implementation.
 
 ---
 
