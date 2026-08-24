@@ -118,6 +118,7 @@ settings.cfg
 /Hammer5ToolsCore/CSharp/external/RemoteConsole/CS2RemoteConsole-client.log
 /Hammer5Tools/SoundEventEditor/soundevents_cache
 /Hammer5Tools/app
+/Hammer5Tools/version.txt
 SoundEventEditor/soundevents_cache
 /dumps/*
 /Hammer5Tools/Hammer5ToolsUpdater.exe

@@ -64,6 +64,45 @@ def get_dotnet_runtime_data():
         fw_path = os.path.join(shared_path, framework)
         if os.path.exists(fw_path):
             versions = [v for v in os.listdir(fw_path) if v.startswith("10.0")]
+
+
+# Create a runtimeconfig.json for the bundled .NET runtime
+def generate_runtime_config(target_dir):
+    config = {
+        "runtimeOptions": {
+            "tfm": "net10.0",
+            "frameworks": [
+                {
+                    "name": "Microsoft.WindowsDesktop.App",
+                    "version": "10.0.0"
+                },
+                {
+                    "name": "Microsoft.NETCore.App",
+                    "version": "10.0.0"
+                }
+            ]
+        }
+    }
+    import json
+    os.makedirs(target_dir, exist_ok=True)
+    with open(os.path.join(target_dir, 'Hammer5Tools.runtimeconfig.json'), 'w') as f:
+        json.dump(config, f, indent=2)
+
+def get_dotnet_runtime_data():
+    """Finds .NET 10.0 runtime files on the system to bundle them."""
+    import glob
+    dotnet_root = os.environ.get("DOTNET_ROOT", r"C:\Program Files\dotnet")
+    if not os.path.exists(dotnet_root):
+        return []
+
+    shared_path = os.path.join(dotnet_root, "shared")
+    results = []
+
+    # Find latest 10.0 versions
+    for framework in ["Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"]:
+        fw_path = os.path.join(shared_path, framework)
+        if os.path.exists(fw_path):
+            versions = [v for v in os.listdir(fw_path) if v.startswith("10.0")]
             if versions:
                 latest = sorted(versions, key=lambda x: [int(i) for i in x.split('.')])[-1]
                 src = os.path.join(fw_path, latest)
@@ -213,6 +252,53 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         raise
 
 
+def build_libraries() -> None:
+    """Builds and publishes all Windows x64 .NET and native libraries."""
+    smartprop_native_project = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'Hammer5Tools.Native.csproj')
+    smartprop_native_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'publish')
+    if os.path.exists(smartprop_native_project):
+        print("Building Hammer5Tools.Native (win-x64 NativeAOT)...")
+        subprocess.run([
+            'dotnet', 'publish', smartprop_native_project,
+            '--configuration', 'Release',
+            '--runtime', 'win-x64',
+            '--self-contained', 'true',
+            '--output', smartprop_native_publish,
+        ], check=True)
+
+    core_project = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'Hammer5Tools.Core.csproj')
+    core_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'publish')
+    if os.path.exists(core_project):
+        print("Building Hammer5Tools.Core...")
+        subprocess.run([
+            'dotnet', 'publish', core_project,
+            '--configuration', 'Release',
+            '--output', core_publish,
+        ], check=True)
+
+    source_porter_project = os.path.join(core_csharp_root, 'SourcePorter.Core', 'SourcePorter.Core.csproj')
+    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
+    if os.path.exists(source_porter_project):
+        print("Building SourcePorter.Core...")
+        subprocess.run([
+            'dotnet', 'publish', source_porter_project,
+            '--configuration', 'Release',
+            '--output', source_porter_publish,
+            '--no-self-contained',
+        ], check=True)
+
+    unreal_bridge_project = os.path.join(core_csharp_root, 'UnrealBridge', 'UnrealBridge.csproj')
+    unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
+    if os.path.exists(unreal_bridge_project):
+        print("Building UnrealBridge...")
+        subprocess.run([
+            'dotnet', 'publish', unreal_bridge_project,
+            '--configuration', 'Release',
+            '--output', unreal_bridge_publish,
+            '--no-self-contained',
+        ], check=True)
+
+
 def build_app_pyinstaller(fast=False, channel='stable') -> None:
     """Builds the Python application using PyInstaller."""
     # Try to locate pre-generated pycparser tables; generate them if absent.
@@ -226,40 +312,15 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     if channel == 'stable':
         generate_runtime_config(runtime_config_dir)
 
-    # NativeAOT SmartProp ABI, H5T.UnrealBridge, and SourcePorter.Core are built under Hammer5ToolsCore/CSharp.
-    smartprop_native_project = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'Hammer5Tools.Native.csproj')
+    build_libraries()
+
     smartprop_native_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'publish')
-    if os.path.exists(smartprop_native_project):
-        subprocess.run([
-            'dotnet', 'publish', smartprop_native_project,
-            '--configuration', 'Release',
-            '--runtime', 'win-x64',
-            '--self-contained', 'true',
-            '--output', smartprop_native_publish,
-        ], check=True)
     smartprop_native_dlls = [
         path for path in glob.glob(os.path.join(smartprop_native_publish, '*.dll'))
         if os.path.isfile(path)
     ]
 
     unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
-    if not os.path.exists(unreal_bridge_publish):
-        unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
-
-    source_porter_project = os.path.join(core_csharp_root, 'SourcePorter.Core', 'SourcePorter.Core.csproj')
-    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
-    if os.path.exists(source_porter_project):
-        subprocess.run([
-            'dotnet', 'publish', source_porter_project,
-            '--configuration', 'Release',
-            '--output', source_porter_publish,
-            '--no-self-contained',
-        ], check=True)
-    bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
-    bspsrc_exe = os.path.join(bspsrc_dir, 'bspsrc.exe')
-    if not os.path.exists(bspsrc_exe):
-        print(f"WARNING: bspsrc.exe not found at {bspsrc_exe}! SourcePorter BSP decompiler will be missing in build.")
-    import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
     ue_scripts_dir = os.path.join(cur_dir, 'tools', 'ue_scripts')
 
     pyinstaller_dist = os.path.join(pyinstaller_root, 'dist')
@@ -431,6 +492,81 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
             print(f"Warning: data folder {folder} missing from template")
 
 
+def package_velopack(channel: str) -> str:
+    """Create a local Velopack distribution using the release workflow contract."""
+    bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
+    required_paths = [
+        os.path.join(bundle_root, 'Hammer5Tools.exe'),
+        os.path.join(bundle_root, 'app', 'Hammer5ToolsGUI.exe'),
+        os.path.join(bundle_root, 'app', 'runtime'),
+    ]
+    missing = [path for path in required_paths if not os.path.exists(path)]
+    if missing:
+        raise FileNotFoundError(f"Cannot package incomplete bundle: {', '.join(missing)}")
+
+    if channel == 'dev':
+        build_number = os.environ.get('H5T_DEV_BUILD_NUMBER')
+        if not build_number:
+            build_number = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+        package_version = f"{app_version}-dev.{build_number}"
+    else:
+        package_version = app_version
+
+    with open(os.path.join(bundle_root, 'version.txt'), 'w', encoding='utf-8', newline='\n') as version_file:
+        version_file.write(f"{package_version}\n{channel}\n")
+
+    packaging_root = os.path.join(build_root, 'packaging')
+    os.makedirs(packaging_root, exist_ok=True)
+    release_notes = os.path.join(packaging_root, f'{channel}-release-notes.md')
+    if channel == 'dev':
+        commits = subprocess.run(
+            ['git', 'log', '-n', '5', '--pretty=format:* %s (%h)'],
+            cwd=cur_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        notes = f"### Recent Changes (Dev Build):\n\n{commits}\n"
+    else:
+        source_notes = os.path.join(cur_dir, 'RELEASE_NOTES.md')
+        if os.path.isfile(source_notes):
+            with open(source_notes, encoding='utf-8') as notes_file:
+                notes = notes_file.read()
+        else:
+            notes = f"## Hammer5Tools {package_version}\n\nRelease {package_version}.\n"
+    with open(release_notes, 'w', encoding='utf-8', newline='\n') as notes_file:
+        notes_file.write(notes)
+
+    tool_root = os.path.join(build_root, 'tools', 'velopack')
+    velopack = os.path.join(tool_root, 'vpk.exe')
+    if not os.path.isfile(velopack):
+        os.makedirs(tool_root, exist_ok=True)
+        subprocess.run(
+            ['dotnet', 'tool', 'install', 'vpk', '--tool-path', tool_root],
+            cwd=cur_dir,
+            check=True,
+        )
+
+    output_root = os.path.join(build_root, 'dist')
+    os.makedirs(output_root, exist_ok=True)
+    command = [
+        velopack,
+        'pack',
+        '--outputDir', output_root,
+        '--packId', 'Hammer5Tools',
+        '--packVersion', package_version,
+        '--packDir', bundle_root,
+        '--mainExe', 'Hammer5Tools.exe',
+        '--icon', os.path.join(gui_root, 'appicon.ico'),
+        '--channel', channel,
+        '--noPortable',
+        '--releaseNotes', release_notes,
+    ]
+    if channel == 'stable':
+        command.extend(['--framework', 'net10.0-x64-desktop'])
+    subprocess.run(command, cwd=cur_dir, check=True)
+    print(f"Velopack {channel} distribution created in {output_root}")
+    return output_root
 
 
 
@@ -442,11 +578,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build Hammer 5 Tools for Velopack.")
     parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
+    parser.add_argument('--build-libs', action='store_true', help="Build only Windows x64 .NET and native libraries.")
+    parser.add_argument('--package', action='store_true', help="Create a Velopack distribution after a full build.")
     parser.add_argument('--fast', action='store_true', help="Use 0 level optimization.")
     channel_group = parser.add_mutually_exclusive_group()
     channel_group.add_argument('--stable', action='store_true', help="Build stable release (default).")
     channel_group.add_argument('--dev', action='store_true', help="Build dev release.")
     args = parser.parse_args()
+    if args.package and not args.build_all:
+        parser.error('--package requires --build-all')
     channel = 'dev' if args.dev else 'stable'
 
 
@@ -497,6 +637,13 @@ def main() -> None:
             
             elapsed_time = time.time() - stage_start_time
             results.append(["Sequential Build (Core + Launcher)", f"{elapsed_time:.2f} seconds"])
+
+            if args.package:
+                stage_start_time = time.time()
+                output_root = package_velopack(channel)
+                elapsed_time = time.time() - stage_start_time
+                results.append([f"Velopack {channel} Distribution", f"{elapsed_time:.2f} seconds"])
+                results.append(["Distribution Output", output_root])
             
         elif args.build_app:
             stage_start_time = time.time()
@@ -504,9 +651,15 @@ def main() -> None:
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
+        elif args.build_libs:
+            stage_start_time = time.time()
+            build_libraries()
+            elapsed_time = time.time() - stage_start_time
+            results.append(["Build Windows x64 Libraries (.NET / NativeAOT)", f"{elapsed_time:.2f} seconds"])
+
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
-        return
+        raise
 
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])
