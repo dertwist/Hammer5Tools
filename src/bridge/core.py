@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Optional
 
 from src.dotnet import DotNetInterop
+
+
+class CoreBridgeError(RuntimeError):
+    """Raised when the Hammer5Tools Core contract cannot be loaded or invoked."""
+
+
+@dataclass(frozen=True)
+class CoreStatus:
+    """Python-native result of probing the Hammer5Tools Core contract."""
+
+    available: bool
+    version: str | None = None
+    diagnostic: str | None = None
 
 
 class CoreBridge:
@@ -13,8 +27,8 @@ class CoreBridge:
 
     _instance: Optional[CoreBridge] = None
 
-    def __init__(self) -> None:
-        self._interop = DotNetInterop()
+    def __init__(self, interop=None) -> None:
+        self._interop = interop or DotNetInterop()
         self._assembly = None
 
     @classmethod
@@ -34,6 +48,22 @@ class CoreBridge:
 
         import System
         return VpkIndex(System.Activator.CreateInstance(index_type))
+
+    def probe(self) -> CoreStatus:
+        """Loads and invokes the versioned Core contract without changing application state."""
+        try:
+            self._ensure_loaded()
+            api_type = self._assembly.GetType("Hammer5Tools.Core.CoreApi")
+            if api_type is None:
+                raise CoreBridgeError("Hammer5Tools.Core does not provide CoreApi")
+
+            result = api_type.GetMethod("Probe").Invoke(None, None)
+            if not bool(result.IsSuccess):
+                diagnostic = next((str(item.Message) for item in result.Diagnostics), "Core probe failed")
+                return CoreStatus(False, diagnostic=diagnostic)
+            return CoreStatus(True, version=str(result.Value))
+        except Exception as error:
+            return CoreStatus(False, diagnostic=str(error))
 
     def evaluate_smartprop_expression(
         self,
@@ -77,8 +107,13 @@ class CoreBridge:
         return float(SmartPropExpression.Evaluate(expression, context, float(default)))
 
     def _ensure_loaded(self) -> None:
-        if self._assembly is None:
+        if self._assembly is not None:
+            return
+
+        try:
             self._assembly = self._interop.setup_hammer5tools_core()
+        except Exception as error:
+            raise CoreBridgeError(f"Hammer5Tools Core is unavailable: {error}") from error
 
 
 class VpkIndex:

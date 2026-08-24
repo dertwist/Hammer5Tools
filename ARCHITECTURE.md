@@ -97,12 +97,13 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`DotNetManager`**: Interop wrapper utilizing `pythonnet` to invoke C# DLL binaries in `src/external/`.
 
 ### Core Bridge (`src/bridge/`)
-- **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once.
+- **`CoreBridge`**: Process-wide Python adapter that loads the public `Hammer5Tools.Core` contract once, translates load failures, and exposes a read-only contract probe.
 - **`VpkIndex`**: Python-native disposable wrapper for Core VPK and loose-file lookup; UI code must use this instead of direct ValvePak imports.
 - **`CoreBridge.evaluate_smartprop_expression()`**: Python-native SmartProp expression entry point; Core namespaces remain inside the bridge.
 
 ### Shared Core Foundation (`src/net_core/Hammer5Tools.Core/`)
 - **`CoreApi.Version`**: Versioned public-contract marker for future Python bridge clients.
+- **`CoreResult<T>` / `CoreDiagnostic`**: Typed operation-result and diagnostic contracts shared by future Core features.
 - **`Resources.VpkIndex`**: Typed VPK and loose-file lookup boundary backed by ValvePak, shared by SourcePorter and future core consumers.
 - **`SmartProps.SmartPropExpression` / `SmartPropContext` / `SmartPropValue`**: UI-neutral numeric expressions and typed literal, variable, expression, and vector value resolution for the staged SmartProp migration.
 - **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project src/net_core/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.

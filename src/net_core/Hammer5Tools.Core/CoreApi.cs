@@ -9,4 +9,9 @@ public static class CoreApi
     /// Gets the version understood by GUI bridge clients.
     /// </summary>
     public static Version Version { get; } = new(1, 0);
+
+    /// <summary>
+    /// Verifies that the public Core contract can be invoked by a client.
+    /// </summary>
+    public static CoreResult<Version> Probe() => CoreResult.Success(Version);
 }

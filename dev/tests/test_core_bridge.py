@@ -1,15 +1,69 @@
-from src.bridge.core import VpkIndex
+from types import SimpleNamespace
+
+from src.bridge.core import CoreBridge, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
-    from src.bridge.core import CoreBridge
-
     original = CoreBridge._instance
     try:
         CoreBridge._instance = None
         assert CoreBridge.instance() is CoreBridge.instance()
     finally:
         CoreBridge._instance = original
+
+
+class FakeMethod:
+    def __init__(self, result):
+        self.result = result
+
+    def Invoke(self, target, arguments):
+        return self.result
+
+
+class FakeApiType:
+    def __init__(self, result):
+        self.result = result
+
+    def GetMethod(self, name):
+        assert name == "Probe"
+        return FakeMethod(self.result)
+
+
+class FakeAssembly:
+    def __init__(self, result):
+        self.result = result
+
+    def GetType(self, name):
+        assert name == "Hammer5Tools.Core.CoreApi"
+        return FakeApiType(self.result)
+
+
+class FakeInterop:
+    def __init__(self, result=None, error=None):
+        self.result = result
+        self.error = error
+
+    def setup_hammer5tools_core(self):
+        if self.error:
+            raise self.error
+        return FakeAssembly(self.result)
+
+
+def test_core_probe_translates_success_to_python_status():
+    result = SimpleNamespace(IsSuccess=True, Value="1.0", Diagnostics=[])
+
+    status = CoreBridge(FakeInterop(result)).probe()
+
+    assert status.available
+    assert status.version == "1.0"
+    assert status.diagnostic is None
+
+
+def test_core_probe_translates_load_failures_to_diagnostics():
+    status = CoreBridge(FakeInterop(error=OSError("missing runtime"))).probe()
+
+    assert not status.available
+    assert "missing runtime" in status.diagnostic
 
 
 class FakeVpkIndex:

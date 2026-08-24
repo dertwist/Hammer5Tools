@@ -13,7 +13,11 @@ from PySide6.QtCore import QThread, Signal, QObject
 def is_pythonnet_available() -> bool:
     """Check if pythonnet and SourcePorter.Core.dll are available for direct CLR invocation."""
     try:
+        from src.bridge import CoreBridge
         from src.dotnet import DotNetInterop
+
+        if not CoreBridge.instance().probe().available:
+            return False
         interop = DotNetInterop()
         sp_dll = interop.paths.source_porter_core
         return sp_dll.is_file()
@@ -31,6 +35,11 @@ class SourcePorterClient:
         return is_pythonnet_available()
 
     def why_unavailable(self) -> str:
+        from src.bridge import CoreBridge
+
+        status = CoreBridge.instance().probe()
+        if not status.available:
+            return status.diagnostic or "Hammer5Tools Core is unavailable."
         if not is_pythonnet_available():
             return "SourcePorter.Core.dll assembly not found. Build src/net_core/SourcePorter.Core."
         return ""
