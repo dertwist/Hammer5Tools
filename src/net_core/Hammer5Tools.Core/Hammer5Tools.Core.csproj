@@ -11,7 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
     <PackageReference Include="ValvePak" Version="5.0.2.177" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ValveResourceFormat">
+      <HintPath>..\..\external\ValveResourceFormat.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+import json
 from typing import Optional
 
 from src.dotnet import DotNetInterop
@@ -20,6 +21,25 @@ class CoreStatus:
     available: bool
     version: str | None = None
     diagnostic: str | None = None
+
+
+@dataclass(frozen=True)
+class SmartPropModel:
+    """Python-native model produced by Core SmartProp evaluation."""
+
+    element_id: int
+    model_name: str
+    transform: tuple[float, ...]
+    material_group: str | None
+    tint_color: tuple[float, float, float, float] | None
+
+
+@dataclass(frozen=True)
+class SmartPropEvaluation:
+    """Python-native SmartProp evaluation result."""
+
+    models: tuple[SmartPropModel, ...]
+    diagnostics: tuple[str, ...]
 
 
 class CoreBridge:
@@ -105,6 +125,26 @@ class CoreBridge:
             None,
         )
         return float(SmartPropExpression.Evaluate(expression, context, float(default)))
+
+    def evaluate_smartprop(self, document: Mapping) -> SmartPropEvaluation:
+        """Evaluates an uncompiled SmartProp document through Hammer5Tools Core and VRF."""
+        self._ensure_loaded()
+
+        from Hammer5Tools.Core.SmartProps import SmartPropEvaluator
+
+        result = SmartPropEvaluator.EvaluateJson(json.dumps(document, separators=(",", ":")))
+        models = tuple(self._convert_smartprop_model(model) for model in result.Models)
+        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        return SmartPropEvaluation(models, diagnostics)
+
+    @staticmethod
+    def _convert_smartprop_model(model) -> SmartPropModel:
+        matrix = model.Transform
+        transform = tuple(float(getattr(matrix, f"M{row}{column}")) for row in range(1, 5) for column in range(1, 5))
+        tint = model.TintColor
+        tint_color = None if tint is None else (float(tint.X), float(tint.Y), float(tint.Z), float(tint.W))
+        material_group = None if model.MaterialGroup is None else str(model.MaterialGroup)
+        return SmartPropModel(int(model.ElementId), str(model.ModelName), transform, material_group, tint_color)
 
     def _ensure_loaded(self) -> None:
         if self._assembly is not None:

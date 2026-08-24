@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from src.bridge.core import CoreBridge, VpkIndex
+from src.bridge.core import CoreBridge, SmartPropModel, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
@@ -64,6 +64,31 @@ def test_core_probe_translates_load_failures_to_diagnostics():
 
     assert not status.available
     assert "missing runtime" in status.diagnostic
+
+
+def test_smartprop_models_are_converted_without_core_types():
+    matrix = SimpleNamespace(**{
+        f"M{row}{column}": float((row - 1) * 4 + column)
+        for row in range(1, 5)
+        for column in range(1, 5)
+    })
+    model = SimpleNamespace(
+        ElementId=7,
+        ModelName="models/example.vmdl",
+        Transform=matrix,
+        MaterialGroup="default",
+        TintColor=SimpleNamespace(X=1, Y=0.5, Z=0.25, W=1),
+    )
+
+    converted = CoreBridge._convert_smartprop_model(model)
+
+    assert converted == SmartPropModel(
+        7,
+        "models/example.vmdl",
+        tuple(float(value) for value in range(1, 17)),
+        "default",
+        (1.0, 0.5, 0.25, 1.0),
+    )
 
 
 class FakeVpkIndex:
