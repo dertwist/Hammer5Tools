@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
+from src.runtime_paths import resolve_runtime_paths
 
 try:
     import winreg
@@ -10,16 +11,7 @@ except ImportError:
 
 def get_fileedit_path():
     """Returns the absolute path to the main Hammer5Tools.exe launcher."""
-    if getattr(sys, 'frozen', False):
-        # We are running as Hammer5Tools_Core.exe, the launcher is next to us
-        base_dir = Path(sys.executable).parent
-        launcher = base_dir / "Hammer5Tools.exe"
-    else:
-        # Dev mode fallback
-        base_dir = Path(__file__).parent.parent.parent
-        launcher = base_dir / "Hammer5Tools.exe"
-    
-    return str(launcher)
+    return str(resolve_runtime_paths().install_root / "Hammer5Tools.exe")
 
 def get_smartprop_icon_path():
     """Returns the absolute path to smartprop.ico."""

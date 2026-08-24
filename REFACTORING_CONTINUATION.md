@@ -328,6 +328,26 @@ Phase 5 will refactor the existing `launcher/` into a deliberately small Windows
 
 Phase 5 exit criterion: one native process owns startup, single-instance handoff, early crash reporting, and update startup; the Python GUI owns all windows and application behavior and can still be run directly in development.
 
+### Phase 5 Progress
+
+- Added launcher protocol version 1 with normalized commands, target paths, working directory, and original arguments.
+- Added native process-lifetime instance arbitration, retrying request forwarding, and abandoned-instance recovery.
+- The launcher now supervises the GUI, propagates exit codes, detects IPC readiness, and logs/displays early startup failures.
+- Installer hooks remain native; update discovery and UI remain in Python.
+- Python skips its duplicate preflight only when explicitly launched by the native host, while direct development startup remains compatible.
+- Added native contract tests and Python protocol compatibility tests.
+
+Remaining Phase 5 work is packaged end-to-end smoke testing, concurrent-process integration coverage, and deciding whether a dedicated ready/failed control pipe is needed beyond process/IPC readiness monitoring.
+
+## Phase 6: Started
+
+- Added a centralized install/application/runtime/userdata path contract in `src/runtime_paths.py`.
+- Packaging now stages the immutable GUI in `app/`, with PyInstaller dependencies in `app/runtime/`; the launcher remains at the install root and user data remains in `userdata/`.
+- File associations resolve the launcher from the install root rather than assuming it is beside the frozen Python executable.
+- Environment-provided roots are covered by regression tests, with a repository-local development fallback.
+
+Remaining Phase 6 work includes a full packaged migration test, auditing remaining `sys._MEIPASS` and executable-relative lookups onto the root contract, shipping/update migration compatibility, and completing supervised shutdown/restart behavior.
+
 After Phase 5, continue with Phase 6 (three-root structure, shipping, and supervised GUI lifecycle), Phase 7 (cross-language naming/style), and Phase 8 (NativeAOT transport replacing Python.NET).
 
 Do not begin the Phase 6 folder cutover while VMAP/resource ownership is still split across GUI and Core.

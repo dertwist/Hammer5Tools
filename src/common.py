@@ -163,6 +163,11 @@ def get_app_paths() -> tuple[Path, Path]:
     app_dir: The folder containing the executable.
     user_data_dir: Persistent folder for user data (survives updates).
     """
+    from src.runtime_paths import resolve_runtime_paths
+    runtime_paths = resolve_runtime_paths()
+    if os.environ.get("H5T_INSTALL_ROOT"):
+        return runtime_paths.app_root, runtime_paths.user_data_root
+
     if getattr(sys, 'frozen', False):
         exe_path = Path(sys.executable)
         current_dir = exe_path.parent

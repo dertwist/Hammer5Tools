@@ -10,6 +10,11 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`main()`**: Entry point routine parsing CLI parameters (`--dev`, `--addon`), configuring PySide6 DLL search paths (`os.add_dll_directory`), handling Velopack installer hooks, instantiating `QApplication`, loading custom bundled fonts, setting window icons, and initializing `AppCore`.
 - **`_handle_velopack_hook(argv)`**: Intercepts Velopack/Squirrel installation, update, or uninstallation arguments (`--velopack-install`, `--velopack-uninstall`) to run background file tasks without starting the PySide GUI.
 
+### Native Lifecycle Host (`launcher/`)
+- **`Hammer5Tools.exe`**: Installed entry point. It handles installer hooks, owns the process-lifetime instance mutex, forwards versioned requests to the GUI IPC server, supervises `app/Hammer5Tools_Core.exe`, and reports startup failures.
+- **`request.hpp` / `request.cpp`**: UI-neutral launcher protocol parsing, Windows argument quoting, path normalization, and JSON serialization. Protocol version 1 carries command, target file, editor type, original arguments, and working directory.
+- Direct `src/main.py` startup remains supported for development. When `H5T_LAUNCHER_OWNS_INSTANCE=1`, Python skips duplicate instance arbitration but still owns the IPC server and all request handling.
+
 ### Application Orchestrator (`src/app_core.py`)
 - **`AppCore` Class** (`QMainWindow`): Primary application controller managing main UI state, docking layouts, local IPC server, system tray icon, file watching, and standalone editor instances.
   - `__init__(app, args)`: Applies global dark QSS stylesheet, starts local IPC server socket (`QLocalServer`), sets up tray menu, and restores window settings.
@@ -121,6 +126,12 @@ This document provides a concise indexation of the modules, classes, functions, 
 - **`SmartProps.SmartPropEvaluator`**: Converts uncompiled editor document data to VRF evaluation input and maps placed models to Hammer5Tools-owned results and diagnostics.
 - **`SmartProps.SmartPropDocumentSerializer`**: Serializes editor document data with VRF's public KeyValues3 writer; serializer output is parsed and evaluated in Core round-trip tests.
 - **`Hammer5Tools.Core.Tests`**: TUnit suite for new core behavior; run with `dotnet run --project src/net_core/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj` while the legacy xUnit suite remains on VSTest.
+
+### Runtime Roots (`src/runtime_paths.py`)
+- **Install root**: Native launcher, update-owned installation metadata, and the mutable `userdata/` root.
+- **Application root**: Immutable packaged GUI payload under `app/`.
+- **Runtime root**: PyInstaller and bundled dependency payload under `app/runtime/`.
+- The launcher exports these roots through `H5T_INSTALL_ROOT`, `H5T_APP_ROOT`, `H5T_RUNTIME_ROOT`, and `H5T_USER_DATA_ROOT`. Development startup resolves all code roots to the repository and uses `userdata_dev/`.
 
 ### Auto-Updater (`src/updater/`)
 - **`check_updates()`**: Asynchronous update checker using Velopack package releases.
