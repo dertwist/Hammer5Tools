@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\Hammer5Tools\SmartPropEditor\Presets\examples\example_expressions.vsmart"
-          Link="Fixtures\example_expressions.vsmart"
+    <None Include="..\..\..\Hammer5Tools\SmartPropEditor\Presets\**\*.vsmart"
+          Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

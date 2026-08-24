@@ -1224,9 +1224,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.update()
 
     def _apply_core_evaluation(self, fallback_models, root_item):
-        """Apply VRF model placements while retaining UI-only preview handles."""
+        """Apply authoritative VRF placements while retaining UI-only element dots."""
+        presentation_only = [info for info in fallback_models if not info.get("path")]
         if not hasattr(self.document, "build_smartprop_document"):
-            return fallback_models
+            self._warn_unsupported.add("Hammer5Tools Core document snapshot unavailable")
+            return presentation_only
 
         try:
             document = self.document.build_smartprop_document()
@@ -1236,11 +1238,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             )
         except Exception as error:
             self._warn_unsupported.add(f"Core evaluation unavailable: {error}")
-            return fallback_models
+            return presentation_only
 
         if result.diagnostics:
             self._warn_unsupported.update(result.diagnostics)
-            return fallback_models
+            return presentation_only
 
         data_by_id = {}
 
@@ -1255,12 +1257,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         collect_data(root_item)
 
         fallback_by_id = {}
-        presentation_only = []
         for info in fallback_models:
             if info.get("path"):
                 fallback_by_id.setdefault(info.get("id", 0), []).append(info)
-            else:
-                presentation_only.append(info)
 
         evaluated = []
         occurrences = {}
@@ -1287,14 +1286,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "tint_color": model.tint_color,
             })
 
-        # Nested SmartProps still use the renderer's file resolver until the Core
-        # bridge accepts a resolver payload. Preserve only those model instances.
-        evaluated_ids = {model.element_id for model in result.models}
-        unresolved_nested = [
-            info for info in fallback_models
-            if info.get("path") and info.get("id") not in evaluated_ids
-        ]
-        return presentation_only + evaluated + unresolved_nested
+        return presentation_only + evaluated
 
     def _collect_nested_smartprops(self, document):
         """Load the nested SmartProp graph for the Core resolver payload."""

@@ -104,7 +104,10 @@ public sealed class SmartPropEvaluatorTests
     [Test]
     public async Task ProductionFixturePreservesEvaluationAcrossSerialization()
     {
-        var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "example_expressions.vsmart");
+        var fixturePath = Directory.GetFiles(
+            Path.Combine(AppContext.BaseDirectory, "Fixtures"),
+            "example_expressions.vsmart",
+            SearchOption.AllDirectories).Single();
         var sourceText = await File.ReadAllTextAsync(fixturePath);
 
         var json = SmartPropDocumentSerializer.DeserializeText(sourceText);
@@ -115,5 +118,26 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(sourceResult.Diagnostics).IsEmpty();
         await Assert.That(serializedResult.Diagnostics).IsEmpty();
         await Assert.That(serializedResult.Models).Count().IsEqualTo(sourceResult.Models.Count);
+    }
+
+    [Test]
+    public async Task AllEditorPresetsPreserveEvaluationAcrossSerialization()
+    {
+        var fixtureDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures");
+        var fixturePaths = Directory.GetFiles(fixtureDirectory, "*.vsmart", SearchOption.AllDirectories);
+
+        await Assert.That(fixturePaths.Length).IsGreaterThan(1);
+        foreach (var fixturePath in fixturePaths)
+        {
+            var sourceText = await File.ReadAllTextAsync(fixturePath);
+            var json = SmartPropDocumentSerializer.DeserializeText(sourceText);
+            var serializedText = SmartPropDocumentSerializer.SerializeJson(json);
+            var sourceResult = SmartPropEvaluator.EvaluateText(sourceText);
+            var serializedResult = SmartPropEvaluator.EvaluateText(serializedText);
+
+            await Assert.That(sourceResult.Diagnostics).IsEmpty();
+            await Assert.That(serializedResult.Diagnostics).IsEmpty();
+            await Assert.That(serializedResult.Models).Count().IsEqualTo(sourceResult.Models.Count);
+        }
     }
 }
