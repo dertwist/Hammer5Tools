@@ -740,62 +740,6 @@ def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = N
     print(f"Decompiled {vpk_file} to {output_filepath}. Size: {len(out_bytes)} bytes.")
     return output_filepath
 
-# Start Extract thumbnail from VMAP file
-
-def extract_vmap_thumbnail(vmap_path):
-    Datamodel, _, DeferredMode = setup_keyvalues2()
-    if not os.path.exists(vmap_path):
-        return None, None
-
-    dmx_model = None
-    try:
-        dmx_model = Datamodel.Load(vmap_path, DeferredMode.Automatic)
-        if not dmx_model or not dmx_model.Root or not hasattr(dmx_model, 'PrefixAttributes'):
-            return None, None
-        prefix_attrs = dmx_model.PrefixAttributes
-        data = prefix_attrs.get("asset_preview_thumbnail")
-        fmt = prefix_attrs.get("asset_preview_thumbnail_format", "jpg")
-        if data is None:
-            return None, None
-        # Convert .NET byte array to hex string
-        if hasattr(data, 'Length'):
-            hex_data = ''.join(f'{data[i]:02X}' for i in range(data.Length))
-        elif isinstance(data, bytes):
-            hex_data = data.hex().upper()
-        elif isinstance(data, str):
-            hex_data = data.strip().replace('\n', '').replace('\t', '').replace(' ', '')
-        else:
-            hex_data = str(data).strip().replace('\n', '').replace('\t', '').replace(' ', '')
-        return hex_data, fmt
-    except Exception:
-        return None, None
-    finally:
-        if dmx_model and hasattr(dmx_model, 'Dispose'):
-            dmx_model.Dispose()
-        import gc; gc.collect()
-
-class TestVMapThumbnail(unittest.TestCase):
-    def test_extract_vmap_thumbnail(self):
-        vmap_path = os.path.join(tests_path, 'files', 'vmap', 'xxx_mapname_xxx.vmap')
-        hex_data, fmt = extract_vmap_thumbnail(vmap_path)
-        self.assertIsNotNone(hex_data, "No thumbnail data found.")
-        self.assertIsInstance(hex_data, str, "Hex data is not a string.")
-        self.assertGreater(len(hex_data), 0, "Hex data is empty.")
-
-        try:
-            image_bytes = binascii.unhexlify(hex_data)
-        except Exception as e:
-            self.fail(f"Failed to decode hex data: {e}")
-
-        try:
-            output_path = Path(vmap_path).with_suffix(f'.thumbnail.{fmt or "jpg"}')
-            output_path.write_bytes(image_bytes)
-            print(f"Saved thumbnail to: {output_path}")
-        except Exception as e:
-            self.fail(f"Failed to save image: {e}")
-
-# End Extract thumbnail from VMAP file
-
 import threading
 import contextlib
 _decompile_lock = threading.Lock()

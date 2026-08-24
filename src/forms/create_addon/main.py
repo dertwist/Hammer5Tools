@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
 from src.common import Presets_Path, Internal_Presets_Path, enable_dark_title_bar, app_dir
-from src.dotnet import extract_vmap_thumbnail
+from src.bridge import CoreBridge
 from PySide6.QtGui import QPixmap
 import binascii
 
@@ -75,7 +75,9 @@ class Create_addon_Dialog(QDialog):
 
         debug(f'Extracting thumbnail from {vmap_path}')
 
-        thumbnail_hex, fxt = extract_vmap_thumbnail(vmap_path)
+        map_document = CoreBridge.instance().read_valve_map(vmap_path)
+        thumbnail_hex = None if map_document.thumbnail is None else map_document.thumbnail.hex().upper()
+        fxt = map_document.thumbnail_format
         
         if thumbnail_hex is None:
             debug(f'Failed to extract thumbnail: thumbnail_hex is None')
@@ -168,4 +170,3 @@ class Create_addon_Dialog(QDialog):
                 if pattern.search(filename):
                     new_filename = pattern.sub(new_addon_name, filename)
                     os.rename(os.path.join(root, filename), os.path.join(root, new_filename))
-

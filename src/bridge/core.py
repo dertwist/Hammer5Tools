@@ -59,6 +59,8 @@ class ValveMapDocument:
     path: str
     entities: tuple[ValveMapEntity, ...]
     asset_references: tuple[str, ...]
+    thumbnail: bytes | None
+    thumbnail_format: str | None
 
 
 class CoreBridge:
@@ -198,7 +200,15 @@ class CoreBridge:
         document = reader.Read(path)
         entities = tuple(self._convert_valve_map_entity(entity) for entity in document.Entities)
         asset_references = tuple(str(reference) for reference in document.AssetReferences)
-        return ValveMapDocument(str(document.Path), entities, asset_references)
+        thumbnail = None if document.Thumbnail is None else bytes(document.Thumbnail)
+        thumbnail_format = None if document.ThumbnailFormat is None else str(document.ThumbnailFormat)
+        return ValveMapDocument(
+            str(document.Path),
+            entities,
+            asset_references,
+            thumbnail,
+            thumbnail_format,
+        )
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:

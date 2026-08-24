@@ -31,6 +31,8 @@ public sealed class ValveMapReaderTests
             Assert.Equal("1 2 3", projectedEntity.Origin);
             Assert.Equal("camera", projectedEntity.Properties["targetname"]);
             Assert.Equal(["materials/example.vmat", "models/example.vmdl"], result.AssetReferences);
+            Assert.Equal([0x01, 0xA2, 0xFF], result.Thumbnail);
+            Assert.Equal("jpg", result.ThumbnailFormat);
             Assert.Equal(timestamp, File.GetLastWriteTimeUtc(path));
         }
         finally
@@ -47,6 +49,8 @@ public sealed class ValveMapReaderTests
             "materials/example.vmat",
             "models/example.vmdl",
         };
+        model.PrefixAttributes["asset_preview_thumbnail"] = new byte[] { 0x01, 0xA2, 0xFF };
+        model.PrefixAttributes["asset_preview_thumbnail_format"] = "jpg";
         var root = new Element(model, "", null, "CMapRootElement");
         model.Root = root;
         var world = new Element(model, "", null, "CMapWorld");

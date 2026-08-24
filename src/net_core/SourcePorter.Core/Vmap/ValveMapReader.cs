@@ -22,7 +22,19 @@ public sealed class ValveMapReader : IValveMapReader
         var nodes = Traverse(world).ToArray();
         var entities = ReadEntities(world).ToArray();
         var assetReferences = ReadAssetReferences(document.Model).ToArray();
-        return new ValveMapDocument(document.Path, world, nodes, entities, assetReferences);
+        var thumbnail = ReadThumbnail(document.Model);
+        var thumbnailFormat = document.Model.PrefixAttributes.TryGetValue(
+            "asset_preview_thumbnail_format", out var format)
+            ? format?.ToString()
+            : null;
+        return new ValveMapDocument(
+            document.Path,
+            world,
+            nodes,
+            entities,
+            assetReferences,
+            thumbnail,
+            thumbnailFormat);
     }
 
     private static ValveMapNode ConvertNode(Element element)
@@ -109,5 +121,20 @@ public sealed class ValveMapReader : IValveMapReader
                 yield return reference.ToString() ?? string.Empty;
             }
         }
+    }
+
+    private static byte[]? ReadThumbnail(Datamodel.Datamodel model)
+    {
+        if (!model.PrefixAttributes.TryGetValue("asset_preview_thumbnail", out var value))
+        {
+            return null;
+        }
+
+        return value switch
+        {
+            byte[] bytes => bytes,
+            IEnumerable<byte> bytes => bytes.ToArray(),
+            _ => null,
+        };
     }
 }

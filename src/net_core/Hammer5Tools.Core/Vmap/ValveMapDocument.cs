@@ -8,4 +8,6 @@ public sealed record ValveMapDocument(
     ValveMapNode World,
     IReadOnlyList<ValveMapNode> Nodes,
     IReadOnlyList<ValveMapEntity> Entities,
-    IReadOnlyList<string> AssetReferences);
+    IReadOnlyList<string> AssetReferences,
+    IReadOnlyList<byte>? Thumbnail,
+    string? ThumbnailFormat);
