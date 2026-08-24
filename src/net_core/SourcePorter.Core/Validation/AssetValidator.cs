@@ -1,3 +1,4 @@
+using Hammer5Tools.Core.Resources;
 using SourcePorter.Core.Domain;
 
 namespace SourcePorter.Core.Validation;

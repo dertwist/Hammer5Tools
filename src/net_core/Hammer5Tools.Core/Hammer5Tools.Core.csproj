@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ValvePak" Version="5.0.2.177" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Collections.Generic" />
     <Using Include="System.Numerics" />

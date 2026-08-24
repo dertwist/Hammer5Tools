@@ -1,4 +1,4 @@
-using SourcePorter.Core.Validation;
+using Hammer5Tools.Core.Resources;
 
 namespace SourcePorter.Core.Toolchain;
 

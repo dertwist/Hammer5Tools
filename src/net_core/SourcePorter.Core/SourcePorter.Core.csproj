@@ -11,13 +11,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- VPK and KeyValues readers used by asset validation and VMAP tooling. -->
-    <PackageReference Include="ValvePak" Version="5.0.2.177" />
+    <!-- KeyValues reader used by asset validation and VMAP tooling. -->
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
 
     <!-- Datamodel (DMX) reader/writer for the uncompiled VMAP graph. -->
     <PackageReference Include="KeyValues2" Version="0.8.0" />
 
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
   </ItemGroup>
 
 </Project>
