@@ -71,7 +71,7 @@ public sealed class ValveMapReader : IValveMapReader
             }
         }
 
-        return new ValveMapNode(element.ClassName, properties, children);
+        return new ValveMapNode(element.Name, element.ClassName, properties, children);
     }
 
     private static IEnumerable<ValveMapNode> Traverse(ValveMapNode node)

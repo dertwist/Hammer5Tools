@@ -53,10 +53,22 @@ class ValveMapEntity:
 
 
 @dataclass(frozen=True)
+class ValveMapNode:
+    """Python-native node projected from an uncompiled Valve map."""
+
+    name: str
+    class_name: str
+    properties: dict[str, str]
+    children: tuple[ValveMapNode, ...]
+
+
+@dataclass(frozen=True)
 class ValveMapDocument:
     """Python-native read-only Valve map projection."""
 
     path: str
+    world: ValveMapNode
+    nodes: tuple[ValveMapNode, ...]
     entities: tuple[ValveMapEntity, ...]
     asset_references: tuple[str, ...]
     thumbnail: bytes | None
@@ -198,12 +210,16 @@ class CoreBridge:
 
         reader = System.Activator.CreateInstance(reader_type)
         document = reader.Read(path)
+        world = self._convert_valve_map_node(document.World)
+        nodes = tuple(self._convert_valve_map_node(node) for node in document.Nodes)
         entities = tuple(self._convert_valve_map_entity(entity) for entity in document.Entities)
         asset_references = tuple(str(reference) for reference in document.AssetReferences)
         thumbnail = None if document.Thumbnail is None else bytes(document.Thumbnail)
         thumbnail_format = None if document.ThumbnailFormat is None else str(document.ThumbnailFormat)
         return ValveMapDocument(
             str(document.Path),
+            world,
+            nodes,
             entities,
             asset_references,
             thumbnail,
@@ -225,6 +241,12 @@ class CoreBridge:
         origin = None if entity.Origin is None else str(entity.Origin)
         angles = None if entity.Angles is None else str(entity.Angles)
         return ValveMapEntity(str(entity.ClassName), origin, angles, properties)
+
+    @classmethod
+    def _convert_valve_map_node(cls, node) -> ValveMapNode:
+        properties = {str(item.Key): str(item.Value) for item in node.Properties}
+        children = tuple(cls._convert_valve_map_node(child) for child in node.Children)
+        return ValveMapNode(str(node.Name), str(node.ClassName), properties, children)
 
     def _ensure_loaded(self) -> None:
         if self._assembly is not None:

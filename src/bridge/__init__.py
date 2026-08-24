@@ -8,6 +8,7 @@ from src.bridge.core import (
     SmartPropModel,
     ValveMapDocument,
     ValveMapEntity,
+    ValveMapNode,
     VpkIndex,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "SmartPropModel",
     "ValveMapDocument",
     "ValveMapEntity",
+    "ValveMapNode",
     "VpkIndex",
 ]

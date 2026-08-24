@@ -1,10 +1,12 @@
-from src.bridge import CoreBridge, ValveMapDocument, ValveMapEntity
+from src.bridge import CoreBridge, ValveMapDocument, ValveMapEntity, ValveMapNode
 from src.editors.loading_editor.commands.vmap_parser import parse
 
 
 def test_parse_returns_point_camera_presentation_data(monkeypatch):
     document = ValveMapDocument(
         "maps/example.vmap",
+        ValveMapNode("world", "CMapWorld", {}, ()),
+        (),
         (
             ValveMapEntity(
                 "point_camera",

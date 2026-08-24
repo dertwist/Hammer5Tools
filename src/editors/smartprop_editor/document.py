@@ -1703,7 +1703,7 @@ class SmartPropDocument(QMainWindow):
         from src.common import get_cs2_path
         from src.settings.common import get_addon_name
         from PySide6.QtWidgets import QFileDialog, QMessageBox
-        from src.dotnet import setup_keyvalues2
+        from src.bridge import CoreBridge
         from src.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         import os
         
@@ -1719,18 +1719,58 @@ class SmartPropDocument(QMainWindow):
         if not file_path:
             return
             
-        Datamodel, Element, DeferredMode = setup_keyvalues2()
-        
-        dmx_model = None
         try:
-            # 1. Load the map
-            dmx_model = Datamodel.Load(file_path, DeferredMode.Automatic)
-            root = dmx_model.Root
-            if root is None or not root.ContainsKey("world") or root["world"] is None:
+            map_document = CoreBridge.instance().read_valve_map(file_path)
+
+            class MapNodeAdapter:
+                def __init__(self, node):
+                    self._node = node
+                    self.ClassName = node.class_name
+                    self.Name = node.name
+
+                def ContainsKey(self, name):
+                    return (
+                        name in self._node.properties
+                        or name == "children" and bool(self._node.children)
+                        or name == "entity_properties" and self._entity_properties() is not None
+                    )
+
+                def __getitem__(self, name):
+                    if name == "children":
+                        return [MapNodeAdapter(child) for child in self._node.children]
+                    if name == "entity_properties":
+                        entity_properties = self._entity_properties()
+                        return None if entity_properties is None else MapNodeAdapter(entity_properties)
+                    if name == "nodeID":
+                        return self._node.properties.get(name, "0")
+                    value = self._node.properties[name]
+                    if name in ("origin", "scales"):
+                        components = self._components(value, [0.0, 0.0, 0.0])
+                        return type("Vector3", (), dict(zip(("X", "Y", "Z"), components)))()
+                    if name == "angles":
+                        components = self._components(value, [0.0, 0.0, 0.0])
+                        return type("QAngle", (), dict(zip(("Pitch", "Yaw", "Roll"), components)))()
+                    return value
+
+                def _entity_properties(self):
+                    return next(
+                        (child for child in self._node.children if "classname" in child.properties),
+                        None,
+                    )
+
+                @staticmethod
+                def _components(value, default):
+                    try:
+                        normalized = str(value).replace(",", " ").replace("<", " ").replace(">", " ")
+                        values = [float(component) for component in normalized.split()]
+                        return (values + default)[:3]
+                    except (TypeError, ValueError):
+                        return default
+
+            world = MapNodeAdapter(map_document.world)
+            if world is None:
                 QMessageBox.critical(self, "Error", "Invalid VMAP file structure: could not find world element.")
                 return
-                
-            world = root["world"]
             
             # 2. Traverse the hierarchy recursively starting from world to find groups, smartprops, props
             scanned_elements = []
@@ -1995,16 +2035,6 @@ class SmartPropDocument(QMainWindow):
             QMessageBox.critical(self, "Import Failed", f"An error occurred while importing VMAP: {e}")
             import traceback
             traceback.print_exc()
-        finally:
-            if dmx_model is not None and hasattr(dmx_model, 'Dispose'):
-                dmx_model.Dispose()
-            import gc; gc.collect()
-            try:
-                import System
-                System.GC.Collect()
-                System.GC.WaitForPendingFinalizers()
-            except:
-                pass
 
     # [Tree widget functions]
     def new_item_with_replacement(self, data):
