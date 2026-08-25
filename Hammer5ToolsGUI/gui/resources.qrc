@@ -1,695 +1,695 @@
 <RCC>
   <qresource prefix="/icons">
-    <file>icons/steam_logo_2.png</file>
-    <file>icons/steam_logo.png</file>
-    <file>icons/hammer_icon.png</file>
+    <file alias="icons/steam_logo_2.png">assets/icons/app/steam_logo_2.png</file>
+    <file alias="icons/steam_logo.png">assets/icons/app/steam_logo.png</file>
+    <file alias="icons/hammer_icon.png">assets/icons/app/hammer_icon.png</file>
     <file>appicon.ico</file>
   </qresource>
   <qresource prefix="/">
-    <file>icons/attachment.png</file>
-    <file>icons/link_off.png</file>
-    <file>icons/add_link.png</file>
-    <file>icons/vertical_line.png</file>
-    <file>icons/vertical_line.svg</file>
-    <file>icons/folder_open.svg</file>
-    <file>icons/add_photo_alternate_16dp.svg</file>
-    <file>icons/arrow_drop_down_circle_16dp.svg</file>
-    <file>icons/arrow_right_16dp.svg</file>
-    <file>icons/auto_towing_16dp.svg</file>
-    <file>icons/bookmarks_16dp.svg</file>
-    <file>icons/cancel_16dp.svg</file>
-    <file>icons/change_circle_16dp.svg</file>
-    <file>icons/check_16dp.svg</file>
-    <file>icons/check_box_outline_blank_16dp.svg</file>
-    <file>icons/clear_all_16dp.svg</file>
-    <file>icons/close_16dp.svg</file>
-    <file>icons/create_new_folder_16dp.svg</file>
-    <file>icons/delete_16dp.svg</file>
-    <file>icons/delete_sweep_16dp.svg</file>
-    <file>icons/description_16dp.svg</file>
-    <file>icons/discover_tune_16dp.svg</file>
-    <file>icons/do_not_disturb_on_16dp.svg</file>
-    <file>icons/done_all_16dp.svg</file>
-    <file>icons/download_done_16dp.svg</file>
-    <file>icons/draft_16dp.svg</file>
-    <file>icons/edit_16dp.svg</file>
-    <file>icons/edit_document_16dp.svg</file>
-    <file>icons/edit_note_16dp.svg</file>
-    <file>icons/file_open_16dp.svg</file>
-    <file>icons/filter_alt_16dp.svg</file>
-    <file>icons/find_in_page_16dp.svg</file>
-    <file>icons/folder_16dp.svg</file>
-    <file>icons/format_list_numbered_16dp.svg</file>
-    <file>icons/image_16dp.svg</file>
-    <file>icons/imagesmode_16dp.svg</file>
-    <file>icons/label_16dp.svg</file>
-    <file>icons/more_up_16dp.svg</file>
-    <file>icons/open_in_new_16dp.svg</file>
-    <file>icons/open_with_16dp.svg</file>
-    <file>icons/output_16dp.svg</file>
-    <file>icons/place_item_16dp.svg</file>
-    <file>icons/post_add_16dp.svg</file>
-    <file>icons/publish_16dp.svg</file>
-    <file>icons/redo_16dp.svg</file>
-    <file>icons/save_16dp.svg</file>
-    <file>icons/save_as_16dp.svg</file>
-    <file>icons/search_16dp.svg</file>
-    <file>icons/select_check_box_16dp.svg</file>
-    <file>icons/settings_16dp.svg</file>
-    <file>icons/settings_b_roll_16dp.svg</file>
-    <file>icons/star_16dp.svg</file>
-    <file>icons/start_16dp.svg</file>
-    <file>icons/sweep_16dp.svg</file>
-    <file>icons/task_16dp.svg</file>
-    <file>icons/terminal_16dp.svg</file>
-    <file>icons/public_16dp.svg</file>
-    <file>icons/developer_guide_16dp.svg</file>
-    <file>icons/menu_book_16dp.svg</file>
-    <file>icons/arrow_drop_down_16dp.svg</file>
-    <file>icons/archive_16dp.svg</file>
-    <file>icons/download_2_16dp.svg</file>
-    <file>icons/upload_2_16dp.svg</file>
-    <file>icons/123_24dp.svg</file>
-    <file>icons/acute_24dp.svg</file>
-    <file>icons/add_circle_24dp.svg</file>
-    <file>icons/add_task_24dp.svg</file>
-    <file>icons/all_match_24dp.svg</file>
-    <file>icons/apps_24dp.svg</file>
-    <file>icons/arrow_back_24dp.svg</file>
-    <file>icons/arrow_forward_24dp.svg</file>
-    <file>icons/arrow_outward_24dp.svg</file>
-    <file>icons/arrow_top_left_24dp.svg</file>
-    <file>icons/assistant_navigation_24dp.svg</file>
-    <file>icons/bottom_panel_close_24dp.svg</file>
-    <file>icons/cancel_24dp.svg</file>
-    <file>icons/category_search_24dp.svg</file>
-    <file>icons/check_box_24dp.svg</file>
-    <file>icons/check_box_outline_blank_24dp.svg</file>
-    <file>icons/check_circle_24dp.svg</file>
-    <file>icons/clock_loader_20_24dp.svg</file>
-    <file>icons/clock_loader_40_24dp.svg</file>
-    <file>icons/clock_loader_60_24dp.svg</file>
-    <file>icons/close_24dp.svg</file>
-    <file>icons/content_copy_24dp.svg</file>
-    <file>icons/content_cut_24dp.svg</file>
-    <file>icons/content_paste_24dp.svg</file>
-    <file>icons/copy_all_24dp.svg</file>
-    <file>icons/create_new_folder_24dp.svg</file>
-    <file>icons/delete_24dp.svg</file>
-    <file>icons/density_medium_24dp.svg</file>
-    <file>icons/done_outline_24dp.svg</file>
-    <file>icons/download_for_offline_24dp.svg</file>
-    <file>icons/dynamic_form_24dp.svg</file>
-    <file>icons/enable_24dp.svg</file>
-    <file>icons/expand_24dp.svg</file>
-    <file>icons/expand_circle_down_24dp.svg</file>
-    <file>icons/file_copy_24dp.svg</file>
-    <file>icons/filter_list_off_24dp.svg</file>
-    <file>icons/folder_copy_24dp.svg</file>
-    <file>icons/forward_24dp.svg</file>
-    <file>icons/home_24dp.svg</file>
-    <file>icons/install_desktop_24dp.svg</file>
-    <file>icons/menu_24dp.svg</file>
-    <file>icons/more_horiz_24dp.svg</file>
-    <file>icons/more_vert_24dp.svg</file>
-    <file>icons/output_24dp.svg</file>
-    <file>icons/place_item_24dp.svg</file>
-    <file>icons/radio_button_partial_24dp.svg</file>
-    <file>icons/radio_button_unchecked_24dp.svg</file>
-    <file>icons/repartition_24dp.svg</file>
-    <file>icons/restore_from_trash_24dp.svg</file>
-    <file>icons/star_24dp.svg</file>
-    <file>icons/subdirectory_arrow_right_24dp.svg</file>
-    <file>icons/sync_24dp.svg</file>
-    <file>icons/sync_alt_24dp.svg</file>
-    <file>icons/system_update_alt_24dp.svg</file>
-    <file>icons/tab_move_24dp.svg</file>
-    <file>icons/toggle_off_24dp.svg</file>
-    <file>icons/token_24dp.svg</file>
-    <file>icons/undo_24dp.svg</file>
-    <file>icons/unfold_less_24dp.svg</file>
-    <file>icons/zoom_in_24dp.svg</file>
-    <file>icons/arrow_drop_up_24dp.svg</file>
-    <file>icons/keyboard_double_arrow_right_24dp.svg</file>
-    <file>icons/add_24dp.svg</file>
-    <file>icons/add_box_24dp.svg</file>
-    <file>icons/arrow_back_ios_24dp.svg</file>
-    <file>icons/arrow_downward_24dp.svg</file>
-    <file>icons/arrow_drop_down_24dp.svg</file>
-    <file>icons/arrow_forward_ios_24dp.svg</file>
-    <file>icons/backspace_24dp.svg</file>
-    <file>icons/bolt_24dp.svg</file>
-    <file>icons/bookmark_24dp.svg</file>
-    <file>icons/bookmark_add_24dp.svg</file>
-    <file>icons/bookmark_added_24dp.svg</file>
-    <file>icons/bookmark_check_24dp.svg</file>
-    <file>icons/bookmark_star_24dp.svg</file>
-    <file>icons/check_24dp.svg</file>
-    <file>icons/chevron_left_24dp.svg</file>
-    <file>icons/chevron_right_24dp.svg</file>
-    <file>icons/done_all_24dp.svg</file>
-    <file>icons/double_arrow_24dp.svg</file>
-    <file>icons/favorite_24dp.svg</file>
-    <file>icons/filter_list_24dp.svg</file>
-    <file>icons/logout_24dp.svg</file>
-    <file>icons/manage_search_24dp.svg</file>
-    <file>icons/menu_open_24dp.svg</file>
-    <file>icons/new_label_24dp.svg</file>
-    <file>icons/open_in_full_24dp.svg</file>
-    <file>icons/radio_button_checked_24dp.svg</file>
-    <file>icons/remove_24dp.svg</file>
-    <file>icons/search_24dp.svg</file>
-    <file>icons/select_check_box_24dp.svg</file>
-    <file>icons/sort_24dp.svg</file>
-    <file>images/help/header.png</file>
-    <file>icons/help_24dp.svg</file>
-    <file>icons/arrow_drop_down.png</file>
-    <file>icons/arrow_drop_right.png</file>
-    <file>icons/splitter-horizontal.svg</file>
-    <file>icons/splitter-vertical.svg</file>
-    <file>icons/more_horiz.png</file>
-    <file>icons/more_vert.png</file>
-    <file>icons/colors_24dp.png</file>
-    <file>icons/construction_24dp.png</file>
-    <file>icons/contrast_24dp.png</file>
-    <file>icons/dashboard_24dp.png</file>
-    <file>icons/data_object_24dp.png</file>
-    <file>icons/dataset_24dp.png</file>
-    <file>icons/deployed_code_24dp.png</file>
-    <file>icons/description_24dp.png</file>
-    <file>icons/design_services_24dp.png</file>
-    <file>icons/draft_24dp.png</file>
-    <file>icons/edit_note_24dp.png</file>
-    <file>icons/emoji_objects_24dp.png</file>
-    <file>icons/exposure_24dp.png</file>
-    <file>icons/file_present_24dp.png</file>
-    <file>icons/filter_alt_24dp.png</file>
-    <file>icons/filter_list_off_24dp.png</file>
-    <file>icons/format_color_fill_24dp.png</file>
-    <file>icons/functions_24dp.png</file>
-    <file>icons/gradient_24dp.png</file>
-    <file>icons/heap_snapshot_large_24dp.png</file>
-    <file>icons/heap_snapshot_thumbnail_24dp.png</file>
-    <file>icons/horizontal_split_24dp.png</file>
-    <file>icons/ink_pen_24dp.png</file>
-    <file>icons/instant_mix_24dp.png</file>
-    <file>icons/lan_24dp.png</file>
-    <file>icons/line_style_24dp.png</file>
-    <file>icons/line_weight_24dp.png</file>
-    <file>icons/linear_scale_24dp.png</file>
-    <file>icons/note_add_24dp.png</file>
-    <file>icons/package_2_24dp.png</file>
-    <file>icons/page_info_24dp.png</file>
-    <file>icons/palette_24dp.png</file>
-    <file>icons/pending_actions_24dp.png</file>
-    <file>icons/polyline_24dp.png</file>
-    <file>icons/regular_expression_24dp.png</file>
-    <file>icons/scan_delete_24dp.png</file>
-    <file>icons/schema_24dp.png</file>
-    <file>icons/shape_line_24dp.png</file>
-    <file>icons/shapes_24dp.png</file>
-    <file>icons/signal_cellular_alt_24dp.png</file>
-    <file>icons/sort_24dp.png</file>
-    <file>icons/storage_24dp.png</file>
-    <file>icons/subject_24dp.png</file>
-    <file>icons/subscript_24dp.png</file>
-    <file>icons/summarize_24dp.png</file>
-    <file>icons/table_24dp.png</file>
-    <file>icons/task_24dp.png</file>
-    <file>icons/topic_24dp.png</file>
-    <file>icons/tune_24dp.png</file>
-    <file>icons/view_array_24dp.png</file>
-    <file>icons/view_in_ar_24dp.png</file>
-    <file>icons/view_object_track_24dp.png</file>
-    <file>icons/visibility_24dp.png</file>
-    <file>icons/visibility_off_24dp.png</file>
-    <file>icons/tools/assettypes/abc_sm.png</file>
-    <file>icons/tools/assettypes/animation_group_sm.png</file>
-    <file>icons/tools/assettypes/animation_sm.png</file>
-    <file>icons/tools/assettypes/blender_sm.png</file>
-    <file>icons/tools/assettypes/css_sm.png</file>
-    <file>icons/tools/assettypes/dmx_sm.png</file>
-    <file>icons/tools/assettypes/fbx_sm.png</file>
-    <file>icons/tools/assettypes/generic_image_sm.png</file>
-    <file>icons/tools/assettypes/generic_sm.png</file>
-    <file>icons/tools/assettypes/image_psd_sm.png</file>
-    <file>icons/tools/assettypes/javascript_sm.png</file>
-    <file>icons/tools/assettypes/map_sm.png</file>
-    <file>icons/tools/assettypes/material_prefab_sm.png</file>
-    <file>icons/tools/assettypes/material_sm.png</file>
-    <file>icons/tools/assettypes/maya_ma_sm.png</file>
-    <file>icons/tools/assettypes/maya_mb_sm.png</file>
-    <file>icons/tools/assettypes/mesh_sm.png</file>
-    <file>icons/tools/assettypes/model_prefab_sm.png</file>
-    <file>icons/tools/assettypes/model_sm.png</file>
-    <file>icons/tools/assettypes/morph_sm.png</file>
-    <file>icons/tools/assettypes/particles_sm.png</file>
-    <file>icons/tools/assettypes/physics_sm.png</file>
-    <file>icons/tools/assettypes/response_template_sm.png</file>
-    <file>icons/tools/assettypes/speech_graphics_sm.png</file>
-    <file>icons/tools/assettypes/surface_sm.png</file>
-    <file>icons/tools/assettypes/text_sm.png</file>
-    <file>icons/tools/assettypes/texture_sm.png</file>
-    <file>icons/tools/assettypes/typescript_sm.png</file>
-    <file>icons/tools/assettypes/vcd_choreo_sm.png</file>
-    <file>icons/tools/assettypes/vcdlist_sm.png</file>
-    <file>icons/tools/assettypes/vclip_sm.png</file>
-    <file>icons/tools/assettypes/vcompmat_sm.png</file>
-    <file>icons/tools/assettypes/vcompmat_lg.png</file>
-    <file>icons/tools/assettypes/vdata_sm.png</file>
-    <file>icons/tools/assettypes/vdata_lg.png</file>
-    <file>icons/tools/assettypes/vmix_sm.png</file>
-    <file>icons/tools/assettypes/vmix_lg.png</file>
-    <file>icons/tools/assettypes/vnmgrph_sm.png</file>
-    <file>icons/tools/assettypes/vodb_sm.png</file>
-    <file>icons/tools/assettypes/vodb_lg.png</file>
-    <file>icons/tools/assettypes/vskel_sm.png</file>
-    <file>icons/tools/assettypes/xml_sm.png</file>
-    <file>icons/tools/assettypes/xml_lg.png</file>
-    <file>icons/keyboard.png</file>
-    <file>icons/volume_up.png</file>
-    <file>icons/smartprop_editor.png</file>
-    <file>icons/soundviewer.png</file>
-    <file>icons/tools/vmixtool/appicon.ico</file>
-    <file>icons/tools/assettypes/vsmart_sm.png</file>
-    <file>icons/tools/assettypes/smart_prop_lg.png</file>
-    <file>icons/tools/assettypes/model_lg.png</file>
-    <file>icons/tools/assettypes/model_prefab_lg.png</file>
-    <file>icons/propertyeditor/array_drag_cursor.png</file>
-    <file>icons/propertyeditor/array_drag_handle.png</file>
-    <file>icons/propertyeditor/array_drag_handle_active.png</file>
-    <file>icons/propertyeditor/array_drag_handle_hover.png</file>
-    <file>icons/propertyeditor/array_item_drag.png</file>
-    <file>icons/propertyeditor/attr_alert.png</file>
-    <file>icons/propertyeditor/attr_menu.png</file>
-    <file>icons/propertyeditor/attr_menu_hover.png</file>
-    <file>icons/propertyeditor/attr_reset.png</file>
-    <file>icons/propertyeditor/attr_reset_hover.png</file>
-    <file>icons/propertyeditor/clear_filter.png</file>
-    <file>icons/propertyeditor/command_icon_group.png</file>
-    <file>icons/propertyeditor/command_icon_group_hover.png</file>
-    <file>icons/propertyeditor/custom_command_button_bg.png</file>
-    <file>icons/propertyeditor/custom_command_button_bg_hover.png</file>
-    <file>icons/propertyeditor/extra_attr_remove.png</file>
-    <file>icons/propertyeditor/extra_attr_remove_hover.png</file>
-    <file>icons/propertyeditor/hierarchy_child.png</file>
-    <file>icons/propertyeditor/hierarchy_collapsed.png</file>
-    <file>icons/propertyeditor/hierarchy_collapsed_hover.png</file>
-    <file>icons/propertyeditor/hierarchy_expanded.png</file>
-    <file>icons/propertyeditor/hierarchy_expanded_hover.png</file>
-    <file>icons/propertyeditor/hierarchy_force_expanded.png</file>
-    <file>icons/propertyeditor/hierarchy_lastchild.png</file>
-    <file>icons/propertyeditor/hierarchy_passthrough.png</file>
-    <file>icons/propertyeditor/internal_command_button_bg.png</file>
-    <file>icons/propertyeditor/internal_command_button_bg_hover.png</file>
-    <file>icons/propertyeditor/interval_lock.png</file>
-    <file>icons/propertyeditor/interval_unlock.png</file>
-    <file>icons/propertyeditor/item_add.png</file>
-    <file>icons/propertyeditor/item_add_hover.png</file>
-    <file>icons/propertyeditor/item_remove.png</file>
-    <file>icons/propertyeditor/item_remove_hover.png</file>
-    <file>icons/propertyeditor/overlay_inherit.png</file>
-    <file>icons/propertyeditor/overlay_inherit_hover.png</file>
-    <file>icons/propertyeditor/overlay_override.png</file>
-    <file>icons/propertyeditor/overlay_override_hover.png</file>
-    <file>icons/propertyeditor/raw_edit_mode.png</file>
-    <file>icons/propertyeditor/show_hidden.png</file>
-    <file>icons/propertyeditor/show_hidden_sm.png</file>
-    <file>icons/propertyeditor/sort_az.png</file>
-    <file>icons/propertyeditor/sort_def.png</file>
-    <file>icons/propertyeditor/sort_za.png</file>
-    <file>icons/valve_style/arrow_closed.png</file>
-    <file>icons/valve_style/arrow_closed_hover.png</file>
-    <file>icons/valve_style/arrow_down.png</file>
-    <file>icons/valve_style/arrow_left.png</file>
-    <file>icons/valve_style/arrow_open.png</file>
-    <file>icons/valve_style/arrow_open_hover.png</file>
-    <file>icons/valve_style/arrow_right.png</file>
-    <file>icons/valve_style/arrow_up.png</file>
-    <file>icons/valve_style/branch_open.png</file>
-    <file>icons/valve_style/branch_open_activated.png</file>
-    <file>icons/valve_style/checkbox_checked.png</file>
-    <file>icons/valve_style/checkbox_checked_disabled.png</file>
-    <file>icons/valve_style/checkbox_indeterminate.png</file>
-    <file>icons/valve_style/checkbox_indeterminate_disabled.png</file>
-    <file>icons/valve_style/checkbox_mini_checked.png</file>
-    <file>icons/valve_style/checkbox_mini_unchecked.png</file>
-    <file>icons/valve_style/checkbox_unchecked.png</file>
-    <file>icons/valve_style/checkbox_unchecked_disabled.png</file>
-    <file>icons/valve_style/dock_close_button.png</file>
-    <file>icons/valve_style/dock_close_button_dim.png</file>
-    <file>icons/valve_style/dock_float_button.png</file>
-    <file>icons/valve_style/dropdown_menu_closed.png</file>
-    <file>icons/valve_style/dropdown_menu_compact_closed.png</file>
-    <file>icons/valve_style/dropdown_menu_compact_closed_dim.png</file>
-    <file>icons/valve_style/dropdown_menu_compact_open.png</file>
-    <file>icons/valve_style/dropdown_menu_compact_open_dim.png</file>
-    <file>icons/valve_style/dropdown_menu_open.png</file>
-    <file>icons/valve_style/lock_locked.png</file>
-    <file>icons/valve_style/lock_unlocked.png</file>
-    <file>icons/valve_style/radio_selected.png</file>
-    <file>icons/valve_style/radio_selected_disabled.png</file>
-    <file>icons/valve_style/radio_unselected.png</file>
-    <file>icons/valve_style/radio_unselected_disabled.png</file>
-    <file>icons/valve_style/tab_destination.png</file>
-    <file>icons/valve_style/tab_destination_hovered.png</file>
-    <file>icons/valve_style/tab-closebutton.png</file>
-    <file>icons/valve_style/tab-closebutton-hovered.png</file>
-    <file>icons/valve_style/tab-closebutton-selected.png</file>
-    <file>icons/valve_style/tab-closebutton-selected-hovered.png</file>
-    <file>icons/valve_style/tab-deselected.png</file>
-    <file>icons/valve_style/tab-selected.png</file>
-    <file>icons/valve_style/toolbar_extension_h.png</file>
-    <file>icons/valve_style/toolbar_extension_v.png</file>
+    <file alias="icons/attachment.png">assets/icons/ui/attachment.png</file>
+    <file alias="icons/link_off.png">assets/icons/ui/link_off.png</file>
+    <file alias="icons/add_link.png">assets/icons/ui/add_link.png</file>
+    <file alias="icons/vertical_line.png">assets/icons/ui/vertical_line.png</file>
+    <file alias="icons/vertical_line.svg">assets/icons/ui/vertical_line.svg</file>
+    <file alias="icons/folder_open.svg">assets/icons/ui/folder_open.svg</file>
+    <file alias="icons/add_photo_alternate_16dp.svg">assets/icons/ui/add_photo_alternate_16dp.svg</file>
+    <file alias="icons/arrow_drop_down_circle_16dp.svg">assets/icons/ui/arrow_drop_down_circle_16dp.svg</file>
+    <file alias="icons/arrow_right_16dp.svg">assets/icons/ui/arrow_right_16dp.svg</file>
+    <file alias="icons/auto_towing_16dp.svg">assets/icons/ui/auto_towing_16dp.svg</file>
+    <file alias="icons/bookmarks_16dp.svg">assets/icons/ui/bookmarks_16dp.svg</file>
+    <file alias="icons/cancel_16dp.svg">assets/icons/ui/cancel_16dp.svg</file>
+    <file alias="icons/change_circle_16dp.svg">assets/icons/ui/change_circle_16dp.svg</file>
+    <file alias="icons/check_16dp.svg">assets/icons/ui/check_16dp.svg</file>
+    <file alias="icons/check_box_outline_blank_16dp.svg">assets/icons/ui/check_box_outline_blank_16dp.svg</file>
+    <file alias="icons/clear_all_16dp.svg">assets/icons/ui/clear_all_16dp.svg</file>
+    <file alias="icons/close_16dp.svg">assets/icons/ui/close_16dp.svg</file>
+    <file alias="icons/create_new_folder_16dp.svg">assets/icons/ui/create_new_folder_16dp.svg</file>
+    <file alias="icons/delete_16dp.svg">assets/icons/ui/delete_16dp.svg</file>
+    <file alias="icons/delete_sweep_16dp.svg">assets/icons/ui/delete_sweep_16dp.svg</file>
+    <file alias="icons/description_16dp.svg">assets/icons/ui/description_16dp.svg</file>
+    <file alias="icons/discover_tune_16dp.svg">assets/icons/ui/discover_tune_16dp.svg</file>
+    <file alias="icons/do_not_disturb_on_16dp.svg">assets/icons/ui/do_not_disturb_on_16dp.svg</file>
+    <file alias="icons/done_all_16dp.svg">assets/icons/ui/done_all_16dp.svg</file>
+    <file alias="icons/download_done_16dp.svg">assets/icons/ui/download_done_16dp.svg</file>
+    <file alias="icons/draft_16dp.svg">assets/icons/ui/draft_16dp.svg</file>
+    <file alias="icons/edit_16dp.svg">assets/icons/ui/edit_16dp.svg</file>
+    <file alias="icons/edit_document_16dp.svg">assets/icons/ui/edit_document_16dp.svg</file>
+    <file alias="icons/edit_note_16dp.svg">assets/icons/ui/edit_note_16dp.svg</file>
+    <file alias="icons/file_open_16dp.svg">assets/icons/ui/file_open_16dp.svg</file>
+    <file alias="icons/filter_alt_16dp.svg">assets/icons/ui/filter_alt_16dp.svg</file>
+    <file alias="icons/find_in_page_16dp.svg">assets/icons/ui/find_in_page_16dp.svg</file>
+    <file alias="icons/folder_16dp.svg">assets/icons/ui/folder_16dp.svg</file>
+    <file alias="icons/format_list_numbered_16dp.svg">assets/icons/ui/format_list_numbered_16dp.svg</file>
+    <file alias="icons/image_16dp.svg">assets/icons/ui/image_16dp.svg</file>
+    <file alias="icons/imagesmode_16dp.svg">assets/icons/ui/imagesmode_16dp.svg</file>
+    <file alias="icons/label_16dp.svg">assets/icons/ui/label_16dp.svg</file>
+    <file alias="icons/more_up_16dp.svg">assets/icons/ui/more_up_16dp.svg</file>
+    <file alias="icons/open_in_new_16dp.svg">assets/icons/ui/open_in_new_16dp.svg</file>
+    <file alias="icons/open_with_16dp.svg">assets/icons/ui/open_with_16dp.svg</file>
+    <file alias="icons/output_16dp.svg">assets/icons/ui/output_16dp.svg</file>
+    <file alias="icons/place_item_16dp.svg">assets/icons/ui/place_item_16dp.svg</file>
+    <file alias="icons/post_add_16dp.svg">assets/icons/ui/post_add_16dp.svg</file>
+    <file alias="icons/publish_16dp.svg">assets/icons/ui/publish_16dp.svg</file>
+    <file alias="icons/redo_16dp.svg">assets/icons/ui/redo_16dp.svg</file>
+    <file alias="icons/save_16dp.svg">assets/icons/ui/save_16dp.svg</file>
+    <file alias="icons/save_as_16dp.svg">assets/icons/ui/save_as_16dp.svg</file>
+    <file alias="icons/search_16dp.svg">assets/icons/ui/search_16dp.svg</file>
+    <file alias="icons/select_check_box_16dp.svg">assets/icons/ui/select_check_box_16dp.svg</file>
+    <file alias="icons/settings_16dp.svg">assets/icons/ui/settings_16dp.svg</file>
+    <file alias="icons/settings_b_roll_16dp.svg">assets/icons/ui/settings_b_roll_16dp.svg</file>
+    <file alias="icons/star_16dp.svg">assets/icons/ui/star_16dp.svg</file>
+    <file alias="icons/start_16dp.svg">assets/icons/ui/start_16dp.svg</file>
+    <file alias="icons/sweep_16dp.svg">assets/icons/ui/sweep_16dp.svg</file>
+    <file alias="icons/task_16dp.svg">assets/icons/ui/task_16dp.svg</file>
+    <file alias="icons/terminal_16dp.svg">assets/icons/ui/terminal_16dp.svg</file>
+    <file alias="icons/public_16dp.svg">assets/icons/ui/public_16dp.svg</file>
+    <file alias="icons/developer_guide_16dp.svg">assets/icons/ui/developer_guide_16dp.svg</file>
+    <file alias="icons/menu_book_16dp.svg">assets/icons/ui/menu_book_16dp.svg</file>
+    <file alias="icons/arrow_drop_down_16dp.svg">assets/icons/ui/arrow_drop_down_16dp.svg</file>
+    <file alias="icons/archive_16dp.svg">assets/icons/ui/archive_16dp.svg</file>
+    <file alias="icons/download_2_16dp.svg">assets/icons/ui/download_2_16dp.svg</file>
+    <file alias="icons/upload_2_16dp.svg">assets/icons/ui/upload_2_16dp.svg</file>
+    <file alias="icons/123_24dp.svg">assets/icons/ui/123_24dp.svg</file>
+    <file alias="icons/acute_24dp.svg">assets/icons/ui/acute_24dp.svg</file>
+    <file alias="icons/add_circle_24dp.svg">assets/icons/ui/add_circle_24dp.svg</file>
+    <file alias="icons/add_task_24dp.svg">assets/icons/ui/add_task_24dp.svg</file>
+    <file alias="icons/all_match_24dp.svg">assets/icons/ui/all_match_24dp.svg</file>
+    <file alias="icons/apps_24dp.svg">assets/icons/ui/apps_24dp.svg</file>
+    <file alias="icons/arrow_back_24dp.svg">assets/icons/ui/arrow_back_24dp.svg</file>
+    <file alias="icons/arrow_forward_24dp.svg">assets/icons/ui/arrow_forward_24dp.svg</file>
+    <file alias="icons/arrow_outward_24dp.svg">assets/icons/ui/arrow_outward_24dp.svg</file>
+    <file alias="icons/arrow_top_left_24dp.svg">assets/icons/ui/arrow_top_left_24dp.svg</file>
+    <file alias="icons/assistant_navigation_24dp.svg">assets/icons/ui/assistant_navigation_24dp.svg</file>
+    <file alias="icons/bottom_panel_close_24dp.svg">assets/icons/ui/bottom_panel_close_24dp.svg</file>
+    <file alias="icons/cancel_24dp.svg">assets/icons/ui/cancel_24dp.svg</file>
+    <file alias="icons/category_search_24dp.svg">assets/icons/ui/category_search_24dp.svg</file>
+    <file alias="icons/check_box_24dp.svg">assets/icons/ui/check_box_24dp.svg</file>
+    <file alias="icons/check_box_outline_blank_24dp.svg">assets/icons/ui/check_box_outline_blank_24dp.svg</file>
+    <file alias="icons/check_circle_24dp.svg">assets/icons/ui/check_circle_24dp.svg</file>
+    <file alias="icons/clock_loader_20_24dp.svg">assets/icons/ui/clock_loader_20_24dp.svg</file>
+    <file alias="icons/clock_loader_40_24dp.svg">assets/icons/ui/clock_loader_40_24dp.svg</file>
+    <file alias="icons/clock_loader_60_24dp.svg">assets/icons/ui/clock_loader_60_24dp.svg</file>
+    <file alias="icons/close_24dp.svg">assets/icons/ui/close_24dp.svg</file>
+    <file alias="icons/content_copy_24dp.svg">assets/icons/ui/content_copy_24dp.svg</file>
+    <file alias="icons/content_cut_24dp.svg">assets/icons/ui/content_cut_24dp.svg</file>
+    <file alias="icons/content_paste_24dp.svg">assets/icons/ui/content_paste_24dp.svg</file>
+    <file alias="icons/copy_all_24dp.svg">assets/icons/ui/copy_all_24dp.svg</file>
+    <file alias="icons/create_new_folder_24dp.svg">assets/icons/ui/create_new_folder_24dp.svg</file>
+    <file alias="icons/delete_24dp.svg">assets/icons/ui/delete_24dp.svg</file>
+    <file alias="icons/density_medium_24dp.svg">assets/icons/ui/density_medium_24dp.svg</file>
+    <file alias="icons/done_outline_24dp.svg">assets/icons/ui/done_outline_24dp.svg</file>
+    <file alias="icons/download_for_offline_24dp.svg">assets/icons/ui/download_for_offline_24dp.svg</file>
+    <file alias="icons/dynamic_form_24dp.svg">assets/icons/ui/dynamic_form_24dp.svg</file>
+    <file alias="icons/enable_24dp.svg">assets/icons/ui/enable_24dp.svg</file>
+    <file alias="icons/expand_24dp.svg">assets/icons/ui/expand_24dp.svg</file>
+    <file alias="icons/expand_circle_down_24dp.svg">assets/icons/ui/expand_circle_down_24dp.svg</file>
+    <file alias="icons/file_copy_24dp.svg">assets/icons/ui/file_copy_24dp.svg</file>
+    <file alias="icons/filter_list_off_24dp.svg">assets/icons/ui/filter_list_off_24dp.svg</file>
+    <file alias="icons/folder_copy_24dp.svg">assets/icons/ui/folder_copy_24dp.svg</file>
+    <file alias="icons/forward_24dp.svg">assets/icons/ui/forward_24dp.svg</file>
+    <file alias="icons/home_24dp.svg">assets/icons/ui/home_24dp.svg</file>
+    <file alias="icons/install_desktop_24dp.svg">assets/icons/ui/install_desktop_24dp.svg</file>
+    <file alias="icons/menu_24dp.svg">assets/icons/ui/menu_24dp.svg</file>
+    <file alias="icons/more_horiz_24dp.svg">assets/icons/ui/more_horiz_24dp.svg</file>
+    <file alias="icons/more_vert_24dp.svg">assets/icons/ui/more_vert_24dp.svg</file>
+    <file alias="icons/output_24dp.svg">assets/icons/ui/output_24dp.svg</file>
+    <file alias="icons/place_item_24dp.svg">assets/icons/ui/place_item_24dp.svg</file>
+    <file alias="icons/radio_button_partial_24dp.svg">assets/icons/ui/radio_button_partial_24dp.svg</file>
+    <file alias="icons/radio_button_unchecked_24dp.svg">assets/icons/ui/radio_button_unchecked_24dp.svg</file>
+    <file alias="icons/repartition_24dp.svg">assets/icons/ui/repartition_24dp.svg</file>
+    <file alias="icons/restore_from_trash_24dp.svg">assets/icons/ui/restore_from_trash_24dp.svg</file>
+    <file alias="icons/star_24dp.svg">assets/icons/ui/star_24dp.svg</file>
+    <file alias="icons/subdirectory_arrow_right_24dp.svg">assets/icons/ui/subdirectory_arrow_right_24dp.svg</file>
+    <file alias="icons/sync_24dp.svg">assets/icons/ui/sync_24dp.svg</file>
+    <file alias="icons/sync_alt_24dp.svg">assets/icons/ui/sync_alt_24dp.svg</file>
+    <file alias="icons/system_update_alt_24dp.svg">assets/icons/ui/system_update_alt_24dp.svg</file>
+    <file alias="icons/tab_move_24dp.svg">assets/icons/ui/tab_move_24dp.svg</file>
+    <file alias="icons/toggle_off_24dp.svg">assets/icons/ui/toggle_off_24dp.svg</file>
+    <file alias="icons/token_24dp.svg">assets/icons/ui/token_24dp.svg</file>
+    <file alias="icons/undo_24dp.svg">assets/icons/ui/undo_24dp.svg</file>
+    <file alias="icons/unfold_less_24dp.svg">assets/icons/ui/unfold_less_24dp.svg</file>
+    <file alias="icons/zoom_in_24dp.svg">assets/icons/ui/zoom_in_24dp.svg</file>
+    <file alias="icons/arrow_drop_up_24dp.svg">assets/icons/ui/arrow_drop_up_24dp.svg</file>
+    <file alias="icons/keyboard_double_arrow_right_24dp.svg">assets/icons/ui/keyboard_double_arrow_right_24dp.svg</file>
+    <file alias="icons/add_24dp.svg">assets/icons/ui/add_24dp.svg</file>
+    <file alias="icons/add_box_24dp.svg">assets/icons/ui/add_box_24dp.svg</file>
+    <file alias="icons/arrow_back_ios_24dp.svg">assets/icons/ui/arrow_back_ios_24dp.svg</file>
+    <file alias="icons/arrow_downward_24dp.svg">assets/icons/ui/arrow_downward_24dp.svg</file>
+    <file alias="icons/arrow_drop_down_24dp.svg">assets/icons/ui/arrow_drop_down_24dp.svg</file>
+    <file alias="icons/arrow_forward_ios_24dp.svg">assets/icons/ui/arrow_forward_ios_24dp.svg</file>
+    <file alias="icons/backspace_24dp.svg">assets/icons/ui/backspace_24dp.svg</file>
+    <file alias="icons/bolt_24dp.svg">assets/icons/ui/bolt_24dp.svg</file>
+    <file alias="icons/bookmark_24dp.svg">assets/icons/ui/bookmark_24dp.svg</file>
+    <file alias="icons/bookmark_add_24dp.svg">assets/icons/ui/bookmark_add_24dp.svg</file>
+    <file alias="icons/bookmark_added_24dp.svg">assets/icons/ui/bookmark_added_24dp.svg</file>
+    <file alias="icons/bookmark_check_24dp.svg">assets/icons/ui/bookmark_check_24dp.svg</file>
+    <file alias="icons/bookmark_star_24dp.svg">assets/icons/ui/bookmark_star_24dp.svg</file>
+    <file alias="icons/check_24dp.svg">assets/icons/ui/check_24dp.svg</file>
+    <file alias="icons/chevron_left_24dp.svg">assets/icons/ui/chevron_left_24dp.svg</file>
+    <file alias="icons/chevron_right_24dp.svg">assets/icons/ui/chevron_right_24dp.svg</file>
+    <file alias="icons/done_all_24dp.svg">assets/icons/ui/done_all_24dp.svg</file>
+    <file alias="icons/double_arrow_24dp.svg">assets/icons/ui/double_arrow_24dp.svg</file>
+    <file alias="icons/favorite_24dp.svg">assets/icons/ui/favorite_24dp.svg</file>
+    <file alias="icons/filter_list_24dp.svg">assets/icons/ui/filter_list_24dp.svg</file>
+    <file alias="icons/logout_24dp.svg">assets/icons/ui/logout_24dp.svg</file>
+    <file alias="icons/manage_search_24dp.svg">assets/icons/ui/manage_search_24dp.svg</file>
+    <file alias="icons/menu_open_24dp.svg">assets/icons/ui/menu_open_24dp.svg</file>
+    <file alias="icons/new_label_24dp.svg">assets/icons/ui/new_label_24dp.svg</file>
+    <file alias="icons/open_in_full_24dp.svg">assets/icons/ui/open_in_full_24dp.svg</file>
+    <file alias="icons/radio_button_checked_24dp.svg">assets/icons/ui/radio_button_checked_24dp.svg</file>
+    <file alias="icons/remove_24dp.svg">assets/icons/ui/remove_24dp.svg</file>
+    <file alias="icons/search_24dp.svg">assets/icons/ui/search_24dp.svg</file>
+    <file alias="icons/select_check_box_24dp.svg">assets/icons/ui/select_check_box_24dp.svg</file>
+    <file alias="icons/sort_24dp.svg">assets/icons/ui/sort_24dp.svg</file>
+    <file alias="images/help/header.png">assets/images/help/header.png</file>
+    <file alias="icons/help_24dp.svg">assets/icons/ui/help_24dp.svg</file>
+    <file alias="icons/arrow_drop_down.png">assets/icons/ui/arrow_drop_down.png</file>
+    <file alias="icons/arrow_drop_right.png">assets/icons/ui/arrow_drop_right.png</file>
+    <file alias="icons/splitter-horizontal.svg">assets/icons/ui/splitter-horizontal.svg</file>
+    <file alias="icons/splitter-vertical.svg">assets/icons/ui/splitter-vertical.svg</file>
+    <file alias="icons/more_horiz.png">assets/icons/ui/more_horiz.png</file>
+    <file alias="icons/more_vert.png">assets/icons/ui/more_vert.png</file>
+    <file alias="icons/colors_24dp.png">assets/icons/ui/colors_24dp.png</file>
+    <file alias="icons/construction_24dp.png">assets/icons/ui/construction_24dp.png</file>
+    <file alias="icons/contrast_24dp.png">assets/icons/ui/contrast_24dp.png</file>
+    <file alias="icons/dashboard_24dp.png">assets/icons/ui/dashboard_24dp.png</file>
+    <file alias="icons/data_object_24dp.png">assets/icons/ui/data_object_24dp.png</file>
+    <file alias="icons/dataset_24dp.png">assets/icons/ui/dataset_24dp.png</file>
+    <file alias="icons/deployed_code_24dp.png">assets/icons/ui/deployed_code_24dp.png</file>
+    <file alias="icons/description_24dp.png">assets/icons/ui/description_24dp.png</file>
+    <file alias="icons/design_services_24dp.png">assets/icons/ui/design_services_24dp.png</file>
+    <file alias="icons/draft_24dp.png">assets/icons/ui/draft_24dp.png</file>
+    <file alias="icons/edit_note_24dp.png">assets/icons/ui/edit_note_24dp.png</file>
+    <file alias="icons/emoji_objects_24dp.png">assets/icons/ui/emoji_objects_24dp.png</file>
+    <file alias="icons/exposure_24dp.png">assets/icons/ui/exposure_24dp.png</file>
+    <file alias="icons/file_present_24dp.png">assets/icons/ui/file_present_24dp.png</file>
+    <file alias="icons/filter_alt_24dp.png">assets/icons/ui/filter_alt_24dp.png</file>
+    <file alias="icons/filter_list_off_24dp.png">assets/icons/ui/filter_list_off_24dp.png</file>
+    <file alias="icons/format_color_fill_24dp.png">assets/icons/ui/format_color_fill_24dp.png</file>
+    <file alias="icons/functions_24dp.png">assets/icons/ui/functions_24dp.png</file>
+    <file alias="icons/gradient_24dp.png">assets/icons/ui/gradient_24dp.png</file>
+    <file alias="icons/heap_snapshot_large_24dp.png">assets/icons/ui/heap_snapshot_large_24dp.png</file>
+    <file alias="icons/heap_snapshot_thumbnail_24dp.png">assets/icons/ui/heap_snapshot_thumbnail_24dp.png</file>
+    <file alias="icons/horizontal_split_24dp.png">assets/icons/ui/horizontal_split_24dp.png</file>
+    <file alias="icons/ink_pen_24dp.png">assets/icons/ui/ink_pen_24dp.png</file>
+    <file alias="icons/instant_mix_24dp.png">assets/icons/ui/instant_mix_24dp.png</file>
+    <file alias="icons/lan_24dp.png">assets/icons/ui/lan_24dp.png</file>
+    <file alias="icons/line_style_24dp.png">assets/icons/ui/line_style_24dp.png</file>
+    <file alias="icons/line_weight_24dp.png">assets/icons/ui/line_weight_24dp.png</file>
+    <file alias="icons/linear_scale_24dp.png">assets/icons/ui/linear_scale_24dp.png</file>
+    <file alias="icons/note_add_24dp.png">assets/icons/ui/note_add_24dp.png</file>
+    <file alias="icons/package_2_24dp.png">assets/icons/ui/package_2_24dp.png</file>
+    <file alias="icons/page_info_24dp.png">assets/icons/ui/page_info_24dp.png</file>
+    <file alias="icons/palette_24dp.png">assets/icons/ui/palette_24dp.png</file>
+    <file alias="icons/pending_actions_24dp.png">assets/icons/ui/pending_actions_24dp.png</file>
+    <file alias="icons/polyline_24dp.png">assets/icons/ui/polyline_24dp.png</file>
+    <file alias="icons/regular_expression_24dp.png">assets/icons/ui/regular_expression_24dp.png</file>
+    <file alias="icons/scan_delete_24dp.png">assets/icons/ui/scan_delete_24dp.png</file>
+    <file alias="icons/schema_24dp.png">assets/icons/ui/schema_24dp.png</file>
+    <file alias="icons/shape_line_24dp.png">assets/icons/ui/shape_line_24dp.png</file>
+    <file alias="icons/shapes_24dp.png">assets/icons/ui/shapes_24dp.png</file>
+    <file alias="icons/signal_cellular_alt_24dp.png">assets/icons/ui/signal_cellular_alt_24dp.png</file>
+    <file alias="icons/sort_24dp.png">assets/icons/ui/sort_24dp.png</file>
+    <file alias="icons/storage_24dp.png">assets/icons/ui/storage_24dp.png</file>
+    <file alias="icons/subject_24dp.png">assets/icons/ui/subject_24dp.png</file>
+    <file alias="icons/subscript_24dp.png">assets/icons/ui/subscript_24dp.png</file>
+    <file alias="icons/summarize_24dp.png">assets/icons/ui/summarize_24dp.png</file>
+    <file alias="icons/table_24dp.png">assets/icons/ui/table_24dp.png</file>
+    <file alias="icons/task_24dp.png">assets/icons/ui/task_24dp.png</file>
+    <file alias="icons/topic_24dp.png">assets/icons/ui/topic_24dp.png</file>
+    <file alias="icons/tune_24dp.png">assets/icons/ui/tune_24dp.png</file>
+    <file alias="icons/view_array_24dp.png">assets/icons/ui/view_array_24dp.png</file>
+    <file alias="icons/view_in_ar_24dp.png">assets/icons/ui/view_in_ar_24dp.png</file>
+    <file alias="icons/view_object_track_24dp.png">assets/icons/ui/view_object_track_24dp.png</file>
+    <file alias="icons/visibility_24dp.png">assets/icons/ui/visibility_24dp.png</file>
+    <file alias="icons/visibility_off_24dp.png">assets/icons/ui/visibility_off_24dp.png</file>
+    <file alias="icons/tools/assettypes/abc_sm.png">assets/icons/tools/assettypes/abc_sm.png</file>
+    <file alias="icons/tools/assettypes/animation_group_sm.png">assets/icons/tools/assettypes/animation_group_sm.png</file>
+    <file alias="icons/tools/assettypes/animation_sm.png">assets/icons/tools/assettypes/animation_sm.png</file>
+    <file alias="icons/tools/assettypes/blender_sm.png">assets/icons/tools/assettypes/blender_sm.png</file>
+    <file alias="icons/tools/assettypes/css_sm.png">assets/icons/tools/assettypes/css_sm.png</file>
+    <file alias="icons/tools/assettypes/dmx_sm.png">assets/icons/tools/assettypes/dmx_sm.png</file>
+    <file alias="icons/tools/assettypes/fbx_sm.png">assets/icons/tools/assettypes/fbx_sm.png</file>
+    <file alias="icons/tools/assettypes/generic_image_sm.png">assets/icons/tools/assettypes/generic_image_sm.png</file>
+    <file alias="icons/tools/assettypes/generic_sm.png">assets/icons/tools/assettypes/generic_sm.png</file>
+    <file alias="icons/tools/assettypes/image_psd_sm.png">assets/icons/tools/assettypes/image_psd_sm.png</file>
+    <file alias="icons/tools/assettypes/javascript_sm.png">assets/icons/tools/assettypes/javascript_sm.png</file>
+    <file alias="icons/tools/assettypes/map_sm.png">assets/icons/tools/assettypes/map_sm.png</file>
+    <file alias="icons/tools/assettypes/material_prefab_sm.png">assets/icons/tools/assettypes/material_prefab_sm.png</file>
+    <file alias="icons/tools/assettypes/material_sm.png">assets/icons/tools/assettypes/material_sm.png</file>
+    <file alias="icons/tools/assettypes/maya_ma_sm.png">assets/icons/tools/assettypes/maya_ma_sm.png</file>
+    <file alias="icons/tools/assettypes/maya_mb_sm.png">assets/icons/tools/assettypes/maya_mb_sm.png</file>
+    <file alias="icons/tools/assettypes/mesh_sm.png">assets/icons/tools/assettypes/mesh_sm.png</file>
+    <file alias="icons/tools/assettypes/model_prefab_sm.png">assets/icons/tools/assettypes/model_prefab_sm.png</file>
+    <file alias="icons/tools/assettypes/model_sm.png">assets/icons/tools/assettypes/model_sm.png</file>
+    <file alias="icons/tools/assettypes/morph_sm.png">assets/icons/tools/assettypes/morph_sm.png</file>
+    <file alias="icons/tools/assettypes/particles_sm.png">assets/icons/tools/assettypes/particles_sm.png</file>
+    <file alias="icons/tools/assettypes/physics_sm.png">assets/icons/tools/assettypes/physics_sm.png</file>
+    <file alias="icons/tools/assettypes/response_template_sm.png">assets/icons/tools/assettypes/response_template_sm.png</file>
+    <file alias="icons/tools/assettypes/speech_graphics_sm.png">assets/icons/tools/assettypes/speech_graphics_sm.png</file>
+    <file alias="icons/tools/assettypes/surface_sm.png">assets/icons/tools/assettypes/surface_sm.png</file>
+    <file alias="icons/tools/assettypes/text_sm.png">assets/icons/tools/assettypes/text_sm.png</file>
+    <file alias="icons/tools/assettypes/texture_sm.png">assets/icons/tools/assettypes/texture_sm.png</file>
+    <file alias="icons/tools/assettypes/typescript_sm.png">assets/icons/tools/assettypes/typescript_sm.png</file>
+    <file alias="icons/tools/assettypes/vcd_choreo_sm.png">assets/icons/tools/assettypes/vcd_choreo_sm.png</file>
+    <file alias="icons/tools/assettypes/vcdlist_sm.png">assets/icons/tools/assettypes/vcdlist_sm.png</file>
+    <file alias="icons/tools/assettypes/vclip_sm.png">assets/icons/tools/assettypes/vclip_sm.png</file>
+    <file alias="icons/tools/assettypes/vcompmat_sm.png">assets/icons/tools/assettypes/vcompmat_sm.png</file>
+    <file alias="icons/tools/assettypes/vcompmat_lg.png">assets/icons/tools/assettypes/vcompmat_lg.png</file>
+    <file alias="icons/tools/assettypes/vdata_sm.png">assets/icons/tools/assettypes/vdata_sm.png</file>
+    <file alias="icons/tools/assettypes/vdata_lg.png">assets/icons/tools/assettypes/vdata_lg.png</file>
+    <file alias="icons/tools/assettypes/vmix_sm.png">assets/icons/tools/assettypes/vmix_sm.png</file>
+    <file alias="icons/tools/assettypes/vmix_lg.png">assets/icons/tools/assettypes/vmix_lg.png</file>
+    <file alias="icons/tools/assettypes/vnmgrph_sm.png">assets/icons/tools/assettypes/vnmgrph_sm.png</file>
+    <file alias="icons/tools/assettypes/vodb_sm.png">assets/icons/tools/assettypes/vodb_sm.png</file>
+    <file alias="icons/tools/assettypes/vodb_lg.png">assets/icons/tools/assettypes/vodb_lg.png</file>
+    <file alias="icons/tools/assettypes/vskel_sm.png">assets/icons/tools/assettypes/vskel_sm.png</file>
+    <file alias="icons/tools/assettypes/xml_sm.png">assets/icons/tools/assettypes/xml_sm.png</file>
+    <file alias="icons/tools/assettypes/xml_lg.png">assets/icons/tools/assettypes/xml_lg.png</file>
+    <file alias="icons/keyboard.png">assets/icons/ui/keyboard.png</file>
+    <file alias="icons/volume_up.png">assets/icons/ui/volume_up.png</file>
+    <file alias="icons/smartprop_editor.png">assets/icons/app/smartprop_editor.png</file>
+    <file alias="icons/soundviewer.png">assets/icons/app/soundviewer.png</file>
+    <file alias="icons/tools/vmixtool/appicon.ico">assets/icons/tools/vmixtool/appicon.ico</file>
+    <file alias="icons/tools/assettypes/vsmart_sm.png">assets/icons/tools/assettypes/vsmart_sm.png</file>
+    <file alias="icons/tools/assettypes/smart_prop_lg.png">assets/icons/tools/assettypes/smart_prop_lg.png</file>
+    <file alias="icons/tools/assettypes/model_lg.png">assets/icons/tools/assettypes/model_lg.png</file>
+    <file alias="icons/tools/assettypes/model_prefab_lg.png">assets/icons/tools/assettypes/model_prefab_lg.png</file>
+    <file alias="icons/propertyeditor/array_drag_cursor.png">assets/icons/propertyeditor/array_drag_cursor.png</file>
+    <file alias="icons/propertyeditor/array_drag_handle.png">assets/icons/propertyeditor/array_drag_handle.png</file>
+    <file alias="icons/propertyeditor/array_drag_handle_active.png">assets/icons/propertyeditor/array_drag_handle_active.png</file>
+    <file alias="icons/propertyeditor/array_drag_handle_hover.png">assets/icons/propertyeditor/array_drag_handle_hover.png</file>
+    <file alias="icons/propertyeditor/array_item_drag.png">assets/icons/propertyeditor/array_item_drag.png</file>
+    <file alias="icons/propertyeditor/attr_alert.png">assets/icons/propertyeditor/attr_alert.png</file>
+    <file alias="icons/propertyeditor/attr_menu.png">assets/icons/propertyeditor/attr_menu.png</file>
+    <file alias="icons/propertyeditor/attr_menu_hover.png">assets/icons/propertyeditor/attr_menu_hover.png</file>
+    <file alias="icons/propertyeditor/attr_reset.png">assets/icons/propertyeditor/attr_reset.png</file>
+    <file alias="icons/propertyeditor/attr_reset_hover.png">assets/icons/propertyeditor/attr_reset_hover.png</file>
+    <file alias="icons/propertyeditor/clear_filter.png">assets/icons/propertyeditor/clear_filter.png</file>
+    <file alias="icons/propertyeditor/command_icon_group.png">assets/icons/propertyeditor/command_icon_group.png</file>
+    <file alias="icons/propertyeditor/command_icon_group_hover.png">assets/icons/propertyeditor/command_icon_group_hover.png</file>
+    <file alias="icons/propertyeditor/custom_command_button_bg.png">assets/icons/propertyeditor/custom_command_button_bg.png</file>
+    <file alias="icons/propertyeditor/custom_command_button_bg_hover.png">assets/icons/propertyeditor/custom_command_button_bg_hover.png</file>
+    <file alias="icons/propertyeditor/extra_attr_remove.png">assets/icons/propertyeditor/extra_attr_remove.png</file>
+    <file alias="icons/propertyeditor/extra_attr_remove_hover.png">assets/icons/propertyeditor/extra_attr_remove_hover.png</file>
+    <file alias="icons/propertyeditor/hierarchy_child.png">assets/icons/propertyeditor/hierarchy_child.png</file>
+    <file alias="icons/propertyeditor/hierarchy_collapsed.png">assets/icons/propertyeditor/hierarchy_collapsed.png</file>
+    <file alias="icons/propertyeditor/hierarchy_collapsed_hover.png">assets/icons/propertyeditor/hierarchy_collapsed_hover.png</file>
+    <file alias="icons/propertyeditor/hierarchy_expanded.png">assets/icons/propertyeditor/hierarchy_expanded.png</file>
+    <file alias="icons/propertyeditor/hierarchy_expanded_hover.png">assets/icons/propertyeditor/hierarchy_expanded_hover.png</file>
+    <file alias="icons/propertyeditor/hierarchy_force_expanded.png">assets/icons/propertyeditor/hierarchy_force_expanded.png</file>
+    <file alias="icons/propertyeditor/hierarchy_lastchild.png">assets/icons/propertyeditor/hierarchy_lastchild.png</file>
+    <file alias="icons/propertyeditor/hierarchy_passthrough.png">assets/icons/propertyeditor/hierarchy_passthrough.png</file>
+    <file alias="icons/propertyeditor/internal_command_button_bg.png">assets/icons/propertyeditor/internal_command_button_bg.png</file>
+    <file alias="icons/propertyeditor/internal_command_button_bg_hover.png">assets/icons/propertyeditor/internal_command_button_bg_hover.png</file>
+    <file alias="icons/propertyeditor/interval_lock.png">assets/icons/propertyeditor/interval_lock.png</file>
+    <file alias="icons/propertyeditor/interval_unlock.png">assets/icons/propertyeditor/interval_unlock.png</file>
+    <file alias="icons/propertyeditor/item_add.png">assets/icons/propertyeditor/item_add.png</file>
+    <file alias="icons/propertyeditor/item_add_hover.png">assets/icons/propertyeditor/item_add_hover.png</file>
+    <file alias="icons/propertyeditor/item_remove.png">assets/icons/propertyeditor/item_remove.png</file>
+    <file alias="icons/propertyeditor/item_remove_hover.png">assets/icons/propertyeditor/item_remove_hover.png</file>
+    <file alias="icons/propertyeditor/overlay_inherit.png">assets/icons/propertyeditor/overlay_inherit.png</file>
+    <file alias="icons/propertyeditor/overlay_inherit_hover.png">assets/icons/propertyeditor/overlay_inherit_hover.png</file>
+    <file alias="icons/propertyeditor/overlay_override.png">assets/icons/propertyeditor/overlay_override.png</file>
+    <file alias="icons/propertyeditor/overlay_override_hover.png">assets/icons/propertyeditor/overlay_override_hover.png</file>
+    <file alias="icons/propertyeditor/raw_edit_mode.png">assets/icons/propertyeditor/raw_edit_mode.png</file>
+    <file alias="icons/propertyeditor/show_hidden.png">assets/icons/propertyeditor/show_hidden.png</file>
+    <file alias="icons/propertyeditor/show_hidden_sm.png">assets/icons/propertyeditor/show_hidden_sm.png</file>
+    <file alias="icons/propertyeditor/sort_az.png">assets/icons/propertyeditor/sort_az.png</file>
+    <file alias="icons/propertyeditor/sort_def.png">assets/icons/propertyeditor/sort_def.png</file>
+    <file alias="icons/propertyeditor/sort_za.png">assets/icons/propertyeditor/sort_za.png</file>
+    <file alias="icons/valve_style/arrow_closed.png">assets/icons/valve_style/arrow_closed.png</file>
+    <file alias="icons/valve_style/arrow_closed_hover.png">assets/icons/valve_style/arrow_closed_hover.png</file>
+    <file alias="icons/valve_style/arrow_down.png">assets/icons/valve_style/arrow_down.png</file>
+    <file alias="icons/valve_style/arrow_left.png">assets/icons/valve_style/arrow_left.png</file>
+    <file alias="icons/valve_style/arrow_open.png">assets/icons/valve_style/arrow_open.png</file>
+    <file alias="icons/valve_style/arrow_open_hover.png">assets/icons/valve_style/arrow_open_hover.png</file>
+    <file alias="icons/valve_style/arrow_right.png">assets/icons/valve_style/arrow_right.png</file>
+    <file alias="icons/valve_style/arrow_up.png">assets/icons/valve_style/arrow_up.png</file>
+    <file alias="icons/valve_style/branch_open.png">assets/icons/valve_style/branch_open.png</file>
+    <file alias="icons/valve_style/branch_open_activated.png">assets/icons/valve_style/branch_open_activated.png</file>
+    <file alias="icons/valve_style/checkbox_checked.png">assets/icons/valve_style/checkbox_checked.png</file>
+    <file alias="icons/valve_style/checkbox_checked_disabled.png">assets/icons/valve_style/checkbox_checked_disabled.png</file>
+    <file alias="icons/valve_style/checkbox_indeterminate.png">assets/icons/valve_style/checkbox_indeterminate.png</file>
+    <file alias="icons/valve_style/checkbox_indeterminate_disabled.png">assets/icons/valve_style/checkbox_indeterminate_disabled.png</file>
+    <file alias="icons/valve_style/checkbox_mini_checked.png">assets/icons/valve_style/checkbox_mini_checked.png</file>
+    <file alias="icons/valve_style/checkbox_mini_unchecked.png">assets/icons/valve_style/checkbox_mini_unchecked.png</file>
+    <file alias="icons/valve_style/checkbox_unchecked.png">assets/icons/valve_style/checkbox_unchecked.png</file>
+    <file alias="icons/valve_style/checkbox_unchecked_disabled.png">assets/icons/valve_style/checkbox_unchecked_disabled.png</file>
+    <file alias="icons/valve_style/dock_close_button.png">assets/icons/valve_style/dock_close_button.png</file>
+    <file alias="icons/valve_style/dock_close_button_dim.png">assets/icons/valve_style/dock_close_button_dim.png</file>
+    <file alias="icons/valve_style/dock_float_button.png">assets/icons/valve_style/dock_float_button.png</file>
+    <file alias="icons/valve_style/dropdown_menu_closed.png">assets/icons/valve_style/dropdown_menu_closed.png</file>
+    <file alias="icons/valve_style/dropdown_menu_compact_closed.png">assets/icons/valve_style/dropdown_menu_compact_closed.png</file>
+    <file alias="icons/valve_style/dropdown_menu_compact_closed_dim.png">assets/icons/valve_style/dropdown_menu_compact_closed_dim.png</file>
+    <file alias="icons/valve_style/dropdown_menu_compact_open.png">assets/icons/valve_style/dropdown_menu_compact_open.png</file>
+    <file alias="icons/valve_style/dropdown_menu_compact_open_dim.png">assets/icons/valve_style/dropdown_menu_compact_open_dim.png</file>
+    <file alias="icons/valve_style/dropdown_menu_open.png">assets/icons/valve_style/dropdown_menu_open.png</file>
+    <file alias="icons/valve_style/lock_locked.png">assets/icons/valve_style/lock_locked.png</file>
+    <file alias="icons/valve_style/lock_unlocked.png">assets/icons/valve_style/lock_unlocked.png</file>
+    <file alias="icons/valve_style/radio_selected.png">assets/icons/valve_style/radio_selected.png</file>
+    <file alias="icons/valve_style/radio_selected_disabled.png">assets/icons/valve_style/radio_selected_disabled.png</file>
+    <file alias="icons/valve_style/radio_unselected.png">assets/icons/valve_style/radio_unselected.png</file>
+    <file alias="icons/valve_style/radio_unselected_disabled.png">assets/icons/valve_style/radio_unselected_disabled.png</file>
+    <file alias="icons/valve_style/tab_destination.png">assets/icons/valve_style/tab_destination.png</file>
+    <file alias="icons/valve_style/tab_destination_hovered.png">assets/icons/valve_style/tab_destination_hovered.png</file>
+    <file alias="icons/valve_style/tab-closebutton.png">assets/icons/valve_style/tab-closebutton.png</file>
+    <file alias="icons/valve_style/tab-closebutton-hovered.png">assets/icons/valve_style/tab-closebutton-hovered.png</file>
+    <file alias="icons/valve_style/tab-closebutton-selected.png">assets/icons/valve_style/tab-closebutton-selected.png</file>
+    <file alias="icons/valve_style/tab-closebutton-selected-hovered.png">assets/icons/valve_style/tab-closebutton-selected-hovered.png</file>
+    <file alias="icons/valve_style/tab-deselected.png">assets/icons/valve_style/tab-deselected.png</file>
+    <file alias="icons/valve_style/tab-selected.png">assets/icons/valve_style/tab-selected.png</file>
+    <file alias="icons/valve_style/toolbar_extension_h.png">assets/icons/valve_style/toolbar_extension_h.png</file>
+    <file alias="icons/valve_style/toolbar_extension_v.png">assets/icons/valve_style/toolbar_extension_v.png</file>
   </qresource>
   <qresource prefix="social">
-    <file>icons/social/bluesky.png</file>
-    <file>icons/social/discord.png</file>
-    <file>icons/social/twitter.png</file>
+    <file alias="icons/social/bluesky.png">assets/icons/social/bluesky.png</file>
+    <file alias="icons/social/discord.png">assets/icons/social/discord.png</file>
+    <file alias="icons/social/twitter.png">assets/icons/social/twitter.png</file>
   </qresource>
   <qresource prefix="/valve_common">
-    <file>icons/tools/model_editor/hierarchy_sequence_group_referenced.png</file>
-    <file>icons/tools/hammer/displacement_tool_icon.png</file>
-    <file>icons/tools/common/add.png</file>
-    <file>icons/tools/common/add_editor_node.png</file>
-    <file>icons/tools/common/add_med.png</file>
-    <file>icons/tools/common/add_node.png</file>
-    <file>icons/tools/common/add_sm.png</file>
-    <file>icons/tools/common/add_sm_highlight.png</file>
-    <file>icons/tools/common/align.png</file>
-    <file>icons/tools/common/arrow_left.png</file>
-    <file>icons/tools/common/arrow_right.png</file>
-    <file>icons/tools/common/arrow_right_disabled.png</file>
-    <file>icons/tools/common/arrow_right_down.png</file>
-    <file>icons/tools/common/arrow_right_up.png</file>
-    <file>icons/tools/common/arrow_up.png</file>
-    <file>icons/tools/common/auto_mute_game.png</file>
-    <file>icons/tools/common/bind_command_list.png</file>
-    <file>icons/tools/common/bind_command_target.png</file>
-    <file>icons/tools/common/bindable_camera_fly_toggle.png</file>
-    <file>icons/tools/common/bindable_camera_lock_height_toggle.png</file>
-    <file>icons/tools/common/bookmark.png</file>
-    <file>icons/tools/common/bookmark_med.png</file>
-    <file>icons/tools/common/bookmark_sm.png</file>
-    <file>icons/tools/common/breakable_asset.png</file>
-    <file>icons/tools/common/browse.png</file>
-    <file>icons/tools/common/browse_sm.png</file>
-    <file>icons/tools/common/busy.gif</file>
-    <file>icons/tools/common/busy_sm.gif</file>
-    <file>icons/tools/common/cancel.png</file>
-    <file>icons/tools/common/cancel_sm.png</file>
-    <file>icons/tools/common/caution.png</file>
-    <file>icons/tools/common/check.png</file>
-    <file>icons/tools/common/check_red_sm.png</file>
-    <file>icons/tools/common/check_sm.png</file>
-    <file>icons/tools/common/clear_list_sm.png</file>
-    <file>icons/tools/common/clock_sm.png</file>
-    <file>icons/tools/common/collapse_all.png</file>
-    <file>icons/tools/common/collapse_left_med.png</file>
-    <file>icons/tools/common/collapse_right.png</file>
-    <file>icons/tools/common/collapse_right_med.png</file>
-    <file>icons/tools/common/collapse_right_sm.png</file>
-    <file>icons/tools/common/color_wheel.png</file>
-    <file>icons/tools/common/color_wheel_sm.png</file>
-    <file>icons/tools/common/connect.png</file>
-    <file>icons/tools/common/control_ff.png</file>
-    <file>icons/tools/common/control_ff_sm.png</file>
-    <file>icons/tools/common/control_first.png</file>
-    <file>icons/tools/common/control_first_sm.png</file>
-    <file>icons/tools/common/control_last.png</file>
-    <file>icons/tools/common/control_last_sm.png</file>
-    <file>icons/tools/common/control_loop.png</file>
-    <file>icons/tools/common/control_loop_sm.png</file>
-    <file>icons/tools/common/control_no_loop.png</file>
-    <file>icons/tools/common/control_no_loop_sm.png</file>
-    <file>icons/tools/common/control_pause.png</file>
-    <file>icons/tools/common/control_pause_sm.png</file>
-    <file>icons/tools/common/control_play.png</file>
-    <file>icons/tools/common/control_play_sm.png</file>
-    <file>icons/tools/common/control_record.png</file>
-    <file>icons/tools/common/control_record_sm.png</file>
-    <file>icons/tools/common/control_rew.png</file>
-    <file>icons/tools/common/control_rew_sm.png</file>
-    <file>icons/tools/common/control_simulate.png</file>
-    <file>icons/tools/common/control_step_fwd.png</file>
-    <file>icons/tools/common/control_step_fwd_sm.png</file>
-    <file>icons/tools/common/control_step_rev.png</file>
-    <file>icons/tools/common/control_step_rev_sm.png</file>
-    <file>icons/tools/common/control_stop.png</file>
-    <file>icons/tools/common/control_stop_sm.png</file>
-    <file>icons/tools/common/copy.png</file>
-    <file>icons/tools/common/copy_sm.png</file>
-    <file>icons/tools/common/curve_tangent_free.png</file>
-    <file>icons/tools/common/curve_tangent_linear.png</file>
-    <file>icons/tools/common/curve_tangent_mirror.png</file>
-    <file>icons/tools/common/curve_tangent_sine.png</file>
-    <file>icons/tools/common/curve_tangent_spline.png</file>
-    <file>icons/tools/common/cut.png</file>
-    <file>icons/tools/common/cut_sm.png</file>
-    <file>icons/tools/common/delete.png</file>
-    <file>icons/tools/common/delete_light.png</file>
-    <file>icons/tools/common/delete_light_med.png</file>
-    <file>icons/tools/common/delete_light_sm.png</file>
-    <file>icons/tools/common/delete_med.png</file>
-    <file>icons/tools/common/delete_sm.png</file>
-    <file>icons/tools/common/document.png</file>
-    <file>icons/tools/common/document_overlay.png</file>
-    <file>icons/tools/common/document_sm.png</file>
-    <file>icons/tools/common/dropdown_menu.png</file>
-    <file>icons/tools/common/dropdown_menu_diagonal.png</file>
-    <file>icons/tools/common/dropdown_menu_gray.png</file>
-    <file>icons/tools/common/dropdown_menu_gray_right.png</file>
-    <file>icons/tools/common/dropdown_menu_right.png</file>
-    <file>icons/tools/common/dropdown_menu_up.png</file>
-    <file>icons/tools/common/duplicate.png</file>
-    <file>icons/tools/common/duplicate_asset.png</file>
-    <file>icons/tools/common/duplicate_overlay.png</file>
-    <file>icons/tools/common/edit.png</file>
-    <file>icons/tools/common/edit_pencil.png</file>
-    <file>icons/tools/common/edit_sm.png</file>
-    <file>icons/tools/common/expand_all.png</file>
-    <file>icons/tools/common/eyedropper.png</file>
-    <file>icons/tools/common/eyedropper_med.png</file>
-    <file>icons/tools/common/eyedropper_sm.png</file>
-    <file>icons/tools/common/favorite.png</file>
-    <file>icons/tools/common/favorite_sm.png</file>
-    <file>icons/tools/common/filter_match_in_text.png</file>
-    <file>icons/tools/common/find.png</file>
-    <file>icons/tools/common/finished.png</file>
-    <file>icons/tools/common/finished_overlay.png</file>
-    <file>icons/tools/common/flip.png</file>
-    <file>icons/tools/common/folder.png</file>
-    <file>icons/tools/common/folder_sm.png</file>
-    <file>icons/tools/common/foliage_asset.png</file>
-    <file>icons/tools/common/fx.png</file>
-    <file>icons/tools/common/fx_overlay.png</file>
-    <file>icons/tools/common/generic_appicon.png</file>
-    <file>icons/tools/common/generic_appicon_sm.png</file>
-    <file>icons/tools/common/generic_filter_add_dialog.png</file>
-    <file>icons/tools/common/generic_filter_add_part.png</file>
-    <file>icons/tools/common/generic_filter_and.png</file>
-    <file>icons/tools/common/generic_filter_clear.png</file>
-    <file>icons/tools/common/generic_filter_edit_part.png</file>
-    <file>icons/tools/common/generic_filter_name_part.png</file>
-    <file>icons/tools/common/generic_filter_negate_part_active.png</file>
-    <file>icons/tools/common/generic_filter_negate_part_inactive.png</file>
-    <file>icons/tools/common/generic_filter_or.png</file>
-    <file>icons/tools/common/generic_filter_remove_part.png</file>
-    <file>icons/tools/common/generic_filter_show_editor.png</file>
-    <file>icons/tools/common/generic_hud_warning.png</file>
-    <file>icons/tools/common/global.png</file>
-    <file>icons/tools/common/global_sm.png</file>
-    <file>icons/tools/common/goto.png</file>
-    <file>icons/tools/common/goto_sm.png</file>
-    <file>icons/tools/common/gotoexternal_sm.png</file>
-    <file>icons/tools/common/gotofolder.png</file>
-    <file>icons/tools/common/gotofolder_sm.png</file>
-    <file>icons/tools/common/grab_handle_nub.png</file>
-    <file>icons/tools/common/hang_detected.png</file>
-    <file>icons/tools/common/help_about_icon.png</file>
-    <file>icons/tools/common/help_documentation_page.png</file>
-    <file>icons/tools/common/help_keybinding_list.png</file>
-    <file>icons/tools/common/help_keybinding_list_sm.png</file>
-    <file>icons/tools/common/hidden.png</file>
-    <file>icons/tools/common/hidden_asset.png</file>
-    <file>icons/tools/common/hidden_overlay.png</file>
-    <file>icons/tools/common/home.png</file>
-    <file>icons/tools/common/home_sm.png</file>
-    <file>icons/tools/common/icon_clear.png</file>
-    <file>icons/tools/common/icon_clear_small.png</file>
-    <file>icons/tools/common/icon_edge_generic.png</file>
-    <file>icons/tools/common/icon_error.png</file>
-    <file>icons/tools/common/icon_error_sm.png</file>
-    <file>icons/tools/common/icon_error_stop.png</file>
-    <file>icons/tools/common/icon_error_stop_sm.png</file>
-    <file>icons/tools/common/icon_info.png</file>
-    <file>icons/tools/common/icon_info_sm.png</file>
-    <file>icons/tools/common/icon_node_generic.png</file>
-    <file>icons/tools/common/icon_question.png</file>
-    <file>icons/tools/common/icon_question_sm.png</file>
-    <file>icons/tools/common/icon_success.png</file>
-    <file>icons/tools/common/icon_success_sm.png</file>
-    <file>icons/tools/common/icon_type_generic.png</file>
-    <file>icons/tools/common/icon_warning.png</file>
-    <file>icons/tools/common/icon_warning_overlay.png</file>
-    <file>icons/tools/common/icon_warning_sm.png</file>
-    <file>icons/tools/common/image.png</file>
-    <file>icons/tools/common/image_sm.png</file>
-    <file>icons/tools/common/import.png</file>
-    <file>icons/tools/common/imported_asset.png</file>
-    <file>icons/tools/common/integrate_sm.png</file>
-    <file>icons/tools/common/lock.png</file>
-    <file>icons/tools/common/lock_activated.png</file>
-    <file>icons/tools/common/lock_light.png</file>
-    <file>icons/tools/common/lock_light_activated.png</file>
-    <file>icons/tools/common/lock_light_sm.png</file>
-    <file>icons/tools/common/lock_light_sm_activated.png</file>
-    <file>icons/tools/common/lock_sm.png</file>
-    <file>icons/tools/common/lock_sm_activated.png</file>
-    <file>icons/tools/common/megascans_asset.png</file>
-    <file>icons/tools/common/menu_sm.png</file>
-    <file>icons/tools/common/model_config_fully_locked.png</file>
-    <file>icons/tools/common/model_config_icon.png</file>
-    <file>icons/tools/common/model_config_partially_locked.png</file>
-    <file>icons/tools/common/model_config_reroll.png</file>
-    <file>icons/tools/common/move_to_changelist.png</file>
-    <file>icons/tools/common/multi_files.png</file>
-    <file>icons/tools/common/mute.png</file>
-    <file>icons/tools/common/new.png</file>
-    <file>icons/tools/common/new_changelist.png</file>
-    <file>icons/tools/common/new_sm.png</file>
-    <file>icons/tools/common/nominated_upgrade_overlay.png</file>
-    <file>icons/tools/common/obsolete.png</file>
-    <file>icons/tools/common/obsolete_content_overlay.png</file>
-    <file>icons/tools/common/open.png</file>
-    <file>icons/tools/common/open_for_edit.png</file>
-    <file>icons/tools/common/open_for_edit_sm.png</file>
-    <file>icons/tools/common/open_sm.png</file>
-    <file>icons/tools/common/options.png</file>
-    <file>icons/tools/common/options_activated.png</file>
-    <file>icons/tools/common/options_sm.png</file>
-    <file>icons/tools/common/options_sm_activated.png</file>
-    <file>icons/tools/common/options_vsm.png</file>
-    <file>icons/tools/common/options_vsm_activated.png</file>
-    <file>icons/tools/common/parentchild_child_first.png</file>
-    <file>icons/tools/common/parentchild_child_last.png</file>
-    <file>icons/tools/common/parentchild_child_mid.png</file>
-    <file>icons/tools/common/parentchild_child_only.png</file>
-    <file>icons/tools/common/parentchild_child_root.png</file>
-    <file>icons/tools/common/parentchild_child_skip.png</file>
-    <file>icons/tools/common/parentchild_parent_first.png</file>
-    <file>icons/tools/common/parentchild_parent_last.png</file>
-    <file>icons/tools/common/parentchild_parent_mid.png</file>
-    <file>icons/tools/common/parentchild_parent_only.png</file>
-    <file>icons/tools/common/parentchild_parent_root.png</file>
-    <file>icons/tools/common/parentchild_parent_skip.png</file>
-    <file>icons/tools/common/paste.png</file>
-    <file>icons/tools/common/paste_sm.png</file>
-    <file>icons/tools/common/photo_asset.png</file>
-    <file>icons/tools/common/preview.png</file>
-    <file>icons/tools/common/preview_sm.png</file>
-    <file>icons/tools/common/progress.png</file>
-    <file>icons/tools/common/read_only.png</file>
-    <file>icons/tools/common/redo.png</file>
-    <file>icons/tools/common/redo_med.png</file>
-    <file>icons/tools/common/redo_sm.png</file>
-    <file>icons/tools/common/reference_asset.png</file>
-    <file>icons/tools/common/refresh.png</file>
-    <file>icons/tools/common/refresh_sm.png</file>
-    <file>icons/tools/common/reload.png</file>
-    <file>icons/tools/common/reload_sm.png</file>
-    <file>icons/tools/common/remove.png</file>
-    <file>icons/tools/common/remove_sm.png</file>
-    <file>icons/tools/common/remove_xsm.png</file>
-    <file>icons/tools/common/repeat.png</file>
-    <file>icons/tools/common/repeat_med.png</file>
-    <file>icons/tools/common/repeat_multiple.png</file>
-    <file>icons/tools/common/repeat_sm.png</file>
-    <file>icons/tools/common/reset.png</file>
-    <file>icons/tools/common/reset_sm.png</file>
-    <file>icons/tools/common/reverse.png</file>
-    <file>icons/tools/common/revert.png</file>
-    <file>icons/tools/common/revert_and_delete_local.png</file>
-    <file>icons/tools/common/revert_med.png</file>
-    <file>icons/tools/common/revert_sm.png</file>
-    <file>icons/tools/common/revert_unchanged.png</file>
-    <file>icons/tools/common/run_map.png</file>
-    <file>icons/tools/common/save.png</file>
-    <file>icons/tools/common/save_all.png</file>
-    <file>icons/tools/common/save_sm.png</file>
-    <file>icons/tools/common/select_cursor_base.png</file>
-    <file>icons/tools/common/select_overlay_add.png</file>
-    <file>icons/tools/common/select_overlay_sub.png</file>
-    <file>icons/tools/common/select_rect_adjust.png</file>
-    <file>icons/tools/common/setting.png</file>
-    <file>icons/tools/common/setting_active.png</file>
-    <file>icons/tools/common/setting_med.png</file>
-    <file>icons/tools/common/setting_med_active.png</file>
-    <file>icons/tools/common/setting_sm.png</file>
-    <file>icons/tools/common/setting_sm_active.png</file>
-    <file>icons/tools/common/shortcut.png</file>
-    <file>icons/tools/common/shutdown_lg.png</file>
-    <file>icons/tools/common/shutdown_sm.png</file>
-    <file>icons/tools/common/small_arrow_left.png</file>
-    <file>icons/tools/common/small_arrow_right.png</file>
-    <file>icons/tools/common/smart_prop_component.png</file>
-    <file>icons/tools/common/smart_prop_component_overlay.png</file>
-    <file>icons/tools/common/snapshot.png</file>
-    <file>icons/tools/common/snapshot_med.png</file>
-    <file>icons/tools/common/snapshot_sm.png</file>
-    <file>icons/tools/common/sort_alpha.png</file>
-    <file>icons/tools/common/sort_default.png</file>
-    <file>icons/tools/common/sub_object_multi_reference.png</file>
-    <file>icons/tools/common/sub_object_reference.png</file>
-    <file>icons/tools/common/subtract.png</file>
-    <file>icons/tools/common/subtract_med.png</file>
-    <file>icons/tools/common/subtract_sm.png</file>
-    <file>icons/tools/common/sync.png</file>
-    <file>icons/tools/common/sync_anim.png</file>
-    <file>icons/tools/common/sync_anim_sml.png</file>
-    <file>icons/tools/common/tag_add.png</file>
-    <file>icons/tools/common/tag_overlay_template.psd</file>
-    <file>icons/tools/common/tag_overlay_template_2.psd</file>
-    <file>icons/tools/common/tag_remove.png</file>
-    <file>icons/tools/common/tileset.png</file>
-    <file>icons/tools/common/tileset_overlay.png</file>
-    <file>icons/tools/common/toggle_collapsed.png</file>
-    <file>icons/tools/common/toggle_collapsed_active.png</file>
-    <file>icons/tools/common/toggle_expanded.png</file>
-    <file>icons/tools/common/toggle_expanded_active.png</file>
-    <file>icons/tools/common/toggle_select_intersecting.png</file>
-    <file>icons/tools/common/toggle_select_intersecting_activated.png</file>
-    <file>icons/tools/common/toggle_select_subobjects.png</file>
-    <file>icons/tools/common/toggle_select_subobjects_activated.png</file>
-    <file>icons/tools/common/tools_muted.png</file>
-    <file>icons/tools/common/tools_options.png</file>
-    <file>icons/tools/common/tools_shared_menu_button.png</file>
-    <file>icons/tools/common/toolscene_settings_button.png</file>
-    <file>icons/tools/common/undo.png</file>
-    <file>icons/tools/common/undo_list_active.png</file>
-    <file>icons/tools/common/undo_list_item.png</file>
-    <file>icons/tools/common/undo_med.png</file>
-    <file>icons/tools/common/undo_sm.png</file>
-    <file>icons/tools/common/unlock.png</file>
-    <file>icons/tools/common/unlock_sm.png</file>
-    <file>icons/tools/common/upgrade.png</file>
-    <file>icons/tools/common/usa.png</file>
-    <file>icons/tools/common/valve_gear_med.png</file>
-    <file>icons/tools/common/valve_gear_sm.png</file>
-    <file>icons/tools/common/valve_small.png</file>
-    <file>icons/tools/common/vcr_play.png</file>
-    <file>icons/tools/common/vcr_reset.png</file>
-    <file>icons/tools/common/vcr_step.png</file>
-    <file>icons/tools/common/vcr_stop.png</file>
-    <file>icons/tools/common/widgetdebugger_focus.png</file>
-    <file>icons/tools/common/widgetdebugger_none.png</file>
-    <file>icons/tools/common/widgetdebugger_selected.png</file>
-    <file>icons/tools/common/widgetdebugger_treehover.png</file>
-    <file>icons/tools/common/widgetdebugger_undermouse.png</file>
-    <file>icons/tools/common/wip_content_overlay.png</file>
-    <file>icons/tools/common/workshop_banner.png</file>
-    <file>icons/tools/common/xen_asset.png</file>
-    <file>icons/tools/common/zoom_in.png</file>
-    <file>icons/tools/common/zoom_out.png</file>
+    <file alias="icons/tools/model_editor/hierarchy_sequence_group_referenced.png">assets/icons/tools/model_editor/hierarchy_sequence_group_referenced.png</file>
+    <file alias="icons/tools/hammer/displacement_tool_icon.png">assets/icons/tools/hammer/displacement_tool_icon.png</file>
+    <file alias="icons/tools/common/add.png">assets/icons/tools/common/add.png</file>
+    <file alias="icons/tools/common/add_editor_node.png">assets/icons/tools/common/add_editor_node.png</file>
+    <file alias="icons/tools/common/add_med.png">assets/icons/tools/common/add_med.png</file>
+    <file alias="icons/tools/common/add_node.png">assets/icons/tools/common/add_node.png</file>
+    <file alias="icons/tools/common/add_sm.png">assets/icons/tools/common/add_sm.png</file>
+    <file alias="icons/tools/common/add_sm_highlight.png">assets/icons/tools/common/add_sm_highlight.png</file>
+    <file alias="icons/tools/common/align.png">assets/icons/tools/common/align.png</file>
+    <file alias="icons/tools/common/arrow_left.png">assets/icons/tools/common/arrow_left.png</file>
+    <file alias="icons/tools/common/arrow_right.png">assets/icons/tools/common/arrow_right.png</file>
+    <file alias="icons/tools/common/arrow_right_disabled.png">assets/icons/tools/common/arrow_right_disabled.png</file>
+    <file alias="icons/tools/common/arrow_right_down.png">assets/icons/tools/common/arrow_right_down.png</file>
+    <file alias="icons/tools/common/arrow_right_up.png">assets/icons/tools/common/arrow_right_up.png</file>
+    <file alias="icons/tools/common/arrow_up.png">assets/icons/tools/common/arrow_up.png</file>
+    <file alias="icons/tools/common/auto_mute_game.png">assets/icons/tools/common/auto_mute_game.png</file>
+    <file alias="icons/tools/common/bind_command_list.png">assets/icons/tools/common/bind_command_list.png</file>
+    <file alias="icons/tools/common/bind_command_target.png">assets/icons/tools/common/bind_command_target.png</file>
+    <file alias="icons/tools/common/bindable_camera_fly_toggle.png">assets/icons/tools/common/bindable_camera_fly_toggle.png</file>
+    <file alias="icons/tools/common/bindable_camera_lock_height_toggle.png">assets/icons/tools/common/bindable_camera_lock_height_toggle.png</file>
+    <file alias="icons/tools/common/bookmark.png">assets/icons/tools/common/bookmark.png</file>
+    <file alias="icons/tools/common/bookmark_med.png">assets/icons/tools/common/bookmark_med.png</file>
+    <file alias="icons/tools/common/bookmark_sm.png">assets/icons/tools/common/bookmark_sm.png</file>
+    <file alias="icons/tools/common/breakable_asset.png">assets/icons/tools/common/breakable_asset.png</file>
+    <file alias="icons/tools/common/browse.png">assets/icons/tools/common/browse.png</file>
+    <file alias="icons/tools/common/browse_sm.png">assets/icons/tools/common/browse_sm.png</file>
+    <file alias="icons/tools/common/busy.gif">assets/icons/tools/common/busy.gif</file>
+    <file alias="icons/tools/common/busy_sm.gif">assets/icons/tools/common/busy_sm.gif</file>
+    <file alias="icons/tools/common/cancel.png">assets/icons/tools/common/cancel.png</file>
+    <file alias="icons/tools/common/cancel_sm.png">assets/icons/tools/common/cancel_sm.png</file>
+    <file alias="icons/tools/common/caution.png">assets/icons/tools/common/caution.png</file>
+    <file alias="icons/tools/common/check.png">assets/icons/tools/common/check.png</file>
+    <file alias="icons/tools/common/check_red_sm.png">assets/icons/tools/common/check_red_sm.png</file>
+    <file alias="icons/tools/common/check_sm.png">assets/icons/tools/common/check_sm.png</file>
+    <file alias="icons/tools/common/clear_list_sm.png">assets/icons/tools/common/clear_list_sm.png</file>
+    <file alias="icons/tools/common/clock_sm.png">assets/icons/tools/common/clock_sm.png</file>
+    <file alias="icons/tools/common/collapse_all.png">assets/icons/tools/common/collapse_all.png</file>
+    <file alias="icons/tools/common/collapse_left_med.png">assets/icons/tools/common/collapse_left_med.png</file>
+    <file alias="icons/tools/common/collapse_right.png">assets/icons/tools/common/collapse_right.png</file>
+    <file alias="icons/tools/common/collapse_right_med.png">assets/icons/tools/common/collapse_right_med.png</file>
+    <file alias="icons/tools/common/collapse_right_sm.png">assets/icons/tools/common/collapse_right_sm.png</file>
+    <file alias="icons/tools/common/color_wheel.png">assets/icons/tools/common/color_wheel.png</file>
+    <file alias="icons/tools/common/color_wheel_sm.png">assets/icons/tools/common/color_wheel_sm.png</file>
+    <file alias="icons/tools/common/connect.png">assets/icons/tools/common/connect.png</file>
+    <file alias="icons/tools/common/control_ff.png">assets/icons/tools/common/control_ff.png</file>
+    <file alias="icons/tools/common/control_ff_sm.png">assets/icons/tools/common/control_ff_sm.png</file>
+    <file alias="icons/tools/common/control_first.png">assets/icons/tools/common/control_first.png</file>
+    <file alias="icons/tools/common/control_first_sm.png">assets/icons/tools/common/control_first_sm.png</file>
+    <file alias="icons/tools/common/control_last.png">assets/icons/tools/common/control_last.png</file>
+    <file alias="icons/tools/common/control_last_sm.png">assets/icons/tools/common/control_last_sm.png</file>
+    <file alias="icons/tools/common/control_loop.png">assets/icons/tools/common/control_loop.png</file>
+    <file alias="icons/tools/common/control_loop_sm.png">assets/icons/tools/common/control_loop_sm.png</file>
+    <file alias="icons/tools/common/control_no_loop.png">assets/icons/tools/common/control_no_loop.png</file>
+    <file alias="icons/tools/common/control_no_loop_sm.png">assets/icons/tools/common/control_no_loop_sm.png</file>
+    <file alias="icons/tools/common/control_pause.png">assets/icons/tools/common/control_pause.png</file>
+    <file alias="icons/tools/common/control_pause_sm.png">assets/icons/tools/common/control_pause_sm.png</file>
+    <file alias="icons/tools/common/control_play.png">assets/icons/tools/common/control_play.png</file>
+    <file alias="icons/tools/common/control_play_sm.png">assets/icons/tools/common/control_play_sm.png</file>
+    <file alias="icons/tools/common/control_record.png">assets/icons/tools/common/control_record.png</file>
+    <file alias="icons/tools/common/control_record_sm.png">assets/icons/tools/common/control_record_sm.png</file>
+    <file alias="icons/tools/common/control_rew.png">assets/icons/tools/common/control_rew.png</file>
+    <file alias="icons/tools/common/control_rew_sm.png">assets/icons/tools/common/control_rew_sm.png</file>
+    <file alias="icons/tools/common/control_simulate.png">assets/icons/tools/common/control_simulate.png</file>
+    <file alias="icons/tools/common/control_step_fwd.png">assets/icons/tools/common/control_step_fwd.png</file>
+    <file alias="icons/tools/common/control_step_fwd_sm.png">assets/icons/tools/common/control_step_fwd_sm.png</file>
+    <file alias="icons/tools/common/control_step_rev.png">assets/icons/tools/common/control_step_rev.png</file>
+    <file alias="icons/tools/common/control_step_rev_sm.png">assets/icons/tools/common/control_step_rev_sm.png</file>
+    <file alias="icons/tools/common/control_stop.png">assets/icons/tools/common/control_stop.png</file>
+    <file alias="icons/tools/common/control_stop_sm.png">assets/icons/tools/common/control_stop_sm.png</file>
+    <file alias="icons/tools/common/copy.png">assets/icons/tools/common/copy.png</file>
+    <file alias="icons/tools/common/copy_sm.png">assets/icons/tools/common/copy_sm.png</file>
+    <file alias="icons/tools/common/curve_tangent_free.png">assets/icons/tools/common/curve_tangent_free.png</file>
+    <file alias="icons/tools/common/curve_tangent_linear.png">assets/icons/tools/common/curve_tangent_linear.png</file>
+    <file alias="icons/tools/common/curve_tangent_mirror.png">assets/icons/tools/common/curve_tangent_mirror.png</file>
+    <file alias="icons/tools/common/curve_tangent_sine.png">assets/icons/tools/common/curve_tangent_sine.png</file>
+    <file alias="icons/tools/common/curve_tangent_spline.png">assets/icons/tools/common/curve_tangent_spline.png</file>
+    <file alias="icons/tools/common/cut.png">assets/icons/tools/common/cut.png</file>
+    <file alias="icons/tools/common/cut_sm.png">assets/icons/tools/common/cut_sm.png</file>
+    <file alias="icons/tools/common/delete.png">assets/icons/tools/common/delete.png</file>
+    <file alias="icons/tools/common/delete_light.png">assets/icons/tools/common/delete_light.png</file>
+    <file alias="icons/tools/common/delete_light_med.png">assets/icons/tools/common/delete_light_med.png</file>
+    <file alias="icons/tools/common/delete_light_sm.png">assets/icons/tools/common/delete_light_sm.png</file>
+    <file alias="icons/tools/common/delete_med.png">assets/icons/tools/common/delete_med.png</file>
+    <file alias="icons/tools/common/delete_sm.png">assets/icons/tools/common/delete_sm.png</file>
+    <file alias="icons/tools/common/document.png">assets/icons/tools/common/document.png</file>
+    <file alias="icons/tools/common/document_overlay.png">assets/icons/tools/common/document_overlay.png</file>
+    <file alias="icons/tools/common/document_sm.png">assets/icons/tools/common/document_sm.png</file>
+    <file alias="icons/tools/common/dropdown_menu.png">assets/icons/tools/common/dropdown_menu.png</file>
+    <file alias="icons/tools/common/dropdown_menu_diagonal.png">assets/icons/tools/common/dropdown_menu_diagonal.png</file>
+    <file alias="icons/tools/common/dropdown_menu_gray.png">assets/icons/tools/common/dropdown_menu_gray.png</file>
+    <file alias="icons/tools/common/dropdown_menu_gray_right.png">assets/icons/tools/common/dropdown_menu_gray_right.png</file>
+    <file alias="icons/tools/common/dropdown_menu_right.png">assets/icons/tools/common/dropdown_menu_right.png</file>
+    <file alias="icons/tools/common/dropdown_menu_up.png">assets/icons/tools/common/dropdown_menu_up.png</file>
+    <file alias="icons/tools/common/duplicate.png">assets/icons/tools/common/duplicate.png</file>
+    <file alias="icons/tools/common/duplicate_asset.png">assets/icons/tools/common/duplicate_asset.png</file>
+    <file alias="icons/tools/common/duplicate_overlay.png">assets/icons/tools/common/duplicate_overlay.png</file>
+    <file alias="icons/tools/common/edit.png">assets/icons/tools/common/edit.png</file>
+    <file alias="icons/tools/common/edit_pencil.png">assets/icons/tools/common/edit_pencil.png</file>
+    <file alias="icons/tools/common/edit_sm.png">assets/icons/tools/common/edit_sm.png</file>
+    <file alias="icons/tools/common/expand_all.png">assets/icons/tools/common/expand_all.png</file>
+    <file alias="icons/tools/common/eyedropper.png">assets/icons/tools/common/eyedropper.png</file>
+    <file alias="icons/tools/common/eyedropper_med.png">assets/icons/tools/common/eyedropper_med.png</file>
+    <file alias="icons/tools/common/eyedropper_sm.png">assets/icons/tools/common/eyedropper_sm.png</file>
+    <file alias="icons/tools/common/favorite.png">assets/icons/tools/common/favorite.png</file>
+    <file alias="icons/tools/common/favorite_sm.png">assets/icons/tools/common/favorite_sm.png</file>
+    <file alias="icons/tools/common/filter_match_in_text.png">assets/icons/tools/common/filter_match_in_text.png</file>
+    <file alias="icons/tools/common/find.png">assets/icons/tools/common/find.png</file>
+    <file alias="icons/tools/common/finished.png">assets/icons/tools/common/finished.png</file>
+    <file alias="icons/tools/common/finished_overlay.png">assets/icons/tools/common/finished_overlay.png</file>
+    <file alias="icons/tools/common/flip.png">assets/icons/tools/common/flip.png</file>
+    <file alias="icons/tools/common/folder.png">assets/icons/tools/common/folder.png</file>
+    <file alias="icons/tools/common/folder_sm.png">assets/icons/tools/common/folder_sm.png</file>
+    <file alias="icons/tools/common/foliage_asset.png">assets/icons/tools/common/foliage_asset.png</file>
+    <file alias="icons/tools/common/fx.png">assets/icons/tools/common/fx.png</file>
+    <file alias="icons/tools/common/fx_overlay.png">assets/icons/tools/common/fx_overlay.png</file>
+    <file alias="icons/tools/common/generic_appicon.png">assets/icons/tools/common/generic_appicon.png</file>
+    <file alias="icons/tools/common/generic_appicon_sm.png">assets/icons/tools/common/generic_appicon_sm.png</file>
+    <file alias="icons/tools/common/generic_filter_add_dialog.png">assets/icons/tools/common/generic_filter_add_dialog.png</file>
+    <file alias="icons/tools/common/generic_filter_add_part.png">assets/icons/tools/common/generic_filter_add_part.png</file>
+    <file alias="icons/tools/common/generic_filter_and.png">assets/icons/tools/common/generic_filter_and.png</file>
+    <file alias="icons/tools/common/generic_filter_clear.png">assets/icons/tools/common/generic_filter_clear.png</file>
+    <file alias="icons/tools/common/generic_filter_edit_part.png">assets/icons/tools/common/generic_filter_edit_part.png</file>
+    <file alias="icons/tools/common/generic_filter_name_part.png">assets/icons/tools/common/generic_filter_name_part.png</file>
+    <file alias="icons/tools/common/generic_filter_negate_part_active.png">assets/icons/tools/common/generic_filter_negate_part_active.png</file>
+    <file alias="icons/tools/common/generic_filter_negate_part_inactive.png">assets/icons/tools/common/generic_filter_negate_part_inactive.png</file>
+    <file alias="icons/tools/common/generic_filter_or.png">assets/icons/tools/common/generic_filter_or.png</file>
+    <file alias="icons/tools/common/generic_filter_remove_part.png">assets/icons/tools/common/generic_filter_remove_part.png</file>
+    <file alias="icons/tools/common/generic_filter_show_editor.png">assets/icons/tools/common/generic_filter_show_editor.png</file>
+    <file alias="icons/tools/common/generic_hud_warning.png">assets/icons/tools/common/generic_hud_warning.png</file>
+    <file alias="icons/tools/common/global.png">assets/icons/tools/common/global.png</file>
+    <file alias="icons/tools/common/global_sm.png">assets/icons/tools/common/global_sm.png</file>
+    <file alias="icons/tools/common/goto.png">assets/icons/tools/common/goto.png</file>
+    <file alias="icons/tools/common/goto_sm.png">assets/icons/tools/common/goto_sm.png</file>
+    <file alias="icons/tools/common/gotoexternal_sm.png">assets/icons/tools/common/gotoexternal_sm.png</file>
+    <file alias="icons/tools/common/gotofolder.png">assets/icons/tools/common/gotofolder.png</file>
+    <file alias="icons/tools/common/gotofolder_sm.png">assets/icons/tools/common/gotofolder_sm.png</file>
+    <file alias="icons/tools/common/grab_handle_nub.png">assets/icons/tools/common/grab_handle_nub.png</file>
+    <file alias="icons/tools/common/hang_detected.png">assets/icons/tools/common/hang_detected.png</file>
+    <file alias="icons/tools/common/help_about_icon.png">assets/icons/tools/common/help_about_icon.png</file>
+    <file alias="icons/tools/common/help_documentation_page.png">assets/icons/tools/common/help_documentation_page.png</file>
+    <file alias="icons/tools/common/help_keybinding_list.png">assets/icons/tools/common/help_keybinding_list.png</file>
+    <file alias="icons/tools/common/help_keybinding_list_sm.png">assets/icons/tools/common/help_keybinding_list_sm.png</file>
+    <file alias="icons/tools/common/hidden.png">assets/icons/tools/common/hidden.png</file>
+    <file alias="icons/tools/common/hidden_asset.png">assets/icons/tools/common/hidden_asset.png</file>
+    <file alias="icons/tools/common/hidden_overlay.png">assets/icons/tools/common/hidden_overlay.png</file>
+    <file alias="icons/tools/common/home.png">assets/icons/tools/common/home.png</file>
+    <file alias="icons/tools/common/home_sm.png">assets/icons/tools/common/home_sm.png</file>
+    <file alias="icons/tools/common/icon_clear.png">assets/icons/tools/common/icon_clear.png</file>
+    <file alias="icons/tools/common/icon_clear_small.png">assets/icons/tools/common/icon_clear_small.png</file>
+    <file alias="icons/tools/common/icon_edge_generic.png">assets/icons/tools/common/icon_edge_generic.png</file>
+    <file alias="icons/tools/common/icon_error.png">assets/icons/tools/common/icon_error.png</file>
+    <file alias="icons/tools/common/icon_error_sm.png">assets/icons/tools/common/icon_error_sm.png</file>
+    <file alias="icons/tools/common/icon_error_stop.png">assets/icons/tools/common/icon_error_stop.png</file>
+    <file alias="icons/tools/common/icon_error_stop_sm.png">assets/icons/tools/common/icon_error_stop_sm.png</file>
+    <file alias="icons/tools/common/icon_info.png">assets/icons/tools/common/icon_info.png</file>
+    <file alias="icons/tools/common/icon_info_sm.png">assets/icons/tools/common/icon_info_sm.png</file>
+    <file alias="icons/tools/common/icon_node_generic.png">assets/icons/tools/common/icon_node_generic.png</file>
+    <file alias="icons/tools/common/icon_question.png">assets/icons/tools/common/icon_question.png</file>
+    <file alias="icons/tools/common/icon_question_sm.png">assets/icons/tools/common/icon_question_sm.png</file>
+    <file alias="icons/tools/common/icon_success.png">assets/icons/tools/common/icon_success.png</file>
+    <file alias="icons/tools/common/icon_success_sm.png">assets/icons/tools/common/icon_success_sm.png</file>
+    <file alias="icons/tools/common/icon_type_generic.png">assets/icons/tools/common/icon_type_generic.png</file>
+    <file alias="icons/tools/common/icon_warning.png">assets/icons/tools/common/icon_warning.png</file>
+    <file alias="icons/tools/common/icon_warning_overlay.png">assets/icons/tools/common/icon_warning_overlay.png</file>
+    <file alias="icons/tools/common/icon_warning_sm.png">assets/icons/tools/common/icon_warning_sm.png</file>
+    <file alias="icons/tools/common/image.png">assets/icons/tools/common/image.png</file>
+    <file alias="icons/tools/common/image_sm.png">assets/icons/tools/common/image_sm.png</file>
+    <file alias="icons/tools/common/import.png">assets/icons/tools/common/import.png</file>
+    <file alias="icons/tools/common/imported_asset.png">assets/icons/tools/common/imported_asset.png</file>
+    <file alias="icons/tools/common/integrate_sm.png">assets/icons/tools/common/integrate_sm.png</file>
+    <file alias="icons/tools/common/lock.png">assets/icons/tools/common/lock.png</file>
+    <file alias="icons/tools/common/lock_activated.png">assets/icons/tools/common/lock_activated.png</file>
+    <file alias="icons/tools/common/lock_light.png">assets/icons/tools/common/lock_light.png</file>
+    <file alias="icons/tools/common/lock_light_activated.png">assets/icons/tools/common/lock_light_activated.png</file>
+    <file alias="icons/tools/common/lock_light_sm.png">assets/icons/tools/common/lock_light_sm.png</file>
+    <file alias="icons/tools/common/lock_light_sm_activated.png">assets/icons/tools/common/lock_light_sm_activated.png</file>
+    <file alias="icons/tools/common/lock_sm.png">assets/icons/tools/common/lock_sm.png</file>
+    <file alias="icons/tools/common/lock_sm_activated.png">assets/icons/tools/common/lock_sm_activated.png</file>
+    <file alias="icons/tools/common/megascans_asset.png">assets/icons/tools/common/megascans_asset.png</file>
+    <file alias="icons/tools/common/menu_sm.png">assets/icons/tools/common/menu_sm.png</file>
+    <file alias="icons/tools/common/model_config_fully_locked.png">assets/icons/tools/common/model_config_fully_locked.png</file>
+    <file alias="icons/tools/common/model_config_icon.png">assets/icons/tools/common/model_config_icon.png</file>
+    <file alias="icons/tools/common/model_config_partially_locked.png">assets/icons/tools/common/model_config_partially_locked.png</file>
+    <file alias="icons/tools/common/model_config_reroll.png">assets/icons/tools/common/model_config_reroll.png</file>
+    <file alias="icons/tools/common/move_to_changelist.png">assets/icons/tools/common/move_to_changelist.png</file>
+    <file alias="icons/tools/common/multi_files.png">assets/icons/tools/common/multi_files.png</file>
+    <file alias="icons/tools/common/mute.png">assets/icons/tools/common/mute.png</file>
+    <file alias="icons/tools/common/new.png">assets/icons/tools/common/new.png</file>
+    <file alias="icons/tools/common/new_changelist.png">assets/icons/tools/common/new_changelist.png</file>
+    <file alias="icons/tools/common/new_sm.png">assets/icons/tools/common/new_sm.png</file>
+    <file alias="icons/tools/common/nominated_upgrade_overlay.png">assets/icons/tools/common/nominated_upgrade_overlay.png</file>
+    <file alias="icons/tools/common/obsolete.png">assets/icons/tools/common/obsolete.png</file>
+    <file alias="icons/tools/common/obsolete_content_overlay.png">assets/icons/tools/common/obsolete_content_overlay.png</file>
+    <file alias="icons/tools/common/open.png">assets/icons/tools/common/open.png</file>
+    <file alias="icons/tools/common/open_for_edit.png">assets/icons/tools/common/open_for_edit.png</file>
+    <file alias="icons/tools/common/open_for_edit_sm.png">assets/icons/tools/common/open_for_edit_sm.png</file>
+    <file alias="icons/tools/common/open_sm.png">assets/icons/tools/common/open_sm.png</file>
+    <file alias="icons/tools/common/options.png">assets/icons/tools/common/options.png</file>
+    <file alias="icons/tools/common/options_activated.png">assets/icons/tools/common/options_activated.png</file>
+    <file alias="icons/tools/common/options_sm.png">assets/icons/tools/common/options_sm.png</file>
+    <file alias="icons/tools/common/options_sm_activated.png">assets/icons/tools/common/options_sm_activated.png</file>
+    <file alias="icons/tools/common/options_vsm.png">assets/icons/tools/common/options_vsm.png</file>
+    <file alias="icons/tools/common/options_vsm_activated.png">assets/icons/tools/common/options_vsm_activated.png</file>
+    <file alias="icons/tools/common/parentchild_child_first.png">assets/icons/tools/common/parentchild_child_first.png</file>
+    <file alias="icons/tools/common/parentchild_child_last.png">assets/icons/tools/common/parentchild_child_last.png</file>
+    <file alias="icons/tools/common/parentchild_child_mid.png">assets/icons/tools/common/parentchild_child_mid.png</file>
+    <file alias="icons/tools/common/parentchild_child_only.png">assets/icons/tools/common/parentchild_child_only.png</file>
+    <file alias="icons/tools/common/parentchild_child_root.png">assets/icons/tools/common/parentchild_child_root.png</file>
+    <file alias="icons/tools/common/parentchild_child_skip.png">assets/icons/tools/common/parentchild_child_skip.png</file>
+    <file alias="icons/tools/common/parentchild_parent_first.png">assets/icons/tools/common/parentchild_parent_first.png</file>
+    <file alias="icons/tools/common/parentchild_parent_last.png">assets/icons/tools/common/parentchild_parent_last.png</file>
+    <file alias="icons/tools/common/parentchild_parent_mid.png">assets/icons/tools/common/parentchild_parent_mid.png</file>
+    <file alias="icons/tools/common/parentchild_parent_only.png">assets/icons/tools/common/parentchild_parent_only.png</file>
+    <file alias="icons/tools/common/parentchild_parent_root.png">assets/icons/tools/common/parentchild_parent_root.png</file>
+    <file alias="icons/tools/common/parentchild_parent_skip.png">assets/icons/tools/common/parentchild_parent_skip.png</file>
+    <file alias="icons/tools/common/paste.png">assets/icons/tools/common/paste.png</file>
+    <file alias="icons/tools/common/paste_sm.png">assets/icons/tools/common/paste_sm.png</file>
+    <file alias="icons/tools/common/photo_asset.png">assets/icons/tools/common/photo_asset.png</file>
+    <file alias="icons/tools/common/preview.png">assets/icons/tools/common/preview.png</file>
+    <file alias="icons/tools/common/preview_sm.png">assets/icons/tools/common/preview_sm.png</file>
+    <file alias="icons/tools/common/progress.png">assets/icons/tools/common/progress.png</file>
+    <file alias="icons/tools/common/read_only.png">assets/icons/tools/common/read_only.png</file>
+    <file alias="icons/tools/common/redo.png">assets/icons/tools/common/redo.png</file>
+    <file alias="icons/tools/common/redo_med.png">assets/icons/tools/common/redo_med.png</file>
+    <file alias="icons/tools/common/redo_sm.png">assets/icons/tools/common/redo_sm.png</file>
+    <file alias="icons/tools/common/reference_asset.png">assets/icons/tools/common/reference_asset.png</file>
+    <file alias="icons/tools/common/refresh.png">assets/icons/tools/common/refresh.png</file>
+    <file alias="icons/tools/common/refresh_sm.png">assets/icons/tools/common/refresh_sm.png</file>
+    <file alias="icons/tools/common/reload.png">assets/icons/tools/common/reload.png</file>
+    <file alias="icons/tools/common/reload_sm.png">assets/icons/tools/common/reload_sm.png</file>
+    <file alias="icons/tools/common/remove.png">assets/icons/tools/common/remove.png</file>
+    <file alias="icons/tools/common/remove_sm.png">assets/icons/tools/common/remove_sm.png</file>
+    <file alias="icons/tools/common/remove_xsm.png">assets/icons/tools/common/remove_xsm.png</file>
+    <file alias="icons/tools/common/repeat.png">assets/icons/tools/common/repeat.png</file>
+    <file alias="icons/tools/common/repeat_med.png">assets/icons/tools/common/repeat_med.png</file>
+    <file alias="icons/tools/common/repeat_multiple.png">assets/icons/tools/common/repeat_multiple.png</file>
+    <file alias="icons/tools/common/repeat_sm.png">assets/icons/tools/common/repeat_sm.png</file>
+    <file alias="icons/tools/common/reset.png">assets/icons/tools/common/reset.png</file>
+    <file alias="icons/tools/common/reset_sm.png">assets/icons/tools/common/reset_sm.png</file>
+    <file alias="icons/tools/common/reverse.png">assets/icons/tools/common/reverse.png</file>
+    <file alias="icons/tools/common/revert.png">assets/icons/tools/common/revert.png</file>
+    <file alias="icons/tools/common/revert_and_delete_local.png">assets/icons/tools/common/revert_and_delete_local.png</file>
+    <file alias="icons/tools/common/revert_med.png">assets/icons/tools/common/revert_med.png</file>
+    <file alias="icons/tools/common/revert_sm.png">assets/icons/tools/common/revert_sm.png</file>
+    <file alias="icons/tools/common/revert_unchanged.png">assets/icons/tools/common/revert_unchanged.png</file>
+    <file alias="icons/tools/common/run_map.png">assets/icons/tools/common/run_map.png</file>
+    <file alias="icons/tools/common/save.png">assets/icons/tools/common/save.png</file>
+    <file alias="icons/tools/common/save_all.png">assets/icons/tools/common/save_all.png</file>
+    <file alias="icons/tools/common/save_sm.png">assets/icons/tools/common/save_sm.png</file>
+    <file alias="icons/tools/common/select_cursor_base.png">assets/icons/tools/common/select_cursor_base.png</file>
+    <file alias="icons/tools/common/select_overlay_add.png">assets/icons/tools/common/select_overlay_add.png</file>
+    <file alias="icons/tools/common/select_overlay_sub.png">assets/icons/tools/common/select_overlay_sub.png</file>
+    <file alias="icons/tools/common/select_rect_adjust.png">assets/icons/tools/common/select_rect_adjust.png</file>
+    <file alias="icons/tools/common/setting.png">assets/icons/tools/common/setting.png</file>
+    <file alias="icons/tools/common/setting_active.png">assets/icons/tools/common/setting_active.png</file>
+    <file alias="icons/tools/common/setting_med.png">assets/icons/tools/common/setting_med.png</file>
+    <file alias="icons/tools/common/setting_med_active.png">assets/icons/tools/common/setting_med_active.png</file>
+    <file alias="icons/tools/common/setting_sm.png">assets/icons/tools/common/setting_sm.png</file>
+    <file alias="icons/tools/common/setting_sm_active.png">assets/icons/tools/common/setting_sm_active.png</file>
+    <file alias="icons/tools/common/shortcut.png">assets/icons/tools/common/shortcut.png</file>
+    <file alias="icons/tools/common/shutdown_lg.png">assets/icons/tools/common/shutdown_lg.png</file>
+    <file alias="icons/tools/common/shutdown_sm.png">assets/icons/tools/common/shutdown_sm.png</file>
+    <file alias="icons/tools/common/small_arrow_left.png">assets/icons/tools/common/small_arrow_left.png</file>
+    <file alias="icons/tools/common/small_arrow_right.png">assets/icons/tools/common/small_arrow_right.png</file>
+    <file alias="icons/tools/common/smart_prop_component.png">assets/icons/tools/common/smart_prop_component.png</file>
+    <file alias="icons/tools/common/smart_prop_component_overlay.png">assets/icons/tools/common/smart_prop_component_overlay.png</file>
+    <file alias="icons/tools/common/snapshot.png">assets/icons/tools/common/snapshot.png</file>
+    <file alias="icons/tools/common/snapshot_med.png">assets/icons/tools/common/snapshot_med.png</file>
+    <file alias="icons/tools/common/snapshot_sm.png">assets/icons/tools/common/snapshot_sm.png</file>
+    <file alias="icons/tools/common/sort_alpha.png">assets/icons/tools/common/sort_alpha.png</file>
+    <file alias="icons/tools/common/sort_default.png">assets/icons/tools/common/sort_default.png</file>
+    <file alias="icons/tools/common/sub_object_multi_reference.png">assets/icons/tools/common/sub_object_multi_reference.png</file>
+    <file alias="icons/tools/common/sub_object_reference.png">assets/icons/tools/common/sub_object_reference.png</file>
+    <file alias="icons/tools/common/subtract.png">assets/icons/tools/common/subtract.png</file>
+    <file alias="icons/tools/common/subtract_med.png">assets/icons/tools/common/subtract_med.png</file>
+    <file alias="icons/tools/common/subtract_sm.png">assets/icons/tools/common/subtract_sm.png</file>
+    <file alias="icons/tools/common/sync.png">assets/icons/tools/common/sync.png</file>
+    <file alias="icons/tools/common/sync_anim.png">assets/icons/tools/common/sync_anim.png</file>
+    <file alias="icons/tools/common/sync_anim_sml.png">assets/icons/tools/common/sync_anim_sml.png</file>
+    <file alias="icons/tools/common/tag_add.png">assets/icons/tools/common/tag_add.png</file>
+    <file alias="icons/tools/common/tag_overlay_template.psd">assets/icons/tools/common/tag_overlay_template.psd</file>
+    <file alias="icons/tools/common/tag_overlay_template_2.psd">assets/icons/tools/common/tag_overlay_template_2.psd</file>
+    <file alias="icons/tools/common/tag_remove.png">assets/icons/tools/common/tag_remove.png</file>
+    <file alias="icons/tools/common/tileset.png">assets/icons/tools/common/tileset.png</file>
+    <file alias="icons/tools/common/tileset_overlay.png">assets/icons/tools/common/tileset_overlay.png</file>
+    <file alias="icons/tools/common/toggle_collapsed.png">assets/icons/tools/common/toggle_collapsed.png</file>
+    <file alias="icons/tools/common/toggle_collapsed_active.png">assets/icons/tools/common/toggle_collapsed_active.png</file>
+    <file alias="icons/tools/common/toggle_expanded.png">assets/icons/tools/common/toggle_expanded.png</file>
+    <file alias="icons/tools/common/toggle_expanded_active.png">assets/icons/tools/common/toggle_expanded_active.png</file>
+    <file alias="icons/tools/common/toggle_select_intersecting.png">assets/icons/tools/common/toggle_select_intersecting.png</file>
+    <file alias="icons/tools/common/toggle_select_intersecting_activated.png">assets/icons/tools/common/toggle_select_intersecting_activated.png</file>
+    <file alias="icons/tools/common/toggle_select_subobjects.png">assets/icons/tools/common/toggle_select_subobjects.png</file>
+    <file alias="icons/tools/common/toggle_select_subobjects_activated.png">assets/icons/tools/common/toggle_select_subobjects_activated.png</file>
+    <file alias="icons/tools/common/tools_muted.png">assets/icons/tools/common/tools_muted.png</file>
+    <file alias="icons/tools/common/tools_options.png">assets/icons/tools/common/tools_options.png</file>
+    <file alias="icons/tools/common/tools_shared_menu_button.png">assets/icons/tools/common/tools_shared_menu_button.png</file>
+    <file alias="icons/tools/common/toolscene_settings_button.png">assets/icons/tools/common/toolscene_settings_button.png</file>
+    <file alias="icons/tools/common/undo.png">assets/icons/tools/common/undo.png</file>
+    <file alias="icons/tools/common/undo_list_active.png">assets/icons/tools/common/undo_list_active.png</file>
+    <file alias="icons/tools/common/undo_list_item.png">assets/icons/tools/common/undo_list_item.png</file>
+    <file alias="icons/tools/common/undo_med.png">assets/icons/tools/common/undo_med.png</file>
+    <file alias="icons/tools/common/undo_sm.png">assets/icons/tools/common/undo_sm.png</file>
+    <file alias="icons/tools/common/unlock.png">assets/icons/tools/common/unlock.png</file>
+    <file alias="icons/tools/common/unlock_sm.png">assets/icons/tools/common/unlock_sm.png</file>
+    <file alias="icons/tools/common/upgrade.png">assets/icons/tools/common/upgrade.png</file>
+    <file alias="icons/tools/common/usa.png">assets/icons/tools/common/usa.png</file>
+    <file alias="icons/tools/common/valve_gear_med.png">assets/icons/tools/common/valve_gear_med.png</file>
+    <file alias="icons/tools/common/valve_gear_sm.png">assets/icons/tools/common/valve_gear_sm.png</file>
+    <file alias="icons/tools/common/valve_small.png">assets/icons/tools/common/valve_small.png</file>
+    <file alias="icons/tools/common/vcr_play.png">assets/icons/tools/common/vcr_play.png</file>
+    <file alias="icons/tools/common/vcr_reset.png">assets/icons/tools/common/vcr_reset.png</file>
+    <file alias="icons/tools/common/vcr_step.png">assets/icons/tools/common/vcr_step.png</file>
+    <file alias="icons/tools/common/vcr_stop.png">assets/icons/tools/common/vcr_stop.png</file>
+    <file alias="icons/tools/common/widgetdebugger_focus.png">assets/icons/tools/common/widgetdebugger_focus.png</file>
+    <file alias="icons/tools/common/widgetdebugger_none.png">assets/icons/tools/common/widgetdebugger_none.png</file>
+    <file alias="icons/tools/common/widgetdebugger_selected.png">assets/icons/tools/common/widgetdebugger_selected.png</file>
+    <file alias="icons/tools/common/widgetdebugger_treehover.png">assets/icons/tools/common/widgetdebugger_treehover.png</file>
+    <file alias="icons/tools/common/widgetdebugger_undermouse.png">assets/icons/tools/common/widgetdebugger_undermouse.png</file>
+    <file alias="icons/tools/common/wip_content_overlay.png">assets/icons/tools/common/wip_content_overlay.png</file>
+    <file alias="icons/tools/common/workshop_banner.png">assets/icons/tools/common/workshop_banner.png</file>
+    <file alias="icons/tools/common/xen_asset.png">assets/icons/tools/common/xen_asset.png</file>
+    <file alias="icons/tools/common/zoom_in.png">assets/icons/tools/common/zoom_in.png</file>
+    <file alias="icons/tools/common/zoom_out.png">assets/icons/tools/common/zoom_out.png</file>
   </qresource>
 </RCC>

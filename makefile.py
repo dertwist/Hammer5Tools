@@ -228,7 +228,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--optimize=0',
         f'--icon={os.path.join(gui_root, "appicon.ico")}',
         f'--add-data={os.path.join(gui_root, "appicon.ico")};.',
-        f'--add-data={os.path.join(gui_root, "images")};images/',
+        f'--add-data={os.path.join(gui_root, "assets", "images")};images/',
         f'--add-data={os.path.join(gui_root, "styles")};styles/',
         f'--add-data={os.path.join(gui_root, "editors", "smartprop_editor", "viewport_3d", "glsl")};gui/editors/smartprop_editor/viewport_3d/glsl/',
         f'--add-data={os.path.join(cur_dir, "version.json")};.',

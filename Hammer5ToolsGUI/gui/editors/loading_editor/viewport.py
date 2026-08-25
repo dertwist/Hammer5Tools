@@ -46,7 +46,7 @@ def ensure_cs2_fonts_loaded():
     global _fonts_loaded
     if _fonts_loaded:
         return
-    fonts_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "fonts"))
+    fonts_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
     if os.path.exists(fonts_dir):
         for f in _CS2_FONT_FILES:
             font_path = os.path.join(fonts_dir, f)

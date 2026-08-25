@@ -606,7 +606,7 @@ def resolve_image_path(path_str: str | None) -> str | None:
     if os.path.isabs(path_str) and os.path.exists(path_str):
         return path_str
 
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets"))
     candidate1 = os.path.normpath(os.path.join(base_dir, path_str))
     if os.path.exists(candidate1):
         return candidate1
