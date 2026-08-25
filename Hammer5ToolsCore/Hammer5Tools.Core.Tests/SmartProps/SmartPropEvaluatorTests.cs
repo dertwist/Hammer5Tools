@@ -1,9 +1,98 @@
-using Hammer5Tools.Core.Format.SmartProps;
+﻿using Hammer5Tools.Core.Format.SmartProps;
 
 namespace Hammer5Tools.Core.Tests.SmartProps;
 
 public sealed class SmartPropEvaluatorTests
 {
+    [Test]
+    public async Task DeserializedTextPreservesNumericLookingStringsAsStrings()
+    {
+        // The KV3 text parser types a value by content, not by the source grammar's quotes â€”
+        // a quoted "1" comes back exactly as typed (Int32) as an unquoted 1 would. Any KV3
+        // property whose value is semantically always a string (m_Expression, in particular â€”
+        // see SmartPropJsonConverter's guard on the way back) must not lose that distinction
+        // when this deserializer hands it to the GUI/Core as JSON.
+        const string text = """
+            <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+            {
+                a = "1"
+                b = "hello"
+                c = 1
+                m_Expression = "1"
+            }
+            """;
+
+        var json = SmartPropDocumentSerializer.DeserializeText(text);
+
+        // Plain properties keep the parser's own (content-based) typing â€” only m_Expression,
+        // which is always expression source text, is special-cased back to a string.
+        await Assert.That(json).Contains("\"a\":1");
+        await Assert.That(json).Contains("\"b\":\"hello\"");
+        await Assert.That(json).Contains("\"c\":1");
+        await Assert.That(json).Contains("\"m_Expression\":\"1\"");
+    }
+
+    [Test]
+    public async Task LinearScaleResolvesCorrectlyAlongsideNumericLookingSiblingExpressions()
+    {
+        // Reproduces a real authored file: m_vModelScale's other components are written as
+        // m_Expression = "1" (a habit of Hammer's own editor). Round-tripped through KV3 text,
+        // those come back as JSON numbers (see DeserializedTextPreservesNumericLookingStringsAsStrings),
+        // which used to make VRF's resolver silently default the *entire* m_vModelScale vector
+        // to (1,1,1) â€” masking a correctly-evaluated LinearScale() in the very same array.
+        const string text = """
+            <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+            {
+                generic_data_type = "CSmartPropRoot"
+                m_Children =
+                [
+                    {
+                        _class = "CSmartPropElement_FitOnLine"
+                        m_nElementID = 1
+                        m_vStart = { m_Components = [0.0, 0.0, 0.0] }
+                        m_vEnd = { m_Components = [200.0, 0.0, 0.0] }
+                        m_Children = [
+                        {
+                            _class = "CSmartPropElement_PickOne"
+                            m_nElementID = 2
+                            m_SelectionCriteria = [
+                            {
+                                _class = "CSmartPropSelectionCriteria_LinearLength"
+                                m_bAllowScale = true
+                                m_flLength = 128.0
+                                m_flMinLength = 64.0
+                                m_flMaxLength = 256.0
+                            }]
+                            m_Children = [
+                            {
+                                _class = "CSmartPropElement_Model"
+                                m_nElementID = 3
+                                m_sModelName = "models/segment.vmdl"
+                                m_vModelScale =
+                                {
+                                    m_Components = [
+                                    { m_Expression = "LinearScale()" },
+                                    { m_Expression = "1" },
+                                    { m_Expression = "1" }]
+                                }
+                            }]
+                        }]
+                    }
+                ]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateText(text);
+
+        // sizer length 200 over an authored 128-unit segment: scale = 200 / 128 = 1.5625.
+        await Assert.That(result.Diagnostics).IsEmpty();
+        var scaleX = MathF.Sqrt(
+            (result.Models[0].Transform.M11 * result.Models[0].Transform.M11)
+            + (result.Models[0].Transform.M12 * result.Models[0].Transform.M12)
+            + (result.Models[0].Transform.M13 * result.Models[0].Transform.M13));
+        await Assert.That(scaleX).IsEqualTo(1.5625f).Within(0.001f);
+    }
+
     [Test]
     public async Task EvaluatesUncompiledEditorDataThroughVrf()
     {
@@ -107,15 +196,18 @@ public sealed class SmartPropEvaluatorTests
         var result = SmartPropEvaluator.EvaluateJson(json);
 
         await Assert.That(result.Diagnostics).IsEmpty();
-        await Assert.That(result.Widgets).Count().IsEqualTo(1);
-        await Assert.That(result.Widgets[0].Type).IsEqualTo("pickone");
-        await Assert.That(result.Widgets[0].ElementId).IsEqualTo(14);
-        await Assert.That(result.Widgets[0].Shape).IsEqualTo("DIAMOND");
-        await Assert.That(result.Widgets[0].Size).IsEqualTo(11f);
+        await Assert.That(result.Widgets).Count().IsEqualTo(2);
+        var element = result.Widgets.Single(widget => widget.Type == "element");
+        await Assert.That(element.ElementId).IsEqualTo(14);
+
+        var pickOne = result.Widgets.Single(widget => widget.Type == "pickone");
+        await Assert.That(pickOne.ElementId).IsEqualTo(14);
+        await Assert.That(pickOne.Shape).IsEqualTo("DIAMOND");
+        await Assert.That(pickOne.Size).IsEqualTo(11f);
     }
 
     [Test]
-    public async Task BendsModelAlongQuarterCircleWithAutoRadius()
+    public async Task BendsRigidModelAlongQuarterCircleWithAutoRadius()
     {
         const string json = """
             {
@@ -130,6 +222,7 @@ public sealed class SmartPropEvaluatorTests
                   "_class": "CSmartPropElement_Model",
                   "m_nElementID": 2,
                   "m_sModelName": "models/segment.vmdl",
+                  "m_bRigidDeformation": true,
                   "m_Modifiers": [{
                     "_class": "CSmartPropOperation_Translate",
                     "m_vPosition": { "m_Components": [100, 0, 0] }
@@ -150,6 +243,141 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Models[0].Transform.M41).IsEqualTo(expected).Within(0.01f);
         await Assert.That(result.Models[0].Transform.M42).IsEqualTo(expected).Within(0.01f);
         await Assert.That(result.Models[0].Transform.M43).IsEqualTo(0f).Within(0.01f);
+
+        // At the box's far end the local frame has swept the full 90 degrees too: the model's
+        // own local X axis (unrotated, so originally (1,0,0)) now points along world Y.
+        await Assert.That(result.Models[0].Transform.M11).IsEqualTo(0f).Within(0.01f);
+        await Assert.That(result.Models[0].Transform.M12).IsEqualTo(1f).Within(0.01f);
+        await Assert.That(result.Models[0].Transform.M13).IsEqualTo(0f).Within(0.01f);
+
+        // Opted out of mesh deformation via m_bRigidDeformation â€” no cage payload attached.
+        await Assert.That(result.Models[0].Deformer).IsNull();
+    }
+
+    [Test]
+    public async Task NonRigidModelUnderBendKeepsStraightTransformAndGetsDeformerCage()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_BendDeformer",
+                "m_nElementID": 1,
+                "m_vSize": { "m_Components": [100, 20, 20] },
+                "m_flBendAngle": 90,
+                "m_flBendPoint": 0,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/pipe.vmdl",
+                  "m_Modifiers": [{
+                    "_class": "CSmartPropOperation_Translate",
+                    "m_vPosition": { "m_Components": [50, 0, 0] }
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        // Default (no m_bRigidDeformation, no RigidDeformation modifier): the instance transform
+        // is left exactly as VRF's raw, unbent placement â€” the viewport warps the mesh instead.
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(1);
+        var model = result.Models[0];
+        await Assert.That(model.Transform.M41).IsEqualTo(50f).Within(0.01f);
+        await Assert.That(model.Transform.M42).IsEqualTo(0f).Within(0.01f);
+        await Assert.That(model.Transform.M43).IsEqualTo(0f).Within(0.01f);
+
+        await Assert.That(model.Deformer).IsNotNull();
+        var deformer = model.Deformer!;
+        await Assert.That(deformer.ControlPoints.Count).IsEqualTo(8);
+        await Assert.That(deformer.Midpoints.Count).IsEqualTo(8);
+        await Assert.That(deformer.Size.X).IsEqualTo(100f).Within(0.01f);
+        // The deformer frame and volume frame are both identity here (no modifiers on the
+        // deformer, no m_vOrigin/m_vAngles), so the far corner (x=sizeX) should land exactly
+        // where the rigid-path math already proved it does: (R, R, 0) for a 90-degree auto bend.
+        var expected = 100f / (MathF.PI / 2f);
+        var farCorner = deformer.ControlPoints[4];
+        await Assert.That(farCorner.X).IsEqualTo(expected).Within(0.01f);
+        await Assert.That(farCorner.Y).IsEqualTo(expected).Within(0.01f);
+    }
+
+    [Test]
+    public async Task RigidDeformationModifierOptsOutOfMeshDeformation()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_BendDeformer",
+                "m_nElementID": 1,
+                "m_vSize": { "m_Components": [100, 0, 0] },
+                "m_flBendAngle": 90,
+                "m_flBendPoint": 0,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/segment.vmdl",
+                  "m_Modifiers": [
+                    {
+                      "_class": "CSmartPropOperation_Translate",
+                      "m_vPosition": { "m_Components": [100, 0, 0] }
+                    },
+                    {
+                      "_class": "CSmartPropOperation_RigidDeformation",
+                      "m_bEnabled": true
+                    }
+                  ]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        var expected = 100f / (MathF.PI / 2f);
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models[0].Transform.M41).IsEqualTo(expected).Within(0.01f);
+        await Assert.That(result.Models[0].Deformer).IsNull();
+    }
+
+    [Test]
+    public async Task HandlesBendAngleBeyondAFullTurnWithoutNaN()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_BendDeformer",
+                "m_nElementID": 1,
+                "m_vSize": { "m_Components": [100, 20, 20] },
+                "m_flBendAngle": 630,
+                "m_flBendPoint": 0.5,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/segment.vmdl",
+                  "m_Modifiers": [{
+                    "_class": "CSmartPropOperation_Translate",
+                    "m_vPosition": { "m_Components": [77, 5, 3] }
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        // A single Bezier segment per edge can't represent a nearly-two-turn bend exactly (the
+        // authored range goes up to 720 degrees), but it must stay finite and well-formed â€”
+        // this only guards against the handle-length formula blowing up near a full turn.
+        await Assert.That(result.Diagnostics).IsEmpty();
+        var transform = result.Models[0].Transform;
+        await Assert.That(float.IsFinite(transform.M41)).IsTrue();
+        await Assert.That(float.IsFinite(transform.M42)).IsTrue();
+        await Assert.That(float.IsFinite(transform.M43)).IsTrue();
     }
 
     [Test]
@@ -187,8 +415,7 @@ public sealed class SmartPropEvaluatorTests
     [Test]
     public async Task ExplicitBendRadiusOverridesAutoRadius()
     {
-        var childX = 40f * MathF.PI / 2f;
-        var json = $$"""
+        const string json = """
             {
               "generic_data_type": "CSmartPropRoot",
               "m_Children": [{
@@ -202,9 +429,10 @@ public sealed class SmartPropEvaluatorTests
                   "_class": "CSmartPropElement_Model",
                   "m_nElementID": 2,
                   "m_sModelName": "models/segment.vmdl",
+                  "m_bRigidDeformation": true,
                   "m_Modifiers": [{
                     "_class": "CSmartPropOperation_Translate",
-                    "m_vPosition": { "m_Components": [{{childX}}, 0, 0] }
+                    "m_vPosition": { "m_Components": [100, 0, 0] }
                   }]
                 }]
               }]
@@ -213,8 +441,9 @@ public sealed class SmartPropEvaluatorTests
 
         var result = SmartPropEvaluator.EvaluateJson(json);
 
-        // With an explicit radius, phi = x / radius directly (independent of m_vSize), so a
-        // child placed at radius*(pi/2) sweeps exactly 90 degrees at that fixed radius.
+        // The swept angle is always bendAngle * (x/sizeX) â€” independent of radius â€” so a child
+        // at the box's far end (x = sizeX) still sweeps exactly 90 degrees; only the radius (and
+        // so the arc's length) is different from the auto-radius case.
         await Assert.That(result.Diagnostics).IsEmpty();
         await Assert.That(result.Models[0].Transform.M41).IsEqualTo(40f).Within(0.01f);
         await Assert.That(result.Models[0].Transform.M42).IsEqualTo(40f).Within(0.01f);
@@ -253,7 +482,7 @@ public sealed class SmartPropEvaluatorTests
         var result = SmartPropEvaluator.EvaluateJson(json);
 
         // A BendDeformer under a repeating PlaceOnPath can't be represented by one probed
-        // frame, so it's left exactly as VRF's unbent placement gives it (Y stays 0 — a bent
+        // frame, so it's left exactly as VRF's unbent placement gives it (Y stays 0 â€” a bent
         // result would have moved it off-axis).
         await Assert.That(result.Diagnostics).IsEmpty();
         await Assert.That(result.Models).Count().IsEqualTo(1);
@@ -268,6 +497,7 @@ public sealed class SmartPropEvaluatorTests
               "_class": "CSmartPropElement_Model",
               "m_nElementID": 2,
               "m_sModelName": "models/segment.vmdl",
+              "m_bRigidDeformation": true,
               "m_Modifiers": [{
                 "_class": "CSmartPropOperation_Translate",
                 "m_vPosition": { "m_Components": [100, 0, 0] }
@@ -309,7 +539,7 @@ public sealed class SmartPropEvaluatorTests
         var nested = SmartPropEvaluator.EvaluateJson(nestedJson).Models.Single(m => m.ElementId == 2);
 
         // The outer deformer must further bend the already inner-bent position, not replace
-        // or ignore it — assert the nested result visibly differs from the inner-only one.
+        // or ignore it â€” assert the nested result visibly differs from the inner-only one.
         var delta = System.Numerics.Vector3.Distance(
             new(innerOnly.Transform.M41, innerOnly.Transform.M42, innerOnly.Transform.M43),
             new(nested.Transform.M41, nested.Transform.M42, nested.Transform.M43));
@@ -475,5 +705,176 @@ public sealed class SmartPropEvaluatorTests
             await Assert.That(serializedResult.Diagnostics).IsEmpty();
             await Assert.That(serializedResult.Models).Count().IsEqualTo(sourceResult.Models.Count);
         }
+    }
+
+    [Test]
+    public async Task MidpointDeformerAppliesFullOffsetAtMidpointAndNoneBeyondRadius()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_MidpointDeformer",
+                "m_nElementID": 1,
+                "m_vStart": { "m_Components": [0, 0, 0] },
+                "m_vEnd": { "m_Components": [200, 0, 0] },
+                "m_fRadius": 50,
+                "m_fFalloff": 1,
+                "m_vOffset": { "m_Components": [0, 0, 40] },
+                "m_Children": [
+                  {
+                    "_class": "CSmartPropElement_Model",
+                    "m_nElementID": 2,
+                    "m_sModelName": "models/at_midpoint.vmdl",
+                    "m_Modifiers": [{
+                      "_class": "CSmartPropOperation_Translate",
+                      "m_vPosition": { "m_Components": [100, 0, 0] }
+                    }]
+                  },
+                  {
+                    "_class": "CSmartPropElement_Model",
+                    "m_nElementID": 3,
+                    "m_sModelName": "models/far.vmdl",
+                    "m_Modifiers": [{
+                      "_class": "CSmartPropOperation_Translate",
+                      "m_vPosition": { "m_Components": [-500, 0, 0] }
+                    }]
+                  }
+                ]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+        var atMidpoint = result.Models.Single(model => model.ElementId == 2);
+        var far = result.Models.Single(model => model.ElementId == 3);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(atMidpoint.Transform.M43).IsEqualTo(40f).Within(0.01f);
+        await Assert.That(far.Transform.M43).IsEqualTo(0f).Within(0.01f);
+    }
+
+    [Test]
+    public async Task GridExpandsIntoWTimesLInstancesCenteredOnOrigin()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_Layout2DGrid",
+                "m_nElementID": 1,
+                "m_nCountW": 3,
+                "m_nCountL": 3,
+                "m_flSpacingWidth": 100,
+                "m_flSpacingLength": 100,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/grid.vmdl"
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(9);
+        await Assert.That(result.Models.Select(model => model.Transform.M41)).Contains(-100f);
+        await Assert.That(result.Models.Select(model => model.Transform.M41)).Contains(100f);
+        await Assert.That(result.Models.Any(model => model.Transform.M41 == 0f && model.Transform.M42 == 0f)).IsTrue();
+    }
+
+    [Test]
+    public async Task PlaceInSphereScattersWithinRadiusShell()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_PlaceInSphere",
+                "m_nElementID": 1,
+                "m_nCountMin": 6,
+                "m_nCountMax": 6,
+                "m_flPositionRadiusInner": 50,
+                "m_flPositionRadiusOuter": 100,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/sphere.vmdl"
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(6);
+        foreach (var model in result.Models)
+        {
+            var distance = new System.Numerics.Vector3(model.Transform.M41, model.Transform.M42, model.Transform.M43).Length();
+            await Assert.That(distance).IsGreaterThanOrEqualTo(49.9f);
+            await Assert.That(distance).IsLessThanOrEqualTo(100.1f);
+        }
+    }
+
+    [Test]
+    public async Task PlaceMultipleExpandsIntoCountInstancesWithVaryingRandomOffsets()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_PlaceMultiple",
+                "m_nElementID": 1,
+                "m_nCount": 5,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/multi.vmdl",
+                  "m_Modifiers": [{
+                    "_class": "CSmartPropOperation_RandomOffset",
+                    "m_vRandomPositionMin": { "m_Components": [-100, -100, 0] },
+                    "m_vRandomPositionMax": { "m_Components": [100, 100, 0] }
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+        var distinctPositions = result.Models
+            .Select(model => (model.Transform.M41, model.Transform.M42))
+            .Distinct()
+            .Count();
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(5);
+        await Assert.That(distinctPositions).IsGreaterThan(1);
+    }
+
+    [Test]
+    public async Task PlaceMultipleWithoutCountFieldStillEmitsOneInstance()
+    {
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_PlaceMultiple",
+                "m_nElementID": 1,
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Model",
+                  "m_nElementID": 2,
+                  "m_sModelName": "models/single.vmdl"
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(1);
     }
 }

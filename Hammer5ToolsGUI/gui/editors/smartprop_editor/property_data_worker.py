@@ -1,4 +1,4 @@
-﻿"""
+"""
 PropertyDataWorker: runs non-UI property data preparation on a QThreadPool worker.
 Emits finished(dict) on the main thread when complete; emits error(str) on failure.
 

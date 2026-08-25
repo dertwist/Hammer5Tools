@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from core.bridge.core import CoreBridge, SmartPropModel, SmartPropWidget, ValveMapEntity, VpkIndex
+from core.bridge.core import CoreBridge, SmartPropDeformer, SmartPropModel, SmartPropWidget, ValveMapEntity, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
@@ -121,6 +121,50 @@ def test_smartprop_widgets_are_converted_from_native_json():
         (1.0, 2.0, 3.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0),
         (0.0, 0.0, 1.0), (0.6, 0.6, 0.6),
         (False,) * 6, (False,) * 3, 2.0, 16.0, 0.0, 8.0, "SQUARE", "origin",
+    )
+
+
+def test_smartprop_model_without_deformer_converts_from_native_json():
+    native_model = {
+        "elementId": 2,
+        "modelName": "models/segment.vmdl",
+        "transform": list(range(1, 17)),
+        "materialGroup": None,
+        "tintColor": None,
+        "deformer": None,
+    }
+
+    converted = CoreBridge._convert_native_smartprop_model(native_model)
+
+    assert converted == SmartPropModel(
+        2, "models/segment.vmdl", tuple(float(value) for value in range(1, 17)), None, None, None,
+    )
+
+
+def test_smartprop_model_deformer_converts_from_native_json():
+    native_model = {
+        "elementId": 2,
+        "modelName": "models/pipe.vmdl",
+        "transform": list(range(1, 17)),
+        "materialGroup": None,
+        "tintColor": None,
+        "deformer": {
+            "size": [100, 20, 20],
+            "controlPoints": [[float(i), 0.0, 0.0] for i in range(8)],
+            "midpoints": [[float(i), 1.0, 0.0] for i in range(8)],
+            "deformerFrame": list(range(1, 17)),
+            "volumeFrame": list(range(16, 0, -1)),
+        },
+    }
+
+    converted = CoreBridge._convert_native_smartprop_model(native_model)
+
+    assert converted.deformer == SmartPropDeformer(
+        (100.0, 20.0, 20.0),
+        tuple((float(i), 0.0, 0.0) for i in range(8)),
+        tuple((float(i), 1.0, 0.0) for i in range(8)),
+        tuple(float(value) for value in range(1, 17)),
+        tuple(float(value) for value in range(16, 0, -1)),
     )
 
 

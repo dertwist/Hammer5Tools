@@ -23,6 +23,24 @@ class CoreStatus:
 
 
 @dataclass(frozen=True)
+class SmartPropDeformer:
+    """Python-native mesh deformation cage for a model under an active, non-rigid deformer.
+
+    Set instead of the model's transform being bent: the model keeps its undeformed placement
+    and the viewport warps its mesh vertices through this cage (Core has no mesh data of its own
+    to do that itself). Shape matches what CS2 bakes into a compiled VMAP's SmartProp deformation
+    data: 8 lattice corners, a 2-point cubic-Bezier handle pair per local-X edge, and the two
+    frames needed to map a mesh vertex into cage-local space and back.
+    """
+
+    size: tuple[float, float, float]
+    control_points: tuple[tuple[float, float, float], ...]
+    midpoints: tuple[tuple[float, float, float], ...]
+    deformer_frame: tuple[float, ...]
+    volume_frame: tuple[float, ...]
+
+
+@dataclass(frozen=True)
 class SmartPropModel:
     """Python-native model produced by Core SmartProp evaluation."""
 
@@ -31,6 +49,7 @@ class SmartPropModel:
     transform: tuple[float, ...]
     material_group: str | None
     tint_color: tuple[float, float, float, float] | None
+    deformer: SmartPropDeformer | None = None
 
 
 @dataclass(frozen=True)
@@ -482,6 +501,19 @@ class CoreBridge:
             tuple(float(value) for value in model["transform"]),
             model.get("materialGroup"),
             None if tint is None else tuple(float(value) for value in tint),
+            CoreBridge._convert_native_smartprop_deformer(model.get("deformer")),
+        )
+
+    @staticmethod
+    def _convert_native_smartprop_deformer(deformer: Mapping | None) -> SmartPropDeformer | None:
+        if deformer is None:
+            return None
+        return SmartPropDeformer(
+            tuple(float(value) for value in deformer["size"]),
+            tuple(tuple(float(value) for value in point) for point in deformer["controlPoints"]),
+            tuple(tuple(float(value) for value in point) for point in deformer["midpoints"]),
+            tuple(float(value) for value in deformer["deformerFrame"]),
+            tuple(float(value) for value in deformer["volumeFrame"]),
         )
 
     @staticmethod

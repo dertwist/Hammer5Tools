@@ -48,8 +48,7 @@ class VPKLoaderThread(QThread):
                 for filepath, _ in index.entries((".vsnd",)):
                     if self._stopped:
                         return
-                    if 'vsnd_c' in filepath and 'sounds' in filepath:
-                        filepath = filepath.replace('vsnd_c', 'vsnd')
+                    if 'sounds' in filepath:
                         element = filepath.split('/')[1:]
                         folders.append(element)
                 self.vpk_loaded.emit(folders)

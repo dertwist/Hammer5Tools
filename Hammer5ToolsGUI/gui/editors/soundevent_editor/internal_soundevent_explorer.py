@@ -153,12 +153,11 @@ class SoundEventLoaderThread(QThread):
                 for fp, _ in index.entries((".vsndevts",)):
                     if self._stopped:
                         break
-                    if 'vsndevts_c' not in fp:
-                        continue
                     key = fp.replace("\\", "/").lower()
                     if key not in seen:
                         seen.add(key)
-                        paths.append(fp)
+                        # read_compiled_resource needs the on-disk compiled entry name.
+                        paths.append(fp + "_c")
         except Exception as e:
             pass
         return paths

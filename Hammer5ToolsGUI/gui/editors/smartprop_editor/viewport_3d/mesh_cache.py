@@ -190,6 +190,13 @@ class MeshCache(QObject):
         self._pending_unload: Dict[str, GPUMesh] = {}     # Waiting to be freed in GL context
         self._loading: set = set()                         # Currently loading
         self._failed: set = set()                          # Failed loads
+        # Per-instance deformed meshes (non-rigid models under a SmartProp
+        # deformer — see mesh_deform.py). Keyed by (resource_path, element_id);
+        # value also carries the (deformer, world_matrix) signature that produced
+        # it, so a changed bend/placement invalidates and re-warps instead of
+        # silently drawing a stale shape.
+        self._deformed_gpu_cache: Dict[tuple, tuple] = {}   # key -> (signature, GPUMesh)
+        self._pending_deformed_unload: list = []            # GPUMesh queued for GL free
         self._thread_pool = QThreadPool()
         # Cap concurrency: reads run fully in parallel (each worker owns its VRF
         # file loader), so a few worker threads speed up multi-model scenes
@@ -284,12 +291,16 @@ class MeshCache(QObject):
             {path for path in self._failed if path not in referenced}
         )
 
+        for key in [key for key in self._deformed_gpu_cache if key[0] not in referenced]:
+            _signature, gpu_mesh = self._deformed_gpu_cache.pop(key)
+            self._pending_deformed_unload.append(gpu_mesh)
+
     def release_unloaded(self):
         """
         Free GPU resources queued by ``prune``. MUST be called from within a valid
         GL context (e.g. inside paintGL).
         """
-        if not self._pending_unload:
+        if not self._pending_unload and not self._pending_deformed_unload:
             return
 
         from OpenGL import GL
@@ -305,17 +316,37 @@ class MeshCache(QObject):
             finally:
                 del self._pending_unload[path]
 
-    def _upload_mesh(self, mesh_data: MeshData) -> GPUMesh:
-        """Upload a MeshData to GPU buffers. Must be called in GL context."""
+        for gpu_mesh in self._pending_deformed_unload:
+            self._free_deformed_mesh(gpu_mesh)
+        self._pending_deformed_unload.clear()
+
+    def _free_deformed_mesh(self, gpu_mesh: GPUMesh):
+        """Free a deformed mesh's own VAO/VBO/EBO — its materials/textures are
+        shared with the undeformed GPUMesh and must not be deleted here."""
+        from OpenGL import GL
+
+        try:
+            GL.glDeleteVertexArrays(1, [gpu_mesh.vao])
+            GL.glDeleteBuffers(2, [gpu_mesh.vbo, gpu_mesh.ebo])
+        except Exception as e:
+            print(f"[MeshCache] Deformed GPU unload failed: {e}")
+
+    def _upload_vertex_buffers(self, vertices: np.ndarray, normals: np.ndarray,
+                                uvs: Optional[np.ndarray], indices: np.ndarray):
+        """Create and fill a VAO/VBO/EBO from interleaved pos/normal/uv + index data.
+
+        Shared by ``_upload_mesh`` (fresh model load) and ``get_deformed_gpu_mesh``
+        (same topology, warped positions) — must be called in GL context.
+        """
         from OpenGL import GL
 
         vao = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(vao)
 
         # Interleave vertex data: pos(3) + normal(3) + uv(2) = 8 floats per vertex
-        n_verts = len(mesh_data.vertices)
-        uvs = mesh_data.uvs if mesh_data.uvs is not None else np.zeros((n_verts, 2), dtype=np.float32)
-        interleaved = np.hstack([mesh_data.vertices, mesh_data.normals, uvs]).astype(np.float32)
+        n_verts = len(vertices)
+        uvs = uvs if uvs is not None else np.zeros((n_verts, 2), dtype=np.float32)
+        interleaved = np.hstack([vertices, normals, uvs]).astype(np.float32)
 
         vbo = GL.glGenBuffers(1)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo)
@@ -337,9 +368,15 @@ class MeshCache(QObject):
 
         ebo = GL.glGenBuffers(1)
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, ebo)
-        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, mesh_data.indices.nbytes, mesh_data.indices, GL.GL_STATIC_DRAW)
+        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL.GL_STATIC_DRAW)
 
         GL.glBindVertexArray(0)
+        return vao, vbo, ebo
+
+    def _upload_mesh(self, mesh_data: MeshData) -> GPUMesh:
+        """Upload a MeshData to GPU buffers. Must be called in GL context."""
+        vao, vbo, ebo = self._upload_vertex_buffers(
+            mesh_data.vertices, mesh_data.normals, mesh_data.uvs, mesh_data.indices)
 
         # Upload each material's textures once (deduped by MaterialData identity),
         # then build a GPUSubMesh per index range.
@@ -439,6 +476,50 @@ class MeshCache(QObject):
         """Get the GPU mesh for a model, or None if not yet loaded."""
         return self._gpu_cache.get(resource_path)
 
+    def get_deformed_gpu_mesh(self, resource_path: str, element_id: int, signature, deform_fn) -> Optional[GPUMesh]:
+        """Get (building/rebuilding as needed) a per-instance mesh warped by ``deform_fn``.
+
+        ``signature`` must be hashable and change whenever the deformation would
+        produce a different shape (deformer params, or the model's own placement)
+        — it's compared against what's cached so a live edit re-warps instead of
+        silently reusing a stale mesh. ``deform_fn(vertices: (N,3) float32) ->
+        (N,3) float32 | None`` does the actual warp (see mesh_deform.py); returning
+        None (degenerate frame) falls back to the model's plain, undeformed mesh.
+        Must be called in GL context (called from the paint loop, alongside
+        ``get_gpu_mesh``).
+        """
+        key = (resource_path, element_id)
+        cached = self._deformed_gpu_cache.get(key)
+        if cached is not None and cached[0] == signature:
+            return cached[1]
+
+        base_cpu = self._cpu_cache.get(resource_path)
+        base_gpu = self._gpu_cache.get(resource_path)
+        if base_cpu is None or base_gpu is None:
+            return None
+
+        deformed_vertices = deform_fn(base_cpu.vertices)
+        if deformed_vertices is None:
+            return base_gpu
+
+        vao, vbo, ebo = self._upload_vertex_buffers(
+            deformed_vertices, base_cpu.normals, base_cpu.uvs, base_cpu.indices)
+        gpu_mesh = GPUMesh(
+            vao=vao, vbo=vbo, ebo=ebo,
+            index_count=len(base_cpu.indices),
+            # Materials/textures are shared with base_gpu, not duplicated —
+            # `textures=[]` keeps this mesh from trying to free them too.
+            submeshes=[GPUSubMesh(sm.index_offset, sm.index_count, sm.material) for sm in base_gpu.submeshes],
+            textures=[],
+            bbox_min=deformed_vertices.min(axis=0) if len(deformed_vertices) else base_gpu.bbox_min,
+            bbox_max=deformed_vertices.max(axis=0) if len(deformed_vertices) else base_gpu.bbox_max,
+        )
+
+        if cached is not None:
+            self._free_deformed_mesh(cached[1])
+        self._deformed_gpu_cache[key] = (signature, gpu_mesh)
+        return gpu_mesh
+
     def is_loading(self, resource_path: str) -> bool:
         """Check if a model is currently being decompiled/loaded."""
         return resource_path in self._loading or resource_path in self._pending_upload
@@ -460,9 +541,16 @@ class MeshCache(QObject):
             except Exception:
                 pass
 
+        for _signature, gpu_mesh in self._deformed_gpu_cache.values():
+            self._free_deformed_mesh(gpu_mesh)
+        for gpu_mesh in self._pending_deformed_unload:
+            self._free_deformed_mesh(gpu_mesh)
+
         self._gpu_cache.clear()
         self._cpu_cache.clear()
         self._pending_upload.clear()
         self._pending_unload.clear()
         self._loading.clear()
         self._failed.clear()
+        self._deformed_gpu_cache.clear()
+        self._pending_deformed_unload.clear()

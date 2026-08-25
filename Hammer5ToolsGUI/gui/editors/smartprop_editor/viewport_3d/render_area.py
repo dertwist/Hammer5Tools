@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication
 from gui.editors.smartprop_editor.viewport_3d.camera import Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix, decompose_trs
 from gui.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
 from gui.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
+from gui.editors.smartprop_editor.viewport_3d import mesh_deform
 from gui.editors.smartprop_editor.viewport_3d.crash_guard import gl_guard
 from gui.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
@@ -184,6 +185,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._group_vao = 0
         self._group_vbo = 0
         self._group_texture = 0
+        self._element_texture = 0
         self._fs_vao = 0  # empty VAO for the fullscreen-triangle outline pass
 
         # Preview-widget GPU resources
@@ -283,7 +285,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
 
-        self._init_group_billboard_geometry()
+        self._init_editor_billboard_geometry()
 
         # Initialize Grid Geometry
         size = 25000.0
@@ -445,7 +447,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             
         # Line: Object count
         rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
-        num_models = sum(1 for info in rendered_pool if not info.get("is_group"))
+        num_models = sum(1 for info in rendered_pool if not info.get("is_editor_marker"))
         hud_lines.append(f"Objects: {num_models}")
         
         # Line: Active transformation details
@@ -517,8 +519,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 
         painter.end()
 
-    def _init_group_billboard_geometry(self):
-        """Upload the bundled group icon and a camera-facing unit quad."""
+    def _init_editor_billboard_geometry(self):
+        """Upload hierarchy marker icons and their camera-facing unit quad."""
         from OpenGL import GL
         from gui.common import gui_assets_dir
 
@@ -542,33 +544,38 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnableVertexAttribArray(1)
         GL.glBindVertexArray(0)
 
-        icon_path = gui_assets_dir("icons", "tools", "hammer", "selection_mode_groups.png")
+        self._group_texture = self._upload_billboard_texture(
+            gui_assets_dir("icons", "tools", "hammer", "selection_mode_groups.png")
+        )
+        self._element_texture = self._upload_billboard_texture(
+            gui_assets_dir("icons", "tools", "hammer", "entity_tool_icon_activated.png")
+        )
+
+    @staticmethod
+    def _upload_billboard_texture(icon_path):
+        """Upload one bundled RGBA editor icon and return its texture id."""
+        from OpenGL import GL
+
         image = QImage(icon_path).convertToFormat(QImage.Format_RGBA8888).mirrored(False, True)
         if image.isNull():
-            raise RuntimeError(f"Unable to load SmartProp group icon: {icon_path}")
+            raise RuntimeError(f"Unable to load SmartProp hierarchy icon: {icon_path}")
         pixels = np.frombuffer(image.constBits(), dtype=np.uint8, count=image.sizeInBytes())
 
-        self._group_texture = GL.glGenTextures(1)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._group_texture)
+        texture = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
         GL.glTexImage2D(
-            GL.GL_TEXTURE_2D,
-            0,
-            GL.GL_RGBA8,
-            image.width(),
-            image.height(),
-            0,
-            GL.GL_RGBA,
-            GL.GL_UNSIGNED_BYTE,
-            pixels,
+            GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, image.width(), image.height(), 0,
+            GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels,
         )
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        return texture
 
-    def _draw_group_billboard(self, view, proj, source_position, pick_color=None):
-        """Draw a depth-tested group icon that continuously faces the camera."""
+    def _draw_editor_billboard(self, view, proj, source_position, texture, pick_color=None):
+        """Draw a camera-facing hierarchy icon."""
         from OpenGL import GL
 
         source = np.array([*source_position, 1.0], dtype=np.float32)
@@ -598,7 +605,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             *(pick_color or (0.0, 0.0, 0.0)),
         )
         GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, self._group_texture)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
         GL.glUniform1i(GL.glGetUniformLocation(self._group_program, "uIcon"), 0)
         GL.glBindVertexArray(self._group_vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
@@ -659,7 +666,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # pass after all opaque geometry, sorted back-to-front with depth writes
         # off so they composite correctly.
         transparent_items = []
-        group_items = []
+        marker_items = []
 
         rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
         for info in rendered_pool:
@@ -694,17 +701,32 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     @ SOURCE2_TO_GL
                 )
 
-            is_group = info.get("is_group", False)
-            if is_group:
-                if not self.display_groups:
+            is_editor_marker = info.get("is_editor_marker", False)
+            if is_editor_marker:
+                marker_type = info.get("marker_type", "element")
+                if marker_type == "group" and not self.display_groups:
                     continue
                 # Draw group markers together after every model pass. This makes
                 # them true editor overlays: meshes never occlude the icon, and
                 # the picking pass resolves the visible icon before geometry.
-                group_items.append((eid, pos))
+                marker_items.append((eid, pos, marker_type))
                 continue
 
-            gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
+            deformer = info.get("deformer")
+            if deformer is not None and "world_matrix" in info:
+                # Non-rigid model under an active deformer: Core left world_matrix
+                # straight on purpose (see EvaluatedSmartPropModel.Deformer) so the
+                # mesh itself can be warped instead of the instance transform.
+                # The signature must change whenever the warp would — a live edit
+                # (bend angle, placement) re-warps instead of reusing a stale mesh.
+                world_matrix_src = info["world_matrix"]
+                signature = (deformer, tuple(np.asarray(world_matrix_src, dtype=np.float32).ravel().tolist()))
+                gpu_mesh = self.mesh_cache.get_deformed_gpu_mesh(
+                    model_path, eid, signature,
+                    lambda vertices, wm=world_matrix_src, d=deformer: mesh_deform.deform_mesh_vertices(vertices, wm, d),
+                )
+            else:
+                gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
 
             if use_pick:
                 # Flat id colour (picking) or white/black silhouette (mask mode).
@@ -780,12 +802,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Editor-object overlay pass. Group icons intentionally ignore scene
         # depth so their location remains visible through opaque/translucent
         # geometry. They do not write depth, keeping subsequent overlays clean.
-        if group_items:
+        if marker_items:
             depth_test_was_enabled = bool(GL.glIsEnabled(GL.GL_DEPTH_TEST))
             depth_writes_were_enabled = bool(GL.glGetBooleanv(GL.GL_DEPTH_WRITEMASK))
             GL.glDisable(GL.GL_DEPTH_TEST)
             GL.glDepthMask(GL.GL_FALSE)
-            for eid, pos in group_items:
+            for eid, pos, marker_type in marker_items:
                 if mask_id is not None:
                     pick_color = (1.0, 1.0, 1.0)
                 elif picking:
@@ -796,7 +818,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     )
                 else:
                     pick_color = None
-                self._draw_group_billboard(view, proj, pos, pick_color)
+                texture = self._group_texture if marker_type == "group" else self._element_texture
+                self._draw_editor_billboard(view, proj, pos, texture, pick_color)
 
             GL.glDepthMask(GL.GL_TRUE if depth_writes_were_enabled else GL.GL_FALSE)
             if depth_test_was_enabled:
@@ -1065,7 +1088,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         sel = self._model_infos.get(self._selected_id)
         if not sel:
             return
-        if not sel.get("is_group") and self.mesh_cache.get_gpu_mesh(sel.get("path", "")) is None:
+        if not sel.get("is_editor_marker") and self.mesh_cache.get_gpu_mesh(sel.get("path", "")) is None:
             return
 
         # Work in device pixels so the mask lines up with the HiDPI framebuffer.
@@ -1138,8 +1161,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 @ translation_matrix(*pos)
                 @ SOURCE2_TO_GL
             )
-            is_group = info.get("is_group", False)
-            if is_group:
+            is_editor_marker = info.get("is_editor_marker", False)
+            if is_editor_marker:
                 gl_pos = (SOURCE2_TO_GL.T @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
                 bbox_min = np.minimum(bbox_min, gl_pos - 10.0)
                 bbox_max = np.maximum(bbox_max, gl_pos + 10.0)
@@ -1346,22 +1369,23 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "world_matrix": world_matrix,
                 "parent_world_matrix": np.eye(4, dtype=np.float32),
                 "data": data_by_id.get(model.element_id, {}),
-                "is_group": False,
+                "is_editor_marker": False,
                 "material_group": model.material_group,
                 "tint_color": model.tint_color,
+                "deformer": model.deformer,
             })
 
         for widget in result.widgets:
-            if widget.type == "group":
-                evaluated.append(self._group_draw_info(widget, data_by_id.get(widget.element_id, {})))
+            if widget.type in ("group", "element"):
+                evaluated.append(self._marker_draw_info(widget, data_by_id.get(widget.element_id, {})))
             else:
                 self._widget_infos.append(self._widget_draw_info(widget))
 
         return evaluated
 
     @staticmethod
-    def _group_draw_info(widget, data):
-        """Adapt a Core group placement to the selectable scene-object schema."""
+    def _marker_draw_info(widget, data):
+        """Adapt a Core hierarchy marker to the selectable scene-object schema."""
         world_matrix = np.asarray(widget.transform, dtype=np.float32).reshape((4, 4))
         world_position, world_rotation, world_scale = decompose_trs(world_matrix)
         return {
@@ -1373,7 +1397,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             "world_matrix": world_matrix,
             "parent_world_matrix": np.eye(4, dtype=np.float32),
             "data": data,
-            "is_group": True,
+            "is_editor_marker": True,
+            "marker_type": widget.type,
         }
 
     @staticmethod

@@ -50,7 +50,15 @@ public static class SmartPropDocumentSerializer
                 foreach (var (name, child) in value.Children)
                 {
                     writer.WritePropertyName(name);
-                    WriteValue(writer, child);
+                    // The KV3 text parser doesn't distinguish a quoted "1" from a bare 1 by
+                    // content, so a numeric-looking m_Expression string (e.g. m_Expression = "1")
+                    // comes back from it typed as a number. m_Expression is always expression
+                    // source text though, so restore the string type here — see the matching
+                    // note in SmartPropJsonConverter, which guards the reverse conversion.
+                    if (name == "m_Expression" && IsNumeric(child.ValueType))
+                        writer.WriteStringValue(child.ToString(null));
+                    else
+                        WriteValue(writer, child);
                 }
                 writer.WriteEndObject();
                 break;
@@ -96,4 +104,9 @@ public static class SmartPropDocumentSerializer
                 throw new InvalidDataException($"Unsupported KV3 value type: {value.ValueType}");
         }
     }
+
+    private static bool IsNumeric(KVValueType type) => type is
+        KVValueType.Int16 or KVValueType.Int32 or KVValueType.Int64
+        or KVValueType.UInt16 or KVValueType.UInt32 or KVValueType.UInt64
+        or KVValueType.FloatingPoint or KVValueType.FloatingPoint64 or KVValueType.Pointer;
 }

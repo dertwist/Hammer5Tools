@@ -30,7 +30,7 @@ public static class SmartPropEvaluator
             var root = SmartPropJsonConverter.Convert(json);
             var result = Evaluate(root, null, options);
             var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, null, options) };
-            return withWidgets with { Models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, null, withWidgets.Models, options) };
+            return withWidgets with { Models = ApplyCorrectionPasses(json, null, withWidgets.Models, options) };
         }
         catch (JsonException exception)
         {
@@ -70,7 +70,7 @@ public static class SmartPropEvaluator
             var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, nestedDocumentsJson, options) };
             return withWidgets with
             {
-                Models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, nestedDocumentsJson, withWidgets.Models, options),
+                Models = ApplyCorrectionPasses(json, nestedDocumentsJson, withWidgets.Models, options),
             };
         }
         catch (JsonException exception)
@@ -100,7 +100,9 @@ public static class SmartPropEvaluator
         try
         {
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
-            return Evaluate(KVDocumentExtensions.ParseKV3(stream).Root, null, options);
+            var root = KVDocumentExtensions.ParseKV3(stream).Root;
+            SmartPropJsonConverter.NormalizeExpressionStrings(root);
+            return Evaluate(root, null, options);
         }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException)
         {
@@ -156,6 +158,24 @@ public static class SmartPropEvaluator
                 "smartprop.evaluation_failed",
                 exception.Message)]);
         }
+    }
+
+    /// <summary>
+    /// Runs the correction passes that patch elements VRF's evaluator treats as transparent
+    /// pass-throughs — see each pass's own remarks for what it fixes and why.
+    /// </summary>
+    private static IReadOnlyList<EvaluatedSmartPropModel> ApplyCorrectionPasses(
+        string json,
+        string? nestedDocumentsJson,
+        IReadOnlyList<EvaluatedSmartPropModel> models,
+        SmartPropEvaluationOptions options)
+    {
+        models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, nestedDocumentsJson, models, options);
+        models = SmartPropMidpointDeformerEvaluator.ApplyMidpointDeformers(json, nestedDocumentsJson, models, options);
+        models = SmartPropLayout2DGridEvaluator.ApplyGrids(json, nestedDocumentsJson, models, options);
+        models = SmartPropPlaceInSphereEvaluator.ApplyPlaceInSphere(json, nestedDocumentsJson, models, options);
+        models = SmartPropPlaceMultipleEvaluator.ApplyPlaceMultiple(json, nestedDocumentsJson, models, options);
+        return models;
     }
 
     private static Dictionary<string, ValveKeyValue.KVObject> ReadNestedDocuments(string json)

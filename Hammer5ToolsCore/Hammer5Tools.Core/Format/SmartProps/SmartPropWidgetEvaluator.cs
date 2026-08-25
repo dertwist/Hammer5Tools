@@ -87,12 +87,12 @@ internal static class SmartPropWidgetEvaluator
             if (IsElement(className))
             {
                 var elementId = ReadInt32(obj, "m_nElementID");
-                if (className.EndsWith("Group", StringComparison.Ordinal))
+                if (!IsModelClass(className))
                     probes.Add(new(
                         documentPath,
                         path.ToArray(),
                         null,
-                        "group",
+                        ClassIs(className, "Group") ? "group" : "element",
                         elementId,
                         obj.DeepClone().AsObject(),
                         context));
@@ -317,6 +317,45 @@ internal static class SmartPropWidgetEvaluator
         return current as JsonObject;
     }
 
+    /// <summary>
+    /// Resolves an element's own accumulated world transform by rigging a clone of it as a
+    /// <c>CSmartPropElement_Model</c> (keeping its real <c>m_Modifiers</c> and ancestor chain) and
+    /// letting VRF's real evaluator compute the placement — the parent/modifier composition logic
+    /// lives in VRF's internal <c>SmartPropModifierEvaluator</c>, so probing is the only way to reach it.
+    /// </summary>
+    internal static Matrix4x4? ProbeElementFrame(
+        JsonObject root,
+        JsonObject? nestedDocuments,
+        IReadOnlyList<PathPart> path,
+        SmartPropEvaluationOptions options,
+        string probeModelName)
+    {
+        if (root.DeepClone() is not JsonObject clone)
+            return null;
+        if (FindObject(clone, path) is not { } element)
+            return null;
+
+        element["_class"] = "CSmartPropElement_Model";
+        element["m_sModelName"] = probeModelName;
+        element.Remove("m_vModelScale");
+        element.Remove("m_flModelScale");
+        element.Remove("m_flUniformModelScale");
+
+        var resolver = nestedDocuments is null ? null : CreateNestedResolver(nestedDocuments);
+        var evaluated = SmartPropEvaluation.Evaluate(
+            SmartPropJsonConverter.Convert(clone.ToJsonString()),
+            resolver,
+            options.MaximumDepth);
+
+        foreach (var placement in evaluated.Models)
+        {
+            if (placement.ModelName == probeModelName)
+                return placement.Transform;
+        }
+
+        return null;
+    }
+
     private static JsonObject? FindNestedDocument(JsonObject? documents, string normalizedPath)
     {
         if (documents is null)
@@ -353,6 +392,73 @@ internal static class SmartPropWidgetEvaluator
             return "rotator";
         return null;
     }
+
+    /// <summary>One element matching a target class, with the model-class descendants under it.</summary>
+    internal readonly record struct DescendantElementInfo(
+        PathPart[] Path, JsonObject Node, int Depth, HashSet<int> DescendantModelIds);
+
+    /// <summary>
+    /// Finds every element of <paramref name="targetClassShortName"/> (e.g. <c>"Layout2DGrid"</c>,
+    /// without the <c>CSmartPropElement_</c> prefix) and, for each, the element ids of every
+    /// Model/ModelEntity/PropPhysics/PropDynamic beneath it. Nested matches of the same class are
+    /// supported — an inner match's descendants also count toward its outer ancestors. Ordered by
+    /// nesting depth so callers can process innermost-first.
+    /// </summary>
+    internal static List<DescendantElementInfo> CollectElementsWithDescendants(JsonObject root, string targetClassShortName)
+    {
+        var found = new List<DescendantElementInfo>();
+        var active = new List<int>();
+        Walk(root, []);
+        return found;
+
+        void Walk(JsonNode? node, List<PathPart> path)
+        {
+            if (node is JsonObject obj)
+            {
+                var className = ReadString(obj, "_class");
+                var pushed = false;
+                if (ClassIs(className, targetClassShortName))
+                {
+                    found.Add(new(path.ToArray(), obj, active.Count, []));
+                    active.Add(found.Count - 1);
+                    pushed = true;
+                }
+                else if (IsModelClass(className))
+                {
+                    var elementId = ReadInt32(obj, "m_nElementID");
+                    foreach (var index in active)
+                        found[index].DescendantModelIds.Add(elementId);
+                }
+
+                foreach (var property in obj)
+                {
+                    path.Add(new(property.Key, null));
+                    Walk(property.Value, path);
+                    path.RemoveAt(path.Count - 1);
+                }
+
+                if (pushed)
+                    active.RemoveAt(active.Count - 1);
+            }
+            else if (node is JsonArray array)
+            {
+                for (var index = 0; index < array.Count; index++)
+                {
+                    path.Add(new(null, index));
+                    Walk(array[index], path);
+                    path.RemoveAt(path.Count - 1);
+                }
+            }
+        }
+    }
+
+    internal static bool IsModelClass(string className)
+        => ClassIs(className, "Model") || ClassIs(className, "ModelEntity")
+            || ClassIs(className, "PropPhysics") || ClassIs(className, "PropDynamic");
+
+    internal static bool ClassIs(string className, string shortName)
+        => className.Equals(shortName, StringComparison.Ordinal)
+            || className.Equals("CSmartPropElement_" + shortName, StringComparison.Ordinal);
 
     private static bool IsElement(string className)
         => className.StartsWith("CSmartPropElement_", StringComparison.Ordinal)

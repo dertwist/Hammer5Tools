@@ -140,6 +140,30 @@ internal static unsafe class NativeApi
             {
                 writer.WriteNull("tintColor");
             }
+            if (model.Deformer is { } deformer)
+            {
+                writer.WriteStartObject("deformer");
+                WriteVector(writer, "size", deformer.Size);
+                writer.WriteStartArray("controlPoints");
+                foreach (var point in deformer.ControlPoints)
+                    WriteVectorValue(writer, point);
+                writer.WriteEndArray();
+                writer.WriteStartArray("midpoints");
+                foreach (var point in deformer.Midpoints)
+                    WriteVectorValue(writer, point);
+                writer.WriteEndArray();
+                writer.WriteStartArray("deformerFrame");
+                WriteMatrix(writer, deformer.DeformerFrame);
+                writer.WriteEndArray();
+                writer.WriteStartArray("volumeFrame");
+                WriteMatrix(writer, deformer.VolumeFrame);
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("deformer");
+            }
             writer.WriteEndObject();
         }
         writer.WriteEndArray();
@@ -206,6 +230,16 @@ internal static unsafe class NativeApi
     private static void WriteVector(Utf8JsonWriter writer, string name, System.Numerics.Vector3 vector)
     {
         writer.WriteStartArray(name);
+        writer.WriteNumberValue(vector.X);
+        writer.WriteNumberValue(vector.Y);
+        writer.WriteNumberValue(vector.Z);
+        writer.WriteEndArray();
+    }
+
+    /// <summary>Writes a bare <c>[x, y, z]</c> array, for a vector nested inside an array-of-vectors.</summary>
+    private static void WriteVectorValue(Utf8JsonWriter writer, System.Numerics.Vector3 vector)
+    {
+        writer.WriteStartArray();
         writer.WriteNumberValue(vector.X);
         writer.WriteNumberValue(vector.Y);
         writer.WriteNumberValue(vector.Z);
