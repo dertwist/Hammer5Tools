@@ -1,6 +1,7 @@
 """
 Icon caching system for better performance
 """
+import os
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QFont
 from PySide6.QtCore import Qt
 from typing import Dict, Tuple
@@ -28,17 +29,8 @@ class IconCache:
         """Get cached icon for modifiers from modeldoc_editor icons."""
         cache_key = "node_modifier"
         if cache_key not in cls._cache:
-            import os
-            path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "..",
-                    "icons",
-                    "tools",
-                    "modeldoc_editor",
-                    "outliner_icon_model_modifier_decaluv.png",
-                )
-            )
+            from gui.common import gui_assets_dir
+            path = gui_assets_dir("icons", "tools", "modeldoc_editor", "outliner_icon_model_modifier_decaluv.png")
             if os.path.exists(path):
                 cls._cache[cache_key] = QIcon(path)
             else:
@@ -50,17 +42,8 @@ class IconCache:
         """Get cached icon for selection criteria from modeldoc_editor icons."""
         cache_key = "node_selection_criteria"
         if cache_key not in cls._cache:
-            import os
-            path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "..",
-                    "icons",
-                    "tools",
-                    "modeldoc_editor",
-                    "outliner_icon_lod_group_list.png",
-                )
-            )
+            from gui.common import gui_assets_dir
+            path = gui_assets_dir("icons", "tools", "modeldoc_editor", "outliner_icon_lod_group_list.png")
             if os.path.exists(path):
                 cls._cache[cache_key] = QIcon(path)
             else:
@@ -72,17 +55,8 @@ class IconCache:
         """Get cached icon for notes from modeldoc_editor icons."""
         cache_key = "node_note"
         if cache_key not in cls._cache:
-            import os
-            path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "..",
-                    "icons",
-                    "tools",
-                    "modeldoc_editor",
-                    "outliner_node_note.png",
-                )
-            )
+            from gui.common import gui_assets_dir
+            path = gui_assets_dir("icons", "tools", "modeldoc_editor", "outliner_node_note.png")
             if os.path.exists(path):
                 cls._cache[cache_key] = QIcon(path)
             else:
@@ -94,17 +68,8 @@ class IconCache:
         """Get cached icon for add note action."""
         cache_key = "action_add_note"
         if cache_key not in cls._cache:
-            import os
-            path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "..",
-                    "icons",
-                    "tools",
-                    "modeldoc_editor",
-                    "add_note.png",
-                )
-            )
+            from gui.common import gui_assets_dir
+            path = gui_assets_dir("icons", "tools", "modeldoc_editor", "add_note.png")
             if os.path.exists(path):
                 cls._cache[cache_key] = QIcon(path)
             else:

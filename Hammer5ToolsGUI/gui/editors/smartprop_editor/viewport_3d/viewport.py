@@ -30,8 +30,8 @@ def _hammer_tool_icon_path(name):
 
 def _modeldoc_tool_icon_path(name):
     """Absolute path to a ModelDoc manipulation icon."""
-    src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-    return os.path.join(src_dir, "icons", "tools", "modeldoc_editor", name)
+    from gui.common import gui_assets_dir
+    return gui_assets_dir("icons", "tools", "modeldoc_editor", name)
 
 
 # Toggle-button styling for the compact icon toggles in the viewport toolbar.

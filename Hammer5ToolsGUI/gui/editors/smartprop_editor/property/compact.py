@@ -20,11 +20,8 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QSizePolicy, QLayout
 
-# src/icons (compact.py lives at src/editors/smartprop_editor/property/).
-_ICON_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-    "icons",
-)
+from gui.common import gui_assets_dir
+_ICON_DIR = gui_assets_dir("icons")
 
 
 _VALVE_ICON_MAP = {

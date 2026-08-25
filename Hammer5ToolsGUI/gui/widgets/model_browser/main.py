@@ -275,14 +275,13 @@ _SOURCE_QCOLOR = {
 
 
 def _get_asset_icon(asset_type: str = "vmdl", grayscaled: bool = False) -> Optional[QPixmap]:
-    import os
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from gui.common import gui_assets_dir
     icon_name = ASSET_LG_ICONS.get(asset_type.lower(), "model_lg.png")
-    icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", icon_name)
+    icon_path = gui_assets_dir("icons", "tools", "assettypes", icon_name)
     pixmap = QPixmap(icon_path)
     if pixmap.isNull():
         # Fallback to model_lg.png
-        icon_path = os.path.join(base_dir, "icons", "tools", "assettypes", "model_lg.png")
+        icon_path = gui_assets_dir("icons", "tools", "assettypes", "model_lg.png")
         pixmap = QPixmap(icon_path)
         if pixmap.isNull():
             return None

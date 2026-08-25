@@ -1,6 +1,4 @@
-import os
 import sys
-from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
 from core.runtime_paths import resolve_runtime_paths
 
@@ -18,36 +16,34 @@ def get_smartprop_icon_path():
     if getattr(sys, 'frozen', False):
         paths = resolve_runtime_paths()
         candidates = [
+            paths.runtime_resource("gui", "assets", "icons", "app", "smartprop.ico"),
             paths.application_resource("icons", "smartprop.ico"),
             paths.runtime_resource("icons", "smartprop.ico"),
-            paths.runtime_resource("src", "icons", "smartprop.ico"),
-            paths.runtime_resource("defaults", "icons", "smartprop.ico"),
         ]
         for c in candidates:
             if c.exists():
                 return str(c)
-    
+
     # Development fallback
-    dev_path = Path(__file__).parent.parent / "icons" / "smartprop.ico"
-    return str(dev_path)
+    from gui.common import gui_assets_dir
+    return gui_assets_dir("icons", "app", "smartprop.ico")
 
 def get_vsnd_icon_path():
     """Returns the absolute path to vsnd.ico."""
     if getattr(sys, 'frozen', False):
         paths = resolve_runtime_paths()
         candidates = [
+            paths.runtime_resource("gui", "assets", "icons", "app", "vsnd.ico"),
             paths.application_resource("icons", "vsnd.ico"),
             paths.runtime_resource("icons", "vsnd.ico"),
-            paths.runtime_resource("src", "icons", "vsnd.ico"),
-            paths.runtime_resource("defaults", "icons", "vsnd.ico"),
         ]
         for c in candidates:
             if c.exists():
                 return str(c)
-    
+
     # Development fallback
-    dev_path = Path(__file__).parent.parent / "icons" / "vsnd.ico"
-    return str(dev_path)
+    from gui.common import gui_assets_dir
+    return gui_assets_dir("icons", "app", "vsnd.ico")
 
 def check_association(extension):
     """

@@ -23,10 +23,9 @@ from .material_converter import (
 )
 
 # material_remap_arrow.png is not in resources.qrc, so it is loaded from disk —
-# same approach as src/widgets/model_browser/main.py. Resolves to src/icons/...
-_SRC_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_REMAP_ICON = os.path.join(_SRC_DIR, "icons", "tools", "modeldoc_editor",
-                           "material_remap_arrow.png")
+# same approach as gui/widgets/model_browser/main.py.
+from gui.common import gui_assets_dir
+_REMAP_ICON = gui_assets_dir("icons", "tools", "modeldoc_editor", "material_remap_arrow.png")
 
 from .shader_schemas import SHADERS
 

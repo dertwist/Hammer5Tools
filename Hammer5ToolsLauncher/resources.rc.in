@@ -1,7 +1,7 @@
 IDI_ICON1 ICON "../Hammer5ToolsGUI/gui/appicon.ico"
-IDI_ICON2 ICON "../Hammer5ToolsGUI/gui/icons/smartprop.ico"
-IDI_ICON3 ICON "../Hammer5ToolsGUI/gui/icons/tools/vconsole/appicon.ico"
-IDI_ICON4 ICON "../Hammer5ToolsGUI/gui/icons/tools/appicon_tools.ico"
+IDI_ICON2 ICON "../Hammer5ToolsGUI/gui/assets/icons/app/smartprop.ico"
+IDI_ICON3 ICON "../Hammer5ToolsGUI/gui/assets/icons/tools/vconsole/appicon.ico"
+IDI_ICON4 ICON "../Hammer5ToolsGUI/gui/assets/icons/tools/appicon_tools.ico"
 
 1 VERSIONINFO
 FILEVERSION @H5T_VERSION_COMMAS@,0

@@ -13,6 +13,14 @@ import ctypes
 from typing import Dict, List, Optional, Set
 import re
 
+GUI_ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+
+
+def gui_assets_dir(*parts: str) -> str:
+    """Absolute path into gui/assets, for on-disk icon/image lookups outside the Qt resource system."""
+    return os.path.join(GUI_ASSETS_DIR, *parts)
+
+
 def generate_unique_name(base_name: str, existing_names: Set[str], separator: str = "_") -> str:
     """
     Generates a unique name by appending or incrementing a numeric suffix (_01, _02, etc.).

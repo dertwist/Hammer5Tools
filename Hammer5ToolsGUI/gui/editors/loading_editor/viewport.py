@@ -46,7 +46,8 @@ def ensure_cs2_fonts_loaded():
     global _fonts_loaded
     if _fonts_loaded:
         return
-    fonts_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "assets", "fonts"))
+    from gui.common import gui_assets_dir
+    fonts_dir = gui_assets_dir("fonts")
     if os.path.exists(fonts_dir):
         for f in _CS2_FONT_FILES:
             font_path = os.path.join(fonts_dir, f)
@@ -294,7 +295,8 @@ def compose_loading_screen_image(
 
     mode_icon_path = os.path.join(assets_dir, "cs2_icon.png")
     if not os.path.exists(mode_icon_path):
-        mode_icon_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "icons", "cs2_icon.jpg"))
+        from gui.common import gui_assets_dir
+        mode_icon_path = gui_assets_dir("icons", "app", "cs2_icon.jpg")
     badge_rect = QRect(gm_start_x, gm_y, badge_size, int(29 * scale))
     if os.path.exists(mode_icon_path):
         mode_pix = QPixmap(mode_icon_path)
@@ -818,9 +820,8 @@ class SectionHeader(QWidget):
             self.folder_button = QToolButton(self)
             icon = QIcon(":/valve_common/icons/tools/common/folder_sm.png")
             if icon.isNull():
-                icon_path = os.path.abspath(
-                    os.path.join(os.path.dirname(__file__), "..", "..", "icons", "tools", "common", "folder_sm.png")
-                )
+                from gui.common import gui_assets_dir
+                icon_path = gui_assets_dir("icons", "tools", "common", "folder_sm.png")
                 if os.path.exists(icon_path):
                     icon = QIcon(icon_path)
             self.folder_button.setIcon(icon)

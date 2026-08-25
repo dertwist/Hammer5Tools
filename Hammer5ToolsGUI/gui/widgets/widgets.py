@@ -703,22 +703,10 @@ def make_composite_icon(base_icon, item_data, overlay_path=None, size: int = 18)
     if is_expression:
         import os
         if overlay_path is None or not os.path.exists(str(overlay_path)):
-            default_overlay = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "..", "icons", "tools", "pet", "func_constraint.png")
-            )
+            from gui.common import gui_assets_dir
+            default_overlay = gui_assets_dir("icons", "tools", "pet", "func_constraint.png")
             if os.path.exists(default_overlay):
                 overlay_path = default_overlay
-            else:
-                try:
-                    from gui.common import app_dir
-                    cand1 = os.path.normpath(os.path.join(app_dir, "src", "icons", "tools", "pet", "func_constraint.png"))
-                    cand2 = os.path.normpath(os.path.join(app_dir, "icons", "tools", "pet", "func_constraint.png"))
-                    if os.path.exists(cand1):
-                        overlay_path = cand1
-                    elif os.path.exists(cand2):
-                        overlay_path = cand2
-                except Exception:
-                    pass
 
         if overlay_path and os.path.exists(str(overlay_path)):
             overlay_pm = QPixmap(str(overlay_path))

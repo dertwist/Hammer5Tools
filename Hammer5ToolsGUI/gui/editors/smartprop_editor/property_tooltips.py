@@ -606,16 +606,11 @@ def resolve_image_path(path_str: str | None) -> str | None:
     if os.path.isabs(path_str) and os.path.exists(path_str):
         return path_str
 
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets"))
-    candidate1 = os.path.normpath(os.path.join(base_dir, path_str))
-    if os.path.exists(candidate1):
-        return candidate1
-
     try:
-        from gui.common import app_dir
-        cand3 = os.path.normpath(os.path.join(app_dir, path_str))
-        if os.path.exists(cand3):
-            return cand3
+        from gui.common import gui_assets_dir
+        candidate1 = os.path.normpath(os.path.join(gui_assets_dir(), path_str))
+        if os.path.exists(candidate1):
+            return candidate1
     except Exception:
         pass
 
