@@ -6,11 +6,15 @@ Kept free of Qt, numpy and .NET imports so the settings dialog can offer a
 
 Two things are cached:
 
-    model_index.json   the flattened asset index (see index.py)
-    thumbs/            one PNG per model per tile size (see thumbnails.py)
+    model_index.json               the flattened asset index (see index.py)
+    tools_thumbnail_cache.sqlite3  one row per model per tile size (see thumbnails.py)
 
 Both are pure derived data — deleting them costs nothing but the time to rebuild.
 Geometry is read directly from compiled assets without glTF/GLB decompilation.
+
+``thumbs/`` is a legacy PNG-per-thumbnail directory from before the sqlite
+cache; it is only kept in ``cache_targets()`` so an old install's leftover
+files get swept up the next time the cache is cleared.
 """
 import os
 import shutil
@@ -53,12 +57,17 @@ def legacy_index_file() -> str:
 
 
 def thumbnail_dir() -> str:
+    """Legacy PNG-per-thumbnail directory, kept only for cleanup. See module docstring."""
     return os.path.join(cache_root(), "thumbs")
+
+
+def thumbnail_db_path() -> str:
+    return os.path.join(cache_root(), "tools_thumbnail_cache.sqlite3")
 
 
 def cache_targets() -> List[str]:
     """Every path clear_cache() would remove, whether or not it exists."""
-    return [index_file(), legacy_index_file(), thumbnail_dir()]
+    return [index_file(), legacy_index_file(), thumbnail_db_path(), thumbnail_dir()]
 
 
 def cache_size() -> Tuple[int, int]:

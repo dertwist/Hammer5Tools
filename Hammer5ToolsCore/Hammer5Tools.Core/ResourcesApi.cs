@@ -4,10 +4,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-
-using Hammer5Tools.Core.IO.Vpk;
-using Hammer5Tools.Core.IO.CompiledResource;
 using Hammer5Tools.Core.Format.Resources;
+using Hammer5Tools.Core.IO.CompiledResource;
+using Hammer5Tools.Core.IO.Vpk;
 
 namespace Hammer5Tools.Core;
 
@@ -15,6 +14,11 @@ namespace Hammer5Tools.Core;
 internal static unsafe class ResourcesApi
 {
     private static readonly ConcurrentDictionary<long, VpkIndex> VpkHandles = new();
+    // VRF keeps mutable current-file state, so one lazy reader belongs to the active addon
+    // and all of its resource reads remain serialized until the addon changes.
+    private static readonly Lock ModelReaderLock = new();
+    private static ModelReaderKey? currentModelReaderKey;
+    private static CompiledModelReader? currentModelReader;
     private static long NextVpkHandle;
 
     [UnmanagedCallersOnly(EntryPoint = "h5t_vpk_open", CallConvs = [typeof(CallConvCdecl)])]
@@ -123,16 +127,17 @@ internal static unsafe class ResourcesApi
         NativeInterop.Invoke(output, outputLength, () =>
         {
             var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
-            var reader = new CompiledModelReader(
-                root.GetProperty("gameDirectory").GetString()!,
-                root.GetProperty("activeAddon").GetString()!);
-            var result = reader.Read(
-                root.GetProperty("resourcePath").GetString()!,
-                GetOptionalString(root, "contextAddon"),
-                GetInt32(root, "maximumTextureDimension", 1024),
-                GetBoolean(root, "baseColorOnly", false),
-                GetInt32(root, "skin", 0));
-            return WriteCompiledModelResult(result);
+            lock (ModelReaderLock)
+            {
+                var reader = GetModelReader(root);
+                var result = reader.Read(
+                    root.GetProperty("resourcePath").GetString()!,
+                    GetOptionalString(root, "contextAddon"),
+                    GetInt32(root, "maximumTextureDimension", 1024),
+                    GetBoolean(root, "baseColorOnly", false),
+                    GetInt32(root, "skin", 0));
+                return WriteCompiledModelResult(result);
+            }
         });
 
     /// <summary>Request: {gameDirectory, activeAddon, resourcePath, contextAddon?}.</summary>
@@ -141,22 +146,23 @@ internal static unsafe class ResourcesApi
         NativeInterop.Invoke(output, outputLength, () =>
         {
             var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
-            var reader = new CompiledModelReader(
-                root.GetProperty("gameDirectory").GetString()!,
-                root.GetProperty("activeAddon").GetString()!);
-            var result = reader.ReadMaterialGroups(
-                root.GetProperty("resourcePath").GetString()!,
-                GetOptionalString(root, "contextAddon"));
+            lock (ModelReaderLock)
+            {
+                var reader = GetModelReader(root);
+                var result = reader.ReadMaterialGroups(
+                    root.GetProperty("resourcePath").GetString()!,
+                    GetOptionalString(root, "contextAddon"));
 
-            var buffer = new ArrayBufferWriter<byte>();
-            using var writer = new Utf8JsonWriter(buffer);
-            writer.WriteStartArray();
-            if (result.IsSuccess)
-                foreach (var group in result.Value!)
-                    writer.WriteStringValue(group);
-            writer.WriteEndArray();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
+                var buffer = new ArrayBufferWriter<byte>();
+                using var writer = new Utf8JsonWriter(buffer);
+                writer.WriteStartArray();
+                if (result.IsSuccess)
+                    foreach (var group in result.Value!)
+                        writer.WriteStringValue(group);
+                writer.WriteEndArray();
+                writer.Flush();
+                return buffer.WrittenSpan.ToArray();
+            }
         });
 
     /// <summary>Request: {vpkPath, resourcePath, soundEvents?}. Mounts a scratch VpkIndex for one read.</summary>
@@ -197,6 +203,22 @@ internal static unsafe class ResourcesApi
         VpkHandles.TryGetValue(handle, out var index)
             ? index
             : throw new ArgumentException($"Invalid VPK handle {handle}.");
+
+    private static CompiledModelReader GetModelReader(JsonElement root)
+    {
+        var gameDirectory = Path.TrimEndingDirectorySeparator(
+            Path.GetFullPath(root.GetProperty("gameDirectory").GetString()!));
+        var activeAddon = root.GetProperty("activeAddon").GetString()!;
+        var key = new ModelReaderKey(gameDirectory.ToUpperInvariant(), activeAddon.ToUpperInvariant());
+        if (currentModelReaderKey == key)
+            return currentModelReader!;
+
+        var replacement = new CompiledModelReader(gameDirectory, activeAddon);
+        currentModelReader?.Dispose();
+        currentModelReaderKey = key;
+        currentModelReader = replacement;
+        return currentModelReader;
+    }
 
     private static byte[] WriteCompiledModelResult(Hammer5Tools.Core.CoreResult<CompiledModel> result)
     {
@@ -350,4 +372,6 @@ internal static unsafe class ResourcesApi
 
     private static bool GetBoolean(JsonElement root, string propertyName, bool defaultValue) =>
         root.TryGetProperty(propertyName, out var property) ? property.GetBoolean() : defaultValue;
+
+    private readonly record struct ModelReaderKey(string GameDirectory, string ActiveAddon);
 }

@@ -13,7 +13,7 @@ namespace Hammer5Tools.Core.Format.Resources;
 
 /// <summary>Reads compiled Source 2 viewport resources through ValveResourceFormat.</summary>
 [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Public resource operations return structured diagnostics for parser and filesystem failures.")]
-public sealed partial class CompiledModelReader(string gameDirectory, string activeAddon) : ICompiledModelReader
+public sealed partial class CompiledModelReader(string gameDirectory, string activeAddon) : ICompiledModelReader, IDisposable
 {
     private static readonly string[] BaseTextures = ["g_tColor", "g_tColor1", "g_tColor2", "g_tColor3", "g_tColor0", "g_tColorA"];
     private static readonly string[] NormalTextures = ["g_tNormal", "g_tNormal1", "g_tNormal2", "g_tNormal3", "g_tNormal0", "g_tNormalA"];
@@ -25,6 +25,18 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         "", null, null, null, null, null, Vector4.One, 1, 1, Vector3.Zero,
         "OPAQUE", 0.5f, false, 0, 0, 0, Vector2.One, Vector2.Zero,
         new Vector2(0.5f), 0);
+    private readonly Lock loaderLock = new();
+    private readonly Dictionary<LoaderKey, GameFileLoader> loaders = [];
+    private bool disposed;
+
+    internal int LoaderCount
+    {
+        get
+        {
+            lock (loaderLock)
+                return loaders.Count;
+        }
+    }
 
     /// <inheritdoc/>
     public CoreResult<CompiledModel> Read(
@@ -38,29 +50,32 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
-            using var loader = CreateLoader(addon, relativePath);
-            using var resource = loader.LoadFileCompiled(relativePath);
-            if (resource?.DataBlock is not Model model)
-                return CoreResult.Failure<CompiledModel>("compiled_model_missing", $"Could not read '{relativePath}'.");
+            lock (loaderLock)
+            {
+                var loader = GetLoader(addon, relativePath);
+                using var resource = loader.LoadFileCompiled(relativePath);
+                if (resource?.DataBlock is not Model model)
+                    return CoreResult.Failure<CompiledModel>("compiled_model_missing", $"Could not read '{relativePath}'.");
 
-            var skinMap = ReadSkinMap(model, skin);
-            var vertices = new List<float>();
-            var normals = new List<float>();
-            var uvs = new List<float>();
-            var indices = new List<uint>();
-            var subMeshes = new List<CompiledSubMesh>();
-            var materialCache = new Dictionary<string, CompiledMaterial>(StringComparer.Ordinal);
-            foreach (var mesh in ReadMeshes(loader, model))
-                AppendMesh(loader, mesh, skinMap, vertices, normals, uvs, indices, subMeshes,
-                    materialCache, maximumTextureDimension, baseColorOnly);
+                var skinMap = ReadSkinMap(model, skin);
+                var vertices = new List<float>();
+                var normals = new List<float>();
+                var uvs = new List<float>();
+                var indices = new List<uint>();
+                var subMeshes = new List<CompiledSubMesh>();
+                var materialCache = new Dictionary<string, CompiledMaterial>(StringComparer.Ordinal);
+                foreach (var mesh in ReadMeshes(loader, model))
+                    AppendMesh(loader, mesh, skinMap, vertices, normals, uvs, indices, subMeshes,
+                        materialCache, maximumTextureDimension, baseColorOnly);
 
-            if (vertices.Count == 0 || indices.Count == 0)
-                return CoreResult.Failure<CompiledModel>("compiled_model_empty", $"'{relativePath}' has no LoD0 geometry.");
+                if (vertices.Count == 0 || indices.Count == 0)
+                    return CoreResult.Failure<CompiledModel>("compiled_model_empty", $"'{relativePath}' has no LoD0 geometry.");
 
-            var (minimum, maximum) = Bounds(vertices);
-            return CoreResult.Success(new CompiledModel(
-                [.. vertices], [.. normals], [.. uvs], [.. indices], minimum, maximum,
-                [.. subMeshes], []));
+                var (minimum, maximum) = Bounds(vertices);
+                return CoreResult.Success(new CompiledModel(
+                    [.. vertices], [.. normals], [.. uvs], [.. indices], minimum, maximum,
+                    [.. subMeshes], []));
+            }
         }
         catch (Exception exception)
         {
@@ -76,13 +91,16 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
-            using var loader = CreateLoader(addon, relativePath);
-            using var resource = loader.LoadFileCompiled(relativePath);
-            if (resource?.DataBlock is not Model model)
-                return CoreResult.Failure<IReadOnlyList<string>>(
-                    "compiled_model_missing", $"Could not read '{relativePath}'.");
-            return CoreResult.Success<IReadOnlyList<string>>(
-                model.GetMaterialGroups().Select(group => group.Item1).ToArray());
+            lock (loaderLock)
+            {
+                var loader = GetLoader(addon, relativePath);
+                using var resource = loader.LoadFileCompiled(relativePath);
+                if (resource?.DataBlock is not Model model)
+                    return CoreResult.Failure<IReadOnlyList<string>>(
+                        "compiled_model_missing", $"Could not read '{relativePath}'.");
+                return CoreResult.Success<IReadOnlyList<string>>(
+                    model.GetMaterialGroups().Select(group => group.Item1).ToArray());
+            }
         }
         catch (Exception exception)
         {
@@ -91,19 +109,40 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         }
     }
 
-    private GameFileLoader CreateLoader(string addon, string relativePath)
+    private GameFileLoader GetLoader(string addon, string relativePath)
     {
         var addonFolder = Path.Combine(gameDirectory, "csgo_addons", addon);
         var addonFile = Path.Combine(addonFolder, relativePath.Replace('/', Path.DirectorySeparatorChar) + "_c");
         var coreFile = Path.Combine(gameDirectory, "csgo", relativePath.Replace('/', Path.DirectorySeparatorChar) + "_c");
-        var loader = new GameFileLoader(null!, File.Exists(addonFile) ? addonFile : coreFile);
+        var useAddonFile = File.Exists(addonFile);
+        var key = new LoaderKey(addon.ToUpperInvariant(), useAddonFile);
+        ObjectDisposedException.ThrowIf(disposed, this);
+        if (loaders.TryGetValue(key, out var existing))
+            return existing;
+
+        var loader = new GameFileLoader(null!, useAddonFile ? addonFile : coreFile);
         if (Directory.Exists(addonFolder))
             loader.AddDiskPathToSearch(addonFolder);
         var activeFolder = Path.Combine(gameDirectory, "csgo_addons", activeAddon);
         if (!string.Equals(activeFolder, addonFolder, StringComparison.OrdinalIgnoreCase)
             && Directory.Exists(activeFolder))
             loader.AddDiskPathToSearch(activeFolder);
+        loaders.Add(key, loader);
         return loader;
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        lock (loaderLock)
+        {
+            if (disposed)
+                return;
+            foreach (var loader in loaders.Values)
+                loader.Dispose();
+            loaders.Clear();
+            disposed = true;
+        }
     }
 
     private static void AppendMesh(
@@ -416,4 +455,6 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
 
     [GeneratedRegex(@"/csgo/(.*)$", RegexOptions.IgnoreCase)]
     private static partial Regex CorePathRegex();
+
+    private readonly record struct LoaderKey(string Addon, bool UsesAddonFile);
 }

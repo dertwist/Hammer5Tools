@@ -10,8 +10,11 @@ stages:
 The render half must run on the thread that owns the GL context, and Qt only
 guarantees that for the GUI thread, so renders are drained one-per-tick from a
 queue instead of blocking the dialog while a few thousand models bake. Results
-are cached as PNGs keyed by resource path + size + source mtime, which makes
-every subsequent open of the browser instant.
+are cached as PNG blobs in a single sqlite3 database, keyed by resource path +
+size + source mtime, which makes every subsequent open of the browser instant.
+One file for potentially tens of thousands of thumbnails avoids the per-file
+open/close (and antivirus scan) cost that a PNG-per-model directory pays on
+every read and on cache clear.
 
 The shader here is deliberately *not* the viewport's PBR one: a 128px tile does
 not benefit from metallic-roughness, and a small self-contained program avoids
@@ -19,10 +22,13 @@ coupling thumbnails to the viewport's uniform layout.
 """
 import os
 import hashlib
+import sqlite3
+import time
+from contextlib import closing
 from typing import Optional, Dict
 
 import numpy as np
-from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, QTimer, Slot, Qt
+from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, QTimer, Slot, Qt, QByteArray, QBuffer, QIODevice
 from PySide6.QtGui import QImage, QPixmap, QOffscreenSurface, QSurfaceFormat
 from PySide6.QtOpenGL import QOpenGLFramebufferObject, QOpenGLFramebufferObjectFormat
 
@@ -61,6 +67,8 @@ uniform sampler2D u_base_tex;
 uniform bool u_has_base_tex;
 uniform vec4 u_base_color;
 uniform vec3 u_view_dir;
+uniform int u_alpha_mode;      // 0 = OPAQUE, 1 = MASK, 2 = BLEND
+uniform float u_alpha_cutoff;
 
 out vec4 frag_color;
 
@@ -100,7 +108,13 @@ void main() {
         base.rgb *= SrgbGammaToLinear(tex.rgb);
         base.a *= tex.a;
     }
-    if (base.a < 0.35) {
+    // Base-color textures routinely pack unrelated data (spec/translucency
+    // masks) into alpha when the material itself is OPAQUE, so only MASK
+    // materials are alpha-tested — matching the SmartProp Editor viewport
+    // shader (glsl/model.frag). Discarding on OPAQUE's alpha here made most
+    // real (textured) models render as empty tiles once real base-color
+    // alpha data started loading.
+    if (u_alpha_mode == 1 && base.a < u_alpha_cutoff) {
         discard;
     }
 
@@ -138,6 +152,10 @@ THUMB_SIZE = 128
 #: for models that ship 4K albedos.
 THUMB_TEXTURE_DIM = 512
 
+#: Mirrors SmartProp3DRenderArea._ALPHA_MODE_CODE (render_area.py) — kept as its
+#: own copy since this module renders with an intentionally separate shader.
+_ALPHA_MODE_CODE = {"OPAQUE": 0, "MASK": 1, "BLEND": 2}
+
 
 def _worker_thread_count() -> int:
     """Loader threads — every core the machine has.
@@ -153,28 +171,60 @@ def _worker_thread_count() -> int:
         return 1
 
 
-def thumbnail_cache_path(resource_path: str, size: int) -> str:
-    """Disk location for one model's thumbnail at one resolution."""
-    from gui.widgets.model_browser.cache import thumbnail_dir
+_DB_SCHEMA = """
+CREATE TABLE IF NOT EXISTS thumbnails (
+    key TEXT PRIMARY KEY,
+    written_at REAL NOT NULL,
+    data BLOB NOT NULL
+)
+"""
+
+
+def _thumbnail_key(resource_path: str, size: int) -> str:
     digest = hashlib.sha1(resource_path.lower().encode("utf-8")).hexdigest()[:16]
-    return os.path.join(thumbnail_dir(), f"{digest}_{size}.png")
+    return f"{digest}_{size}"
 
 
-def _cached_thumbnail(entry, size: int) -> Optional[str]:
-    """Return a cached PNG that is still newer than its source, else None."""
-    png = thumbnail_cache_path(entry.path, size)
-    if not os.path.isfile(png):
+def _cached_thumbnail_bytes(entry, size: int) -> Optional[bytes]:
+    """Return cached PNG bytes that are still newer than the source, else None."""
+    from gui.widgets.model_browser.cache import thumbnail_db_path
+    key = _thumbnail_key(entry.path, size)
+    try:
+        with closing(sqlite3.connect(thumbnail_db_path(), timeout=5.0)) as conn:
+            row = conn.execute(
+                "SELECT written_at, data FROM thumbnails WHERE key = ?", (key,)
+            ).fetchone()
+    except sqlite3.Error:
         return None
+    if row is None:
+        return None
+    written_at, data = row
     # VPK-backed models have no cheap mtime to compare against; the pak only
     # changes on a game update, and a stale tile there is harmless.
     if entry.in_vpk:
-        return png
+        return data
     try:
-        if os.path.getmtime(png) > os.path.getmtime(entry.fs_path):
-            return png
+        if written_at > os.path.getmtime(entry.fs_path):
+            return data
     except OSError:
-        return png
+        return data
     return None
+
+
+def _store_thumbnail_bytes(resource_path: str, size: int, data: bytes):
+    from gui.widgets.model_browser.cache import thumbnail_db_path
+    path = thumbnail_db_path()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with closing(sqlite3.connect(path, timeout=5.0)) as conn:
+            conn.execute(_DB_SCHEMA)
+            conn.execute(
+                "INSERT OR REPLACE INTO thumbnails (key, written_at, data) VALUES (?, ?, ?)",
+                (_thumbnail_key(resource_path, size), time.time(), data),
+            )
+            conn.commit()
+    except sqlite3.Error:
+        pass
 
 
 class _MeshLoadSignals(QObject):
@@ -259,9 +309,10 @@ class ThumbnailService(QObject):
             self._memory.move_to_end(entry.path)
             return pixmap
 
-        png = _cached_thumbnail(entry, self.size)
-        if png:
-            pixmap = QPixmap(png)
+        data = _cached_thumbnail_bytes(entry, self.size)
+        if data:
+            pixmap = QPixmap()
+            pixmap.loadFromData(data, "PNG")
             if not pixmap.isNull():
                 self._store_memory_pixmap(entry.path, pixmap)
                 return pixmap
@@ -336,12 +387,12 @@ class ThumbnailService(QObject):
             pixmap = QPixmap.fromImage(image)
             self._store_memory_pixmap(resource_path, pixmap)
 
-            png = thumbnail_cache_path(resource_path, self.size)
-            try:
-                os.makedirs(os.path.dirname(png), exist_ok=True)
-                image.save(png, "PNG")
-            except Exception:
-                pass
+            buffer = QByteArray()
+            qbuf = QBuffer(buffer)
+            qbuf.open(QIODevice.WriteOnly)
+            image.save(qbuf, "PNG")
+            qbuf.close()
+            _store_thumbnail_bytes(resource_path, self.size, bytes(buffer))
 
             self.ready.emit(resource_path, pixmap)
 
@@ -444,12 +495,15 @@ class ThumbnailService(QObject):
             base_tex_loc = GL.glGetUniformLocation(self._program, "u_base_tex")
             has_tex_loc = GL.glGetUniformLocation(self._program, "u_has_base_tex")
             color_loc = GL.glGetUniformLocation(self._program, "u_base_color")
+            alpha_mode_loc = GL.glGetUniformLocation(self._program, "u_alpha_mode")
+            alpha_cutoff_loc = GL.glGetUniformLocation(self._program, "u_alpha_cutoff")
             GL.glUniform1i(base_tex_loc, 0)
 
             submeshes = mesh.submeshes or []
             if not submeshes:
                 GL.glUniform1i(has_tex_loc, 0)
                 GL.glUniform4f(color_loc, 0.72, 0.72, 0.72, 1.0)
+                GL.glUniform1i(alpha_mode_loc, 0)
                 GL.glDrawElements(GL.GL_TRIANGLES, len(indices), GL.GL_UNSIGNED_INT, None)
             else:
                 for submesh in submeshes:
@@ -469,6 +523,8 @@ class ThumbnailService(QObject):
 
                     factor = getattr(material, "base_color_factor", (1.0, 1.0, 1.0, 1.0))
                     GL.glUniform4f(color_loc, *[float(c) for c in factor])
+                    GL.glUniform1i(alpha_mode_loc, _ALPHA_MODE_CODE.get(getattr(material, "alpha_mode", "OPAQUE"), 0))
+                    GL.glUniform1f(alpha_cutoff_loc, float(getattr(material, "alpha_cutoff", 0.5)))
                     GL.glDrawElements(
                         GL.GL_TRIANGLES, submesh.index_count, GL.GL_UNSIGNED_INT,
                         GL.ctypes.c_void_p(submesh.index_offset * 4))
