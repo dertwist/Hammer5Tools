@@ -33,6 +33,21 @@
             ]
         },
         {
+            "name": "build-core",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/makefile.py",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            },
+            "args": [
+                "--build-libs"
+            ]
+        },
+        {
             "name": "compile_ui",
             "type": "debugpy",
             "request": "launch",
