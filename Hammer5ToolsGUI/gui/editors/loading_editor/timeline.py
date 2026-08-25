@@ -29,7 +29,6 @@ from PySide6.QtWidgets import (
     QProgressDialog,
     QFileDialog
 )
-from gui.settings.main import debug
 
 # 500ms per frame (matches the historical GIF export cadence)
 ANIMATION_FPS = 2
@@ -68,7 +67,7 @@ def render_animation(image_paths: List[str], output_dir: str, base_name: str,
                 max_width = max(max_width, img.width)
                 max_height = max(max_height, img.height)
         except Exception as e:
-            debug(f"Error checking image size {image_path}: {e}")
+            pass
 
     if max_width == 0 or max_height == 0:
         raise ValueError("No valid images found")
@@ -90,7 +89,7 @@ def render_animation(image_paths: List[str], output_dir: str, base_name: str,
 
             frames.append(img)
         except Exception as e:
-            debug(f"Error loading image {image_path}: {e}")
+            pass
         if progress_callback:
             progress_callback(int((i + 1) / total * 90))  # 90% for loading images
 
@@ -393,7 +392,6 @@ class TimelineTreeWidget(QTreeWidget):
         self.thumbnail_cache.clear()
         
         if not os.path.exists(history_path):
-            debug(f"History path does not exist: {history_path}")
             return
         
         # Group images by camera name
@@ -410,7 +408,6 @@ class TimelineTreeWidget(QTreeWidget):
                 try:
                     timestamp = datetime.strptime(timestamp_folder, "%Y-%m-%d_%H-%M-%S")
                 except ValueError:
-                    debug(f"Invalid timestamp folder format: {timestamp_folder}")
                     continue
                 
                 # Find images in this timestamp folder
@@ -423,7 +420,6 @@ class TimelineTreeWidget(QTreeWidget):
                             camera_data[camera_name].append((timestamp, image_path))
         
         except Exception as e:
-            debug(f"Error loading timeline data: {e}")
             return
         
         # Create tree structure
@@ -454,7 +450,6 @@ class TimelineTreeWidget(QTreeWidget):
                 
                 self.schedule_thumbnail_load(image_item, image_path)
         
-        debug(f"Loaded timeline data: {len(camera_data)} cameras")
 
     def extract_camera_name(self, filename: str) -> str:
         """Extract camera name from filename, treating different numbered cameras as separate"""
@@ -529,7 +524,7 @@ class ThumbnailWorker(QRunnable):
                 icon = QIcon(thumbnail)
                 self.signals.result.emit(self.image_path, icon, self.item)
         except Exception as e:
-            debug(f"Error generating thumbnail for {self.image_path}: {e}")
+            pass
 
 class TimelineExplorer(QMainWindow):
     """Timeline explorer widget for viewing image sequences"""
@@ -645,9 +640,8 @@ class TimelineExplorer(QMainWindow):
             try:
                 output_path = render_animation(image_paths, output_dir, camera_name,
                                                  fmt=self.export_format, quality=self.export_quality)
-                debug(f"Exported animation: {output_path}")
             except Exception as e:
-                debug(f"Error exporting {camera_name}: {e}")
+                pass
 
             exported_count += 1
             progress_dialog.setValue(exported_count)

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon, QDropEvent
 
-from gui.settings.main import get_addon_dir, debug
+from gui.settings.main import get_addon_dir
 from gui.editors.assetgroup_maker.analyzer import analyze_reference_file, ReferenceAnalysisResult
 from gui.styles.common import (
     qt_stylesheet_button, qt_stylesheet_lineedit, qt_stylesheet_combobox, apply_stylesheets

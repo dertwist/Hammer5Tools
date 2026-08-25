@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 
 from gui.editors.smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from gui.common import editor_info, JsonToKv3, Kv3ToJson
-from gui.settings.main import debug, get_settings_bool
+from gui.settings.main import get_settings_bool
 from gui.editors.smartprop_editor._common import (
     disable_line_value_length_limit_keys,
     get_clean_class_name,
@@ -257,7 +257,6 @@ class VsmartOpen:
             data = CoreBridge.instance().deserialize_smartprop(data)
         except Exception:
             data = Kv3ToJson(data)
-        debug(f"Loaded data:\n{data}")
         restore_reference_objects(data)
         self.variables = data.get("m_Variables", None)
         # Clear previous tree data.
@@ -271,7 +270,6 @@ class VsmartOpen:
                 self.next_element_id = self.next_element_id.get("m_nElementID", None)
                 if self.next_element_id:
                     self.element_id_generator.add_id(self.next_element_id)
-                    debug(f"Last ElementID from file: {self.next_element_id}")
         self.raw_choices = data.get("m_Choices", None)
         self.populate_tree(data)
         if self.variables_scrollArea is None:
@@ -307,7 +305,6 @@ class VsmartOpen:
             print("No choices")
             return False
         else:
-            debug(f"Choices: {data}")
             for choice in data:
                 name = (
                     choice.get("m_Name") or

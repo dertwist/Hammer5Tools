@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict, List, Optional, Tuple
-from gui.settings.main import get_addon_dir, debug
+from gui.settings.main import get_addon_dir
 
 
 class ReferenceAnalysisResult:
@@ -119,14 +119,12 @@ def analyze_reference_file(reference_rel_path: str, context_folder: Optional[str
     result = ReferenceAnalysisResult(reference_rel_path)
 
     if not full_path or not os.path.isfile(full_path):
-        debug(f"[Analyzer] Reference file does not exist: {full_path}")
         return result
 
     try:
         with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read()
     except Exception as e:
-        debug(f"[Analyzer] Failed to read reference file: {e}")
         return result
 
     result.raw_content = content

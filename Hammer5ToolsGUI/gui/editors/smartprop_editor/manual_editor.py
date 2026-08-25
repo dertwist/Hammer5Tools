@@ -25,7 +25,6 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, Signal, QRect, QSize, QStringListModel
 
 from gui.common import JsonToKv3, fast_deepcopy
-from gui.settings.main import debug
 
 
 # ── KV3 Syntax Highlighter ────────────────────────────────────────────────────

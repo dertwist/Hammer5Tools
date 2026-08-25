@@ -176,18 +176,12 @@ class PreferencesDialog(QDialog):
         row_git.addStretch()
         layout_other.addLayout(row_git)
 
-        row_debug = QHBoxLayout()
+        row_console = QHBoxLayout()
         self.btn_open_console = Button(text=" Open Console")
         self.btn_open_console.setToolTip("Open a console window for log output.")
-        row_debug.addWidget(self.btn_open_console)
-        self.checkBox_debug_info = QCheckBox("Enable Debug Info", self.frame_other)
-        self.checkBox_debug_info.setStyleSheet(qt_stylesheet_checkbox)
-        self.checkBox_debug_info.setToolTip(
-            "Print internal debug messages to the console (click Open Console above to see them)."
-        )
-        row_debug.addWidget(self.checkBox_debug_info)
-        row_debug.addStretch()
-        layout_other.addLayout(row_debug)
+        row_console.addWidget(self.btn_open_console)
+        row_console.addStretch()
+        layout_other.addLayout(row_console)
 
         layout.addWidget(self.frame_other)
         layout.addStretch()
@@ -401,7 +395,6 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
         self.checkBox_git_generate_commit_messages.setChecked(
             get_settings_bool('GitSync', 'generate_commit_messages', True))
-        self.checkBox_debug_info.setChecked(get_settings_bool('OTHER', 'debug_info', False))
         # Same default as get_channel(), so a dev build shows the box already ticked
         self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
         # The label describes the running build, not the channel being followed
@@ -484,9 +477,6 @@ class PreferencesDialog(QDialog):
         )
         self.checkBox_git_generate_commit_messages.toggled.connect(
             lambda checked: set_settings_bool('GitSync', 'generate_commit_messages', checked)
-        )
-        self.checkBox_debug_info.toggled.connect(
-            lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
         )
         self.btn_open_console.clicked.connect(self._open_console)
         self.spe_display_id_with_variable_class.toggled.connect(

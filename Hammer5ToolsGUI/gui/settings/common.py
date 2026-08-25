@@ -54,13 +54,6 @@ def default_settings():
 
 default_settings()
 
-def debug(value):
-    if settings.value("OTHER/debug_info", type=bool, defaultValue=False):
-        print(value)
-
-def debug_bool():
-    return settings.value("OTHER/debug_info", type=bool, defaultValue=False)
-
 def get_cs2_path():
     """Retrieves the CS2 installation path."""
     def cs2_exe_exists(path):

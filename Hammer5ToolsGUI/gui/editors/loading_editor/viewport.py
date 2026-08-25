@@ -27,7 +27,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtSvg import QSvgRenderer
-from gui.settings.main import debug
 import sys
 
 class NoWheelScrollArea(QScrollArea):
@@ -54,9 +53,9 @@ def ensure_cs2_fonts_loaded():
             if os.path.exists(font_path):
                 fid = QFontDatabase.addApplicationFont(font_path)
                 if fid >= 0:
-                    debug(f"Registered CS2 font: {f} -> {QFontDatabase.applicationFontFamilies(fid)}")
+                    pass
                 else:
-                    debug(f"Failed to register CS2 font: {f}")
+                    pass
     _fonts_loaded = True
 
 def is_generic_camera_name(name: str) -> bool:
@@ -167,7 +166,6 @@ def compose_loading_screen_image(
             offset_y = crop_rect.top() - exp_rect.top()
             blurred_sub = res.copy(offset_x, offset_y, crop_rect.width(), crop_rect.height())
         except Exception as e:
-            debug(f"Blur effect fallback: {e}")
             sub_crop = original_pixmap.copy(crop_rect)
             pass1 = sub_crop.scaled(max(1, sub_crop.width() // 4), max(1, sub_crop.height() // 4), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
             pass2 = pass1.scaled(max(1, pass1.width() // 2), max(1, pass1.height() // 2), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
@@ -541,7 +539,6 @@ class Viewport(QMainWindow):
             else:
                 self.set_placeholder_text()
         except Exception as e:
-            debug(f"Error loading images from directory '{directory}': {e}")
             self.set_placeholder_text()
 
     def showImage(self, image_path):
@@ -590,7 +587,6 @@ class Viewport(QMainWindow):
             else:
                 self.set_placeholder_text()
         except Exception as e:
-            debug(f"Error displaying image '{image_path}': {e}")
             self.set_placeholder_text()
 
     def updateWindowTitle(self, image_path):
@@ -637,7 +633,7 @@ class Viewport(QMainWindow):
                     self.zoom_level = 0.03
                 self.updateImageDisplay()
             except Exception as e:
-                debug(f"Error fitting image to window: {e}")
+                pass
 
     def updateImageDisplay(self, mouse_pos=None, save_position=True):
         """
@@ -659,7 +655,7 @@ class Viewport(QMainWindow):
                             try:
                                 data = self.preview_data_provider() or {}
                             except Exception as e:
-                                debug(f"Error retrieving loading screen preview data: {e}")
+                                pass
                         
                         camera_name = None
                         if data.get("show_camera_name", False):
@@ -705,7 +701,7 @@ class Viewport(QMainWindow):
                 if save_position:
                     self.saveCameraPosition()
         except Exception as e:
-            debug(f"Error updating image display: {e}")
+            pass
         finally:
             self._is_updating_display = False
 
@@ -761,7 +757,6 @@ class Viewport(QMainWindow):
             self.saved_zoom_level = self.zoom_level
             self.saved_h_scroll = self.scroll_area.horizontalScrollBar().value()
             self.saved_v_scroll = self.scroll_area.verticalScrollBar().value()
-            debug(f"Saved shared camera position - Zoom: {self.saved_zoom_level}, H: {self.saved_h_scroll}, V: {self.saved_v_scroll}")
     
     def restoreCameraPosition(self):
         """
@@ -780,7 +775,6 @@ class Viewport(QMainWindow):
             if self.saved_v_scroll is not None:
                 self.scroll_area.verticalScrollBar().setValue(self.saved_v_scroll)
                 
-            debug(f"Restored shared camera position - Zoom: {self.saved_zoom_level}, H: {self.saved_h_scroll}, V: {self.saved_v_scroll}")
 
 VALID_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
 
@@ -984,9 +978,8 @@ class ImageTreeView(QTreeView):
             try:
                 shutil.copy(source_file, destination_file)
                 copied_files.append(destination_file)
-                debug(f"Copied file {source_file} to {destination_file}")
             except Exception as e:
-                debug(f"Error copying file '{source_file}': {e}")
+                pass
         if copied_files:
             self.images_dropped.emit(copied_files)
             event.acceptProposedAction()
@@ -1085,9 +1078,8 @@ class ImageExplorer(QWidget):
                 os.remove(file_path)
                 model.remove(index)
                 self.image_viewer.set_placeholder_text()
-                debug(f"Removed image: {file_path}")
             except Exception as e:
-                debug(f"Error removing file '{file_path}': {e}")
+                pass
 
     def removeSelectedFolder(self, tree: "ImageTreeView", index):
         model = tree.file_model
@@ -1097,9 +1089,8 @@ class ImageExplorer(QWidget):
                 shutil.rmtree(folder_path)
                 model.remove(index)
                 self.image_viewer.set_placeholder_text()
-                debug(f"Removed folder: {folder_path}")
             except Exception as e:
-                debug(f"Error removing folder '{folder_path}': {e}")
+                pass
 
 from PySide6.QtWidgets import QStyledItemDelegate
 from PySide6.QtCore import QSize
@@ -1144,9 +1135,9 @@ class ThumbnailWorker(QRunnable):
                 icon = QIcon(thumbnail)
                 self.signals.result.emit(self.file_path, icon)
             else:
-                debug(f"Failed to generate thumbnail for: {self.file_path}")
+                pass
         except Exception as e:
-            debug(f"Error generating thumbnail for '{self.file_path}': {e}")
+            pass
 
 class QFileSystemModelWithThumbnails(QFileSystemModel):
     """
@@ -1165,7 +1156,6 @@ class QFileSystemModelWithThumbnails(QFileSystemModel):
             if not self.isDir(index):
                 if file_path not in self.watcher.files():
                     self.watcher.addPath(file_path)
-                    debug(f"Added watcher for file: {file_path}")
 
                 if file_path in self.thumbnail_cache:
                     return self.thumbnail_cache[file_path]
@@ -1182,7 +1172,6 @@ class QFileSystemModelWithThumbnails(QFileSystemModel):
         self.thumbnail_cache[file_path] = icon
         index = self.index(file_path)
         self.dataChanged.emit(index, index, [Qt.DecorationRole])
-        debug(f"Loaded thumbnail for: {file_path}")
 
     def on_file_changed(self, file_path):
         if file_path in self.thumbnail_cache:
@@ -1190,7 +1179,6 @@ class QFileSystemModelWithThumbnails(QFileSystemModel):
             self.load_thumbnail_async(file_path)
             index = self.index(file_path)
             self.dataChanged.emit(index, index, [Qt.DecorationRole])
-            debug(f"Updated thumbnail for changed file: {file_path}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

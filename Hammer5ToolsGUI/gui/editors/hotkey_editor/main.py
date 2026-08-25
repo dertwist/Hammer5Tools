@@ -4,7 +4,7 @@ from gui.editors.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushButton, QMessageBox
 from gui.editors.hotkey_editor.dialog import KeyDialog
 from gui.editors.hotkey_editor.objects import *
-from gui.settings.main import debug, get_addon_name, get_cs2_path
+from gui.settings.main import get_addon_name, get_cs2_path
 from gui.other.addon_functions import launch_addon, kill_addon
 from gui.widgets.explorer.main import Explorer
 import os
@@ -61,7 +61,7 @@ class KeyButton(QPushButton):
                 self.key = val
                 self.set_button_style(self.ACTIVE_COLOR)
         else:
-            debug((self.key))
+            pass
 class HotkeyEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -112,7 +112,6 @@ class HotkeyEditorMainWindow(QMainWindow):
             source = self.opened_file
 
         dest = os.path.join(path_keybindings, f'{self.editor}_key_bindings.txt')
-        debug(f'Source:{source}, dest: {dest}')
         shutil.copy2(source, dest)
         reply = QMessageBox.question(self, 'Confirmation', 'Would you like to restart the editor? Keybindings will be applied upon restart.', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
@@ -190,7 +189,6 @@ class HotkeyEditorMainWindow(QMainWindow):
 
             # Collect existing commands once per context
             existing_commands = existing_items.get(context, set())
-            debug(f'Hotkey Editor Existing commands: {existing_commands}')
 
             # Add new commands that are not in existing_commands
             for command in commands:
@@ -204,7 +202,6 @@ class HotkeyEditorMainWindow(QMainWindow):
 
     def open_preset(self):
         self.ui.keybindings_tree.clear()
-        debug(self.selected_preset)
 
 
         filename = self.explorer_instance.get_current_path()
@@ -248,7 +245,6 @@ class HotkeyEditorMainWindow(QMainWindow):
         kv3.write(output, path)
 
     def filter_input(self, filter_text, parent_item):
-        debug(('filter text', filter_text))
         # Reset the root visibility and start the filtering process
         self.filter_widget(parent_item, str(filter_text).lower(), True)
     def filter_command(self, filter_text, parent_item):
@@ -304,7 +300,6 @@ class HotkeyEditorMainWindow(QMainWindow):
             item_visible = filter_text in item_text
 
 
-        debug(('t', item_text, filter_text))
         # Always show the root, regardless of filter
         if is_root:
             item.setHidden(False)

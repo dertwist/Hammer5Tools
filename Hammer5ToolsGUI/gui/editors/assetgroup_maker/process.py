@@ -3,7 +3,7 @@ import re
 from typing import Dict, List, Optional, Set, Tuple, Any
 from PySide6.QtCore import QThread, Signal
 
-from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir, debug
+from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
 from gui.editors.assetgroup_maker.analyzer import (
     analyze_reference_file, resolve_reference_full_path, get_addon_root_from_path
@@ -31,7 +31,7 @@ class StartProcess(QThread):
             )
             self.finished.emit()
         except Exception as e:
-            debug(f"[StartProcess] Error: {e}")
+            pass
 
     def stop(self):
         self.stop_thread = True
@@ -380,7 +380,6 @@ def perform_batch_processing(
         try:
             os.makedirs(output_directory, exist_ok=True)
         except Exception as e:
-            debug(f"[Batch] Failed to create output directory {output_directory}: {e}")
             return []
 
     created_files: List[str] = []
@@ -403,14 +402,12 @@ def perform_batch_processing(
                     with open(ref_full, 'r', encoding='utf-8', errors='replace') as f:
                         tpl_content = f.read()
                 except Exception as e:
-                    debug(f"[Batch] Failed to load reference {ref_full}: {e}")
                     tpl_content = None
 
         if not tpl_content:
             tpl_content = DEFAULT_TEMPLATES.get(ext, "")
 
         if not tpl_content:
-            debug(f"[Batch] No template content available for template '{template_info.get('id')}' ({ext})")
             continue
 
         slots_def = analysis.slots if analysis else {}
@@ -458,7 +455,6 @@ def perform_batch_processing(
                     ref_norm = os.path.normpath(os.path.abspath(ref_full)).lower()
                     out_norm = os.path.normpath(os.path.abspath(output_file_path)).lower()
                     if ref_norm == out_norm:
-                        debug(f"[Batch] Skipping reference file from overwrite: {output_file_path}")
                         continue
                 except Exception:
                     pass
@@ -478,8 +474,7 @@ def perform_batch_processing(
                 with open(output_file_path, 'w', encoding='utf-8') as f:
                     f.write(rendered_data)
                 created_files.append(output_file_path)
-                debug(f"[Batch] Created file: {output_file_path}")
             except Exception as e:
-                debug(f"[Batch] Failed to write file {output_file_path}: {e}")
+                pass
 
     return created_files

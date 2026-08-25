@@ -1,7 +1,7 @@
 from gui.common import JsonToKv3, Kv3ToJson, fast_deepcopy
 import os, json
 from gui.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
-from gui.settings.main import get_addon_dir, debug
+from gui.settings.main import get_addon_dir
 from gui.editors.assetgroup_maker.process import perform_batch_processing
 
 # Optional dependencies for image processing
@@ -50,20 +50,17 @@ class QuickConfigFile:
         try:
             rel_path = os.path.relpath(self.filepath, get_addon_dir()).replace(os.path.sep, '/')
         except Exception as e:
-            debug(f"Error computing relative path: {e}")
             return
 
         try:
             with open(self.filepath, 'r') as file:
                 file_content = file.read()
         except Exception as e:
-            debug(f"Error reading file '{self.filepath}': {e}")
             return
 
         try:
             source_model = Kv3ToJson(file_content)
         except Exception as e:
-            debug(f"Error converting file content to JSON: {e}")
             return
 
         # Determine file paths based on the current file's directory.
@@ -96,7 +93,6 @@ class QuickConfigFile:
             elif not extracted_filename and not children:
                 raise ValueError("No children found in source model")
         except Exception as e:
-            debug(f"Error extracting filename from source model: {e}")
             return
 
         # Use original file content for the file content key if available,
@@ -133,11 +129,10 @@ class QuickConfigFile:
         try:
             with open(output_file, 'w') as file:
                 json.dump(new_config, file, indent=4)
-            debug(f"Created config file: {output_file}")
             from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher
             MonitoringFileWatcher.notify_new_file(output_file)
         except Exception as e:
-            debug(f"Error creating config file: {e}")
+            pass
 
 class QuickProcess:
     def __init__(self, parent=None, filepath=None):
@@ -154,7 +149,6 @@ class QuickProcess:
             replacements = data.get('replacements', {})
             content = data.get('file', {}).get('content', '')
             if not process:
-                debug(f"No process configuration found in {self._filepath}.")
                 return
             perform_batch_processing(
                 file_path=self._filepath,
@@ -163,9 +157,8 @@ class QuickProcess:
                 replacements=replacements,
                 content_template=content
             )
-            debug(f"Quick process completed for {self._filepath}")
         except Exception as e:
-            debug(f"QuickProcess error for {self._filepath}: {e}")
+            pass
 
 
 def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
@@ -176,10 +169,8 @@ def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
     """
     try:
         if Image is None or np is None:
-            debug("FixPBRRange: Pillow or NumPy not available. Install 'Pillow' and 'numpy'.")
             return False
         if not os.path.isfile(filepath):
-            debug(f"FixPBRRange: file not found: {filepath}")
             return False
 
         img = Image.open(filepath)
@@ -226,10 +217,8 @@ def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
         except Exception:
             pass
         out_img.save(filepath)
-        debug(f"FixPBRRange: clamped '{filepath}' to [{low}, {high}]")
         return True
     except Exception as e:
-        debug(f"FixPBRRange error for '{filepath}': {e}")
         return False
 
 
@@ -533,4 +522,3 @@ class QuickVsmart:
 
         with open(vsmart_path, 'w') as f:
             f.write(JsonToKv3(vsmart_content))
-        debug(f"Created Quick VSmart: {vsmart_path}")

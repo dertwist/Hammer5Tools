@@ -12,7 +12,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator
 from shiboken6 import isValid
 
-from gui.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, get_addon_dir, debug
+from gui.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, get_addon_dir
 from gui.widgets.common import ErrorInfo
 from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from gui.widgets.tree import BranchTreeView
@@ -135,7 +135,6 @@ class CustomFileSystemModel(QFileSystemModel):
             file_info = QFileInfo(old_path)
             file_dir = file_info.dir()
             extension = file_info.suffix()
-            debug(f'Renaming file value: {value}')
             new_name = value.replace('.' + extension, '') + ('.' + extension if extension else '')
             new_path = file_dir.absoluteFilePath(new_name)
             if QFile.exists(new_path):
@@ -506,7 +505,6 @@ class Explorer(QMainWindow):
             self.model.setRootPath(new_path)
             source_index = self.model.index(new_path)
             self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
-            debug(f"Explorer root changed to: {new_path}")
 
     def _apply_filter_debounced(self):
         if hasattr(self, 'filter_editline') and isValid(self.filter_editline):
@@ -716,7 +714,6 @@ class Explorer(QMainWindow):
                 if os.path.exists(norm_path):
                     target_path = norm_path
                 else:
-                    debug("select_tree_item: path does not exist - %s" % path)
                     return
             elif not target_path:
                 return
@@ -733,7 +730,6 @@ class Explorer(QMainWindow):
         self.add_recent_file(target_path)
         source_index = self.model.index(target_path)
         if not source_index.isValid():
-            debug("select_tree_item: invalid index for path - %s" % target_path)
             return
 
         proxy_index = self.filter_proxy_model.mapFromSource(source_index)
@@ -744,7 +740,6 @@ class Explorer(QMainWindow):
             proxy_index = self.filter_proxy_model.mapFromSource(source_index)
 
         if not proxy_index.isValid():
-            debug("select_tree_item: invalid proxy index for path - %s" % target_path)
             return
 
         # Ensure all parents are expanded
@@ -799,7 +794,6 @@ class Explorer(QMainWindow):
             self.play_audio_file(current_path)
 
     def play_audio_file(self, file_path):
-        debug(f"Playing {file_path}")
         if file_path.endswith(tuple(audio_extensions)):
             if self.use_internal_player:
                 self.play_sound.emit(file_path)
@@ -1163,7 +1157,6 @@ class Explorer(QMainWindow):
             return
 
         command = f"open_asset {asset_path}"
-        debug(f"[AssetGroupMaker] Sending CS2 command: {command}")
         if CS2Netcon is None or not CS2Netcon.send(command):
             QMessageBox.warning(
                 self,
@@ -1350,7 +1343,6 @@ class Explorer(QMainWindow):
             from gui.forms.asset_manager.move_worker import MoveWorker
             # Explorer uses self.rootpath as the addon content path
             self.worker = MoveWorker([(old_path, new_path)], self.rootpath)
-            self.worker.log.connect(lambda msg: debug(f"[Rename] {msg}"))
             self.worker.finished_move.connect(self.on_rename_finished)
 
             # Disable UI or show progress if needed, but for now just start
@@ -1575,7 +1567,7 @@ class Explorer(QMainWindow):
                         item.setIcon(QIcon("://icons/file_present_24dp.png"))
                 self._panel_list.addItem(item)
             except Exception as e:
-                debug(f"Skipping invalid panel path: {path} ({e})")
+                pass
 
     def _filter_panel_items(self, text):
         for i in range(self._panel_list.count()):

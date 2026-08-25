@@ -17,11 +17,8 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 try:
-    from gui.settings.main import debug  # type: ignore
     from gui.styles.common import qt_stylesheet_button  # type: ignore
 except Exception:
-    def debug(msg: str):
-        print(msg)
     qt_stylesheet_button = ""
 
 from gui.other.cs2_netcon import CS2Netcon

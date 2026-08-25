@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from gui.common import Kv3ToJson, SoundEventEditor_path
 from core.bridge.core import CoreBridge
-from gui.settings.main import get_cs2_path, debug
+from gui.settings.main import get_cs2_path
 from gui.styles.common import qt_stylesheet_widgetlist2
 from gui.editors.soundevent_editor.thread_parking import park
 
@@ -67,7 +67,6 @@ def extract_vsndevts_file(
     export: bool = False,
     output_folder: Optional[str] = None,
 ) -> Optional[str]:
-    debug(f"[vsndevts] Extracting {inner_path}")
     result = CoreBridge.instance().read_compiled_resource(_get_vpk_path(), inner_path, soundevents=True)
     if result is None:
         return None
@@ -161,7 +160,7 @@ class SoundEventLoaderThread(QThread):
                         seen.add(key)
                         paths.append(fp)
         except Exception as e:
-            debug(f'[vsndevts] VPK scan error: {e}')
+            pass
         return paths
 
     def _load_from_vpk(self) -> Dict[str, str]:
@@ -188,7 +187,6 @@ class SoundEventLoaderThread(QThread):
                     if not cached:
                         continue
                 except Exception as e:
-                    debug(f"[vsndevts] Decompile failed {inner}: {e}")
                     continue
             else:
                 self.progress.emit(f"Loading {base} ({idx}/{total})")
@@ -220,7 +218,6 @@ class SoundEventLoaderThread(QThread):
             self.events_loaded.emit(merged)
             self.progress.emit(f"Loaded {len(merged)} sound events")
         except Exception as e:
-            debug(f"[vsndevts] Loader error: {e}")
             self.events_loaded.emit({})
 
 
@@ -349,7 +346,6 @@ class InternalSoundEventExplorer(QWidget):
         if not fp:
             return {}
         if fp not in self._parsed_files:
-            debug(f"[vsndevts] Lazy-parsing {os.path.basename(fp)} for '{name}'")
             self._parsed_files[fp] = parse_vsndevts_file(fp)
         data = dict(self._parsed_files[fp].get(name, {}))
         data.pop("_source", None)
@@ -374,7 +370,6 @@ class InternalSoundEventExplorer(QWidget):
             _EVENTS_CACHE = dict(name_to_file)
         self._name_to_file = name_to_file
         self._source_model.set_names(sorted(name_to_file, key=str.lower))
-        debug(f"[vsndevts] List populated with {len(name_to_file)} events")
 
     def _selected_names(self) -> List[str]:
         return [i.data(Qt.DisplayRole) for i in self._view.selectedIndexes()

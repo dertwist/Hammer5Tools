@@ -4,7 +4,6 @@ import ast
 from typing import Dict, List, Any, Optional
 from gui.settings.common import get_settings_value, set_settings_value
 from gui.common import JsonToKv3, Kv3ToJson
-from gui.settings.main import debug
 
 DEFAULT_FILE_TEMPLATE: Dict[str, Any] = {
     'version': 3,
@@ -192,7 +191,6 @@ def load_hbat_file(file_path: str) -> Dict[str, Any]:
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read().strip()
     except Exception as e:
-        debug(f"[objects] Failed to read {file_path}: {e}")
         return get_default_file()
 
     # 1. Check if KeyValues3 format
@@ -227,7 +225,7 @@ def load_hbat_file(file_path: str) -> Dict[str, Any]:
                             t['replacements'] = []
                     return parsed
         except Exception as e:
-            debug(f"[objects] Failed parsing KV3 from {file_path}: {e}")
+            pass
 
     # 2. Try JSON format (legacy)
     try:
@@ -295,10 +293,8 @@ def save_hbat_file(file_path: str, data: Dict[str, Any]) -> bool:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(kv3_text)
 
-        debug(f"[objects] Saved KV3 .hbat config: {file_path}")
         return True
     except Exception as e:
-        debug(f"[objects] Failed saving KV3 {file_path}: {e}")
         return False
 
 

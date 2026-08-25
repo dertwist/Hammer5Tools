@@ -2,7 +2,6 @@ from gui.editors.hotkey_editor.ui_dialog import Ui_Dialog
 from PySide6.QtWidgets import QDialog
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtCore import Qt
-from gui.settings.main import debug
 from gui.common import enable_dark_title_bar
 class KeyDialog(QDialog):
     def __init__(self, parent=None):
@@ -73,4 +72,3 @@ class KeyDialog(QDialog):
         else:
             alt = ''
         self.value = f'{ctrl+shift+alt+key}'
-        debug(self.value)

@@ -1,4 +1,3 @@
-from gui.settings.main import debug
 from gui.editors.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
@@ -425,7 +424,6 @@ class PropertyFrame(QWidget):
             #===========================================================<  Element ID  >========================================================
             self.element_id_generator.update_value(self.value)
             self.element_id = self.element_id_generator.get_key(self.value)
-            debug(f'Property frame get_ElementID: {self.element_id}')
             self.ui.element_id_display.setText(str(self.element_id))
             if isinstance(self._worker_raw_value_with_class, dict):
                 self._worker_raw_value_with_class['m_nElementID'] = self.element_id
@@ -444,7 +442,6 @@ class PropertyFrame(QWidget):
         self.prop_class = prepared_data["prop_class"]
         self._ordered_pairs = prepared_data["ordered_pairs"]
         self.value["m_nElementID"] = self.element_id
-        debug(f'Property frame get_ElementID (precomputed): {self.element_id}')
         self.ui.element_id_display.setText(str(self.element_id))
         self.ui.property_class.setText(self.name)
         self._worker_raw_value_with_class = dict(self.value)
@@ -1125,7 +1122,6 @@ class PropertyFrame(QWidget):
 
         self._active_worker = None
 
-        debug(f"PropertyDataWorker error ΓÇö falling back to sync init: {error_msg}")
         self._ordered_pairs = None
         self._finish_init()
 

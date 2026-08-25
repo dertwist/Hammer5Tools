@@ -1505,7 +1505,6 @@ class SmartPropDocument(QMainWindow):
 
     def drop_files_into_hierarchy(self, paths, target_item):
         """Create elements for .vmdl / .vsmart files dropped onto the hierarchy from the explorer."""
-        from gui.settings.main import debug
         addon_path = get_addon_dir()
         items = []
         for path in paths:
@@ -1517,7 +1516,6 @@ class SmartPropDocument(QMainWindow):
             except ValueError:
                 continue
             if rel_path.startswith('..'):
-                debug(f'Dropped file is outside the addon, skipping: {path}')
                 continue
             base_name = os.path.splitext(os.path.basename(path))[0]
             if ext == '.vsmart':

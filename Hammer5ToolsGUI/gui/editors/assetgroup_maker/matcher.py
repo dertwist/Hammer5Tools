@@ -2,7 +2,7 @@ import os
 import re
 import fnmatch
 from typing import Dict, List, Optional, Set, Tuple, Any
-from gui.settings.main import get_addon_dir, debug
+from gui.settings.main import get_addon_dir
 
 KNOWN_PREFIXES = [
     # Collision prefixes
@@ -202,7 +202,6 @@ def match_folder_assets(
             rel_folder = directory.replace('\\', '/')
 
     if not os.path.isdir(directory):
-        debug(f"[Matcher] Directory does not exist: {directory}")
         return []
 
     ext_norm = extension.lower().strip('.')

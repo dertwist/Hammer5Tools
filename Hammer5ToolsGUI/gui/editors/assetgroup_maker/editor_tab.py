@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, Signal, QByteArray
 from PySide6.QtGui import QIcon
 
 from gui.settings.main import (
-    get_addon_dir, get_cs2_path, get_addon_name, debug,
+    get_addon_dir, get_cs2_path, get_addon_name,
     get_settings_value, set_settings_value
 )
 from gui.editors.assetgroup_maker.widgets.reference_card import MultiTemplateManagerWidget
@@ -160,7 +160,7 @@ class EditorTabWidget(QWidget):
                 self.splitter.restoreState(QByteArray.fromHex(saved_state.encode('utf-8')))
                 return
             except Exception as e:
-                debug(f"Error restoring editor splitter state: {e}")
+                pass
         self.splitter.setSizes([220, 480])
 
     def _on_splitter_moved(self, pos: int, index: int):
@@ -168,7 +168,7 @@ class EditorTabWidget(QWidget):
             state_hex = self.splitter.saveState().toHex().data().decode('utf-8')
             set_settings_value('AssetGroupMaker', 'editor_splitter_state', state_hex)
         except Exception as e:
-            debug(f"Error saving editor splitter state: {e}")
+            pass
 
     def _connect_signals(self):
         self.template_manager.data_changed.connect(self._on_template_data_changed)
@@ -305,7 +305,6 @@ class EditorTabWidget(QWidget):
             self._dirty = False
             self.title_changed.emit(os.path.basename(self.file_path))
             self.refresh_matching()
-            debug(f"[EditorTab] Loaded file: {self.file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Load Error", f"Failed to load batch file:\n{e}")
 
@@ -332,7 +331,6 @@ class EditorTabWidget(QWidget):
                 self._dirty = False
                 self.dirty_changed.emit(False)
                 self.title_changed.emit(os.path.basename(self.file_path))
-                debug(f"[EditorTab] Saved KV3 file: {self.file_path}")
 
                 from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher
                 for watcher in MonitoringFileWatcher._instances:
@@ -387,7 +385,7 @@ class EditorTabWidget(QWidget):
                         os.remove(path)
                         deleted_count += 1
                     except Exception as e:
-                        debug(f"Failed to remove file {path}: {e}")
+                        pass
             self.created_files.clear()
             self.revert_btn.setEnabled(False)
             self.status_updated.emit(f"Reverted {deleted_count} file(s).")

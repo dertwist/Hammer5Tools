@@ -4,7 +4,7 @@ from gui.common import fast_deepcopy
 from gui.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import QTimer
-from gui.settings.main import settings, debug
+from gui.settings.main import settings
 from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.editors.soundevent_editor.objects import *
@@ -210,7 +210,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             try:
                 value = ast.literal_eval(value)
             except (ValueError, SyntaxError) as e:
-                debug(f"[props] str→dict: {e}")
                 value = {}
 
         # Ensure value is a dictionary and has at least one item
@@ -222,7 +221,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             self._next_undo_desc = f"Add property '{key}'"
             self.create_property(key, val)
         else:
-            debug("[props] new_property: invalid value")
+            pass
         self.on_update()
 
     def paste_property(self):
@@ -329,7 +328,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Loading properties from given data"""
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
-            debug(f"[props] populate: {list(_data.keys())}")
 
             for item, value in _data.items():
                 if item == 'm_sLabel':

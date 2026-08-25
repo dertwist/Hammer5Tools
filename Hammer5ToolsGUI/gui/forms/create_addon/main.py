@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QMessageBox
 import shutil, os, re
-from gui.settings.main import get_cs2_path, get_settings_value, set_settings_value, debug
+from gui.settings.main import get_cs2_path, get_settings_value, set_settings_value
 from gui.forms.create_addon.ui_main import Ui_Create_addon_Dialog
 from gui.widgets import exception_handler
 from PySide6.QtCore import Qt
@@ -70,26 +70,21 @@ class Create_addon_Dialog(QDialog):
                 break
         
         if not vmap_path:
-            debug(f'Vmap not found for preset: {preset}')
             return
 
-        debug(f'Extracting thumbnail from {vmap_path}')
 
         map_document = CoreBridge.instance().read_valve_map(vmap_path)
         thumbnail_hex = None if map_document.thumbnail is None else map_document.thumbnail.hex().upper()
         fxt = map_document.thumbnail_format
         
         if thumbnail_hex is None:
-            debug(f'Failed to extract thumbnail: thumbnail_hex is None')
             return
 
-        debug(f'Thumbnail extracted: {fxt}, size: {len(thumbnail_hex)} bytes')
 
         # Convert hex to raw image bytes
         try:
             image_bytes = binascii.unhexlify(thumbnail_hex)
         except Exception as e:
-            debug(f"Failed to unhexlify thumbnail: {e}")
             return
 
         # Load image into QPixmap
@@ -100,7 +95,7 @@ class Create_addon_Dialog(QDialog):
             scaled_pixmap = pixmap.scaled(label_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.ui.label.setPixmap(scaled_pixmap)
         else:
-            debug("QPixmap failed to load image from data.")
+            pass
 
     @exception_handler
     def set_preset_name_on_change(self, index):

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
 from PySide6.QtGui import QGuiApplication
-from gui.settings.main import get_cs2_path, get_addon_dir, debug
+from gui.settings.main import get_cs2_path, get_addon_dir
 from gui.common import SoundEventEditor_path
 from gui.widgets import exception_handler
 from core.bridge.core import CoreBridge
@@ -54,7 +54,6 @@ class VPKLoaderThread(QThread):
                         folders.append(element)
                 self.vpk_loaded.emit(folders)
         except Exception as e:
-            debug(f"VPK load failed: {e}")
             self.vpk_load_failed.emit(str(e))
 
 
@@ -73,9 +72,9 @@ class VSNDDecodeThread(QThread):
             if result is not None:
                 self.decoded.emit(result.data, result.format)
             else:
-                debug(f"Failed to decode {self.internal_path}")
+                pass
         except Exception as e:
-            debug(f"Error decoding {self.internal_path}: {e}")
+            pass
 
 
 @exception_handler
@@ -206,7 +205,6 @@ class InternalSoundFileExplorer(QTreeWidget):
         if len(selected_vsnd) == 1:
             assembled_path = self.assemble_path(selected_vsnd[0])
             if 'vsnd' in assembled_path:
-                debug(f"Assembled Path: {assembled_path}")
                 self.play_audio_file(assembled_path)
 
     # ──────────────────────────────────────────────
@@ -294,7 +292,6 @@ class InternalSoundFileExplorer(QTreeWidget):
         if paths:
             clipboard_text = '\n'.join(paths)
             QGuiApplication.clipboard().setText(clipboard_text)
-            debug(f"Copied {len(paths)} asset name(s) to clipboard")
 
     # ──────────────────────────────────────────────
     #  Drag-and-drop  (supports multi-select)

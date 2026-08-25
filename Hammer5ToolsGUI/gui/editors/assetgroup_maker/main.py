@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QByteArray
 from PySide6.QtGui import QIcon, QAction, QKeySequence, QCloseEvent, QPixmap
 
-from gui.settings.main import get_addon_name, get_cs2_path, get_addon_dir, get_settings_value, set_settings_value, debug
+from gui.settings.main import get_addon_name, get_cs2_path, get_addon_dir, get_settings_value, set_settings_value
 from gui.widgets.explorer.main import Explorer
 from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher
 from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
@@ -523,7 +523,7 @@ class BatchCreatorMainWindow(QMainWindow):
             set_settings_value('AssetGroupMaker', 'geometry', geo_hex)
             set_settings_value('AssetGroupMaker', 'window_state', state_hex)
         except Exception as e:
-            debug(f"Error saving AssetGroupMaker layout state: {e}")
+            pass
 
     def _restore_layout_state(self):
         try:
@@ -538,7 +538,6 @@ class BatchCreatorMainWindow(QMainWindow):
             else:
                 self.resizeDocks([self.explorer_dock, self.config_dock], [260, 260], Qt.Horizontal)
         except Exception as e:
-            debug(f"Error restoring AssetGroupMaker layout state: {e}")
             self.resizeDocks([self.explorer_dock, self.config_dock], [260, 260], Qt.Horizontal)
 
     def closeEvent(self, event: QCloseEvent):
@@ -561,4 +560,4 @@ class BatchCreatorMainWindow(QMainWindow):
             else:
                 event.ignore()
                 return
-        super().closeEvent(event)
+        super().closeEvent(event)

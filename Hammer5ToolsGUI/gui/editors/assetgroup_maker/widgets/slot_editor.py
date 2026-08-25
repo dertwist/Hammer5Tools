@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
 
-from gui.settings.main import get_addon_dir, get_addon_name, debug
+from gui.settings.main import get_addon_dir, get_addon_name
 from gui.styles.common import (
     qt_stylesheet_button, qt_stylesheet_combobox, qt_stylesheet_lineedit,
     qt_stylesheet_checkbox, apply_stylesheets

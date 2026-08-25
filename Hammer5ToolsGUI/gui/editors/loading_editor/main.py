@@ -23,7 +23,7 @@ from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, Q
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from gui.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir
+from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
 from gui.styles.common import qt_stylesheet_combobox
 from gui.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
@@ -123,7 +123,6 @@ class ApplyScreenshotsWorker(QRunnable):
             res_folder = os.path.join(self.addon_path, "res")
             if os.path.exists(res_folder):
                 shutil.rmtree(res_folder)
-                debug(f"Deleted res folder at {res_folder}")
                 self.signals.log.emit(f"Deleted res folder at {res_folder}")
 
             self.clean_resolution_folders()
@@ -175,7 +174,6 @@ class ApplyScreenshotsWorker(QRunnable):
             files = sorted([f for f in os.listdir(self.game_screenshot_path)
                             if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
         except Exception as e:
-            debug(f"Error listing files: {e}")
             self.signals.log.emit(f"Error listing files: {e}")
             files = []
         for idx, file_name in enumerate(files):
@@ -195,7 +193,6 @@ class ApplyScreenshotsWorker(QRunnable):
             shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
             self.signals.log.emit("Deleted old vtex files from primary location")
         except Exception as e:
-            debug(f"Error deleting old vtex files: {e}")
             self.signals.log.emit(f"Error deleting old vtex files: {e}")
         if self.delete_existing:
             self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
@@ -209,7 +206,6 @@ class ApplyScreenshotsWorker(QRunnable):
                     shutil.rmtree(os.path.join(base, res))
                 self.signals.log.emit("Deleted compiled vtex_c files from game location")
             except Exception as e:
-                debug(f"Error deleting compiled vtex_c files: {e}")
                 self.signals.log.emit(f"Error deleting compiled vtex_c files: {e}")
 
     def process_files(self, file_list: list):
@@ -235,7 +231,6 @@ class ApplyScreenshotsWorker(QRunnable):
         pixmap = QPixmap(original_file_path)
         if pixmap.isNull():
             msg = f"Error loading image {original_file_path} with QPixmap."
-            debug(msg)
             self.signals.log.emit(msg)
             return
         
@@ -296,7 +291,6 @@ class ApplyScreenshotsWorker(QRunnable):
             output_image_path = os.path.join(target_folder, f"{new_base_name}.png")
             if not scaled_pixmap.save(output_image_path, "PNG"):
                 err_msg = f"Error saving downscaled image {output_image_path}"
-                debug(err_msg)
                 self.signals.log.emit(err_msg)
                 continue
 
@@ -309,7 +303,6 @@ class ApplyScreenshotsWorker(QRunnable):
                 self.signals.log.emit(f"Created vtex file at {vtex_path}")
             except Exception as e:
                 err_msg = f"Error writing vtex file {vtex_path}: {e}"
-                debug(err_msg)
                 self.signals.log.emit(err_msg)
                 continue
             compile(vtex_path)
@@ -488,16 +481,14 @@ class Loading_editorMainWindow(QMainWindow):
         if index == 1:  # Timeline tab
             # Refresh timeline data when switching to timeline tab
             self.timeline_view.load_timeline_data()
-            debug("Switched to Timeline tab")
         else:  # Explorer tab
-            debug("Switched to Explorer tab")
+            pass
 
     def on_timeline_image_selected(self, image_path: str):
         """Handle image selection from timeline view"""
         if os.path.exists(image_path):
             # Show the image in the viewport
             self.image_viewer.showImage(image_path)
-            debug(f"Timeline image selected: {os.path.basename(image_path)}")
 
     def export_all_animations(self):
         self.timeline_view.export_all_animations()
@@ -540,7 +531,6 @@ class Loading_editorMainWindow(QMainWindow):
             svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
             svg_path = os.path.join(folder_path, svg_icon_filename)
             if os.path.exists(svg_path):
-                debug(f"Loading existing SVG icon from {svg_path}")
                 self.svg_preview_widget.load_svg(svg_path)
                 return
 
@@ -555,16 +545,14 @@ class Loading_editorMainWindow(QMainWindow):
                     lines = f.readlines()
                 description = "".join(lines[1:]).strip() if len(lines) > 1 else ""
                 self.ui.PlainTextEdit_Description_2.setPlainText(description)
-                debug(f"Loaded description from {description_file}")
             except Exception as e:
-                debug(f"Error loading description: {e}")
+                pass
 
     def start_apply_screenshots(self):
         try:
             file_count = len([f for f in os.listdir(self.loadingscreen_path)
                               if os.path.isfile(os.path.join(self.loadingscreen_path, f))])
         except Exception as e:
-            debug(f"Error counting files: {e}")
             file_count = 0
 
         if file_count > 10:
@@ -630,13 +618,11 @@ class Loading_editorMainWindow(QMainWindow):
         src_folder = os.path.join(self.history_path, session_date)
         dst_folder = os.path.join(self.content_history_path, session_date)
 
-        debug(f"Scheduling history screenshot copy in {delay_ms} ms: {src_folder} -> {dst_folder}")
         QTimer.singleShot(delay_ms, lambda: self._copy_history_session(src_folder, dst_folder))
 
     def _copy_history_session(self, src_folder: str, dst_folder: str):
         """Copy history screenshots from the game folder into content/panorama/history_screenshots."""
         if not os.path.isdir(src_folder):
-            debug(f"History source folder not found (CS2 may still be shooting): {src_folder}")
             return
         try:
             os.makedirs(dst_folder, exist_ok=True)
@@ -646,9 +632,8 @@ class Loading_editorMainWindow(QMainWindow):
                 if os.path.isfile(src_file):
                     shutil.copy2(src_file, os.path.join(dst_folder, filename))
                     copied += 1
-            debug(f"Copied {copied} history screenshot(s) to {dst_folder}")
         except Exception as e:
-            debug(f"Failed to copy history screenshots: {e}")
+            pass
 
     def take_loading_screen_shots_action(self):
         """Generate commands for loading screen screenshots, clear previous shots, and send to CS2 via netcon."""
@@ -662,7 +647,7 @@ class Loading_editorMainWindow(QMainWindow):
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    debug(f"Failed to delete {file_path}: {e}")
+                    pass
 
         path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
         commands, _ = generate_commands(path, history=False)
@@ -686,7 +671,6 @@ class Loading_editorMainWindow(QMainWindow):
         try:
             svg_path = os.path.normpath(self.svg_preview_widget.get_svg_path())
         except ValueError:
-            debug("No SVG file loaded in icon drag and drop area.")
             return
         cs2_path = get_cs2_path()
         if not cs2_path:
@@ -700,7 +684,6 @@ class Loading_editorMainWindow(QMainWindow):
             try:
                 rescale_svg(svg_path, svg_dst)
             except Exception as e:
-                debug(f"SVG rescale failed, copying original: {e}")
                 shutil.copy2(svg_path, svg_dst)
         else:
             shutil.copy2(svg_path, svg_dst)
@@ -718,6 +701,5 @@ class Loading_editorMainWindow(QMainWindow):
             focused_widget = QApplication.focusWidget()
             if not isinstance(focused_widget, (QPlainTextEdit,)):
                 self.image_viewer.restoreCameraPosition()
-                debug("F key pressed - Restoring camera position")
         else:
             super().keyPressEvent(event)

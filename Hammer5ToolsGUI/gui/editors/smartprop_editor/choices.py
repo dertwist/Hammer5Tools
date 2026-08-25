@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from gui.editors.smartprop_editor._common import is_category_widget
 from gui.widgets import ComboboxTreeChild
-from gui.settings.main import debug
 
 var_choice_identification_bool = ['boolean', 'bool', 'csmartpropvariable_bool']
 var_choice_identification_int = ['integer', 'int', 'csmartpropvariable_int']
@@ -121,31 +120,22 @@ class AddVariable:
         val = value_dict.get('m_default')
 
         if var_type in var_choice_identification_bool:
-            debug('Var choice type bool')
             widget = VariableBool(value=val, type=var_class or 'Bool', parent_item=parent)
         elif var_type in var_choice_identification_int:
-            debug('Var choice type int')
             widget = VariableInt(value=val, type=var_class or 'Int', parent_item=parent)
         elif var_type in var_choice_identification_float:
-            debug('Var choice type float')
             widget = VariableFloat(value=val, type=var_class or 'Float', parent_item=parent)
         elif var_type in var_choice_identification_color:
-            debug('Var choice type color')
             widget = VariableColor(value=val, type=var_class or 'Color', parent_item=parent)
         elif var_type in var_choice_identification_vector2d:
-            debug('Var choice type vector2d')
             widget = VariableVector2d(value=val, type=var_class or 'Vector2D', parent_item=parent)
         elif var_type in var_choice_identification_vector4d:
-            debug('Var choice type vector4d')
             widget = VariableVector4d(value=val, type=var_class or 'Vector4D', parent_item=parent)
         elif var_type in var_choice_identification_vector3d:
-            debug('Var choice type vector3d')
             widget = VariableVector3d(value=val, type=var_class or 'Vector3D', parent_item=parent)
         elif var_type in var_choice_identification_string:
-            debug('Var choice type string')
             widget = VariableString(value=val, type=var_class or 'String', parent_item=parent)
         else:
-            debug(f'Var choice type is generic ({var_type})')
             widget = VariableWidget(value=val, type=var_class or 'String', parent_item=parent)
 
         parent.treeWidget().setItemWidget(parent, 1, widget)

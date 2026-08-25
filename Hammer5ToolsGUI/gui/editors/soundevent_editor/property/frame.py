@@ -8,7 +8,6 @@ from gui.editors.soundevent_editor.property.common import SoundEventEditorProper
 from gui.editors.soundevent_editor.property.ui_frame import Ui_Form
 from gui.property.methods import PropertyMethods
 from gui.common import convert_snake_case
-from gui.settings.main import debug
 from gui.editors.soundevent_editor.common import vsnd_filepath_convert
 
 
@@ -69,7 +68,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             try:
                 value = ast.literal_eval(value)
             except Exception as error:
-                debug(error)
+                pass
 
         # Widgets import
         from gui.editors.soundevent_editor.property.common import (
@@ -333,7 +332,6 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     def populate_properties(self, data: dict):
         """Adding properties from received data"""
-        debug(f"populate_properties frame Data: \n {data}")
         if data:
             for name, value in data.items():
                 self.add_property(name, value)
@@ -347,7 +345,6 @@ class SoundEventEditorPropertyFrame(QWidget):
                 widget_instance = self.ui.content.layout().itemAt(index).widget()
                 value_dict = widget_instance.value
                 _data.update(value_dict)
-            debug(f"serialize_properties frame Data: \n {_data}")
             return _data
 
     def get_property(self, index):

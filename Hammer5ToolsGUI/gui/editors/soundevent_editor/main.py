@@ -1,6 +1,6 @@
 import ast, shutil, os
 
-from gui.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool, get_settings_value, settings, get_addon_dir
+from gui.settings.main import get_addon_name, get_cs2_path, get_settings_bool, get_settings_value, settings, get_addon_dir
 from gui.editors.soundevent_editor.ui_main import Ui_MainWindow
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.widgets.explorer.main import Explorer
@@ -154,8 +154,6 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.filepath_sounds = ""
 
         # Variables debug
-        debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")
-        debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
         # Init Hierarchy
         self.ui.hierarchy_widget.deleteLater()
@@ -271,7 +269,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
             self.ui.verticalLayout_5.insertWidget(0, self.editor_header_frame)
         except Exception as e:
-            debug(f"Failed to setup Property Editor header: {e}")
+            pass
 
         # Init LoadSoundEvents. A missing file is the normal state for a fresh
         # addon, so load silently and show the inline placeholder instead of
@@ -671,7 +669,7 @@ class SoundEventEditorMainWindow(QMainWindow):
                     data = val
             self.new_soundevent(_data=data, _soundevent_name=template_name)
         except Exception as e:
-            debug(f"Failed to load template {template_path}: {e}")
+            pass
 
     def save_current_soundevent_as_template(self):
         """Save selected soundevent as a template KV3 file."""
@@ -711,7 +709,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         """Sets the value to the data column and saves if in realtime mode."""
         # Convert the dictionary to a string representation
         item.setData(0, Qt.UserRole, _data)
-        debug(f"[hier] update: {item.text(0)}")
 
     def filter_editor_properties(self, text: str):
         """Filter active property frames in Property Editor by property name."""
@@ -750,7 +747,6 @@ class SoundEventEditorMainWindow(QMainWindow):
                 props = self.PropertiesWindow.get_properties_value() if current_item else {}
                 self.property_browser_widget.update_property_states(props)
         except Exception as e:
-            debug(f"Error switching properties view: {e}")
             QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")
 
     def _on_item_edit_start(self, item, column):
@@ -996,7 +992,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             if hasattr(self, '_history_dock'):
                 self.resizeDocks([self.ui.dockWidget_4, self._history_dock], [650, 200], Qt.Vertical)
         except Exception as e:
-            debug(f"Failed to apply default dock layout: {e}")
+            pass
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -1043,12 +1039,10 @@ class SoundEventEditorMainWindow(QMainWindow):
         """
         data = self.internal_soundevents_explorer.get_event_data(name)
         if not data:
-            debug(f"[vsndevts] No data to preview for '{name}'")
             return
         self.PropertiesWindow.properties_clear()
         self.PropertiesWindow.properties_groups_show()
         self.PropertiesWindow.populate_properties(data)
-        debug(f"[vsndevts] Previewing '{name}'")
 
     def _copy_internal_soundevent_to_addon(self, name: str, data: dict) -> None:
         """
@@ -1061,4 +1055,3 @@ class SoundEventEditorMainWindow(QMainWindow):
             data = self.internal_soundevents_explorer.get_event_data(name)
         self.new_soundevent(_data=data, _soundevent_name=name)
         self.save_soundevents()
-        debug(f"[vsndevts] Copied '{name}' to addon")

@@ -32,12 +32,10 @@ from contextlib import closing
 from typing import Callable, Optional, Sequence
 
 try:
-    from gui.settings.main import get_settings_value, debug  # type: ignore
+    from gui.settings.main import get_settings_value  # type: ignore
 except Exception:
     def get_settings_value(section: str, key: str, default=None):
         return default
-    def debug(msg: str):
-        print(msg)
 
 
 class CS2Netcon:
@@ -98,7 +96,6 @@ class CS2Netcon:
                         match = pattern.search(text)
                         if match:
                             value = match.group(1).strip(' "\'')
-                            debug(f"[CS2Netcon] Query '{cvar}' = '{value}'")
                             return value
                 except (TimeoutError, socket.timeout):
                     pass  # timeout is expected once all output is consumed
@@ -108,15 +105,11 @@ class CS2Netcon:
             match = pattern.search(text)
             if match:
                 value = match.group(1).strip(' "\'')
-                debug(f"[CS2Netcon] Query '{cvar}' = '{value}'")
                 return value
-            debug(f"[CS2Netcon] Query '{cvar}': could not parse response: {text!r}")
             return None
         except ConnectionRefusedError:
-            debug(f"[CS2Netcon] Query: connection refused")
             return None
         except Exception as e:
-            debug(f"[CS2Netcon] Query failed: {e}")
             return None
 
     @staticmethod
@@ -163,16 +156,12 @@ class CS2Netcon:
                 # be treated as a command separator at the TCP level.
                 payload = "\n".join(c.rstrip("\n") for c in filtered) + "\n"
                 sock.sendall(payload.encode('utf-8'))
-            debug(f"[CS2Netcon] Sent {len(filtered)} command(s) ({len(payload)} bytes) to {host}:{port}")
             return True
         except ConnectionRefusedError:
-            debug(f"[CS2Netcon] Connection refused – CS2 not running or netconport not set")
             return False
         except TimeoutError:
-            debug(f"[CS2Netcon] Connection timed out to {host}:{port}")
             return False
         except Exception as e:
-            debug(f"[CS2Netcon] Send failed: {e}")
             return False
 
     @staticmethod
@@ -209,14 +198,12 @@ class CS2Netcon:
             sock.connect((host, port))
 
             sock.sendall((command.strip() + "\n").encode('utf-8'))
-            debug(f"[CS2Netcon] send_and_listen: sent '{command}' to {host}:{port}")
 
             buffer = b""
             deadline = time.time() + timeout
 
             while time.time() < deadline:
                 if stop_event and stop_event.is_set():
-                    debug("[CS2Netcon] send_and_listen: aborted via stop_event")
                     sock.close()
                     return False
 
@@ -239,17 +226,13 @@ class CS2Netcon:
                         if on_line:
                             on_line(line)
                         if sentinel in line:
-                            debug(f"[CS2Netcon] send_and_listen: sentinel '{sentinel}' found")
                             sock.close()
                             return True
 
             sock.close()
-            debug(f"[CS2Netcon] send_and_listen: timed out after {timeout}s")
             return False
         except ConnectionRefusedError:
-            debug("[CS2Netcon] send_and_listen: connection refused")
             return False
         except Exception as e:
-            debug(f"[CS2Netcon] send_and_listen failed: {e}")
             return False
 
