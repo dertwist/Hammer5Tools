@@ -19,3 +19,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Third-Party Assets Notice
+
+This software is a toolkit for Counter-Strike 2 / Source 2 modding and
+ships a large number of icons and images taken from Valve's own Source 2
+tools (Hammer, Model Doc Editor, Source Filmmaker, the Particle Editor
+Tool, Asset Browser, VConsole, Workshop Manager, and others), found under
+`Hammer5ToolsGUI/gui/icons/` and `Hammer5ToolsGUI/gui/images/`, as well as
+Valve/Counter-Strike 2 branding such as `cs2_icon.jpg`. These icons and
+images are the property of Valve Corporation, are used solely for
+identification and interoperability with Valve's tools and file formats,
+and are NOT covered by the MIT license above. Their inclusion does not
+imply endorsement by or affiliation with Valve. All other trademarks are
+the property of their respective owners.
