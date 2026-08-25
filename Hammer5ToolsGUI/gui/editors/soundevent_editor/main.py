@@ -4,8 +4,8 @@ from gui.settings.main import get_addon_name, get_cs2_path, debug, get_settings_
 from gui.editors.soundevent_editor.ui_main import Ui_MainWindow
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.widgets.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog, QDockWidget, QUndoView
-from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
+from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog, QDockWidget, QUndoView, QWidget, QVBoxLayout, QLabel
+from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent, QIcon, QPixmap
 from PySide6.QtCore import Qt
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets import HierarchyItemModel, ErrorInfo
@@ -14,6 +14,7 @@ from gui.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCom
 from gui.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from gui.editors.soundevent_editor.property_browser import PropertyBrowserWidget
 from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton
+from gui.styles.common import qt_stylesheet_button
 from gui.common import *
 from gui.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from gui.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
@@ -272,9 +273,14 @@ class SoundEventEditorMainWindow(QMainWindow):
         except Exception as e:
             debug(f"Failed to setup Property Editor header: {e}")
 
-        # Init LoadSoundEvents
-        self.load_soundevents(self.filepath_vsndevts)
+        # Init LoadSoundEvents. A missing file is the normal state for a fresh
+        # addon, so load silently and show the inline placeholder instead of
+        # popping a dialog unprompted on every startup.
+        if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
+            self.load_soundevents(self.filepath_vsndevts)
         self.PropertiesWindowInit()
+        self._build_empty_state()
+        self.update_placeholder_visibility()
 
         # Init filter
         self.ui.hierarchy_widget.installEventFilter(self)
@@ -422,19 +428,12 @@ class SoundEventEditorMainWindow(QMainWindow):
 
             response = msg_box.exec()
             if response == QMessageBox.Yes:
-                CopyDefaultSoundFolders()
-                if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
-                    try:
-                        self.PropertiesWindow.properties_clear()
-                        self.ui.hierarchy_widget.clear()
-                    except Exception:
-                        pass
-                    LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
-                    if callable(self.update_title):
-                        self.update_title('saved', self.filepath_vsndevts)
+                self._create_default_soundevents_file()
+                return
 
         if hasattr(self, 'undo_stack') and self.undo_stack:
             self.undo_stack.clear()
+        self.update_placeholder_visibility()
 
     @exception_handler
     def save_soundevents(self):
@@ -463,6 +462,76 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
+
+    def _build_empty_state(self):
+        """Placeholder shown in the central frame when the addon has no
+        soundevents file yet, in place of the auto-popping create dialog."""
+        self.empty_state_widget = QWidget(self.ui.frame)
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(QIcon(":/icons/tools/vmixtool/appicon.ico").pixmap(32, 32))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Create or load soundevents")
+        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("This addon has no soundevents file yet. Create a default one or load an existing .vsndevts file.")
+        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.setAlignment(Qt.AlignCenter)
+
+        btn_create = QPushButton("Create Default")
+        btn_create.setStyleSheet(qt_stylesheet_button)
+        btn_create.setFixedHeight(26)
+        btn_create.clicked.connect(self._create_default_soundevents_file)
+        btn_row.addWidget(btn_create)
+
+        btn_load = QPushButton("Load File...")
+        btn_load.setStyleSheet(qt_stylesheet_button)
+        btn_load.setFixedHeight(26)
+        btn_load.clicked.connect(lambda: self.load_soundevents())
+        btn_row.addWidget(btn_load)
+
+        empty_layout.addLayout(btn_row)
+        self.ui.frame.layout().addWidget(self.empty_state_widget)
+
+    def update_placeholder_visibility(self):
+        # Guarded: called from load_soundevents(), which __init__ also calls
+        # before PropertiesWindow/empty_state_widget exist yet.
+        if not hasattr(self, 'PropertiesWindow') or not hasattr(self, 'empty_state_widget'):
+            return
+        loaded = bool(self.filepath_vsndevts) and os.path.exists(self.filepath_vsndevts)
+        self.PropertiesWindow.setVisible(loaded)
+        if hasattr(self, 'editor_header_frame'):
+            self.editor_header_frame.setVisible(loaded)
+        self.ui.label.setVisible(loaded)
+        self.empty_state_widget.setVisible(not loaded)
+
+    def _create_default_soundevents_file(self):
+        CopyDefaultSoundFolders()
+        if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
+            try:
+                self.PropertiesWindow.properties_clear()
+                self.ui.hierarchy_widget.clear()
+            except Exception:
+                pass
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+            if callable(self.update_title):
+                self.update_title('saved', self.filepath_vsndevts)
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.clear()
+        self.update_placeholder_visibility()
 
     def PropertiesWindowUpdate(self):
         item = self.ui.hierarchy_widget.currentItem()
