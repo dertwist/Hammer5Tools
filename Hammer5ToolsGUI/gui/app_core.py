@@ -48,7 +48,6 @@ from gui.forms.source_porter.main import SourcePorterWidget
 from gui.forms.launch_options.main import LaunchOptionsDialog
 from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile
 from gui.styles.qt_global_stylesheet import QT_Stylesheet_global
-from hammer5tools_core.dotnet import check_dotnet_runtime
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.quick_create.main import QuickCreateDialog

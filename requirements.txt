@@ -24,6 +24,9 @@ certifi
 pefile
 altgraph
 pytest
+# pythonnet/clr_loader/cffi: dev-only, for test_unreal_vmap_writer.py's
+# independent .vmap structure verification (hammer5tools_core/dotnet.py). Not
+# imported by any shipped code path, not bundled into the packaged app.
 pythonnet
 clr_loader
 cffi

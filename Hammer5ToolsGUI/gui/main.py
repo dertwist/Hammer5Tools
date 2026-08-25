@@ -318,7 +318,7 @@ if __name__ == "__main__":
         existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
-    from gui.app_core import Widget, start_instance_server, QT_Stylesheet_global, check_dotnet_runtime
+    from gui.app_core import Widget, start_instance_server, QT_Stylesheet_global
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
@@ -343,12 +343,7 @@ if __name__ == "__main__":
     theme.set_brightness_level(brightness)
 
     app.setStyleSheet(QT_Stylesheet_global)
-    
-    # Check .NET runtime if pythonnet-dependent libraries are present
-    from hammer5tools_core.dotnet import DotNetPaths
-    if DotNetPaths().keyvalues2_net.exists():
-        check_dotnet_runtime()
-    
+
     # Create main window
     widget = Widget(dev_mode=args.dev)
     from gui.other.taskbar_identity import apply_taskbar_identity

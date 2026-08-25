@@ -8,8 +8,6 @@ from dataclasses import dataclass
 import json
 from typing import Optional
 
-from hammer5tools_core.dotnet import DotNetInterop
-
 
 class CoreBridgeError(RuntimeError):
     """Raised when the Hammer5Tools Core contract cannot be loaded or invoked."""
@@ -153,7 +151,10 @@ class CoreBridge:
     _instance: Optional[CoreBridge] = None
 
     def __init__(self, interop=None, native_client=None) -> None:
-        self._interop = interop or DotNetInterop()
+        # `interop` is unused (nothing here ever reads it) — kept as an accepted
+        # constructor argument for test-fake compatibility, not defaulted to a
+        # real DotNetInterop() so CoreBridge never touches pythonnet.
+        self._interop = interop
         self._native_client = native_client
 
     @classmethod
@@ -299,6 +300,26 @@ class CoreBridge:
     def unreal_export_landscape(self, content_dir: str, map_path: str, out_dir: str, flags: str = "all") -> dict:
         """Exports the map's first landscape actor into ``out_dir``."""
         return self._smartprop_native().unreal_export_landscape(content_dir, map_path, out_dir, flags)
+
+    def vmap_merge_open(self, ours_path: str, theirs_path: str, base_path: str | None, allow_unrelated: bool) -> dict:
+        """Loads and diffs ours/theirs (and an optional base) for a 3-way .vmap block merge."""
+        return self._smartprop_native().vmap_merge_open(ours_path, theirs_path, base_path, allow_unrelated)
+
+    def vmap_merge_resolve(self, handle: int, block_id: str, side: str) -> int:
+        """Records a manual resolution for one conflicting block. Returns 0 on success."""
+        return self._smartprop_native().vmap_merge_resolve(handle, block_id, side)
+
+    def vmap_merge_resolve_all(self, handle: int, side: str) -> None:
+        """Picks one side for every remaining conflict."""
+        self._smartprop_native().vmap_merge_resolve_all(handle, side)
+
+    def vmap_merge_write(self, handle: int, out_path: str) -> dict:
+        """Applies the merge and writes it to out_path. Returns {orphaned: [...]}."""
+        return self._smartprop_native().vmap_merge_write(handle, out_path)
+
+    def vmap_merge_close(self, handle: int) -> None:
+        """Releases a merge session's loaded documents."""
+        self._smartprop_native().vmap_merge_close(handle)
 
     def source_porter_validate(
         self, cs2_dir: str, addon: str, *, log: Callable[[str], None], cancellation=None,

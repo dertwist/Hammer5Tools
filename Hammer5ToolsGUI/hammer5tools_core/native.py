@@ -296,6 +296,40 @@ class SmartPropNativeClient:
             })),
         ))
 
+    def vmap_merge_open(self, ours_path: str, theirs_path: str, base_path: str | None, allow_unrelated: bool) -> dict:
+        """Loads and diffs ours/theirs (and an optional base) for a 3-way .vmap
+        block merge. Returns {handle, oursBlockCount, theirsBlockCount,
+        realignedCount, added, removed, changed, conflicts}."""
+        request = {
+            "oursPath": ours_path, "theirsPath": theirs_path,
+            "basePath": base_path, "allowUnrelated": allow_unrelated,
+        }
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_merge_open, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def vmap_merge_resolve(self, handle: int, block_id: str, side: str) -> int:
+        """Records a manual resolution for one conflicting block. Returns 0 on success."""
+        block_id_buffer, block_id_length = self._buffer_arguments(block_id.encode("utf-8"))
+        side_buffer, side_length = self._buffer_arguments(side.encode("utf-8"))
+        return int(self._library.h5t_vmap_merge_resolve(handle, block_id_buffer, block_id_length, side_buffer, side_length))
+
+    def vmap_merge_resolve_all(self, handle: int, side: str) -> None:
+        """Picks one side for every remaining conflict."""
+        side_buffer, side_length = self._buffer_arguments(side.encode("utf-8"))
+        self._library.h5t_vmap_merge_resolve_all(handle, side_buffer, side_length)
+
+    def vmap_merge_write(self, handle: int, out_path: str) -> dict:
+        """Applies the merge and writes it to out_path. Returns {orphaned: [...]}.
+        Raises NativeCoreError if conflicts remain unresolved."""
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_merge_write, handle, *self._buffer_arguments(out_path.encode("utf-8")),
+        ))
+
+    def vmap_merge_close(self, handle: int) -> None:
+        """Releases a merge session's loaded documents."""
+        self._library.h5t_vmap_merge_close(handle)
+
     def source_porter_validate(
         self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
     ) -> int:
@@ -407,6 +441,17 @@ class SmartPropNativeClient:
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, _LOG_CALLBACK_TYPE, ctypes.c_longlong]
             function.restype = ctypes.c_int
+
+        self._library.h5t_vmap_merge_open.argtypes = [pointer, length, output, output_length]
+        self._library.h5t_vmap_merge_open.restype = ctypes.c_int
+        self._library.h5t_vmap_merge_resolve.argtypes = [ctypes.c_longlong, pointer, length, pointer, length]
+        self._library.h5t_vmap_merge_resolve.restype = ctypes.c_int
+        self._library.h5t_vmap_merge_resolve_all.argtypes = [ctypes.c_longlong, pointer, length]
+        self._library.h5t_vmap_merge_resolve_all.restype = None
+        self._library.h5t_vmap_merge_write.argtypes = [ctypes.c_longlong, pointer, length, output, output_length]
+        self._library.h5t_vmap_merge_write.restype = ctypes.c_int
+        self._library.h5t_vmap_merge_close.argtypes = [ctypes.c_longlong]
+        self._library.h5t_vmap_merge_close.restype = None
 
     def _invoke(self, function, *arguments) -> str:
         status, payload = self._invoke_raw(function, *arguments)
