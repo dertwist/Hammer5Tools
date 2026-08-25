@@ -20,7 +20,7 @@ with open(os.path.join(cur_dir, 'version.json'), encoding='utf-8') as version_fi
 
 gui_python_root = os.path.join(cur_dir, 'Hammer5ToolsGUI')
 gui_root = os.path.join(gui_python_root, 'gui')
-core_csharp_root = os.path.join(cur_dir, 'Hammer5ToolsCore', 'CSharp')
+core_csharp_root = os.path.join(cur_dir, 'Hammer5ToolsCore')
 external_root = os.path.join(core_csharp_root, 'external')
 external = f"--add-data={external_root};external"
 print(f"External path: {external}")
@@ -285,10 +285,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     ]
 
     unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
-    ue_scripts_dir = os.path.join(cur_dir, 'tools', 'ue_scripts')
+    ue_scripts_dir = os.path.join(gui_root, 'tools', 'ue_scripts')
     source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
-    bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
-    import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
+    bspsrc_dir = os.path.join(gui_root, 'tools', 'bspsrc')
 
     pyinstaller_dist = os.path.join(pyinstaller_root, 'dist')
     pyinstaller_work = os.path.join(pyinstaller_root, 'work')
@@ -399,7 +398,6 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--add-data={unreal_bridge_publish};unreal_bridge' if os.path.exists(unreal_bridge_publish) else '',
         f'--add-data={source_porter_publish};source_porter' if os.path.exists(source_porter_publish) else '',
         f'--add-data={bspsrc_dir};tools/bspsrc' if os.path.exists(bspsrc_dir) else '',
-        f'--add-data={import_scripts_dir};tools/import_scripts' if os.path.exists(import_scripts_dir) else '',
         f'--add-data={ue_scripts_dir};tools/ue_scripts' if os.path.exists(ue_scripts_dir) else '',
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
         f'--add-data={runtime_config_path};dotnet' if channel == 'stable' and os.path.exists(runtime_config_path) else '',

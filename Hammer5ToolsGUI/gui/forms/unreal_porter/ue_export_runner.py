@@ -18,7 +18,10 @@ from hammer5tools_core.runtime_paths import resolve_runtime_paths
 def _export_script() -> Path:
     paths = resolve_runtime_paths()
     bundled = paths.runtime_resource("tools", "ue_scripts", "export_assets.py")
-    return bundled if bundled.is_file() else paths.install_root / "tools" / "ue_scripts" / "export_assets.py"
+    if bundled.is_file():
+        return bundled
+    gui_root = Path(__file__).resolve().parents[2]
+    return gui_root / "tools" / "ue_scripts" / "export_assets.py"
 
 
 class UeExportError(RuntimeError):

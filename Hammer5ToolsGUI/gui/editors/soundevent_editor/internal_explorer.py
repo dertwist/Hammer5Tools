@@ -23,6 +23,7 @@ _VSND_FOLDERS_CACHE = None
 @exception_handler
 class VPKLoaderThread(QThread):
     vpk_loaded = Signal(list)
+    vpk_load_failed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,7 +34,14 @@ class VPKLoaderThread(QThread):
 
     def run(self):
         try:
-            path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+            cs2_path = get_cs2_path()
+            path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk')
+            if not cs2_path or not os.path.isfile(path):
+                self.vpk_load_failed.emit(
+                    f"CS2 installation not found (looked for {path}).\n"
+                    "Set the CS2 path in Preferences."
+                )
+                return
             with CoreBridge.instance().create_vpk_index() as index:
                 index.mount(path)
                 folders = []
@@ -46,7 +54,8 @@ class VPKLoaderThread(QThread):
                         folders.append(element)
                 self.vpk_loaded.emit(folders)
         except Exception as e:
-            self.vpk_loaded.emit([])
+            debug(f"VPK load failed: {e}")
+            self.vpk_load_failed.emit(str(e))
 
 
 @exception_handler
@@ -95,6 +104,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             # its parent aborts the process. See thread_parking.
             self.vpk_loader_thread = park(VPKLoaderThread())
             self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
+            self.vpk_loader_thread.vpk_load_failed.connect(self.on_vpk_load_failed)
             self.vpk_loader_thread.start()
 
     # ──────────────────────────────────────────────
@@ -347,9 +357,11 @@ class InternalSoundFileExplorer(QTreeWidget):
     #  Tree population
     # ──────────────────────────────────────────────
 
+    def on_vpk_load_failed(self, reason):
+        QMessageBox.critical(self, "Error", f"Failed to load VPK file:\n{reason}")
+
     def populate_tree(self, folders):
         if not folders:
-            QMessageBox.critical(self, "Error", "Failed to load VPK file.")
             return
 
         global _VSND_FOLDERS_CACHE

@@ -17,10 +17,11 @@ C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> ext
 - `Hammer5ToolsGUI/gui/`: windows, widgets, layouts, styling, input, presentation state. Must not parse Source 2 formats or duplicate a core evaluator — go through `CoreBridge` (`hammer5tools_core/bridge/`).
 - `Hammer5ToolsGUI/hammer5tools_core/`: Python bridge to the C# core (pythonnet/CLR + NativeAOT `ctypes`, `hammer5tools_core/native.py`). Pure Python, lives beside `gui/`, not under `Hammer5ToolsCore/`.
 - `Hammer5ToolsGUI/keyvalues3/`: standalone KV3 read/write library.
-- `Hammer5ToolsCore/CSharp/`: 100% C#. `Hammer5Tools.Core` does Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic; never depends on GUI or launcher. `Hammer5Tools.Native` exposes it via a NativeAOT ABI.
-- `Hammer5ToolsCore/CSharp/SourcePorter.Core` stays authoritative for its existing features until a deliberate migration replaces it — do not create competing implementations.
+- `Hammer5ToolsCore/`: 100% C#. `Hammer5Tools.Core` does Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic; never depends on GUI or launcher. `Hammer5Tools.Native` exposes it via a NativeAOT ABI.
+- `Hammer5ToolsCore/SourcePorter.Core` stays authoritative for its existing features until a deliberate migration replaces it — do not create competing implementations.
 - Consume external libraries as dependencies; keep Hammer5Tools behavior in Hammer5Tools-owned code.
-- `dev/tests/`: Python regression and characterization tests.
+- `Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
+- `Hammer5ToolsGUI/gui/tools/`: bundled external tools and scripts (bspsrc, import/UE scripts) shipped alongside the packaged app.
 - `makefile.py`: build and packaging entry point; `src/common.py`/root `version.json` own the application version.
 
 ## Before Writing New Code

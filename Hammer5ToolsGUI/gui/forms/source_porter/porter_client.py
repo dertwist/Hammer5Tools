@@ -41,7 +41,7 @@ class SourcePorterClient:
         if not status.available:
             return status.diagnostic or "Hammer5Tools Core is unavailable."
         if not is_pythonnet_available():
-            return "SourcePorter.Core.dll assembly not found. Build Hammer5ToolsCore/CSharp/SourcePorter.Core."
+            return "SourcePorter.Core.dll assembly not found. Build Hammer5ToolsCore/SourcePorter.Core."
         return ""
 
 
@@ -63,7 +63,7 @@ class PorterThread(QThread):
 
     def run(self):
         if not is_pythonnet_available():
-            self.log_signal.emit("[SourcePorter Error] SourcePorter.Core.dll is not available. Please build Hammer5ToolsCore/CSharp/SourcePorter.Core.")
+            self.log_signal.emit("[SourcePorter Error] SourcePorter.Core.dll is not available. Please build Hammer5ToolsCore/SourcePorter.Core.")
             self.finished_signal.emit(1)
             return
 
@@ -224,11 +224,11 @@ class PorterThread(QThread):
             runner.OnOutput += Action[Toolchain.ProcessLine](lambda line: on_log(line.Text))
 
             # Locate bspsrc.exe
-            root = Path(__file__).resolve().parents[4]
+            gui_root = Path(__file__).resolve().parents[2]
             from hammer5tools_core.runtime_paths import resolve_runtime_paths
             runtime_paths = resolve_runtime_paths()
             bspsrc_candidates = [
-                root / "tools" / "bspsrc" / "bspsrc.exe",
+                gui_root / "tools" / "bspsrc" / "bspsrc.exe",
                 runtime_paths.runtime_resource("tools", "bspsrc", "bspsrc.exe"),
             ]
             bspsrc_location = None

@@ -60,10 +60,10 @@ def _read_error(fh, limit: int = 300) -> str:
 def _candidate_bridge_paths():
     """Locations to search for the published bridge dll."""
     root = Path(__file__).resolve().parents[4]
-    yield root / "Hammer5ToolsCore" / "CSharp" / "UnrealBridge" / "publish" / "H5T.UnrealBridge.dll"
-    yield root / "Hammer5ToolsCore" / "CSharp" / "UnrealBridge" / "bin" / "Release" / "net10.0" / "H5T.UnrealBridge.dll"
-    yield root / "tools" / "unreal_bridge" / "publish" / "H5T.UnrealBridge.dll"
-    yield root / "Hammer5ToolsCore" / "CSharp" / "external" / "unreal_bridge" / "H5T.UnrealBridge.dll"
+    yield root / "Hammer5ToolsCore" / "UnrealBridge" / "publish" / "H5T.UnrealBridge.dll"
+    yield root / "Hammer5ToolsCore" / "UnrealBridge" / "bin" / "Release" / "net10.0" / "H5T.UnrealBridge.dll"
+    yield root / "Hammer5ToolsGUI" / "gui" / "tools" / "unreal_bridge" / "publish" / "H5T.UnrealBridge.dll"
+    yield root / "Hammer5ToolsCore" / "external" / "unreal_bridge" / "H5T.UnrealBridge.dll"
     # Frozen (PyInstaller) bundle
     if getattr(sys, "frozen", False):
         from hammer5tools_core.runtime_paths import resolve_runtime_paths
