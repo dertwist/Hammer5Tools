@@ -22,9 +22,9 @@ from PySide6.QtWidgets import QPushButton, QMessageBox, QInputDialog, QLineEdit
 from shiboken6 import isValid
 
 from gui.settings.common import get_addon_dir, get_settings_bool
-from gui.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
-from gui.git_sync.commit_msg import generate
-from gui.git_sync.conflict_dialog import ConflictDialog
+from gui.forms.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
+from gui.forms.git_sync.commit_msg import generate
+from gui.forms.git_sync.conflict_dialog import ConflictDialog
 
 _SYNC_ICON = ":/icons/sync_24dp.svg"
 
@@ -581,7 +581,7 @@ class GitController:
             self.button.setEnabled(not busy and self._is_repo)
 
 
-if __name__ == "__main__":   # python -m src.git_sync.controller
+if __name__ == "__main__":   # python -m gui.forms.git_sync.controller
     assert _progress("Receiving objects:  45% (450/1000), 1.20 MiB | 500.00 KiB/s") \
         == "Downloading 45% — 1.20 MiB | 500.00 KiB/s"
     assert _progress("remote: Counting objects:  9% (2/20)") == "Processing 9%"

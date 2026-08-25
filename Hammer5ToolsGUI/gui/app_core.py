@@ -19,7 +19,7 @@ from PySide6.QtNetwork import QLocalServer
 from gui.ipc.protocol import IPCMessage, IPCCommand
 from gui.forms.about.main import AboutDialog
 from gui.forms.mapbuilder.main import MapBuilderDialog
-from gui.git_sync.controller import GitController, SyncButton
+from gui.forms.git_sync.controller import GitController, SyncButton
 from gui.settings.main import (
     PreferencesDialog,
     get_steam_path,
