@@ -56,7 +56,7 @@ The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/g
 *   `Hammer5ToolsCore/`: C# domain projects (SourcePorter, UnrealBridge, native core).
 *   `Hammer5ToolsLauncher/`: Native startup, IPC, and GUI supervision.
 *   `Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
-*   `Hammer5ToolsCore/CSharp/external/`: External libraries and .NET resources.
+*   `Hammer5ToolsCore/external/`: External libraries and .NET resources.
 *   `Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
 
 ### Getting Started

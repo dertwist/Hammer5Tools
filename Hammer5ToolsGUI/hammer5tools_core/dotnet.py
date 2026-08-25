@@ -56,7 +56,7 @@ class DotNetPaths:
 
     def __init__(self, base_dir: Optional[str] = None):
         if base_dir is None:
-            development_external = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore' / 'CSharp' / 'external'
+            development_external = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore' / 'external'
             if development_external.is_dir():
                 base_dir = development_external
             else:
@@ -75,7 +75,7 @@ class DotNetPaths:
             return Path(env)
 
         # Search SourcePorter.Core publish output or local base directory
-        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore' / 'CSharp'
+        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore'
         from hammer5tools_core.runtime_paths import resolve_runtime_paths
         candidates = [
             net_core / 'SourcePorter.Core' / 'publish' / 'SourcePorter.Core.dll',
@@ -191,7 +191,7 @@ class DotNetInterop:
         # Preload the dependency versions SourcePorter.Core.dll was actually built
         # against, from whichever folder it was resolved from (SourcePorter.Core publish
         # folder or bundled source_porter directory).
-        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore' / 'CSharp'
+        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore'
         pub_folder = net_core / 'SourcePorter.Core' / 'publish'
         for dep_name in ("ValveKeyValue.dll", "ValvePak.dll", "Datamodel.NET.dll",
                          "System.IO.Hashing.dll", "Blake3.dll", "KeyValues2.dll"):

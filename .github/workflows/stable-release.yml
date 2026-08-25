@@ -49,11 +49,11 @@ jobs:
           # Pinned: CUE4Parse master restructured CUE4Parse_Conversion.Landscape
           # into Exporters/Dto. Bump only together with Program.cs.
           git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          dotnet publish Hammer5ToolsCore/CSharp/UnrealBridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath="${{ github.workspace }}/../CUE4Parse" -p:CUE4PARSE_SKIP_NATIVE=true -o Hammer5ToolsCore/CSharp/UnrealBridge/publish
+          dotnet publish Hammer5ToolsCore/UnrealBridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath="${{ github.workspace }}/../CUE4Parse" -p:CUE4PARSE_SKIP_NATIVE=true -o Hammer5ToolsCore/UnrealBridge/publish
 
       - name: Build SourcePorter Core
         run: |
-          dotnet publish Hammer5ToolsCore/CSharp/SourcePorter.Core/SourcePorter.Core.csproj -c Release -r win-x64 --self-contained false -o Hammer5ToolsCore/CSharp/SourcePorter.Core/publish
+          dotnet publish Hammer5ToolsCore/SourcePorter.Core/SourcePorter.Core.csproj -c Release -r win-x64 --self-contained false -o Hammer5ToolsCore/SourcePorter.Core/publish
 
       - name: Build All
 

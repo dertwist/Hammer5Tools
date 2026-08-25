@@ -2,7 +2,7 @@
 
   <!-- Shared settings for every managed Core project. -->
   <PropertyGroup>
-    <VersionManifest>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\version.json'))</VersionManifest>
+    <VersionManifest>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\version.json'))</VersionManifest>
     <VersionManifestText>$([System.IO.File]::ReadAllText('$(VersionManifest)'))</VersionManifestText>
     <Version>$([System.Text.RegularExpressions.Regex]::Match('$(VersionManifestText)', '&quot;version&quot;\s*:\s*&quot;([^&quot;]+)&quot;').Groups[1].Value)</Version>
     <LangVersion>latest</LangVersion>

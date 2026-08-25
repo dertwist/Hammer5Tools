@@ -306,7 +306,7 @@ class SmartPropNativeClient:
             Path(override) if override else None,
             paths.runtime_resource("smartprop_native", cls.LIBRARY_NAME),
             paths.application_resource("smartprop_native", cls.LIBRARY_NAME),
-            paths.install_root / "Hammer5ToolsCore" / "CSharp" / "Hammer5Tools.Native" / "publish" / cls.LIBRARY_NAME,
-            paths.install_root / "Hammer5ToolsCore" / "CSharp" / "Hammer5Tools.Native" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Native" / "publish" / cls.LIBRARY_NAME,
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Native" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
         ]
         return next((candidate.resolve() for candidate in candidates if candidate and candidate.is_file()), None)
