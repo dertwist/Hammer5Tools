@@ -215,7 +215,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--paths={gui_python_root}',
         '--hidden-import=gui.resources_rc',
         '--collect-all=gui',
-        '--collect-all=hammer5tools_core',
+        '--collect-all=core',
         '--collect-all=keyvalues3',
         # Only OpenGL.GL is imported anywhere; collect-submodules (no data/binaries)
         # still catches PyOpenGL's lazy per-extension submodule loading.

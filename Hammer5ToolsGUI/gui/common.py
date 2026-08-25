@@ -46,8 +46,8 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
-from hammer5tools_core.runtime_paths import resolve_runtime_paths
-from hammer5tools_core.version import APP_VERSION
+from core.runtime_paths import resolve_runtime_paths
+from core.version import APP_VERSION
 
 
 app_version = APP_VERSION

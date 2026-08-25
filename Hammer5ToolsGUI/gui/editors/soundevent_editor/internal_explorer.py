@@ -11,7 +11,7 @@ from PySide6.QtGui import QGuiApplication
 from gui.settings.main import get_cs2_path, get_addon_dir, debug
 from gui.common import SoundEventEditor_path
 from gui.widgets import exception_handler
-from hammer5tools_core.bridge.core import CoreBridge
+from core.bridge.core import CoreBridge
 from gui.editors.soundevent_editor.thread_parking import park
 
 # pak01_dir.vpk is global CS2 content, identical for every addon. Scan it once

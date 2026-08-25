@@ -1,7 +1,7 @@
 from gui.common import Kv3ToJson
 import vdf
 from collections import deque
-from hammer5tools_core.bridge import CoreBridge
+from core.bridge import CoreBridge
 
 
 def extract_vmap_references(vmap_path):

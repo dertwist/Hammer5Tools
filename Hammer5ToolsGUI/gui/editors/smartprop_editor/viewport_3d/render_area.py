@@ -25,7 +25,7 @@ from gui.editors.smartprop_editor.viewport_3d.shaders import (
     LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER
 )
 
-from hammer5tools_core.bridge import CoreBridge
+from core.bridge import CoreBridge
 
 
 def compile_shader(shader_type, source):

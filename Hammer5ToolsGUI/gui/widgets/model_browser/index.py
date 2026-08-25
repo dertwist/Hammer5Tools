@@ -227,7 +227,7 @@ def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple
     exts = tuple(extensions) if extensions else SUPPORTED_EXTENSIONS
     entries: List[ModelEntry] = []
     try:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         with CoreBridge.instance().create_vpk_index() as index:
             for vpk_path in vpk_paths:

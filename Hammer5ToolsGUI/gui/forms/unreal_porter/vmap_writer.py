@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import replace
 from typing import Optional
 
-from hammer5tools_core.bridge import CoreBridge
+from core.bridge import CoreBridge
 
 from .light_entities import CUBEMAP_COMPONENTS, LIGHT_COMPONENTS, SKY_COMPONENTS, ue_actor_to_entity
 from .transform import UETransform, UnitScale, convert_transform, mirror_placement

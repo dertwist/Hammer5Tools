@@ -39,12 +39,12 @@ class UnrealBridge:
         self.content_dir = content_dir
 
     def is_available(self) -> bool:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         return CoreBridge.instance().probe().available
 
     def why_unavailable(self) -> str:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         status = CoreBridge.instance().probe()
         return "" if status.available else (status.diagnostic or "Hammer5Tools Core is unavailable.")
@@ -52,8 +52,8 @@ class UnrealBridge:
     def _bridge(self):
         if not self.is_available():
             raise BridgeError(self.why_unavailable())
-        from hammer5tools_core.bridge import CoreBridge
-        from hammer5tools_core.native import NativeCoreError
+        from core.bridge import CoreBridge
+        from core.native import NativeCoreError
 
         return CoreBridge.instance(), NativeCoreError
 

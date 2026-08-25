@@ -159,7 +159,7 @@ def _install_crash_handler():
 
         # 1. Write to persistent crash log files
         try:
-            from hammer5tools_core.runtime_paths import resolve_runtime_paths
+            from core.runtime_paths import resolve_runtime_paths
             paths = resolve_runtime_paths()
             logs_dir = paths.user_data_root / "logs"
         except Exception:

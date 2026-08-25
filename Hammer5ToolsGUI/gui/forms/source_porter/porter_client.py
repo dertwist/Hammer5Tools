@@ -19,12 +19,12 @@ class SourcePorterClient:
         pass
 
     def is_available(self) -> bool:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         return CoreBridge.instance().probe().available
 
     def why_unavailable(self) -> str:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         status = CoreBridge.instance().probe()
         return "" if status.available else (status.diagnostic or "Hammer5Tools Core is unavailable.")
@@ -69,7 +69,7 @@ class PorterThread(QThread):
         self.finished_signal.emit(code)
 
     def _run_native(self) -> int:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         bridge = CoreBridge.instance()
         self._cancellation = bridge.create_smartprop_cancellation()
@@ -137,7 +137,7 @@ class PorterThread(QThread):
         """Locates bspsrc.exe alongside the packaged app or in the dev tree.
         None means "not found" — the native side treats that the same way the
         old CLI did when bspsrc wasn't bundled."""
-        from hammer5tools_core.runtime_paths import resolve_runtime_paths
+        from core.runtime_paths import resolve_runtime_paths
 
         gui_root = Path(__file__).resolve().parents[2]
         candidates = [

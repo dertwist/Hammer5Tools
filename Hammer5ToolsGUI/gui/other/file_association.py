@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
-from hammer5tools_core.runtime_paths import resolve_runtime_paths
+from core.runtime_paths import resolve_runtime_paths
 
 try:
     import winreg

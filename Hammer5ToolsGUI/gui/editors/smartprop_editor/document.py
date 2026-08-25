@@ -1703,7 +1703,7 @@ class SmartPropDocument(QMainWindow):
         from gui.common import get_cs2_path
         from gui.settings.common import get_addon_name
         from PySide6.QtWidgets import QFileDialog, QMessageBox
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         import os
         

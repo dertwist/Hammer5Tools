@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
 from gui.common import Presets_Path, Internal_Presets_Path, enable_dark_title_bar, app_dir
-from hammer5tools_core.bridge import CoreBridge
+from core.bridge import CoreBridge
 from PySide6.QtGui import QPixmap
 import binascii
 

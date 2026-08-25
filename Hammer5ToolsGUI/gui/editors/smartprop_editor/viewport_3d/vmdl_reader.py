@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from hammer5tools_core.bridge.core import CoreBridge
+from core.bridge.core import CoreBridge
 from gui.editors.smartprop_editor.viewport_3d.mesh_cache import MaterialData, MeshData, SubMeshData, MAX_TEXTURE_DIM
 
 

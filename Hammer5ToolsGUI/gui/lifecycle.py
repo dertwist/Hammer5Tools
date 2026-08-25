@@ -48,7 +48,7 @@ def relaunch_through_launcher(arguments) -> bool:
     if os.name != "nt" or os.environ.get(_RELAUNCH_MARKER_ENV) == "1":
         return False  # already relaunched once: the handoff is broken, not missing
     try:
-        from hammer5tools_core.runtime_paths import resolve_runtime_paths
+        from core.runtime_paths import resolve_runtime_paths
         launcher = resolve_runtime_paths().install_root / "Hammer5Tools.exe"
         if not launcher.is_file():
             return False

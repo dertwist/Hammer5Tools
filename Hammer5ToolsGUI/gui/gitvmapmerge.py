@@ -123,8 +123,8 @@ def merge(ours_path: str, theirs_path: str, base: str | None = None, allow_unrel
     geometry on top of each other. Pass allow_unrelated=True if that
     pile-everything-in behaviour is genuinely what you want.
     """
-    from hammer5tools_core.bridge import CoreBridge
-    from hammer5tools_core.native import NativeCoreError
+    from core.bridge import CoreBridge
+    from core.native import NativeCoreError
 
     bridge = CoreBridge.instance()
     try:

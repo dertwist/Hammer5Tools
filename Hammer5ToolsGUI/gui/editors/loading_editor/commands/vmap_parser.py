@@ -1,6 +1,6 @@
 """Loading-screen VMAP presentation adapter."""
 
-from hammer5tools_core.bridge import CoreBridge
+from core.bridge import CoreBridge
 
 
 def parse(dmx_file_path, show_entity_properties=True):

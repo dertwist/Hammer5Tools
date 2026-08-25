@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import Kv3ToJson, SoundEventEditor_path
-from hammer5tools_core.bridge.core import CoreBridge
+from core.bridge.core import CoreBridge
 from gui.settings.main import get_cs2_path, debug
 from gui.styles.common import qt_stylesheet_widgetlist2
 from gui.editors.soundevent_editor.thread_parking import park

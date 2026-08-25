@@ -253,7 +253,7 @@ class VsmartOpen:
         data = self.load_file(self.filename)
         data = self.fix_format(data)
         try:
-            from hammer5tools_core.bridge import CoreBridge
+            from core.bridge import CoreBridge
             data = CoreBridge.instance().deserialize_smartprop(data)
         except Exception:
             data = Kv3ToJson(data)
@@ -511,7 +511,7 @@ class VsmartSave:
         """Save the current document through the .NET SmartProp serializer."""
         out_data = self.document_data
         try:
-            from hammer5tools_core.bridge import CoreBridge
+            from core.bridge import CoreBridge
             k3_data = CoreBridge.instance().serialize_smartprop(out_data)
         except Exception:
             # Keep saving available on systems where the optional .NET runtime

@@ -76,7 +76,7 @@ def apply_taskbar_identity(window) -> None:
     if sys.platform != "win32":
         return
     try:
-        from hammer5tools_core.runtime_paths import resolve_runtime_paths
+        from core.runtime_paths import resolve_runtime_paths
         launcher = resolve_runtime_paths().install_root / "Hammer5Tools.exe"
         if not launcher.is_file():
             return  # development run: no launcher to relaunch through

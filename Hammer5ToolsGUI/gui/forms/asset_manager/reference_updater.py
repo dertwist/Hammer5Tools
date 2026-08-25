@@ -24,7 +24,7 @@ class ReferenceUpdater:
         return pattern.sub(lambda m: renames[m.group(0)], text)
 
     def _update_vmap_references(self, abs_path: str, renames: dict) -> bool:
-        from hammer5tools_core.bridge import CoreBridge
+        from core.bridge import CoreBridge
 
         result = CoreBridge.instance().rewrite_vmap_references(abs_path, renames)
         for diagnostic in result.diagnostics:
