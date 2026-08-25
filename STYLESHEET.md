@@ -37,7 +37,7 @@ The palette above is the **level 2 (Standard)** canonical source: every QSS colo
 |---|---|---|
 | 1 | Dark | Inverse of the brightening rewrite — restores the original pre-brightening palette (e.g. `#272727 → #151515`) |
 | 2 | Standard | Identity — literals pass through untouched (default) |
-| 3 | Bright | One more 8%-toward-white lift of every palette color (e.g. `#272727 → #383838`) |
+| 3 | Bright | HSL-lightness inverse of the standard palette, preserving accent hues (e.g. `#272727 → #D8D8D8`) |
 
 All colors must therefore be written as level-2 literals. New palette colors MUST be added to `_OLD_TO_LEVEL2` in `src/styles/theme.py` (and `dev/scripts/brighten_colors.py`) so they follow the brightness setting. Colors that bypass `setStyleSheet()` (QPainter pens, OpenGL clear colors) MUST resolve through `theme.qcolor()` / `theme.color()` / `theme.gl_clear_color()` instead of raw literals.
 

@@ -1,4 +1,4 @@
-"""Runtime theme brightness for the dark palette.
+"""Runtime theme selection for the application palette.
 
 The interface brightness setting (Preferences -> General, stored as
 APP/brightness_level in settings.ini) has three levels:
@@ -6,12 +6,12 @@ APP/brightness_level in settings.ini) has three levels:
     1 - Dark    : the original pre-brightening palette
     2 - Standard: the current source palette (default; identity map,
                   stylesheets pass through untouched)
-    3 - Bright  : the source palette lifted one more step toward white
+    3 - Bright  : a lightness-inverted light palette
 
-All QSS colors in the codebase are written as level-2 literals. Level 1 and
-level 3 are derived from the rewrite table below: its inverse restores the
-old palette exactly, and one more 8%-toward-white lift produces level 3
-(the same step size used between levels 1 and 2).
+All QSS colors in the codebase are written as level-2 literals. Level 1 is
+derived from the rewrite table below and restores the old palette exactly.
+Level 3 inverts each canonical color's HSL lightness, turning dark surfaces
+into layered off-whites while preserving the hues of accents and status colors.
 
 ``install()`` patches QWidget/QApplication ``setStyleSheet`` so every
 stylesheet (global QSS, compiled .ui styles, inline calls) is transformed
@@ -21,6 +21,7 @@ bypass stylesheets entirely (QPainter pens, the OpenGL clear color) use
 ``color()`` / ``qcolor()`` / ``gl_clear_color()`` with level-2 literals.
 """
 
+import colorsys
 import re
 import weakref
 
@@ -29,8 +30,6 @@ from PySide6.QtGui import QColor
 LEVEL_DARK = 1
 LEVEL_STANDARD = 2
 LEVEL_BRIGHT = 3
-
-_LIFT = 0.08
 
 # Rewrite table of the palette brightening: original (level 1) -> current
 # (level 2, canonical). Kept verbatim from dev/scripts/brighten_colors.py.
@@ -154,11 +153,16 @@ _PURE_TRIPLETS_TO_OLD = {
 }
 
 
-def _lift(hex_color):
-    r = int(hex_color[1:3], 16)
-    g = int(hex_color[3:5], 16)
-    b = int(hex_color[5:7], 16)
-    return "#%02x%02x%02x" % tuple(round(c + _LIFT * (255 - c)) for c in (r, g, b))
+def _invert_rgb_lightness(rgb):
+    normalized = tuple(channel / 255 for channel in rgb)
+    hue, lightness, saturation = colorsys.rgb_to_hls(*normalized)
+    inverted = colorsys.hls_to_rgb(hue, 1 - lightness, saturation)
+    return tuple(round(channel * 255) for channel in inverted)
+
+
+def _invert_hex_lightness(hex_color):
+    rgb = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+    return "#%02x%02x%02x" % _invert_rgb_lightness(rgb)
 
 
 def _invert(spec):
@@ -172,7 +176,9 @@ def _invert(spec):
 
 # canonical (level 2) -> level-specific hex
 PALETTE_2_TO_1 = _invert(_OLD_TO_LEVEL2)
-PALETTE_2_TO_3 = {new: _lift(new) for new in _OLD_TO_LEVEL2.values()}
+PALETTE_2_TO_3 = {new: _invert_hex_lightness(new) for new in _OLD_TO_LEVEL2.values()}
+PALETTE_2_TO_3["#ffffff"] = "#000000"
+PALETTE_2_TO_3["#fff"] = "#000000"
 
 _LEVEL_MAPS = {LEVEL_DARK: PALETTE_2_TO_1, LEVEL_STANDARD: {}, LEVEL_BRIGHT: PALETTE_2_TO_3}
 
@@ -187,6 +193,7 @@ _CACHE = {}
 
 _HEX_RE = re.compile(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{8}|[0-9a-fA-F]{3})(?![0-9a-fA-F])")
 _TRIPLET_RE = re.compile(r"(rgba?\s*\(\s*)(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})")
+_NAMED_WHITE_RE = re.compile(r"(?P<prefix>:\s*)white(?=\s*[;}])", re.IGNORECASE)
 
 
 def set_brightness_level(level):
@@ -212,7 +219,7 @@ def set_brightness_level(level):
         if _LEVEL == LEVEL_DARK:
             triplets[canon] = old
         else:
-            triplets[canon] = tuple(round(c + _LIFT * (255 - c)) for c in canon)
+            triplets[canon] = _invert_rgb_lightness(canon)
     _TRIPLET_MAP = triplets
     _CACHE = {}
 
@@ -245,6 +252,8 @@ def transform_qss(qss):
         return "%s%d, %d, %d" % (m.group(1), *new) if new else m.group(0)
 
     out = _HEX_RE.sub(hex_sub, qss)
+    if _LEVEL == LEVEL_BRIGHT:
+        out = _NAMED_WHITE_RE.sub(r"\g<prefix>#000000", out)
     if _TRIPLET_MAP:
         out = _TRIPLET_RE.sub(triplet_sub, out)
     _CACHE[qss] = out
@@ -264,7 +273,7 @@ def qcolor(hex_level2):
 _VIEWPORT_CLEAR = {  # matches glClearColor() for each level
     LEVEL_DARK: (0.11, 0.11, 0.11),
     LEVEL_STANDARD: (0.18, 0.18, 0.18),
-    LEVEL_BRIGHT: (0.25, 0.25, 0.25),
+    LEVEL_BRIGHT: (0.82, 0.82, 0.82),
 }
 
 
