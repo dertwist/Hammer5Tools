@@ -15,7 +15,7 @@
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
 
     <!-- Datamodel (DMX) reader/writer for the uncompiled VMAP graph. -->
-    <PackageReference Include="KeyValues2" Version="0.8.0" />
+    <PackageReference Include="KeyValues2" Version="0.10.0" />
 
   </ItemGroup>
 

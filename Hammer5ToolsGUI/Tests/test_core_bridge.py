@@ -122,19 +122,15 @@ def test_smartprop_deserializer_returns_python_native_document():
     assert document == {"m_Children": []}
 
 
-def test_valve_map_entities_are_converted_without_core_types():
-    properties = [
-        SimpleNamespace(Key="classname", Value="point_camera"),
-        SimpleNamespace(Key="targetname", Value="camera"),
-    ]
-    entity = SimpleNamespace(
-        ClassName="point_camera",
-        Origin="1 2 3",
-        Angles=None,
-        Properties=properties,
-    )
+def test_valve_map_entities_are_converted_from_native_json():
+    entity = {
+        "className": "point_camera",
+        "origin": "1 2 3",
+        "angles": None,
+        "properties": {"classname": "point_camera", "targetname": "camera"},
+    }
 
-    converted = CoreBridge._convert_valve_map_entity(entity)
+    converted = CoreBridge._convert_valve_map_entity_json(entity)
 
     assert converted == ValveMapEntity(
         "point_camera",
@@ -142,6 +138,25 @@ def test_valve_map_entities_are_converted_without_core_types():
         None,
         {"classname": "point_camera", "targetname": "camera"},
     )
+
+
+def test_valve_map_nodes_are_converted_recursively_from_native_json():
+    node = {
+        "name": "world",
+        "className": "CMapWorld",
+        "properties": {},
+        "children": [
+            {"name": "child", "className": "CMapEntity", "properties": {"classname": "prop_static"}, "children": []},
+        ],
+    }
+
+    converted = CoreBridge._convert_valve_map_node_json(node)
+
+    assert converted.name == "world"
+    assert converted.class_name == "CMapWorld"
+    assert len(converted.children) == 1
+    assert converted.children[0].class_name == "CMapEntity"
+    assert converted.children[0].properties == {"classname": "prop_static"}
 
 
 class FakeNativeVpk:

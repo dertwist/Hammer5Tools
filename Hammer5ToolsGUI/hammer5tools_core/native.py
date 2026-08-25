@@ -210,6 +210,27 @@ class SmartPropNativeClient:
             self._library.h5t_compiled_resource_read_json, *self._buffer_arguments(self._json_bytes(request)),
         ))
 
+    def read_valve_map(self, path: str) -> dict:
+        """Reads an uncompiled VMAP into the shared read-only projection (path/world/nodes/entities/...)."""
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_read_json, *self._buffer_arguments(path.encode("utf-8")),
+        ))
+
+    def rewrite_vmap_references(self, path: str, renames: dict) -> dict:
+        """Rewrites content-relative asset paths in a VMAP. Returns {"value": bool | None, "diagnostics": [...]}."""
+        request = {"path": path, "renames": renames}
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_rewrite_references_json, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def write_unreal_map(self, request: dict, output_path: str) -> dict:
+        """Writes typed Unreal placements to a VMAP. Returns {"value": {...} | None, "diagnostics": [...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_write_unreal_json,
+            *self._buffer_arguments(self._json_bytes(request)),
+            *self._buffer_arguments(output_path.encode("utf-8")),
+        ))
+
     def _configure_functions(self) -> None:
         pointer = ctypes.c_void_p
         length = ctypes.c_int
@@ -238,10 +259,15 @@ class SmartPropNativeClient:
             "h5t_compiled_model_read_json",
             "h5t_compiled_model_material_groups_json",
             "h5t_compiled_resource_read_json",
+            "h5t_vmap_read_json",
+            "h5t_vmap_rewrite_references_json",
         ):
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, output, output_length]
             function.restype = ctypes.c_int
+
+        self._library.h5t_vmap_write_unreal_json.argtypes = [pointer, length, pointer, length, output, output_length]
+        self._library.h5t_vmap_write_unreal_json.restype = ctypes.c_int
 
         self._library.h5t_vpk_open.argtypes = []
         self._library.h5t_vpk_open.restype = ctypes.c_longlong

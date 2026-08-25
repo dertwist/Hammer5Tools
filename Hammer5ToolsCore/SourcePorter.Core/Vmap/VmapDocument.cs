@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Datamodel;
 using DM = Datamodel.Datamodel;
 
@@ -71,9 +73,21 @@ public sealed class VmapDocument
     /// <summary>Replaces the world's child nodes with an empty array (skybox template).</summary>
     public void ClearWorldChildren() => World["children"] = new ElementArray();
 
+    // Datamodel.Datamodel's static constructor registers its built-in codecs via
+    // Activator.CreateInstance(Type), and Binary.Decode looks up the KeyValues2 source
+    // generator's per-project ElementFactory the same way — both via a reflection scan
+    // that NativeAOT trims away unless something declares them reachable. ElementFactory
+    // is generated into this project's own global namespace by the KeyValues2 package's
+    // analyzer; it exists even though nothing here subclasses Datamodel.Element.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>Loads a <c>.vmap</c> from disk.</summary>
     public static VmapDocument Load(string path) => new(DM.Load(path), path);
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>
     /// Loads a <c>.vmap</c> from an in-memory copy of the file so the file handle is <b>not</b>
     /// held open — required when we mean to overwrite the same path (a binary DMX <see cref="DM.Load(string)"/>
@@ -82,6 +96,9 @@ public sealed class VmapDocument
     public static VmapDocument LoadInMemory(string path) =>
         new(DM.Load(File.ReadAllBytes(path), Datamodel.Codecs.DeferredMode.Disabled), path);
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>
     /// Saves to <paramref name="path"/> (default: the load path) using the document's
     /// own encoding+version, so a text KeyValues2 map stays text and a binary map stays

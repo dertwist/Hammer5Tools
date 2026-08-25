@@ -155,7 +155,6 @@ class CoreBridge:
     def __init__(self, interop=None, native_client=None) -> None:
         self._interop = interop or DotNetInterop()
         self._native_client = native_client
-        self._source_porter_assembly = None
 
     @classmethod
     def instance(cls) -> CoreBridge:
@@ -237,67 +236,49 @@ class CoreBridge:
 
     def read_valve_map(self, path: str) -> ValveMapDocument:
         """Reads a VMAP through SourcePorter's shared Core reader contract."""
-        assembly = self._ensure_source_porter_loaded()
-        reader_type = assembly.GetType("SourcePorter.Core.Vmap.ValveMapReader")
-        if reader_type is None:
-            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.ValveMapReader")
-
-        import System
-
-        reader = System.Activator.CreateInstance(reader_type)
-        document = reader.Read(path)
-        world = self._convert_valve_map_node(document.World)
-        nodes = tuple(self._convert_valve_map_node(node) for node in document.Nodes)
-        entities = tuple(self._convert_valve_map_entity(entity) for entity in document.Entities)
-        asset_references = tuple(str(reference) for reference in document.AssetReferences)
-        thumbnail = None if document.Thumbnail is None else bytes(document.Thumbnail)
-        thumbnail_format = None if document.ThumbnailFormat is None else str(document.ThumbnailFormat)
+        document = self._smartprop_native().read_valve_map(path)
+        thumbnail = document["thumbnail"]
         return ValveMapDocument(
-            str(document.Path),
-            world,
-            nodes,
-            entities,
-            asset_references,
-            thumbnail,
-            thumbnail_format,
+            document["path"],
+            self._convert_valve_map_node_json(document["world"]),
+            tuple(self._convert_valve_map_node_json(node) for node in document["nodes"]),
+            tuple(self._convert_valve_map_entity_json(entity) for entity in document["entities"]),
+            tuple(document["assetReferences"]),
+            None if thumbnail is None else base64.b64decode(thumbnail),
+            document["thumbnailFormat"],
         )
 
     def rewrite_vmap_references(self, path: str, renames: Mapping[str, str]) -> VmapRewriteResult:
         """Rewrites VMAP body and prefix references through SourcePorter Core."""
-        assembly = self._ensure_source_porter_loaded()
-        rewriter_type = assembly.GetType("SourcePorter.Core.Vmap.VmapReferenceRewriter")
-        if rewriter_type is None:
-            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.VmapReferenceRewriter")
-
-        from System.Collections.Generic import Dictionary
-
-        native_renames = Dictionary[str, str]()
-        for old_path, new_path in renames.items():
-            native_renames.Add(old_path, new_path)
-        result = rewriter_type.GetMethod("Rewrite").Invoke(None, [path, native_renames])
-        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
-        return VmapRewriteResult(bool(result.Value), diagnostics)
+        result = self._smartprop_native().rewrite_vmap_references(path, dict(renames))
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        return VmapRewriteResult(bool(result["value"]), diagnostics)
 
     def write_unreal_map(self, path: str, request: Mapping) -> UnrealMapWriteResult:
         """Writes typed primitive Unreal placements through SourcePorter Core."""
-        assembly = self._ensure_source_porter_loaded()
-        writer_type = assembly.GetType("SourcePorter.Core.Vmap.UnrealMapWriter")
-        if writer_type is None:
-            raise CoreBridgeError("SourcePorter.Core does not provide Vmap.UnrealMapWriter")
-
-        result = writer_type.GetMethod("WriteJson").Invoke(
-            None,
-            [json.dumps(request, separators=(",", ":")), path],
-        )
-        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
-        value = result.Value
+        result = self._smartprop_native().write_unreal_map(dict(request), path)
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        value = result["value"]
         if value is None:
             return UnrealMapWriteResult(0, None, None, diagnostics)
         return UnrealMapWriteResult(
-            int(value.PlacementCount),
-            str(value.Encoding),
-            int(value.EncodingVersion),
+            value["placementCount"],
+            value["encoding"],
+            value["encodingVersion"],
             diagnostics,
+        )
+
+    @classmethod
+    def _convert_valve_map_node_json(cls, node: Mapping) -> ValveMapNode:
+        return ValveMapNode(
+            node["name"], node["className"], dict(node["properties"]),
+            tuple(cls._convert_valve_map_node_json(child) for child in node["children"]),
+        )
+
+    @staticmethod
+    def _convert_valve_map_entity_json(entity: Mapping) -> ValveMapEntity:
+        return ValveMapEntity(
+            entity["className"], entity["origin"], entity["angles"], dict(entity["properties"]),
         )
 
     def read_compiled_model(self, game_directory: str, active_addon: str, resource_path: str,
@@ -389,29 +370,6 @@ class CoreBridge:
 
             self._native_client = SmartPropNativeClient()
         return self._native_client
-
-    @staticmethod
-    def _convert_valve_map_entity(entity) -> ValveMapEntity:
-        properties = {str(item.Key): str(item.Value) for item in entity.Properties}
-        origin = None if entity.Origin is None else str(entity.Origin)
-        angles = None if entity.Angles is None else str(entity.Angles)
-        return ValveMapEntity(str(entity.ClassName), origin, angles, properties)
-
-    @classmethod
-    def _convert_valve_map_node(cls, node) -> ValveMapNode:
-        properties = {str(item.Key): str(item.Value) for item in node.Properties}
-        children = tuple(cls._convert_valve_map_node(child) for child in node.Children)
-        return ValveMapNode(str(node.Name), str(node.ClassName), properties, children)
-
-    def _ensure_source_porter_loaded(self):
-        if self._source_porter_assembly is not None:
-            return self._source_porter_assembly
-
-        try:
-            self._source_porter_assembly = self._interop.setup_source_porter()
-            return self._source_porter_assembly
-        except Exception as error:
-            raise CoreBridgeError(f"SourcePorter Core is unavailable: {error}") from error
 
 
 class VpkIndex:

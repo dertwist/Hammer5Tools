@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
+    <ProjectReference Include="..\SourcePorter.Core\SourcePorter.Core.csproj" />
   </ItemGroup>
 
 </Project>

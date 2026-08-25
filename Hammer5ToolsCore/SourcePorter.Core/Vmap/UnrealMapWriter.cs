@@ -152,6 +152,7 @@ public static class UnrealMapWriter
     // codecs' parameterless constructors reachable.
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     private static (DM Document, Element World) CreateDocument()
     {
         var document = new DM("vmap", 40);
