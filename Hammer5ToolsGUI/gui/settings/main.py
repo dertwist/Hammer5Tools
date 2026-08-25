@@ -176,6 +176,19 @@ class PreferencesDialog(QDialog):
         row_git.addStretch()
         layout_other.addLayout(row_git)
 
+        row_debug = QHBoxLayout()
+        self.btn_open_console = Button(text=" Open Console")
+        self.btn_open_console.setToolTip("Open a console window for log output.")
+        row_debug.addWidget(self.btn_open_console)
+        self.checkBox_debug_info = QCheckBox("Enable Debug Info", self.frame_other)
+        self.checkBox_debug_info.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_debug_info.setToolTip(
+            "Print internal debug messages to the console (click Open Console above to see them)."
+        )
+        row_debug.addWidget(self.checkBox_debug_info)
+        row_debug.addStretch()
+        layout_other.addLayout(row_debug)
+
         layout.addWidget(self.frame_other)
         layout.addStretch()
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
@@ -388,6 +401,7 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
         self.checkBox_git_generate_commit_messages.setChecked(
             get_settings_bool('GitSync', 'generate_commit_messages', True))
+        self.checkBox_debug_info.setChecked(get_settings_bool('OTHER', 'debug_info', False))
         # Same default as get_channel(), so a dev build shows the box already ticked
         self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
         # The label describes the running build, not the channel being followed
@@ -471,6 +485,10 @@ class PreferencesDialog(QDialog):
         self.checkBox_git_generate_commit_messages.toggled.connect(
             lambda checked: set_settings_bool('GitSync', 'generate_commit_messages', checked)
         )
+        self.checkBox_debug_info.toggled.connect(
+            lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
+        )
+        self.btn_open_console.clicked.connect(self._open_console)
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
@@ -590,6 +608,10 @@ class PreferencesDialog(QDialog):
         
         self.action_buttons_panel.check_update_button.setEnabled(True)
         self.populate_preferences()
+
+    def _open_console(self):
+        from gui.other.console import open_console
+        open_console()
 
     def force_file_associations(self):
         setup_all_associations(force=True, parent_window=self)

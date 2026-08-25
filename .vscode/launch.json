@@ -31,6 +31,18 @@
                 "--dev",
                 "--package"
             ]
+        },
+        {
+            "name": "compile_ui",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/compile_ui.py",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            }
         }
     ]
 }

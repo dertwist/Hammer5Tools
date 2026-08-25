@@ -219,12 +219,6 @@ def _install_crash_handler():
 
 
 
-def allocate_console():
-    if not ctypes.windll.kernel32.GetConsoleWindow():
-        ctypes.windll.kernel32.AllocConsole()
-        sys.stdout = open("CONOUT$", "w")
-        sys.stderr = open("CONOUT$", "w")
-
 if __name__ == "__main__":
     # Add the 'src' directory to sys.path so that 'import resources_rc' and other
     # top-level imports within the 'src' package work correctly.
@@ -263,7 +257,6 @@ if __name__ == "__main__":
         sys.exit(2)
 
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
-    parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output')
     parser.add_argument('--create-vmdl', help='Create VMDL in folder')
     parser.add_argument('--quick-vmdl', help='Quick create VMDL from mesh')
@@ -275,6 +268,7 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
 
     if args.console:
+        from gui.other.console import allocate_console
         allocate_console()
 
     # Must run before anything spawns a child process.
@@ -345,7 +339,7 @@ if __name__ == "__main__":
     app.setStyleSheet(QT_Stylesheet_global)
 
     # Create main window
-    widget = Widget(dev_mode=args.dev)
+    widget = Widget()
     from gui.other.taskbar_identity import apply_taskbar_identity
     apply_taskbar_identity(widget)
     widget.show()

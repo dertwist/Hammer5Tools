@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import time
 from PySide6.QtWidgets import (
@@ -94,24 +95,8 @@ class AlternatingMenu(QMenu):
             row += 1
 
 
-class DevWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Development Widget")
-        self.setGeometry(100, 100, 400, 300)
-        layout = QVBoxLayout()
-        label = QLabel("Development Mode Active", self)
-        layout.addWidget(label)
-        self.checkBox_debug_info = QCheckBox("Enable Debug Info", self)
-        self.checkBox_debug_info.setChecked(get_settings_bool('OTHER', 'debug_info', False))
-        self.checkBox_debug_info.toggled.connect(
-            lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
-        )
-        layout.addWidget(self.checkBox_debug_info)
-        self.setLayout(layout)
-
 class Widget(QMainWindow):
-    def __init__(self, parent=None, dev_mode=False):
+    def __init__(self, parent=None):
         super().__init__(parent)
         from gui.ui_main import Ui_MainWindow
         self.ui = Ui_MainWindow()
@@ -163,10 +148,6 @@ class Widget(QMainWindow):
         self.launchOptionPoller.setInterval(1000)
         self.launchOptionPoller.timeout.connect(self.updateLaunchAddonButton)
         self.launchOptionPoller.start()
-
-        if dev_mode:
-            self.dev_widget = DevWidget(self)
-            self.ui.centralwidget.layout().addWidget(self.dev_widget)
 
         QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
@@ -481,7 +462,7 @@ class Widget(QMainWindow):
             self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
             return
         addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
-        found_any = False
+        found_names = []
         try:
             if not os.path.exists(addons_folder):
                 self.ui.ComboBoxSelectAddon.addItem("Addons Folder Not Found")
@@ -491,7 +472,8 @@ class Widget(QMainWindow):
                 full_path = os.path.join(addons_folder, item)
                 if os.path.isdir(full_path) and item not in exclude_addons:
                     self.ui.ComboBoxSelectAddon.addItem(item)
-                    found_any = True
+                    found_names.append(item)
+            found_any = bool(found_names)
             if not found_any:
                 response = QMessageBox.question(self, "No Addon Found", "No addons found. Would you like to create one now?", QMessageBox.Yes | QMessageBox.No)
                 if response == QMessageBox.Yes:
@@ -501,16 +483,22 @@ class Widget(QMainWindow):
                 else:
                     self.ui.ComboBoxSelectAddon.addItem("")
                     self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
-            if not get_addon_name() and found_any: set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+            # The saved addon setting defaults to the literal "addon", which is
+            # almost never a real folder name. If it doesn't match any addon
+            # that actually exists, pick one at random instead of leaving that
+            # placeholder name selected.
+            if found_any and get_addon_name() not in found_names:
+                set_addon_name(random.choice(found_names))
         except Exception as e: print("Failed to load addons:", e)
 
     def refresh_addon_combobox(self):
         try: self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
         except Exception: pass
-        addon = get_addon_name()
         self.ui.ComboBoxSelectAddon.clear()
         self.populate_addon_combobox()
-        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
+        # Read after populate: it may have corrected a stale/default addon
+        # name to a real one, and the combo should reflect that correction.
+        self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
         tools = ["SoundEventEditorMainWindow", "SmartPropEditorMainWindow", "BatchCreator_MainWindow", "LoadingEditorMainWindow"]
         if not any(getattr(self, tool, None) for tool in tools): self.selected_addon_name()
