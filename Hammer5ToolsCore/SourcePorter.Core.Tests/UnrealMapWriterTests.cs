@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-using SourcePorter.Core.Vmap;
+using Hammer5Tools.Core.Format.Vmap;
 
 namespace SourcePorter.Core.Tests;
 

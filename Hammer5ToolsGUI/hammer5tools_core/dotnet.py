@@ -1,5 +1,9 @@
 """
-.NET Interop module for SourcePorter.Core and KeyValues (Datamodel.NET) handling.
+.NET Interop module for KeyValues (Datamodel.NET) handling — the git .vmap
+3-way merge tool's last pythonnet consumer (gui/gitvmapmerge.py). Everything
+else that used to load a .NET assembly through here (SmartProp, VPK/compiled
+resources, VMAP, SourcePorter's porting pipeline) now goes through the
+NativeAOT ABI in hammer5tools_core/native.py instead.
 """
 
 import os
@@ -15,40 +19,6 @@ import binascii
 
 tests_path = Path(__file__).parent.parent / 'tests'
 RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
-
-# (context, path) -> Assembly, so a repeat load is a dict hit. setup_source_porter()
-# is called from a fresh DotNetInterop() per call site; without this the second
-# call site to run in a given process hits the same FileLoadException.
-_alc_loaded: dict = {}
-_alc_contexts: dict = {}
-
-
-def _get_alc(context: Optional[str]):
-    """Return ``(AssemblyLoadContext type, instance)``; ``None`` = the default one."""
-    import System
-    alc_type = System.Type.GetType("System.Runtime.Loader.AssemblyLoadContext")
-    if context is None:
-        return alc_type, alc_type.GetProperty("Default").GetValue(None)
-    if context not in _alc_contexts:
-        ctor = alc_type.GetConstructor([System.String, System.Boolean])
-        _alc_contexts[context] = ctor.Invoke([context, False])
-    return alc_type, _alc_contexts[context]
-
-
-def _load_assembly_into(path: Path, context: Optional[str] = None):
-    """Load ``path`` into ``context`` (the default one when None), once per process."""
-    import System
-    key = (context, str(path))
-    if key not in _alc_loaded:
-        alc_type, alc = _get_alc(context)
-        load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
-        _alc_loaded[key] = load_method.Invoke(alc, [str(path)])
-    return _alc_loaded[key]
-
-
-def _load_into_default_alc(path: Path) -> None:
-    """Load ``path`` into the default AssemblyLoadContext, once per process."""
-    _load_assembly_into(path, None)
 
 
 class DotNetPaths:
@@ -67,31 +37,6 @@ class DotNetPaths:
             base_dir = Path(base_dir)
 
         self.keyvalues2_net = base_dir / 'Datamodel.NET.dll'
-        self.source_porter_core = self._find_source_porter_core(base_dir)
-
-    def _find_source_porter_core(self, base_dir: Path) -> Path:
-        env = os.environ.get("H5T_SOURCE_PORTER_CORE")
-        if env and Path(env).is_file():
-            return Path(env)
-
-        # Search SourcePorter.Core publish output or local base directory
-        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore'
-        from hammer5tools_core.runtime_paths import resolve_runtime_paths
-        candidates = [
-            net_core / 'SourcePorter.Core' / 'publish' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net9.0' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net9.0' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'net10.0' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'net10.0' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Release' / 'SourcePorter.Core.dll',
-            net_core / 'SourcePorter.Core' / 'bin' / 'Debug' / 'SourcePorter.Core.dll',
-            base_dir / 'SourcePorter.Core.dll',
-            resolve_runtime_paths().runtime_resource('source_porter', 'SourcePorter.Core.dll'),
-        ]
-        existing = [c for c in candidates if c.is_file()]
-        if existing:
-            return max(existing, key=lambda p: p.stat().st_mtime)
-        return base_dir / 'SourcePorter.Core.dll'
 
 
 class DotNetInterop:
@@ -178,33 +123,6 @@ class DotNetInterop:
 
         return Datamodel.Datamodel, Datamodel.Element, DeferredMode
 
-    def setup_source_porter(self):
-        """Setup SourcePorter.Core .NET interop via pythonnet."""
-        self._init_pythonnet()
-
-        sp_dll = self.paths.source_porter_core
-        if not sp_dll.exists():
-            raise FileNotFoundError(f"SourcePorter.Core.dll assembly not found: {sp_dll}")
-
-        import System
-
-        # Preload the dependency versions SourcePorter.Core.dll was actually built
-        # against, from whichever folder it was resolved from (SourcePorter.Core publish
-        # folder or bundled source_porter directory).
-        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore'
-        pub_folder = net_core / 'SourcePorter.Core' / 'publish'
-        for dep_name in ("ValveKeyValue.dll", "ValvePak.dll", "Datamodel.NET.dll",
-                         "System.IO.Hashing.dll", "Blake3.dll", "KeyValues2.dll"):
-            dep = sp_dll.parent / dep_name
-            if not dep.is_file() and pub_folder.exists():
-                dep = pub_folder / dep_name
-            if dep.is_file():
-                _load_into_default_alc(dep)
-
-        _load_into_default_alc(sp_dll)
-
-        sp_assembly = System.Reflection.Assembly.LoadFrom(str(sp_dll))
-        return sp_assembly
 
 class DotNetRuntimeChecker:
     """Check and manage .NET runtime installation."""
@@ -349,5 +267,5 @@ def setup_keyvalues2():
 
 if __name__ == "__main__":
     interop = DotNetInterop()
-    assert interop.setup_source_porter() is not None
-    print("Self-check passed: SourcePorter.Core loaded")
+    assert interop.setup_keyvalues() is not None
+    print("Self-check passed: KeyValues2 (Datamodel.NET) loaded")

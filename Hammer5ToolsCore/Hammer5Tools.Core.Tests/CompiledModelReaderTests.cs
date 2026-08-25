@@ -1,4 +1,4 @@
-using Hammer5Tools.Core.Resources;
+using Hammer5Tools.Core.Format.Resources;
 
 namespace Hammer5Tools.Core.Tests;
 

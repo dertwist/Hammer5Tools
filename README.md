@@ -53,7 +53,7 @@ Want to contribute or build your own version? Here's the lowdown on the project 
 The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/gui/` and can run standalone if you point it to the right paths. `Hammer5ToolsGUI/gui/main.py` is the entry point that brings everything together.
 
 *   `Hammer5ToolsGUI/`: PySide6 application, editors, widgets, styles, and resources.
-*   `Hammer5ToolsCore/`: C# domain projects (SourcePorter, UnrealBridge, native core).
+*   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL — Source 2 parsing, porting, and Unreal bridge logic.
 *   `Hammer5ToolsLauncher/`: Native startup, IPC, and GUI supervision.
 *   `Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
 *   `Hammer5ToolsCore/external/`: External libraries and .NET resources.

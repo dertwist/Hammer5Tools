@@ -1,7 +1,8 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
-using SourcePorter.Core.Toolchain;
+using Hammer5Tools.Core.IO.Toolchain;
+using Hammer5Tools.Core.Format.Toolchain;
 
 namespace SourcePorter.Core.Tests;
 

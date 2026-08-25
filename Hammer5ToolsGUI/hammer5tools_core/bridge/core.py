@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import json
 from typing import Optional
@@ -267,6 +267,48 @@ class CoreBridge:
             value["encodingVersion"],
             diagnostics,
         )
+
+    def source_porter_validate(
+        self, cs2_dir: str, addon: str, *, log: Callable[[str], None], cancellation=None,
+    ) -> int:
+        """Validates an addon's assets. Returns 0 (clean), 1 (issues found), or a negative status."""
+        return self._smartprop_native().source_porter_validate(
+            {"cs2Dir": cs2_dir, "addon": addon}, log, cancellation=cancellation)
+
+    def source_porter_force_import(
+        self, cs2_dir: str, addon: str, asset_paths: Sequence[str], *,
+        no_compile_assets: bool = False, log: Callable[[str], None], cancellation=None,
+    ) -> int:
+        """Force-imports specific Source 1 asset paths into an addon."""
+        return self._smartprop_native().source_porter_force_import({
+            "cs2Dir": cs2_dir, "addon": addon,
+            "assetPaths": list(asset_paths), "noCompileAssets": no_compile_assets,
+        }, log, cancellation=cancellation)
+
+    def source_porter_repair(
+        self, cs2_dir: str, addon: str, *, log: Callable[[str], None], cancellation=None,
+    ) -> int:
+        """Validates then re-imports an addon's missing assets."""
+        return self._smartprop_native().source_porter_repair(
+            {"cs2Dir": cs2_dir, "addon": addon}, log, cancellation=cancellation)
+
+    def source_porter_port(
+        self, cs2_dir: str, source_map: str, addon: str, *,
+        bspsrc_location: str | None = None, threads: int = 1,
+        no_bsp: bool = False, no_merge: bool = False, no_deps: bool = False, no_unpack: bool = False,
+        compile_map: bool = False, no_compile_assets: bool = False, collapse_prefabs: bool = False,
+        repair: bool = False, use_filelist: bool = False, compact: bool = True,
+        log: Callable[[str], None], cancellation=None,
+    ) -> int:
+        """Ports a Source 1 map into a CS2 addon."""
+        return self._smartprop_native().source_porter_port({
+            "cs2Dir": cs2_dir, "sourceMap": source_map, "addon": addon,
+            "bspsrcLocation": bspsrc_location, "threads": threads,
+            "noBsp": no_bsp, "noMerge": no_merge, "noDeps": no_deps, "noUnpack": no_unpack,
+            "compileMap": compile_map, "noCompileAssets": no_compile_assets,
+            "collapsePrefabs": collapse_prefabs, "repair": repair,
+            "useFilelist": use_filelist, "compact": compact,
+        }, log, cancellation=cancellation)
 
     @classmethod
     def _convert_valve_map_node_json(cls, node: Mapping) -> ValveMapNode:

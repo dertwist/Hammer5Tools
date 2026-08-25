@@ -1,5 +1,5 @@
-using SourcePorter.Core.Toolchain;
-using SourcePorter.Core.Validation;
+using Hammer5Tools.Core.Format.Toolchain;
+using Hammer5Tools.Core.Format.Validation;
 
 namespace SourcePorter.Core.Tests;
 

@@ -1,4 +1,5 @@
-using Hammer5Tools.Core.Resources;
+using Hammer5Tools.Core.IO.Vpk;
+using Hammer5Tools.Core.IO.CompiledResource;
 
 namespace Hammer5Tools.Core.Tests;
 

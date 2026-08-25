@@ -1,6 +1,6 @@
 using Datamodel;
-using SourcePorter.Core.Domain;
-using SourcePorter.Core.Validation;
+using Hammer5Tools.Core.IO.Domain;
+using Hammer5Tools.Core.Format.Validation;
 using DM = Datamodel.Datamodel;
 
 namespace SourcePorter.Core.Tests;

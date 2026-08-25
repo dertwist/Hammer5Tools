@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SourcePorter.Core\SourcePorter.Core.csproj" />
+    <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
   </ItemGroup>
 
 </Project>

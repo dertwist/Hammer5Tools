@@ -5,9 +5,15 @@ from __future__ import annotations
 import ctypes
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 from hammer5tools_core.runtime_paths import resolve_runtime_paths
+
+# Matches the C ABI's `void (*)(const uint8_t* line, int32_t line_length)` log
+# callback (SourcePorterApi.cs). Module-level so every streaming call shares one
+# ctypes function type instead of re-deriving it per call.
+_LOG_CALLBACK_TYPE = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_int)
 
 
 class NativeCoreError(RuntimeError):
@@ -43,13 +49,13 @@ class SmartPropNativeClient:
     """Marshals primitive SmartProp requests across the stable C ABI."""
 
     ABI_VERSION = 1
-    LIBRARY_NAME = "Hammer5Tools.Native.dll"
+    LIBRARY_NAME = "Hammer5Tools.Core.dll"
 
     def __init__(self, library_path: str | os.PathLike[str] | None = None) -> None:
         path = Path(library_path).resolve() if library_path else self._find_library()
         if path is None:
             raise NativeCoreError(
-                "Hammer5Tools Native Core was not found; publish Hammer5Tools.Native first"
+                "Hammer5Tools Native Core was not found; publish Hammer5Tools.Core first"
             )
 
         self._dll_directory = None
@@ -231,6 +237,49 @@ class SmartPropNativeClient:
             *self._buffer_arguments(output_path.encode("utf-8")),
         ))
 
+    def source_porter_validate(
+        self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
+    ) -> int:
+        """Validates an addon's assets. Streams progress/issue lines through ``log``.
+        Returns 0 (no issues), 1 (issues found — not an error), or a negative status."""
+        return self._invoke_streaming(self._library.h5t_source_porter_validate, request, log, cancellation)
+
+    def source_porter_force_import(
+        self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
+    ) -> int:
+        """Force-imports specific Source 1 asset paths into an addon. Streams progress through ``log``."""
+        return self._invoke_streaming(self._library.h5t_source_porter_force_import, request, log, cancellation)
+
+    def source_porter_repair(
+        self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
+    ) -> int:
+        """Validates then re-imports an addon's missing assets. Streams progress/issue lines through ``log``."""
+        return self._invoke_streaming(self._library.h5t_source_porter_repair, request, log, cancellation)
+
+    def source_porter_port(
+        self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
+    ) -> int:
+        """Ports a Source 1 map into a CS2 addon. Streams progress/issue lines through ``log``."""
+        return self._invoke_streaming(self._library.h5t_source_porter_port, request, log, cancellation)
+
+    def _invoke_streaming(
+        self, function, request: dict, log: Callable[[str], None], cancellation: NativeCancellation | None,
+    ) -> int:
+        """Calls a SourcePorter-style command: JSON request in, log lines streamed
+        synchronously through a native callback, an int status code out."""
+        buffer, length = self._buffer_arguments(self._json_bytes(request))
+
+        def on_log(line: ctypes.c_void_p, line_length: int) -> None:
+            # A Python exception must never unwind back through the native call
+            # frame that invoked this callback — swallow and drop the line.
+            try:
+                log(ctypes.string_at(line, line_length).decode("utf-8", errors="replace"))
+            except Exception:
+                pass
+
+        callback = _LOG_CALLBACK_TYPE(on_log)
+        return int(function(buffer, length, callback, 0 if cancellation is None else cancellation.handle))
+
     def _configure_functions(self) -> None:
         pointer = ctypes.c_void_p
         length = ctypes.c_int
@@ -280,6 +329,16 @@ class SmartPropNativeClient:
         for name in ("h5t_vpk_mount", "h5t_vpk_add_loose_root", "h5t_vpk_read_bytes", "h5t_vpk_entries_json"):
             function = getattr(self._library, name)
             function.argtypes = [ctypes.c_longlong, pointer, length, output, output_length]
+            function.restype = ctypes.c_int
+
+        for name in (
+            "h5t_source_porter_validate",
+            "h5t_source_porter_force_import",
+            "h5t_source_porter_repair",
+            "h5t_source_porter_port",
+        ):
+            function = getattr(self._library, name)
+            function.argtypes = [pointer, length, _LOG_CALLBACK_TYPE, ctypes.c_longlong]
             function.restype = ctypes.c_int
 
     def _invoke(self, function, *arguments) -> str:
@@ -332,7 +391,7 @@ class SmartPropNativeClient:
             Path(override) if override else None,
             paths.runtime_resource("smartprop_native", cls.LIBRARY_NAME),
             paths.application_resource("smartprop_native", cls.LIBRARY_NAME),
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Native" / "publish" / cls.LIBRARY_NAME,
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Native" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "publish" / cls.LIBRARY_NAME,
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
         ]
         return next((candidate.resolve() for candidate in candidates if candidate and candidate.is_file()), None)

@@ -6,8 +6,5 @@
   </Configurations>
   <Project Path="Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
   <Project Path="Hammer5Tools.Core/Hammer5Tools.Core.csproj" />
-  <Project Path="Hammer5Tools.Native/Hammer5Tools.Native.csproj" />
   <Project Path="SourcePorter.Core.Tests/SourcePorter.Core.Tests.csproj" />
-  <Project Path="SourcePorter.Core/SourcePorter.Core.csproj" />
-  <Project Path="UnrealBridge/UnrealBridge.csproj" />
 </Solution>

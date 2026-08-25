@@ -26,7 +26,7 @@ public class DmxMaterialScannerTests
                 return new[] { mesh };
             });
 
-            var materials = SourcePorter.Core.Validation.DmxMaterialScanner.Scan(path);
+            var materials = Hammer5Tools.Core.Format.Validation.DmxMaterialScanner.Scan(path);
 
             Assert.Contains("materials/models/props/crate.vmat", materials, StringComparer.OrdinalIgnoreCase);
             Assert.Contains("materials/models/props/crate_lod.vmat", materials, StringComparer.OrdinalIgnoreCase);
@@ -49,7 +49,7 @@ public class DmxMaterialScannerTests
                 return new[] { mesh };
             });
 
-            var materials = SourcePorter.Core.Validation.DmxMaterialScanner.Scan(path);
+            var materials = Hammer5Tools.Core.Format.Validation.DmxMaterialScanner.Scan(path);
 
             Assert.Single(materials);
             Assert.Contains("materials/models/props/crate.vmat", materials, StringComparer.OrdinalIgnoreCase);
@@ -72,7 +72,7 @@ public class DmxMaterialScannerTests
                 return new[] { m1, m2 };
             });
 
-            var materials = SourcePorter.Core.Validation.DmxMaterialScanner.Scan(path);
+            var materials = Hammer5Tools.Core.Format.Validation.DmxMaterialScanner.Scan(path);
 
             Assert.Single(materials);
         }
@@ -93,7 +93,7 @@ public class DmxMaterialScannerTests
                 return new[] { mesh };
             });
 
-            var materials = SourcePorter.Core.Validation.DmxMaterialScanner.Scan(path);
+            var materials = Hammer5Tools.Core.Format.Validation.DmxMaterialScanner.Scan(path);
 
             Assert.Contains("materials/models/props/crate.vmat", materials, StringComparer.OrdinalIgnoreCase);
         }
@@ -109,7 +109,7 @@ public class DmxMaterialScannerTests
             var path = Path.Combine(root, "not-a-dmx.dmx");
             File.WriteAllBytes(path, [0x00, 0x01, 0x02, 0x03]); // garbage, not a DMX header
 
-            var materials = SourcePorter.Core.Validation.DmxMaterialScanner.Scan(path);
+            var materials = Hammer5Tools.Core.Format.Validation.DmxMaterialScanner.Scan(path);
 
             Assert.Empty(materials);
         }

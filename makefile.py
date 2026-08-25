@@ -211,55 +211,17 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
 
 
 def build_libraries() -> None:
-    """Builds and publishes all Windows x64 .NET and native libraries."""
-    smartprop_native_project = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'Hammer5Tools.Native.csproj')
-    smartprop_native_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'publish')
-    if os.path.exists(smartprop_native_project):
-        print("Building Hammer5Tools.Native (win-x64 NativeAOT)...")
-        subprocess.run([
-            'dotnet', 'publish', smartprop_native_project,
-            '--configuration', 'Release',
-            '--runtime', 'win-x64',
-            '--self-contained', 'true',
-            '--output', smartprop_native_publish,
-        ], check=True)
-
+    """Builds and publishes the Hammer5Tools.Core native AOT library."""
     core_project = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'Hammer5Tools.Core.csproj')
     core_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'publish')
     if os.path.exists(core_project):
-        print("Building Hammer5Tools.Core...")
+        print("Building Hammer5Tools.Core (win-x64 NativeAOT)...")
         subprocess.run([
             'dotnet', 'publish', core_project,
             '--configuration', 'Release',
-            '--output', core_publish,
-        ], check=True)
-
-    source_porter_project = os.path.join(core_csharp_root, 'SourcePorter.Core', 'SourcePorter.Core.csproj')
-    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
-    if os.path.exists(source_porter_project):
-        print("Building SourcePorter.Core...")
-        # Incremental publish does not prune stale per-RID native asset folders
-        # (e.g. runtimes/win-x86, runtimes/linux-x64) left behind by a prior
-        # publish without --runtime; wipe the output first so only win-x64 lands.
-        if os.path.exists(source_porter_publish):
-            shutil.rmtree(source_porter_publish)
-        subprocess.run([
-            'dotnet', 'publish', source_porter_project,
-            '--configuration', 'Release',
             '--runtime', 'win-x64',
-            '--output', source_porter_publish,
-            '--no-self-contained',
-        ], check=True)
-
-    unreal_bridge_project = os.path.join(core_csharp_root, 'UnrealBridge', 'UnrealBridge.csproj')
-    unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
-    if os.path.exists(unreal_bridge_project):
-        print("Building UnrealBridge...")
-        subprocess.run([
-            'dotnet', 'publish', unreal_bridge_project,
-            '--configuration', 'Release',
-            '--output', unreal_bridge_publish,
-            '--no-self-contained',
+            '--self-contained', 'true',
+            '--output', core_publish,
         ], check=True)
 
 
@@ -278,15 +240,13 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
     build_libraries()
 
-    smartprop_native_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Native', 'publish')
+    smartprop_native_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'publish')
     smartprop_native_dlls = [
         path for path in glob.glob(os.path.join(smartprop_native_publish, '*.dll'))
         if os.path.isfile(path)
     ]
 
-    unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
     ue_scripts_dir = os.path.join(gui_root, 'tools', 'ue_scripts')
-    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
     bspsrc_dir = os.path.join(gui_root, 'tools', 'bspsrc')
 
     pyinstaller_dist = os.path.join(pyinstaller_root, 'dist')
@@ -395,8 +355,6 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
             f'--add-binary={path};smartprop_native'
             for path in smartprop_native_dlls
         ],
-        f'--add-data={unreal_bridge_publish};unreal_bridge' if os.path.exists(unreal_bridge_publish) else '',
-        f'--add-data={source_porter_publish};source_porter' if os.path.exists(source_porter_publish) else '',
         f'--add-data={bspsrc_dir};tools/bspsrc' if os.path.exists(bspsrc_dir) else '',
         f'--add-data={ue_scripts_dir};tools/ue_scripts' if os.path.exists(ue_scripts_dir) else '',
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),

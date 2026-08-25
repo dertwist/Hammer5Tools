@@ -1,4 +1,4 @@
-using Hammer5Tools.Core.Resources;
+using Hammer5Tools.Core.IO.Vpk;
 using SteamDatabase.ValvePak;
 
 namespace Hammer5Tools.Core.Tests.Resources;

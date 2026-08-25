@@ -1,4 +1,4 @@
-using Hammer5Tools.Core.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps;
 
 namespace Hammer5Tools.Core.Tests.SmartProps;
 
