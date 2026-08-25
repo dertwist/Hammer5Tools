@@ -7,7 +7,7 @@ import math
 import numpy as np
 
 from PySide6.QtCore import Qt, Signal, QPointF
-from PySide6.QtGui import QColor, QMouseEvent
+from PySide6.QtGui import QColor, QImage, QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 
@@ -22,7 +22,8 @@ from gui.editors.smartprop_editor.viewport_3d.shaders import (
     GIZMO_VERTEX_SHADER, GIZMO_FRAGMENT_SHADER,
     WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER,
     OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER,
-    LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER
+    LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER,
+    GROUP_BILLBOARD_VERTEX_SHADER, GROUP_BILLBOARD_FRAGMENT_SHADER,
 )
 
 from core.bridge import CoreBridge
@@ -174,13 +175,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._wireframe_program = 0
         self._outline_program = 0
         self._locator_program = 0
+        self._group_program = 0
 
         self._grid_vao = 0
         self._grid_vbo = 0
         self._box_vao = 0
         self._box_vbo = 0
-        self._dot_vao = 0
-        self._dot_vbo = 0
+        self._group_vao = 0
+        self._group_vbo = 0
+        self._group_texture = 0
         self._fs_vao = 0  # empty VAO for the fullscreen-triangle outline pass
 
         # Preview-widget GPU resources
@@ -262,6 +265,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._wireframe_program = link_program(WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER)
         self._outline_program = link_program(OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER)
         self._locator_program = link_program(LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER)
+        self._group_program = link_program(
+            GROUP_BILLBOARD_VERTEX_SHADER,
+            GROUP_BILLBOARD_FRAGMENT_SHADER,
+        )
 
         # Empty VAO required by core profile to issue the attribute-less
         # fullscreen-triangle draw in the selection outline pass.
@@ -275,6 +282,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
+
+        self._init_group_billboard_geometry()
 
         # Initialize Grid Geometry
         size = 25000.0
@@ -316,32 +325,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glBindVertexArray(self._box_vao)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._box_vbo)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, box_lines.nbytes, box_lines, GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
-        GL.glEnableVertexAttribArray(0)
-        GL.glBindVertexArray(0)
-
-        # Initialize Solid Dot Geometry for empty elements
-        h_dot = 0.5
-        dot_verts = np.array([
-            [-h_dot, -h_dot,  h_dot], [ h_dot, -h_dot,  h_dot], [ h_dot,  h_dot,  h_dot],
-            [-h_dot, -h_dot,  h_dot], [ h_dot,  h_dot,  h_dot], [-h_dot,  h_dot,  h_dot],
-            [-h_dot, -h_dot, -h_dot], [-h_dot,  h_dot, -h_dot], [ h_dot,  h_dot, -h_dot],
-            [-h_dot, -h_dot, -h_dot], [ h_dot,  h_dot, -h_dot], [ h_dot, -h_dot, -h_dot],
-            [-h_dot,  h_dot, -h_dot], [-h_dot,  h_dot,  h_dot], [ h_dot,  h_dot,  h_dot],
-            [-h_dot,  h_dot, -h_dot], [ h_dot,  h_dot,  h_dot], [ h_dot,  h_dot, -h_dot],
-            [-h_dot, -h_dot, -h_dot], [ h_dot, -h_dot, -h_dot], [ h_dot, -h_dot,  h_dot],
-            [-h_dot, -h_dot, -h_dot], [ h_dot, -h_dot,  h_dot], [-h_dot, -h_dot,  h_dot],
-            [ h_dot, -h_dot, -h_dot], [ h_dot,  h_dot, -h_dot], [ h_dot,  h_dot,  h_dot],
-            [ h_dot, -h_dot, -h_dot], [ h_dot,  h_dot,  h_dot], [ h_dot, -h_dot,  h_dot],
-            [-h_dot, -h_dot, -h_dot], [-h_dot, -h_dot,  h_dot], [-h_dot,  h_dot,  h_dot],
-            [-h_dot, -h_dot, -h_dot], [-h_dot,  h_dot,  h_dot], [-h_dot,  h_dot, -h_dot]
-        ], dtype=np.float32)
-
-        self._dot_vao = GL.glGenVertexArrays(1)
-        self._dot_vbo = GL.glGenBuffers(1)
-        GL.glBindVertexArray(self._dot_vao)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dot_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, dot_verts.nbytes, dot_verts, GL.GL_STATIC_DRAW)
         GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
@@ -462,7 +445,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             
         # Line: Object count
         rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
-        num_models = sum(1 for info in rendered_pool if not info.get("is_dot"))
+        num_models = sum(1 for info in rendered_pool if not info.get("is_group"))
         hud_lines.append(f"Objects: {num_models}")
         
         # Line: Active transformation details
@@ -534,6 +517,94 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 
         painter.end()
 
+    def _init_group_billboard_geometry(self):
+        """Upload the bundled group icon and a camera-facing unit quad."""
+        from OpenGL import GL
+        from gui.common import gui_assets_dir
+
+        vertices = np.array([
+            [-0.5, -0.5, 0.0, 0.0],
+            [ 0.5, -0.5, 1.0, 0.0],
+            [ 0.5,  0.5, 1.0, 1.0],
+            [-0.5, -0.5, 0.0, 0.0],
+            [ 0.5,  0.5, 1.0, 1.0],
+            [-0.5,  0.5, 0.0, 1.0],
+        ], dtype=np.float32)
+
+        self._group_vao = GL.glGenVertexArrays(1)
+        self._group_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._group_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._group_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 2, GL.GL_FLOAT, GL.GL_FALSE, 16, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 16, GL.ctypes.c_void_p(8))
+        GL.glEnableVertexAttribArray(1)
+        GL.glBindVertexArray(0)
+
+        icon_path = gui_assets_dir("icons", "tools", "hammer", "selection_mode_groups.png")
+        image = QImage(icon_path).convertToFormat(QImage.Format_RGBA8888).mirrored(False, True)
+        if image.isNull():
+            raise RuntimeError(f"Unable to load SmartProp group icon: {icon_path}")
+        pixels = np.frombuffer(image.constBits(), dtype=np.uint8, count=image.sizeInBytes())
+
+        self._group_texture = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._group_texture)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexImage2D(
+            GL.GL_TEXTURE_2D,
+            0,
+            GL.GL_RGBA8,
+            image.width(),
+            image.height(),
+            0,
+            GL.GL_RGBA,
+            GL.GL_UNSIGNED_BYTE,
+            pixels,
+        )
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+    def _draw_group_billboard(self, view, proj, source_position, pick_color=None):
+        """Draw a depth-tested group icon that continuously faces the camera."""
+        from OpenGL import GL
+
+        source = np.array([*source_position, 1.0], dtype=np.float32)
+        center = (SOURCE2_TO_GL.T @ source)[:3]
+        distance = float(np.linalg.norm(self.camera.position - center))
+        size = max(distance * 0.035, 8.0)
+
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        GL.glUseProgram(self._group_program)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._group_program, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._group_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform3fv(GL.glGetUniformLocation(self._group_program, "uCenter"), 1, center)
+        GL.glUniform3fv(
+            GL.glGetUniformLocation(self._group_program, "uCameraRight"),
+            1,
+            np.asarray(self.camera.right_vector, dtype=np.float32),
+        )
+        GL.glUniform3fv(
+            GL.glGetUniformLocation(self._group_program, "uCameraUp"),
+            1,
+            np.asarray(self.camera.up_vector, dtype=np.float32),
+        )
+        GL.glUniform1f(GL.glGetUniformLocation(self._group_program, "uSize"), size)
+        GL.glUniform1i(GL.glGetUniformLocation(self._group_program, "uPicking"), pick_color is not None)
+        GL.glUniform3f(
+            GL.glGetUniformLocation(self._group_program, "uPickColor"),
+            *(pick_color or (0.0, 0.0, 0.0)),
+        )
+        GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._group_texture)
+        GL.glUniform1i(GL.glGetUniformLocation(self._group_program, "uIcon"), 0)
+        GL.glBindVertexArray(self._group_vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
+        GL.glBindVertexArray(0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
     def _render_scene_models(self, view, proj, cam_pos, picking=False, mask_id=None):
         from OpenGL import GL
 
@@ -588,6 +659,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # pass after all opaque geometry, sorted back-to-front with depth writes
         # off so they composite correctly.
         transparent_items = []
+        group_items = []
 
         rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
         for info in rendered_pool:
@@ -622,44 +694,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     @ SOURCE2_TO_GL
                 )
 
-            is_dot = info.get("is_dot", False)
-            if is_dot:
+            is_group = info.get("is_group", False)
+            if is_group:
                 if not self.display_groups:
                     continue
-                if use_pick:
-                    set_pick_color(eid)
-                    dot_size = 12.0
-                    dot_matrix = scale_matrix(dot_size, dot_size, dot_size) @ model_matrix
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uModel"), 1, GL.GL_FALSE, dot_matrix)
-                    GL.glBindVertexArray(self._dot_vao)
-                    GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36)
-                    GL.glBindVertexArray(0)
-                else:
-                    is_selected = (eid == self._selected_id)
-                    GL.glUseProgram(self._wireframe_program)
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
-                    
-                    dot_size = 12.0
-                    dot_matrix = scale_matrix(dot_size, dot_size, dot_size) @ model_matrix
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, dot_matrix)
-                    
-                    # Color: orange/brown for groups, cyan for selected
-                    dot_color = np.array([0.0, 0.85, 0.85] if is_selected else [0.8, 0.4, 0.1], dtype=np.float32)
-                    GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, dot_color)
-                    
-                    GL.glBindVertexArray(self._dot_vao)
-                    GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36)
-                    
-                    if is_selected:
-                        highlight_size = 14.0
-                        highlight_matrix = scale_matrix(highlight_size, highlight_size, highlight_size) @ model_matrix
-                        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, highlight_matrix)
-                        GL.glBindVertexArray(self._box_vao)
-                        GL.glDrawArrays(GL.GL_LINES, 0, 24)
-                        
-                    GL.glBindVertexArray(0)
-                    GL.glUseProgram(self._model_program)
+                # Draw group markers together after every model pass. This makes
+                # them true editor overlays: meshes never occlude the icon, and
+                # the picking pass resolves the visible icon before geometry.
+                group_items.append((eid, pos))
                 continue
 
             gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
@@ -734,6 +776,34 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self._draw_material_submesh(gm, sm, mm, nm, sel, True)
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_CULL_FACE)
+
+        # Editor-object overlay pass. Group icons intentionally ignore scene
+        # depth so their location remains visible through opaque/translucent
+        # geometry. They do not write depth, keeping subsequent overlays clean.
+        if group_items:
+            depth_test_was_enabled = bool(GL.glIsEnabled(GL.GL_DEPTH_TEST))
+            depth_writes_were_enabled = bool(GL.glGetBooleanv(GL.GL_DEPTH_WRITEMASK))
+            GL.glDisable(GL.GL_DEPTH_TEST)
+            GL.glDepthMask(GL.GL_FALSE)
+            for eid, pos in group_items:
+                if mask_id is not None:
+                    pick_color = (1.0, 1.0, 1.0)
+                elif picking:
+                    pick_color = (
+                        (eid & 0xFF) / 255.0,
+                        ((eid >> 8) & 0xFF) / 255.0,
+                        ((eid >> 16) & 0xFF) / 255.0,
+                    )
+                else:
+                    pick_color = None
+                self._draw_group_billboard(view, proj, pos, pick_color)
+
+            GL.glDepthMask(GL.GL_TRUE if depth_writes_were_enabled else GL.GL_FALSE)
+            if depth_test_was_enabled:
+                GL.glEnable(GL.GL_DEPTH_TEST)
+            else:
+                GL.glDisable(GL.GL_DEPTH_TEST)
+            GL.glUseProgram(self._picking_program if use_pick else self._model_program)
 
         # Restore standard polygon fill mode
         if not use_pick:
@@ -987,15 +1057,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         mask FBO; (2) a fullscreen pass dilates that mask and paints the ring just
         outside the silhouette over the visible scene -- visible through occluders.
 
-        Only loaded meshes are outlined here — group dots and not-yet-loaded model
+        Loaded meshes and group billboards are outlined here. Not-yet-loaded model
         placeholders keep their own wireframe-box selection markers.
         """
         from OpenGL import GL
 
         sel = self._model_infos.get(self._selected_id)
-        if not sel or sel.get("is_dot"):
+        if not sel:
             return
-        if self.mesh_cache.get_gpu_mesh(sel.get("path", "")) is None:
+        if not sel.get("is_group") and self.mesh_cache.get_gpu_mesh(sel.get("path", "")) is None:
             return
 
         # Work in device pixels so the mask lines up with the HiDPI framebuffer.
@@ -1051,7 +1121,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         ``infos`` is an iterable of element info dicts (a subset of
         ``self._model_infos.values()``).  Meshes use their transformed AABB;
-        dots and not-yet-loaded models fall back to a small box at their origin.
+        groups and not-yet-loaded models fall back to a small box at their origin.
         """
         bbox_min = np.array([float('inf'), float('inf'), float('inf')], dtype=np.float32)
         bbox_max = np.array([float('-inf'), float('-inf'), float('-inf')], dtype=np.float32)
@@ -1068,8 +1138,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 @ translation_matrix(*pos)
                 @ SOURCE2_TO_GL
             )
-            is_dot = info.get("is_dot", False)
-            if is_dot:
+            is_group = info.get("is_group", False)
+            if is_group:
                 gl_pos = (SOURCE2_TO_GL.T @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
                 bbox_min = np.minimum(bbox_min, gl_pos - 10.0)
                 bbox_max = np.maximum(bbox_max, gl_pos + 10.0)
@@ -1127,15 +1197,27 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Nothing selected (or selection has no bounds) — frame everything.
         self.fit_view()
 
-    def _is_element_in_tree(self, parent_item, eid):
+    def _find_tree_item(self, parent_item, eid):
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
             data = child.data(0, Qt.UserRole)
             if isinstance(data, dict) and data.get("m_nElementID") == eid:
-                return True
-            if self._is_element_in_tree(child, eid):
-                return True
-        return False
+                return child
+            found = self._find_tree_item(child, eid)
+            if found is not None:
+                return found
+        return None
+
+    def _collect_subtree_ids(self, item):
+        """IDs of ``item`` and every descendant — the set a viewport isolation
+        should keep visible."""
+        ids = set()
+        data = item.data(0, Qt.UserRole)
+        if isinstance(data, dict) and data.get("m_nElementID"):
+            ids.add(data["m_nElementID"])
+        for i in range(item.childCount()):
+            ids.update(self._collect_subtree_ids(item.child(i)))
+        return ids
 
     # Element classes the viewport can place/preview.  Anything else that carries
     # geometry or replicates it (PlaceMultiple, BendDeformer, ModifyState, …) is
@@ -1174,11 +1256,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return
 
         if self.isolated_element_id is not None:
-            if not self._is_element_in_tree(tree_widget.invisibleRootItem(), self.isolated_element_id):
+            isolated_item = self._find_tree_item(tree_widget.invisibleRootItem(), self.isolated_element_id)
+            if isolated_item is None:
                 self.isolated_element_id = None
                 self.isolated_element_name = ""
+            else:
+                self.isolated_element_name = isolated_item.text(0)
 
         models_info = self._apply_core_evaluation(tree_widget.invisibleRootItem())
+
+        if self.isolated_element_id is not None:
+            subtree_ids = self._collect_subtree_ids(isolated_item)
+            models_info = [info for info in models_info if info.get("id") in subtree_ids]
 
         self._model_instances = list(models_info)
         for info in models_info:
@@ -1257,12 +1346,66 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "world_matrix": world_matrix,
                 "parent_world_matrix": np.eye(4, dtype=np.float32),
                 "data": data_by_id.get(model.element_id, {}),
-                "is_dot": False,
+                "is_group": False,
                 "material_group": model.material_group,
                 "tint_color": model.tint_color,
             })
 
+        for widget in result.widgets:
+            if widget.type == "group":
+                evaluated.append(self._group_draw_info(widget, data_by_id.get(widget.element_id, {})))
+            else:
+                self._widget_infos.append(self._widget_draw_info(widget))
+
         return evaluated
+
+    @staticmethod
+    def _group_draw_info(widget, data):
+        """Adapt a Core group placement to the selectable scene-object schema."""
+        world_matrix = np.asarray(widget.transform, dtype=np.float32).reshape((4, 4))
+        world_position, world_rotation, world_scale = decompose_trs(world_matrix)
+        return {
+            "id": widget.element_id,
+            "path": "",
+            "position": world_position,
+            "rotation": world_rotation,
+            "scale": world_scale,
+            "world_matrix": world_matrix,
+            "parent_world_matrix": np.eye(4, dtype=np.float32),
+            "data": data,
+            "is_group": True,
+        }
+
+    @staticmethod
+    def _widget_draw_info(widget):
+        """Adapt a Core widget placement to the existing OpenGL draw schema."""
+        world_matrix = np.asarray(widget.transform, dtype=np.float32).reshape((4, 4))
+        world_position, world_rotation, _ = decompose_trs(world_matrix)
+        offset = np.asarray(widget.offset, dtype=np.float32)
+        positioned = (np.array([*offset, 1.0], dtype=np.float32) @ world_matrix)[:3]
+        return {
+            "type": widget.type,
+            "element_id": widget.element_id,
+            "world_matrix": world_matrix,
+            "position": list(world_position) if widget.type == "sizer" else positioned.tolist(),
+            "rotation": list(world_rotation),
+            "offset": list(widget.offset),
+            "min_bounds": list(widget.minimum_bounds),
+            "max_bounds": list(widget.maximum_bounds),
+            "axis": list(widget.axis),
+            "color": list(widget.color),
+            "handles": dict(zip(
+                ("min_x", "max_x", "min_y", "max_y", "min_z", "max_z"),
+                widget.handles,
+            )),
+            "active_axes": dict(zip(("x", "y", "z"), widget.active_axes)),
+            "scale": widget.scale,
+            "radius": widget.radius,
+            "angle": widget.angle,
+            "size": widget.size,
+            "shape": widget.shape,
+            "name": widget.name,
+        }
 
     def _collect_nested_smartprops(self, document):
         """Load the nested SmartProp graph for the Core resolver payload."""

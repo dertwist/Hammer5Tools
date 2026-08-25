@@ -5,4 +5,5 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 /// </summary>
 public sealed record SmartPropEvaluationResult(
     IReadOnlyList<EvaluatedSmartPropModel> Models,
+    IReadOnlyList<EvaluatedSmartPropWidget> Widgets,
     IReadOnlyList<CoreDiagnostic> Diagnostics);

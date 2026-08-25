@@ -27,11 +27,14 @@ public static class SmartPropEvaluator
 
         try
         {
-            return Evaluate(SmartPropJsonConverter.Convert(json), null, options);
+            var root = SmartPropJsonConverter.Convert(json);
+            var result = Evaluate(root, null, options);
+            var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, null, options) };
+            return withWidgets with { Models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, null, withWidgets.Models, options) };
         }
         catch (JsonException exception)
         {
-            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+            return new SmartPropEvaluationResult([], [], [new CoreDiagnostic(
                 CoreDiagnosticSeverity.Error,
                 "smartprop.invalid_json",
                 exception.Message)]);
@@ -60,14 +63,19 @@ public static class SmartPropEvaluator
         try
         {
             var nestedDocuments = ReadNestedDocuments(nestedDocumentsJson);
-            return Evaluate(
+            var result = Evaluate(
                 SmartPropJsonConverter.Convert(json),
                 path => nestedDocuments.GetValueOrDefault(NormalizeResourcePath(path)),
                 options);
+            var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, nestedDocumentsJson, options) };
+            return withWidgets with
+            {
+                Models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, nestedDocumentsJson, withWidgets.Models, options),
+            };
         }
         catch (JsonException exception)
         {
-            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+            return new SmartPropEvaluationResult([], [], [new CoreDiagnostic(
                 CoreDiagnosticSeverity.Error,
                 "smartprop.invalid_json",
                 exception.Message)]);
@@ -96,7 +104,7 @@ public static class SmartPropEvaluator
         }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException)
         {
-            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+            return new SmartPropEvaluationResult([], [], [new CoreDiagnostic(
                 CoreDiagnosticSeverity.Error,
                 "smartprop.invalid_kv3",
                 exception.Message)]);
@@ -132,18 +140,18 @@ public static class SmartPropEvaluator
                     "smartprop.model_limit_reached",
                     $"Evaluation produced more than {options.MaximumModels} model placements.") }
                 : [];
-            return new SmartPropEvaluationResult(models, diagnostics);
+            return new SmartPropEvaluationResult(models, [], diagnostics);
         }
         catch (OperationCanceledException)
         {
-            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+            return new SmartPropEvaluationResult([], [], [new CoreDiagnostic(
                 CoreDiagnosticSeverity.Warning,
                 "smartprop.cancelled",
                 "SmartProp evaluation was cancelled.")]);
         }
         catch (Exception exception) when (exception is InvalidDataException or InvalidOperationException or ArgumentException)
         {
-            return new SmartPropEvaluationResult([], [new CoreDiagnostic(
+            return new SmartPropEvaluationResult([], [], [new CoreDiagnostic(
                 CoreDiagnosticSeverity.Error,
                 "smartprop.evaluation_failed",
                 exception.Message)]);

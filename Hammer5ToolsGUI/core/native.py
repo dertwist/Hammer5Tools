@@ -61,6 +61,19 @@ class SmartPropNativeClient:
         self._dll_directory = None
         if hasattr(os, "add_dll_directory"):
             self._dll_directory = os.add_dll_directory(str(path.parent))
+        # NativeAOT's own P/Invoke module resolution fails to find sibling native
+        # DLLs (e.g. libSkiaSharp.dll) when this library is loaded via ctypes from
+        # a non-.NET host process, even with add_dll_directory pointed at the same
+        # folder — it raises BadImageFormatException instead of DllNotFoundException.
+        # Loading the dependency ourselves first makes Windows resolve later
+        # same-named LoadLibrary calls (including NativeAOT's internal one) against
+        # the already-loaded module instead of re-searching.
+        skia = path.parent / "libSkiaSharp.dll"
+        if skia.is_file():
+            try:
+                ctypes.CDLL(str(skia))
+            except OSError:
+                pass
         try:
             self._library = ctypes.CDLL(str(path))
         except OSError as error:

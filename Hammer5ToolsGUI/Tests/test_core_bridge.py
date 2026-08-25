@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from core.bridge.core import CoreBridge, SmartPropModel, ValveMapEntity, VpkIndex
+from core.bridge.core import CoreBridge, SmartPropModel, SmartPropWidget, ValveMapEntity, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
@@ -85,12 +85,43 @@ def test_smartprop_evaluation_passes_bounded_options():
     )
 
     assert result.models == ()
+    assert result.widgets == ()
     assert result.diagnostics == ()
     assert captured["document"] == {"m_Children": []}
     assert captured["nested_documents"] == {
         "smartprops/nested.vsmart": {"m_Children": []}
     }
     assert captured["options"]["maximum_depth"] == 7
+
+
+def test_smartprop_widgets_are_converted_from_native_json():
+    native_widget = {
+        "type": "locator",
+        "elementId": 9,
+        "transform": list(range(1, 17)),
+        "offset": [1, 2, 3],
+        "minimumBounds": [0, 0, 0],
+        "maximumBounds": [0, 0, 0],
+        "axis": [0, 0, 1],
+        "color": [0.6, 0.6, 0.6],
+        "handles": [False] * 6,
+        "activeAxes": [False] * 3,
+        "scale": 2,
+        "radius": 16,
+        "angle": 0,
+        "size": 8,
+        "shape": "SQUARE",
+        "name": "origin",
+    }
+
+    converted = CoreBridge._convert_native_smartprop_widget(native_widget)
+
+    assert converted == SmartPropWidget(
+        "locator", 9, tuple(float(value) for value in range(1, 17)),
+        (1.0, 2.0, 3.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0),
+        (0.0, 0.0, 1.0), (0.6, 0.6, 0.6),
+        (False,) * 6, (False,) * 3, 2.0, 16.0, 0.0, 8.0, "SQUARE", "origin",
+    )
 
 
 def test_smartprop_serializer_uses_python_native_document():

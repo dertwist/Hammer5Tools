@@ -34,6 +34,12 @@ def _modeldoc_tool_icon_path(name):
     return gui_assets_dir("icons", "tools", "modeldoc_editor", name)
 
 
+def _bundled_hammer_icon_path(name):
+    """Absolute path to a Hammer-style icon bundled with Hammer 5 Tools."""
+    from gui.common import gui_assets_dir
+    return gui_assets_dir("icons", "tools", "hammer", name)
+
+
 # Toggle-button styling for the compact icon toggles in the viewport toolbar.
 # Checked state is highlighted so the on/off state reads clearly at a glance.
 _VIEWPORT_TOGGLE_STYLE = """
@@ -121,10 +127,10 @@ class SmartProp3DViewport(QWidget):
         tb_layout.addWidget(self.btn_rotate)
         tb_layout.addWidget(self.btn_scale)
 
-        # Display Groups toggle — single-state Hammer "solids" icon.
+        # Display Groups toggle — matches the billboard drawn for group elements.
         self.groups_check = self._make_toggle_button(
             tooltip="Display Groups",
-            icon_off=_hammer_tool_icon_path("selection_mode_solids.png"),
+            icon_off=_bundled_hammer_icon_path("selection_mode_groups.png"),
         )
         self.groups_check.setChecked(True)
         self.groups_check.toggled.connect(self._on_display_groups_changed)

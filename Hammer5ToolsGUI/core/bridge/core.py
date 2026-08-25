@@ -34,10 +34,33 @@ class SmartPropModel:
 
 
 @dataclass(frozen=True)
+class SmartPropWidget:
+    """Python-native editor widget produced by Core SmartProp evaluation."""
+
+    type: str
+    element_id: int
+    transform: tuple[float, ...]
+    offset: tuple[float, float, float]
+    minimum_bounds: tuple[float, float, float]
+    maximum_bounds: tuple[float, float, float]
+    axis: tuple[float, float, float]
+    color: tuple[float, float, float]
+    handles: tuple[bool, ...]
+    active_axes: tuple[bool, ...]
+    scale: float
+    radius: float
+    angle: float
+    size: float
+    shape: str
+    name: str
+
+
+@dataclass(frozen=True)
 class SmartPropEvaluation:
     """Python-native SmartProp evaluation result."""
 
     models: tuple[SmartPropModel, ...]
+    widgets: tuple[SmartPropWidget, ...]
     diagnostics: tuple[str, ...]
 
 
@@ -218,10 +241,12 @@ class CoreBridge:
             cancellation=cancellation,
         )
         models = tuple(self._convert_native_smartprop_model(model) for model in result["models"])
+        widgets = tuple(self._convert_native_smartprop_widget(widget)
+                        for widget in result.get("widgets", ()))
         diagnostics = tuple(
             f"{item['code']}: {item['message']}" for item in result["diagnostics"]
         )
-        return SmartPropEvaluation(models, diagnostics)
+        return SmartPropEvaluation(models, widgets, diagnostics)
 
     def create_smartprop_cancellation(self):
         """Create a cooperative cancellation handle for SmartProp evaluation."""
@@ -457,6 +482,27 @@ class CoreBridge:
             tuple(float(value) for value in model["transform"]),
             model.get("materialGroup"),
             None if tint is None else tuple(float(value) for value in tint),
+        )
+
+    @staticmethod
+    def _convert_native_smartprop_widget(widget: Mapping) -> SmartPropWidget:
+        return SmartPropWidget(
+            str(widget["type"]),
+            int(widget["elementId"]),
+            tuple(float(value) for value in widget["transform"]),
+            tuple(float(value) for value in widget["offset"]),
+            tuple(float(value) for value in widget["minimumBounds"]),
+            tuple(float(value) for value in widget["maximumBounds"]),
+            tuple(float(value) for value in widget["axis"]),
+            tuple(float(value) for value in widget["color"]),
+            tuple(bool(value) for value in widget["handles"]),
+            tuple(bool(value) for value in widget["activeAxes"]),
+            float(widget["scale"]),
+            float(widget["radius"]),
+            float(widget["angle"]),
+            float(widget["size"]),
+            str(widget["shape"]),
+            str(widget["name"]),
         )
 
     def _smartprop_native(self):

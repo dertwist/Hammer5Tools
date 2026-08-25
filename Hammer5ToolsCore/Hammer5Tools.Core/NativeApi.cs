@@ -143,6 +143,31 @@ internal static unsafe class NativeApi
             writer.WriteEndObject();
         }
         writer.WriteEndArray();
+        writer.WriteStartArray("widgets");
+        foreach (var widget in result.Widgets)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("type", widget.Type);
+            writer.WriteNumber("elementId", widget.ElementId);
+            writer.WriteStartArray("transform");
+            WriteMatrix(writer, widget.Transform);
+            writer.WriteEndArray();
+            WriteVector(writer, "offset", widget.Offset);
+            WriteVector(writer, "minimumBounds", widget.MinimumBounds);
+            WriteVector(writer, "maximumBounds", widget.MaximumBounds);
+            WriteVector(writer, "axis", widget.Axis);
+            WriteVector(writer, "color", widget.Color);
+            WriteBooleanArray(writer, "handles", widget.Handles);
+            WriteBooleanArray(writer, "activeAxes", widget.ActiveAxes);
+            writer.WriteNumber("scale", widget.Scale);
+            writer.WriteNumber("radius", widget.Radius);
+            writer.WriteNumber("angle", widget.Angle);
+            writer.WriteNumber("size", widget.Size);
+            writer.WriteString("shape", widget.Shape);
+            writer.WriteString("name", widget.Name);
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
         writer.WriteStartArray("diagnostics");
         foreach (var diagnostic in result.Diagnostics)
         {
@@ -176,6 +201,23 @@ internal static unsafe class NativeApi
         writer.WriteNumberValue(matrix.M42);
         writer.WriteNumberValue(matrix.M43);
         writer.WriteNumberValue(matrix.M44);
+    }
+
+    private static void WriteVector(Utf8JsonWriter writer, string name, System.Numerics.Vector3 vector)
+    {
+        writer.WriteStartArray(name);
+        writer.WriteNumberValue(vector.X);
+        writer.WriteNumberValue(vector.Y);
+        writer.WriteNumberValue(vector.Z);
+        writer.WriteEndArray();
+    }
+
+    private static void WriteBooleanArray(Utf8JsonWriter writer, string name, IReadOnlyList<bool> values)
+    {
+        writer.WriteStartArray(name);
+        foreach (var value in values)
+            writer.WriteBooleanValue(value);
+        writer.WriteEndArray();
     }
 
     private static CancellationToken GetCancellationToken(long cancellationId) =>
