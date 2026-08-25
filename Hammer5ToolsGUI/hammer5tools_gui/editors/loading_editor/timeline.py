@@ -1,15 +1,16 @@
 import os
-import shutil
-import subprocess
-import tempfile
 from datetime import datetime
 from collections import defaultdict
 from typing import Dict, List, Tuple
 from PIL import Image
 import re
 
-from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QTimer
-from PySide6.QtGui import QPixmap, QIcon, QAction, QFont
+from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QTimer, QEventLoop, QUrl
+from PySide6.QtGui import QPixmap, QIcon, QAction, QFont, QImage
+from PySide6.QtMultimedia import (
+    QMediaCaptureSession, QMediaRecorder, QVideoFrameInput,
+    QVideoFrameFormat, QVideoFrame, QMediaFormat,
+)
 from PySide6.QtWidgets import QStyle
 from PySide6.QtWidgets import (
     QApplication,
@@ -33,8 +34,14 @@ from hammer5tools_gui.settings.main import debug
 # 500ms per frame (matches the historical GIF export cadence)
 ANIMATION_FPS = 2
 WEBP_QUALITY_PRESETS = {"Low": 50, "Medium": 75, "High": 95}
-MP4_CRF_PRESETS = {"Low": 32, "Medium": 23, "High": 18}  # lower crf = higher quality
-_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+MP4_QUALITY_PRESETS = {
+    "Low": QMediaRecorder.Quality.LowQuality,
+    "Medium": QMediaRecorder.Quality.NormalQuality,
+    "High": QMediaRecorder.Quality.HighQuality,
+}
+# Windows Media Foundation's H264 encoder MFT rejects init below this size
+# (empirically: 64x40 works, 64x32 doesn't) regardless of even/16-alignment.
+_MP4_MIN_DIM = 64
 
 
 def render_animation(image_paths: List[str], output_dir: str, base_name: str,
@@ -95,7 +102,7 @@ def render_animation(image_paths: List[str], output_dir: str, base_name: str,
 
     if fmt == "MP4":
         output_path = os.path.join(output_dir, f"{base_name}_timeline.mp4")
-        _save_mp4(frames, output_path, MP4_CRF_PRESETS.get(quality, 23))
+        _save_mp4(frames, output_path, quality)
     elif fmt == "WEBP":
         output_path = os.path.join(output_dir, f"{base_name}_timeline.webp")
         frames[0].save(
@@ -125,28 +132,96 @@ def render_animation(image_paths: List[str], output_dir: str, base_name: str,
     return output_path
 
 
-def _save_mp4(frames: List[Image.Image], output_path: str, crf: int) -> None:
-    """Encode frames to MP4 using the ffmpeg binary bundled with imageio-ffmpeg."""
-    import imageio_ffmpeg
-    tmp_dir = tempfile.mkdtemp(prefix="h5t_anim_")
+def _pil_to_video_frame(img: Image.Image, frame_format: QVideoFrameFormat,
+                         start_us: int, end_us: int) -> QVideoFrame:
+    """Pack a PIL RGB image into an RGBA8888 QVideoFrame for QVideoFrameInput."""
+    rgba = img.convert("RGBA")
+    w, h = rgba.size
+    qimg = QImage(rgba.tobytes(), w, h, QImage.Format.Format_RGBA8888)
+    frame = QVideoFrame(frame_format)
+    frame.map(QVideoFrame.MapMode.WriteOnly)
     try:
-        for i, frame in enumerate(frames):
-            frame.save(os.path.join(tmp_dir, f"frame_{i:05d}.png"))
-        args = [
-            imageio_ffmpeg.get_ffmpeg_exe(), "-y",
-            "-framerate", str(ANIMATION_FPS),
-            "-i", os.path.join(tmp_dir, "frame_%05d.png"),
-            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",  # libx264 requires even dimensions
-            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", str(crf),
-            output_path,
-        ]
-        subprocess.run(
-            args, check=True,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            creationflags=_NO_WINDOW,
-        )
+        bytes_per_line = frame.bytesPerLine(0)
+        buf = frame.bits(0)
+        src = qimg.constBits().tobytes()
+        if bytes_per_line == w * 4:
+            buf[:len(src)] = src
+        else:
+            row_bytes = w * 4
+            for row in range(h):
+                buf[row * bytes_per_line:row * bytes_per_line + row_bytes] = \
+                    src[row * row_bytes:(row + 1) * row_bytes]
     finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+        frame.unmap()
+    frame.setStartTime(start_us)
+    frame.setEndTime(end_us)
+    return frame
+
+
+def _save_mp4(frames: List[Image.Image], output_path: str, quality: str) -> None:
+    """Encode frames to MP4/H264 via QtMultimedia's QVideoFrameInput recorder."""
+    w, h = frames[0].size
+    # Even dims (4:2:0 chroma) and a floor under _MP4_MIN_DIM (the MFT H264
+    # encoder rejects init below that regardless of alignment).
+    pad_w = max(_MP4_MIN_DIM, w + (w % 2))
+    pad_h = max(_MP4_MIN_DIM, h + (h % 2))
+    if (pad_w, pad_h) != (w, h):
+        padded = []
+        for f in frames:
+            canvas = Image.new("RGB", (pad_w, pad_h), (0, 0, 0))
+            canvas.paste(f, (0, 0))
+            padded.append(canvas)
+        frames = padded
+
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    session = QMediaCaptureSession()
+    frame_input = QVideoFrameInput()
+    session.setVideoFrameInput(frame_input)
+    recorder = QMediaRecorder()
+    session.setRecorder(recorder)
+    recorder.setOutputLocation(QUrl.fromLocalFile(output_path))
+    media_format = QMediaFormat()
+    media_format.setFileFormat(QMediaFormat.FileFormat.MPEG4)
+    media_format.setVideoCodec(QMediaFormat.VideoCodec.H264)
+    recorder.setMediaFormat(media_format)
+    recorder.setQuality(MP4_QUALITY_PRESETS.get(quality, QMediaRecorder.Quality.NormalQuality))
+
+    errors = []
+    recorder.errorOccurred.connect(lambda *a: errors.append(recorder.errorString()))
+
+    frame_format = QVideoFrameFormat(QSize(pad_w, pad_h), QVideoFrameFormat.PixelFormat.Format_RGBA8888)
+    frame_duration_us = int(1_000_000 / ANIMATION_FPS)
+    state = {"i": 0}
+    loop = QEventLoop()
+
+    def send_next():
+        i = state["i"]
+        if i >= len(frames):
+            recorder.stop()
+            return
+        video_frame = _pil_to_video_frame(
+            frames[i], frame_format, i * frame_duration_us, (i + 1) * frame_duration_us,
+        )
+        frame_input.sendVideoFrame(video_frame)
+        state["i"] += 1
+
+    def on_state_changed(new_state):
+        if new_state == QMediaRecorder.RecorderState.StoppedState:
+            loop.quit()
+
+    frame_input.readyToSendVideoFrame.connect(send_next)
+    recorder.recorderStateChanged.connect(on_state_changed)
+
+    recorder.record()
+    QTimer.singleShot(30_000, loop.quit)  # safety timeout, encoding is local/fast
+    loop.exec()
+
+    if errors:
+        raise RuntimeError(f"MP4 export failed: {errors[0]}")
+    if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        raise RuntimeError("MP4 export produced no output")
 
 
 class TimelineExportSignals(QObject):

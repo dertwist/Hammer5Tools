@@ -5,22 +5,17 @@ packaging
 
 markdown2
 pypresence
-portalocker
 setuptools
 psutil
-py3nvml
 tqdm
 
 colorama
 pygetwindow
-watchdog
-json-stream
 pyinstaller
 tabulate
 numpy
-imageio-ffmpeg
 pyqtgraph
-cairosvg
+lameenc
 lz4
 parsimonious
 urllib3
@@ -40,13 +35,8 @@ ply
 Pillow
 pygltflib
 
-matplotlib
-pynvml
 GPUtil
 orjson
 pyinstaller
 lxml
-inkex
-uharfbuzz
-fontTools
 velopack

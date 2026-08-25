@@ -7,16 +7,13 @@ from collections import deque
 
 import psutil
 import GPUtil
+import pyqtgraph as pg
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame
 )
 from PySide6.QtCore import QTimer, Qt, QThread, QObject, Signal, Slot
 from PySide6.QtGui import QColor, QFont
-
-# Matplotlib embed
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 
 
 # Design System Colors (Hammer5Tools)
@@ -440,28 +437,29 @@ class HistoryGraph(QWidget):
         self.label.setStyleSheet(f"color: {DesignColors.TEXT_PRIMARY}; background: transparent;")
         layout.addWidget(self.label)
 
-        # Matplotlib figure with dark theme
-        self.fig = Figure(figsize=(3, 2), facecolor=DesignColors.CHART_BG, edgecolor='none')
-        self.fig.patch.set_alpha(1.0)
+        # pyqtgraph plot with dark theme
+        self.plot = pg.PlotWidget()
+        self.plot.setBackground(DesignColors.CHART_BG)
+        self.plot.setYRange(0, 100, padding=0)
+        self.plot.setXRange(0, max_points, padding=0)
+        self.plot.hideAxis('bottom')
+        self.plot.showGrid(y=True, alpha=0.15)
+        self.plot.setLabel('left', '%', color=DesignColors.CHART_TEXT)
+        self.plot.getAxis('left').setPen(DesignColors.CHART_GRID)
+        self.plot.getAxis('left').setTextPen(DesignColors.CHART_TEXT)
+        self.plot.setMouseEnabled(x=False, y=False)
+        self.plot.setMenuEnabled(False)
+        self.plot.hideButtons()
+        self.plot.setStyleSheet(f"background-color: {DesignColors.CHART_BG}; border: none;")
 
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_facecolor(DesignColors.CHART_BG)
-        self.ax.set_ylim(0, 100)
-        self.ax.set_xlim(0, max_points)
-        self.ax.set_xticks([])
-        self.ax.set_ylabel("%", color=DesignColors.CHART_TEXT, fontsize=9)
-        self.ax.tick_params(colors=DesignColors.CHART_TEXT, labelsize=8)
-
-        # Grid styling
-        self.ax.grid(True, alpha=0.15, color=DesignColors.CHART_GRID, linestyle='--', linewidth=0.5)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['left'].set_color(DesignColors.CHART_GRID)
-        self.ax.spines['bottom'].set_color(DesignColors.CHART_GRID)
-
-        self.canvas = FigureCanvasQTAgg(self.fig)
-        self.canvas.setStyleSheet(f"background-color: {DesignColors.CHART_BG}; border: none;")
-        layout.addWidget(self.canvas)
+        fill_color = QColor(color)
+        fill_color.setAlphaF(0.15)
+        self.curve = self.plot.plot(
+            pen=pg.mkPen(color, width=2),
+            fillLevel=0,
+            brush=pg.mkBrush(fill_color),
+        )
+        layout.addWidget(self.plot)
 
         # Container frame for visual separation
         self.setStyleSheet(f"""
@@ -480,24 +478,8 @@ class HistoryGraph(QWidget):
         # Update label with current value
         self.label.setText(f"{self.title} – {v:.1f}%{suffix_text}")
 
-        # Redraw graph
-        self.ax.cla()
-        self.ax.set_ylim(0, 100)
-        self.ax.set_xlim(0, self.max_points)
-        self.ax.set_xticks([])
-        self.ax.set_ylabel("%", color=DesignColors.CHART_TEXT, fontsize=9)
-        self.ax.tick_params(colors=DesignColors.CHART_TEXT, labelsize=8)
-        self.ax.grid(True, alpha=0.15, color=DesignColors.CHART_GRID, linestyle='--', linewidth=0.5)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['left'].set_color(DesignColors.CHART_GRID)
-        self.ax.spines['bottom'].set_color(DesignColors.CHART_GRID)
-        self.ax.set_facecolor(DesignColors.CHART_BG)
-
-        self.ax.plot(list(self.values), color=self.color, linewidth=2, alpha=0.9)
-        self.ax.fill_between(range(len(self.values)), list(self.values), alpha=0.15, color=self.color)
-
-        self.canvas.draw_idle()
+        # Update graph data in place (styling is set once in __init__)
+        self.curve.setData(list(self.values))
 
 
 # Main System Monitor Widget

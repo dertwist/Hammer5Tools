@@ -5,9 +5,9 @@ zoom/pan, a drag-select region, movable markers, a playhead, and a toolbar of
 numpy DSP operations (volume, fade ramps).
 
 Editing works on a float32 sample buffer of shape (N, channels). MP3 (and other
-non-WAV) inputs are decoded to WAV via the bundled ffmpeg on load; saving writes
-16-bit PCM WAV and persists markers as a RIFF ``cue `` chunk (the same format
-CS2's own content uses for loop points).
+non-WAV) inputs are decoded to WAV via QtMultimedia's QAudioDecoder on load;
+saving writes 16-bit PCM WAV and persists markers as a RIFF ``cue `` chunk (the
+same format CS2's own content uses for loop points).
 
 ponytail: single edit buffer, up to 20 undo snapshots (cheap for typical clips);
 switch to diff-based undo only if multi-minute stereo files make snapshots heavy.
@@ -16,11 +16,9 @@ import os
 import wave
 import struct
 import tempfile
-import subprocess
 
 import numpy as np
 import pyqtgraph as pg
-import imageio_ffmpeg
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QFileDialog, QMessageBox, QTabWidget, QMenuBar,
@@ -31,12 +29,12 @@ from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize
 from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
+from hammer5tools_gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
 from hammer5tools_gui.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from hammer5tools_gui.widgets.explorer.main import Explorer
 from hammer5tools_gui.settings.main import get_cs2_path, get_addon_name
 from hammer5tools_gui.styles.common import qt_stylesheet_button
 
-_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
 
 # Toolbar / menu icons (resource paths from the app's compiled .qrc)
@@ -99,13 +97,14 @@ def load_audio(path):
     src = path
     tmp = None
     if ext != ".wav":
+        samples, sr = decode_to_pcm16(path)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         tmp.close()
-        subprocess.run(
-            [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-i", path, tmp.name],
-            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            creationflags=_NO_WINDOW,
-        )
+        with wave.open(tmp.name, "wb") as w:
+            w.setnchannels(samples.shape[1])
+            w.setsampwidth(2)
+            w.setframerate(sr)
+            w.writeframes(samples.astype("<i2").tobytes())
         src = tmp.name
     try:
         with wave.open(src, "rb") as w:

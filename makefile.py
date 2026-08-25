@@ -34,10 +34,6 @@ def generate_runtime_config(target_dir):
             "tfm": "net10.0",
             "frameworks": [
                 {
-                    "name": "Microsoft.WindowsDesktop.App",
-                    "version": "10.0.0"
-                },
-                {
                     "name": "Microsoft.NETCore.App",
                     "version": "10.0.0"
                 }
@@ -59,47 +55,10 @@ def get_dotnet_runtime_data():
     shared_path = os.path.join(dotnet_root, "shared")
     results = []
 
-    # Find latest 10.0 versions
-    for framework in ["Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"]:
-        fw_path = os.path.join(shared_path, framework)
-        if os.path.exists(fw_path):
-            versions = [v for v in os.listdir(fw_path) if v.startswith("10.0")]
-
-
-# Create a runtimeconfig.json for the bundled .NET runtime
-def generate_runtime_config(target_dir):
-    config = {
-        "runtimeOptions": {
-            "tfm": "net10.0",
-            "frameworks": [
-                {
-                    "name": "Microsoft.WindowsDesktop.App",
-                    "version": "10.0.0"
-                },
-                {
-                    "name": "Microsoft.NETCore.App",
-                    "version": "10.0.0"
-                }
-            ]
-        }
-    }
-    import json
-    os.makedirs(target_dir, exist_ok=True)
-    with open(os.path.join(target_dir, 'Hammer5Tools.runtimeconfig.json'), 'w') as f:
-        json.dump(config, f, indent=2)
-
-def get_dotnet_runtime_data():
-    """Finds .NET 10.0 runtime files on the system to bundle them."""
-    import glob
-    dotnet_root = os.environ.get("DOTNET_ROOT", r"C:\Program Files\dotnet")
-    if not os.path.exists(dotnet_root):
-        return []
-
-    shared_path = os.path.join(dotnet_root, "shared")
-    results = []
-
-    # Find latest 10.0 versions
-    for framework in ["Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"]:
+    # Find latest 10.0 version. Microsoft.WindowsDesktop.App is deliberately
+    # excluded: nothing in this repo uses WPF/WinForms (no UseWPF/UseWindowsForms
+    # in any .csproj), so bundling it just adds ~95MB of unused framework files.
+    for framework in ["Microsoft.NETCore.App"]:
         fw_path = os.path.join(shared_path, framework)
         if os.path.exists(fw_path):
             versions = [v for v in os.listdir(fw_path) if v.startswith("10.0")]
@@ -280,9 +239,15 @@ def build_libraries() -> None:
     source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
     if os.path.exists(source_porter_project):
         print("Building SourcePorter.Core...")
+        # Incremental publish does not prune stale per-RID native asset folders
+        # (e.g. runtimes/win-x86, runtimes/linux-x64) left behind by a prior
+        # publish without --runtime; wipe the output first so only win-x64 lands.
+        if os.path.exists(source_porter_publish):
+            shutil.rmtree(source_porter_publish)
         subprocess.run([
             'dotnet', 'publish', source_porter_project,
             '--configuration', 'Release',
+            '--runtime', 'win-x64',
             '--output', source_porter_publish,
             '--no-self-contained',
         ], check=True)
@@ -322,6 +287,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
     unreal_bridge_publish = os.path.join(core_csharp_root, 'UnrealBridge', 'publish')
     ue_scripts_dir = os.path.join(cur_dir, 'tools', 'ue_scripts')
+    source_porter_publish = os.path.join(core_csharp_root, 'SourcePorter.Core', 'publish')
+    bspsrc_dir = os.path.join(cur_dir, 'tools', 'bspsrc')
+    import_scripts_dir = os.path.join(cur_dir, 'tools', 'import_scripts')
 
     pyinstaller_dist = os.path.join(pyinstaller_root, 'dist')
     pyinstaller_work = os.path.join(pyinstaller_root, 'work')
@@ -339,7 +307,15 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
         '--hidden-import=vpk',
         '--collect-all=velopack',
-        '--collect-all=win32com',
+        # Only win32com.client.Dispatch("Shell.Application") is used (addon_functions.py);
+        # collect-all pulled in unrelated Pythonwin/pywin32 payload for nothing.
+        '--hidden-import=win32com.client',
+        '--exclude-module=win32ui',
+        '--exclude-module=Pythonwin',
+        # pyqtgraph.colormap has an optional try/except matplotlib import for a
+        # colormap-listing feature we never call; PyInstaller's static scan still
+        # follows it into the full matplotlib package otherwise.
+        '--exclude-module=matplotlib',
 
         '--noconfirm',
 
@@ -352,7 +328,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--collect-all=hammer5tools_gui',
         '--collect-all=hammer5tools_core',
         '--collect-all=keyvalues3',
-        '--collect-all=OpenGL',
+        # Only OpenGL.GL is imported anywhere; collect-submodules (no data/binaries)
+        # still catches PyOpenGL's lazy per-extension submodule loading.
+        '--collect-submodules=OpenGL',
         '--collect-submodules=pycparser',
 
         '--hidden-import=PySide6.QtNetwork',
@@ -378,6 +356,43 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--exclude-module=scipy',
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
+        # Unused Qt addon modules (nothing in the codebase imports these); PySide6's
+        # PyInstaller hook otherwise bundles Qt6Quick/Qml/Pdf regardless of usage.
+        '--exclude-module=PySide6.QtQml',
+        '--exclude-module=PySide6.QtQuick',
+        '--exclude-module=PySide6.QtQuickWidgets',
+        '--exclude-module=PySide6.QtQuick3D',
+        '--exclude-module=PySide6.QtPdf',
+        '--exclude-module=PySide6.QtPdfWidgets',
+        '--exclude-module=PySide6.QtBluetooth',
+        '--exclude-module=PySide6.QtNfc',
+        '--exclude-module=PySide6.QtSensors',
+        '--exclude-module=PySide6.QtSerialPort',
+        '--exclude-module=PySide6.QtSerialBus',
+        '--exclude-module=PySide6.QtPositioning',
+        '--exclude-module=PySide6.QtLocation',
+        '--exclude-module=PySide6.QtTextToSpeech',
+        '--exclude-module=PySide6.QtWebEngineCore',
+        '--exclude-module=PySide6.QtWebEngineWidgets',
+        '--exclude-module=PySide6.QtWebEngineQuick',
+        '--exclude-module=PySide6.QtWebSockets',
+        '--exclude-module=PySide6.QtWebChannel',
+        '--exclude-module=PySide6.QtCharts',
+        '--exclude-module=PySide6.QtDataVisualization',
+        '--exclude-module=PySide6.QtRemoteObjects',
+        '--exclude-module=PySide6.QtDesigner',
+        '--exclude-module=PySide6.QtHelp',
+        '--exclude-module=PySide6.QtSql',
+        '--exclude-module=PySide6.QtSpatialAudio',
+        '--exclude-module=PySide6.QtScxml',
+        '--exclude-module=PySide6.QtStateMachine',
+        '--exclude-module=PySide6.QtHttpServer',
+        '--exclude-module=PySide6.Qt3DCore',
+        '--exclude-module=PySide6.Qt3DRender',
+        '--exclude-module=PySide6.Qt3DAnimation',
+        '--exclude-module=PySide6.Qt3DExtras',
+        '--exclude-module=PySide6.Qt3DInput',
+        '--exclude-module=PySide6.Qt3DLogic',
         external,
         *[
             f'--add-binary={path};smartprop_native'
