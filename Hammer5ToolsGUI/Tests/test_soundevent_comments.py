@@ -16,8 +16,8 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.common import Kv3ToJson
-from hammer5tools_gui.editors.soundevent_editor.comment_handler import (
+from gui.common import Kv3ToJson
+from gui.editors.soundevent_editor.comment_handler import (
     extract_vsndevts_comments,
     serialize_vsndevts_with_comments,
 )
@@ -381,7 +381,7 @@ def test_event_modifications_with_comments():
 def test_load_and_save_integration_with_assets(qapp, asset_path):
     """Test LoadSoundEvents and SaveSoundEvents with real test assets."""
     from PySide6.QtWidgets import QTreeWidget
-    from hammer5tools_gui.editors.soundevent_editor.main import LoadSoundEvents, SaveSoundEvents
+    from gui.editors.soundevent_editor.main import LoadSoundEvents, SaveSoundEvents
 
     tree = QTreeWidget()
     LoadSoundEvents(tree=tree, path=asset_path)

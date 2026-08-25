@@ -11,7 +11,7 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.editors.assetgroup_maker.monitor import get_reference_asset_path
+from gui.editors.assetgroup_maker.monitor import get_reference_asset_path
 
 
 def test_get_reference_asset_path_relative_forward_slash():

@@ -12,7 +12,7 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.widgets.explorer.main import Explorer
+from gui.widgets.explorer.main import Explorer
 
 
 @pytest.fixture(scope="session")

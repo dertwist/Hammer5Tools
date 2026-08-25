@@ -15,10 +15,10 @@ if repo_root not in sys.path:
 # Ensure QApplication exists for Qt widget tests
 app = QApplication.instance() or QApplication(sys.argv)
 
-from hammer5tools_gui.editors.smartprop_editor._common import is_category_variable_name, is_category_widget
-from hammer5tools_gui.editors.smartprop_editor.widgets.main import ComboboxVariables, ComboboxVariablesWidget
-from hammer5tools_gui.editors.smartprop_editor.completion_utils import CompletionUtils
-from hammer5tools_gui.widgets.element_id import ElementIDGenerator
+from gui.editors.smartprop_editor._common import is_category_variable_name, is_category_widget
+from gui.editors.smartprop_editor.widgets.main import ComboboxVariables, ComboboxVariablesWidget
+from gui.editors.smartprop_editor.completion_utils import CompletionUtils
+from gui.widgets.element_id import ElementIDGenerator
 
 
 class MockVariableWidget(QWidget):

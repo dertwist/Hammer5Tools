@@ -5,12 +5,12 @@
             "name": "main",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/Hammer5ToolsGUI/hammer5tools_gui/main.py",
+            "program": "${workspaceFolder}/Hammer5ToolsGUI/gui/main.py",
             "python": "${workspaceFolder}/.venv/Scripts/python.exe",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI;${workspaceFolder}/Hammer5ToolsCore/Python;${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI",
                 "PYTHONUNBUFFERED": "1"
             }
         },
@@ -23,7 +23,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI;${workspaceFolder}/Hammer5ToolsCore/Python;${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI",
                 "PYTHONUNBUFFERED": "1"
             },
             "args": [

@@ -16,7 +16,7 @@ def compile_ui(ui_file: str, out_file: str) -> None:
             generated = generated_file.read()
         generated = generated.replace(
             'import resources_rc',
-            'from hammer5tools_gui import resources_rc',
+            'from gui import resources_rc',
         )
         with open(out_file, 'w', encoding='utf-8', newline='\n') as generated_file:
             generated_file.write(generated)
@@ -59,7 +59,7 @@ def main(directory: str) -> None:
         print(f"'{directory}' does not exist.")
         sys.exit(1)
 
-    source_directory = os.path.join(directory, "Hammer5ToolsGUI", "hammer5tools_gui")
+    source_directory = os.path.join(directory, "Hammer5ToolsGUI", "gui")
     if not os.path.isdir(source_directory):
         source_directory = directory
     ui_files = find_ui_files(source_directory)

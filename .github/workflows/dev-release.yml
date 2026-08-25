@@ -107,7 +107,7 @@ jobs:
 
       - name: Velopack Pack
         run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon Hammer5ToolsGUI/hammer5tools_gui/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md
+          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon Hammer5ToolsGUI/gui/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md
 
       - name: Delete old dev release
         run: gh release delete dev --yes --cleanup-tag

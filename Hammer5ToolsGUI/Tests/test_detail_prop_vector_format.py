@@ -11,8 +11,8 @@ repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
-from hammer5tools_gui.common import Kv3ToJson
-from hammer5tools_gui.forms.detail_prop_editor.vdata_io import (
+from gui.common import Kv3ToJson
+from gui.forms.detail_prop_editor.vdata_io import (
     save_vdata,
     load_vdata,
     default_type,

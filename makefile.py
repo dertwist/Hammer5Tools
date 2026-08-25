@@ -19,8 +19,7 @@ with open(os.path.join(cur_dir, 'version.json'), encoding='utf-8') as version_fi
     app_version = json.load(version_file)['version']
 
 gui_python_root = os.path.join(cur_dir, 'Hammer5ToolsGUI')
-gui_root = os.path.join(gui_python_root, 'hammer5tools_gui')
-core_python_root = os.path.join(cur_dir, 'Hammer5ToolsCore', 'Python')
+gui_root = os.path.join(gui_python_root, 'gui')
 core_csharp_root = os.path.join(cur_dir, 'Hammer5ToolsCore', 'CSharp')
 external_root = os.path.join(core_csharp_root, 'external')
 external = f"--add-data={external_root};external"
@@ -323,9 +322,8 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--windowed',
 
         f'--paths={gui_python_root}',
-        f'--paths={core_python_root}',
-        '--hidden-import=hammer5tools_gui.resources_rc',
-        '--collect-all=hammer5tools_gui',
+        '--hidden-import=gui.resources_rc',
+        '--collect-all=gui',
         '--collect-all=hammer5tools_core',
         '--collect-all=keyvalues3',
         # Only OpenGL.GL is imported anywhere; collect-submodules (no data/binaries)
@@ -418,7 +416,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     
     build_environment = os.environ.copy()
     existing_python_path = build_environment.get('PYTHONPATH')
-    python_roots = os.pathsep.join((gui_python_root, core_python_root))
+    python_roots = gui_python_root
     build_environment['PYTHONPATH'] = (
         python_roots + os.pathsep + existing_python_path
         if existing_python_path

@@ -50,18 +50,18 @@ Is your addon folder getting messy? This tool scans your `.vmap` and sweeps away
 Want to contribute or build your own version? Here's the lowdown on the project structure.
 
 ### Project Architecture
-The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/hammer5tools_gui/` and can run standalone if you point it to the right paths. `Hammer5ToolsGUI/hammer5tools_gui/main.py` is the entry point that brings everything together.
+The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/gui/` and can run standalone if you point it to the right paths. `Hammer5ToolsGUI/gui/main.py` is the entry point that brings everything together.
 
 *   `Hammer5ToolsGUI/`: PySide6 application, editors, widgets, styles, and resources.
-*   `Hammer5ToolsCore/`: C# domain projects and the thin Python bridge package.
+*   `Hammer5ToolsCore/`: C# domain projects (SourcePorter, UnrealBridge, native core).
 *   `Hammer5ToolsLauncher/`: Native startup, IPC, and GUI supervision.
-*   `Hammer5ToolsGUI/hammer5tools_gui/forms/`: Minor dialogs and UI helpers.
+*   `Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
 *   `Hammer5ToolsCore/CSharp/external/`: External libraries and .NET resources.
-*   `Hammer5ToolsGUI/hammer5tools_gui/common.py`: Shared logic and utility functions.
+*   `Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
 
 ### Getting Started
 1.  **Environment**: Requires Python 3.11+. Install dependencies via `pip install -r requirements.txt`.
-2.  **Running**: Launch `Hammer5ToolsGUI/hammer5tools_gui/main.py`. Ensure your working directory is set to the project root.
+2.  **Running**: Launch `Hammer5ToolsGUI/gui/main.py`. Ensure your working directory is set to the project root.
 3.  **Building**: A custom `makefile.py` handles the build process:
     ```powershell
     # Build a stable release

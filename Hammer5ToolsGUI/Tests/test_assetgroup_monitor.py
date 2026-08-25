@@ -13,7 +13,7 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher, read_reference_from_file, get_reference_asset_path
+from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher, read_reference_from_file, get_reference_asset_path
 
 
 @pytest.fixture(scope="session")
@@ -32,9 +32,9 @@ def fake_addon_dir():
         os.makedirs(os.path.join(addon_path, "materials", "nature"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "smartprops", "dev"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "sounds", "weapons"), exist_ok=True)
-        with patch("hammer5tools_gui.editors.assetgroup_maker.monitor.get_addon_dir", return_value=addon_path), \
-             patch("hammer5tools_gui.settings.common.get_addon_dir", return_value=addon_path), \
-             patch("hammer5tools_gui.widgets.explorer.actions.get_addon_dir", return_value=addon_path):
+        with patch("gui.editors.assetgroup_maker.monitor.get_addon_dir", return_value=addon_path), \
+             patch("gui.settings.common.get_addon_dir", return_value=addon_path), \
+             patch("gui.widgets.explorer.actions.get_addon_dir", return_value=addon_path):
             yield addon_path
 
 
@@ -102,7 +102,7 @@ def test_notify_new_file(qapp, fake_addon_dir):
 
 
 def test_quick_config_file_notifies_watcher(qapp, fake_addon_dir):
-    from hammer5tools_gui.widgets.explorer.actions import QuickConfigFile
+    from gui.widgets.explorer.actions import QuickConfigFile
 
     watcher = MonitoringFileWatcher(fake_addon_dir)
     try:
@@ -124,7 +124,7 @@ def test_quick_config_file_notifies_watcher(qapp, fake_addon_dir):
 
 
 def test_quick_create_dialog_notifies_watcher(qapp, fake_addon_dir):
-    from hammer5tools_gui.forms.quick_create.main import QuickCreateDialog
+    from gui.forms.quick_create.main import QuickCreateDialog
 
     watcher = MonitoringFileWatcher(fake_addon_dir)
     try:

@@ -14,7 +14,7 @@ if repo_root not in sys.path:
 # Ensure QApplication exists for Qt widget tests
 app = QApplication.instance() or QApplication(sys.argv)
 
-from hammer5tools_gui.settings.main import PreferencesDialog
+from gui.settings.main import PreferencesDialog
 
 
 def test_preferences_dialog_tabs():

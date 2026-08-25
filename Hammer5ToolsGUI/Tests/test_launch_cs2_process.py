@@ -10,7 +10,7 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.other.addon_functions import launch_cs2_process, assemble_commands
+from gui.other.addon_functions import launch_cs2_process, assemble_commands
 
 
 def test_assemble_commands():
@@ -102,7 +102,7 @@ def test_launch_cs2_process_fallback_to_popen():
 
 
 def test_job_object_limit_flags():
-    from hammer5tools_gui.job_object import install_job_object
+    from gui.job_object import install_job_object
     JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000
     JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x0800
     JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x1000

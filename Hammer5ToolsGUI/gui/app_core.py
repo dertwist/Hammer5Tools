@@ -1,0 +1,900 @@
+import os
+import sys
+import time
+from PySide6.QtWidgets import (
+    QSystemTrayIcon,
+    QMenu,
+    QDockWidget,
+    QDialog
+)
+from PySide6.QtGui import QAction, QPainter, QColor
+from PySide6.QtCore import (
+    QPropertyAnimation,
+    QPoint,
+    QFileSystemWatcher,
+    QEvent,
+)
+from PySide6.QtNetwork import QLocalServer
+
+from gui.ipc.protocol import IPCMessage, IPCCommand
+from gui.forms.about.main import AboutDialog
+from gui.forms.mapbuilder.main import MapBuilderDialog
+from gui.git_sync.controller import GitController, SyncButton
+from gui.settings.main import (
+    PreferencesDialog,
+    get_steam_path,
+    get_cs2_path,
+    get_addon_name,
+    set_addon_name,
+    get_settings_bool,
+    set_settings_bool,
+    get_settings_value,
+    set_settings_value,
+    settings,
+    get_addon_dir
+)
+from gui.editors.loading_editor.main import Loading_editorMainWindow
+from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
+from gui.forms.create_addon.main import Create_addon_Dialog
+from gui.other.addon_functions import delete_addon, launch_addon
+from gui.other.file_association import check_association, setup_all_associations
+from gui.updater.check import check_updates
+from gui.forms.export.main import ExportAndImportAddonDialog
+from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
+from gui.editors.smartprop_editor.main import SmartPropEditorMainWindow
+from gui.editors.soundevent_editor.main import SoundEventEditorMainWindow
+from gui.forms.unreal_porter.main import UnrealPorterWidget
+from gui.forms.source_porter.main import SourcePorterWidget
+from gui.forms.launch_options.main import LaunchOptionsDialog
+from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile
+from gui.styles.qt_global_stylesheet import QT_Stylesheet_global
+from hammer5tools_core.dotnet import check_dotnet_runtime
+from gui.other.addon_validation import validate_addon_structure
+from gui.forms.cleanup.main import CleanupDialog
+from gui.forms.quick_create.main import QuickCreateDialog
+from gui.widgets import *
+
+# Global paths
+steam_path = get_steam_path()
+cs2_path = get_cs2_path()
+INSTANCE_KEY = "Hammer5ToolsIPC"
+
+def activate_existing_window(hwnd):
+    SW_RESTORE = 9
+    ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
+    ctypes.windll.user32.UpdateWindow(hwnd)
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
+
+def restore_window(hwnd):
+    SW_NORMAL = 1
+    SW_RESTORE = 9
+    SW_SHOW = 5
+    ctypes.windll.user32.ShowWindow(hwnd, SW_NORMAL)
+    time.sleep(0.1)
+    ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
+    ctypes.windll.user32.ShowWindow(hwnd, SW_SHOW)
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
+    ctypes.windll.user32.BringWindowToTop(hwnd)
+    ctypes.windll.user32.SwitchToThisWindow(hwnd, True)
+
+class AlternatingMenu(QMenu):
+    """QMenu with alternating row backgrounds (QMenu items aren't view rows,
+    so this can't be done via stylesheet). Paints a subtle band over odd,
+    non-separator rows on top of the normal render."""
+    ALT_COLOR = QColor(255, 255, 255, 14)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        row = 0
+        for action in self.actions():
+            if action.isSeparator():
+                continue
+            if row % 2 == 1:
+                painter.fillRect(self.actionGeometry(action), self.ALT_COLOR)
+            row += 1
+
+
+class DevWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Development Widget")
+        self.setGeometry(100, 100, 400, 300)
+        layout = QVBoxLayout()
+        label = QLabel("Development Mode Active", self)
+        layout.addWidget(label)
+        self.checkBox_debug_info = QCheckBox("Enable Debug Info", self)
+        self.checkBox_debug_info.setChecked(get_settings_bool('OTHER', 'debug_info', False))
+        self.checkBox_debug_info.toggled.connect(
+            lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
+        )
+        layout.addWidget(self.checkBox_debug_info)
+        self.setLayout(layout)
+
+class Widget(QMainWindow):
+    def __init__(self, parent=None, dev_mode=False):
+        super().__init__(parent)
+        from gui.ui_main import Ui_MainWindow
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        enable_dark_title_bar(self)
+
+        self.preferences_dialog = None
+        self.mapbuilder_dialog = None
+        self.launch_options = None
+        self.Create_addon_Dialog = None
+        self.Delete_addon_Dialog = None
+
+        if cs2_path is None:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Counter Strike 2 Not Found")
+            msg_box.setText("Counter Strike 2 installation was not found automatically.\n\n"
+                          "You can manually set the CS2 path in Settings > General > CS2 Path.\n\n"
+                          "Would you like to continue anyway?")
+            exit_button = msg_box.addButton("Exit", QMessageBox.RejectRole)
+            settings_button = msg_box.addButton("Open Settings", QMessageBox.ActionRole)
+            continue_button = msg_box.addButton("Continue Anyway", QMessageBox.AcceptRole)
+            msg_box.setDefaultButton(settings_button)
+            result = msg_box.exec()
+            
+            if msg_box.clickedButton() == exit_button:
+                sys.exit(1)
+            elif msg_box.clickedButton() == settings_button:
+                QTimer.singleShot(500, self.open_preferences_dialog)
+
+        self.setup_tray_icon()
+        self.setup_tabs()
+        self.setup_buttons()
+        self.current_tab(False)
+        self.settings = settings
+
+        # Persist window geometry/maximized-state continuously (debounced) so it
+        # survives crashes and abrupt termination (e.g. stopping the debugger),
+        # not only a clean close. resize/move restart the timer; a single save
+        # fires once the window stops changing.
+        self._geometry_save_timer = QTimer(self)
+        self._geometry_save_timer.setSingleShot(True)
+        self._geometry_save_timer.setInterval(500)
+        self._geometry_save_timer.timeout.connect(self._save_window_state)
+
+        self.setWindowTitle("Hammer 5 Tools")
+
+        self.launchOptionPoller = QTimer(self)
+        self.launchOptionPoller.setInterval(1000)
+        self.launchOptionPoller.timeout.connect(self.updateLaunchAddonButton)
+        self.launchOptionPoller.start()
+
+        if dev_mode:
+            self.dev_widget = DevWidget(self)
+            self.ui.centralwidget.layout().addWidget(self.dev_widget)
+
+        QTimer.singleShot(100, self.deferred_update_check)
+        self._restore_user_prefs()
+        if get_settings_bool('APP', 'show_about_on_startup', True):
+            QTimer.singleShot(500, self.open_about)
+        
+        QTimer.singleShot(2000, self.check_file_associations)
+
+        self.addon_watcher = QFileSystemWatcher(self)
+        if cs2_path is not None:
+            addon_folder_path = os.path.join(cs2_path, "content", "csgo_addons")
+            if os.path.exists(addon_folder_path):
+                self.addon_watcher.addPath(addon_folder_path)
+                self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
+
+        for dock in self.findChildren(QDockWidget):
+            dock.show()
+        for child in self.findChildren(QMainWindow):
+            for dock in child.findChildren(QDockWidget):
+                dock.show()
+        validate_addon_structure()
+
+    def trigger_update_check(self):
+        check_updates("https://github.com/dertwist/Hammer5Tools", app_version, False)
+
+    def deferred_update_check(self):
+        try:
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        except Exception as e:
+            print(f"Error checking updates: {e}")
+
+    def check_file_associations(self):
+        if not get_settings_bool('APP', 'check_associations', True):
+            return
+        _, is_us = check_association('.vsmart')
+        if is_us:
+            return
+
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("File Association Setup")
+        msg_box.setText("Associate .vsmart files with Hammer5Tools?")
+        msg_box.setInformativeText(
+            "This lets you double-click SmartProp (.vsmart) files to open them directly."
+        )
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+
+        # QMessageBox shrink-wraps to its text, which wraps the message into a
+        # cramped narrow column. Force a comfortable minimum width by stretching
+        # a spacer across the bottom row of its grid layout.
+        from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+        grid = msg_box.layout()
+        if grid is not None:
+            grid.addItem(
+                QSpacerItem(440, 0, QSizePolicy.Minimum, QSizePolicy.Expanding),
+                grid.rowCount(), 0, 1, grid.columnCount()
+            )
+
+        if msg_box.exec() == QMessageBox.Yes:
+            setup_all_associations(force=False, parent_window=self)
+
+    @exception_handler
+    def update_title(self, status=None, file_path=None, text=None):
+        # Feeds the persistent console line only; window title stays static.
+        if file_path:
+            if status == "saved":
+                msg = f"Saved file [{file_path}]"
+            elif status == "opened":
+                msg = f"Opened file [{file_path}]"
+            else:
+                return
+        elif text:
+            msg = text
+        else:
+            return
+        try: self.ui.console_label.setText(msg)
+        except Exception: pass
+
+    def _hook_undo_console(self, stack):
+        """Report a QUndoStack's actions to the console line. A fresh push and a
+        redo both advance the index by one, so count() disambiguates them."""
+        if stack is None:
+            return
+        try:
+            state = {"idx": stack.index(), "count": stack.count()}
+        except (RuntimeError, AttributeError):
+            return
+
+        def on_index_changed(new_idx):
+            try:
+                prev_idx, prev_count = state["idx"], state["count"]
+                count = stack.count()
+                state["idx"], state["count"] = new_idx, count
+                if count == 0:
+                    return
+                if count > prev_count:                       # new command pushed
+                    txt = stack.text(new_idx - 1)
+                    if txt: self.update_title(text=txt[:1].upper() + txt[1:])
+                elif new_idx < prev_idx:                     # undo
+                    txt = stack.text(new_idx)
+                    if txt: self.update_title(text=f"Undo [{txt}]")
+                elif new_idx > prev_idx:                     # redo
+                    txt = stack.text(new_idx - 1)
+                    if txt: self.update_title(text=f"Redo [{txt}]")
+            except (RuntimeError, AttributeError):
+                pass
+
+        try:
+            stack.indexChanged.connect(on_index_changed)
+        except (RuntimeError, AttributeError):
+            pass
+
+    def current_tab(self, set_flag):
+        if set_flag:
+            try:
+                set_settings_value('APP', 'current_tab', str(self.ui.MainWindowTools_tabs.currentIndex()))
+            except Exception:
+                pass
+        else:
+            try:
+                current_tab = int(get_settings_value('APP', 'current_tab'))
+                self.ui.MainWindowTools_tabs.setCurrentIndex(current_tab)
+            except Exception:
+                pass
+
+    def setup_tray_icon(self):
+        self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
+        self.tray_icon.setToolTip("Hammer5Tools")
+        self.tray_menu = QMenu()
+        show_action = QAction("Show", self, triggered=self.show_from_tray)
+        exit_action = QAction("Exit", self, triggered=self.exit_application)
+        self.tray_menu.addAction(show_action)
+        self.tray_menu.addAction(exit_action)
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.tray_icon.show()
+
+    def on_tray_icon_activated(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.show_from_tray()
+
+    def show_from_tray(self):
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+        hwnd = self.winId().__int__()
+        restore_window(hwnd)
+        for dock in self.findChildren(QDockWidget):
+            dock.show()
+        for child in self.findChildren(QMainWindow):
+            for dock in child.findChildren(QDockWidget):
+                dock.show()
+
+    def open_file_in_smartprop(self, file_path):
+        if not file_path:
+            return
+        file_path = os.path.normpath(file_path)
+        if "csgo_addons" in file_path.lower():
+            parts = file_path.split(os.sep)
+            for i, part in enumerate(parts):
+                if part.lower() == "csgo_addons" and i + 1 < len(parts):
+                    addon_hint = parts[i + 1]
+                    if not self.check_addon_mismatch(addon_hint):
+                        return
+                    break
+
+        if not self.SmartPropEditorMainWindow:
+            print("SmartProp Editor not initialized")
+            return
+        smartprop_tab_index = self.ui.MainWindowTools_tabs.indexOf(self.ui.smartpropeditor_tab)
+        if smartprop_tab_index >= 0:
+            self.ui.MainWindowTools_tabs.setCurrentIndex(smartprop_tab_index)
+        self.SmartPropEditorMainWindow.open_file(filename=file_path)
+
+    def open_file_in_soundevent(self, file_path):
+        if not file_path:
+            return
+        file_path = os.path.normpath(file_path)
+        if "csgo_addons" in file_path.lower():
+            parts = file_path.split(os.sep)
+            for i, part in enumerate(parts):
+                if part.lower() == "csgo_addons" and i + 1 < len(parts):
+                    addon_hint = parts[i + 1]
+                    if not self.check_addon_mismatch(addon_hint):
+                        return
+                    break
+
+        if not self.SoundEventEditorMainWindow:
+            print("SoundEvent Editor not initialized")
+            return
+        soundevent_tab_index = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
+        if soundevent_tab_index >= 0:
+            self.ui.MainWindowTools_tabs.setCurrentIndex(soundevent_tab_index)
+        self.SoundEventEditorMainWindow.load_soundevents(filepath=file_path)
+
+    def open_quick_create_dialog(self, folder_path, file_type):
+        dialog = QuickCreateDialog(folder_path, file_type, self)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
+    def check_addon_mismatch(self, addon_hint):
+        if not addon_hint: return True
+        current_addon = get_addon_name()
+        if addon_hint.lower() == current_addon.lower(): return True
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("Addon Mismatch")
+        msg_box.setText(f"This file belongs to addon '{addon_hint}', but Hammer5Tools is currently using '{current_addon}'.")
+        msg_box.setInformativeText("Would you like to switch to the correct addon before proceeding?")
+        switch_button = msg_box.addButton("Switch Addon", QMessageBox.AcceptRole)
+        keep_button = msg_box.addButton("Keep Current", QMessageBox.RejectRole)
+        cancel_button = msg_box.addButton(QMessageBox.Cancel)
+        msg_box.setDefaultButton(switch_button)
+        msg_box.exec()
+        if msg_box.clickedButton() == switch_button:
+            self.ui.ComboBoxSelectAddon.setCurrentText(addon_hint)
+            return True
+        elif msg_box.clickedButton() == keep_button: return True
+        else: return False
+
+    def handle_quick_vmdl(self, path):
+        if os.path.isfile(path):
+            folder = os.path.dirname(path)
+            basename = os.path.splitext(os.path.basename(path))[0]
+            vmdl_path = os.path.join(folder, f"{basename}.vmdl")
+            addon_dir = get_addon_dir()
+            try:
+                if addon_dir:
+                    rel_mesh = os.path.relpath(path, addon_dir).replace('\\', '/')
+                else:
+                    rel_mesh = os.path.basename(path)
+            except (ValueError, Exception): rel_mesh = ""
+            from gui.editors.assetgroup_maker.objects import DEFAULT_VMDL
+            from gui.common import fast_deepcopy
+            vmdl_content = fast_deepcopy(DEFAULT_VMDL)
+            for child in vmdl_content.get('rootNode', {}).get('children', []):
+                if child.get('_class') == 'RenderMeshList':
+                    for mesh_file in child.get('children', []):
+                        if mesh_file.get('_class') == 'RenderMeshFile': mesh_file['filename'] = rel_mesh
+                if child.get('_class') == 'PhysicsShapeList':
+                    for phys_file in child.get('children', []):
+                        if phys_file.get('_class') == 'PhysicsHullFile':
+                            phys_file['filename'] = rel_mesh
+                            phys_file['name'] = basename
+            kv3_content = JsonToKv3(vmdl_content, format='vmdl')
+            try:
+                with open(vmdl_path, 'w') as f: f.write(kv3_content)
+                self.update_title(text=f"Created VMDL: {os.path.basename(vmdl_path)}")
+            except Exception as e: QMessageBox.critical(self, "Error", f"Failed to create VMDL: {e}")
+        else: self.open_quick_create_dialog(path, "vmdl")
+
+    def handle_quick_batch(self, path):
+        target_dir = path if os.path.isdir(path) else os.path.dirname(path)
+        if os.path.isdir(target_dir):
+            cs2_path = get_cs2_path()
+            if not cs2_path:
+                QMessageBox.warning(self, "CS2 Not Found", "CS2 installation path not set.")
+                return
+            rc_exe = os.path.join(cs2_path, "game", "bin", "win64", "resourcecompiler.exe")
+            bat_content = f'@echo off\n"{rc_exe}" -i "*.vmdl" "*.vmat"\npause'
+            bat_path = os.path.join(target_dir, "compile_assets.bat")
+            try:
+                with open(bat_path, 'w') as f: f.write(bat_content)
+                self.update_title(text=f"Created Batch: {os.path.basename(bat_path)}")
+            except Exception as e: QMessageBox.critical(self, "Error", f"Failed to create Batch file: {e}")
+
+    def handle_quick_process(self, path):
+        if os.path.isdir(path):
+            self.update_title(text=f"Processing folder: {os.path.basename(path)}...")
+            run_compile(os.path.join(path, "*.vmdl"))
+            run_compile(os.path.join(path, "*.vmat"))
+
+    def handle_quick_process_file(self, path):
+        if os.path.isfile(path):
+            self.update_title(text=f"Processing file: {os.path.basename(path)}...")
+            run_compile(path)
+
+    def setup_tabs(self):
+        self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
+        self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
+
+        # Programmatically create DetailProp Editor tab
+        from PySide6.QtWidgets import QWidget, QVBoxLayout
+        from PySide6.QtGui import QIcon
+        self.detailpropeditor_tab = QWidget()
+        self.detailpropeditor_tab.setObjectName("detailpropeditor_tab")
+        layout = QVBoxLayout(self.detailpropeditor_tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        dp_icon = QIcon(":/valve_common/icons/tools/hammer/displacement_tool_icon.png")
+        idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.hotkeyeditor_tab)
+        self.ui.MainWindowTools_tabs.insertTab(idx + 1, self.detailpropeditor_tab, dp_icon, "DetailProp Editor")
+
+        # Programmatically create Audio Editor tab (addon-independent, created once)
+        from gui.editors.soundevent_editor.wave_editor import AudioEditor
+        self.audio_editor_tab = QWidget()
+        self.audio_editor_tab.setObjectName("audio_editor_tab")
+        ae_layout = QVBoxLayout(self.audio_editor_tab)
+        ae_layout.setContentsMargins(0, 0, 0, 0)
+        self.AudioEditor_instance = AudioEditor(parent=self)
+        ae_layout.addWidget(self.AudioEditor_instance)
+        ae_icon = QIcon(":/valve_common/icons/tools/common/control_play.png")
+        sound_idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
+        self.ui.MainWindowTools_tabs.insertTab(sound_idx + 1, self.audio_editor_tab, ae_icon, "Audio Editor")
+
+    def populate_addon_combobox(self):
+        exclude_addons = {"workshop_items", "addon_template"}
+        if cs2_path is None:
+            self.ui.ComboBoxSelectAddon.addItem("CS2 Path Not Set")
+            self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+            return
+        addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
+        found_any = False
+        try:
+            if not os.path.exists(addons_folder):
+                self.ui.ComboBoxSelectAddon.addItem("Addons Folder Not Found")
+                self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+                return
+            for item in os.listdir(addons_folder):
+                full_path = os.path.join(addons_folder, item)
+                if os.path.isdir(full_path) and item not in exclude_addons:
+                    self.ui.ComboBoxSelectAddon.addItem(item)
+                    found_any = True
+            if not found_any:
+                response = QMessageBox.question(self, "No Addon Found", "No addons found. Would you like to create one now?", QMessageBox.Yes | QMessageBox.No)
+                if response == QMessageBox.Yes:
+                    Create_addon_Dialog(self).exec()
+                    self.refresh_addon_combobox()
+                    return
+                else:
+                    self.ui.ComboBoxSelectAddon.addItem("")
+                    self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+            if not get_addon_name() and found_any: set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        except Exception as e: print("Failed to load addons:", e)
+
+    def refresh_addon_combobox(self):
+        try: self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
+        except Exception: pass
+        addon = get_addon_name()
+        self.ui.ComboBoxSelectAddon.clear()
+        self.populate_addon_combobox()
+        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+        tools = ["SoundEventEditorMainWindow", "SmartPropEditorMainWindow", "BatchCreator_MainWindow", "LoadingEditorMainWindow"]
+        if not any(getattr(self, tool, None) for tool in tools): self.selected_addon_name()
+
+    def animate_launch_button(self):
+        button = self.ui.Launch_Addon_Button
+        overlay = QWidget(button)
+        overlay.setObjectName("launchOverlay")
+        overlay.setAttribute(Qt.WA_StyledBackground, True)
+        overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        overlay.setStyleSheet("QWidget#launchOverlay { background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgba(80, 88, 100,0.25), stop: 0.2 rgba(80, 88, 100,0.40), stop: 0.8 rgba(80, 88, 100,0.40), stop: 1 rgba(80, 88, 100,0.25)); }")
+        button_width, button_height = button.width(), button.height()
+        overlay.setGeometry(-button_width, 0, button_width, button_height)
+        overlay.show()
+        overlay.lower()
+        animation = QPropertyAnimation(overlay, b"pos", self)
+        animation.setDuration(1200)
+        animation.setStartValue(QPoint(-button_width, 0))
+        animation.setEndValue(QPoint(button_width, 0))
+        animation.finished.connect(overlay.deleteLater)
+        animation.start()
+
+    def launch_addon_action(self):
+        self.animate_launch_button()
+        self.update_title(text=f'Launched addon: {get_addon_name()}')
+        launch_addon()
+
+    def setup_buttons(self):
+        self.git_sync_button = SyncButton(self.centralWidget())
+        _combo_idx = self.ui.horizontalLayout_2.indexOf(self.ui.ComboBoxSelectAddon)
+        self.ui.horizontalLayout_2.insertWidget(_combo_idx + 1, self.git_sync_button)
+        self.git = GitController(self, self.git_sync_button)
+        self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
+        self.ui.ComboBoxSelectAddon.wheelEvent = lambda event: None
+        self.ui.ComboBoxSelectAddon.view().setAlternatingRowColors(True)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+        addon = get_addon_name()
+        combo_items = [self.ui.ComboBoxSelectAddon.itemText(i) for i in range(self.ui.ComboBoxSelectAddon.count())]
+        if addon not in combo_items: self.refresh_addon_combobox()
+        if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name(): self.selected_addon_name()
+        self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
+        self.ui.ComboBoxSelectAddon.activated.connect(self.refresh_addon_combobox)
+        self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
+        self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
+        self.ui.discord.clicked.connect(self.open_discord)
+        self.ui.documentation_button.clicked.connect(self.open_about)
+        self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
+        self._build_addon_actions_menu()
+        self._build_utilities_menu()
+        # Hide the dropdown arrow and cap height to match the sibling buttons.
+        # Existing .ui styles are bare declarations, so wrap them in a selector
+        # before adding the sub-control rule (mixing the two is invalid CSS).
+        h = self.ui.preferences_button.sizeHint().height()
+        for b in (self.ui.utilities_button, self.ui.addon_actions_button):
+            base = b.styleSheet().strip()
+            wrapped = f"QToolButton {{ {base} }}\n" if base else ""
+            b.setStyleSheet(wrapped + "QToolButton::menu-indicator { image: none; width: 0px; }")
+            b.setMaximumHeight(h)
+        self.ui.utilities_button.setMinimumWidth(0)
+        self.ui.console_label.setText("Ready")
+        self.updateLaunchAddonButton()
+
+    def _build_addon_actions_menu(self):
+        menu = AlternatingMenu(self)
+        menu.addAction("Edit launch parameters", self.open_launch_options)
+        menu.addSeparator()
+        menu.addAction("Create new addon", self.open_create_addon_dialog)
+        menu.addAction("Delete addon", self.delete_addon)
+        menu.addSeparator()
+        menu.addAction("Export addon", self.open_export_and_import_addon)
+        menu.addAction("Import addon", self.import_addon_action)
+        menu.addSeparator()
+        menu.addAction("Open content folder", lambda: self.open_addons_folder("content"))
+        menu.addAction("Open game folder", lambda: self.open_addons_folder("game"))
+        self.ui.addon_actions_button.setMenu(menu)
+
+    def _build_utilities_menu(self):
+        menu = AlternatingMenu(self)
+        menu.addAction("SourcePorter", self._open_source_porter)
+        menu.addAction("UnrealPorter", self._open_unreal_porter)
+        menu.addAction("Cleanup Content", lambda: CleanupDialog(self).show())
+        menu.addAction("Cleanup _vrad3 cache", self.cleanup_vrad3_cache)
+        self.ui.utilities_button.setMenu(menu)
+
+    def cleanup_vrad3_cache(self):
+        """Delete the _vrad3 lightmap cache folder from every addon in the
+        game directory (game/csgo_addons/*/_vrad3). Destructive, so it asks
+        for confirmation and reports the result."""
+        import shutil
+        from pathlib import Path
+        from PySide6.QtWidgets import QMessageBox
+
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            QMessageBox.warning(self, "Cleanup _vrad3 cache",
+                                "CS2 path not found. Set it in the settings first.")
+            return
+
+        game_addons_dir = Path(cs2_path) / 'game' / 'csgo_addons'
+        if not game_addons_dir.is_dir():
+            QMessageBox.warning(self, "Cleanup _vrad3 cache",
+                                f"Addons directory not found:\n{game_addons_dir}")
+            return
+
+        targets = [addon / '_vrad3' for addon in sorted(game_addons_dir.iterdir())
+                   if addon.is_dir() and (addon / '_vrad3').is_dir()]
+
+        if not targets:
+            QMessageBox.information(self, "Cleanup _vrad3 cache",
+                                    "No _vrad3 cache folders found.")
+            return
+
+        addon_list = "\n".join(f"  • {t.parent.name}" for t in targets)
+        reply = QMessageBox.question(
+            self, "Cleanup _vrad3 cache",
+            f"Delete the _vrad3 cache from {len(targets)} addon(s)?\n\n{addon_list}\n\n"
+            "This forces a full lightmap rebuild on the next compile.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        removed, failed = 0, []
+        for target in targets:
+            try:
+                shutil.rmtree(target)
+                removed += 1
+            except Exception as e:
+                failed.append(f"{target.parent.name}: {e}")
+
+        if failed:
+            QMessageBox.warning(
+                self, "Cleanup _vrad3 cache",
+                f"Removed {removed} of {len(targets)} cache folder(s).\n\n"
+                "Failed:\n" + "\n".join(failed)
+            )
+        else:
+            QMessageBox.information(
+                self, "Cleanup _vrad3 cache",
+                f"Removed the _vrad3 cache from {removed} addon(s)."
+            )
+
+    def _open_source_porter(self):
+        self.source_porter_dialog = SourcePorterWidget(parent=self)
+        self.source_porter_dialog.show()
+
+    def _open_unreal_porter(self):
+        self.unreal_porter_dialog = UnrealPorterWidget(parent=self)
+        self.unreal_porter_dialog.show()
+
+    def updateLaunchAddonButton(self):
+        commands = get_settings_value("LAUNCH", "commands", default_commands)
+        self.ui.Launch_Addon_Button.setText("Edit map" if commands and "-asset" in commands else "Launch Tools")
+
+    def closeEvent(self, event):
+        # Capture geometry (including maximized/fullscreen state) while the
+        # window is still visible, before it is hidden or destroyed.
+        self._save_window_state()
+        if get_settings_bool("APP", "minimize_to_tray", False):
+            event.ignore()
+            self.hide()
+            for dock in self.findChildren(QDockWidget): dock.hide()
+            for child in self.findChildren(QMainWindow):
+                for dock in child.findChildren(QDockWidget): dock.hide()
+            self.show_minimize_message_once()
+        else: self.exit_application()
+
+    def collect_unsaved_files(self):
+        """(editor_name, file_label, save_callable) for every unsaved file in the open editors."""
+        editors = (
+            ('BatchCreator_MainWindow', "AssetGroup Maker"),
+            ('SmartPropEditorMainWindow', "SmartProp Editor"),
+            ('SoundEventEditorMainWindow', "SoundEvent Editor"),
+            ('AudioEditor_instance', "Wave Editor"),
+            ('DetailPropEditorWidget_instance', "DetailProp Editor"),
+        )
+        unsaved = []
+        for attr, editor_name in editors:
+            editor = getattr(self, attr, None)
+            if editor is None:
+                continue
+            for label, save in getattr(editor, 'unsaved_files', list)():
+                unsaved.append((editor_name, label, save))
+        return unsaved
+
+    @exception_handler
+    def selected_addon_name(self, text=None):
+        new_addon = self.ui.ComboBoxSelectAddon.currentText()
+        if not new_addon: return
+        current_addon = get_addon_name()
+        if current_addon == new_addon and getattr(self, 'SmartPropEditorMainWindow', None): return
+
+        unsaved = self.collect_unsaved_files()
+        if unsaved and current_addon and current_addon != new_addon:
+            if UnsavedFilesDialog(unsaved, self).exec() != QDialog.Accepted:
+                try:
+                    self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
+                    self.ui.ComboBoxSelectAddon.setCurrentText(current_addon)
+                finally:
+                    self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+                return
+
+        set_addon_name(new_addon)
+        if getattr(self, 'SoundEventEditorMainWindow', None):
+            self.SoundEventEditorMainWindow.close(); self.SoundEventEditorMainWindow.deleteLater(); self.SoundEventEditorMainWindow = None
+        if getattr(self, 'SmartPropEditorMainWindow', None):
+            self.ui.smartpropeditor_tab.layout().removeWidget(self.SmartPropEditorMainWindow)
+            self.SmartPropEditorMainWindow.close(); self.SmartPropEditorMainWindow.deleteLater(); self.SmartPropEditorMainWindow = None
+        if getattr(self, 'DetailPropEditorWidget_instance', None) and hasattr(self, 'detailpropeditor_tab'):
+            self.detailpropeditor_tab.layout().removeWidget(self.DetailPropEditorWidget_instance)
+            self.DetailPropEditorWidget_instance.close(); self.DetailPropEditorWidget_instance.deleteLater(); self.DetailPropEditorWidget_instance = None
+        if getattr(self, 'BatchCreator_MainWindow', None):
+            self.BatchCreator_MainWindow.close(); self.BatchCreator_MainWindow.deleteLater(); self.BatchCreator_MainWindow = None
+        if getattr(self, 'LoadingEditorMainWindow', None):
+            self.LoadingEditorMainWindow.close(); self.LoadingEditorMainWindow.deleteLater(); self.LoadingEditorMainWindow = None
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title, parent=self)
+        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
+        if cs2_path is not None:
+            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title, parent=self)
+            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
+            self._hook_undo_console(getattr(self.SoundEventEditorMainWindow, 'undo_stack', None))
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title, parent=self)
+            self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+            self._hook_undo_console(getattr(self.SmartPropEditorMainWindow, 'undo_stack', None))
+            self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
+            self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+
+            if getattr(self, 'AudioEditor_instance', None):
+                self.AudioEditor_instance.set_root(
+                    os.path.join(cs2_path, 'content', 'csgo_addons', new_addon, 'sounds'))
+
+            if hasattr(self, 'detailpropeditor_tab'):
+                from gui.forms.detail_prop_editor.main import DetailPropEditorWidget
+                self.DetailPropEditorWidget_instance = DetailPropEditorWidget(parent=self)
+                self.detailpropeditor_tab.layout().addWidget(self.DetailPropEditorWidget_instance)
+                self._hook_undo_console(getattr(self.DetailPropEditorWidget_instance, 'undo_stack', None))
+
+        if getattr(self, 'git', None):
+            self.git.refresh()
+
+    @exception_handler
+    def open_addons_folder(self, folder_type="content"):
+        if cs2_path is None:
+            QMessageBox.warning(self, "CS2 Path Not Set", "CS2 installation path is not set. Please set it in Settings > General > CS2 Path."); return
+        addon_name = self.ui.ComboBoxSelectAddon.currentText()
+        folder_path = r"\game\csgo_addons" if folder_type == "game" else r"\content\csgo_addons"
+        full_path = f"{cs2_path}{folder_path}\\{addon_name}"
+        if os.path.exists(full_path): os.startfile(full_path)
+        else: QMessageBox.warning(self, "Folder Not Found", f"The addon folder does not exist:\n{full_path}")
+
+    @exception_handler
+    def open_mapbuilder_dialog(self):
+        if self.mapbuilder_dialog is None: self.mapbuilder_dialog = MapBuilderDialog(self)
+        self.mapbuilder_dialog.show(); self.mapbuilder_dialog.raise_(); self.mapbuilder_dialog.activateWindow()
+
+    @exception_handler
+    def open_preferences_dialog(self):
+        if self.preferences_dialog is None:
+            self.preferences_dialog = PreferencesDialog(app_version, self); self.preferences_dialog.show()
+            self.preferences_dialog.finished.connect(lambda: setattr(self, 'preferences_dialog', None))
+
+    @exception_handler
+    def open_launch_options(self):
+        if self.launch_options is None:
+            self.launch_options = LaunchOptionsDialog(); self.launch_options.show()
+            self.launch_options.finished.connect(lambda: setattr(self, 'launch_options', None))
+
+    def exit_application(self):
+        self.current_tab(True)
+        # Only overwrite the saved geometry when the window is actually visible;
+        # exiting from the tray (window hidden) would otherwise clobber the
+        # maximized state captured in closeEvent with a stale/normal geometry.
+        if self.isVisible():
+            self._save_window_state()
+        if self.tray_icon: self.tray_icon.hide()
+        QApplication.quit()
+
+    def open_about(self):
+        AboutDialog(app_version, self).exec()
+
+    def open_create_addon_dialog(self):
+        dialog = Create_addon_Dialog(self)
+        if dialog.exec() == QDialog.Accepted: self.refresh_addon_combobox()
+
+    def delete_addon(self):
+        if delete_addon(self.ui):
+            self.refresh_addon_combobox()
+
+    def open_export_and_import_addon(self):
+        ExportAndImportAddonDialog(self).exec()
+
+    def import_addon_action(self):
+        dialog = ExportAndImportAddonDialog(self)
+        dialog.do_import_addon()
+        self.refresh_addon_combobox()
+
+    def open_my_twitter(self): webbrowser.open("https://twitter.com/dertwist")
+    def open_discord(self): webbrowser.open("https://discord.gg/6X88yX8Y")
+
+    def _restore_user_prefs(self):
+        # Restore the window geometry saved on the previous exit. QWidget's
+        # saveGeometry/restoreGeometry round-trips the maximized/fullscreen
+        # state as well, so a window that was maximized reopens maximized.
+        try:
+            geometry = self.settings.value("MainWindow/geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
+        except Exception as e:
+            print(f"Failed to restore window geometry: {e}")
+
+    def _save_window_state(self):
+        if getattr(self, 'settings', None) is None:
+            return
+        try:
+            self.settings.setValue("MainWindow/geometry", self.saveGeometry())
+            # Flush to disk immediately: QSettings otherwise buffers writes and
+            # loses them if the process is killed before its normal shutdown.
+            self.settings.sync()
+        except Exception as e:
+            print(f"Failed to save window geometry: {e}")
+
+    def _schedule_window_state_save(self):
+        timer = getattr(self, '_geometry_save_timer', None)
+        if timer is not None:
+            timer.start()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._schedule_window_state_save()
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        self._schedule_window_state_save()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        # Persist maximize/restore/fullscreen transitions promptly.
+        if event.type() == QEvent.WindowStateChange:
+            self._save_window_state()
+
+    def show_minimize_message_once(self): pass
+
+def handle_new_connection(server, widget):
+    socket = server.nextPendingConnection()
+    if socket.waitForReadyRead(1000):
+        data = socket.readAll().data()
+        message = IPCMessage.parse(data)
+        if message:
+            command = message.get("command")
+            if command == IPCCommand.SHOW_WINDOW.value:
+                widget.show_from_tray()
+            elif command == IPCCommand.OPEN_FILE.value:
+                file_path = message.get("file_path")
+                editor_type = message.get("editor_type")
+                if file_path:
+                    widget.show_from_tray()
+                    ext = os.path.splitext(file_path)[1].lower()
+                    if editor_type == "soundevent" or ext == '.vsndevts':
+                        widget.open_file_in_soundevent(file_path)
+                    else:
+                        widget.open_file_in_smartprop(file_path)
+            elif command == IPCCommand.CREATE_VMDL.value:
+                widget.show_from_tray()
+                widget.open_quick_create_dialog(message.get("file_path"), "vmdl")
+            elif command == IPCCommand.QUICK_VMDL.value:
+                widget.show_from_tray()
+                widget.handle_quick_vmdl(message.get("file_path"))
+            elif command == IPCCommand.QUICK_BATCH.value:
+                widget.show_from_tray()
+                widget.handle_quick_batch(message.get("file_path"))
+            elif command == IPCCommand.QUICK_PROCESS.value:
+                widget.show_from_tray()
+                widget.handle_quick_process(message.get("file_path"))
+            elif command == IPCCommand.QUICK_PROCESS_FILE.value:
+                widget.show_from_tray()
+                widget.handle_quick_process_file(message.get("file_path"))
+    socket.disconnectFromServer()
+
+def start_instance_server(widget):
+    from gui.ipc.server_utils import set_ipc_server
+    server = QLocalServer()
+    set_ipc_server(server)
+    if not server.listen(INSTANCE_KEY):
+        raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
+    server.newConnection.connect(lambda: handle_new_connection(server, widget))
+    return server

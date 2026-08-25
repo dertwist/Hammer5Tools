@@ -1,5 +1,5 @@
 from hammer5tools_core.dotnet import setup_keyvalues2
-from hammer5tools_gui.forms.unreal_porter.vmap_writer import write_vmap
+from gui.forms.unreal_porter.vmap_writer import write_vmap
 
 
 def _actor(name, component_type, *, mesh=None, blueprint=None, material=None):

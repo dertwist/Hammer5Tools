@@ -40,11 +40,11 @@ def test_frozen_common_resolves_paths_without_error(monkeypatch, tmp_path):
     monkeypatch.setenv("H5T_USER_DATA_ROOT", str(tmp_path / "userdata"))
     monkeypatch.setattr(sys, "frozen", True, raising=False)
 
-    import hammer5tools_gui.common
-    importlib.reload(hammer5tools_gui.common)
+    import gui.common
+    importlib.reload(gui.common)
 
-    assert hammer5tools_gui.common.app_dir == (install / "app").resolve()
-    assert hammer5tools_gui.common.user_data_dir == (tmp_path / "userdata").resolve()
+    assert gui.common.app_dir == (install / "app").resolve()
+    assert gui.common.user_data_dir == (tmp_path / "userdata").resolve()
 
 
 def test_crash_handler_writes_crash_logs(monkeypatch, tmp_path):
@@ -53,7 +53,7 @@ def test_crash_handler_writes_crash_logs(monkeypatch, tmp_path):
     monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))
     monkeypatch.setenv("H5T_USER_DATA_ROOT", str(user_data))
 
-    from hammer5tools_gui.main import _install_crash_handler
+    from gui.main import _install_crash_handler
 
     _install_crash_handler()
 
@@ -62,7 +62,7 @@ def test_crash_handler_writes_crash_logs(monkeypatch, tmp_path):
     except ValueError:
         exc_type, exc_val, exc_tb = sys.exc_info()
         monkeypatch.setattr("ctypes.windll.user32.MessageBoxW", lambda *args: 0, raising=False)
-        from hammer5tools_gui.widgets import common as widget_common
+        from gui.widgets import common as widget_common
         monkeypatch.setattr(widget_common.ErrorInfo, "exec", lambda self: 0, raising=False)
         sys.excepthook(exc_type, exc_val, exc_tb)
 

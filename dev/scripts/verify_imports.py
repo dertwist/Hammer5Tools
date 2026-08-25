@@ -16,12 +16,11 @@ import sys
 REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CUR_DIR = REPO_DIR
 SOURCE_DIRS = (
-    os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'hammer5tools_gui'),
-    os.path.join(REPO_DIR, 'Hammer5ToolsCore', 'Python', 'hammer5tools_core'),
+    os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'gui'),
+    os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'hammer5tools_core'),
 )
 IMPORT_ROOTS = (
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI'),
-    os.path.join(REPO_DIR, 'Hammer5ToolsCore', 'Python'),
 )
 
 # .NET assemblies pythonnet materialises at runtime after clr.AddReference().
@@ -32,7 +31,7 @@ CLR_ASSEMBLIES = {'System', 'Datamodel', 'SourcePorter', 'UnrealBridge', 'ValveR
 def local_names() -> set:
     """Top-level names importable from the repo itself.
 
-    The release build adds both separated Python roots to ``sys.path``.
+    The release build adds the Hammer5ToolsGUI root to ``sys.path``.
     """
     names = set()
     for root in (CUR_DIR, *IMPORT_ROOTS):

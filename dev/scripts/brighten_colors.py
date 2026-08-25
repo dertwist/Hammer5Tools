@@ -22,7 +22,7 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SRC = REPO / "Hammer5ToolsGUI" / "hammer5tools_gui"
+SRC = REPO / "Hammer5ToolsGUI" / "gui"
 
 # Files whose colors are semantic (meaning-carrying) and must not shift,
 # plus files that only contain colors the exact-match table never targets.

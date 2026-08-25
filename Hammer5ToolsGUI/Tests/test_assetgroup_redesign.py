@@ -13,12 +13,12 @@ if repo_root not in sys.path:
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-from hammer5tools_gui.editors.assetgroup_maker.analyzer import analyze_reference_file
-from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_suffix, is_file_ignored
-from hammer5tools_gui.editors.assetgroup_maker.process import perform_batch_processing, render_asset_template
-from hammer5tools_gui.editors.assetgroup_maker.matcher import AssetGroupItem
-from hammer5tools_gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
-from hammer5tools_gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
+from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
+from gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_suffix, is_file_ignored
+from gui.editors.assetgroup_maker.process import perform_batch_processing, render_asset_template
+from gui.editors.assetgroup_maker.matcher import AssetGroupItem
+from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
+from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
 
 
 @pytest.fixture(scope="session")
@@ -36,13 +36,13 @@ def fake_addon_dir():
         os.makedirs(os.path.join(addon_path, "models", "props", "crate"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "materials", "nature"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "smartprops", "dev"), exist_ok=True)
-        with patch("hammer5tools_gui.settings.main.get_addon_dir", return_value=addon_path), \
-             patch("hammer5tools_gui.settings.common.get_addon_dir", return_value=addon_path), \
-             patch("hammer5tools_gui.settings.main.get_addon_name", return_value="test_addon"), \
-             patch("hammer5tools_gui.settings.common.get_addon_name", return_value="test_addon"), \
-             patch("hammer5tools_gui.settings.main.get_cs2_path", return_value=tmpdir), \
-             patch("hammer5tools_gui.settings.common.get_cs2_path", return_value=tmpdir), \
-             patch("hammer5tools_gui.common.get_cs2_path", return_value=tmpdir):
+        with patch("gui.settings.main.get_addon_dir", return_value=addon_path), \
+             patch("gui.settings.common.get_addon_dir", return_value=addon_path), \
+             patch("gui.settings.main.get_addon_name", return_value="test_addon"), \
+             patch("gui.settings.common.get_addon_name", return_value="test_addon"), \
+             patch("gui.settings.main.get_cs2_path", return_value=tmpdir), \
+             patch("gui.settings.common.get_cs2_path", return_value=tmpdir), \
+             patch("gui.common.get_cs2_path", return_value=tmpdir):
             yield addon_path
 
 
@@ -222,7 +222,7 @@ def test_batch_process_with_conditional_blocks(fake_addon_dir):
 
 
 def test_editor_tab_widget(qapp, fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.objects import load_hbat_file
+    from gui.editors.assetgroup_maker.objects import load_hbat_file
 
     crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
     hbat_path = os.path.join(crate_dir, "test_editor.hbat")
@@ -283,7 +283,7 @@ def test_main_window_layout_and_empty_state(qapp, fake_addon_dir):
 
 
 def test_file_item_watch_button_and_global_watch(qapp, fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher, FileItemWidget, is_watch_enabled, set_watch_enabled
+    from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher, FileItemWidget, is_watch_enabled, set_watch_enabled
 
     crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
     hbat_path = os.path.join(crate_dir, "test_watch.hbat")
@@ -319,7 +319,7 @@ def test_file_item_watch_button_and_global_watch(qapp, fake_addon_dir):
 
 
 def test_asset_browser_multi_type_scan(fake_addon_dir):
-    from hammer5tools_gui.widgets.model_browser.index import scan_all
+    from gui.widgets.model_browser.index import scan_all
 
     # Create dummy assets in addon
     os.makedirs(os.path.join(fake_addon_dir, "models", "props"), exist_ok=True)
@@ -343,7 +343,7 @@ def test_asset_browser_multi_type_scan(fake_addon_dir):
 
 
 def test_prefix_and_suffix_affix_matching(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_affixes
+    from gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_affixes
 
     # Test affix stripper
     assert strip_known_affixes("phys_treedead") == "treedead"
@@ -395,7 +395,7 @@ def test_prefix_and_suffix_affix_matching(fake_addon_dir):
 
 
 def test_analyzer_kv3_physics_and_render_mesh(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.analyzer import analyze_reference_file
+    from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
 
     vmdl_content = '''<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0} -->
 {
@@ -441,7 +441,7 @@ def test_analyzer_kv3_physics_and_render_mesh(fake_addon_dir):
 
 
 def test_slot_assignment_dialog(qapp, fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
+    from gui.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
 
     template_data = {
         'id': 'template_0',
@@ -468,7 +468,7 @@ def test_slot_assignment_dialog(qapp, fake_addon_dir):
 
 
 def test_kv3_hbat_io_and_no_raw_text(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
+    from gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
 
     hbat_path = os.path.join(fake_addon_dir, "models", "props", "crate", "test.hbat")
     data = {
@@ -521,7 +521,7 @@ def test_kv3_hbat_io_and_no_raw_text(fake_addon_dir):
 
 
 def test_legacy_json_automatic_conversion(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.objects import load_hbat_file
+    from gui.editors.assetgroup_maker.objects import load_hbat_file
 
     legacy_json_path = os.path.join(fake_addon_dir, "models", "props", "crate", "legacy.hbat")
     legacy_dict = {
@@ -570,7 +570,7 @@ def test_legacy_json_automatic_conversion(fake_addon_dir):
 
 
 def test_multi_template_matching_vmdl_and_vmat(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+    from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
     target_dir = os.path.join(fake_addon_dir, "models", "props", "multi_test")
     os.makedirs(target_dir, exist_ok=True)
@@ -639,7 +639,7 @@ def test_multi_template_matching_vmdl_and_vmat(fake_addon_dir):
 
 
 def test_multi_template_batch_processing(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.process import perform_batch_processing
+    from gui.editors.assetgroup_maker.process import perform_batch_processing
 
     # Setup template references
     vmdl_ref = os.path.join(fake_addon_dir, "models", "props", "ref_model.vmdl")
@@ -710,7 +710,7 @@ def test_multi_template_batch_processing(fake_addon_dir):
 
 def test_create_new_config_for_selected_folder_without_browser(qapp, fake_addon_dir, monkeypatch):
     from unittest.mock import MagicMock
-    from hammer5tools_gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
+    from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
     from PySide6.QtWidgets import QFileDialog
 
     # Ensure QFileDialog is never called
@@ -747,7 +747,7 @@ def test_create_new_config_for_selected_folder_without_browser(qapp, fake_addon_
 
 
 def test_per_template_ignore_settings(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+    from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
     target_dir = os.path.join(fake_addon_dir, "models", "props", "ignore_test")
     os.makedirs(target_dir, exist_ok=True)
@@ -802,8 +802,8 @@ def test_per_template_ignore_settings(fake_addon_dir):
 
 
 def test_material_shader_slots_orm_emissive_height(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.analyzer import analyze_reference_file
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets
+    from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
+    from gui.editors.assetgroup_maker.matcher import match_folder_assets
 
     vmat_path = os.path.join(fake_addon_dir, "materials", "props", "complex_box.vmat")
     os.makedirs(os.path.dirname(vmat_path), exist_ok=True)
@@ -864,7 +864,7 @@ Layer0
 
 
 def test_ignore_list_spaces_and_prefix_patterns(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets
+    from gui.editors.assetgroup_maker.matcher import match_folder_assets
 
     target_dir = os.path.join(fake_addon_dir, "models", "props", "filter_test")
     os.makedirs(target_dir, exist_ok=True)
@@ -904,7 +904,7 @@ def test_ignore_list_spaces_and_prefix_patterns(fake_addon_dir):
 
 
 def test_include_filter_mode(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets
+    from gui.editors.assetgroup_maker.matcher import match_folder_assets
 
     target_dir = os.path.join(fake_addon_dir, "models", "props", "include_test")
     os.makedirs(target_dir, exist_ok=True)
@@ -937,8 +937,8 @@ def test_include_filter_mode(fake_addon_dir):
 
 
 def test_template_skipped_slots(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_folder_assets
-    from hammer5tools_gui.editors.assetgroup_maker.process import render_asset_template, perform_batch_processing
+    from gui.editors.assetgroup_maker.matcher import match_folder_assets
+    from gui.editors.assetgroup_maker.process import render_asset_template, perform_batch_processing
 
     batch_dir = os.path.join(fake_addon_dir, "models", "props", "skip_test")
     os.makedirs(batch_dir, exist_ok=True)
@@ -985,9 +985,9 @@ def test_template_skipped_slots(fake_addon_dir):
 def test_asset_table_context_menu_show(qapp, fake_addon_dir, monkeypatch):
     from unittest.mock import MagicMock
     from PySide6.QtCore import QPoint
-    import hammer5tools_gui.editors.assetgroup_maker.widgets.asset_table as at_mod
-    from hammer5tools_gui.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import AssetGroupItem
+    import gui.editors.assetgroup_maker.widgets.asset_table as at_mod
+    from gui.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
+    from gui.editors.assetgroup_maker.matcher import AssetGroupItem
 
     widget = AssetTableWidget()
     try:
@@ -1009,7 +1009,7 @@ def test_asset_table_context_menu_show(qapp, fake_addon_dir, monkeypatch):
 
 
 def test_firewatch_trees_pine_scenario(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+    from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
     pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
     os.makedirs(pine_dir, exist_ok=True)
@@ -1078,8 +1078,8 @@ def test_firewatch_trees_pine_scenario(fake_addon_dir):
 
 
 def test_firewatch_multi_template_batch_execution(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.process import perform_batch_processing
-    from hammer5tools_gui.editors.assetgroup_maker.objects import save_hbat_file
+    from gui.editors.assetgroup_maker.process import perform_batch_processing
+    from gui.editors.assetgroup_maker.objects import save_hbat_file
 
     pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
     os.makedirs(pine_dir, exist_ok=True)
@@ -1181,7 +1181,7 @@ Layer0
 
 
 def test_template_filter_and_ignore_serialization(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.objects import save_hbat_file, load_hbat_file
+    from gui.editors.assetgroup_maker.objects import save_hbat_file, load_hbat_file
 
     save_path = os.path.join(fake_addon_dir, "models", "test_roundtrip.hbat")
     data_to_save = {
@@ -1249,9 +1249,9 @@ def test_template_filter_and_ignore_serialization(fake_addon_dir):
 
 
 def test_preview_equals_output_11_assets(fake_addon_dir):
-    from hammer5tools_gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
-    from hammer5tools_gui.editors.assetgroup_maker.process import perform_batch_processing
-    from hammer5tools_gui.editors.assetgroup_maker.objects import save_hbat_file
+    from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+    from gui.editors.assetgroup_maker.process import perform_batch_processing
+    from gui.editors.assetgroup_maker.objects import save_hbat_file
 
     pine_dir = os.path.join(fake_addon_dir, "models", "firewatch", "nature", "trees", "pine")
     os.makedirs(pine_dir, exist_ok=True)
@@ -1363,7 +1363,7 @@ def test_editor_tab_splitter_and_scroll_bar(qapp, fake_addon_dir):
 
         # Test splitter moved callback saves state
         tab._on_splitter_moved(300, 0)
-        from hammer5tools_gui.settings.main import get_settings_value
+        from gui.settings.main import get_settings_value
         saved_state = get_settings_value("AssetGroupMaker", "editor_splitter_state")
         assert saved_state is not None
         assert len(saved_state) > 0
@@ -1373,7 +1373,7 @@ def test_editor_tab_splitter_and_scroll_bar(qapp, fake_addon_dir):
 
 def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
     from PySide6.QtCore import Qt
-    from hammer5tools_gui.settings.main import get_settings_value, set_settings_value
+    from gui.settings.main import get_settings_value, set_settings_value
 
     win = BatchCreatorMainWindow()
     try:
@@ -1398,7 +1398,7 @@ def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
 def test_assetgroup_maker_uses_system_file_dialogs(qapp, fake_addon_dir, monkeypatch):
     from unittest.mock import MagicMock
     from PySide6.QtWidgets import QFileDialog
-    from hammer5tools_gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
+    from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
 
     mock_open_file = MagicMock(return_value=("", ""))
     mock_save_file = MagicMock(return_value=("", ""))

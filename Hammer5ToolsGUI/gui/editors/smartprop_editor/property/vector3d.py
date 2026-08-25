@@ -1,0 +1,577 @@
+import re
+
+from gui.editors.smartprop_editor.property.ui_vector3d import Ui_Widget
+from gui.widgets.completer.main import CompletingPlainTextEdit
+from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
+from PySide6.QtCore import Signal
+from gui.widgets import FloatWidget
+from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.completion_utils import CompletionUtils
+from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from gui.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from gui.editors.smartprop_editor.property import compact
+
+
+class PropertyVector3D(QWidget, PooledPropertyMixin):
+    edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
+
+    # Precompile patterns for faster initialization
+    _pattern_phase1 = re.compile(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_')
+    _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
+
+
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
+        self.element_id_generator = element_id_generator
+        self.setAcceptDrops(False)
+        self.value_class = value_class
+        self.value = value
+        self.variables_scrollArea = variables_scrollArea
+
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.comboBox_x.wheelEvent = lambda event: None
+        self.ui.comboBox_y.wheelEvent = lambda event: None
+        self.ui.comboBox_z.wheelEvent = lambda event: None
+
+        # Performance: Build output string in a single pass
+        intermediate = self._pattern_phase1.sub('', self.value_class)
+        output = self._pattern_phase2.sub(r'\1 \2', intermediate)
+        self.ui.property_class.setText(output)
+
+        self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
+        filter_types = ['Float', 'Int']
+
+        self.variable_logic_switch = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=['Vector3D'], variable_name=f"{self.value_class}",
+            element_id_generator=self.element_id_generator
+        )
+        self.variable_logic_switch.setMinimumWidth(256)
+        self.variable_logic_switch.setMaximumHeight(24)
+        self.variable_logic_switch.search_button.set_size(width=24, height=24)
+        self.variable_logic_switch.combobox.changed.connect(self.on_changed)
+        self.ui.layout.insertWidget(2, self.variable_logic_switch)
+
+        # Vector X Setup
+        self.float_widget_x = FloatWidget()
+        self.float_widget_x.edited.connect(self.on_changed)
+        self.float_widget_x.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_x.committed.connect(self.committed)
+        self.ui.layout_x.insertWidget(2, self.float_widget_x)
+
+        self.variable_x = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types, variable_name=f"{self.value_class}_x",
+            element_id_generator=self.element_id_generator
+        )
+        self.variable_x.setMinimumWidth(256)
+        self.variable_x.setMaximumHeight(24)
+        self.variable_x.search_button.set_size(width=24, height=24)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable_x)
+        layout.addSpacerItem(spacer)
+        self.variable_x_frame = QWidget()
+        self.variable_x_frame.setLayout(layout)
+        self.variable_x_frame.setMinimumHeight(32)
+        self.variable_x.combobox.changed.connect(self.on_changed)
+        self.ui.layout_x.insertWidget(3, self.variable_x_frame)
+
+        self.text_line_x = CompletingPlainTextEdit()
+        self.text_line_x.completion_tail = ''
+        self.expression_editor_x = ExpressionEditor(self.text_line_x, self.variables_scrollArea)
+        self.ui.layout_x.insertWidget(4, self.text_line_x)
+        self.ui.layout_x.insertWidget(4, self.expression_editor_x)
+        self.text_line_x.textChanged.connect(self.on_changed)
+        self.text_line_x.setPlaceholderText('Enter expression (e.g., variable_name.x)')
+        self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
+
+
+        # Vector Y Setup
+        self.float_widget_y = FloatWidget()
+        self.float_widget_y.edited.connect(self.on_changed)
+        self.float_widget_y.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_y.committed.connect(self.committed)
+        self.ui.layout_y.insertWidget(2, self.float_widget_y)
+
+        self.variable_y = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types, variable_name=f"{self.value_class}_y",
+            element_id_generator=self.element_id_generator
+        )
+        self.variable_y.setMinimumWidth(256)
+        self.variable_y.setMaximumHeight(24)
+        self.variable_y.search_button.set_size(width=24, height=24)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable_y)
+        layout.addSpacerItem(spacer)
+        self.variable_y_frame = QWidget()
+        self.variable_y_frame.setMinimumHeight(32)
+        self.variable_y_frame.setLayout(layout)
+        self.variable_y.combobox.changed.connect(self.on_changed)
+        self.ui.layout_y.insertWidget(3, self.variable_y_frame)
+
+        self.text_line_y = CompletingPlainTextEdit()
+        self.text_line_y.completion_tail = ''
+        self.expression_editor_y = ExpressionEditor(self.text_line_y, self.variables_scrollArea)
+        self.ui.layout_y.insertWidget(4, self.text_line_y)
+        self.ui.layout_y.insertWidget(4, self.expression_editor_y)
+        self.text_line_y.textChanged.connect(self.on_changed)
+        self.text_line_y.setPlaceholderText('Enter expression (e.g., variable_name.y)')
+        self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
+
+        # Vector Z Setup
+        self.float_widget_z = FloatWidget()
+        self.float_widget_z.edited.connect(self.on_changed)
+        self.float_widget_z.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_z.committed.connect(self.committed)
+        self.ui.layout_z.insertWidget(2, self.float_widget_z)
+
+        self.variable_z = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types, variable_name=f"{self.value_class}_z",
+            element_id_generator=self.element_id_generator
+        )
+        self.variable_z.setMinimumWidth(196)
+        self.variable_z.setMaximumHeight(24)
+        self.variable_z.search_button.set_size(width=24, height=24)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable_z)
+        layout.addSpacerItem(spacer)
+        self.variable_z_frame = QWidget()
+        self.variable_z_frame.setMinimumHeight(32)
+        self.variable_z_frame.setLayout(layout)
+        self.variable_z.combobox.changed.connect(self.on_changed)
+        self.ui.layout_z.insertWidget(3, self.variable_z_frame)
+
+        self.text_line_z = CompletingPlainTextEdit()
+        self.text_line_z.completion_tail = ''
+        self.expression_editor_z = ExpressionEditor(self.text_line_z, self.variables_scrollArea)
+        self.ui.layout_z.insertWidget(4, self.text_line_z)
+        self.ui.layout_z.insertWidget(4, self.expression_editor_z)
+        self.text_line_z.textChanged.connect(self.on_changed)
+        self.text_line_z.setPlaceholderText('Enter expression (e.g., variable_name.z)')
+        self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
+
+        # Default states
+        self.value = None
+        self.float_widget_x.set_value(1.0)
+        self.float_widget_y.set_value(1.0)
+        self.float_widget_z.set_value(1.0)
+        self.ui.logic_switch.setCurrentIndex(0)
+
+        def add_value(layout_widget, in_value, combo, variable, float_widget):
+            if isinstance(in_value, dict):
+                if 'm_Expression' in in_value:
+                    layout_widget.setPlainText(str(in_value['m_Expression']))
+                    combo.setCurrentIndex(2)
+                if 'm_SourceName' in in_value:
+                    variable.combobox.updateItems()
+                    variable.combobox.addItem(in_value['m_SourceName'])
+                    variable.combobox.setCurrentText(in_value['m_SourceName'])
+                    combo.setCurrentIndex(1)
+            elif isinstance(in_value, int) or isinstance(in_value, float):
+                float_widget.set_value(in_value)
+                combo.setCurrentIndex(0)
+            else:
+                layout_widget.setPlainText(str(in_value))
+                combo.setCurrentIndex(0)
+
+        # Performance: reduce logic for dict or list by pre-determining the structure
+        if isinstance(value, dict):
+            if 'm_Components' in value:
+                self.ui.logic_switch.setCurrentIndex(2)
+                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x,
+                          self.variable_x, self.float_widget_x)
+                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y,
+                          self.variable_y, self.float_widget_y)
+                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z,
+                          self.variable_z, self.float_widget_z)
+            if 'm_SourceName' in value:
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.var_value = value['m_SourceName']
+                self.variable_logic_switch.combobox.addItem(value['m_SourceName'])
+                self.variable_logic_switch.combobox.setCurrentText(value['m_SourceName'])
+        elif isinstance(value, list):
+            self.ui.logic_switch.setCurrentIndex(2)
+            add_value(self.text_line_x, value[0], self.ui.comboBox_x,
+                      self.variable_x, self.float_widget_x)
+            add_value(self.text_line_y, value[1], self.ui.comboBox_y,
+                      self.variable_y, self.float_widget_y)
+            add_value(self.text_line_z, value[2], self.ui.comboBox_z,
+                      self.variable_z, self.float_widget_z)
+
+        self.on_changed()
+
+        self._apply_compact()
+
+    def _apply_compact(self):
+        """Compact Source2-style vector: thin header row + 3 colour-tagged
+        component rows, each aligned to the scalar-editor grid."""
+        self.setObjectName(compact.ROW_OBJECT_NAME)
+        self.setStyleSheet(compact.widget_qss())
+        # Frames that receive the alternating row background (zebra).
+        self._compact_frames = [self.ui.frame_5, self.ui.frame,
+                                self.ui.frame_2, self.ui.frame_3]
+
+        # Header row (value-mode switch for the whole vector).
+        compact.compact_frame(self.ui.frame_5)
+        self.ui.horizontalLayout.setContentsMargins(6, 0, 4, 0)
+        self.ui.horizontalLayout.setSpacing(0)
+        self.ui.layout.setSpacing(4)
+        compact.style_label(self.ui.property_class, color="#A375FF")
+        compact.style_logic_switch(self.ui.logic_switch)
+        self.ui.layout.setAlignment(self.ui.logic_switch, compact.Qt.AlignVCenter)
+
+        # No whole-item offset: component fields align to the scalar grid.
+        self.ui.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.ui.verticalLayout_2.setSpacing(0)
+
+        tags = ("P", "Y", "R") if compact.is_angle_vector(self.value_class) else ("X", "Y", "Z")
+        rows = (
+            (self.ui.frame, self.ui.label, self.ui.comboBox_x, self.ui.horizontalLayout_2,
+             self.float_widget_x, self.variable_x_frame, self.variable_x,
+             self.text_line_x, self.expression_editor_x, self.ui.layout_x),
+            (self.ui.frame_2, self.ui.label_2, self.ui.comboBox_y, self.ui.horizontalLayout_7,
+             self.float_widget_y, self.variable_y_frame, self.variable_y,
+             self.text_line_y, self.expression_editor_y, self.ui.layout_y),
+            (self.ui.frame_3, self.ui.label_3, self.ui.comboBox_z, self.ui.horizontalLayout_8,
+             self.float_widget_z, self.variable_z_frame, self.variable_z,
+             self.text_line_z, self.expression_editor_z, self.ui.layout_z),
+        )
+        for i, (frame, label, combo, hbox, fw, var_frame, var,
+                text_line, expr_btn, inner) in enumerate(rows):
+            compact.compact_frame(frame)
+            hbox.setContentsMargins(6, 0, 4, 0)
+            hbox.setSpacing(0)
+            label.setText(tags[i])
+            # Indent only the X/Y/Z tag label (field stays on the grid).
+            compact.style_label(label, color=compact.VEC_XYZ[i], indent=15)
+            compact.style_logic_switch(combo)
+            inner.setAlignment(combo, compact.Qt.AlignVCenter)
+            compact.style_slider(fw)
+            compact.compact_variable_frame(var_frame, var)
+            compact.style_text_line(text_line)
+            compact.style_expr_button(expr_btn)
+
+    def logic_switch_line(self):
+        if self.ui.comboBox_x.currentIndex() == 0:
+            self.text_line_x.hide()
+            self.expression_editor_x.hide()
+            self.float_widget_x.show()
+            self.variable_x_frame.hide()
+        elif self.ui.comboBox_x.currentIndex() == 1:
+            self.text_line_x.hide()
+            self.expression_editor_x.hide()
+            self.float_widget_x.hide()
+            self.variable_x_frame.show()
+        else:
+            self.text_line_x.show()
+            self.expression_editor_x.show()
+            self.float_widget_x.hide()
+            self.variable_x_frame.hide()
+
+        if self.ui.comboBox_y.currentIndex() == 0:
+            self.text_line_y.hide()
+            self.expression_editor_y.hide()
+            self.float_widget_y.show()
+            self.variable_y_frame.hide()
+        elif self.ui.comboBox_y.currentIndex() == 1:
+            self.text_line_y.hide()
+            self.expression_editor_y.hide()
+            self.float_widget_y.hide()
+            self.variable_y_frame.show()
+        else:
+            self.text_line_y.show()
+            self.expression_editor_y.show()
+            self.float_widget_y.hide()
+            self.variable_y_frame.hide()
+
+        if self.ui.comboBox_z.currentIndex() == 0:
+            self.text_line_z.hide()
+            self.expression_editor_z.hide()
+            self.float_widget_z.show()
+            self.variable_z_frame.hide()
+        elif self.ui.comboBox_z.currentIndex() == 1:
+            self.text_line_z.hide()
+            self.expression_editor_z.hide()
+            self.float_widget_z.hide()
+            self.variable_z_frame.show()
+        else:
+            self.text_line_z.show()
+            self.expression_editor_z.show()
+            self.float_widget_z.hide()
+            self.variable_z_frame.hide()
+
+    def logic_switch(self):
+        widget = self.ui.layout.itemAt(2).widget()
+        if self.ui.logic_switch.currentIndex() == 0:
+            self.ui.frame_4.setMaximumHeight(0)
+            widget.hide()
+            self.variable_logic_switch.hide()
+        elif self.ui.logic_switch.currentIndex() == 1:
+            self.ui.frame_4.setMaximumHeight(0)
+            widget.show()
+            self.variable_logic_switch.show()
+        else:
+            self.ui.frame_4.setMaximumHeight(1600)
+            if isinstance(widget, CompletingPlainTextEdit):
+                widget.hide()
+            self.variable_logic_switch.hide()
+
+    def on_changed(self):
+        self._update_display_and_value()
+        self.edited.emit()
+
+    def _update_display_and_value(self):
+        # Setup type-aware completer for expression mode without filters
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_x,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_y,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_z,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        
+        self.logic_switch_line()
+        self.logic_switch()
+
+        self.change_value()
+
+    def change_value(self):
+        if self.ui.logic_switch.currentIndex() == 0:
+            self.value = None
+        elif self.ui.logic_switch.currentIndex() == 1:
+            value = self.variable_logic_switch.combobox.get_variable()
+            self.value = {self.value_class: {'m_SourceName': value}}
+        elif self.ui.logic_switch.currentIndex() == 2:
+            def handle_value(line, combo_box, variable, float_widget):
+                index = combo_box.currentIndex()
+                if index == 0:
+                    return float_widget.value
+                elif index == 1:
+                    return {'m_SourceName': variable.combobox.get_variable()}
+                return {'m_Expression': line.toPlainText()}
+
+            value_x = handle_value(self.text_line_x, self.ui.comboBox_x,
+                                   self.variable_x, self.float_widget_x)
+            value_y = handle_value(self.text_line_y, self.ui.comboBox_y,
+                                   self.variable_y, self.float_widget_y)
+            value_z = handle_value(self.text_line_z, self.ui.comboBox_z,
+                                   self.variable_z, self.float_widget_z)
+            self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
+
+    def get_variables(self, search_term=None):
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
+
+    # ===== Pooling implementation =====
+    @classmethod
+    def _pool_key_from_kwargs(cls, **kwargs):
+        # Vector3D widget structure is fixed; pool key is constant.
+        return ("Vector3D",)
+
+    def _current_pool_key(self):
+        return ("Vector3D",)
+
+    def reconfigure(
+        self,
+        value_class,
+        value,
+        variables_scrollArea,
+        element_id_generator,
+        **kwargs,
+    ):
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.comboBox_x,
+            self.ui.comboBox_y,
+            self.ui.comboBox_z,
+            self.float_widget_x,
+            self.float_widget_y,
+            self.float_widget_z,
+            self.text_line_x,
+            self.text_line_y,
+            self.text_line_z,
+            self.variable_logic_switch.combobox,
+            self.variable_x.combobox,
+            self.variable_y.combobox,
+            self.variable_z.combobox,
+        ]
+
+        for c in children_to_block:
+            c.blockSignals(True)
+
+        try:
+            # Identity attributes (used by label + variable reset names).
+            self.value_class = value_class
+            self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+
+            # Update label text (mirrors __init__).
+            intermediate = self._pattern_phase1.sub('', self.value_class)
+            output = self._pattern_phase2.sub(r'\1 \2', intermediate)
+            self.ui.property_class.setText(output)
+
+            # Refresh component tags (pool key is constant, so a reused vector
+            # widget must switch X/Y/Z <-> P/Y/R for the new value_class).
+            _tags = ("P", "Y", "R") if compact.is_angle_vector(value_class) else ("X", "Y", "Z")
+            self.ui.label.setText(_tags[0])
+            self.ui.label_2.setText(_tags[1])
+            self.ui.label_3.setText(_tags[2])
+
+            # Reset sub-widgets that depend on document-wide variables_scrollArea.
+            self.variable_logic_switch.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=['Vector3D'],
+                variable_name=value_class,
+                element_id_generator=element_id_generator,
+            )
+            self.expression_editor_x.reset(variables_scrollArea)
+            self.expression_editor_y.reset(variables_scrollArea)
+            self.expression_editor_z.reset(variables_scrollArea)
+
+            # Component variable widgets.
+            filter_types_float = ['Float', 'Int']
+            self.variable_x.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_x",
+                element_id_generator=element_id_generator,
+            )
+            self.variable_y.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_y",
+                element_id_generator=element_id_generator,
+            )
+            self.variable_z.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_z",
+                element_id_generator=element_id_generator,
+            )
+
+            # Reset component UI to a safe default (prevents stale content when switching modes).
+            self.ui.logic_switch.setCurrentIndex(0)
+            self.ui.comboBox_x.setCurrentIndex(0)
+            self.ui.comboBox_y.setCurrentIndex(0)
+            self.ui.comboBox_z.setCurrentIndex(0)
+
+            self.float_widget_x.set_value(1.0)
+            self.float_widget_y.set_value(1.0)
+            self.float_widget_z.set_value(1.0)
+
+            self.text_line_x.completion_tail = ''
+            self.text_line_y.completion_tail = ''
+            self.text_line_z.completion_tail = ''
+            self.text_line_x.setPlainText('')
+            self.text_line_y.setPlainText('')
+            self.text_line_z.setPlainText('')
+
+            # Apply new value (mirrors __init__ initialization).
+            def apply_component(in_value, line, combo_box, variable, float_widget):
+                if isinstance(in_value, dict):
+                    if 'm_Expression' in in_value:
+                        line.setPlainText(str(in_value['m_Expression']))
+                        combo_box.setCurrentIndex(2)
+                    if 'm_SourceName' in in_value:
+                        variable.combobox.set_variable(in_value['m_SourceName'])
+                        combo_box.setCurrentIndex(1)
+                elif isinstance(in_value, (int, float)):
+                    float_widget.set_value(in_value)
+                    combo_box.setCurrentIndex(0)
+                else:
+                    line.setPlainText(str(in_value))
+                    combo_box.setCurrentIndex(0)
+
+            if isinstance(value, dict):
+                if 'm_Components' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    comps = value.get('m_Components', [])
+                    if len(comps) >= 3:
+                        apply_component(comps[0], self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+                        apply_component(comps[1], self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+                        apply_component(comps[2], self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(1)
+                    self.variable_logic_switch.combobox.set_variable(value['m_SourceName'])
+            elif isinstance(value, list):
+                self.ui.logic_switch.setCurrentIndex(2)
+                if len(value) >= 3:
+                    apply_component(value[0], self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+                    apply_component(value[1], self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+                    apply_component(value[2], self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+
+            # signals were blocked; ensure add-button visibility is correct for any set_variable paths.
+            self.variable_logic_switch.update_add_button_visibility(self.variable_logic_switch.combobox.currentText())
+            self.variable_x.update_add_button_visibility(self.variable_x.combobox.currentText())
+            self.variable_y.update_add_button_visibility(self.variable_y.combobox.currentText())
+            self.variable_z.update_add_button_visibility(self.variable_z.combobox.currentText())
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+
+        # Sync display state and compute self.value without emitting edited.
+        self._update_display_and_value()
+
+    def set_value(self, value):
+        """Fast update of vector components during live interactions (e.g. gizmo drag)."""
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.comboBox_x,
+            self.ui.comboBox_y,
+            self.ui.comboBox_z,
+            self.float_widget_x,
+            self.float_widget_y,
+            self.float_widget_z,
+            self.text_line_x,
+            self.text_line_y,
+            self.text_line_z,
+        ]
+        for c in children_to_block:
+            c.blockSignals(True)
+        try:
+            comps = None
+            if isinstance(value, dict) and "m_Components" in value:
+                comps = value.get("m_Components")
+            elif isinstance(value, (list, tuple)):
+                comps = value
+
+            if comps and len(comps) >= 3:
+                for i, (comp_val, float_w, line_w, combo_w) in enumerate([
+                    (comps[0], self.float_widget_x, self.text_line_x, self.ui.comboBox_x),
+                    (comps[1], self.float_widget_y, self.text_line_y, self.ui.comboBox_y),
+                    (comps[2], self.float_widget_z, self.text_line_z, self.ui.comboBox_z),
+                ]):
+                    if isinstance(comp_val, (int, float)):
+                        float_w.set_value(float(comp_val))
+                        combo_w.setCurrentIndex(0)
+                    elif isinstance(comp_val, str):
+                        line_w.setPlainText(comp_val)
+                    elif isinstance(comp_val, dict) and "m_Expression" in comp_val:
+                        line_w.setPlainText(str(comp_val["m_Expression"]))
+                        combo_w.setCurrentIndex(2)
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+        self._update_display_and_value()

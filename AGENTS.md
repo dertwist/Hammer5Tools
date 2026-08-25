@@ -14,10 +14,11 @@ C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> ext
 ```
 
 - `Hammer5ToolsLauncher/`: startup, single-instance IPC handoff, crash reporting, update startup only.
-- `Hammer5ToolsGUI/`: windows, widgets, layouts, styling, input, presentation state. Must not parse Source 2 formats or duplicate a core evaluator — go through `CoreBridge` (`hammer5tools_core/bridge/`).
-- `Hammer5ToolsCore/CSharp/Hammer5Tools.Core`: Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic. Never depends on GUI or launcher.
-- `Hammer5ToolsCore/CSharp/Hammer5Tools.Native`: NativeAOT ABI exposing Core to Python via `ctypes` (`hammer5tools_core/native.py`).
-- `src/net_core/SourcePorter.Core` stays authoritative for its existing features until a deliberate migration replaces it — do not create competing implementations.
+- `Hammer5ToolsGUI/gui/`: windows, widgets, layouts, styling, input, presentation state. Must not parse Source 2 formats or duplicate a core evaluator — go through `CoreBridge` (`hammer5tools_core/bridge/`).
+- `Hammer5ToolsGUI/hammer5tools_core/`: Python bridge to the C# core (pythonnet/CLR + NativeAOT `ctypes`, `hammer5tools_core/native.py`). Pure Python, lives beside `gui/`, not under `Hammer5ToolsCore/`.
+- `Hammer5ToolsGUI/keyvalues3/`: standalone KV3 read/write library.
+- `Hammer5ToolsCore/CSharp/`: 100% C#. `Hammer5Tools.Core` does Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, conversions, and other non-UI logic; never depends on GUI or launcher. `Hammer5Tools.Native` exposes it via a NativeAOT ABI.
+- `Hammer5ToolsCore/CSharp/SourcePorter.Core` stays authoritative for its existing features until a deliberate migration replaces it — do not create competing implementations.
 - Consume external libraries as dependencies; keep Hammer5Tools behavior in Hammer5Tools-owned code.
 - `dev/tests/`: Python regression and characterization tests.
 - `makefile.py`: build and packaging entry point; `src/common.py`/root `version.json` own the application version.
