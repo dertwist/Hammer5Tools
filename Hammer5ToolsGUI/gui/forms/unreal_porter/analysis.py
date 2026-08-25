@@ -207,7 +207,7 @@ def analyze(bridge, content_dir: str, log_cb=None, progress_cb=None):
     if is_truncated(assets, info) and log_cb:
         log_cb(
             f"Bridge listed only {len(assets)} of {info.get('totalFiles')} files — "
-            "H5T.UnrealBridge.dll is out of date. Rebuild it, or the port will miss assets.",
+            "the port will miss assets.",
             "warn",
         )
     materials = scan_master_materials(

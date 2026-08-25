@@ -237,6 +237,65 @@ class SmartPropNativeClient:
             *self._buffer_arguments(output_path.encode("utf-8")),
         ))
 
+    def unreal_info(self, content_dir: str) -> dict:
+        """Project stats: {contentDir, game, totalFiles, uassets, umaps, externalActorFiles, sampleFiles}."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_info, *self._buffer_arguments(self._json_bytes({"contentDir": content_dir})),
+        ))
+
+    def unreal_list(self, content_dir: str, substring: str = "") -> list:
+        """Every mounted file path containing ``substring`` (case-insensitive), sorted."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_list,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "substring": substring})),
+        ))
+
+    def unreal_dump(self, content_dir: str, object_path: str):
+        """Raw JSON of every export in the package — can be large."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_dump,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "objectPath": object_path})),
+        ))
+
+    def unreal_iter_refs(self, content_dir: str, object_path: str) -> list:
+        """Every object reference in a package, flat and deduplicated."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_iter_refs,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "objectPath": object_path})),
+        ))
+
+    def unreal_dump_scene(self, content_dir: str, map_path: str) -> dict:
+        """Normalized actor list for a map: {map, count, actors:[...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_dump_scene,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "mapPath": map_path})),
+        ))
+
+    def unreal_dump_blueprint(self, content_dir: str, bp_path: str) -> dict:
+        """Normalized Blueprint component tree: {blueprint, count, components:[...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_dump_blueprint,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "bpPath": bp_path})),
+        ))
+
+    def unreal_dump_material(self, content_dir: str, mat_path: str) -> dict:
+        """Resolved material params: {material, parent, flags, textures, scalars, vectors, switches}."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_dump_material,
+            *self._buffer_arguments(self._json_bytes({"contentDir": content_dir, "matPath": mat_path})),
+        ))
+
+    def unreal_export_landscape(self, content_dir: str, map_path: str, out_dir: str, flags: str = "all") -> dict:
+        """Exports the map's first landscape actor into ``out_dir``. Raises
+        NativeCoreError (message starts with "NO_LANDSCAPE") if the map has no
+        landscape actor with components."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_export_landscape,
+            *self._buffer_arguments(self._json_bytes({
+                "contentDir": content_dir, "mapPath": map_path, "outDir": out_dir, "flags": flags,
+            })),
+        ))
+
     def source_porter_validate(
         self, request: dict, log: Callable[[str], None], *, cancellation: NativeCancellation | None = None,
     ) -> int:
@@ -310,6 +369,14 @@ class SmartPropNativeClient:
             "h5t_compiled_resource_read_json",
             "h5t_vmap_read_json",
             "h5t_vmap_rewrite_references_json",
+            "h5t_unreal_info",
+            "h5t_unreal_list",
+            "h5t_unreal_dump",
+            "h5t_unreal_iter_refs",
+            "h5t_unreal_dump_scene",
+            "h5t_unreal_dump_blueprint",
+            "h5t_unreal_dump_material",
+            "h5t_unreal_export_landscape",
         ):
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, output, output_length]

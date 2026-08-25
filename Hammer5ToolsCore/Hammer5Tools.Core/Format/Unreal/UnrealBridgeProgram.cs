@@ -1,4 +1,3 @@
-using System.Text;
 using CUE4Parse.FileProvider;
 using CUE4Parse.UE4.Assets.Exports.Actor;
 using CUE4Parse.UE4.Assets.Exports.Component.Landscape;
@@ -13,67 +12,32 @@ using CUE4Parse_Conversion.Meshes;
 using CUE4Parse_Conversion.Textures;
 using Newtonsoft.Json;
 
-// H5T Unreal Bridge — thin CLI over CUE4Parse for the Unreal Converter.
-// Commands:
-//   info <projectContentDir>
-//   list <projectContentDir> <substring>
-//   dump <projectContentDir> <objectPath>        (raw JSON of all exports)
-//   iter-refs <projectContentDir> <objectPath>   (flat list of referenced object paths)
-//   dump-scene <projectContentDir> <mapPath>      (normalized actor list)
+namespace Hammer5Tools.Core.Format.Unreal;
 
-static class Program
+// Reads Unreal Engine content (loose, uncooked .uasset/.umap) via CUE4Parse for
+// the Unreal Converter. Each public command below is called from a matching
+// entry point in UnrealBridgeApi.cs — this file is the implementation, the ABI
+// file is the JSON-in/JSON-out native surface. Every command mounts its own
+// DefaultFileProvider per call (see MountProvider); no caching across calls.
+static class UnrealBridgeProgram
 {
-    static int Main(string[] args)
+    internal static DefaultFileProvider MountProvider(string contentDir)
     {
-        Console.OutputEncoding = Encoding.UTF8;
-        if (args.Length < 2)
-        {
-            Console.Error.WriteLine("usage: <info|list|dump> <contentDir> [arg]");
-            return 2;
-        }
-
-        var cmd = args[0].ToLowerInvariant();
-        var dir = args[1];
-
-        DefaultFileProvider provider;
         try
         {
-            provider = new DefaultFileProvider(
-                dir, SearchOption.AllDirectories, true,
+            var provider = new DefaultFileProvider(
+                contentDir, SearchOption.AllDirectories, true,
                 new VersionContainer(EGame.GAME_UE5_7));
             provider.Initialize();
+            return provider;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            Console.Error.WriteLine("MOUNT_ERROR: " + e);
-            return 1;
-        }
-
-        try
-        {
-            switch (cmd)
-            {
-                case "info": return Info(provider, dir);
-                case "list": return List(provider, args.Length > 2 ? args[2] : "");
-                case "dump": return Dump(provider, args[2]);
-                case "iter-refs": return IterRefs(provider, args[2]);
-                case "dump-scene": return DumpScene(provider, args[2]);
-                case "dump-blueprint": return DumpBlueprint(provider, args[2]);
-                case "dump-material": return DumpMaterial(provider, args[2]);
-                case "export-landscape": return ExportLandscape(provider, args[2], args[3], args.Length > 4 ? args[4] : "all");
-                default:
-                    Console.Error.WriteLine("unknown command: " + cmd);
-                    return 2;
-            }
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine("ERROR: " + e);
-            return 1;
+            throw new InvalidOperationException($"MOUNT_ERROR: {exception}", exception);
         }
     }
 
-    static int Info(DefaultFileProvider provider, string dir)
+    internal static string Info(DefaultFileProvider provider, string dir)
     {
         var files = provider.Files.Keys.ToList();
         int external = files.Count(f => f.Contains("__ExternalActors__", StringComparison.OrdinalIgnoreCase));
@@ -90,32 +54,28 @@ static class Program
             externalActorFiles = external,
             sampleFiles = files.Take(15).ToList(),
         };
-        Console.WriteLine(JsonConvert.SerializeObject(info, Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(info, Formatting.Indented);
     }
 
     // No cap. This is the converter's whole view of a project: the port scope,
     // the material scan and reference expansion are all built from it, so a
     // truncated list does not shrink the port, it silently drops every asset
     // past the cut (a 563-asset project ported 52 meshes). A few thousand paths
-    // of JSON over stdout costs nothing next to that.
-    static int List(DefaultFileProvider provider, string substring)
+    // of JSON costs nothing next to that.
+    internal static string List(DefaultFileProvider provider, string substring)
     {
         var matches = provider.Files.Keys
             .Where(f => f.Contains(substring, StringComparison.OrdinalIgnoreCase))
             .OrderBy(f => f)
             .ToList();
-        Console.WriteLine(JsonConvert.SerializeObject(matches, Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(matches, Formatting.Indented);
     }
 
-    static int Dump(DefaultFileProvider provider, string objectPath)
+    internal static string Dump(DefaultFileProvider provider, string objectPath)
     {
         var pkg = provider.LoadPackage(objectPath);
         var exports = pkg.GetExports();
-        var json = JsonConvert.SerializeObject(exports, Formatting.Indented);
-        Console.WriteLine(json);
-        return 0;
+        return JsonConvert.SerializeObject(exports, Formatting.Indented);
     }
 
     // Collect every asset reference in a package as a flat list of object paths,
@@ -124,7 +84,7 @@ static class Program
     // megabytes of RenderData (and the material slots serialise as null when
     // their FPackageIndex import doesn't resolve). This walks the live objects
     // and resolves each ref the same way dump-scene/dump-blueprint do.
-    static int IterRefs(DefaultFileProvider provider, string objectPath)
+    internal static string IterRefs(DefaultFileProvider provider, string objectPath)
     {
         var pkg = provider.LoadPackage(objectPath);
         var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -134,8 +94,7 @@ static class Program
             CollectExportRefs(export, refs);
         }
 
-        Console.WriteLine(JsonConvert.SerializeObject(refs.OrderBy(r => r).ToList(), Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(refs.OrderBy(r => r).ToList(), Formatting.Indented);
     }
 
     // Walk one export for references. Mesh material arrays are pulled explicitly
@@ -458,7 +417,7 @@ static class Program
     // mesh reference and UE transform. Coordinate conversion to Source 2 is done
     // on the Python side via the shared transform module. Instanced/foliage/spline
     // components are tagged by componentType so the caller can special-case them.
-    static int DumpScene(DefaultFileProvider provider, string mapPath)
+    internal static string DumpScene(DefaultFileProvider provider, string mapPath)
     {
         var pkg = provider.LoadPackage(mapPath);
         var actors = new List<object>();
@@ -586,8 +545,7 @@ static class Program
         }
 
         var result = new { map = mapPath, count = actors.Count, actors };
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
     // SCS component templates are exported as "<VariableName>_GEN_VARIABLE".
@@ -622,7 +580,7 @@ static class Program
         return rootComp.GetOrDefault<FPackageIndex?>("StaticMesh", null)?.ResolvedObject?.GetPathName();
     }
 
-    static int DumpBlueprint(DefaultFileProvider provider, string bpPath)
+    internal static string DumpBlueprint(DefaultFileProvider provider, string bpPath)
     {
         var pkg = provider.LoadPackage(bpPath);
         var one = new FVector(1f, 1f, 1f);
@@ -758,8 +716,7 @@ static class Program
 
         components.AddRange(byName.Values);
         var result = new { blueprint = bpPath, count = components.Count, components };
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
     // Walk a material's Parent chain to the base UMaterial and read the render
@@ -961,7 +918,7 @@ static class Program
         return null;
     }
 
-    static int DumpMaterial(DefaultFileProvider provider, string matPath)
+    internal static string DumpMaterial(DefaultFileProvider provider, string matPath)
     {
         var textures = new Dictionary<string, string>();
         var scalars = new Dictionary<string, float>();
@@ -1014,8 +971,7 @@ static class Program
         }
 
         var result = new { material = matPath, parent, flags, textures, scalars, vectors, switches };
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
-        return 0;
+        return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
     // Convert a UE Landscape into a mesh (OBJ) and, optionally, heightmap/weightmap
@@ -1023,17 +979,14 @@ static class Program
     // Unreal Converter's Scenes/Models pipeline to place the landscape as a
     // prop_static), "heightmap", "weightmap", or "all" (default; used by the
     // standalone research workflow).
-    static int ExportLandscape(DefaultFileProvider provider, string mapPath, string outDir, string flagsArg = "all")
+    internal static string ExportLandscape(DefaultFileProvider provider, string mapPath, string outDir, string flagsArg = "all")
     {
         var pkg = provider.LoadPackage(mapPath);
         ALandscapeProxy? landscape = null;
         foreach (var e in pkg.GetExports())
             if (e is ALandscapeProxy lp && lp.LandscapeComponents.Length > 0) { landscape = lp; break; }
         if (landscape == null)
-        {
-            Console.Error.WriteLine("NO_LANDSCAPE: no ALandscapeProxy with components in this map.");
-            return 1;
-        }
+            throw new InvalidOperationException("NO_LANDSCAPE: no ALandscapeProxy with components in this map.");
 
         var comps = landscape.LandscapeComponents
             .Select(pi => pi.Load<ULandscapeComponent>())
@@ -1059,11 +1012,9 @@ static class Program
         Directory.CreateDirectory(outDir);
         if (exporter.TryWriteToDir(new DirectoryInfo(outDir), out var label, out var saved))
         {
-            Console.WriteLine(JsonConvert.SerializeObject(
-                new { ok = true, components = comps.Length, label, saved }, Formatting.Indented));
-            return 0;
+            return JsonConvert.SerializeObject(
+                new { ok = true, components = comps.Length, label, saved }, Formatting.Indented);
         }
-        Console.Error.WriteLine("EXPORT_FAILED");
-        return 1;
+        throw new InvalidOperationException("EXPORT_FAILED");
     }
 }

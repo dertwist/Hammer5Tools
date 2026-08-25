@@ -268,6 +268,38 @@ class CoreBridge:
             diagnostics,
         )
 
+    def unreal_info(self, content_dir: str) -> dict:
+        """Project stats for an Unreal content directory."""
+        return self._smartprop_native().unreal_info(content_dir)
+
+    def unreal_list(self, content_dir: str, substring: str = "") -> list:
+        """Every mounted file path containing ``substring``, sorted."""
+        return self._smartprop_native().unreal_list(content_dir, substring)
+
+    def unreal_dump(self, content_dir: str, object_path: str):
+        """Raw JSON of every export in the package — can be large."""
+        return self._smartprop_native().unreal_dump(content_dir, object_path)
+
+    def unreal_iter_refs(self, content_dir: str, object_path: str) -> list:
+        """Every object reference in a package, flat and deduplicated."""
+        return self._smartprop_native().unreal_iter_refs(content_dir, object_path)
+
+    def unreal_dump_scene(self, content_dir: str, map_path: str) -> dict:
+        """Normalized actor list for a map."""
+        return self._smartprop_native().unreal_dump_scene(content_dir, map_path)
+
+    def unreal_dump_blueprint(self, content_dir: str, bp_path: str) -> dict:
+        """Normalized Blueprint component tree."""
+        return self._smartprop_native().unreal_dump_blueprint(content_dir, bp_path)
+
+    def unreal_dump_material(self, content_dir: str, mat_path: str) -> dict:
+        """Resolved material params (textures/scalars/vectors/switches/flags)."""
+        return self._smartprop_native().unreal_dump_material(content_dir, mat_path)
+
+    def unreal_export_landscape(self, content_dir: str, map_path: str, out_dir: str, flags: str = "all") -> dict:
+        """Exports the map's first landscape actor into ``out_dir``."""
+        return self._smartprop_native().unreal_export_landscape(content_dir, map_path, out_dir, flags)
+
     def source_porter_validate(
         self, cs2_dir: str, addon: str, *, log: Callable[[str], None], cancellation=None,
     ) -> int:
