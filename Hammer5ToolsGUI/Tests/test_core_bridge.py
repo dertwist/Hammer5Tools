@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from hammer5tools_core.bridge.core import CoreBridge, SmartPropModel, ValveMapEntity, VpkIndex
+from core.bridge.core import CoreBridge, SmartPropModel, ValveMapEntity, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():

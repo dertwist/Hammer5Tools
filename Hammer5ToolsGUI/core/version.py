@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from hammer5tools_core.runtime_paths import resolve_runtime_paths
+from core.runtime_paths import resolve_runtime_paths
 
 
 def _version_manifest() -> Path:

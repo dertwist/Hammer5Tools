@@ -1,4 +1,4 @@
-from hammer5tools_core.bridge import CoreBridge, ValveMapDocument, ValveMapEntity, ValveMapNode
+from core.bridge import CoreBridge, ValveMapDocument, ValveMapEntity, ValveMapNode
 from gui.editors.loading_editor.commands.vmap_parser import parse
 
 

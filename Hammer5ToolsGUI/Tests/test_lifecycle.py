@@ -70,7 +70,7 @@ def _launcher_stub(tmp_path, monkeypatch):
     launcher = tmp_path / "Hammer5Tools.exe"
     launcher.write_bytes(b"")
     monkeypatch.setattr(
-        "hammer5tools_core.runtime_paths.resolve_runtime_paths",
+        "core.runtime_paths.resolve_runtime_paths",
         lambda: SimpleNamespace(install_root=tmp_path),
     )
     started = []

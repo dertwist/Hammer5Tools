@@ -461,7 +461,7 @@ class CoreBridge:
 
     def _smartprop_native(self):
         if self._native_client is None:
-            from hammer5tools_core.native import SmartPropNativeClient
+            from core.native import SmartPropNativeClient
 
             self._native_client = SmartPropNativeClient()
         return self._native_client

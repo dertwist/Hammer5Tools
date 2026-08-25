@@ -5,7 +5,7 @@ the same `[UnmanagedCallersOnly]` native ABI as the rest of `Hammer5Tools.Core`
 (see `UnrealBridgeApi.cs`; the CUE4Parse-facing logic itself is
 `Format/Unreal/UnrealBridgeProgram.cs`). The Unreal Converter (Python side,
 `Hammer5ToolsGUI/gui/forms/unreal_porter/bridge_client.py`) calls it in-process
-through `hammer5tools_core/native.py`/`bridge/core.py` — no subprocess, no
+through `core/native.py`/`bridge/core.py` — no subprocess, no
 separate `.NET` runtime invocation — to read Unreal Engine `.uasset` / `.umap`
 files directly. **No Unreal install required.**
 
@@ -50,7 +50,7 @@ dependency for a full build/publish (see `Hammer5Tools.Core.csproj`'s
 ## Commands
 
 Each is a JSON-in/JSON-out native entry point (`h5t_unreal_*`), called through
-`CoreBridge.unreal_*` — see `hammer5tools_core/bridge/core.py`. All take a
+`CoreBridge.unreal_*` — see `core/bridge/core.py`. All take a
 `contentDir` (the UE project's `Content` folder) plus a command-specific field:
 
 * `info` — project stats (file counts, sample paths).

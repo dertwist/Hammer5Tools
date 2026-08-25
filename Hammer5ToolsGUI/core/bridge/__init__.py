@@ -1,6 +1,6 @@
 """Stable Python adapters for Hammer5Tools.Core public APIs."""
 
-from hammer5tools_core.bridge.core import (
+from core.bridge.core import (
     CoreBridge,
     CoreBridgeError,
     CoreStatus,

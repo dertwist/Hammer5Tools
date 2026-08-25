@@ -8,7 +8,7 @@ import os
 from collections.abc import Callable
 from pathlib import Path
 
-from hammer5tools_core.runtime_paths import resolve_runtime_paths
+from core.runtime_paths import resolve_runtime_paths
 
 # Matches the C ABI's `void (*)(const uint8_t* line, int32_t line_length)` log
 # callback (SourcePorterApi.cs). Module-level so every streaming call shares one
