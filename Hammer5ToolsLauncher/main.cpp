@@ -63,6 +63,105 @@ void Log(const fs::path& directory, const std::wstring& message)
     catch (...) {}
 }
 
+LRESULT CALLBACK ErrorDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_SIZE:
+    {
+        RECT client{};
+        GetClientRect(hwnd, &client);
+        constexpr auto buttonHeight = 28;
+        constexpr auto padding = 8;
+        if (const auto edit = GetDlgItem(hwnd, 1))
+            MoveWindow(edit, padding, padding, client.right - padding * 2,
+                       client.bottom - buttonHeight - padding * 3, TRUE);
+        if (const auto button = GetDlgItem(hwnd, IDOK))
+            MoveWindow(button, client.right - 90 - padding, client.bottom - buttonHeight - padding,
+                       90, buttonHeight, TRUE);
+        return 0;
+    }
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+            DestroyWindow(hwnd);
+        return 0;
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return 0;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    default:
+        return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
+}
+
+// A read-only multiline EDIT control natively supports mouse/keyboard
+// selection, Ctrl+C, and a right-click Copy menu, so this is preferred
+// over MessageBoxW for text the user may want to copy (crash details,
+// log paths).
+void ShowErrorDialog(const std::wstring& message, const std::wstring& title, LPCWSTR icon = IDI_ERROR)
+{
+    const auto instance = GetModuleHandleW(nullptr);
+    static const auto registered = [instance] {
+        WNDCLASSW windowClass{};
+        windowClass.lpfnWndProc = ErrorDialogProc;
+        windowClass.hInstance = instance;
+        windowClass.lpszClassName = L"Hammer5ToolsErrorDialog";
+        windowClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+        windowClass.hIcon = LoadIconW(nullptr, IDI_ERROR);
+        return RegisterClassW(&windowClass) != 0;
+    }();
+    (void)registered;
+
+    constexpr auto width = 640;
+    constexpr auto height = 420;
+    const auto hwnd = CreateWindowExW(
+        WS_EX_DLGMODALFRAME, L"Hammer5ToolsErrorDialog", title.c_str(),
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+        (GetSystemMetrics(SM_CXSCREEN) - width) / 2, (GetSystemMetrics(SM_CYSCREEN) - height) / 2,
+        width, height, nullptr, nullptr, instance, nullptr);
+    if (hwnd == nullptr)
+    {
+        MessageBoxW(nullptr, message.c_str(), title.c_str(), MB_OK | MB_ICONERROR);
+        return;
+    }
+    const auto dialogIcon = LoadIconW(nullptr, icon);
+    SendMessageW(hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(dialogIcon));
+    SendMessageW(hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(dialogIcon));
+
+    const auto edit = CreateWindowExW(
+        WS_EX_CLIENTEDGE, L"EDIT", message.c_str(),
+        WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
+        0, 0, 0, 0, hwnd, reinterpret_cast<HMENU>(1), instance, nullptr);
+    const auto button = CreateWindowExW(
+        0, L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+        0, 0, 0, 0, hwnd, reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDOK)), instance, nullptr);
+
+    const auto font = reinterpret_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+    SendMessageW(edit, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+    SendMessageW(edit, EM_SETSEL, 0, 0);
+
+    RECT client{};
+    GetClientRect(hwnd, &client);
+    SendMessageW(hwnd, WM_SIZE, 0, MAKELPARAM(client.right, client.bottom));
+    SetFocus(edit);
+
+    MSG msg;
+    while (GetMessageW(&msg, nullptr, 0, 0) > 0)
+    {
+        if (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)
+        {
+            DestroyWindow(hwnd);
+            continue;
+        }
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+}
+
 bool SendRequest(const std::string& message)
 {
     const auto pipe = CreateFileW(PipeName().c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -209,7 +308,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
         const auto message = L"Could not create the Hammer5Tools GUI handoff. Windows error "
             + std::to_wstring(GetLastError()) + L".";
         Log(logsDirectory, message);
-        MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
+        ShowErrorDialog(message, L"Hammer 5 Tools Launcher");
         return 2;
     }
 
@@ -259,7 +358,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
         CloseHandle(handoff);
         const auto message = L"Could not start the Hammer5Tools GUI. Windows error " + std::to_wstring(errorCode) + L".";
         Log(logsDirectory, message);
-        MessageBoxW(nullptr, message.c_str(), L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
+        ShowErrorDialog(message, L"Hammer 5 Tools Launcher");
         return 2;
     }
     if (stdErrHandle != INVALID_HANDLE_VALUE)
@@ -300,9 +399,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
         message += L"\n\nLog folder:\n" + logsDirectory.wstring();
 
         Log(logsDirectory, message);
-        MessageBoxW(nullptr, message.c_str(),
-                    duringStartup ? L"Hammer 5 Tools Startup Failure" : L"Hammer 5 Tools Crash",
-                    MB_OK | MB_ICONERROR);
+        ShowErrorDialog(message, duringStartup ? L"Hammer 5 Tools Startup Failure" : L"Hammer 5 Tools Crash");
     }
     return static_cast<int>(exitCode);
 }
@@ -345,8 +442,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
         if (waitResult != WAIT_OBJECT_0 && waitResult != WAIT_ABANDONED_0)
         {
             CloseHandle(mutex);
-            MessageBoxW(nullptr, L"The existing Hammer5Tools instance did not accept the request.",
-                        L"Hammer 5 Tools", MB_OK | MB_ICONWARNING);
+            ShowErrorDialog(L"The existing Hammer5Tools instance did not accept the request.",
+                            L"Hammer 5 Tools", IDI_WARNING);
             return 3;
         }
     }
@@ -358,8 +455,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     {
         ReleaseMutex(mutex);
         CloseHandle(mutex);
-        MessageBoxW(nullptr, L"app\\Hammer5ToolsGUI.exe is missing from the application payload.",
-                    L"Hammer 5 Tools Launcher", MB_OK | MB_ICONERROR);
+        ShowErrorDialog(L"app\\Hammer5ToolsGUI.exe is missing from the application payload.",
+                        L"Hammer 5 Tools Launcher");
         return 2;
     }
     auto childArguments = arguments;
