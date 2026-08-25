@@ -230,6 +230,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--add-data={os.path.join(gui_root, "appicon.ico")};.',
         f'--add-data={os.path.join(gui_root, "images")};images/',
         f'--add-data={os.path.join(gui_root, "styles")};styles/',
+        f'--add-data={os.path.join(gui_root, "editors", "smartprop_editor", "viewport_3d", "glsl")};gui/editors/smartprop_editor/viewport_3d/glsl/',
         f'--add-data={os.path.join(cur_dir, "version.json")};.',
         *[
             f'--add-data={os.path.join(cur_dir, "Hammer5Tools", folder)};defaults/{folder}'

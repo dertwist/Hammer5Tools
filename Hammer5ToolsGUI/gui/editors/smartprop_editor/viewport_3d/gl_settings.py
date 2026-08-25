@@ -46,7 +46,7 @@ def make_viewport_surface_format(samples: int = None) -> QSurfaceFormat:
     fmt = QSurfaceFormat()
     fmt.setDepthBufferSize(24)
     fmt.setStencilBufferSize(8)
-    fmt.setVersion(3, 3)
+    fmt.setVersion(4, 3)
     fmt.setProfile(QSurfaceFormat.CoreProfile)
     if samples and samples > 1:
         fmt.setSamples(int(samples))
