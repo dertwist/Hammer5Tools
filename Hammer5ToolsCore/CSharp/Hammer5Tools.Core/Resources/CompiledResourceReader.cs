@@ -31,6 +31,11 @@ public sealed class CompiledResourceReader(VpkIndex index)
         };
     }
 
+    // FileExtract.Extract's return type is resolved dynamically below (its concrete
+    // subtype varies by resource kind), so the trimmer/ILC cannot see the Data/FileName
+    // property reads that follow. Without this, NativeAOT publish can strip them and the
+    // reflection silently returns null instead of throwing.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ContentFile))]
     private CoreResult<CompiledResourceContent> Read(string path, string failureCode)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

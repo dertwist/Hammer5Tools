@@ -1,6 +1,5 @@
 """
-.NET Interop module for Valve Resource Format and KeyValues handling.
-Provides simplified interfaces for working with VRF, VPK files, and KeyValues.
+.NET Interop module for SourcePorter.Core and KeyValues (Datamodel.NET) handling.
 """
 
 import os
@@ -17,18 +16,9 @@ import binascii
 tests_path = Path(__file__).parent.parent / 'tests'
 RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
 
-#: Private AssemblyLoadContext for the ValveResourceFormat assembly set.
-#
-# VRF is bundled independently from the .NET Core publish output. A load context
-# resolves dependencies by simple name, so the two groups must remain isolated
-# until their full dependency graphs are verified as interchangeable. The Core
-# stays in the default context because Python.NET imports its public namespaces.
-VRF_ALC = "Hammer5Tools.Vrf"
-
-# (context, path) -> Assembly, so a repeat load is a dict hit. setup_vrf() /
-# setup_source_porter() are each called from a fresh DotNetInterop() per call
-# site (viewport, model browser, thumbnails, ...); without this the second call
-# site to run in a given process hits the same FileLoadException.
+# (context, path) -> Assembly, so a repeat load is a dict hit. setup_source_porter()
+# is called from a fresh DotNetInterop() per call site; without this the second
+# call site to run in a given process hits the same FileLoadException.
 _alc_loaded: dict = {}
 _alc_contexts: dict = {}
 
@@ -76,20 +66,8 @@ class DotNetPaths:
         else:
             base_dir = Path(base_dir)
 
-        self.vrf = base_dir / 'ValveResourceFormat.dll'
-        self.valve_keyvalue = base_dir / 'ValveKeyValue.dll'
-        self.valve_pak = base_dir / 'ValvePak.dll'
-        self.zstd_sharp = base_dir / 'ZstdSharp.dll'
         self.keyvalues2_net = base_dir / 'Datamodel.NET.dll'
-        self.compression = base_dir / 'K4os.Compression.LZ4.dll'
-        self.sharp_zstd = base_dir / 'SharpZstd.Interop.dll'
-
-        self.skia_sharp = base_dir / 'SkiaSharp.dll'
-        self.system_io_hashing = base_dir / 'System.IO.Hashing.dll'
-        self.tiny_bc_sharp = base_dir / 'TinyBCSharp.dll'
-        self.tiny_exr_net = base_dir / 'TinyEXR.NET.dll'
         self.source_porter_core = self._find_source_porter_core(base_dir)
-        self.hammer5tools_core = self._find_hammer5tools_core(base_dir)
 
     def _find_source_porter_core(self, base_dir: Path) -> Path:
         env = os.environ.get("H5T_SOURCE_PORTER_CORE")
@@ -114,26 +92,6 @@ class DotNetPaths:
         if existing:
             return max(existing, key=lambda p: p.stat().st_mtime)
         return base_dir / 'SourcePorter.Core.dll'
-
-    def _find_hammer5tools_core(self, base_dir: Path) -> Path:
-        env = os.environ.get("H5T_CORE_DLL")
-        if env and Path(env).is_file():
-            return Path(env)
-
-        net_core = Path(__file__).resolve().parents[2] / 'Hammer5ToolsCore' / 'CSharp'
-        from hammer5tools_core.runtime_paths import resolve_runtime_paths
-        candidates = [
-            net_core / 'SourcePorter.Core' / 'publish' / 'Hammer5Tools.Core.dll',
-            net_core / 'Hammer5Tools.Core' / 'publish' / 'Hammer5Tools.Core.dll',
-            net_core / 'Hammer5Tools.Core' / 'bin' / 'Release' / 'Hammer5Tools.Core.dll',
-            net_core / 'Hammer5Tools.Core' / 'bin' / 'Debug' / 'Hammer5Tools.Core.dll',
-            base_dir / 'Hammer5Tools.Core.dll',
-            resolve_runtime_paths().runtime_resource('source_porter', 'Hammer5Tools.Core.dll'),
-        ]
-        existing = [candidate for candidate in candidates if candidate.is_file()]
-        if existing:
-            return max(existing, key=lambda candidate: candidate.stat().st_mtime)
-        return base_dir / 'Hammer5Tools.Core.dll'
 
 
 class DotNetInterop:
@@ -220,103 +178,8 @@ class DotNetInterop:
 
         return Datamodel.Datamodel, Datamodel.Element, DeferredMode
 
-    def setup_vrf(self) -> Tuple[Any, Any, Any, Any, Any, Any]:
-        """Setup Valve Resource Format .NET interop."""
-        self._init_pythonnet()
-
-        # Add DLL directory to PATH for assembly resolution
-        dll_dir = self.paths.vrf.parent
-        os.environ["PATH"] = str(dll_dir) + os.pathsep + os.environ.get("PATH", "")
-
-        import System
-
-        # Load dependencies first.
-        dependencies = [
-            self.paths.valve_keyvalue,
-            self.paths.zstd_sharp,
-            self.paths.valve_pak,
-            self.paths.system_io_hashing,
-            self.paths.vrf
-        ]
-
-        for dep in dependencies:
-            if not dep.exists():
-                raise FileNotFoundError(f"Assembly not found: {dep}")
-
-        # A private context does no probing of its own (unlike Assembly.LoadFrom,
-        # which probed the loaded file's folder), so preload every managed .dll
-        # sitting next to VRF — SkiaSharp, TinyBCSharp, TinyEXR.NET, ... — into it.
-        # Native DLLs in the same folder throw BadImageFormatException; they are
-        # found through PATH above, not the load context.
-        for dll in sorted(dll_dir.glob("*.dll")):
-            if dll.name == "SourcePorter.Core.dll":
-                continue  # belongs to the other, incompatible dependency set
-            try:
-                _load_assembly_into(dll, VRF_ALC)
-            except Exception:
-                pass
-
-        for dep in dependencies:
-            _load_assembly_into(dep, VRF_ALC)
-
-        # Get required types
-        vrf_assembly = _load_assembly_into(self.paths.vrf, VRF_ALC)
-        valvepak_assembly = _load_assembly_into(self.paths.valve_pak, VRF_ALC)
-
-        # Find required types
-        Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
-        Texture = vrf_assembly.GetType("ValveResourceFormat.Texture")
-        TextureExtract = vrf_assembly.GetType("ValveResourceFormat.TextureExtract")
-        FileExtract = self._find_type(vrf_assembly, "FileExtract") or vrf_assembly.GetType(
-            "ValveResourceFormat.IO.FileExtract")
-        ContentFile = self._find_type(vrf_assembly, "ContentFile") or vrf_assembly.GetType(
-            "ValveResourceFormat.IO.ContentFile")
-        Package = self._find_package_type(valvepak_assembly)
-
-        # Validate all types were found
-        missing = []
-        types = [Resource, FileExtract, ContentFile, Package]
-        names = ["Resource", "FileExtract", "ContentFile", "Package"]
-
-        for type_obj, name in zip(types, names):
-            if type_obj is None:
-                missing.append(name)
-
-        if missing:
-            raise RuntimeError(f"Could not find required .NET types: {', '.join(missing)}")
-
-        return Resource, Texture, TextureExtract, FileExtract, ContentFile, Package
-
-    def _find_type(self, assembly, type_name: str):
-        """Find a type by partial name in assembly."""
-        for type_info in assembly.GetTypes():
-            if type_name in type_info.Name:
-                return type_info
-        return None
-
-    def _find_package_type(self, assembly):
-        """Find Package type with various possible namespaces."""
-        possible_names = [
-            "ValvePak.Package",
-            "SteamDatabase.ValvePak.Package"
-        ]
-
-        for name in possible_names:
-            package_type = assembly.GetType(name)
-            if package_type:
-                return package_type
-
-        # Fallback: find any type with 'Package' in name
-        return self._find_type(assembly, "Package")
-
     def setup_source_porter(self):
-        """Setup SourcePorter.Core .NET interop via pythonnet.
-
-        Deliberately does NOT call setup_vrf(): SourcePorter.Core never touches
-        ValveResourceFormat, and the two are built against binary-incompatible
-        versions of ValveKeyValue/System.IO.Hashing — see :data:`VRF_ALC`, which
-        is what keeps the two sets in separate load contexts.
-        """
+        """Setup SourcePorter.Core .NET interop via pythonnet."""
         self._init_pythonnet()
 
         sp_dll = self.paths.source_porter_core
@@ -342,173 +205,6 @@ class DotNetInterop:
 
         sp_assembly = System.Reflection.Assembly.LoadFrom(str(sp_dll))
         return sp_assembly
-
-    def setup_hammer5tools_core(self):
-        """Load the Hammer5Tools Core public API into Python.NET's default context."""
-        self._init_pythonnet()
-
-        core_dll = self.paths.hammer5tools_core
-        if not core_dll.exists():
-            raise FileNotFoundError(f"Hammer5Tools.Core.dll assembly not found: {core_dll}")
-
-        for dependency in ("Blake3.dll", "System.IO.Hashing.dll", "ValvePak.dll"):
-            path = core_dll.parent / dependency
-            if path.is_file():
-                _load_into_default_alc(path)
-
-        _load_into_default_alc(core_dll)
-
-        import System
-        return System.Reflection.Assembly.LoadFrom(str(core_dll))
-
-
-class VPKExtractor:
-    """Simplified VPK file extraction."""
-
-    def __init__(self, interop: DotNetInterop):
-        self.interop = interop
-        self._vrf_types = None
-
-    def _ensure_vrf_loaded(self):
-        """Ensure VRF types are loaded."""
-        if self._vrf_types is None:
-            self._vrf_types = self.interop.setup_vrf()
-
-    def extract_file(self, vpk_path: str, file_path: str) -> Optional[bytes]:
-        """Extract a file from VPK. Returns bytes or None if not found."""
-        self._ensure_vrf_loaded()
-
-        import System
-        from System import Array, Byte
-        from System.Reflection import BindingFlags
-
-        _, _, _, _, _, Package = self._vrf_types
-
-        package = System.Activator.CreateInstance(Package)
-        try:
-            package.Read(vpk_path)
-
-            normalized_path = file_path.replace("\\", "/")
-            file_entry = package.FindEntry(normalized_path)
-
-            if file_entry is None:
-                return None
-
-            # Find and invoke ReadEntry method
-            read_method = self._find_read_entry_method(Package)
-            if read_method is None:
-                raise RuntimeError("Could not find ReadEntry method")
-
-            params = read_method.GetParameters()
-            args = System.Array.CreateInstance(System.Object, len(params))
-            args[0] = file_entry
-
-            output_bytes = System.Array.CreateInstance(Byte, 0)
-            args[1] = output_bytes
-
-            if len(params) > 2:
-                args[2] = True  # validateCrc
-
-            read_method.Invoke(package, args)
-            return args[1]  # The out parameter contains the data
-
-        finally:
-            if hasattr(package, 'Dispose'):
-                package.Dispose()
-
-    def _find_read_entry_method(self, package_type):
-        """Find appropriate ReadEntry method."""
-        from System import Type
-        from System.Reflection import BindingFlags
-
-        methods = package_type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-        for method in methods:
-            if method.Name == "ReadEntry":
-                params = method.GetParameters()
-                if len(params) >= 2:
-                    return method
-        return None
-
-
-class ResourceProcessor:
-    """Process Valve resources."""
-
-    def __init__(self, interop: DotNetInterop):
-        self.interop = interop
-        self._vrf_types = None
-
-    def _ensure_vrf_loaded(self):
-        """Ensure VRF types are loaded."""
-        if self._vrf_types is None:
-            self._vrf_types = self.interop.setup_vrf()
-
-    def extract_resource(self, data: bytes, output_path: str) -> bool:
-        """Extract a resource from binary data."""
-        self._ensure_vrf_loaded()
-
-        import System
-        from System.IO import MemoryStream
-
-        Resource, _, _, FileExtract, _, _ = self._vrf_types
-
-        try:
-            # Create resource and load data
-            resource = System.Activator.CreateInstance(Resource)
-            memory_stream = MemoryStream(data)
-
-            try:
-                resource.Read(memory_stream)
-
-                extract_method = self._find_extract_method(FileExtract)
-                if extract_method is None:
-                    return False
-
-                params = extract_method.GetParameters()
-                args = System.Array.CreateInstance(System.Object, len(params))
-                args[0] = resource
-
-                for i in range(1, len(params)):
-                    args[i] = None
-
-                content_file = extract_method.Invoke(None, args)
-
-                if content_file and hasattr(content_file, 'Data') and content_file.Data:
-                    # Save main file
-                    data_bytes = bytes(content_file.Data)
-                    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-                    Path(output_path).write_bytes(data_bytes)
-                    return True
-
-            finally:
-                memory_stream.Dispose()
-                if hasattr(resource, 'Dispose'):
-                    resource.Dispose()
-
-        except Exception:
-            return False
-
-        return False
-
-    def extract_resource_from_vpk(self, vpk_path: str, file_path: str, output_path: str) -> bool:
-        """Extract a resource from a VPK file using VPKExtractor and process it."""
-        extractor = VPKExtractor(self.interop)
-        data = extractor.extract_file(vpk_path, file_path)
-        if data is None:
-            return False
-        return self.extract_resource(data, output_path)
-
-    def _find_extract_method(self, file_extract_type):
-        """Find static Extract method."""
-        from System.Reflection import BindingFlags
-        import System
-        from System.IO import MemoryStream
-
-        methods = file_extract_type.GetMethods(BindingFlags.Public | BindingFlags.Static)
-        for method in methods:
-            if method.Name == "Extract":
-                return method
-        return None
-
 
 class DotNetRuntimeChecker:
     """Check and manage .NET runtime installation."""
@@ -556,7 +252,6 @@ class DotNetRuntimeChecker:
             if show_dialog:
                 self._show_download_dialog()
             else:
-                setup_vrf()
                 setup_keyvalues2()
             return False
 
@@ -564,7 +259,6 @@ class DotNetRuntimeChecker:
             if show_dialog:
                 self._show_download_dialog()
             else:
-                setup_vrf()
                 setup_keyvalues2()
             return False
 
@@ -647,58 +341,13 @@ def check_dotnet_runtime(min_version: str = "10.0", dev_mode: bool = False) -> b
     return checker.check_runtime(show_dialog=not dev_mode)
 
 
-def setup_vrf():
-    """Setup VRF interop (legacy function)."""
-    interop = DotNetInterop()
-    return interop.setup_vrf()
-
-
 def setup_keyvalues2():
     """Setup KeyValues2 interop (legacy function)."""
     interop = DotNetInterop()
     return interop.setup_keyvalues()
 
 
-import threading
-import contextlib
-_decompile_lock = threading.Lock()
-
-def synchronized(lock):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            with lock:
-                return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-@contextlib.contextmanager
-def _suppress_dotnet_console():
-    """Silence VRF's Console output (VPK preloads, "Failed to load ..." notes)
-    for the duration of a block. Restores the streams afterwards. Safe because
-    decompilation is serialised by _decompile_lock. Requires pythonnet to be
-    initialised (call setup_vrf() first)."""
-    import System
-    import System.IO
-    orig_out, orig_err = System.Console.Out, System.Console.Error
-    try:
-        System.Console.SetOut(System.IO.TextWriter.Null)
-        System.Console.SetError(System.IO.TextWriter.Null)
-        yield
-    finally:
-        System.Console.SetOut(orig_out)
-        System.Console.SetError(orig_err)
-
-
 if __name__ == "__main__":
-    # VRF and SourcePorter.Core must both load in one process, in either order.
-    # They share dependency names at incompatible versions, so a regression here
-    # (both back in one load context) breaks whichever tool the user opens second.
-    for first, second in (("vrf", "porter"), ("porter", "vrf")):
-        interop = DotNetInterop()
-        for which in (first, second):
-            if which == "vrf":
-                assert interop.setup_vrf()[0] is not None
-            else:
-                assert interop.setup_source_porter() is not None
-        print(f"Self-check passed: {first} then {second}")
+    interop = DotNetInterop()
+    assert interop.setup_source_porter() is not None
+    print("Self-check passed: SourcePorter.Core loaded")

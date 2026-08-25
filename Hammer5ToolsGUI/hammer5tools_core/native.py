@@ -142,6 +142,74 @@ class SmartPropNativeClient:
             *self._buffer_arguments(payload),
         ))
 
+    def vpk_open(self) -> int:
+        """Opens a native VPK index handle. Must be closed with :meth:`vpk_close`."""
+        return int(self._library.h5t_vpk_open())
+
+    def vpk_close(self, handle: int) -> None:
+        """Releases a native VPK index handle."""
+        self._library.h5t_vpk_close(handle)
+
+    def vpk_mount(self, handle: int, path: str) -> None:
+        """Mounts a `_dir.vpk` archive. Missing paths are ignored."""
+        self._invoke(self._library.h5t_vpk_mount, handle, *self._buffer_arguments(path.encode("utf-8")))
+
+    def vpk_add_loose_root(self, handle: int, directory: str) -> None:
+        """Adds a loose directory root to search. Missing directories are ignored."""
+        self._invoke(self._library.h5t_vpk_add_loose_root, handle, *self._buffer_arguments(directory.encode("utf-8")))
+
+    def vpk_exists(self, handle: int, path: str) -> bool:
+        """Gets whether a path exists in a mounted archive or loose root."""
+        buffer, length = self._buffer_arguments(path.encode("utf-8"))
+        status = self._library.h5t_vpk_exists(handle, buffer, length)
+        if status < 0:
+            raise NativeCoreError(f"Invalid VPK handle {handle}")
+        return bool(status)
+
+    def vpk_package_count(self, handle: int) -> int:
+        """Gets the number of mounted VPK archives."""
+        count = self._library.h5t_vpk_package_count(handle)
+        if count < 0:
+            raise NativeCoreError(f"Invalid VPK handle {handle}")
+        return count
+
+    def vpk_read_bytes(self, handle: int, path: str) -> bytes | None:
+        """Reads a file's raw bytes from a mounted archive or loose root, or ``None`` when absent."""
+        buffer, length = self._buffer_arguments(path.encode("utf-8"))
+        status, payload = self._invoke_raw(self._library.h5t_vpk_read_bytes, handle, buffer, length)
+        if status == 1:
+            return None
+        if status != 0:
+            self._raise_native_error(status, payload)
+        return payload
+
+    def vpk_entries(self, handle: int, suffixes: tuple[str, ...] = ()) -> tuple[tuple[str, int], ...]:
+        """Enumerates mounted VPK entries whose paths end with one of ``suffixes``."""
+        payload = self._invoke(
+            self._library.h5t_vpk_entries_json, handle,
+            *self._buffer_arguments(self._json_bytes(list(suffixes))),
+        )
+        return tuple((path, size) for path, size in json.loads(payload))
+
+    def read_compiled_model(self, request: dict) -> dict:
+        """Reads a compiled model. Returns {"value": {...} | None, "diagnostics": [...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_compiled_model_read_json, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def read_compiled_model_material_groups(self, request: dict) -> list[str]:
+        """Reads the material group names of a compiled model."""
+        return json.loads(self._invoke(
+            self._library.h5t_compiled_model_material_groups_json,
+            *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def read_compiled_resource(self, request: dict) -> dict:
+        """Reads and decodes a compiled sound or SoundEvent. Returns {"value": {...} | None, "diagnostics": [...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_compiled_resource_read_json, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
     def _configure_functions(self) -> None:
         pointer = ctypes.c_void_p
         length = ctypes.c_int
@@ -167,12 +235,35 @@ class SmartPropNativeClient:
             "h5t_smartprop_evaluate_expression",
             "h5t_smartprop_serialize_json",
             "h5t_smartprop_deserialize_text",
+            "h5t_compiled_model_read_json",
+            "h5t_compiled_model_material_groups_json",
+            "h5t_compiled_resource_read_json",
         ):
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, output, output_length]
             function.restype = ctypes.c_int
 
+        self._library.h5t_vpk_open.argtypes = []
+        self._library.h5t_vpk_open.restype = ctypes.c_longlong
+        self._library.h5t_vpk_close.argtypes = [ctypes.c_longlong]
+        self._library.h5t_vpk_close.restype = None
+        self._library.h5t_vpk_exists.argtypes = [ctypes.c_longlong, pointer, length]
+        self._library.h5t_vpk_exists.restype = ctypes.c_int
+        self._library.h5t_vpk_package_count.argtypes = [ctypes.c_longlong]
+        self._library.h5t_vpk_package_count.restype = ctypes.c_int
+        for name in ("h5t_vpk_mount", "h5t_vpk_add_loose_root", "h5t_vpk_read_bytes", "h5t_vpk_entries_json"):
+            function = getattr(self._library, name)
+            function.argtypes = [ctypes.c_longlong, pointer, length, output, output_length]
+            function.restype = ctypes.c_int
+
     def _invoke(self, function, *arguments) -> str:
+        status, payload = self._invoke_raw(function, *arguments)
+        if status != 0:
+            self._raise_native_error(status, payload)
+        return payload.decode("utf-8") if payload else ""
+
+    def _invoke_raw(self, function, *arguments) -> tuple[int, bytes]:
+        """Calls a buffer-returning native function without decoding or raising."""
         output = ctypes.c_void_p()
         output_length = ctypes.c_int()
         status = function(
@@ -181,21 +272,20 @@ class SmartPropNativeClient:
             ctypes.byref(output_length),
         )
         try:
-            payload = (
-                ctypes.string_at(output.value, output_length.value).decode("utf-8")
-                if output.value else ""
-            )
+            payload = ctypes.string_at(output.value, output_length.value) if output.value else b""
         finally:
             if output.value:
                 self._library.h5t_core_release(output)
+        return status, payload
 
-        if status != 0:
-            try:
-                message = json.loads(payload).get("error", payload)
-            except json.JSONDecodeError:
-                message = payload
-            raise NativeCoreError(message or f"Native Core call failed with status {status}")
-        return payload
+    @staticmethod
+    def _raise_native_error(status: int, payload: bytes) -> None:
+        text = payload.decode("utf-8", errors="replace")
+        try:
+            message = json.loads(text).get("error", text)
+        except json.JSONDecodeError:
+            message = text
+        raise NativeCoreError(message or f"Native Core call failed with status {status}")
 
     @staticmethod
     def _json_bytes(value: object) -> bytes:

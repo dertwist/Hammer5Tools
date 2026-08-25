@@ -344,9 +344,9 @@ if __name__ == "__main__":
 
     app.setStyleSheet(QT_Stylesheet_global)
     
-    # Check .NET runtime if libraries are present
+    # Check .NET runtime if pythonnet-dependent libraries are present
     from hammer5tools_core.dotnet import DotNetPaths
-    if DotNetPaths().vrf.exists():
+    if DotNetPaths().keyvalues2_net.exists():
         check_dotnet_runtime()
     
     # Create main window

@@ -12,55 +12,30 @@ def test_core_bridge_is_a_process_singleton():
         CoreBridge._instance = original
 
 
-class FakeMethod:
-    def __init__(self, result):
-        self.result = result
-
-    def Invoke(self, target, arguments):
-        return self.result
-
-
-class FakeApiType:
-    def __init__(self, result):
-        self.result = result
-
-    def GetMethod(self, name):
-        assert name == "Probe"
-        return FakeMethod(self.result)
-
-
-class FakeAssembly:
-    def __init__(self, result):
-        self.result = result
-
-    def GetType(self, name):
-        assert name == "Hammer5Tools.Core.CoreApi"
-        return FakeApiType(self.result)
-
-
 class FakeInterop:
-    def __init__(self, result=None, error=None):
-        self.result = result
-        self.error = error
+    """Stands in for DotNetInterop so tests never touch pythonnet."""
 
-    def setup_hammer5tools_core(self):
-        if self.error:
-            raise self.error
-        return FakeAssembly(self.result)
+
+class FakeNativeClient:
+    ABI_VERSION = 1
+
+
+class FailingNativeClient:
+    @property
+    def ABI_VERSION(self):
+        raise OSError("missing runtime")
 
 
 def test_core_probe_translates_success_to_python_status():
-    result = SimpleNamespace(IsSuccess=True, Value="1.0", Diagnostics=[])
-
-    status = CoreBridge(FakeInterop(result)).probe()
+    status = CoreBridge(FakeInterop(), native_client=FakeNativeClient()).probe()
 
     assert status.available
-    assert status.version == "1.0"
+    assert status.version == "native-abi-1"
     assert status.diagnostic is None
 
 
 def test_core_probe_translates_load_failures_to_diagnostics():
-    status = CoreBridge(FakeInterop(error=OSError("missing runtime"))).probe()
+    status = CoreBridge(FakeInterop(), native_client=FailingNativeClient()).probe()
 
     assert not status.available
     assert "missing runtime" in status.diagnostic
@@ -169,46 +144,41 @@ def test_valve_map_entities_are_converted_without_core_types():
     )
 
 
-class FakeVpkIndex:
+class FakeNativeVpk:
+    """Stands in for SmartPropNativeClient's vpk_* native ABI calls."""
+
     def __init__(self):
-        self.PackageCount = 0
+        self.package_count_value = 0
         self.roots = []
-        self.disposed = False
+        self.closed_handles = set()
 
-    def MountVpk(self, path):
-        self.PackageCount += 1
+    def vpk_open(self):
+        return 1
 
-    def AddLooseRoot(self, directory):
+    def vpk_mount(self, handle, path):
+        self.package_count_value += 1
+
+    def vpk_add_loose_root(self, handle, directory):
         self.roots.append(directory)
 
-    def Exists(self, path):
+    def vpk_exists(self, handle, path):
         return path == "present.txt"
 
-    def TryReadBytes(self, path):
-        return bytearray(b"data") if path == "present.txt" else None
+    def vpk_read_bytes(self, handle, path):
+        return b"data" if path == "present.txt" else None
 
-    def Dispose(self):
-        self.disposed = True
+    def vpk_package_count(self, handle):
+        return self.package_count_value
 
-    def EnumerateEntries(self, suffixes):
-        return [SimpleNamespace(Path="models/example.vmdl", Size=42)]
+    def vpk_entries(self, handle, suffixes):
+        return (("models/example.vmdl", 42),)
+
+    def vpk_close(self, handle):
+        self.closed_handles.add(handle)
 
 
-def test_vpk_index_converts_core_results_to_python_values(monkeypatch):
-    class FakeList(list):
-        @classmethod
-        def __class_getitem__(cls, item):
-            return cls
-
-        def Add(self, value):
-            self.append(value)
-
-    import sys
-    monkeypatch.setitem(sys.modules, "System", SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "System.Collections", SimpleNamespace())
-    monkeypatch.setitem(sys.modules, "System.Collections.Generic", SimpleNamespace(List=FakeList))
-
-    native = FakeVpkIndex()
+def test_vpk_index_converts_core_results_to_python_values():
+    native = FakeNativeVpk()
     index = VpkIndex(native)
 
     index.mount("pak01_dir.vpk")
@@ -223,12 +193,12 @@ def test_vpk_index_converts_core_results_to_python_values(monkeypatch):
 
 
 def test_vpk_index_rejects_calls_after_close():
-    native = FakeVpkIndex()
+    native = FakeNativeVpk()
     index = VpkIndex(native)
 
     index.close()
 
-    assert native.disposed
+    assert native.closed_handles == {1}
     try:
         index.exists("present.txt")
     except RuntimeError as error:

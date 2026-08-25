@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 using Datamodel;
@@ -10,6 +11,11 @@ namespace SourcePorter.Core.Vmap;
 public static class VmapReferenceRewriter
 {
     /// <summary>Rewrites every matching string in the VMAP body and prefix attributes.</summary>
+    // See UnrealMapWriter.CreateDocument for why these are required under NativeAOT:
+    // document.Save() needs Datamodel.Datamodel's static codec registration to have
+    // its codec constructors preserved.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     public static CoreResult<bool> Rewrite(string path, IReadOnlyDictionary<string, string> renames)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 import json
@@ -154,7 +155,6 @@ class CoreBridge:
     def __init__(self, interop=None, native_client=None) -> None:
         self._interop = interop or DotNetInterop()
         self._native_client = native_client
-        self._assembly = None
         self._source_porter_assembly = None
 
     @classmethod
@@ -166,28 +166,13 @@ class CoreBridge:
 
     def create_vpk_index(self) -> VpkIndex:
         """Creates a Core-owned VPK index without exposing C# namespaces to callers."""
-        self._ensure_loaded()
-
-        index_type = self._assembly.GetType("Hammer5Tools.Core.Resources.VpkIndex")
-        if index_type is None:
-            raise RuntimeError("Hammer5Tools.Core does not provide Resources.VpkIndex")
-
-        import System
-        return VpkIndex(System.Activator.CreateInstance(index_type))
+        return VpkIndex(self._smartprop_native())
 
     def probe(self) -> CoreStatus:
-        """Loads and invokes the versioned Core contract without changing application state."""
+        """Loads the versioned Core contract without changing application state."""
         try:
-            self._ensure_loaded()
-            api_type = self._assembly.GetType("Hammer5Tools.Core.CoreApi")
-            if api_type is None:
-                raise CoreBridgeError("Hammer5Tools.Core does not provide CoreApi")
-
-            result = api_type.GetMethod("Probe").Invoke(None, None)
-            if not bool(result.IsSuccess):
-                diagnostic = next((str(item.Message) for item in result.Diagnostics), "Core probe failed")
-                return CoreStatus(False, diagnostic=diagnostic)
-            return CoreStatus(True, version=str(result.Value))
+            client = self._smartprop_native()
+            return CoreStatus(True, version=f"native-abi-{client.ABI_VERSION}")
         except Exception as error:
             return CoreStatus(False, diagnostic=str(error))
 
@@ -319,67 +304,64 @@ class CoreBridge:
                             *, context_addon: str | None = None, maximum_texture_dimension: int = 1024,
                             base_color_only: bool = False, skin: int = 0) -> CompiledModelData | None:
         """Reads a compiled model into Python-native immutable data."""
-        self._ensure_loaded()
-        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledModelReader")
-        import System
-        reader = System.Activator.CreateInstance(reader_type, game_directory, active_addon)
-        result = reader.Read(resource_path, context_addon, maximum_texture_dimension, base_color_only, skin)
-        if not bool(result.IsSuccess) or result.Value is None:
+        result = self._smartprop_native().read_compiled_model({
+            "gameDirectory": game_directory,
+            "activeAddon": active_addon,
+            "resourcePath": resource_path,
+            "contextAddon": context_addon,
+            "maximumTextureDimension": maximum_texture_dimension,
+            "baseColorOnly": base_color_only,
+            "skin": skin,
+        })
+        model = result["value"]
+        if model is None:
             return None
-        model = result.Value
-        diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         return CompiledModelData(
-            tuple(float(value) for value in model.Vertices), tuple(float(value) for value in model.Normals),
-            tuple(float(value) for value in model.Uvs), tuple(int(value) for value in model.Indices),
-            self._vector(model.BoundsMinimum, 3), self._vector(model.BoundsMaximum, 3),
-            tuple(CompiledSubMeshData(int(item.IndexOffset), int(item.IndexCount), self._compiled_material(item.Material))
-                  for item in model.SubMeshes), diagnostics)
+            tuple(model["vertices"]), tuple(model["normals"]), tuple(model["uvs"]), tuple(model["indices"]),
+            tuple(model["boundsMinimum"]), tuple(model["boundsMaximum"]),
+            tuple(CompiledSubMeshData(item["indexOffset"], item["indexCount"], self._compiled_material(item["material"]))
+                  for item in model["submeshes"]), diagnostics)
 
     def read_compiled_model_material_groups(self, game_directory: str, active_addon: str,
                                             resource_path: str, context_addon: str | None = None) -> tuple[str, ...]:
-        self._ensure_loaded()
-        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledModelReader")
-        import System
-        reader = System.Activator.CreateInstance(reader_type, game_directory, active_addon)
-        result = reader.ReadMaterialGroups(resource_path, context_addon)
-        return tuple(str(value) for value in result.Value) if bool(result.IsSuccess) else ()
+        groups = self._smartprop_native().read_compiled_model_material_groups({
+            "gameDirectory": game_directory,
+            "activeAddon": active_addon,
+            "resourcePath": resource_path,
+            "contextAddon": context_addon,
+        })
+        return tuple(groups)
 
     def read_compiled_resource(self, vpk_path: str, resource_path: str, *, soundevents: bool = False) -> CompiledResourceData | None:
         """Reads and decodes a compiled sound or SoundEvent through Core."""
-        self._ensure_loaded()
-        index_type = self._assembly.GetType("Hammer5Tools.Core.Resources.VpkIndex")
-        reader_type = self._assembly.GetType("Hammer5Tools.Core.Resources.CompiledResourceReader")
-        import System
-        index = System.Activator.CreateInstance(index_type)
-        try:
-            index.MountVpk(vpk_path)
-            reader = System.Activator.CreateInstance(reader_type, index)
-            result = reader.ReadSoundEvents(resource_path) if soundevents else reader.ReadSound(resource_path)
-            if not bool(result.IsSuccess) or result.Value is None:
-                return None
-            diagnostics = tuple(f"{item.Code}: {item.Message}" for item in result.Diagnostics)
-            return CompiledResourceData(bytes(result.Value.Data), str(result.Value.Format), diagnostics)
-        finally:
-            index.Dispose()
+        result = self._smartprop_native().read_compiled_resource({
+            "vpkPath": vpk_path,
+            "resourcePath": resource_path,
+            "soundEvents": soundevents,
+        })
+        content = result["value"]
+        if content is None:
+            return None
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        return CompiledResourceData(base64.b64decode(content["data"]), content["format"], diagnostics)
 
     @classmethod
-    def _compiled_material(cls, material) -> CompiledMaterialData:
+    def _compiled_material(cls, material: Mapping) -> CompiledMaterialData:
         return CompiledMaterialData(
-            str(material.Name), tuple(cls._compiled_texture(getattr(material, name)) for name in
-                                      ("BaseColor", "Normal", "MetallicRoughness", "AmbientOcclusion", "Emissive")),
-            cls._vector(material.BaseColorFactor, 4), float(material.MetallicFactor), float(material.RoughnessFactor),
-            cls._vector(material.EmissiveFactor, 3), str(material.AlphaMode), float(material.AlphaCutoff),
-            bool(material.DoubleSided), int(material.WrapU), int(material.WrapV), int(material.UvSet),
-            cls._vector(material.UvScale, 2), cls._vector(material.UvOffset, 2),
-            cls._vector(material.UvCenter, 2), float(material.UvRotation))
+            material["name"], tuple(cls._compiled_texture(material[name]) for name in
+                                    ("baseColor", "normal", "metallicRoughness", "ambientOcclusion", "emissive")),
+            tuple(material["baseColorFactor"]), material["metallicFactor"], material["roughnessFactor"],
+            tuple(material["emissiveFactor"]), material["alphaMode"], material["alphaCutoff"],
+            material["doubleSided"], material["wrapU"], material["wrapV"], material["uvSet"],
+            tuple(material["uvScale"]), tuple(material["uvOffset"]),
+            tuple(material["uvCenter"]), material["uvRotation"])
 
     @staticmethod
-    def _compiled_texture(texture) -> CompiledTextureData | None:
-        return None if texture is None else CompiledTextureData(int(texture.Width), int(texture.Height), bytes(texture.Rgba))
-
-    @staticmethod
-    def _vector(value, count: int) -> tuple[float, ...]:
-        return tuple(float(getattr(value, component)) for component in "XYZW"[:count])
+    def _compiled_texture(texture: Mapping | None) -> CompiledTextureData | None:
+        if texture is None:
+            return None
+        return CompiledTextureData(texture["width"], texture["height"], base64.b64decode(texture["rgba"]))
 
     @staticmethod
     def _convert_smartprop_model(model) -> SmartPropModel:
@@ -421,15 +403,6 @@ class CoreBridge:
         children = tuple(cls._convert_valve_map_node(child) for child in node.Children)
         return ValveMapNode(str(node.Name), str(node.ClassName), properties, children)
 
-    def _ensure_loaded(self) -> None:
-        if self._assembly is not None:
-            return
-
-        try:
-            self._assembly = self._interop.setup_hammer5tools_core()
-        except Exception as error:
-            raise CoreBridgeError(f"Hammer5Tools Core is unavailable: {error}") from error
-
     def _ensure_source_porter_loaded(self):
         if self._source_porter_assembly is not None:
             return self._source_porter_assembly
@@ -442,57 +415,48 @@ class CoreBridge:
 
 
 class VpkIndex:
-    """Owns a disposable Core VPK index with Python-native arguments and results."""
+    """Owns a disposable native Core VPK index handle with Python-native arguments and results."""
 
-    def __init__(self, index) -> None:
-        self._index = index
+    def __init__(self, native_client) -> None:
+        self._native = native_client
+        self._handle: int | None = native_client.vpk_open()
 
     @property
     def package_count(self) -> int:
         """Gets the number of mounted VPK archives."""
         self._require_open()
-        return int(self._index.PackageCount)
+        return self._native.vpk_package_count(self._handle)
 
     def mount(self, path: str) -> None:
         """Mounts a VPK directory archive when it exists."""
         self._require_open()
-        self._index.MountVpk(path)
+        self._native.vpk_mount(self._handle, path)
 
     def add_loose_root(self, directory: str) -> None:
         """Adds a loose directory root when it exists."""
         self._require_open()
-        self._index.AddLooseRoot(directory)
+        self._native.vpk_add_loose_root(self._handle, directory)
 
     def exists(self, path: str) -> bool:
         """Gets whether a path exists in a mounted archive or loose root."""
         self._require_open()
-        return bool(self._index.Exists(path))
+        return self._native.vpk_exists(self._handle, path)
 
     def read_bytes(self, path: str) -> bytes | None:
         """Reads a file from a mounted archive or loose root."""
         self._require_open()
-        data = self._index.TryReadBytes(path)
-        return None if data is None else bytes(data)
+        return self._native.vpk_read_bytes(self._handle, path)
 
     def entries(self, suffixes: Sequence[str] = ()) -> tuple[tuple[str, int], ...]:
         """Returns Python-native paths and sizes from mounted VPK archives."""
         self._require_open()
-
-        from System.Collections.Generic import List
-
-        native_suffixes = List[str]()
-        for suffix in suffixes:
-            native_suffixes.Add(suffix)
-        return tuple(
-            (str(entry.Path), int(entry.Size))
-            for entry in self._index.EnumerateEntries(native_suffixes)
-        )
+        return self._native.vpk_entries(self._handle, tuple(suffixes))
 
     def close(self) -> None:
         """Releases archive handles. The bridge remains usable for new indexes."""
-        if self._index is not None:
-            self._index.Dispose()
-            self._index = None
+        if self._handle is not None:
+            self._native.vpk_close(self._handle)
+            self._handle = None
 
     def __enter__(self) -> VpkIndex:
         self._require_open()
@@ -502,5 +466,5 @@ class VpkIndex:
         self.close()
 
     def _require_open(self) -> None:
-        if self._index is None:
+        if self._handle is None:
             raise RuntimeError("VpkIndex is closed")

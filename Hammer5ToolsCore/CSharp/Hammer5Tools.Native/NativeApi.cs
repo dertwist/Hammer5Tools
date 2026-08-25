@@ -129,41 +129,13 @@ internal static unsafe class NativeApi
         NativeMemory.Free(memory);
     }
 
-    private static int Invoke(byte** output, int* outputLength, Func<byte[]> operation)
-    {
-        if (output is null || outputLength is null)
-            return -1;
+    private static int Invoke(byte** output, int* outputLength, Func<byte[]> operation) =>
+        NativeInterop.Invoke(output, outputLength, operation);
 
-        *output = null;
-        *outputLength = 0;
-        try
-        {
-            WriteOutput(operation(), output, outputLength);
-            return 0;
-        }
-        catch (Exception exception)
-        {
-            WriteOutput(WriteNativeError(exception.Message), output, outputLength);
-            return -2;
-        }
-    }
+    private static string ReadUtf8(byte* input, int length) => NativeInterop.ReadUtf8(input, length);
 
-    private static string ReadUtf8(byte* input, int length)
-    {
-        if (input is null || length < 0)
-            throw new ArgumentException("A valid UTF-8 input buffer is required.");
-
-        return Encoding.UTF8.GetString(new ReadOnlySpan<byte>(input, length));
-    }
-
-    private static void WriteOutput(byte[] bytes, byte** output, int* outputLength)
-    {
-        var buffer = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
-        bytes.CopyTo(new Span<byte>(buffer, bytes.Length));
-        buffer[bytes.Length] = 0;
-        *output = buffer;
-        *outputLength = bytes.Length;
-    }
+    private static void WriteOutput(byte[] bytes, byte** output, int* outputLength) =>
+        NativeInterop.WriteOutput(bytes, output, outputLength);
 
     private static byte[] WriteEvaluationResult(SmartPropEvaluationResult result)
     {
@@ -232,17 +204,6 @@ internal static unsafe class NativeApi
         writer.WriteNumberValue(matrix.M42);
         writer.WriteNumberValue(matrix.M43);
         writer.WriteNumberValue(matrix.M44);
-    }
-
-    private static byte[] WriteNativeError(string message)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer);
-        writer.WriteStartObject();
-        writer.WriteString("error", message);
-        writer.WriteEndObject();
-        writer.Flush();
-        return buffer.WrittenSpan.ToArray();
     }
 
     private static CancellationToken GetCancellationToken(long cancellationId)

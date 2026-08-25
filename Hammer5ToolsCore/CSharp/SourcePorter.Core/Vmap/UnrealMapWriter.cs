@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +10,7 @@ using DM = Datamodel.Datamodel;
 namespace SourcePorter.Core.Vmap;
 
 /// <summary>The VMAP node shape produced from a normalized Unreal placement.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(JsonStringEnumConverter<UnrealMapPlacementKind>))]
 public enum UnrealMapPlacementKind
 {
     /// <summary>A point entity with EditGameClassProps.</summary>
@@ -37,6 +38,11 @@ public sealed record UnrealMapWriteRequest(IReadOnlyList<UnrealMapPlacement> Pla
 
 /// <summary>Summary of a completed Unreal VMAP write.</summary>
 public sealed record UnrealMapWriteResult(int PlacementCount, string Encoding, int EncodingVersion);
+
+/// <summary>Source-generated JSON contract for <see cref="UnrealMapWriter.WriteJson"/>, required under NativeAOT
+/// (reflection-based serialization is unavailable there).</summary>
+[JsonSerializable(typeof(UnrealMapWriteRequest))]
+internal sealed partial class UnrealMapWriterJsonContext : JsonSerializerContext;
 
 /// <summary>Writes normalized Unreal placements as a Source 2 VMAP.</summary>
 public static class UnrealMapWriter
@@ -84,7 +90,7 @@ public static class UnrealMapWriter
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         try
         {
-            var request = JsonSerializer.Deserialize<UnrealMapWriteRequest>(requestJson)
+            var request = JsonSerializer.Deserialize(requestJson, UnrealMapWriterJsonContext.Default.UnrealMapWriteRequest)
                 ?? throw new JsonException("The Unreal map request was empty.");
             return Write(request, outputPath);
         }
@@ -139,6 +145,13 @@ public static class UnrealMapWriter
         }
     }
 
+    // Datamodel.Datamodel's static constructor registers its built-in codecs via
+    // Activator.CreateInstance(Type). Under NativeAOT that constructor metadata is not
+    // preserved unless something declares it needed, so the very first access to DM in
+    // an AOT process throws a TypeInitializationException. These dependencies keep both
+    // codecs' parameterless constructors reachable.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     private static (DM Document, Element World) CreateDocument()
     {
         var document = new DM("vmap", 40);
