@@ -82,6 +82,15 @@
       [JsonSerializable] source-generated context, not adding more NoWarn.
     -->
     <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+    <!--
+      ponytail: NU1608 — CUE4Parse-Conversion pins SkiaSharp = 2.88.9 exactly, but
+      this project needs the much newer SkiaSharp already referenced below (VRF
+      thumbnail rendering, see commit 911f79ad). NuGet resolves the higher version
+      correctly; this is CUE4Parse-Conversion's constraint being stricter than
+      necessary, not an actual incompatibility. Suppressed rather than downgrading
+      SkiaSharp, which would break the thumbnail work.
+    -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PublishAot>true</PublishAot>
     <NativeLib>Shared</NativeLib>
@@ -103,6 +112,9 @@
     <PackageReference Include="ValvePak" Version="5.0.2.177" />
     <PackageReference Include="SkiaSharp" Version="4.151.1" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.8" />
+    <!-- Pins the transitive dependency (pulled in via CUE4Parse) past the DoS
+         advisory GHSA-73j8-2gch-69rq, patched at 9.0.14/10.0.4. -->
+    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.11" />
 
     <!-- Datamodel (DMX) reader/writer for the uncompiled VMAP graph. -->
     <PackageReference Include="KeyValues2" Version="0.10.0" />
