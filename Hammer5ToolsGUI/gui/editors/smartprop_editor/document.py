@@ -64,7 +64,8 @@ from gui.widgets.element_id import ElementIDGenerator
 from gui.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
-    get_label_id_from_value
+    get_label_id_from_value,
+    parse_component_clipboard,
 )
 
 from gui.common import (
@@ -979,25 +980,40 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.AddItem(new_element_item)
 
     # [Properties operator]
-    def _append_component(self, container_key, component_value, force_new_id=False):
-        """Append a modifier/selection-criteria dict to the current item and commit.
+    def _append_components(self, container_key, component_values, force_new_id=False):
+        """Append modifier/selection-criteria dicts to the current item and commit.
 
-        Mirrors ComponentList._add_component_dict (props/components.py) so both
+        Mirrors ComponentList._add_component_dicts (props/components.py) so both
         the toolbar Add/Paste actions and the Section-1 "+" button produce
         identically-shaped data + undo history.
         """
         item = self.ui.tree_hierarchy_widget.currentItem()
         if item is None:
             return
-        if not isinstance(component_value, dict):
-            component_value = ast.literal_eval(component_value)
-        component_value = dict(component_value)
-        component_value.setdefault('m_bEnabled', True)
-        self.element_id_generator.update_value(component_value, force=force_new_id)
+        if not isinstance(component_values, (list, tuple)):
+            component_values = [component_values]
+
+        new_comps = []
+        for val in component_values:
+            if isinstance(val, str):
+                try:
+                    val = ast.literal_eval(val)
+                except Exception:
+                    continue
+            if not isinstance(val, dict):
+                continue
+            c = dict(val)
+            c.setdefault('m_bEnabled', True)
+            self.element_id_generator.update_value(c, force=force_new_id)
+            new_comps.append(c)
+
+        if not new_comps:
+            return
 
         old_data = fast_deepcopy(item.data(0, Qt.UserRole))
         new_data = fast_deepcopy(old_data)
-        new_data.setdefault(container_key, []).append(component_value)
+        arr = new_data.setdefault(container_key, [])
+        arr.extend(new_comps)
         item.setData(0, Qt.UserRole, new_data)
 
         self._modified = True
@@ -1005,8 +1021,12 @@ class SmartPropDocument(QMainWindow):
         self.undo_stack.push(PropertySnapshotCommand(self, item, old_data, new_data))
         self.smartprop_property_panel.set_element(item)
 
+    def _append_component(self, container_key, component_value, force_new_id=False):
+        """Append a single modifier/selection-criteria dict to the current item and commit."""
+        self._append_components(container_key, [component_value], force_new_id=force_new_id)
+
     def new_operator(self, element_class, element_value):
-        self._append_component("m_Modifiers", element_value)
+        self._append_components("m_Modifiers", element_value)
 
     def add_an_operator(self):
         """
@@ -1057,12 +1077,11 @@ class SmartPropDocument(QMainWindow):
 
     def paste_operator(self):
         clipboard_text = QApplication.clipboard().text()
-        clipboard_data = clipboard_text.split(";;")
-        if clipboard_data[0] != "hammer5tools:smartprop_editor_property":
-            print("Clipboard data format is not valid.")
+        clip_group, dicts = parse_component_clipboard(clipboard_text)
+        if not dicts or clip_group != "modifier":
+            print("Clipboard data format is not valid for modifier.")
             return
-        data = ast.literal_eval(clipboard_data[2])
-        self._append_component("m_Modifiers", data, force_new_id=True)
+        self._append_components("m_Modifiers", dicts, force_new_id=True)
 
     # [Properties Selection Criteria]
     def add_a_selection_criteria(self):
@@ -1114,16 +1133,15 @@ class SmartPropDocument(QMainWindow):
         self.popup_menu.show()
 
     def new_selection_criteria(self, element_class, element_value):
-        self._append_component("m_SelectionCriteria", element_value)
+        self._append_components("m_SelectionCriteria", element_value)
 
     def paste_selection_criteria(self):
         clipboard_text = QApplication.clipboard().text()
-        clipboard_data = clipboard_text.split(";;")
-        if clipboard_data[0] != "hammer5tools:smartprop_editor_property":
-            print("Clipboard data format is not valid.")
+        clip_group, dicts = parse_component_clipboard(clipboard_text)
+        if not dicts or clip_group != "selection_criteria":
+            print("Clipboard data format is not valid for selection criteria.")
             return
-        data = ast.literal_eval(clipboard_data[2])
-        self._append_component("m_SelectionCriteria", data, force_new_id=True)
+        self._append_components("m_SelectionCriteria", dicts, force_new_id=True)
 
     # [Open File]
     @exception_handler
@@ -2096,6 +2114,14 @@ class SmartPropDocument(QMainWindow):
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         if data_input is None:
             data_input = QApplication.clipboard().text()
+
+        # Check if clipboard contains modifier or selection criteria components
+        clip_group, comp_dicts = parse_component_clipboard(data_input)
+        if comp_dicts and clip_group:
+            container_key = "m_Modifiers" if clip_group == "modifier" else "m_SelectionCriteria"
+            self._append_components(container_key, comp_dicts, force_new_id=True)
+            return
+
         try:
             obj = Kv3ToJson(self.fix_format(data_input))
             items = []

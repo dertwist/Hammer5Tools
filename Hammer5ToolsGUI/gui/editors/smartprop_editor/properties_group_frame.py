@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal, QSize
 from gui.property.methods import PropertyMethods
 from gui.widgets import ErrorInfo
 from gui.editors.smartprop_editor.property import compact
+from gui.editors.smartprop_editor._common import parse_component_clipboard
 
 # Group type color constants
 _GROUP_COLORS = {
@@ -76,11 +77,12 @@ class PropertiesGroupFrame(QWidget):
         if self.group_type:
             clipboard = QApplication.clipboard()
             clipboard_text = clipboard.text()
-            clipboard_data = clipboard_text.split(";;")
-            if len(clipboard_data) >= 4 and clipboard_data[0] == "hammer5tools:smartprop_editor_property":
-                clip_group_type = clipboard_data[3] if len(clipboard_data) > 3 else None
-                if clip_group_type and clip_group_type != self.group_type:
-                    friendly_src = clip_group_type.replace('_', ' ')
+            clip_group, pasted_dicts = parse_component_clipboard(clipboard_text)
+            if clip_group and pasted_dicts:
+                target_norm = "modifier" if self.group_type in ("modifier", "modifiers", "operators") else "selection_criteria"
+                clip_norm = "modifier" if clip_group in ("modifier", "modifiers", "operators") else "selection_criteria"
+                if target_norm != clip_norm:
+                    friendly_src = clip_group.replace('_', ' ')
                     friendly_dst = self.group_type.replace('_', ' ')
                     ErrorInfo(
                         text=f"Cannot paste a '{friendly_src}' into '{friendly_dst}' group."
