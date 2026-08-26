@@ -13,7 +13,7 @@ import importlib.util
 import os
 import sys
 
-REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+REPO_DIR = os.path.abspath(os.path.dirname(__file__))
 CUR_DIR = REPO_DIR
 SOURCE_DIRS = (
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'gui'),
