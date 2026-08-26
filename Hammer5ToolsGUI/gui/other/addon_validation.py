@@ -20,6 +20,10 @@ def validate_addon_structure():
         print(f"Skipping addon validation: {e}")
         return True
 
+    if not addon_name or not addon_dir:
+        # CS2 path not found or addon name not set - skip validation
+        return True
+
     # Check if the main vmap file exists and matches the addon name
     main_vmap_file = os.path.join(addon_dir, 'maps', f"{addon_name}.vmap")
     if not os.path.isfile(main_vmap_file):

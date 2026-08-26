@@ -317,7 +317,12 @@ if __name__ == "__main__":
     from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
     app = QApplication(sys.argv)
-    
+    # The global stylesheet's layout assumptions (tab alignment, control padding,
+    # etc.) are tuned against Qt's Fusion style. Native styles lay widgets out
+    # differently per platform (e.g. QMacStyle centers QTabBar tabs), which QSS
+    # color/border rules can't override, so pin one style everywhere.
+    app.setStyle('Fusion')
+
     # Explicitly add PySide6 plugins to library path to ensure scene importers (assimp, gltf) are resolved
     import PySide6
     plugins_dir = os.path.join(os.path.dirname(PySide6.__file__), "plugins")
