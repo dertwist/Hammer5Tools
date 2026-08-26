@@ -1,0 +1,9 @@
+namespace Hammer5Tools.Core.Format.SmartProps;
+
+/// <summary>
+/// Contains evaluated SmartProp models and structured diagnostics.
+/// </summary>
+public sealed record SmartPropEvaluationResult(
+    IReadOnlyList<EvaluatedSmartPropModel> Models,
+    IReadOnlyList<EvaluatedSmartPropWidget> Widgets,
+    IReadOnlyList<CoreDiagnostic> Diagnostics);

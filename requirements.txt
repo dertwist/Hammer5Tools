@@ -1,26 +1,20 @@
 PySide6==6.9.0
 PySide6_Essentials==6.9.0
 PyOpenGL
-packaging
 
 markdown2
 pypresence
-portalocker
 setuptools
 psutil
-py3nvml
 tqdm
 
 colorama
 pygetwindow
-watchdog
-json-stream
 pyinstaller
 tabulate
 numpy
-imageio-ffmpeg
 pyqtgraph
-cairosvg
+lameenc
 lz4
 parsimonious
 urllib3
@@ -29,24 +23,12 @@ certifi
 pefile
 altgraph
 pytest
-pythonnet
-clr_loader
-cffi
 vdf
-vpk
-pycparser
 
-ply
 Pillow
 pygltflib
 
-matplotlib
-pynvml
 GPUtil
 orjson
-pyinstaller
 lxml
-inkex
-uharfbuzz
-fontTools
 velopack

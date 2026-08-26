@@ -50,16 +50,18 @@ Is your addon folder getting messy? This tool scans your `.vmap` and sweeps away
 Want to contribute or build your own version? Here's the lowdown on the project structure.
 
 ### Project Architecture
-The app is modular. Each editor lives in its own folder under `src/` and can run standalone if you point it to the right paths. `src/main.py` is the entry point that brings everything together.
+The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/gui/` and can run standalone if you point it to the right paths. `Hammer5ToolsGUI/gui/main.py` is the entry point that brings everything together.
 
-*   `src/`: The heart of the app.
-*   `src/forms/`: Minor dialogs and UI helpers.
-*   `src/external/`: External libraries and .NET resources.
-*   `src/common/`: Shared logic and utility functions.
+*   `Hammer5ToolsGUI/`: PySide6 application, editors, widgets, styles, and resources.
+*   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL — Source 2 parsing, porting, and Unreal bridge logic.
+*   `Hammer5ToolsLauncher/`: Native startup, IPC, and GUI supervision.
+*   `Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
+*   `Hammer5ToolsCore/external/`: External libraries and .NET resources.
+*   `Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
 
 ### Getting Started
 1.  **Environment**: Requires Python 3.11+. Install dependencies via `pip install -r requirements.txt`.
-2.  **Running**: Launch `src/main.py`. Ensure your working directory is set to the project root.
+2.  **Running**: Launch `Hammer5ToolsGUI/gui/main.py`. Ensure your working directory is set to the project root.
 3.  **Building**: A custom `makefile.py` handles the build process:
     ```powershell
     # Build a stable release
@@ -80,7 +82,6 @@ Hammer 5 Tools builds upon several open-source libraries, tools, and frameworks:
 *   **[PyOpenGL](https://pyopengl.sourceforge.net/) & [PyQtGraph](https://www.pyqtgraph.org/)**: 3D viewport rendering for models and real-time hardware performance telemetry visualization.
 *   **[Velopack](https://velopack.io/)**: Installer and dynamic auto-update framework for desktop applications.
 *   **[keyvalues3](https://github.com/kristiker/keyvalues3)**: Python library for reading and writing Valve's KeyValues3 (KV3) format.
-*   **[pythonnet](https://pythonnet.github.io/)**: Managed .NET CLR interop layer enabling Python to directly call C# assemblies.
 *   **[SkiaSharp](https://github.com/mono/SkiaSharp)**: Cross-platform 2D graphics API for asset texture rendering and image processing.
 *   **[ValveResourceFormat (VRF / Source2Viewer)](https://github.com/ValveResourceFormat/ValveResourceFormat)**: C# library for parsing, decompiling, and inspecting Valve Source 2 resources, VPK archives (`ValvePak`), and KeyValues formats (`ValveKeyValue`).
 *   **[CUE4Parse](https://github.com/FabianFG/CUE4Parse)**: C# parser library for Unreal Engine packages.

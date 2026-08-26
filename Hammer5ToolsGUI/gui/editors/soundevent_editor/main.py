@@ -1,0 +1,1057 @@
+import ast, shutil, os
+
+from gui.settings.main import get_addon_name, get_cs2_path, get_settings_bool, get_settings_value, settings, get_addon_dir
+from gui.editors.soundevent_editor.ui_main import Ui_MainWindow
+from gui.widgets.tree import HierarchyTreeWidget
+from gui.widgets.explorer.main import Explorer
+from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog, QDockWidget, QUndoView, QWidget, QVBoxLayout, QLabel
+from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent, QIcon, QPixmap
+from PySide6.QtCore import Qt
+from gui.widgets.popup_menu.main import PopupMenu
+from gui.widgets import HierarchyItemModel, ErrorInfo
+from gui.editors.soundevent_editor.commands import *
+from gui.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCommand
+from gui.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
+from gui.editors.soundevent_editor.property_browser import PropertyBrowserWidget
+from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton
+from gui.styles.common import qt_stylesheet_button
+from gui.common import *
+from gui.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
+from gui.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
+from gui.editors.soundevent_editor.soundevent_player import play_soundevent
+from gui.editors.soundevent_editor.audio_player import AudioPlayer
+from gui.widgets.common import exception_handler
+
+def _quiesce_thread(thr):
+    """Ask a background VPK scanner to stop, without waiting for it.
+
+    Destroying a running QThread aborts the whole process
+    ("QThread: Destroyed while thread is still running"), which is what an addon
+    switch used to do while the scanners were still walking the ~130k-entry
+    pak01_dir.vpk. That is now handled by thread_parking: the scanners outlive
+    the editor instead of dying with it, and are waited on once at app exit.
+
+    So there is nothing to block on here — and blocking was its own bug. This
+    ran on the UI thread, so a scanner busy inside a .NET decompile froze the
+    whole switch until it came back up for air.
+    """
+    if thr is None or not thr.isRunning():
+        return
+    if hasattr(thr, 'stop'):
+        thr.stop()
+
+
+class CopyDefaultSoundFolders:
+    def __init__(self):
+        """Coping  soundevents file and sounds from sounds folder from addon_template to the current addon"""
+        super().__init__()
+        # Source
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+             raise ValueError("CS2 path not found")
+             
+        self.soundevents_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'soundevents', 'soundevents_addon.vsndevts')
+        self.sounds_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'sounds')
+        # Destination
+        self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')
+        self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        self.copy_with_overwrite()
+
+    def copy_with_overwrite(self):
+        # Ensure destination directories exist
+        os.makedirs(os.path.dirname(self.filepath_vsndevts), exist_ok=True)
+        os.makedirs(self.filepath_sounds, exist_ok=True)
+
+        # Copy the soundevents file, overwriting if it exists
+        shutil.copy2(self.soundevents_source_path, self.filepath_vsndevts)
+
+        # Copy the sounds directory, overwriting existing files
+        if os.path.exists(self.sounds_source_path):
+            for item in os.listdir(self.sounds_source_path):
+                source_item = os.path.join(self.sounds_source_path, item)
+                destination_item = os.path.join(self.filepath_sounds, item)
+                if os.path.isdir(source_item):
+                    shutil.copytree(source_item, destination_item, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(source_item, destination_item)
+from gui.editors.soundevent_editor.comment_handler import (
+    extract_vsndevts_comments,
+    serialize_vsndevts_with_comments,
+)
+
+class LoadSoundEvents:
+    def __init__(self, tree: QTreeWidget, path: str):
+        super().__init__()
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        file_header_comments, event_comments, file_footer_comments = extract_vsndevts_comments(content)
+        tree.file_header_comments = file_header_comments
+        tree.file_footer_comments = file_footer_comments
+        tree.editor_info_comments = event_comments.get("editor_info", "")
+
+        data = Kv3ToJson(content)
+        tree.editor_info_data = data.get("editor_info")
+
+        self.tree = tree
+        self.tree.clear()
+        self.root = self.tree.invisibleRootItem()
+        for key in data:
+            if key != "editor_info":
+                new_item = HierarchyItemModel(_data=data[key], _name=key, _class='Event')
+                if key in event_comments:
+                    new_item.setData(0, Qt.UserRole + 1, event_comments[key])
+                self.root.addChild(new_item)
+
+class SaveSoundEvents:
+    def __init__(self, tree: QTreeWidget, path: str):
+        super().__init__()
+        data = {}
+        event_comments = {}
+        file_header_comments = getattr(tree, "file_header_comments", "")
+        file_footer_comments = getattr(tree, "file_footer_comments", "")
+        editor_info_comments = getattr(tree, "editor_info_comments", "")
+        editor_info_data = getattr(tree, "editor_info_data", None)
+
+        for index in range(tree.invisibleRootItem().childCount()):
+            item = tree.invisibleRootItem().child(index)
+            key = str(item.text(0))
+            value = item.data(0, Qt.UserRole)
+            comment = item.data(0, Qt.UserRole + 1)
+            data[key] = value
+            if comment:
+                event_comments[key] = comment
+
+        # Write to file
+        output_text = serialize_vsndevts_with_comments(
+            data,
+            file_header_comments=file_header_comments,
+            event_comments=event_comments,
+            file_footer_comments=file_footer_comments,
+            editor_info_data=editor_info_data,
+            editor_info_comments=editor_info_comments,
+        )
+        with open(path, 'w', encoding="utf-8") as output:
+            output.write(output_text)
+
+class SoundEventEditorMainWindow(QMainWindow):
+    def __init__(self, parent=None, update_title=None):
+        super().__init__(parent)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.settings = settings
+        self.undo_stack = QUndoStack(self)
+        self.update_title = update_title
+
+        # Variables
+        cs2_path = get_cs2_path()
+        if cs2_path:
+            self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+            self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        else:
+            self.filepath_vsndevts = ""
+            self.filepath_sounds = ""
+
+        # Variables debug
+
+        # Init Hierarchy
+        self.ui.hierarchy_widget.deleteLater()
+        self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
+        self.ui.addon_soundevents_tab.layout().insertWidget(1, self.ui.hierarchy_widget)
+
+        self.ui.hierarchy_widget.header().setSectionHidden(1, True)
+        self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
+        self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
+        self.ui.hierarchy_widget.itemDoubleClicked.connect(self._on_item_edit_start)
+        self.ui.hierarchy_widget.itemChanged.connect(self._on_item_renamed)
+        self._pre_rename_item = None
+        self._pre_rename_name = None
+        self.ui.hierarchy_widget.setHeaderLabels(['Event'])
+
+        from gui.editors.soundevent_editor.soundevent_player import SoundEventPlayerWidget
+        self.soundevent_player_widget = SoundEventPlayerWidget(self)
+        self.soundevent_player_widget.set_event_resolver(lambda: self.ui.hierarchy_widget.currentItem().text(0) if self.ui.hierarchy_widget.currentItem() else None)
+        try:
+            self.ui.verticalLayout_3.addWidget(self.soundevent_player_widget)
+        except Exception:
+            pass
+
+        # Init Property Browser Dock
+        self.property_browser_widget = PropertyBrowserWidget(self)
+        self.property_browser_dock = QDockWidget("Property Browser", self)
+        self.property_browser_dock.setObjectName("property_browser_dock")
+        self.property_browser_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea
+        )
+        self.property_browser_dock.setWidget(self.property_browser_widget)
+        self.property_browser_dock.setMinimumWidth(260)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
+        self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Horizontal)
+        self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [220, 360], Qt.Horizontal)
+
+        # Property Browser connections
+        self.property_browser_widget.add_property_requested.connect(self.on_property_added_from_browser)
+        self.property_browser_widget.create_event_from_template_requested.connect(self.on_create_event_from_template)
+
+        # Property Editor Header with program stylesheet
+        try:
+            from PySide6.QtWidgets import QFrame, QLineEdit, QHBoxLayout
+            self.editor_header_frame = QFrame(self.ui.frame)
+            self.editor_header_frame.setObjectName("editor_header_frame")
+            self.editor_header_frame.setStyleSheet("""
+                QFrame#editor_header_frame {
+                    background-color: #2e2e2e;
+                    border: none;
+                    border-bottom: 2px solid rgba(94, 94, 94, 255);
+                    border-radius: 0px;
+                }
+                QLabel {
+                    font: 580 9pt "Segoe UI";
+                    color: #e5e5e5;
+                    border: none;
+                }
+            """)
+            header_row = QHBoxLayout(self.editor_header_frame)
+            header_row.setContentsMargins(4, 2, 4, 2)
+            header_row.setSpacing(6)
+
+            # Label
+            self.ui.verticalLayout_5.removeWidget(self.ui.label)
+            header_row.addWidget(self.ui.label)
+
+            # Filterbar in middle
+            self.editor_prop_filter_edit = QLineEdit(self.editor_header_frame)
+            self.editor_prop_filter_edit.setPlaceholderText("Filter properties...")
+            self.editor_prop_filter_edit.setClearButtonEnabled(True)
+            self.editor_prop_filter_edit.setStyleSheet("""
+                QLineEdit {
+                    font: 580 9pt "Segoe UI";
+                    border: 2px solid black;
+                    border-color: rgba(94, 94, 94, 255);
+                    border-radius: 2px;
+                    color: #e5e5e5;
+                    background-color: #2e2e2e;
+                    padding: 2px 4px;
+                }
+                QLineEdit:focus {
+                    border-color: #515965;
+                }
+            """)
+            self.editor_prop_filter_edit.textChanged.connect(self.filter_editor_properties)
+            header_row.addWidget(self.editor_prop_filter_edit, 1)
+
+            # Save as Template button on right
+            self.save_template_btn = QPushButton("Save as Template", self.editor_header_frame)
+            self.save_template_btn.setStyleSheet("""
+                QPushButton {
+                    font: 580 9pt "Segoe UI";
+                    border: 2px solid black;
+                    border-radius: 2px;
+                    border-color: rgba(94, 94, 94, 255);
+                    height: 22px;
+                    padding: 2px 6px;
+                    color: #e5e5e5;
+                    background-color: #2e2e2e;
+                }
+                QPushButton:hover {
+                    background-color: #515965;
+                    color: white;
+                }
+                QPushButton:pressed {
+                    background-color: #2e2e2e;
+                }
+            """)
+            self.save_template_btn.clicked.connect(self.save_current_soundevent_as_template)
+            header_row.addWidget(self.save_template_btn)
+
+            self.ui.verticalLayout_5.insertWidget(0, self.editor_header_frame)
+        except Exception as e:
+            pass
+
+        # Init LoadSoundEvents. A missing file is the normal state for a fresh
+        # addon, so load silently and show the inline placeholder instead of
+        # popping a dialog unprompted on every startup.
+        if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
+            self.load_soundevents(self.filepath_vsndevts)
+        self.PropertiesWindowInit()
+        self._build_empty_state()
+        self.update_placeholder_visibility()
+
+        # Init filter
+        self.ui.hierarchy_widget.installEventFilter(self)
+
+        # Init Hierarchy filer bar
+        self.ui.hierarchy_search_bar_widget.textChanged.connect(lambda text:self.search_hierarchy(text, self.ui.hierarchy_widget.invisibleRootItem()))
+
+        # Connections
+        self.ui.load_button.clicked.connect(self.load_soundevents)
+        self.ui.save_file_button.clicked.connect(self.save_soundevents)
+
+
+        # Creating Audioplayer for explorer
+        self.audio_player = None
+
+        # Explorer
+        if os.path.exists(self.filepath_sounds):
+            pass
+        else:
+            os.makedirs(self.filepath_sounds)
+        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
+        self.mini_explorer.tree.setStyleSheet("""border:none""")
+        self.mini_explorer.play_sound.connect(self.play_sound)
+        self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
+
+        self.internal_explorer = InternalSoundFileExplorer()
+        self.internal_explorer.setStyleSheet("""border:none""")
+        self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
+        self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
+        self.internal_explorer.play_audio_data.connect(self.play_sound_data)
+
+        self.internal_soundevents_explorer = InternalSoundEventExplorer()
+        self.ui.internal_soundevents_tab.layout().addWidget(self.internal_soundevents_explorer)
+
+        # Single click → play in-game sound event
+        self.internal_soundevents_explorer.play_soundevent.connect(
+            lambda name: play_soundevent(str(name))
+        )
+
+        # Double click → show event properties in the Properties Window
+        self.internal_soundevents_explorer.preview_soundevent.connect(
+            self._preview_internal_soundevent
+        )
+
+        # Context menu "Copy to Addon" → add as new hierarchy item + save
+        self.internal_soundevents_explorer.copy_to_addon_requested.connect(
+            self._copy_internal_soundevent_to_addon
+        )
+
+        self._setup_history_dock()
+        set_qdock_tab_style(self.findChildren)
+
+        # Audio player init
+        self.add_player()
+    # History Dock
+    def _setup_history_dock(self):
+        self._history_dock = QDockWidget("History", self)
+        self._history_dock.setObjectName("history_dock")
+        self._history_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea |
+            Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        self._history_dock.setMinimumWidth(180)
+        history_view = QUndoView(self.undo_stack, self._history_dock)
+        self._history_dock.setWidget(history_view)
+        # Stack Soundevents (70%) and History (30%) on the right, no tabs
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
+        self.splitDockWidget(self.ui.dockWidget_4, self._history_dock, Qt.Vertical)
+        self.resizeDocks(
+            [self.ui.dockWidget_4, self._history_dock],
+            [700, 300],  # 70% Soundevents, 30% History (height in px)
+            Qt.Vertical,
+        )
+
+    # AudioPlayer
+    def add_player(self):
+        self.audio_player_widget = AudioPlayer()
+        self.ui.explorer_layout_widget.layout().insertWidget(1,self.audio_player_widget)
+
+    def _prepare_player(self):
+        if not get_settings_bool('SoundEventEditor', 'play_on_click'):
+            return False
+        if hasattr(self, 'audio_player_widget') and self.audio_player_widget:
+            self.audio_player_widget.deleteLater()
+        self.add_player()
+        return True
+
+    def play_sound(self, file_path):
+        if self._prepare_player():
+            self.audio_player_widget.set_audiopath(file_path)
+            self.audio_player_widget.play_sound()
+
+    def play_sound_data(self, data, ext):
+        if self._prepare_player():
+            self.audio_player_widget.set_audio_bytes(data, ext)
+            self.audio_player_widget.play_sound()
+    #     if self.audio_player is not None:
+    #         self.audio_player.deleteLater()
+    #     self.audio_player = QMediaPlayer()
+    #     self.audio_output = QAudioOutput()
+    #     self.audio_player.setAudioOutput(self.audio_output)
+    #     self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+    #     self.audio_player.play()
+    # Actions
+    # SoundEvents
+    @exception_handler
+    def load_soundevents(self, filepath=None):
+        """Load soundevents. If filepath is given, load it. If not, open file dialog."""
+        target_path = None
+
+        if isinstance(filepath, str) and filepath:
+            target_path = filepath
+        else:
+            # User clicked "Load" button or called without path -> open file dialog
+            base_dir = os.path.join(get_addon_dir(), 'soundevents') if get_addon_dir() else ""
+            if not os.path.exists(base_dir):
+                base_dir = get_addon_dir() or ""
+            target_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Select a Soundevents file",
+                base_dir,
+                "Soundevents Files (*.vsndevts);;All Files (*)"
+            )
+            if not target_path:
+                return
+
+        if target_path and os.path.exists(target_path):
+            try:
+                self.PropertiesWindow.properties_clear()
+                self.ui.hierarchy_widget.clear()
+            except Exception:
+                pass
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=target_path)
+            self.filepath_vsndevts = target_path
+            if callable(self.update_title):
+                self.update_title('saved', self.filepath_vsndevts)
+        else:
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setText(
+                "It seems there is no soundevents file available. Would you like to create a default one? Please note: this action may overwrite any existing WAV files in the sounds folder, if they are present.")
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+            response = msg_box.exec()
+            if response == QMessageBox.Yes:
+                self._create_default_soundevents_file()
+                return
+
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.clear()
+        self.update_placeholder_visibility()
+
+    @exception_handler
+    def save_soundevents(self):
+        SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.setClean()
+        print(f'Saved file: {self.filepath_vsndevts}')
+        if callable(self.update_title):
+            self.update_title('saved', self.filepath_vsndevts)
+
+    def has_unsaved_changes(self) -> bool:
+        """Returns True if soundevents file has unsaved edits in undo stack."""
+        if hasattr(self, 'undo_stack') and self.undo_stack is not None:
+            return not self.undo_stack.isClean()
+        return False
+
+    def unsaved_files(self):
+        """(label, save_callable) for the soundevents file, if it has unsaved edits."""
+        if not self.has_unsaved_changes():
+            return []
+        return [(self.filepath_vsndevts, self.save_soundevents)]
+
+    # Properties Window
+
+    def PropertiesWindowInit(self):
+        self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
+        self.ui.frame.layout().addWidget(self.PropertiesWindow)
+        self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
+
+    def _build_empty_state(self):
+        """Placeholder shown in the central frame when the addon has no
+        soundevents file yet, in place of the auto-popping create dialog."""
+        self.empty_state_widget = QWidget(self.ui.frame)
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(QIcon(":/icons/tools/vmixtool/appicon.ico").pixmap(32, 32))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Create or load soundevents")
+        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("This addon has no soundevents file yet. Create a default one or load an existing .vsndevts file.")
+        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.setAlignment(Qt.AlignCenter)
+
+        btn_create = QPushButton("Create Default")
+        btn_create.setStyleSheet(qt_stylesheet_button)
+        btn_create.setFixedHeight(26)
+        btn_create.clicked.connect(self._create_default_soundevents_file)
+        btn_row.addWidget(btn_create)
+
+        btn_load = QPushButton("Load File...")
+        btn_load.setStyleSheet(qt_stylesheet_button)
+        btn_load.setFixedHeight(26)
+        btn_load.clicked.connect(lambda: self.load_soundevents())
+        btn_row.addWidget(btn_load)
+
+        empty_layout.addLayout(btn_row)
+        self.ui.frame.layout().addWidget(self.empty_state_widget)
+
+    def update_placeholder_visibility(self):
+        # Guarded: called from load_soundevents(), which __init__ also calls
+        # before PropertiesWindow/empty_state_widget exist yet.
+        if not hasattr(self, 'PropertiesWindow') or not hasattr(self, 'empty_state_widget'):
+            return
+        loaded = bool(self.filepath_vsndevts) and os.path.exists(self.filepath_vsndevts)
+        self.PropertiesWindow.setVisible(loaded)
+        if hasattr(self, 'editor_header_frame'):
+            self.editor_header_frame.setVisible(loaded)
+        self.ui.label.setVisible(loaded)
+        self.empty_state_widget.setVisible(not loaded)
+
+    def _create_default_soundevents_file(self):
+        CopyDefaultSoundFolders()
+        if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
+            try:
+                self.PropertiesWindow.properties_clear()
+                self.ui.hierarchy_widget.clear()
+            except Exception:
+                pass
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+            if callable(self.update_title):
+                self.update_title('saved', self.filepath_vsndevts)
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.clear()
+        self.update_placeholder_visibility()
+
+    def PropertiesWindowUpdate(self):
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            return
+        _data = self.PropertiesWindow.value
+        self.update_hierarchy_item(item, _data)
+        self.update_properties_label()
+        if hasattr(self, 'property_browser_widget'):
+            self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
+
+    def update_properties_label(self):
+        """Refresh the Properties header label with the active event name and property count."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            self.ui.label.setText("Properties")
+            return
+        event_name = item.text(0)
+        value = self.PropertiesWindow.value
+        if not isinstance(value, dict):
+            self.ui.label.setText(f"Properties: {event_name}")
+            return
+        # Count properties: all keys except comment(s) and 'm_sLabel'
+        prop_count = sum(
+            1 for k in value
+            if k != 'm_sLabel'
+            and not (isinstance(k, str) and (k == 'comment' or k.startswith('comment_')))
+        )
+        self.ui.label.setText(f"Properties: {event_name}    |    {prop_count} properties")
+
+    # Filter
+    def eventFilter(self, source, event):
+        """Handle keyboard and shortcut events for various widgets."""
+
+        if event.type() == QKeyEvent.KeyPress:
+            # Handle events for hierarchy_widget
+            if source == self.ui.hierarchy_widget:
+                # Copy (Ctrl + C)
+                if event.matches(QKeySequence.Copy):
+                    self.copy_item(self.ui.hierarchy_widget)
+                    return True
+
+                # Paste (Ctrl + V)
+                if event.matches(QKeySequence.Paste):
+                    self.paste_item(self.ui.hierarchy_widget, paste_to_parent=True)
+                    return True
+
+                if event.matches(QKeySequence.Delete):
+                    self.ui.hierarchy_widget.DeleteSelectedItems()
+
+                    return True
+                # Duplicate
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_D:
+                    self.duplicate_hierarchy_items(self.ui.hierarchy_widget)
+                    return True
+
+                if event.matches(QKeySequence.Undo):
+                    self.undo_stack.undo()
+                    return True
+                is_redo = event.matches(QKeySequence.Redo) or (
+                    event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_Z
+                )
+                if is_redo:
+                    self.undo_stack.redo()
+                    return True
+
+
+                if source.viewport().underMouse():
+                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                        self.property_browser_widget.tmpl_filter_edit.setFocus()
+                        return True
+
+        return super().eventFilter(source, event)
+
+    # Hierarchy Actions
+    def new_soundevent(self, _data: dict = None, _soundevent_name: str = None):
+        """Creates new soundevent using given data. Input dict"""
+        if _soundevent_name is None:
+            _soundevent_name = "SoundEvent"
+        _soundevent_name = self.unique_soundevent_int(_soundevent_name)
+        _soundevent = HierarchyItemModel(_name=_soundevent_name, _data=_data, _class='Event')
+        tree = self.ui.hierarchy_widget
+        cmd = AddItemCommand(tree, tree.invisibleRootItem(), _soundevent)
+        cmd.setText("Add Event")
+        tree.undo_stack.push(cmd)
+        tree.setCurrentItem(_soundevent)
+
+    def unique_soundevent_int(self, _name: str = None):
+        """Creating Unique name for new hierarchy element using dots as separators."""
+        if _name is None:
+            _name = "SoundEvent"
+
+        existing_names = set()
+        root = self.ui.hierarchy_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            existing_names.add(item.text(0))
+
+        # Use the global utility with a dot separator
+        return generate_unique_name(_name, existing_names, separator=".")
+
+
+    def new_soundevent_blank(self):
+        """Create empty soundevent using """
+        self.new_soundevent(_data={})
+
+    def on_property_added_from_browser(self, name: str, val_dict: dict):
+        """Add property selected from Property Browser to currently active soundevent."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            QMessageBox.information(self, "Property Browser", "Please select a sound event in the hierarchy to add this property.")
+            return
+        prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
+        if prop_key.lower() != "comment":
+            existing_props = self.PropertiesWindow.get_properties_value()
+            existing_lower = {str(k).lower() for k in existing_props}
+            if prop_key.lower() in existing_lower:
+                return  # Skip duplicate single-add property
+        self.PropertiesWindow.new_property(name, val_dict)
+        if hasattr(self, 'property_browser_widget'):
+            self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
+
+    def on_create_event_from_template(self, template_name: str, template_path: str):
+        """Create a new soundevent from selected template file."""
+        if not os.path.exists(template_path):
+            return
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            data = Kv3ToJson(content)
+            if not isinstance(data, dict):
+                data = {}
+            # If KV3 root dict contains a single wrapper key, unwrap it
+            if len(data) == 1:
+                key, val = next(iter(data.items()))
+                if isinstance(val, dict) and key != "editor_info":
+                    data = val
+            self.new_soundevent(_data=data, _soundevent_name=template_name)
+        except Exception as e:
+            pass
+
+    def save_current_soundevent_as_template(self):
+        """Save selected soundevent as a template KV3 file."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            QMessageBox.information(self, "Save as Template", "Please select a sound event to save as a template.")
+            return
+        
+        event_name = item.text(0)
+        template_name, ok = QInputDialog.getText(
+            self, "Save as Template", "Enter Template Name:", QLineEdit.Normal, event_name
+        )
+        if not ok or not template_name.strip():
+            return
+        
+        template_name = template_name.strip()
+        data = item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            data = {}
+            
+        from gui.common import SoundEventEditor_Preset_Path, JsonToKv3
+        os.makedirs(SoundEventEditor_Preset_Path, exist_ok=True)
+        file_path = os.path.join(SoundEventEditor_Preset_Path, f"{template_name}.kv3")
+        
+        try:
+            kv3_str = JsonToKv3(data)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(kv3_str)
+            self.property_browser_widget.load_templates()
+            QMessageBox.information(self, "Save as Template", f"Template '{template_name}' saved successfully.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save template: {e}")
+
+    # Hierarchy
+
+    def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
+        """Sets the value to the data column and saves if in realtime mode."""
+        # Convert the dictionary to a string representation
+        item.setData(0, Qt.UserRole, _data)
+
+    def filter_editor_properties(self, text: str):
+        """Filter active property frames in Property Editor by property name."""
+        search = text.strip().lower()
+        if not hasattr(self, 'PropertiesWindow') or not self.PropertiesWindow:
+            return
+        layout = self.PropertiesWindow.ui.properties_layout
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            if not item:
+                continue
+            widget = item.widget()
+            from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
+            if isinstance(widget, SoundEventEditorPropertyFrame):
+                prop_name = str(getattr(widget, 'name', '') or '').lower()
+                display_label = ""
+                if hasattr(widget, 'ui') and hasattr(widget.ui, 'property_class'):
+                    display_label = widget.ui.property_class.text().lower()
+                
+                match = (search in prop_name) or (search in display_label)
+                widget.setHidden(bool(search and not match))
+
+    def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
+        """Handles changes in the hierarchy item by updating the properties window."""
+        # Delegate switching logic to PropertiesWindow so it can suppress undo pushes
+        try:
+            self.PropertiesWindow.switch_to_item(current_item)
+            # Update the header label to reflect the currently selected element.
+            # Skip during undo/redo — the label will be refreshed when _restore_state
+            # emits 'edited' and PropertiesWindowUpdate runs.
+            if not self.PropertiesWindow._restoring_from_undo:
+                self.update_properties_label()
+            if hasattr(self, 'editor_prop_filter_edit') and self.editor_prop_filter_edit.text():
+                self.filter_editor_properties(self.editor_prop_filter_edit.text())
+            if hasattr(self, 'property_browser_widget'):
+                props = self.PropertiesWindow.get_properties_value() if current_item else {}
+                self.property_browser_widget.update_property_states(props)
+        except Exception as e:
+            QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")
+
+    def _on_item_edit_start(self, item, column):
+        """Capture the name before inline editing begins so rename can be undone."""
+        if column == 0:
+            self._pre_rename_item = item
+            self._pre_rename_name = item.text(0)
+
+    def _on_item_renamed(self, item, column):
+        """Push a RenameItemCommand when an inline edit commits a new name."""
+        if column != 0:
+            return
+        if self._pre_rename_item is not item:
+            return
+        old_name = self._pre_rename_name
+        self._pre_rename_item = None
+        self._pre_rename_name = None
+        new_name = item.text(0)
+        if old_name is None or old_name == new_name:
+            return
+        cmd = RenameItemCommand(item, old_name, new_name, on_renamed=self.update_properties_label)
+        self.undo_stack.push(cmd)
+
+    # [Tree widget hierarchy filter]
+    def search_hierarchy(self, filter_text, parent_item):
+        self.filter_tree_item(parent_item, filter_text.strip().lower(), is_root=True)
+
+    def filter_tree_item(self, item, filter_text, is_root=False):
+        if not isinstance(item, (HierarchyItemModel, QTreeWidgetItem)):
+            return False
+
+        role_data = item.text(0)
+        role_text = str(role_data).lower() if role_data is not None else ""
+        display_text = item.text(0).lower()
+
+        if not filter_text:
+            item.setHidden(False)
+            if not is_root:
+                item.setExpanded(False)
+            for i in range(item.childCount()):
+                self.filter_tree_item(item.child(i), filter_text, False)
+            return True
+        item_visible = filter_text in role_text or filter_text in display_text
+
+        if is_root:
+            item.setHidden(False)
+        else:
+            item.setHidden(not item_visible)
+
+        any_child_visible = False
+
+        for i in range(item.childCount()):
+            child_visible = self.filter_tree_item(item.child(i), filter_text, False)
+            if child_visible:
+                any_child_visible = True
+
+        if any_child_visible:
+            item.setHidden(False)
+            item.setExpanded(True)
+
+        return item_visible or any_child_visible
+
+    # [Tree widget hierarchy context menu]
+    def open_hierarchy_menu(self, position):
+        menu = QMenu()
+        add_new_action = menu.addAction("New")
+        add_new_action.triggered.connect(self.new_soundevent_blank)
+
+        save_template_action = menu.addAction("Save as Template...")
+        save_template_action.triggered.connect(self.save_current_soundevent_as_template)
+
+        menu.addSeparator()
+
+        remove_action = menu.addAction("Remove")
+        # remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.hierarchy_widget))
+        remove_action.triggered.connect(
+            lambda: self.ui.hierarchy_widget.DeleteSelectedItems())
+        remove_action.setShortcut(QKeySequence(QKeySequence("Delete")))
+
+        duplicate_action = menu.addAction("Duplicate")
+        duplicate_action.triggered.connect(lambda: self.duplicate_hierarchy_items(self.ui.hierarchy_widget))
+        duplicate_action.setShortcut(QKeySequence(QKeySequence("Ctrl+D")))
+
+        menu.addSeparator()
+
+        copy_action = menu.addAction("Copy")
+        copy_action.setShortcut(QKeySequence(QKeySequence.Copy))
+        copy_action.triggered.connect(lambda: self.copy_item(self.ui.hierarchy_widget))
+
+        paste_action = menu.addAction("Paste")
+        paste_action.setShortcut(QKeySequence(QKeySequence.Paste))
+        paste_action.triggered.connect(lambda: self.paste_item(self.ui.hierarchy_widget, paste_to_parent=True))
+
+        menu.exec(self.ui.hierarchy_widget.viewport().mapToGlobal(position))
+
+    # [Tree widget functions]
+
+    def move_tree_item(self, tree, direction):
+        """Move selected tree items up or down. Supports undo via MoveItemsCommand."""
+        selected_items = tree.selectedItems()
+        if not selected_items:
+            return
+
+        # Snapshot positions before any moves
+        old_positions = {item: tree.indexOfTopLevelItem(item) for item in selected_items}
+
+        # Apply moves in the right order to avoid cascading index shifts
+        ordered = sorted(selected_items, key=lambda i: old_positions[i], reverse=(direction > 0))
+        for item in ordered:
+            cur = tree.indexOfTopLevelItem(item)
+            tgt = cur + direction
+            if 0 <= tgt < tree.topLevelItemCount():
+                tree.takeTopLevelItem(cur)
+                tree.insertTopLevelItem(tgt, item)
+
+        # Build move_infos from actual post-move positions
+        move_infos = []
+        for item in selected_items:
+            old_idx = old_positions[item]
+            new_idx = tree.indexOfTopLevelItem(item)
+            if old_idx != new_idx:
+                move_infos.append({
+                    'item': item,
+                    'old_parent': None,
+                    'old_index': old_idx,
+                    'new_parent': None,
+                    'new_index': new_idx,
+                })
+
+        if move_infos:
+            tree.undo_stack.push(MoveItemsCommand(tree, move_infos))
+
+        tree.clearSelection()
+        for item in selected_items:
+            item.setSelected(True)
+        tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
+
+    def copy_item(self, tree, copy_to_clipboard=True):
+        """Coping Tree item"""
+        item_data = self.serialization_hierarchy_items(tree)
+        # Output
+        if copy_to_clipboard:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(JsonToKv3(item_data))
+        else:
+            return JsonToKv3(item_data)
+
+    def paste_item(self, tree, data_input=None, paste_to_parent=False):
+        """Pasting tree items with undo support using PasteItemsCommand (batch)"""
+        if data_input is None:
+            data_input = QApplication.clipboard().text()
+        try:
+            input_data = Kv3ToJson(data_input)
+            tree_items = self.deserialize_hierarchy_items(input_data)
+            if not tree_items:
+                return
+            parent = tree.invisibleRootItem()
+            cmd = PasteItemsCommand(tree, parent, tree_items)
+            tree.undo_stack.push(cmd)
+        except Exception as error:
+            error_message = str(error)
+            error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
+            error_dialog.exec()
+
+    def remove_tree_item(self, tree):
+        """Removing Tree item"""
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        for item in selected_items:
+            if item:
+                if item == item.treeWidget().invisibleRootItem():
+                    pass
+                else:
+                    parent = item.parent() or item.treeWidget().invisibleRootItem()
+                    index = parent.indexOfChild(item)
+                    parent.takeChild(index)
+
+    def duplicate_hierarchy_items(self, tree):
+        """Duplicate selected items with unique names, placed directly below the original."""
+        selected = tree.selectedItems()
+        if not selected:
+            return
+        cmd = DuplicateSoundEventsCommand(self, tree, selected)
+        tree.undo_stack.push(cmd)
+    
+    def serialization_hierarchy_items_single(self, item):
+        """Convert single tree item to dict"""
+        data = {}
+        value_row = item.data(0, Qt.UserRole)
+        name_row = item.text(0)
+        parent_data = value_row
+        data.update({name_row: parent_data})
+        return data
+
+    # [Tree item serialization and deserialization]
+
+    def serialization_hierarchy_items(self, tree, data=None):
+        """Convert tree structure to json"""
+        if data is None:
+            data = {}
+        for item in tree.selectedItems():
+            value_row = item.data(0, Qt.UserRole)
+            name_row = item.text(0)
+            parent_data = value_row
+            data.update({name_row:parent_data})
+
+        return data
+
+    def deserialize_hierarchy_items(self, data):
+        tree_items = []
+        names = set()
+        root = self.ui.hierarchy_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            tree_item = root.child(i)
+            names.add(tree_item.text(0))
+
+        for key, value in data.items():
+            # Use the robust global utility for generating a unique name
+            candidate = generate_unique_name(key, names)
+            
+            tree_item = HierarchyItemModel(_data=value, _name=candidate, _class='Event')
+            tree_items.append(tree_item)
+            # Add to the local names set so multiple pasted items don't clash
+            names.add(candidate)
+        return tree_items
+
+
+
+
+    def _apply_default_dock_layout(self):
+        """Ensure default horizontal/vertical dock split and sizes matching reference screenshot."""
+        try:
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.ui.dockWidget_10)
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
+            self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Horizontal)
+
+            if hasattr(self, '_history_dock'):
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.ui.dockWidget_4)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
+                self.splitDockWidget(self.ui.dockWidget_4, self._history_dock, Qt.Vertical)
+
+            self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [220, 360], Qt.Horizontal)
+            if hasattr(self, '_history_dock'):
+                self.resizeDocks([self.ui.dockWidget_4, self._history_dock], [650, 200], Qt.Vertical)
+        except Exception as e:
+            pass
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not getattr(self, '_dock_layout_applied', False):
+            self._dock_layout_applied = True
+            self._apply_default_dock_layout()
+
+    # [Window State]
+    def _restore_user_prefs(self):
+        """Restore window state"""
+        geo = self.settings.value("SoundEventEditorMainWindow/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+
+        state = self.settings.value("SoundEventEditorMainWindow/windowState")
+        if state:
+            restored = self.restoreState(state)
+            if not restored:
+                self._apply_default_dock_layout()
+        else:
+            self._apply_default_dock_layout()
+
+    def _save_user_prefs(self):
+        """Save window state"""
+        self.settings.setValue("SoundEventEditorMainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
+    def closeEvent(self, event):
+        self._save_user_prefs()
+        # Stop the background VPK scanners before this editor is destroyed on an
+        # addon switch, else the process aborts on a still-running QThread.
+        _quiesce_thread(getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None))
+        _quiesce_thread(getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None))
+
+    # File actions
+    def save_file(self, file_path):
+        """Serializing tree and save to the filepath"""
+
+    # Internal SoundEvent Explorer handlers
+
+    def _preview_internal_soundevent(self, name: str) -> None:
+        """
+        Show a read-only preview of an internal CS2 sound event in the Properties Window.
+        Triggered by double-clicking an event in InternalSoundEventExplorer.
+        """
+        data = self.internal_soundevents_explorer.get_event_data(name)
+        if not data:
+            return
+        self.PropertiesWindow.properties_clear()
+        self.PropertiesWindow.properties_groups_show()
+        self.PropertiesWindow.populate_properties(data)
+
+    def _copy_internal_soundevent_to_addon(self, name: str, data: dict) -> None:
+        """
+        Copy an internal CS2 sound event into the addon hierarchy.
+        Triggered by 'Copy to Addon' in InternalSoundEventExplorer context menu.
+        Deduplicates the name automatically via new_soundevent → unique_soundevent_int.
+        """
+        if not data:
+            # Lazy-load if the explorer emitted an empty dict (shouldn't happen, but safe)
+            data = self.internal_soundevents_explorer.get_event_data(name)
+        self.new_soundevent(_data=data, _soundevent_name=name)
+        self.save_soundevents()

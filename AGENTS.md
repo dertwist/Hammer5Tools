@@ -1,78 +1,62 @@
-# AGENTS.md
+# Hammer 5 Tools
 
-Hammer 5 Tools is a PySide6-based modular desktop toolkit designed to streamline level design, SmartProp editing, sound event management, map compilation, and addon packaging for Counter-Strike 2. It integrates custom Qt UI controls, KeyValues3 (KV3) parser utilities, C# .NET interop bindings, and automated build and release workflows.
+Hammer 5 Tools is a Counter-Strike 2 desktop toolkit. The target design is a PySide6 GUI over reusable .NET domain code, with an optional, minimal C++ launcher.
 
-## AI Agent Guidelines
+## Read First
 
-Before making any changes to this repository, AI coding agents and contributors MUST review the following documentation:
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for a concise index of project modules, core classes, functions, and key methods.
-- Read [STYLESHEET.md](STYLESHEET.md) for UI/UX design rules, global Qt stylesheets, color palettes, and component patterns.
-- Read [ConventionalCommits.md](ConventionalCommits.md) for git branch naming and commit message format specifications.
+- [STYLESHEET.md](STYLESHEET.md) before changing any UI.
+- Use `codebase-memory-mcp` (`search_graph`, `get_architecture`, `trace_path`) to find existing modules, classes, and call chains before writing new code — this repo has no separate static code-index doc; the graph is the source of truth and won't go stale.
 
-## Project Structure Overview
+## Architecture
 
-```
-Hammer5Tools/
-├── CLAUDE.md                 # Entry document for AI agents (redirects to AGENTS.md)
-├── AGENTS.md                 # Main agent guidelines and project structure overview
-├── ARCHITECTURE.md           # Module indexation, class maps, functions, and data flows
-├── STYLESHEET.md             # UI/UX guidelines, dark mode QSS, color tokens, and widgets
-├── ConventionalCommits.md    # Git commit conventions and RFC 2119 contribution rules
-├── compile_ui.py             # Script to compile Qt .ui files into Python UI modules
-├── makefile.py               # Build and packaging automation script (dev/stable releases)
-├── requirements.txt          # Python dependencies (PySide6, pythonnet, etc.)
-├── settings.ini              # Application configuration defaults
-├── Hotkeys/                  # Application hotkey profiles and user bindings
-├── Presets/                  # Preset definitions for tools and editors
-├── SmartPropEditor/          # SmartProp editor presets and schema definitions
-├── SoundEventEditor/         # SoundEvent editor configuration and templates
-├── docs/                     # Additional project design and rewrite specifications
-└── src/                      # Main Python source directory
-    ├── main.py               # Application launcher, argument parser, and Velopack hook handler
-    ├── app_core.py           # Central application controller and state orchestrator
-    ├── ui_main.py            # Primary window layout initialization and tab manager
-    ├── common.py             # Shared helper functions, file paths, and environment settings
-    ├── dotnet.py             # pythonnet / .NET CLR interop interface layer
-    ├── gitvmapmerge.py       # Git merge driver for Valve VMAP binary/text files
-    ├── editors/              # Standalone & integrated editor modules
-    │   ├── smartprop_editor/ # Visual editor for Valve .vsmart files
-    │   ├── soundevent_editor/# Visual editor for soundevents_addon.vsndevts files
-    │   ├── assetgroup_maker/ # Tool for creating and grouping game asset collections
-    │   ├── hotkey_editor/    # Manager for shortcut keys and input actions
-    │   └── loading_editor/   # Loading screen and map metadata builder
-    ├── widgets/              # Reusable PySide6 UI widgets and tree controls
-    │   ├── tree.py           # Custom tree widgets and drag-drop handlers
-    │   ├── commands.py       # Context menu and command registry handlers
-    │   ├── console.py        # Embedded output console widget
-    │   ├── element_id.py     # Unique identifier generators for UI nodes
-    │   ├── widgets.py        # Styled buttons, inputs, and input dialogs
-    │   ├── completer/        # Auto-complete widgets and popup models
-    │   ├── explorer/         # File explorer and asset browser controls
-    │   ├── model_browser/    # 3D model viewer and asset selector
-    │   ├── popup_menu/       # Contextual popup menu components
-    │   └── property/         # Custom property editor fields and inspectors
-    ├── property/             # Generic property inspector and value binding logic
-    ├── smartprop/            # SmartProp element hierarchy, variable models, and parser
-    ├── styles/               # Design system, themes, and global stylesheets
-    │   ├── qt_global_stylesheet.py # Primary QSS dark mode stylesheet string
-    │   ├── common.py         # Dynamic styling utilities and palette helpers
-    │   ├── property_icons.py # Dynamic property icon map generators
-    │   └── widgets.py        # Custom widget styling rules
-    ├── forms/                # Compiled Qt form classes and modal dialogs
-    ├── settings/             # Settings storage and preference management logic
-    ├── git_sync/             # Git synchronization tools and vmap conflict resolution
-    ├── ipc/                  # Inter-Process Communication channels and socket servers
-    ├── external/             # C# .NET helper DLLs and external binary assets
-    ├── updater/              # Velopack auto-updater integration client
-    ├── icons/                # Image icons and vector graphics resources
-    ├── images/               # Application image assets and splash graphics
-    └── fonts/                # Custom bundled typography files
+```text
+C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> external libraries
 ```
 
-## Core Agent Instructions
+- `Hammer5ToolsLauncher/`: startup, single-instance IPC handoff, crash reporting, update startup only.
+- `Hammer5ToolsGUI/gui/`: windows, widgets, layouts, styling, input, presentation state. Must not parse Source 2 formats or duplicate a core evaluator — go through `CoreBridge` (`core/bridge/`).
+- `Hammer5ToolsGUI/core/`: Python bridge to the C# core (NativeAOT `ctypes`, `core/native.py`). Pure Python, lives beside `gui/`, not under `Hammer5ToolsCore/`.
+- `Hammer5ToolsGUI/keyvalues3/`: standalone KV3 read/write library.
+- `Hammer5ToolsCore/`: 100% C#, one project (`Hammer5Tools.Core`), publishing as one NativeAOT native DLL. Source 2 parsing, resource/VPK access, SmartProp evaluation, VMAP processing, format conversions, Source-to-CS2 porting, and Unreal content extraction all live here, organized VRF-style: `IO/` (accessing the external environment — archives, processes, filesystem/install layout) and `Format/` (interpreting or converting a specific file format's bytes). The root of the project holds the public contract (`CoreApi.cs`) and the `[UnmanagedCallersOnly]` ABI surface (`NativeApi.cs`, `ResourcesApi.cs`, `VmapApi.cs`, `SourcePorterApi.cs`, `UnrealBridgeApi.cs`, `VmapMergeApi.cs`, and more as the ABI grows) — GUI code goes through this ABI via `core/native.py`/`bridge/core.py`. No pythonnet, no CLR reflection, no subprocess CLI anywhere in the shipped app. Never depends on GUI or launcher.
+- SmartProp evaluation returns both model placements and editor widget placements; the GUI only adapts these Core-owned results for OpenGL drawing.
+- Consume external libraries as dependencies; keep Hammer5Tools behavior in Hammer5Tools-owned code.
+- `Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
+- `Hammer5ToolsGUI/gui/tools/`: bundled external tools and scripts (bspsrc, import/UE scripts) shipped alongside the packaged app.
+- `makefile.py`: build and packaging entry point; `src/common.py`/root `version.json` own the application version.
 
-1. **Keep Files Short and Modular**: Avoid creating monolithic code files; break complexity down into lightweight, single-responsibility modules.
-2. **Consult ARCHITECTURE.md**: Always verify existing function signatures and module layout before adding new code.
-3. **Follow UI/UX Standards**: All UI additions MUST follow [STYLESHEET.md](STYLESHEET.md).
-4. **Adhere to Commit Format**: Commits MUST strictly comply with [ConventionalCommits.md](ConventionalCommits.md).
-5. **No AI Agent Attribution**: Do not include AI agent names in branch names, commit messages, or contribution records.
+## Before Writing New Code
+
+**Adding a feature or function:**
+1. Is something similar already implemented in this project?
+2. Do existing functions/utilities already cover this?
+3. Does a new method actually earn its place, or should an existing one be extended instead?
+
+**Adding or reaching for a library:**
+1. Does the project already have a dependency that does this?
+2. How heavy is this dependency (size, transitive deps, install cost)?
+3. If you'd only use a handful of functions from a large library, would a smaller focused library — or a few lines of your own code — serve better?
+
+## .NET Style
+
+Follow VRF conventions for all new or migrated C# code: latest supported .NET, nullable references, file-scoped namespaces, 4 spaces, LF, final newlines, Allman braces. `var` for locals; collection expressions; pattern matching/switch expressions; null-coalescing/throw expressions; string interpolation; `MathF`; `using` declarations; early returns. Expression bodies for properties/indexers/accessors, block bodies for methods/constructors. `System` usings first, remove unused. PascalCase types/members/private fields, camelCase locals/parameters, `I`-prefixed interfaces. Prefer exact names (`Reader`, `Writer`, `Evaluator`, `Context`, `Document`, `Service`) over `Manager`/`Handler`/`Controller`. Seal internal types when appropriate; concise XML docs on public core APIs. Comments explain non-obvious reasons only, plain ASCII, no narration of changes/sessions.
+
+## Python and UI Rules
+
+- Keep Python domain-free: use bridge adapters (`CoreBridge`) rather than exposing .NET namespaces or assembly loading to editors.
+- UI code is view composition, binding, input routing, dialogs, rendering, and user feedback only.
+- Use the global style system in `src/styles/`; no hard-coded inline palettes. Follow [STYLESHEET.md](STYLESHEET.md).
+- Preserve existing behavior while migrating. Add characterization tests/fixtures before moving uncovered behavior.
+
+## Commits & Branches
+
+Conventional Commits: `type(scope): description`, e.g. `feat(smartprop): add vector scaling support`, `fix(soundevent): resolve path normalization`. Breaking change: `!` before the colon or a `BREAKING CHANGE:` footer. Keep commits short and focused on one change.
+
+**MUST NOT** mention AI coding agents (Claude, Codex, Gemini, ChatGPT, or any other AI agent name) in branch names, commit messages, PR descriptions, or contribution credits.
+
+## Before Finishing
+
+1. Keep the change small and modular; update this file when module ownership or public contracts change.
+2. Build the project being changed while iterating. For a completed .NET change: Release build, `dotnet format`, relevant test suites. Run new TUnit core suites with `dotnet run --project <test-project>` until the legacy xUnit suite is migrated to Microsoft Testing Platform.
+3. Run affected Python tests for Python or bridge changes.
+4. Remove debug logging and commented-out code introduced by the change.
+5. Use focused Conventional Commits. Do not include AI agent names in branches, commits, or credits.

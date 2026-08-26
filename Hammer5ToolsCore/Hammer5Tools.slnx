@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
+  <Project Path="Hammer5Tools.Core/Hammer5Tools.Core.csproj" />
+  <Project Path="SourcePorter.Core.Tests/SourcePorter.Core.Tests.csproj" />
+</Solution>

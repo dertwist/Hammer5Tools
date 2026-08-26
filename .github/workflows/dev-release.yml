@@ -43,16 +43,16 @@ jobs:
           dotnet tool install -g vpk
           echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
 
-      - name: Build UnrealBridge (CUE4Parse)
+      - name: Clone CUE4Parse
         run: |
           # Pinned: CUE4Parse master restructured CUE4Parse_Conversion.Landscape
-          # into Exporters/Dto. Bump only together with Program.cs.
+          # into Exporters/Dto. Bump only together with Format/Unreal/UnrealBridgeProgram.cs.
+          # Hammer5Tools.Core (Format/Unreal/) picks this up via the CUE4ParsePathEnv
+          # fallback in its .csproj — the actual publish happens once, inside
+          # `python makefile.py --build-all` below, for the single merged project.
           git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          dotnet publish src/net_core/UnrealBridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath="${{ github.workspace }}/../CUE4Parse" -p:CUE4PARSE_SKIP_NATIVE=true -o src/net_core/UnrealBridge/publish
-
-      - name: Build SourcePorter Core
-        run: |
-          dotnet publish src/net_core/SourcePorter.Core/SourcePorter.Core.csproj -c Release -r win-x64 --self-contained false -o src/net_core/SourcePorter.Core/publish
+          echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
+          echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV
 
       - name: Build All
 
@@ -75,10 +75,22 @@ jobs:
           }
           Pop-Location
 
+      - name: Validate three-root bundle
+        shell: pwsh
+        run: |
+          $required = @(
+            'Hammer5Tools\Hammer5Tools.exe',
+            'Hammer5Tools\app\Hammer5ToolsGUI.exe',
+            'Hammer5Tools\app\runtime'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing packaged runtime path: $path" }
+          }
+
       - name: Read app version
         id: version
         run: |
-          $ver = python -c "from src.common import app_version; print(app_version)"
+          $ver = python -c "import json; print(json.load(open('version.json'))['version'])"
           $ver = "$ver-dev.${{ github.run_number }}"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
           # Line 2 is the build channel; get_build_channel() reads it to decide the
@@ -95,7 +107,7 @@ jobs:
 
       - name: Velopack Pack
         run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md
+          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon Hammer5ToolsGUI/gui/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md
 
       - name: Delete old dev release
         run: gh release delete dev --yes --cleanup-tag

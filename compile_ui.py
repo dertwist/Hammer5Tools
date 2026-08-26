@@ -6,12 +6,20 @@ from typing import List
 from tqdm import tqdm
 from threading import Lock
 
-IGNORED_FOLDERS = ["venv", "__pycache__"]
+IGNORED_FOLDERS = ["venv", "__pycache__", "build", "dist"]
 
 
 def compile_ui(ui_file: str, out_file: str) -> None:
     try:
         subprocess.run(['pyside6-uic', ui_file, '-o', out_file], check=True)
+        with open(out_file, encoding='utf-8') as generated_file:
+            generated = generated_file.read()
+        generated = generated.replace(
+            'import resources_rc',
+            'from gui import resources_rc',
+        )
+        with open(out_file, 'w', encoding='utf-8', newline='\n') as generated_file:
+            generated_file.write(generated)
         print(f"Compiled {ui_file} -> {out_file}")
     except subprocess.CalledProcessError as e:
         print(f"Failed to compile {ui_file}: {e}")
@@ -51,7 +59,10 @@ def main(directory: str) -> None:
         print(f"'{directory}' does not exist.")
         sys.exit(1)
 
-    ui_files = find_ui_files(directory)
+    source_directory = os.path.join(directory, "Hammer5ToolsGUI", "gui")
+    if not os.path.isdir(source_directory):
+        source_directory = directory
+    ui_files = find_ui_files(source_directory)
     if not ui_files:
         print("No .ui files found.")
         return
@@ -80,12 +91,9 @@ def main(directory: str) -> None:
     print("All .ui files compiled successfully.")
 
     # Compile resources.qrc if present in the directory
-    directory_root = os.path.join(directory)
-    directory = os.path.join(directory_root, 'src')
-
-    qrc_path = os.path.join(directory, "resources.qrc")
+    qrc_path = os.path.join(source_directory, "resources.qrc")
     if os.path.isfile(qrc_path):
-        out_rc = os.path.join(directory, 'resources_rc.py')
+        out_rc = os.path.join(source_directory, 'resources_rc.py')
         compile_qrc(qrc_path, out_rc)
 
 if __name__ == "__main__":

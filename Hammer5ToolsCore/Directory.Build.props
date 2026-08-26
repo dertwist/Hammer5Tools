@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Shared settings for every managed Core project. -->
+  <PropertyGroup>
+    <VersionManifest>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\version.json'))</VersionManifest>
+    <VersionManifestText>$([System.IO.File]::ReadAllText('$(VersionManifest)'))</VersionManifestText>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match('$(VersionManifestText)', '&quot;version&quot;\s*:\s*&quot;([^&quot;]+)&quot;').Groups[1].Value)</Version>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <Product>Hammer5Tools.NetCore</Product>
+    <Company>dertwist</Company>
+    <Authors>dertwist</Authors>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>

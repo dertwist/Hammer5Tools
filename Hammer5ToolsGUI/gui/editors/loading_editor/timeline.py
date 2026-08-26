@@ -1,0 +1,669 @@
+import os
+from datetime import datetime
+from collections import defaultdict
+from typing import Dict, List, Tuple
+from PIL import Image
+import re
+
+from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QTimer, QEventLoop, QUrl
+from PySide6.QtGui import QPixmap, QIcon, QAction, QFont, QImage
+from PySide6.QtMultimedia import (
+    QMediaCaptureSession, QMediaRecorder, QVideoFrameInput,
+    QVideoFrameFormat, QVideoFrame, QMediaFormat,
+)
+from PySide6.QtWidgets import QStyle
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QSplitter,
+    QLabel,
+    QScrollArea,
+    QMenu,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QMessageBox,
+    QProgressDialog,
+    QFileDialog
+)
+
+# 500ms per frame (matches the historical GIF export cadence)
+ANIMATION_FPS = 2
+WEBP_QUALITY_PRESETS = {"Low": 50, "Medium": 75, "High": 95}
+MP4_QUALITY_PRESETS = {
+    "Low": QMediaRecorder.Quality.LowQuality,
+    "Medium": QMediaRecorder.Quality.NormalQuality,
+    "High": QMediaRecorder.Quality.HighQuality,
+}
+# Windows Media Foundation's H264 encoder MFT rejects init below this size
+# (empirically: 64x40 works, 64x32 doesn't) regardless of even/16-alignment.
+_MP4_MIN_DIM = 64
+
+
+def render_animation(image_paths: List[str], output_dir: str, base_name: str,
+                      fmt: str = "GIF", quality: str = "High",
+                      progress_callback=None) -> str:
+    """Combine image_paths into a single animation file (GIF, WEBP, or MP4).
+
+    Resizes every frame to the largest resolution found in the sequence,
+    flattens transparency onto white, and writes the result to output_dir.
+    Returns the path of the created file. Raises ValueError if no valid
+    images could be loaded.
+    """
+    if not image_paths:
+        raise ValueError("No images to export")
+
+    fmt = fmt.upper()
+    total = len(image_paths)
+
+    # First pass: determine the maximum resolution
+    max_width, max_height = 0, 0
+    for image_path in image_paths:
+        try:
+            with Image.open(image_path) as img:
+                max_width = max(max_width, img.width)
+                max_height = max(max_height, img.height)
+        except Exception as e:
+            pass
+
+    if max_width == 0 or max_height == 0:
+        raise ValueError("No valid images found")
+
+    # Second pass: load, resize, and flatten transparency
+    frames = []
+    for i, image_path in enumerate(image_paths):
+        try:
+            img = Image.open(image_path)
+            if img.width != max_width or img.height != max_height:
+                img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
+
+            if img.mode in ('RGBA', 'LA'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            frames.append(img)
+        except Exception as e:
+            pass
+        if progress_callback:
+            progress_callback(int((i + 1) / total * 90))  # 90% for loading images
+
+    if not frames:
+        raise ValueError("No valid images could be loaded")
+
+    os.makedirs(output_dir, exist_ok=True)
+    duration_ms = int(1000 / ANIMATION_FPS)
+
+    if fmt == "MP4":
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.mp4")
+        _save_mp4(frames, output_path, quality)
+    elif fmt == "WEBP":
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.webp")
+        frames[0].save(
+            output_path,
+            format="WEBP",
+            save_all=True,
+            append_images=frames[1:],
+            duration=duration_ms,
+            loop=0,
+            quality=WEBP_QUALITY_PRESETS.get(quality, 90),
+            method=6,
+        )
+    else:
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.gif")
+        # Convert to palette mode for GIF (adaptive palette)
+        palette_frames = [f.convert('P', palette=Image.ADAPTIVE) for f in frames]
+        palette_frames[0].save(
+            output_path,
+            save_all=True,
+            append_images=palette_frames[1:],
+            duration=duration_ms,
+            loop=0,
+        )
+
+    if progress_callback:
+        progress_callback(100)
+    return output_path
+
+
+def _pil_to_video_frame(img: Image.Image, frame_format: QVideoFrameFormat,
+                         start_us: int, end_us: int) -> QVideoFrame:
+    """Pack a PIL RGB image into an RGBA8888 QVideoFrame for QVideoFrameInput."""
+    rgba = img.convert("RGBA")
+    w, h = rgba.size
+    qimg = QImage(rgba.tobytes(), w, h, QImage.Format.Format_RGBA8888)
+    frame = QVideoFrame(frame_format)
+    frame.map(QVideoFrame.MapMode.WriteOnly)
+    try:
+        bytes_per_line = frame.bytesPerLine(0)
+        buf = frame.bits(0)
+        src = qimg.constBits().tobytes()
+        if bytes_per_line == w * 4:
+            buf[:len(src)] = src
+        else:
+            row_bytes = w * 4
+            for row in range(h):
+                buf[row * bytes_per_line:row * bytes_per_line + row_bytes] = \
+                    src[row * row_bytes:(row + 1) * row_bytes]
+    finally:
+        frame.unmap()
+    frame.setStartTime(start_us)
+    frame.setEndTime(end_us)
+    return frame
+
+
+def _save_mp4(frames: List[Image.Image], output_path: str, quality: str) -> None:
+    """Encode frames to MP4/H264 via QtMultimedia's QVideoFrameInput recorder."""
+    w, h = frames[0].size
+    # Even dims (4:2:0 chroma) and a floor under _MP4_MIN_DIM (the MFT H264
+    # encoder rejects init below that regardless of alignment).
+    pad_w = max(_MP4_MIN_DIM, w + (w % 2))
+    pad_h = max(_MP4_MIN_DIM, h + (h % 2))
+    if (pad_w, pad_h) != (w, h):
+        padded = []
+        for f in frames:
+            canvas = Image.new("RGB", (pad_w, pad_h), (0, 0, 0))
+            canvas.paste(f, (0, 0))
+            padded.append(canvas)
+        frames = padded
+
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    session = QMediaCaptureSession()
+    frame_input = QVideoFrameInput()
+    session.setVideoFrameInput(frame_input)
+    recorder = QMediaRecorder()
+    session.setRecorder(recorder)
+    recorder.setOutputLocation(QUrl.fromLocalFile(output_path))
+    media_format = QMediaFormat()
+    media_format.setFileFormat(QMediaFormat.FileFormat.MPEG4)
+    media_format.setVideoCodec(QMediaFormat.VideoCodec.H264)
+    recorder.setMediaFormat(media_format)
+    recorder.setQuality(MP4_QUALITY_PRESETS.get(quality, QMediaRecorder.Quality.NormalQuality))
+
+    errors = []
+    recorder.errorOccurred.connect(lambda *a: errors.append(recorder.errorString()))
+
+    frame_format = QVideoFrameFormat(QSize(pad_w, pad_h), QVideoFrameFormat.PixelFormat.Format_RGBA8888)
+    frame_duration_us = int(1_000_000 / ANIMATION_FPS)
+    state = {"i": 0}
+    loop = QEventLoop()
+
+    def send_next():
+        i = state["i"]
+        if i >= len(frames):
+            recorder.stop()
+            return
+        video_frame = _pil_to_video_frame(
+            frames[i], frame_format, i * frame_duration_us, (i + 1) * frame_duration_us,
+        )
+        frame_input.sendVideoFrame(video_frame)
+        state["i"] += 1
+
+    def on_state_changed(new_state):
+        if new_state == QMediaRecorder.RecorderState.StoppedState:
+            loop.quit()
+
+    frame_input.readyToSendVideoFrame.connect(send_next)
+    recorder.recorderStateChanged.connect(on_state_changed)
+
+    recorder.record()
+    QTimer.singleShot(30_000, loop.quit)  # safety timeout, encoding is local/fast
+    loop.exec()
+
+    if errors:
+        raise RuntimeError(f"MP4 export failed: {errors[0]}")
+    if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        raise RuntimeError("MP4 export produced no output")
+
+
+class TimelineExportSignals(QObject):
+    progress = Signal(int)
+    finished = Signal(str)
+    error = Signal(str)
+
+class TimelineExportWorker(QRunnable):
+    """Worker thread for exporting a timeline sequence to an animation file"""
+    def __init__(self, camera_name: str, image_paths: List[str], output_path: str,
+                 fmt: str = "GIF", quality: str = "High"):
+        super().__init__()
+        self.camera_name = camera_name
+        self.image_paths = image_paths
+        self.output_path = output_path
+        self.fmt = fmt
+        self.quality = quality
+        self.signals = TimelineExportSignals()
+
+    def run(self):
+        try:
+            output_path = render_animation(
+                self.image_paths, self.output_path, self.camera_name,
+                fmt=self.fmt, quality=self.quality,
+                progress_callback=self.signals.progress.emit,
+            )
+            self.signals.finished.emit(output_path)
+        except Exception as e:
+            self.signals.error.emit(f"Error creating animation: {str(e)}")
+
+class TimelineTreeWidget(QTreeWidget):
+    """Custom tree widget for timeline view with thumbnail support"""
+    
+    image_selected = Signal(str)  # Signal emitted when an image is selected
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setHeaderLabel("Timeline")
+        self.setIconSize(QSize(32, 32))
+        self.setIndentation(20)
+        self.setRootIsDecorated(True)
+        self.setAlternatingRowColors(True)
+
+        # Animation export settings, kept in sync with TimelineExplorer.set_export_settings
+        self.export_format = "GIF"
+        self.export_quality = "High"
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
+        
+        self.itemClicked.connect(self.on_item_clicked)
+        
+        # Thread pool for thumbnail generation
+        self.thread_pool = QThreadPool()
+        self.thumbnail_cache = {}
+        
+        # Timer for delayed thumbnail loading
+        self.thumbnail_timer = QTimer()
+        self.thumbnail_timer.setSingleShot(True)
+        self.thumbnail_timer.timeout.connect(self.load_pending_thumbnails)
+        self.pending_thumbnails = []
+
+    def on_item_clicked(self, item: QTreeWidgetItem, column: int):
+        """Handle item click - emit signal if it's an image item"""
+        if hasattr(item, 'image_path'):
+            self.image_selected.emit(item.image_path)
+
+    def show_context_menu(self, position):
+        """Show context menu for timeline items"""
+        item = self.itemAt(position)
+        if not item:
+            return
+            
+        menu = QMenu(self)
+        
+        if hasattr(item, 'camera_name'):  # Camera folder
+            export_action = QAction("Export Animation...", self)
+            export_action.triggered.connect(lambda: self.export_camera_animation(item))
+            menu.addAction(export_action)
+        elif hasattr(item, 'image_path'):  # Image item
+            show_action = QAction("Show in Viewport", self)
+            show_action.triggered.connect(lambda: self.image_selected.emit(item.image_path))
+            menu.addAction(show_action)
+            
+            open_folder_action = QAction("Open Containing Folder", self)
+            open_folder_action.triggered.connect(lambda: self.open_containing_folder(item.image_path))
+            menu.addAction(open_folder_action)
+        
+        if menu.actions():
+            menu.exec(self.mapToGlobal(position))
+
+    def open_containing_folder(self, image_path: str):
+        """Open the folder containing the image"""
+        folder_path = os.path.dirname(image_path)
+        if os.path.exists(folder_path):
+            os.startfile(folder_path)
+
+    def export_camera_animation(self, camera_item: QTreeWidgetItem):
+        """Export all images for a camera to an animation file (GIF/WEBP/MP4)"""
+        if not hasattr(camera_item, 'camera_name'):
+            return
+
+        # Collect all image paths for this camera
+        image_paths = []
+        for i in range(camera_item.childCount()):
+            child = camera_item.child(i)
+            if hasattr(child, 'image_path'):
+                image_paths.append(child.image_path)
+
+        if not image_paths:
+            QMessageBox.warning(self, "Export Error", "No images found for this camera.")
+            return
+
+        # Sort by timestamp (oldest first)
+        image_paths.sort(key=lambda x: self.extract_timestamp_from_path(x))
+
+        # Ask user for output directory
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Output Directory",
+            os.path.expanduser("~/Desktop")
+        )
+
+        if not output_dir:
+            return
+
+        progress_dialog = QProgressDialog("Exporting animation...", "Cancel", 0, 100, self)
+        progress_dialog.setWindowModality(Qt.WindowModal)
+        progress_dialog.show()
+
+        # Create worker
+        worker = TimelineExportWorker(camera_item.camera_name, image_paths, output_dir,
+                                       fmt=self.export_format, quality=self.export_quality)
+        worker.signals.progress.connect(progress_dialog.setValue)
+        worker.signals.finished.connect(lambda path: self.on_export_finished(progress_dialog, path))
+        worker.signals.error.connect(lambda error: self.on_export_error(progress_dialog, error))
+
+        progress_dialog.canceled.connect(lambda: self.thread_pool.clear())
+
+        # Start export
+        self.thread_pool.start(worker)
+
+    def on_export_finished(self, progress_dialog: QProgressDialog, output_path: str):
+        """Handle successful animation export"""
+        progress_dialog.close()
+        QMessageBox.information(
+            self,
+            "Export Complete",
+            f"Animation exported successfully to:\n{output_path}"
+        )
+
+    def on_export_error(self, progress_dialog: QProgressDialog, error: str):
+        """Handle animation export error"""
+        progress_dialog.close()
+        QMessageBox.critical(self, "Export Error", f"Failed to export animation:\n{error}")
+
+    def extract_timestamp_from_path(self, image_path: str) -> datetime:
+        """Extract timestamp from image path"""
+        # Extract timestamp from folder name (e.g., "2025-06-14_18-28-36")
+        folder_name = os.path.basename(os.path.dirname(image_path))
+        try:
+            return datetime.strptime(folder_name, "%Y-%m-%d_%H-%M-%S")
+        except ValueError:
+            return datetime.min
+
+    def load_timeline_data(self, history_path: str):
+        """Load timeline data from History folder"""
+        self.clear()
+        self.thumbnail_cache.clear()
+        
+        if not os.path.exists(history_path):
+            return
+        
+        # Group images by camera name
+        camera_data = defaultdict(list)
+        
+        try:
+            # Iterate through timestamp folders
+            for timestamp_folder in os.listdir(history_path):
+                timestamp_path = os.path.join(history_path, timestamp_folder)
+                if not os.path.isdir(timestamp_path):
+                    continue
+                
+                # Parse timestamp
+                try:
+                    timestamp = datetime.strptime(timestamp_folder, "%Y-%m-%d_%H-%M-%S")
+                except ValueError:
+                    continue
+                
+                # Find images in this timestamp folder
+                for filename in os.listdir(timestamp_path):
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tga')):
+                        # Extract camera name from filename (e.g., "CT Spawn_0000.jpg" -> "CT Spawn")
+                        camera_name = self.extract_camera_name(filename)
+                        if camera_name:
+                            image_path = os.path.join(timestamp_path, filename)
+                            camera_data[camera_name].append((timestamp, image_path))
+        
+        except Exception as e:
+            return
+        
+        # Create tree structure
+        for camera_name, images in camera_data.items():
+            # Sort images by timestamp (oldest first)
+            images.sort(key=lambda x: x[0])
+            
+            # Create camera folder item
+            camera_item = QTreeWidgetItem(self)
+            camera_item.setText(0, f"{camera_name} ({len(images)} images)")
+            camera_item.camera_name = camera_name
+            camera_item.setExpanded(False)
+            
+            # Set folder icon - use a simple folder icon
+            try:
+                camera_item.setIcon(0, self.style().standardIcon(QStyle.SP_DirIcon))
+            except AttributeError:
+                # Fallback: create a simple folder icon from text
+                folder_icon = QIcon()
+                camera_item.setIcon(0, folder_icon)
+            
+            # Add image items
+            for timestamp, image_path in images:
+                image_item = QTreeWidgetItem(camera_item)
+                image_item.setText(0, timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+                image_item.image_path = image_path
+                image_item.timestamp = timestamp
+                
+                self.schedule_thumbnail_load(image_item, image_path)
+        
+
+    def extract_camera_name(self, filename: str) -> str:
+        """Extract camera name from filename, treating different numbered cameras as separate"""
+        # Remove extension
+        base_name = os.path.splitext(filename)[0]
+
+        # Extract camera name and number (e.g., "Site_0000" -> "Site", "Site_0001" -> "Site 1")
+        match = re.match(r'^(.+?)_(\d+)$', base_name)
+        if match:
+            camera_base = match.group(1)
+            camera_number = int(match.group(2))
+            
+            if camera_number == 0:
+                return camera_base  # "Site_0000" -> "Site"
+            else:
+                return f"{camera_base} {camera_number}"  # "Site_0001" -> "Site 1"
+
+        # If no underscore pattern, return the base name
+        return base_name
+
+    def schedule_thumbnail_load(self, item: QTreeWidgetItem, image_path: str):
+        """Schedule thumbnail loading for an item"""
+        self.pending_thumbnails.append((item, image_path))
+        self.thumbnail_timer.start(100)  # Delay to batch thumbnail loading
+
+    def load_pending_thumbnails(self):
+        """Load thumbnails for pending items"""
+        if not self.pending_thumbnails:
+            return
+        
+        # Process a batch of thumbnails
+        batch_size = 5
+        batch = self.pending_thumbnails[:batch_size]
+        self.pending_thumbnails = self.pending_thumbnails[batch_size:]
+        
+        for item, image_path in batch:
+            if image_path not in self.thumbnail_cache:
+                worker = ThumbnailWorker(image_path, item)
+                worker.signals.result.connect(self.on_thumbnail_loaded)
+                self.thread_pool.start(worker)
+        
+        # Schedule next batch if there are more pending
+        if self.pending_thumbnails:
+            self.thumbnail_timer.start(100)
+
+    def on_thumbnail_loaded(self, image_path: str, icon: QIcon, item: QTreeWidgetItem):
+        """Handle thumbnail loaded"""
+        self.thumbnail_cache[image_path] = icon
+        if item and not item.isHidden():
+            item.setIcon(0, icon)
+
+class ThumbnailWorkerSignals(QObject):
+    result = Signal(str, QIcon, QTreeWidgetItem)
+
+class ThumbnailWorker(QRunnable):
+    """Worker thread for loading thumbnails"""
+    def __init__(self, image_path: str, item: QTreeWidgetItem):
+        super().__init__()
+        self.image_path = image_path
+        self.item = item
+        self.signals = ThumbnailWorkerSignals()
+
+    def run(self):
+        try:
+            pixmap = QPixmap(self.image_path)
+            if not pixmap.isNull():
+                thumbnail = pixmap.scaled(
+                    64, 64,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                icon = QIcon(thumbnail)
+                self.signals.result.emit(self.image_path, icon, self.item)
+        except Exception as e:
+            pass
+
+class TimelineExplorer(QMainWindow):
+    """Timeline explorer widget for viewing image sequences"""
+    
+    image_selected = Signal(str)  # Signal emitted when an image is selected
+    
+    def __init__(self, history_directory: str = None, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Timeline Explorer")
+        self.history_directory = history_directory
+        self.export_format = "GIF"
+        self.export_quality = "High"
+
+        self.setup_ui()
+
+        if history_directory:
+            self.load_timeline_data()
+
+    def set_export_settings(self, fmt: str, quality: str):
+        """Update the animation format/quality used by both the toolbar export and the
+        per-camera context menu export."""
+        self.export_format = fmt
+        self.export_quality = quality
+        self.timeline_tree.export_format = fmt
+        self.timeline_tree.export_quality = quality
+
+    def setup_ui(self):
+        """Setup the user interface"""
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        
+        layout = QVBoxLayout(central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        self.timeline_tree = TimelineTreeWidget()
+        self.timeline_tree.image_selected.connect(self.image_selected.emit)
+        
+        layout.addWidget(self.timeline_tree)
+
+    def set_history_directory(self, directory: str):
+        """Set the history directory and reload data"""
+        self.history_directory = directory
+        self.load_timeline_data()
+
+    def load_timeline_data(self):
+        """Load timeline data from history directory"""
+        if not self.history_directory:
+            return
+        
+        self.timeline_tree.load_timeline_data(self.history_directory)
+
+    def export_all_animations(self):
+        """Export all camera sequences to animation files (GIF/WEBP/MP4)"""
+        if not self.history_directory:
+            QMessageBox.warning(self, "Export Error", "No history directory set.")
+            return
+
+        # Ask user for output directory
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Output Directory for All Animations",
+            os.path.expanduser("~/Desktop")
+        )
+
+        if not output_dir:
+            return
+
+        # Collect all camera data
+        camera_data = defaultdict(list)
+
+        try:
+            for timestamp_folder in os.listdir(self.history_directory):
+                timestamp_path = os.path.join(self.history_directory, timestamp_folder)
+                if not os.path.isdir(timestamp_path):
+                    continue
+
+                try:
+                    timestamp = datetime.strptime(timestamp_folder, "%Y-%m-%d_%H-%M-%S")
+                except ValueError:
+                    continue
+
+                for filename in os.listdir(timestamp_path):
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tga')):
+                        camera_name = self.timeline_tree.extract_camera_name(filename)
+                        if camera_name:
+                            image_path = os.path.join(timestamp_path, filename)
+                            camera_data[camera_name].append((timestamp, image_path))
+
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Error collecting camera data: {e}")
+            return
+
+        if not camera_data:
+            QMessageBox.warning(self, "Export Error", "No camera data found.")
+            return
+
+        # Export each camera sequence
+        total_cameras = len(camera_data)
+        progress_dialog = QProgressDialog("Exporting all cameras...", "Cancel", 0, total_cameras, self)
+        progress_dialog.setWindowModality(Qt.WindowModal)
+        progress_dialog.show()
+
+        exported_count = 0
+        for camera_name, images in camera_data.items():
+            if progress_dialog.wasCanceled():
+                break
+
+            # Sort by timestamp (oldest first)
+            images.sort(key=lambda x: x[0])
+            image_paths = [img[1] for img in images]
+
+            try:
+                output_path = render_animation(image_paths, output_dir, camera_name,
+                                                 fmt=self.export_format, quality=self.export_quality)
+            except Exception as e:
+                pass
+
+            exported_count += 1
+            progress_dialog.setValue(exported_count)
+            QApplication.processEvents()
+
+        progress_dialog.close()
+
+        if exported_count > 0:
+            QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Exported {exported_count} camera sequences to:\n{output_dir}"
+            )
+        else:
+            QMessageBox.warning(self, "Export Error", "No animation files were created.")
+
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    
+    # Test with a sample directory
+    timeline = TimelineExplorer("D:/test/History")
+    timeline.show()
+    
+    sys.exit(app.exec())
