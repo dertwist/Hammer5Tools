@@ -125,21 +125,6 @@ QLineEdit[h5Component="legacyLineEdit"]:hover {
     color: @selection_text;
 }
 
-QPlainTextEdit[h5Component="legacyBatchPlainText"] {
-    font: 580 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: @rgba_5e5e5e_255;
-    height: 18px;
-    padding: 0px;
-    color: @text;
-    background-color: @background;
-}
-QPlainTextEdit[h5Component="legacyBatchPlainText"]:pressed {
-    background-color: @background;
-    margin: 0px;
-}
-
 QComboBox[h5Component="legacyCombobox"] {
     font: 580 9pt "Segoe UI";
     border: 2px solid black;

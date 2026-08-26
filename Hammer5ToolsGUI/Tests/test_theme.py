@@ -77,7 +77,6 @@ def test_smartprop_headers_present_in_compiled_qss():
     assert "QFrame#frame > QLabel#label" in qss
     assert "QFrame#frame > QCheckBox#show_child" in qss
     assert "QFrame#frame > QLineEdit#variable_name" in qss
-    assert "QFrame#frame > QLineEdit#property_name" in qss
     assert "QFrame#frame > QPushButton#add_button" in qss
     assert "QFrame#frame_layout" in qss
     assert "h5VarKind=\"string\"" in qss
