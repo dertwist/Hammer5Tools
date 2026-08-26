@@ -3,13 +3,11 @@ PySide6_Essentials==6.9.0
 PyOpenGL
 
 markdown2
-pypresence
 setuptools
 psutil
 tqdm
 
 colorama
-pygetwindow
 pyinstaller
 tabulate
 numpy
