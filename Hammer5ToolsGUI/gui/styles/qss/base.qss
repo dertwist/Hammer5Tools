@@ -10,7 +10,7 @@ QLabel {
     padding-bottom: 2px;
     padding-left: 4px;
     padding-right: 4px;
-    color: @text_primary;
+    color: @text;
 }
 
 /* The shared group-box look: a single rule above the title, no box around
@@ -18,7 +18,7 @@ QLabel {
    common.py's apply_stylesheets() path, where the two copies drifted apart
    (one drew a full bordered box, the other only the top rule). One copy now. */
 QGroupBox {
-    border: 1px solid #5e5e5e;
+    border: 1px solid @hex_5e5e5e;
     border-bottom: none;
     border-left: none;
     border-right: none;
@@ -30,7 +30,7 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 6;
-    color: white;
+    color: @selection_text;
 }
 
 QGroupBox::indicator {
@@ -47,7 +47,7 @@ QGroupBox::indicator:unchecked {
 }
 
 QGroupBox:disabled {
-    color: #727272;
+    color: @hex_727272;
     border-color: #3b3b3e;
 }
 
@@ -55,30 +55,30 @@ QToolTip {
     font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
     height: 18px;
     padding-top: 2px;
     padding-bottom: 2px;
     padding-left: 4px;
     padding-right: 4px;
-    color: @text_primary;
-    background-color: @background_primary;
+    color: @text;
+    background-color: @background;
 }
 
 QScrollArea {
-    border: 2px solid #d0d0d0;
-    border-color: rgba(94, 94, 94, 255);
+    border: 2px solid @hex_d0d0d0;
+    border-color: @rgba_5e5e5e_255;
     border-radius: 2px;
-    color: @text_primary;
+    color: @text;
 }
 
 QDialog {
-    background-color: @background_neutral;
-    color: @text_primary;
+    background-color: @surface;
+    color: @text;
 }
 
 QWidget {
-    background-color: @background_neutral;
+    background-color: @surface;
     outline: none;
 }
 
@@ -93,26 +93,26 @@ QWidget[paintThrough="true"] {
 }
 
 QWidget:item:checked {
-    background-color: @background_neutral;
-    color: white;
+    background-color: @surface;
+    color: @selection_text;
 }
 
 QWidget:item:selected {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
     border: 0px;
 }
 
 QScrollBar:horizontal {
     height: 15px;
     margin: 3px 3px 3px 3px;
-    border: 1px transparent #3b3a3a;
+    border: 1px transparent @hex_3b3a3a;
     border-radius: 0px;
-    background-color: #3b3a3a;
+    background-color: @hex_3b3a3a;
 }
 
 QScrollBar::handle:horizontal {
-    background-color: @selected_fill;
+    background-color: @selection;
     min-width: 5px;
     border-radius: 0px;
 }
@@ -133,15 +133,15 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
 }
 
 QScrollBar:vertical {
-    background-color: #3b3a3a;
+    background-color: @hex_3b3a3a;
     width: 15px;
     margin: 3px 3px 3px 3px;
-    border: 1px transparent #3b3a3a;
+    border: 1px transparent @hex_3b3a3a;
     border-radius: 0px;
 }
 
 QScrollBar::handle:vertical {
-    background-color: @selected_fill;
+    background-color: @selection;
     min-height: 5px;
     border-radius: 0px;
 }
@@ -163,15 +163,15 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 QSlider::groove:horizontal {
     border: 2px solid black;
-    border-color: rgba(94, 94, 94, 0);
+    border-color: @rgba_5e5e5e_0;
     height: 2px;
     margin: 2px 0;
 }
 
 QSlider::handle:horizontal {
-    background: @selected_fill;
+    background: @selection;
     border: 2px solid black;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
     width: 6px;
     height: 36px;
     margin: -17px 0;
@@ -184,25 +184,25 @@ QSlider::handle:horizontal:pressed {
 }
 
 QSlider::sub-page:horizontal {
-    background: #35383e;
+    background: @hex_35383e;
     border: 2px solid black;
     border-radius: 1px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
     height: 2px;
 }
 
 QSlider::add-page:horizontal {
     border: 2px solid black;
     border-radius: 1px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
     height: 2px;
 }
 
 QStatusBar {
-    background-color: @background_primary;
-    color: @text_primary;
+    background-color: @background;
+    color: @text;
     font: 600 10pt "Segoe UI";
-    border-top: 1px solid #585858;
+    border-top: 1px solid @hex_585858;
 }
 
 QStatusBar::item {
@@ -214,19 +214,19 @@ QSplitter {
 }
 
 QSplitter::handle {
-    background-color: @background_primary;
+    background-color: @background;
     margin: 1px 1px;
 }
 
 QSplitter::handle:hover {
-    background-color: @background_primary;
+    background-color: @background;
 }
 
 QSplitterHandle::hover {
 }
 
 QSplitter::handle:vertical:hover, QSplitter::handle:horizontal:hover {
-    background: #5e5e5e;
+    background: @hex_5e5e5e;
 }
 
 QSplitter::handle:vertical {

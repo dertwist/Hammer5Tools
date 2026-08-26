@@ -7,9 +7,9 @@ from typing import List, Dict, Optional, Set
 
 # Local imports
 from gui.forms.cleanup.parse import get_vmap_references
-from gui.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button, qt_stylesheet_table, qt_stylesheet_lineedit
 from gui.settings.main import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
 from gui.common import enable_dark_title_bar
+from gui.styles.common import mark_paint_through
 
 from PySide6.QtCore import Qt, QModelIndex, QUrl, QSize
 from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem, QDesktopServices
@@ -60,13 +60,13 @@ class ExportAndImportAddonDialog(QDialog):
         self.proxy_model.setSourceModel(self.file_model)
         self.proxy_model.setSortRole(Qt.UserRole)
         self.table_view.setModel(self.proxy_model)
-        self.table_view.setStyleSheet(qt_stylesheet_table)
+        self.table_view.setProperty("h5Component", "legacyTable")
         self.layout.addWidget(self.table_view)
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         self.export_button = QPushButton("Export Addon")
-        self.export_button.setStyleSheet(qt_stylesheet_button)
+        self.export_button.setProperty("h5Component", "legacyButton")
         self.export_button.setIcon(QIcon(":/icons/upload_2_16dp.svg"))
         btn_layout.addWidget(self.export_button)
         self.layout.addLayout(btn_layout)
@@ -74,9 +74,11 @@ class ExportAndImportAddonDialog(QDialog):
         self._connect_signals()
         self.update_export_preview()
 
-        # Style labels for dark mode
+        # Labels already get @text_primary from the global QLabel rule; only
+        # the transparency (opting out of the default opaque QWidget
+        # background) needs setting per label.
         for label in self.findChildren(QLabel):
-            label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
+            mark_paint_through(label)
 
     def _create_simple_tab(self):
         self.simple_tab = QWidget()
@@ -90,7 +92,7 @@ class ExportAndImportAddonDialog(QDialog):
         checkboxes = [self.skip_non_default_checkbox, self.compiled_maps_checkbox, self.compiled_materials_checkbox,
                       self.compiled_models_checkbox, self.ignore_vcs_checkbox]
         for checkbox in checkboxes:
-            checkbox.setStyleSheet(qt_stylesheet_checkbox)
+            checkbox.setProperty("h5Component", "legacyCheckbox")
             simple_layout.addWidget(checkbox)
         self.compiled_maps_checkbox.setChecked(True)
         self.compiled_materials_checkbox.setChecked(True)
@@ -103,7 +105,7 @@ class ExportAndImportAddonDialog(QDialog):
         advanced_layout = QVBoxLayout(self.advanced_tab)
         advanced_layout.setAlignment(Qt.AlignTop)
         self.only_deps_checkbox = QCheckBox("Only include dependencies from VMap files (Content)")
-        self.only_deps_checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.only_deps_checkbox.setProperty("h5Component", "legacyCheckbox")
         advanced_layout.addWidget(self.only_deps_checkbox)
         self.vmap_widget_container = QWidget()
         vmap_layout = QVBoxLayout(self.vmap_widget_container)
@@ -121,10 +123,10 @@ class ExportAndImportAddonDialog(QDialog):
         self.vmap_table_view.setSelectionBehavior(QTableView.SelectRows)
         self.vmap_table_view.setSelectionMode(QTableView.ExtendedSelection)
         self.vmap_table_view.setMaximumHeight(120)
-        self.vmap_table_view.setStyleSheet(qt_stylesheet_table)
+        self.vmap_table_view.setProperty("h5Component", "legacyTable")
 
         self.add_vmap_button = QPushButton("Add VMap File...")
-        self.add_vmap_button.setStyleSheet(qt_stylesheet_button)
+        self.add_vmap_button.setProperty("h5Component", "legacyButton")
         vmap_layout.addWidget(self.vmap_table_view)
         vmap_layout.addWidget(self.add_vmap_button)
         self.vmap_widget_container.setVisible(False)
@@ -134,10 +136,10 @@ class ExportAndImportAddonDialog(QDialog):
         advanced_layout.addWidget(self.ignore_edit)
         advanced_layout.addWidget(QLabel("Archive Compression Level:"))
         self.compression_combo = QComboBox()
-        self.compression_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.compression_combo.setProperty("h5Component", "legacyCombobox")
         self.compression_combo.addItems(["Fastest", "Normal", "Ultra (Slow)"])
         self.compression_combo.setCurrentText("Normal")
-        self.ignore_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_edit.setProperty("h5Component", "legacyLineEdit")
 
         advanced_layout.addWidget(self.compression_combo, 0, Qt.AlignTop)
         self.tabs.addTab(self.advanced_tab, "Advanced")

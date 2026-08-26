@@ -30,23 +30,7 @@ class PropertyBase(QWidget):
         # self.init_label(label_text)
         # self.on_property_update()
 
-        self.setStyleSheet(""".QFrame {
-    font: 580 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 0px;
-    border-left: 0px;
-    border-right: 0px;
-	border-top: 0px;
-    border-color: rgba(66, 66, 66, 255);
-    color: #e5e5e5;
-    background-color: #2e2e2e;
-}
-
-.QFrame::hover {
-}
-.QFrame::selected {
-    background-color: #515965;
-}""")
+        self.setProperty("h5Component", "propertyFrame")
 
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
@@ -58,8 +42,8 @@ class PropertyBase(QWidget):
             label_text = "Label"
         label_instance = QLabel()
         label_instance.setText(convert_snake_case(label_text))
-        label_instance.setStyleSheet(f"""
-        color: {self.init_label_color()}""")
+        label_instance.setProperty("h5Component", "editorPropertyLabel")
+        label_instance.setProperty("h5ColorRole", self.init_label_color().lstrip("#").lower())
         self.root_layout.addWidget(label_instance)
     def init_label_color(self):
         return "#C7C7BB"
@@ -127,8 +111,8 @@ class PropertyReplacement(PropertyBase):
         # Highlighting
         self.highlighter_source = CustomHighlighter(self.source_line.document())
         self.highlighter_destination = CustomHighlighter(self.destination_line.document())
-        self.source_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
-        self.destination_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
+        self.source_line.setProperty("h5Component", "legacyBatchPlainText")
+        self.destination_line.setProperty("h5Component", "legacyBatchPlainText")
 
         # connections for updating on changes
         self.source_line.textChanged.connect(self.on_property_update)

@@ -510,7 +510,12 @@ class Widget(QMainWindow):
         overlay.setObjectName("launchOverlay")
         overlay.setAttribute(Qt.WA_StyledBackground, True)
         overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        overlay.setStyleSheet("QWidget#launchOverlay { background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgba(80, 88, 100,0.25), stop: 0.2 rgba(80, 88, 100,0.40), stop: 0.8 rgba(80, 88, 100,0.40), stop: 1 rgba(80, 88, 100,0.25)); }")
+        button_width, button_height = button.width(), button.height()
+        overlay.setGeometry(-button_width, 0, button_width, button_height)
+        overlay.show()
+        overlay.lower()
+        animation = QPropertyAnimation(overlay, b"pos", self)
+        animation.setDuration(1200)
         button_width, button_height = button.width(), button.height()
         overlay.setGeometry(-button_width, 0, button_width, button_height)
         overlay.show()
@@ -549,16 +554,25 @@ class Widget(QMainWindow):
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self._build_addon_actions_menu()
         self._build_utilities_menu()
-        # Hide the dropdown arrow and cap height to match the sibling buttons.
-        # Existing .ui styles are bare declarations, so wrap them in a selector
-        # before adding the sub-control rule (mixing the two is invalid CSS).
-        h = self.ui.preferences_button.sizeHint().height()
+        # Hide the dropdown arrow on menu tool buttons and ensure uniform height across the bottom bar.
         for b in (self.ui.utilities_button, self.ui.addon_actions_button):
-            base = b.styleSheet().strip()
-            wrapped = f"QToolButton {{ {base} }}\n" if base else ""
-            b.setStyleSheet(wrapped + "QToolButton::menu-indicator { image: none; width: 0px; }")
-            b.setMaximumHeight(h)
+            b.setProperty("h5Component", "mainMenuToolButton")
         self.ui.utilities_button.setMinimumWidth(0)
+
+        h = 32
+        for w in (
+            self.ui.my_twitter_button,
+            self.ui.discord,
+            self.ui.documentation_button,
+            self.ui.preferences_button,
+            self.ui.utilities_button,
+            self.ui.addon_actions_button,
+            self.ui.ComboBoxSelectAddon,
+            self.git_sync_button,
+            self.ui.Launch_Addon_Button,
+            self.ui.mapbuilder,
+        ):
+            w.setFixedHeight(h)
         self.ui.console_label.setText("Ready")
         self.updateLaunchAddonButton()
 

@@ -48,19 +48,7 @@ class MaterialGroupChoiceRow(QWidget):
         layout.addWidget(self.weight_widget)
 
         delete_btn = QToolButton()
-        delete_btn.setStyleSheet("""QToolButton {
-    icon: url(:/icons/delete_24dp.svg);
-    font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 0px;
-    border-color: rgba(94, 94, 94, 255);
-    height:18px;
-    padding: 4px;
-    color: #e5e5e5;
-    background-color: #2e2e2e;
-}
-QToolButton:hover { background-color: #515965; color: white; }
-QToolButton:pressed { background-color: #2e2e2e; }""")
+        delete_btn.setProperty("h5Component", "smartpropDeleteIconButton")
         delete_btn.setIcon(QIcon(":/icons/delete_24dp.svg"))
         layout.addWidget(delete_btn)
 

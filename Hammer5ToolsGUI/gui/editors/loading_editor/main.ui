@@ -111,13 +111,13 @@
                 <number>0</number>
                </property>
                <property name="topMargin">
-                <number>4</number>
+                <number>0</number>
                </property>
                <property name="rightMargin">
                 <number>0</number>
                </property>
                <property name="bottomMargin">
-                <number>4</number>
+                <number>0</number>
                </property>
               </layout>
              </widget>
@@ -130,16 +130,16 @@
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
             <property name="leftMargin">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -615,13 +615,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <number>0</number>
          </property>
          <property name="topMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
           <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>4</number>
+          <number>0</number>
          </property>
         </layout>
        </widget>
@@ -658,16 +658,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QFrame" name="svg_icon_frame">
@@ -831,16 +831,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <property name="leftMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
-             <number>4</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QPlainTextEdit" name="PlainTextEdit_Description_2">

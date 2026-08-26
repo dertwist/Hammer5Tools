@@ -19,13 +19,6 @@ from gui.editors.smartprop_editor.note_utils import get_note, set_note
 from gui.editors.smartprop_editor.props.model import ComponentRef
 from gui.styles.property_icons import IconCache
 
-# Yellow sticky note styling matching CS2 / ModelDoc note appearance
-_NOTE_BG = "#FFF8BE"
-_NOTE_FG = "#1E1E1E"
-_NOTE_BORDER = "#E0D28A"
-_NOTE_SEL_BG = "#515965"
-_NOTE_SEL_FG = "#FFFFFF"
-
 
 class NoteEditorWidget(QWidget):
     """Editable yellow note editor for the currently selected SmartProp component."""
@@ -43,27 +36,7 @@ class NoteEditorWidget(QWidget):
 
         self.text_edit = QPlainTextEdit(self)
         self.text_edit.setPlaceholderText("Enter note here...")
-        self.text_edit.setStyleSheet(f"""
-            QPlainTextEdit {{
-                background-color: {_NOTE_BG};
-                color: {_NOTE_FG};
-                border: 1px solid {_NOTE_BORDER};
-                border-radius: 2px;
-                font-family: "Segoe UI";
-                font-size: 11px;
-                padding: 4px 6px;
-                selection-background-color: {_NOTE_SEL_BG};
-                selection-color: {_NOTE_SEL_FG};
-            }}
-            QScrollBar:vertical {{
-                width: 6px;
-                background: transparent;
-            }}
-            QScrollBar::handle:vertical {{
-                background: #B0A66E;
-                border-radius: 0px;
-            }}
-        """)
+        self.text_edit.setProperty("h5Component", "smartpropNoteEdit")
         self.text_edit.textChanged.connect(self._on_text_changed)
         layout.addWidget(self.text_edit)
 

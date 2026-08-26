@@ -14,7 +14,6 @@ from gui.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCom
 from gui.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from gui.editors.soundevent_editor.property_browser import PropertyBrowserWidget
 from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton
-from gui.styles.common import qt_stylesheet_button
 from gui.common import *
 from gui.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from gui.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
@@ -201,19 +200,6 @@ class SoundEventEditorMainWindow(QMainWindow):
             from PySide6.QtWidgets import QFrame, QLineEdit, QHBoxLayout
             self.editor_header_frame = QFrame(self.ui.frame)
             self.editor_header_frame.setObjectName("editor_header_frame")
-            self.editor_header_frame.setStyleSheet("""
-                QFrame#editor_header_frame {
-                    background-color: #2e2e2e;
-                    border: none;
-                    border-bottom: 2px solid rgba(94, 94, 94, 255);
-                    border-radius: 0px;
-                }
-                QLabel {
-                    font: 580 9pt "Segoe UI";
-                    color: #e5e5e5;
-                    border: none;
-                }
-            """)
             header_row = QHBoxLayout(self.editor_header_frame)
             header_row.setContentsMargins(4, 2, 4, 2)
             header_row.setSpacing(6)
@@ -226,44 +212,13 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.editor_prop_filter_edit = QLineEdit(self.editor_header_frame)
             self.editor_prop_filter_edit.setPlaceholderText("Filter properties...")
             self.editor_prop_filter_edit.setClearButtonEnabled(True)
-            self.editor_prop_filter_edit.setStyleSheet("""
-                QLineEdit {
-                    font: 580 9pt "Segoe UI";
-                    border: 2px solid black;
-                    border-color: rgba(94, 94, 94, 255);
-                    border-radius: 2px;
-                    color: #e5e5e5;
-                    background-color: #2e2e2e;
-                    padding: 2px 4px;
-                }
-                QLineEdit:focus {
-                    border-color: #515965;
-                }
-            """)
+            self.editor_prop_filter_edit.setProperty("h5Component", "soundeventHeaderFilterEdit")
             self.editor_prop_filter_edit.textChanged.connect(self.filter_editor_properties)
             header_row.addWidget(self.editor_prop_filter_edit, 1)
 
             # Save as Template button on right
             self.save_template_btn = QPushButton("Save as Template", self.editor_header_frame)
-            self.save_template_btn.setStyleSheet("""
-                QPushButton {
-                    font: 580 9pt "Segoe UI";
-                    border: 2px solid black;
-                    border-radius: 2px;
-                    border-color: rgba(94, 94, 94, 255);
-                    height: 22px;
-                    padding: 2px 6px;
-                    color: #e5e5e5;
-                    background-color: #2e2e2e;
-                }
-                QPushButton:hover {
-                    background-color: #515965;
-                    color: white;
-                }
-                QPushButton:pressed {
-                    background-color: #2e2e2e;
-                }
-            """)
+            self.save_template_btn.setProperty("h5Component", "soundeventHeaderSaveTemplateBtn")
             self.save_template_btn.clicked.connect(self.save_current_soundevent_as_template)
             header_row.addWidget(self.save_template_btn)
 
@@ -300,12 +255,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         else:
             os.makedirs(self.filepath_sounds)
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
-        self.mini_explorer.tree.setStyleSheet("""border:none""")
+        self.mini_explorer.tree.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         self.internal_explorer = InternalSoundFileExplorer()
-        self.internal_explorer.setStyleSheet("""border:none""")
+        self.internal_explorer.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
         self.internal_explorer.play_audio_data.connect(self.play_sound_data)
@@ -476,12 +431,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel("Create or load soundevents")
-        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setProperty("h5Component", "emptyStateTitle")
         title_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(title_lbl)
 
         desc_lbl = QLabel("This addon has no soundevents file yet. Create a default one or load an existing .vsndevts file.")
-        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setProperty("h5Component", "emptyStateDescription")
         desc_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(desc_lbl)
 
@@ -490,13 +445,13 @@ class SoundEventEditorMainWindow(QMainWindow):
         btn_row.setAlignment(Qt.AlignCenter)
 
         btn_create = QPushButton("Create Default")
-        btn_create.setStyleSheet(qt_stylesheet_button)
+        btn_create.setProperty("h5Component", "legacyButton")
         btn_create.setFixedHeight(26)
         btn_create.clicked.connect(self._create_default_soundevents_file)
         btn_row.addWidget(btn_create)
 
         btn_load = QPushButton("Load File...")
-        btn_load.setStyleSheet(qt_stylesheet_button)
+        btn_load.setProperty("h5Component", "legacyButton")
         btn_load.setFixedHeight(26)
         btn_load.clicked.connect(lambda: self.load_soundevents())
         btn_row.addWidget(btn_load)

@@ -11,12 +11,14 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from gui.styles.theme import Theme, TOKEN_NAMES
+from gui.styles.theme import TOKEN_NAMES, Theme, resolve_hex, resolve_rgb
 
 _QSS_DIR = Path(__file__).parent / "qss"
 _FEATURES_DIR = _QSS_DIR / "features"
 
 _TOKEN_RE = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
+_HEX_TOKEN_RE = re.compile(r"^hex_([0-9a-fA-F]{6})$")
+_RGBA_TOKEN_RE = re.compile(r"^rgba_([0-9a-fA-F]{6})_(\d{1,3})$")
 
 
 def _base_fragment_paths() -> list[Path]:
@@ -39,6 +41,16 @@ def _feature_fragment_paths() -> list[Path]:
 def _substitute(qss_text: str, theme: Theme, source: Path) -> str:
     def resolve(match: re.Match) -> str:
         name = match.group(1)
+        rgba_match = _RGBA_TOKEN_RE.match(name)
+        if rgba_match:
+            hex_value = rgba_match.group(1)
+            canonical = tuple(int(hex_value[i:i + 2], 16) for i in (0, 2, 4))
+            red, green, blue = resolve_rgb(theme, canonical)
+            alpha = min(int(rgba_match.group(2)), 255)
+            return f"rgba({red}, {green}, {blue}, {alpha})"
+        hex_match = _HEX_TOKEN_RE.match(name)
+        if hex_match:
+            return resolve_hex(theme, "#" + hex_match.group(1))
         if name not in TOKEN_NAMES:
             raise ValueError(f"Unknown QSS token '@{name}' in {source}")
         return str(getattr(theme, name))

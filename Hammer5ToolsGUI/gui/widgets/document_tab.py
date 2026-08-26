@@ -37,22 +37,6 @@ class DocumentTabBar(QTabBar):
         self.new_tab_btn.setIcon(QIcon(":/valve_common/icons/tools/common/add_sm.png"))
         self.new_tab_btn.setToolTip("New Document (Ctrl+N)")
         self.new_tab_btn.setCursor(Qt.PointingHandCursor)
-        self.new_tab_btn.setStyleSheet("""
-            QToolButton#DocumentNewTabButton {
-                background: transparent;
-                border: 1px solid transparent;
-                border-radius: 2px;
-                padding: 1px;
-                margin: 0px;
-            }
-            QToolButton#DocumentNewTabButton:hover {
-                background-color: #363639;
-                border: 1px solid #464649;
-            }
-            QToolButton#DocumentNewTabButton:pressed {
-                background-color: #464649;
-            }
-        """)
         self.new_tab_btn.clicked.connect(self._on_new_tab_clicked)
         self._update_new_tab_btn_pos()
 

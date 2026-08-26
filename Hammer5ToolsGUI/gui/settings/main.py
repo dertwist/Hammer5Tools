@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
 from gui.settings.common import *
 from gui.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
 from gui.widgets.common import Button  # Using the internal Button class
-from gui.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from gui.other.file_association import setup_all_associations
 
 
@@ -32,7 +31,7 @@ class ActionButtonsPanel(QFrame):
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
         self.checkBox_dev_channel = QCheckBox("Receive dev versions", self)
-        self.checkBox_dev_channel.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_dev_channel.setProperty("h5Component", "legacyCheckbox")
         self.checkBox_dev_channel.setToolTip(
             "Update to pre-release (dev) builds. These are less tested than stable releases."
         )
@@ -52,7 +51,7 @@ class PreferencesDialog(QDialog):
         self.setWindowTitle('Settings')
         self.main_layout = QVBoxLayout(self)
         self.tabWidget = QTabWidget(self)
-        self.tabWidget.setStyleSheet("background-color: #2e2e2e;")
+        self.tabWidget.setProperty("h5Component", "settingsTabWidget")
         self.main_layout.addWidget(self.tabWidget)
         # Create tabs and bottom action panel
         self.create_general_tab()
@@ -70,7 +69,7 @@ class PreferencesDialog(QDialog):
         divider.setLineWidth(2)
         # Enforcing height of 2 pixels and divider color #424242
         divider.setFixedHeight(2)
-        divider.setStyleSheet("background-color: #424242; border: none;")
+        divider.setProperty("h5Component", "settingsDivider")
         return divider
 
     def wrap_in_scroll_area(self, widget):
@@ -78,11 +77,7 @@ class PreferencesDialog(QDialog):
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(widget)
         scroll_area.setObjectName("customScrollArea")
-        scroll_area.setStyleSheet("""
-            QScrollArea#customScrollArea {
-                border: none;
-            }
-        """)
+        scroll_area.setProperty("h5Component", "settingsScrollArea")
         return scroll_area
 
     def create_general_tab(self):
@@ -131,7 +126,7 @@ class PreferencesDialog(QDialog):
         label_brightness.setMinimumWidth(130)
         layout_brightness.addWidget(label_brightness)
         self.appearance_combo_brightness = QComboBox(frame_brightness)
-        self.appearance_combo_brightness.setStyleSheet(qt_stylesheet_combobox)
+        self.appearance_combo_brightness.setProperty("h5Component", "legacyCombobox")
         self.appearance_combo_brightness.addItem("1 · Dark", 1)
         self.appearance_combo_brightness.addItem("2 · Standard", 2)
         self.appearance_combo_brightness.addItem("3 · Bright", 3)
@@ -149,7 +144,7 @@ class PreferencesDialog(QDialog):
         layout_other = QVBoxLayout(self.frame_other)
         row_app = QHBoxLayout()
         self.checkBox_close_to_tray = QCheckBox("Minimize on Close", self.frame_other)
-        self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_close_to_tray.setProperty("h5Component", "legacyCheckbox")
         row_app.addWidget(self.checkBox_close_to_tray)
         self.cleanup_model_browser_button = Button(text=" Cleanup model browser cache")
         self.cleanup_model_browser_button.set_icon_delete()
@@ -167,7 +162,7 @@ class PreferencesDialog(QDialog):
         row_git = QHBoxLayout()
         self.checkBox_git_generate_commit_messages = QCheckBox(
             "Git sync: Generate commit messages", self.frame_other)
-        self.checkBox_git_generate_commit_messages.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_git_generate_commit_messages.setProperty("h5Component", "legacyCheckbox")
         self.checkBox_git_generate_commit_messages.setToolTip(
             "Write the commit message automatically from the changed files. "
             "Turn off to be asked for a message each time you press Git Sync."
@@ -198,10 +193,10 @@ class PreferencesDialog(QDialog):
         frame_interface = QFrame(smartprop_content)
         layout_interface = QVBoxLayout(frame_interface)
         self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", frame_interface)
-        self.spe_display_id_with_variable_class.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_display_id_with_variable_class.setProperty("h5Component", "legacyCheckbox")
         layout_interface.addWidget(self.spe_display_id_with_variable_class)
         self.spe_hide_experimental = QCheckBox("Hide experimental properties and elements", frame_interface)
-        self.spe_hide_experimental.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_hide_experimental.setProperty("h5Component", "legacyCheckbox")
         self.spe_hide_experimental.setToolTip(
             "When enabled, elements and criteria marked as experimental (not verified to work in CS2)\n"
             "are hidden from the Add Element / Add Operator / Add Criteria menus.\n"
@@ -217,7 +212,7 @@ class PreferencesDialog(QDialog):
         frame_format = QFrame(smartprop_content)
         layout_format = QVBoxLayout(frame_format)
         self.spe_export_properties = QCheckBox("Export properties in one line", frame_format)
-        self.spe_export_properties.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_export_properties.setProperty("h5Component", "legacyCheckbox")
         self.spe_export_properties.setChecked(True)
         layout_format.addWidget(self.spe_export_properties)
         layout.addWidget(frame_format)
@@ -233,7 +228,7 @@ class PreferencesDialog(QDialog):
         row_vmap_import = QHBoxLayout()
         
         self.spe_round_vmap_values = QCheckBox("Round values during VMAP import (recommended)", frame_vmap_import)
-        self.spe_round_vmap_values.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_round_vmap_values.setProperty("h5Component", "legacyCheckbox")
         row_vmap_import.addWidget(self.spe_round_vmap_values)
         
         row_vmap_import.addSpacing(20)
@@ -242,7 +237,7 @@ class PreferencesDialog(QDialog):
         row_vmap_import.addWidget(label_decimals)
         
         self.spe_round_vmap_decimals = QComboBox(frame_vmap_import)
-        self.spe_round_vmap_decimals.setStyleSheet(qt_stylesheet_combobox)
+        self.spe_round_vmap_decimals.setProperty("h5Component", "legacyCombobox")
         # Options: 2, 3, 4, 5, 6, 1, 0
         for opt in ["2", "3", "4", "5", "6", "1", "0"]:
             self.spe_round_vmap_decimals.addItem(opt, int(opt))
@@ -265,7 +260,7 @@ class PreferencesDialog(QDialog):
         label_msaa.setMinimumWidth(130)
         row_msaa.addWidget(label_msaa)
         self.spe_viewport_msaa = QComboBox(frame_viewport)
-        self.spe_viewport_msaa.setStyleSheet(qt_stylesheet_combobox)
+        self.spe_viewport_msaa.setProperty("h5Component", "legacyCombobox")
         # Value stored is the MSAA sample count (0 == off).
         for text, samples in [("Off", 0), ("2x MSAA", 2), ("4x MSAA", 4), ("8x MSAA", 8)]:
             self.spe_viewport_msaa.addItem(text, samples)
@@ -323,7 +318,7 @@ class PreferencesDialog(QDialog):
         label_algo.setMinimumWidth(130)
         row_algo.addWidget(label_algo)
         self.assetgroupmaker_combo_algorithm = QComboBox(frame_default_file)
-        self.assetgroupmaker_combo_algorithm.setStyleSheet(qt_stylesheet_combobox)
+        self.assetgroupmaker_combo_algorithm.setProperty("h5Component", "legacyCombobox")
         # Add the two algorithm options:
         self.assetgroupmaker_combo_algorithm.addItem("Process without interpretation", 0)
         self.assetgroupmaker_combo_algorithm.addItem("Remove underscore from the end", 1)
@@ -358,7 +353,7 @@ class PreferencesDialog(QDialog):
         self.frame_audio = QFrame(sound_editor_content)
         layout_audio = QHBoxLayout(self.frame_audio)
         self.checkBox_play_on_click = QCheckBox("Play on Click", self.frame_audio)
-        self.checkBox_play_on_click.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_play_on_click.setProperty("h5Component", "legacyCheckbox")
         layout_audio.addWidget(self.checkBox_play_on_click)
         layout.addWidget(self.frame_audio)
         layout.addStretch()
@@ -457,8 +452,9 @@ class PreferencesDialog(QDialog):
         level = int(self.appearance_combo_brightness.currentData())
         set_settings_value('APP', 'brightness_level', level)
         from gui.styles import theme
+        from gui.styles import manager as style_manager
         theme.set_brightness_level(level)
-        theme.reapply()
+        style_manager.reapply(theme.get_theme(level))
 
     def connect_signals(self):
         self.appearance_combo_brightness.currentIndexChanged.connect(self.apply_brightness_level)

@@ -441,19 +441,19 @@ class Viewport(QMainWindow):
         self.placeholder_label = QLabel(self.container)
         self.placeholder_label.setAlignment(Qt.AlignCenter)
         self.placeholder_label.setText("Select image in the screenshots")
-        self.placeholder_label.setStyleSheet("color: gray; font-size: 13px;")
+        self.placeholder_label.setProperty("h5Component", "loadingImagePlaceholder")
 
         self.image_label = QLabel(self.container)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setScaledContents(False)
-        self.image_label.setStyleSheet("border: none; background: transparent; outline: none;")
+        self.image_label.setProperty("h5Component", "loadingImagePreview")
 
         self.scroll_area = NoWheelScrollArea(self.container)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.image_label)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; outline: none; }")
+        self.scroll_area.setProperty("h5Component", "loadingImageScroll")
 
         layout.addWidget(self.placeholder_label)
         layout.addWidget(self.scroll_area)
@@ -506,7 +506,7 @@ class Viewport(QMainWindow):
         Show a placeholder label and hide the scroll area when no valid image is loaded.
         """
         self.placeholder_label.setText("Select image in the screenshots")
-        self.placeholder_label.setStyleSheet("color: gray; font-size: 16px;")
+        self.placeholder_label.setProperty("h5Size", "large")
         self.placeholder_label.show()
         self.scroll_area.hide()
         self.image_label.clear()
@@ -518,7 +518,6 @@ class Viewport(QMainWindow):
         """
         self.placeholder_label.hide()
         self.placeholder_label.clear()
-        self.placeholder_label.setStyleSheet("")
         self.scroll_area.show()
 
     def loadImagesFromDirectory(self, directory):
@@ -805,7 +804,7 @@ class SectionHeader(QWidget):
         self.title_label.setFont(font)
 
         self.count_label = QLabel("", self)
-        self.count_label.setStyleSheet("color: gray;")
+        self.count_label.setProperty("h5Component", "loadingSectionCount")
 
         layout.addWidget(self.arrow_label)
         layout.addWidget(self.title_label)
@@ -823,18 +822,7 @@ class SectionHeader(QWidget):
             self.folder_button.setToolTip(f"Open {title} folder")
             self.folder_button.setFixedSize(20, 20)
             self.folder_button.setCursor(Qt.PointingHandCursor)
-            self.folder_button.setStyleSheet("""
-                QToolButton {
-                    border: none;
-                    background: transparent;
-                    padding: 0px;
-                    margin: 0px;
-                }
-                QToolButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                    border-radius: 2px;
-                }
-            """)
+            self.folder_button.setProperty("h5Component", "loadingSectionFolderButton")
             self.folder_button.clicked.connect(self._open_folder)
             layout.addWidget(self.folder_button)
 
@@ -917,7 +905,7 @@ class ImageTreeView(QTreeView):
         self.setUniformRowHeights(False)
         self.setAcceptDrops(True)
         self.setDragDropMode(QAbstractItemView.NoDragDrop)
-        self.setStyleSheet("QTreeView { outline: none; }")
+        self.setProperty("h5Component", "loadingImageTree")
 
         self.file_model = QFileSystemModelWithThumbnails(self)
         self.file_model.setRootPath(root_dir)

@@ -7,13 +7,13 @@ from gui.property.methods import PropertyMethods
 from gui.widgets import ErrorInfo
 from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor._common import parse_component_clipboard
+from gui.styles.common import set_style_property
 
 # Group type color constants
 _GROUP_COLORS = {
     'modifier': '#8B5E3C',           # bronze
     'selection_criteria': '#2E6B9E',  # steel blue
 }
-_DROP_INDICATOR_COLOR = '#5599FF'
 
 
 class PropertiesGroupFrame(QWidget):
@@ -56,18 +56,8 @@ class PropertiesGroupFrame(QWidget):
     def _apply_group_color(self):
         color = _GROUP_COLORS.get(self.group_type)
         if color:
-            self.ui.label.setStyleSheet(
-                f"image: url(:/icons/more_vert.png);\n"
-                f"padding-left: 3px;\n"
-                f"padding-right: 3px;\n"
-                f"border: 2px solid #d0d0d0;\n"
-                f"border-top: 0px;\n"
-                f"border-right: 0px;\n"
-                f"border-bottom: 0px;\n"
-                f"border-left: 3px solid {color};\n"
-                f"border-radius: 0px;\n"
-                f"background-color: #363636;"
-            )
+            set_style_property(self.ui.label, "h5Component", "smartpropGroupColorLabel")
+            set_style_property(self.ui.label, "h5GroupType", self.group_type)
 
     def add_action(self):
         self.add_signal.emit()
@@ -100,7 +90,7 @@ class PropertiesGroupFrame(QWidget):
         self._hide_drop_indicator()
         indicator = QFrame()
         indicator.setFixedHeight(2)
-        indicator.setStyleSheet(f"background-color: {_DROP_INDICATOR_COLOR};")
+        indicator.setProperty("h5Component", "smartpropDropIndicator")
         indicator.setObjectName("_drop_indicator")
         self.layout.insertWidget(index, indicator)
         self._drop_indicator = indicator

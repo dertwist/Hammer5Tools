@@ -45,14 +45,7 @@ class PropertyBrowserWidget(QWidget):
 
         # Header label
         prop_header = QLabel("Properties", properties_container)
-        prop_header.setStyleSheet("""
-            QLabel {
-                font-weight: bold;
-                font-size: 11px;
-                color: #d0d0d0;
-                padding-left: 2px;
-            }
-        """)
+        prop_header.setProperty("h5Component", "soundeventBrowserHeaderLabel")
         prop_layout.addWidget(prop_header)
 
         # Search bar
@@ -65,26 +58,7 @@ class PropertyBrowserWidget(QWidget):
         # Properties List
         self.prop_list_widget = QListWidget(properties_container)
         self.prop_list_widget.setAlternatingRowColors(True)
-        self.prop_list_widget.setStyleSheet("""
-            QListWidget {
-                background-color: #2e2e2e;
-                alternate-background-color: #363636;
-                border: 1px solid #434343;
-                border-radius: 2px;
-                color: #e2e2e2;
-                font: 580 10pt "Segoe UI";
-            }
-            QListWidget::item {
-                padding: 2px 6px;
-            }
-            QListWidget::item:hover {
-                background-color: #3e434b;
-            }
-            QListWidget::item:selected {
-                background-color: #4d596b;
-                color: white;
-            }
-        """)
+        self.prop_list_widget.setProperty("h5Component", "soundeventBrowserList")
         self.prop_list_widget.itemDoubleClicked.connect(self._on_property_double_clicked)
         prop_layout.addWidget(self.prop_list_widget)
 
@@ -103,14 +77,7 @@ class PropertyBrowserWidget(QWidget):
         tmpl_bar_layout.setContentsMargins(0, 0, 0, 0)
 
         tmpl_header = QLabel("Templates", templates_container)
-        tmpl_header.setStyleSheet("""
-            QLabel {
-                font-weight: bold;
-                font-size: 11px;
-                color: #d0d0d0;
-                padding-left: 2px;
-            }
-        """)
+        tmpl_header.setProperty("h5Component", "soundeventBrowserHeaderLabel")
         tmpl_bar_layout.addWidget(tmpl_header)
         tmpl_bar_layout.addStretch()
 
@@ -148,26 +115,7 @@ class PropertyBrowserWidget(QWidget):
         # Templates List
         self.tmpl_list_widget = QListWidget(templates_container)
         self.tmpl_list_widget.setAlternatingRowColors(True)
-        self.tmpl_list_widget.setStyleSheet("""
-            QListWidget {
-                background-color: #2e2e2e;
-                alternate-background-color: #363636;
-                border: 1px solid #434343;
-                border-radius: 2px;
-                color: #e2e2e2;
-                font: 580 10pt "Segoe UI";
-            }
-            QListWidget::item {
-                padding: 2px 6px;
-            }
-            QListWidget::item:hover {
-                background-color: #3e434b;
-            }
-            QListWidget::item:selected {
-                background-color: #4d596b;
-                color: white;
-            }
-        """)
+        self.tmpl_list_widget.setProperty("h5Component", "soundeventBrowserList")
         self.tmpl_list_widget.itemClicked.connect(self._on_template_clicked)
         self.tmpl_list_widget.itemDoubleClicked.connect(self._on_template_clicked)
         tmpl_layout.addWidget(self.tmpl_list_widget)

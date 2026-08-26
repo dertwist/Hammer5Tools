@@ -2,40 +2,40 @@
    styling-refactor migration. Behavior preserved as-is. */
 
 QDockWidget {
-    font: 580 9pt "Segoe UI";
-    color: @text_primary;
-    background-color: #3d3d3d;
-    border: 2px solid @background_primary;
+    font: 9pt "Segoe UI";
+    color: @text;
+    background-color: @hex_3d3d3d;
+    border: 2px solid @background;
 }
 
 QDockWidget::title {
-    background-color: @background_primary;
-    font: 580 10pt "Segoe UI";
-    color: @text_primary;
+    background-color: @background;
+    font: 9pt "Segoe UI";
+    color: @text;
 }
 
 QDockWidget::slider {
-    color: @background_primary;
+    color: @background;
 }
 QDockWidget::close-button, QDockWidget::float-button {
-    border: 1px solid @background_primary;
-    background: @background_primary;
+    border: 1px solid @background;
+    background: @background;
 }
 
 QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-    background: @selected_fill;
+    background: @selection;
 }
 
 QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-    background: @background_primary;
+    background: @background;
 }
 
 QDockWidget DockTitleWidget {
-  border-top: 1px solid #c0c0c0;
-  border-bottom: 1px solid #c0c0c0;
+  border-top: 1px solid @hex_c0c0c0;
+  border-bottom: 1px solid @hex_c0c0c0;
   background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-    stop: 0.0 #d4d4d4, stop: 0.3 #d0d0d0,
-    stop: 0.7 #cfcfcf, stop: 1.0 #c8c8c8);
+    stop: 0.0 @hex_d4d4d4, stop: 0.3 @hex_d0d0d0,
+    stop: 0.7 @hex_cfcfcf, stop: 1.0 @hex_c8c8c8);
 }
 QDockWidget DockTitleWidget QPushButton,
 QDockWidget DockTitleWidget QToolButton {
@@ -46,11 +46,11 @@ QDockWidget DockTitleWidget QToolButton {
 }
 QDockWidget DockTitleWidget QPushButton:hover,
 QDockWidget DockTitleWidget QToolButton:hover {
-  border-color: #939393;
+  border-color: @hex_939393;
   border-radius: 2px;
   background: qlineargradient(x1:0, y1 : 0, x2 : 0, y2 : 1,
-    stop : 0.0 #a8a8a8, stop : 0.3 #b3b3b3,
-    stop : 0.7 #b2b2b2, stop : 1.0 #aaaaaa);
+    stop : 0.0 @hex_a8a8a8, stop : 0.3 @hex_b3b3b3,
+    stop : 0.7 @hex_b2b2b2, stop : 1.0 @hex_aaaaaa);
 }
 QDockWidget DockTitleWidget QPushButton::menu-indicator,
 QDockWidget DockTitleWidget QToolButton::menu-indicator {

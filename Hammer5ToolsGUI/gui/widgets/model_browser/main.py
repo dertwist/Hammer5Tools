@@ -113,7 +113,7 @@ class _FacetPopup(QFrame):
         self.rows_layout.setContentsMargins(0, 0, 0, 0)
         self.rows_layout.setSpacing(0)
         layout.addWidget(self.rows_host)
-        self.setStyleSheet("QFrame { background-color: #272727; border: 1px solid #464649; }")
+        self.setProperty("h5Component", "modelBrowserFacetPopup")
 
     def set_values(self, values: List[str], checked: Optional[set] = None):
         self._values = list(values)
@@ -737,7 +737,7 @@ class ModelBrowserWidget(QWidget):
         selected_grid_item = None
         selected_list_item = None
         tree_rows = []
-        default_color = QColor("#e5e5e5")
+        default_color = theme.qcolor("#e5e5e5")
 
         for entry in self._visible:
             placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)

@@ -19,6 +19,7 @@ from gui.settings.main import (
     get_settings_bool, set_settings_bool,
 )
 from gui.settings.common import get_cs2_path
+from gui.styles.common import set_style_property
 
 from gui.widgets.console import ConsoleWidget
 from .constants import scan_unsupported
@@ -226,7 +227,7 @@ class UnrealPorterWidget(QDialog):
         self.resize(1280, 850)
         self.setMinimumSize(960, 600)
         enable_dark_title_bar(self)
-        self.setStyleSheet("background-color: #272727;")
+        self.setProperty("h5Component", "unrealPorterWindow")
 
         self.groups = {}
         self.worker = None
@@ -271,21 +272,7 @@ class UnrealPorterWidget(QDialog):
         self.ensure_analysis()
 
     def _setup_progress_bar_style(self):
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #5e5e5e;
-                border-radius: 2px;
-                text-align: center;
-                color: white;
-                font-size: 10px;
-                background-color: #2e2e2e;
-            }
-            QProgressBar::chunk {
-                background-color: #1a528a;
-                margin: 0px;
-                width: 1px;
-            }
-        """)
+        self.progress_bar.setProperty("h5Component", "mapbuilderProgressBar")
 
     # UI
 
@@ -458,10 +445,10 @@ class UnrealPorterWidget(QDialog):
         install = self.engine_install()
         if install:
             self.engine_label.setText(f"Unreal Engine, {install.version}")
-            self.engine_label.setStyleSheet("color: #7ac07a;")
+            set_style_property(self.engine_label, "h5State", "available")
         else:
             self.engine_label.setText("None, please install Unreal Engine 4.27 or 5.x")
-            self.engine_label.setStyleSheet("color: #d08a4a;")
+            set_style_property(self.engine_label, "h5State", "missing")
 
         self._log_export_cache()
 

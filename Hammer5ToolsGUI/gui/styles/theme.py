@@ -1,29 +1,5 @@
-"""Runtime theme selection for the application palette.
+"""Explicit application themes shared by QSS, QPainter, and OpenGL."""
 
-The interface brightness setting (Preferences -> General, stored as
-APP/brightness_level in settings.ini) has three levels:
-
-    1 - Dark    : the original pre-brightening palette
-    2 - Standard: the current source palette (default; identity map,
-                  stylesheets pass through untouched)
-    3 - Bright  : a lightness-inverted light palette
-
-All QSS colors in the codebase are written as level-2 literals. Level 1 is
-derived from the rewrite table below and restores the old palette exactly.
-Level 3 inverts each canonical color's HSL lightness, turning dark surfaces
-into layered off-whites while preserving the hues of accents and status colors.
-
-``install()`` patches QWidget/QApplication ``setStyleSheet`` so every
-stylesheet (global QSS, compiled .ui styles, inline calls) is transformed
-through the active map before Qt sees it; ``reapply()`` restyles every
-live widget when the user switches levels at runtime. The few colors that
-bypass stylesheets entirely (QPainter pens, the OpenGL clear color) use
-``color()`` / ``qcolor()`` / ``gl_clear_color()`` with level-2 literals.
-"""
-
-import colorsys
-import re
-import weakref
 from dataclasses import dataclass, fields
 
 from PySide6.QtGui import QColor
@@ -32,385 +8,220 @@ LEVEL_DARK = 1
 LEVEL_STANDARD = 2
 LEVEL_BRIGHT = 3
 
-# Rewrite table of the palette brightening: original (level 1) -> current
-# (level 2, canonical). Kept verbatim from dev/scripts/brighten_colors.py.
-_OLD_TO_LEVEL2 = {
-    "#151515": "#272727",
-    "#161616": "#292929",
-    "#1a1a1a": "#2c2c2c",
-    "#1c1c1c": "#2e2e2e",
-    "#1d1d1f": "#2f2f31",
-    "#121212": "#252525",
-    "#18181a": "#2a2a2c",
-    "#1e1e1e": "#303030",
-    "#1f1f1f": "#313131",
-    "#212121": "#333333",
-    "#222222": "#343434",
-    "#232323": "#353535",
-    "#242424": "#363636",
-    "#242426": "#363637",
-    "#252525": "#363636",
-    "#252526": "#363637",
-    "#262626": "#373737",
-    "#26262a": "#37373b",
-    "#26262b": "#37373c",
-    "#272729": "#38383a",
-    "#27272a": "#38383b",
-    "#292929": "#3a3a3a",
-    "#2a2929": "#3b3a3a",
-    "#2a2a2a": "#3b3b3b",
-    "#2a2a2d": "#3b3b3e",
-    "#2a2e38": "#3b3f48",
-    "#2c2c2c": "#3d3d3d",
-    "#2d2d2d": "#3e3e3e",
-    "#2d2d30": "#3e3e41",
-    "#2d333b": "#3e434b",
-    "#2e2e2e": "#3f3f3f",
-    "#2e2f30": "#3f4041",
-    "#2e2e32": "#3f3f42",
-    "#2f2f2f": "#404040",
-    "#323232": "#424242",
-    "#333333": "#434343",
-    "#333336": "#434346",
-    "#33363d": "#43464d",
-    "#333a48": "#434a57",
-    "#353535": "#454545",
-    "#363639": "#464649",
-    "#3a3a3a": "#4a4a4a",
-    "#3c3c3c": "#4c4c4c",
-    "#3d3d3d": "#4d4d4d",
-    "#3d3d42": "#4d4d51",
-    "#3e3e3e": "#4d4d4d",
-    "#3e4451": "#4d535f",
-    "#3e4b5e": "#4d596b",
-    "#404040": "#4f4f4f",
-    "#414956": "#515965",
-    "#434343": "#525252",
-    "#444444": "#535353",
-    "#4a4a4a": "#585858",
-    "#4a5a6a": "#586776",
-    "#4f5259": "#5d6066",
-    "#505050": "#5e5e5e",
-    "#555555": "#636363",
-    "#606060": "#6d6d6d",
-    "#606c77": "#6d7882",
-    "#61666e": "#6e727a",
-    "#666666": "#727272",
-    "#6b6b6b": "#777777",
-    "#6c6c6c": "#787878",
-    "#6d6d6d": "#797979",
-    "#71717a": "#7c7c85",
-    "#7a7a7a": "#858585",
-    "#7f7f7f": "#898989",
-    "#808080": "#8a8a8a",
-    "#888888": "#929292",
-    "#8a8a8a": "#939393",
-    "#8e8e93": "#97979c",
-    "#909090": "#999999",
-    "#999999": "#a1a1a1",
-    "#9a9f91": "#a2a79a",
-    "#9aa0aa": "#a2a8b1",
-    "#9d9d9d": "#a5a5a5",
-    "#a0a0a0": "#a8a8a8",
-    "#a3a3a3": "#aaaaaa",
-    "#a7a9a9": "#aeb0b0",
-    "#aaaaaa": "#b1b1b1",
-    "#ababab": "#b2b2b2",
-    "#acacac": "#b3b3b3",
-    "#b0b0b0": "#b6b6b6",
-    "#b8b8b8": "#bebebe",
-    "#bababa": "#c0c0c0",
-    "#bbbbbb": "#c0c0c0",
-    "#c3c3c3": "#c8c8c8",
-    "#c8c8c8": "#cccccc",
-    "#cbcbcb": "#cfcfcf",
-    "#cccccc": "#d0d0d0",
-    "#d0d0d0": "#d4d4d4",
-    "#e0e0e0": "#e2e2e2",
-    "#e3e3e3": "#e5e5e5",
-    "#1e222a": "#30343b",
-    "#282c34": "#393d44",
-    "#2c3e50": "#3d4d5e",
-    "#4e5563": "#5c636f",
-    "#abb2bf": "#b2b8c4",
-    "#accc8d": "#b3d096",
-    "#4caf50": "#5ab55e",
-    "#23272d": "#35383e",
-    "#008cba": "#1495c0",
-    "#3a78c4": "#4a83c9",
-    "#3d88bd": "#4d92c2",
-    "#515966": "#5f6672",
-}
-
-# Canonical rgb()/rgba() triplet values that appear in QSS strings but have
-# no hex counterpart in the table above (they were rewritten as triplets):
-# current (level 2) -> original (level 1).
-_PURE_TRIPLETS_TO_OLD = {
-    (135, 135, 135): (125, 125, 125),
-    (112, 112, 112): (100, 100, 100),
-    (80, 88, 100): (65, 73, 86),
-    (193, 193, 193): (188, 188, 188),
-    (57, 57, 57): (40, 40, 40),
-}
-
-
-def _invert_rgb_lightness(rgb):
-    normalized = tuple(channel / 255 for channel in rgb)
-    hue, lightness, saturation = colorsys.rgb_to_hls(*normalized)
-    inverted = colorsys.hls_to_rgb(hue, 1 - lightness, saturation)
-    return tuple(round(channel * 255) for channel in inverted)
-
-
-def _invert_hex_lightness(hex_color):
-    rgb = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
-    return "#%02x%02x%02x" % _invert_rgb_lightness(rgb)
-
-
-def _invert(spec):
-    """level2 -> level1. On value collisions (sources 1-2/255 apart) the
-    darkest original wins, deterministically (reverse sort + overwrite)."""
-    out = {}
-    for old, new in sorted(spec.items(), reverse=True):
-        out[new] = old
-    return out
-
-
-# canonical (level 2) -> level-specific hex
-PALETTE_2_TO_1 = _invert(_OLD_TO_LEVEL2)
-PALETTE_2_TO_3 = {new: _invert_hex_lightness(new) for new in _OLD_TO_LEVEL2.values()}
-PALETTE_2_TO_3["#ffffff"] = "#000000"
-PALETTE_2_TO_3["#fff"] = "#000000"
-
-_LEVEL_MAPS = {LEVEL_DARK: PALETTE_2_TO_1, LEVEL_STANDARD: {}, LEVEL_BRIGHT: PALETTE_2_TO_3}
-
-# canonical hex (lowercase, no '#') -> (r, g, b) for triplet matching
-_HEX_TO_RGB = {}
-for _old, _new in _OLD_TO_LEVEL2.items():
-    _HEX_TO_RGB[_new[1:]] = tuple(int(_new[i:i + 2], 16) for i in (1, 3, 5))
-
-_LEVEL = LEVEL_STANDARD
-_TRIPLET_MAP = {}  # canonical (r, g, b) -> active (r, g, b)
-_CACHE = {}
-
-_HEX_RE = re.compile(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{8}|[0-9a-fA-F]{3})(?![0-9a-fA-F])")
-_TRIPLET_RE = re.compile(r"(rgba?\s*\(\s*)(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})")
-_NAMED_WHITE_RE = re.compile(r"(?P<prefix>:\s*)white(?=\s*[;}])", re.IGNORECASE)
-
-
-def set_brightness_level(level):
-    """Select the active brightness map (1/2/3; anything else -> 2)."""
-    global _LEVEL, _TRIPLET_MAP, _CACHE
-    try:
-        _LEVEL = int(level)
-    except (TypeError, ValueError):
-        _LEVEL = LEVEL_STANDARD
-    if _LEVEL == LEVEL_STANDARD:
-        _TRIPLET_MAP = {}
-        _CACHE = {}
-        return
-    # canonical (r, g, b) -> active (r, g, b), covering both triplet forms
-    # that mirror a hex entry and triplets that only ever existed as such
-    triplets = {}
-    for hex2 in _HEX_TO_RGB:
-        target = _LEVEL_MAPS[_LEVEL].get("#" + hex2)
-        if target:
-            rgb = _HEX_TO_RGB[hex2]
-            triplets[rgb] = tuple(int(target[i:i + 2], 16) for i in (1, 3, 5))
-    for canon, old in _PURE_TRIPLETS_TO_OLD.items():
-        if _LEVEL == LEVEL_DARK:
-            triplets[canon] = old
-        else:
-            triplets[canon] = _invert_rgb_lightness(canon)
-    _TRIPLET_MAP = triplets
-    _CACHE = {}
-
-
-def brightness_level():
-    return _LEVEL
-
-
-def transform_qss(qss):
-    """Map a canonical (level 2) stylesheet string to the active level."""
-    if not qss or _LEVEL == LEVEL_STANDARD:
-        return qss
-    cached = _CACHE.get(qss)
-    if cached is not None:
-        return cached
-
-    palette = _LEVEL_MAPS.get(_LEVEL, {})
-
-    def hex_sub(m):
-        h = m.group(1)
-        if len(h) == 8:  # #AARRGGBB: transform the RGB part only
-            new = palette.get("#" + h[2:].lower())
-            return "#" + h[:2] + new[1:] if new else m.group(0)
-        new = palette.get("#" + h.lower())
-        return new if new else m.group(0)
-
-    def triplet_sub(m):
-        key = (int(m.group(2)), int(m.group(3)), int(m.group(4)))
-        new = _TRIPLET_MAP.get(key)
-        return "%s%d, %d, %d" % (m.group(1), *new) if new else m.group(0)
-
-    out = _HEX_RE.sub(hex_sub, qss)
-    if _LEVEL == LEVEL_BRIGHT:
-        out = _NAMED_WHITE_RE.sub(r"\g<prefix>#000000", out)
-    if _TRIPLET_MAP:
-        out = _TRIPLET_RE.sub(triplet_sub, out)
-    _CACHE[qss] = out
-    return out
-
-
-def color(hex_level2):
-    """Canonical (level 2) hex literal -> active-level hex string."""
-    palette = _LEVEL_MAPS.get(_LEVEL, {})
-    return palette.get(hex_level2.lower(), hex_level2)
-
-
-def qcolor(hex_level2):
-    return QColor(color(hex_level2))
-
-
-_VIEWPORT_CLEAR = {  # matches glClearColor() for each level
-    LEVEL_DARK: (0.11, 0.11, 0.11),
-    LEVEL_STANDARD: (0.18, 0.18, 0.18),
-    LEVEL_BRIGHT: (0.82, 0.82, 0.82),
-}
-
-
-def gl_clear_color():
-    """OpenGL viewport clear RGB for the active level (alpha is 1.0)."""
-    return _VIEWPORT_CLEAR.get(_LEVEL, _VIEWPORT_CLEAR[LEVEL_STANDARD])
-
-
-# --- setStyleSheet interception -------------------------------------------
-
-_ORIG_WIDGET_SSS = None
-_ORIG_APP_SSS = None
-_widget_qss = weakref.WeakKeyDictionary()  # widget -> raw canonical stylesheet
-_app_qss = []  # single-slot stash for the app-level stylesheet
-
-
-def _install_widget_patch():
-    global _ORIG_WIDGET_SSS
-    if _ORIG_WIDGET_SSS is not None:
-        return
-    from PySide6.QtWidgets import QWidget
-
-    _ORIG_WIDGET_SSS = QWidget.setStyleSheet
-
-    def patched(self, qss):
-        try:
-            _widget_qss[self] = qss
-            qss = transform_qss(qss)
-        except Exception:
-            pass  # never let theming break a widget
-        return _ORIG_WIDGET_SSS(self, qss)
-
-    QWidget.setStyleSheet = patched
-
-
-def _install_app_patch():
-    global _ORIG_APP_SSS
-    if _ORIG_APP_SSS is not None:
-        return
-    from PySide6.QtWidgets import QApplication
-
-    _ORIG_APP_SSS = QApplication.setStyleSheet
-
-    def patched(self, qss):
-        try:
-            _app_qss[:] = [qss]
-            qss = transform_qss(qss)
-        except Exception:
-            pass
-        return _ORIG_APP_SSS(self, qss)
-
-    QApplication.setStyleSheet = patched
-
-
-def install():
-    """Route every future setStyleSheet call through the active palette."""
-    _install_widget_patch()
-    _install_app_patch()
-
-
-def reapply():
-    """Re-apply the global stylesheet and all stashed widget stylesheets
-    through the currently active level (live theme switch)."""
-    from PySide6.QtWidgets import QApplication
-
-    app = QApplication.instance()
-    if app is None:
-        return
-    if _app_qss:
-        _ORIG_APP_SSS(app, transform_qss(_app_qss[0]))
-    for widget, raw in list(_widget_qss.items()):
-        try:
-            _ORIG_WIDGET_SSS(widget, transform_qss(raw))
-        except RuntimeError:
-            pass  # C++ object already deleted
-
-
-# --- Theme: semantic tokens for the new qss_compiler/manager pipeline -----
-#
-# This coexists with the setStyleSheet-patching machinery above during the
-# migration (see the styling-refactor plan). Nothing above this point is
-# used by the new pipeline; nothing below is used by the old one. Once every
-# caller goes through qss_compiler/manager, the code above is deleted.
-
-_STANDARD_HEX = {
-    "background_neutral": "#272727",
-    "background_primary": "#2e2e2e",
-    "background_secondary": "#2f2f31",
-    "text_primary": "#e5e5e5",
-    "text_neutral": "#a5a5a5",
-    "stroke": "#464649",
-    "selected_fill": "#515965",
-    "pressed": "#6d7882",
-    "accent": "#4a83c9",
-}
-
 
 @dataclass(frozen=True)
 class Theme:
-    """Semantic tokens consumed by qss_compiler.compile_stylesheet().
+    """Semantic colors, control metrics, and explicit compatibility shades."""
 
-    Field names double as the ``@token`` names QSS source files reference
-    (see gui/styles/qss/). Values are plain hex strings so they can be
-    substituted directly into QSS text.
-    """
-
-    background_neutral: str
-    background_primary: str
-    background_secondary: str
-    text_primary: str
-    text_neutral: str
-    stroke: str
-    selected_fill: str
-    pressed: str
+    background: str
+    surface: str
+    surface_raised: str
+    surface_input: str
+    text: str
+    text_muted: str
+    text_disabled: str
+    border: str
+    border_strong: str
     accent: str
-    viewport_clear: tuple  # (r, g, b) floats 0-1, for gl_clear_color()
+    accent_hover: str
+    accent_pressed: str
+    selection: str
+    selection_text: str
+    error: str
+    warning: str
+    success: str
+    control_height: str
+    spacing_unit: str
+    radius: str
+    border_width: str
+    icon_size: str
+    viewport_clear: tuple[float, float, float]
+    palette: tuple[tuple[str, str], ...]
+    level: int
 
 
-def _theme_for_level(level: int) -> "Theme":
-    """Derive a Theme's hex values from the existing rewrite tables, so the
-    three instances stay pixel-identical to what transform_qss() used to
-    produce for these same tokens."""
-    palette = _LEVEL_MAPS.get(level, {})
-    values = {name: palette.get(hex2, hex2) for name, hex2 in _STANDARD_HEX.items()}
-    return Theme(**values, viewport_clear=_VIEWPORT_CLEAR[level])
+_DARK_COLORS = (
+    ("#292929", "#161616"), ("#2c2c2c", "#1a1a1a"),
+    ("#2e2e2e", "#1c1c1c"), ("#2f2f31", "#1d1d1f"),
+    ("#303030", "#1e1e1e"), ("#343434", "#222222"),
+    ("#353535", "#232323"), ("#363636", "#242424"),
+    ("#363637", "#242426"), ("#373737", "#262626"),
+    ("#37373c", "#26262b"), ("#38383a", "#272729"),
+    ("#38383b", "#27272a"), ("#3b3a3a", "#2a2929"),
+    ("#3b3b3b", "#2a2a2a"), ("#3b3f48", "#2a2e38"),
+    ("#3d4d5e", "#2c3e50"), ("#3e3e3e", "#2d2d2d"),
+    ("#3e3e41", "#2d2d30"), ("#3e434b", "#2d333b"),
+    ("#3f3f42", "#2e2e32"), ("#424242", "#323232"),
+    ("#434343", "#333333"), ("#434346", "#333336"),
+    ("#43464d", "#33363d"), ("#464649", "#363639"),
+    ("#4a4a4a", "#3a3a3a"), ("#4d4d51", "#3d3d42"),
+    ("#4d596b", "#3e4b5e"), ("#4f4f4f", "#404040"),
+    ("#515965", "#414956"), ("#535353", "#444444"),
+    ("#586776", "#4a5a6a"), ("#5d6066", "#4f5259"),
+    ("#5e5e5e", "#505050"), ("#636363", "#555555"),
+    ("#6d6d6d", "#606060"), ("#727272", "#666666"),
+    ("#777777", "#6b6b6b"), ("#787878", "#6c6c6c"),
+    ("#797979", "#6d6d6d"), ("#7c7c85", "#71717a"),
+    ("#8a8a8a", "#808080"), ("#929292", "#888888"),
+    ("#a1a1a1", "#999999"), ("#a2a8b1", "#9aa0aa"),
+    ("#a5a5a5", "#9d9d9d"), ("#aaaaaa", "#a3a3a3"),
+    ("#b1b1b1", "#aaaaaa"), ("#b2b2b2", "#ababab"),
+    ("#b3d096", "#accc8d"), ("#b6b6b6", "#b0b0b0"),
+    ("#bebebe", "#b8b8b8"), ("#c0c0c0", "#bababa"),
+    ("#cccccc", "#c8c8c8"), ("#d0d0d0", "#cccccc"),
+    ("#d4d4d4", "#d0d0d0"), ("#e2e2e2", "#e0e0e0"),
+    ("#e5e5e5", "#e3e3e3"),
+    ("#1495c0", "#008cba"), ("#252525", "#121212"),
+    ("#2a2a2c", "#18181a"), ("#35383e", "#23272d"),
+    ("#37373b", "#26262a"), ("#3d3d3d", "#2c2c2c"),
+    ("#585858", "#4a4a4a"), ("#5ab55e", "#4caf50"),
+    ("#6e727a", "#61666e"), ("#939393", "#8a8a8a"),
+    ("#97979c", "#8e8e93"), ("#999999", "#909090"),
+    ("#a2a79a", "#9a9f91"), ("#a8a8a8", "#a0a0a0"),
+    ("#b3b3b3", "#acacac"), ("#c8c8c8", "#c3c3c3"),
+    ("#cfcfcf", "#cbcbcb"),
+)
+
+_BRIGHT_COLORS = (
+    ("#292929", "#d6d6d6"), ("#2c2c2c", "#d3d3d3"),
+    ("#2e2e2e", "#d1d1d1"), ("#2f2f31", "#ceced0"),
+    ("#303030", "#cfcfcf"), ("#343434", "#cbcbcb"),
+    ("#353535", "#cacaca"), ("#363636", "#c9c9c9"),
+    ("#363637", "#c8c8c9"), ("#373737", "#c8c8c8"),
+    ("#37373c", "#c3c3c8"), ("#38383a", "#c5c5c7"),
+    ("#38383b", "#c4c4c7"), ("#3b3a3a", "#c5c4c4"),
+    ("#3b3b3b", "#c4c4c4"), ("#3b3f48", "#b7bbc4"),
+    ("#3d4d5e", "#a1b1c2"), ("#3e3e3e", "#c1c1c1"),
+    ("#3e3e41", "#bebec1"), ("#3e434b", "#b4b9c1"),
+    ("#3f3f42", "#bdbdc0"), ("#424242", "#bdbdbd"),
+    ("#434343", "#bcbcbc"), ("#434346", "#b9b9bc"),
+    ("#43464d", "#b2b5bc"), ("#464649", "#b6b6b9"),
+    ("#4a4a4a", "#b5b5b5"), ("#4d4d51", "#aeaeb2"),
+    ("#4d596b", "#94a0b2"), ("#4f4f4f", "#b0b0b0"),
+    ("#515965", "#9aa2ae"), ("#535353", "#acacac"),
+    ("#586776", "#8998a7"), ("#5d6066", "#999ca2"),
+    ("#5e5e5e", "#a1a1a1"), ("#636363", "#9c9c9c"),
+    ("#6d6d6d", "#929292"), ("#727272", "#8d8d8d"),
+    ("#777777", "#888888"), ("#787878", "#878787"),
+    ("#797979", "#868686"), ("#7c7c85", "#7a7a83"),
+    ("#8a8a8a", "#757575"), ("#929292", "#6d6d6d"),
+    ("#a1a1a1", "#5e5e5e"), ("#a2a8b1", "#4e545d"),
+    ("#a5a5a5", "#5a5a5a"), ("#aaaaaa", "#555555"),
+    ("#b1b1b1", "#4e4e4e"), ("#b2b2b2", "#4d4d4d"),
+    ("#b3d096", "#4c692f"), ("#b6b6b6", "#494949"),
+    ("#bebebe", "#414141"), ("#c0c0c0", "#3f3f3f"),
+    ("#cccccc", "#333333"), ("#d0d0d0", "#2f2f2f"),
+    ("#d4d4d4", "#2b2b2b"), ("#e2e2e2", "#1d1d1d"),
+    ("#e5e5e5", "#1a1a1a"), ("#ffffff", "#000000"),
+    ("#1495c0", "#3fc0eb"), ("#252525", "#dadada"),
+    ("#2a2a2c", "#d3d3d5"), ("#35383e", "#c1c4ca"),
+    ("#37373b", "#c4c4c8"), ("#3d3d3d", "#c2c2c2"),
+    ("#585858", "#a7a7a7"), ("#5ab55e", "#4aa54e"),
+    ("#6e727a", "#858991"), ("#939393", "#6c6c6c"),
+    ("#97979c", "#636368"), ("#999999", "#666666"),
+    ("#a2a79a", "#606558"), ("#a8a8a8", "#575757"),
+    ("#b3b3b3", "#4c4c4c"), ("#c8c8c8", "#373737"),
+    ("#cfcfcf", "#303030"),
+)
 
 
-THEMES = {
-    LEVEL_DARK: _theme_for_level(LEVEL_DARK),
-    LEVEL_STANDARD: _theme_for_level(LEVEL_STANDARD),
-    LEVEL_BRIGHT: _theme_for_level(LEVEL_BRIGHT),
-}
+def _make_theme(*, level, palette, viewport_clear, **colors):
+    return Theme(
+        **colors, control_height="22px", spacing_unit="4px", radius="2px",
+        border_width="2px", icon_size="16px", viewport_clear=viewport_clear,
+        palette=palette, level=level,
+    )
 
-TOKEN_NAMES = frozenset(f.name for f in fields(Theme))
+
+DARK_THEME = _make_theme(
+    level=LEVEL_DARK, palette=_DARK_COLORS, viewport_clear=(0.11, 0.11, 0.11),
+    background="#1c1c1c", surface="#151515", surface_raised="#1d1d1f",
+    surface_input="#242426", text="#e3e3e3", text_muted="#9d9d9d",
+    text_disabled="#6d6d6d", border="#363639", border_strong="#505050",
+    accent="#3a78c4", accent_hover="#4a5a6a", accent_pressed="#606c77",
+    selection="#414956", selection_text="#ffffff", error="#d1494a",
+    warning="#e5a00d", success="#4caf50",
+)
+STANDARD_THEME = _make_theme(
+    level=LEVEL_STANDARD, palette=(), viewport_clear=(0.18, 0.18, 0.18),
+    background="#2e2e2e", surface="#272727", surface_raised="#2f2f31",
+    surface_input="#363637", text="#e5e5e5", text_muted="#a5a5a5",
+    text_disabled="#797979", border="#464649", border_strong="#5e5e5e",
+    accent="#4a83c9", accent_hover="#586776", accent_pressed="#6d7882",
+    selection="#515965", selection_text="#ffffff", error="#d1494a",
+    warning="#e5a00d", success="#5ab55e",
+)
+BRIGHT_THEME = _make_theme(
+    level=LEVEL_BRIGHT, palette=_BRIGHT_COLORS, viewport_clear=(0.82, 0.82, 0.82),
+    background="#d1d1d1", surface="#d8d8d8", surface_raised="#ceced0",
+    surface_input="#c8c8c9", text="#1a1a1a", text_muted="#5a5a5a",
+    text_disabled="#868686", border="#b6b6b9", border_strong="#a1a1a1",
+    accent="#366fb5", accent_hover="#8998a7", accent_pressed="#7d8892",
+    selection="#9aa2ae", selection_text="#000000", error="#d1494a",
+    warning="#e5a00d", success="#4aa54e",
+)
+
+THEMES = {LEVEL_DARK: DARK_THEME, LEVEL_STANDARD: STANDARD_THEME, LEVEL_BRIGHT: BRIGHT_THEME}
+_PALETTE_MAPS = {level: dict(theme.palette) for level, theme in THEMES.items()}
+_ACTIVE_THEME = STANDARD_THEME
+_NON_TOKEN_FIELDS = {"viewport_clear", "palette", "level"}
+TOKEN_NAMES = frozenset(f.name for f in fields(Theme) if f.name not in _NON_TOKEN_FIELDS)
+
+
+def set_brightness_level(level):
+    """Select the active explicit theme (invalid values select Standard)."""
+    global _ACTIVE_THEME
+    try:
+        selected = int(level)
+    except (TypeError, ValueError):
+        selected = LEVEL_STANDARD
+    _ACTIVE_THEME = THEMES.get(selected, STANDARD_THEME)
+
+
+def brightness_level():
+    return _ACTIVE_THEME.level
 
 
 def get_theme(level: int | None = None) -> Theme:
-    """The active Theme, or the Theme for a specific brightness level."""
-    return THEMES.get(level if level is not None else _LEVEL, THEMES[LEVEL_STANDARD])
+    return THEMES.get(level, STANDARD_THEME) if level is not None else _ACTIVE_THEME
+
+
+def resolve_hex(theme: Theme, canonical: str) -> str:
+    palette = _PALETTE_MAPS.get(theme.level)
+    if palette is None:
+        palette = dict(theme.palette)
+    return palette.get(canonical.lower(), canonical)
+
+
+_RGB_BY_LEVEL = {
+    LEVEL_DARK: {
+        (135, 135, 135): (125, 125, 125), (112, 112, 112): (100, 100, 100),
+        (80, 88, 100): (65, 73, 86), (193, 193, 193): (188, 188, 188),
+        (57, 57, 57): (40, 40, 40),
+    },
+    LEVEL_BRIGHT: {
+        (135, 135, 135): (120, 120, 120), (112, 112, 112): (143, 143, 143),
+        (80, 88, 100): (155, 163, 175), (193, 193, 193): (62, 62, 62),
+        (57, 57, 57): (198, 198, 198),
+    },
+}
+
+
+def resolve_rgb(theme: Theme, canonical: tuple[int, int, int]) -> tuple[int, int, int]:
+    hex_value = "#%02x%02x%02x" % canonical
+    resolved = resolve_hex(theme, hex_value)
+    if resolved != hex_value:
+        return tuple(int(resolved[index:index + 2], 16) for index in (1, 3, 5))
+    return _RGB_BY_LEVEL.get(theme.level, {}).get(canonical, canonical)
+
+
+def color(canonical: str) -> str:
+    return resolve_hex(_ACTIVE_THEME, canonical)
+
+
+def qcolor(canonical: str) -> QColor:
+    return QColor(color(canonical))
+
+
+def gl_clear_color():
+    return _ACTIVE_THEME.viewport_clear

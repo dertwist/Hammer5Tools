@@ -19,7 +19,7 @@ from shiboken6 import Shiboken
 from gui.widgets.popup_menu.ui_main import Ui_PoPupMenu
 from gui.widgets.common import Button
 from gui.settings.main import set_settings_value, get_settings_value
-from gui.widgets.popup_menu.common import _label_stylesheet, _bookmark_bottom_style
+from gui.widgets.popup_menu.common import LABEL_COMPONENT, LABEL_BOOKMARK_BOTTOM_COMPONENT
 
 
 class PropertyItemWidget(QWidget):
@@ -84,10 +84,8 @@ class PropertyItemWidget(QWidget):
             self._layout.addWidget(self.bookmark_button)
 
     def _apply_styles(self, highlighted=False):
-        # Apply a global stylesheet to the label
         try:
-            style = _label_stylesheet()
-            self.label.setStyleSheet(style)
+            self.label.setProperty("h5Component", LABEL_COMPONENT)
             self.label.setProperty("selected", highlighted)
             self.label.style().unpolish(self.label)
             self.label.style().polish(self.label)
@@ -233,7 +231,7 @@ class PopupMenu(QDialog):
         # Separator between bookmarked and regular items
         self.separator = QWidget()
         self.separator.setFixedHeight(2)
-        self.separator.setStyleSheet("background-color: #464649;")
+        self.separator.setProperty("h5Component", "popupMenuSeparator")
         self.separator.hide()
 
         # Combine everything
@@ -305,7 +303,9 @@ class PopupMenu(QDialog):
         # If bookmarked_list isn't empty, style the last item differently
         for idx, wdg in enumerate(bookmarked_list):
             if idx == len(bookmarked_list) - 1:
-                wdg.label.setStyleSheet(_bookmark_bottom_style())
+                wdg.label.setProperty("h5Component", LABEL_BOOKMARK_BOTTOM_COMPONENT)
+                wdg.label.style().unpolish(wdg.label)
+                wdg.label.style().polish(wdg.label)
             self.bookmarked_layout.addWidget(wdg)
             self._all_items.append(wdg)
 

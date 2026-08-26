@@ -1,4 +1,4 @@
-"""The one place in the app allowed to call QApplication.setStyleSheet().
+"""Apply the compiled application stylesheet.
 
 See the styling-refactor plan (gui/styles/theme.py docstring / project plan
 history) for why this split exists: qss_compiler produces text, this module
@@ -17,8 +17,7 @@ def apply(app: QApplication, theme: Theme) -> None:
 
 
 def reapply(theme: Theme) -> None:
-    """Re-run apply() against the current QApplication instance, e.g. after
-    the user changes the brightness level at runtime."""
+    """Recompile the one global stylesheet for a live theme switch."""
     app = QApplication.instance()
     if app is not None:
         apply(app, theme)

@@ -16,7 +16,6 @@ from gui.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
 from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets, AssetGroupItem
 from gui.editors.assetgroup_maker.process import perform_batch_processing
 from gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file, get_default_file
-from gui.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit
 
 
 class EditorTabWidget(QWidget):
@@ -72,13 +71,7 @@ class EditorTabWidget(QWidget):
 
         # 3. Bottom Action Footer
         footer_frame = QFrame()
-        footer_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2E2E2E;
-                border: 1px solid #464649;
-                border-radius: 2px;
-            }
-        """)
+        footer_frame.setProperty("h5Component", "assetgroupFooterFrame")
         footer_layout = QVBoxLayout(footer_frame)
         footer_layout.setContentsMargins(8, 8, 8, 8)
         footer_layout.setSpacing(6)
@@ -88,12 +81,12 @@ class EditorTabWidget(QWidget):
         opt_row.setSpacing(8)
 
         output_lbl = QLabel("Output Directory:")
-        output_lbl.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        output_lbl.setProperty("h5Component", "assetgroupHintLabel")
         output_lbl.setFixedHeight(28)
         opt_row.addWidget(output_lbl)
 
         self.custom_output_edit = QLineEdit()
-        self.custom_output_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.custom_output_edit.setProperty("h5Component", "legacyLineEdit")
         self.custom_output_edit.setPlaceholderText("Output directory relative to addon (leave blank to output in asset folder)...")
         self.custom_output_edit.setFixedHeight(28)
         self.custom_output_edit.textChanged.connect(self._on_output_text_changed)
@@ -101,7 +94,7 @@ class EditorTabWidget(QWidget):
 
         self.browse_output_btn = QPushButton("Browse...")
         self.browse_output_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
-        self.browse_output_btn.setStyleSheet(qt_stylesheet_button)
+        self.browse_output_btn.setProperty("h5Component", "legacyButton")
         self.browse_output_btn.setFixedHeight(28)
         self.browse_output_btn.clicked.connect(self._on_browse_output)
         opt_row.addWidget(self.browse_output_btn)
@@ -113,12 +106,12 @@ class EditorTabWidget(QWidget):
         action_row.setSpacing(8)
 
         self.status_label = QLabel("No assets loaded")
-        self.status_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        self.status_label.setProperty("h5Component", "assetgroupHintLabel")
         self.status_label.setFixedHeight(28)
         action_row.addWidget(self.status_label, 1)
 
         self.watch_changes_cb = QCheckBox("Watch the changes")
-        self.watch_changes_cb.setStyleSheet(qt_stylesheet_checkbox)
+        self.watch_changes_cb.setProperty("h5Component", "legacyCheckbox")
         self.watch_changes_cb.setToolTip("Automatically monitor asset files and live-update batch configuration on changes")
         self.watch_changes_cb.setChecked(True)
         self.watch_changes_cb.setFixedHeight(28)
@@ -127,14 +120,14 @@ class EditorTabWidget(QWidget):
 
         self.save_btn = QPushButton("Save")
         self.save_btn.setIcon(QIcon(":/valve_common/icons/tools/common/save.png"))
-        self.save_btn.setStyleSheet(qt_stylesheet_button)
+        self.save_btn.setProperty("h5Component", "legacyButton")
         self.save_btn.setFixedHeight(28)
         self.save_btn.setToolTip("Save this Batch Profile (Ctrl+S)")
         self.save_btn.clicked.connect(lambda: self.save_file())
         action_row.addWidget(self.save_btn)
 
         self.revert_btn = QPushButton("Revert Batch")
-        self.revert_btn.setStyleSheet(qt_stylesheet_button)
+        self.revert_btn.setProperty("h5Component", "legacyButton")
         self.revert_btn.setEnabled(False)
         self.revert_btn.setFixedHeight(28)
         self.revert_btn.setToolTip("Delete files created by the last batch process")
@@ -143,7 +136,7 @@ class EditorTabWidget(QWidget):
 
         self.process_btn = QPushButton("Process Batch")
         self.process_btn.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
-        self.process_btn.setStyleSheet(qt_stylesheet_button)
+        self.process_btn.setProperty("h5Component", "legacyButton")
         self.process_btn.setFixedHeight(28)
         self.process_btn.clicked.connect(self.process_all)
         action_row.addWidget(self.process_btn)

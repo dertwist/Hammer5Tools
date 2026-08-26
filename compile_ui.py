@@ -1,4 +1,5 @@
 import os
+import ast
 import sys
 import subprocess
 import threading
@@ -7,6 +8,39 @@ from tqdm import tqdm
 from threading import Lock
 
 IGNORED_FOLDERS = ["venv", "__pycache__", "build", "dist"]
+_STYLE_MANAGER_IMPORT = "from gui.styles.manager import apply_widget_stylesheet"
+
+
+def strip_designer_stylesheets(generated: str) -> str:
+    """Remove standalone stylesheet statements emitted by ``pyside6-uic``.
+
+    Widget appearance belongs to the compiled application QSS.  Supporting
+    both fresh ``widget.setStyleSheet(...)`` output and the temporary
+    ``apply_widget_stylesheet(widget, ...)`` form keeps existing generated
+    files mechanically clean during the migration.
+    """
+    tree = ast.parse(generated)
+    removed_lines = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
+            continue
+        function = node.value.func
+        is_designer_style = (
+            isinstance(function, ast.Attribute) and function.attr == "setStyleSheet"
+        ) or (
+            isinstance(function, ast.Name) and function.id == "apply_widget_stylesheet"
+        )
+        if is_designer_style:
+            removed_lines.update(range(node.lineno - 1, node.end_lineno))
+
+    lines = generated.splitlines(keepends=True)
+    stripped = "".join(
+        line for index, line in enumerate(lines)
+        if index not in removed_lines and line.strip() != _STYLE_MANAGER_IMPORT
+    )
+    if ".setStyleSheet(" in stripped or "apply_widget_stylesheet(" in stripped:
+        raise ValueError("A generated stylesheet call was not a standalone statement")
+    return stripped
 
 
 def compile_ui(ui_file: str, out_file: str) -> None:
@@ -18,6 +52,7 @@ def compile_ui(ui_file: str, out_file: str) -> None:
             'import resources_rc',
             'from gui import resources_rc',
         )
+        generated = strip_designer_stylesheets(generated)
         with open(out_file, 'w', encoding='utf-8', newline='\n') as generated_file:
             generated_file.write(generated)
         print(f"Compiled {ui_file} -> {out_file}")

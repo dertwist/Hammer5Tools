@@ -14,11 +14,6 @@ from PySide6.QtWidgets import (
 from gui.editors.smartprop_editor.viewport_3d.render_area import SmartProp3DRenderArea
 from gui.editors.smartprop_editor.viewport_3d.gizmo import GizmoMode
 from gui.common import get_cs2_path
-from gui.styles.common import (
-    qt_stylesheet_viewport_toolbar,
-    qt_stylesheet_combobox,
-    qt_stylesheet_checkbox,
-)
 
 
 def _hammer_tool_icon_path(name):
@@ -40,25 +35,6 @@ def _bundled_hammer_icon_path(name):
     return gui_assets_dir("icons", "tools", "hammer", name)
 
 
-# Toggle-button styling for the compact icon toggles in the viewport toolbar.
-# Checked state is highlighted so the on/off state reads clearly at a glance.
-_VIEWPORT_TOGGLE_STYLE = """
-QToolButton {
-    border: 1px solid rgba(94, 94, 94, 255);
-    border-radius: 2px;
-    background-color: #2e2e2e;
-    padding: 1px;
-}
-QToolButton:hover {
-    background-color: #515965;
-}
-QToolButton:checked {
-    background-color: #586776;
-    border-color: #b3d096;
-}
-"""
-
-
 class SmartProp3DViewport(QWidget):
     elementClicked = Signal(int)
 
@@ -77,7 +53,7 @@ class SmartProp3DViewport(QWidget):
         toolbar = QWidget()
         toolbar.setFixedHeight(28)
         toolbar.setObjectName("SPE_Viewport3D_Toolbar")
-        toolbar.setStyleSheet(qt_stylesheet_viewport_toolbar)
+        toolbar.setProperty("h5Component", "smartpropViewportToolbar")
         toolbar.setMinimumWidth(0)
         toolbar.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
 
@@ -195,18 +171,10 @@ class SmartProp3DViewport(QWidget):
         # Keep all controls packed against the left edge of the toolbar.
         tb_layout.addStretch()
 
-        # Create smaller styling for the toolbar controls
-        qt_stylesheet_viewport_combo = qt_stylesheet_combobox.replace(
-            "height:22px;", "height:16px; min-height:16px; max-height:16px; padding-top: 0px; padding-bottom: 0px; font: 580 8pt \"Segoe UI\";"
-        )
-        qt_stylesheet_viewport_check = qt_stylesheet_checkbox.replace(
-            "height:22px;", "height:16px; min-height:16px; max-height:16px; padding-top: 0px; padding-bottom: 0px; font: 580 8pt \"Segoe UI\";"
-        )
-
-        # Apply shared app stylesheets to the toolbar controls.
+        # Apply the compact toolbar-control size variant to the toolbar controls.
         for combo in (self.space_combo, self.grid_combo, self.rot_combo, self.view_combo):
-            combo.setStyleSheet(qt_stylesheet_viewport_combo)
-        self.snap_check.setStyleSheet(qt_stylesheet_viewport_check)
+            combo.setProperty("h5Component", "smartpropViewportCombo")
+        self.snap_check.setProperty("h5Component", "smartpropViewportCheck")
 
         layout.addWidget(toolbar)
 
@@ -239,7 +207,7 @@ class SmartProp3DViewport(QWidget):
         btn.setFixedSize(22, 22)
         btn.setIconSize(QSize(16, 16))
         btn.setCursor(Qt.PointingHandCursor)
-        btn.setStyleSheet(_VIEWPORT_TOGGLE_STYLE)
+        btn.setProperty("h5Component", "smartpropViewportToggle")
         icon = QIcon()
         icon.addFile(icon_off, QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         icon.addFile(icon_on or icon_off, QSize(), QIcon.Mode.Normal, QIcon.State.On)

@@ -15,7 +15,6 @@ from gui.widgets.explorer.main import Explorer
 from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher
 from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
 from gui.editors.assetgroup_maker.objects import get_default_file
-from gui.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit
 
 
 class BatchCreatorMainWindow(QMainWindow):
@@ -86,12 +85,12 @@ class BatchCreatorMainWindow(QMainWindow):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel("Create config for asset folder or open a config")
-        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setProperty("h5Component", "emptyStateTitle")
         title_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(title_lbl)
 
         desc_lbl = QLabel("Select an asset folder in the Explorer on the left, open an existing .hbat file, or create a new profile.")
-        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setProperty("h5Component", "emptyStateDescription")
         desc_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(desc_lbl)
 
@@ -101,21 +100,21 @@ class BatchCreatorMainWindow(QMainWindow):
 
         btn_create_folder = QPushButton("New Config for Selected Folder")
         btn_create_folder.setIcon(QIcon(":/valve_common/icons/tools/common/folder.png"))
-        btn_create_folder.setStyleSheet(qt_stylesheet_button)
+        btn_create_folder.setProperty("h5Component", "legacyButton")
         btn_create_folder.setFixedHeight(28)
         btn_create_folder.clicked.connect(self.create_new_config_for_selected_folder)
         btn_row.addWidget(btn_create_folder)
 
         btn_open = QPushButton("Open Config...")
         btn_open.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
-        btn_open.setStyleSheet(qt_stylesheet_button)
+        btn_open.setProperty("h5Component", "legacyButton")
         btn_open.setFixedHeight(28)
         btn_open.clicked.connect(self._open_file_dialog)
         btn_row.addWidget(btn_open)
 
         btn_new = QPushButton("Create New Config...")
         btn_new.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
-        btn_new.setStyleSheet(qt_stylesheet_button)
+        btn_new.setProperty("h5Component", "legacyButton")
         btn_new.setFixedHeight(28)
         btn_new.clicked.connect(lambda: self.create_new_config_dialog(force_file_dialog=True))
         btn_row.addWidget(btn_new)
@@ -161,7 +160,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.new_cfg_for_folder_btn = QPushButton("New config for selected folder")
         self.new_cfg_for_folder_btn.setIcon(QIcon(":/valve_common/icons/tools/common/folder.png"))
         self.new_cfg_for_folder_btn.setToolTip("Create a new batch configuration for the selected directory in Explorer")
-        self.new_cfg_for_folder_btn.setStyleSheet(qt_stylesheet_button)
+        self.new_cfg_for_folder_btn.setProperty("h5Component", "legacyButton")
         self.new_cfg_for_folder_btn.setFixedHeight(28)
         self.new_cfg_for_folder_btn.clicked.connect(self.create_new_config_for_selected_folder)
         explorer_dock_layout.addWidget(self.new_cfg_for_folder_btn)
@@ -183,7 +182,7 @@ class BatchCreatorMainWindow(QMainWindow):
         # Search / filter input at top of Config Explorer
         self.cfg_search = QLineEdit()
         self.cfg_search.setPlaceholderText("Filter configs...")
-        self.cfg_search.setStyleSheet(qt_stylesheet_lineedit)
+        self.cfg_search.setProperty("h5Component", "legacyLineEdit")
         self.cfg_search.setClearButtonEnabled(True)
         self.cfg_search.textChanged.connect(self._filter_configs)
         config_dock_layout.addWidget(self.cfg_search)
@@ -202,7 +201,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.new_cfg_btn = QPushButton("New Config...")
         self.new_cfg_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
         self.new_cfg_btn.setToolTip("Open file dialog to create a new .hbat batch config file (Ctrl+N)")
-        self.new_cfg_btn.setStyleSheet(qt_stylesheet_button)
+        self.new_cfg_btn.setProperty("h5Component", "legacyButton")
         self.new_cfg_btn.setFixedHeight(28)
         self.new_cfg_btn.clicked.connect(self._open_new_config_file_dialog)
         cfg_bottom_layout.addWidget(self.new_cfg_btn)

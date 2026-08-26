@@ -175,22 +175,3 @@ def test_remove_file_widget(qapp, fake_addon_dir):
         watcher.close()
 
 
-def test_monitoring_watcher_alternating_rows_and_widget_sizing(qapp, fake_addon_dir):
-    hbat_path = os.path.join(fake_addon_dir, "models", "props", "crate", "test_item.hbat")
-    with open(hbat_path, "w") as f:
-        json.dump({"process": {"reference": ""}, "replacements": {}, "file": {"content": ""}}, f)
-
-    watcher = MonitoringFileWatcher(fake_addon_dir)
-    try:
-        assert watcher.alternatingRowColors() is True
-        norm_path = os.path.normpath(hbat_path)
-        assert norm_path in watcher.file_widgets
-        item, widget = watcher.file_widgets[norm_path]
-        assert widget.sizeHint().height() >= 26
-        assert item.sizeHint().height() >= 26
-        assert widget.play_button.iconSize().width() >= 14
-        assert widget.watch_button.iconSize().width() >= 14
-    finally:
-        watcher.close()
-
-

@@ -33,7 +33,6 @@ from gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
 from gui.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from gui.widgets.explorer.main import Explorer
 from gui.settings.main import get_cs2_path, get_addon_name
-from gui.styles.common import qt_stylesheet_button
 
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
 
@@ -158,7 +157,7 @@ def save_wav(path, samples, sr, cue_positions=None):
 def _sep():
     line = QFrame()
     line.setFrameShape(QFrame.VLine)
-    line.setStyleSheet("color: rgba(94, 94, 94,255);")
+    line.setProperty("h5Component", "soundeventSeparator")
     return line
 
 
@@ -349,15 +348,7 @@ class AudioDocument(QWidget):
 
         # Categorized menu bar: File / Edit / View / Playback / Effects / Markers
         menubar = QMenuBar(self)
-        menubar.setStyleSheet(
-            "QMenuBar { background-color:#2e2e2e; color:#e5e5e5; border:none; }"
-            "QMenuBar::item { padding:3px 8px; background:transparent; }"
-            "QMenuBar::item:selected { background-color:#515965; color:#FFFFFF; }"
-            "QMenu { background-color:#2e2e2e; color:#e5e5e5;"
-            " border:1px solid rgba(94, 94, 94,255); }"
-            "QMenu::item { padding:4px 20px; }"
-            "QMenu::item:selected { background-color:#515965; color:#FFFFFF; }"
-            "QMenu::separator { height:1px; background:rgba(94, 94, 94,255); margin:3px 6px; }")
+        menubar.setProperty("h5Component", "soundeventWaveMenuBar")
         for name, acts in self._menus:
             m = menubar.addMenu(name)
             for a in acts:
@@ -373,18 +364,7 @@ class AudioDocument(QWidget):
         toolbar = QToolBar(self)
         toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         toolbar.setIconSize(QSize(14, 14))
-        toolbar.setStyleSheet(
-            "QToolBar { background-color:#2e2e2e; border:none; spacing:2px; padding:2px; }"
-            "QToolBar::separator { background:rgba(94, 94, 94,255); width:1px; margin:2px 3px; }"
-            "QToolButton {"
-            "  font: 580 8pt 'Segoe UI';"
-            "  color:#e5e5e5; background-color:#2e2e2e;"
-            "  border:2px solid rgba(94, 94, 94,255); border-radius:2px;"
-            "  padding:1px 5px;"
-            "}"
-            "QToolButton:hover { background-color:#515965; color:#FFFFFF; }"
-            "QToolButton:pressed { background-color:#2e2e2e; }"
-            "QToolButton:checked { background-color:#515965; }")
+        toolbar.setProperty("h5Component", "soundeventWaveToolbar")
         # Actions excluded from the toolbar (stay accessible via menus/hotkeys)
         toolbar_excluded = {
             self.act_new, self.act_open, self.act_save, self.act_save_as,
@@ -446,10 +426,7 @@ class AudioDocument(QWidget):
             self.info_button.setText("ℹ")
         else:
             self.info_button.setIcon(info_icon)
-        self.info_button.setStyleSheet(
-            "QToolButton { background-color:#2f2f31; border:1px solid #434346;"
-            " border-radius:2px; color:#e5e5e5; }"
-            "QToolButton:hover { background-color:#515965; color:#FFFFFF; }")
+        self.info_button.setProperty("h5Component", "soundeventInfoButton")
         self._info_overlay = DBInfoOverlay(self)
         self.info_button.clicked.connect(self._toggle_info)
         right.addWidget(self.info_button, 0, Qt.AlignHCenter)
@@ -459,7 +436,7 @@ class AudioDocument(QWidget):
 
         self.status = QLabel("Drop an audio file here, or use File ▸ Open. "
                              "Single-click to move the play line; left-drag to select.")
-        self.status.setStyleSheet("color:#a5a5a5; font: 9pt 'Segoe UI';")
+        self.status.setProperty("h5Component", "soundeventWaveStatus")
         root.addWidget(self.status)
 
     def _seek_to(self, x):
@@ -793,12 +770,12 @@ class AudioEditor(QMainWindow):
         empty_layout.addWidget(icon_lbl)
 
         title_lbl = QLabel("Open an audio file or create a new document")
-        title_lbl.setStyleSheet("font: 700 13pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setProperty("h5Component", "emptyStateTitle")
         title_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(title_lbl)
 
         desc_lbl = QLabel("Select an audio file in the Audio Explorer on the left, open an existing file, or create a new audio document.")
-        desc_lbl.setStyleSheet("font: 500 9.5pt 'Segoe UI'; color: #9D9D9D;")
+        desc_lbl.setProperty("h5Component", "emptyStateDescription")
         desc_lbl.setAlignment(Qt.AlignCenter)
         empty_layout.addWidget(desc_lbl)
 
@@ -808,14 +785,14 @@ class AudioEditor(QMainWindow):
 
         btn_open = QPushButton("Open File...")
         btn_open.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
-        btn_open.setStyleSheet(qt_stylesheet_button)
+        btn_open.setProperty("h5Component", "legacyButton")
         btn_open.setFixedHeight(26)
         btn_open.clicked.connect(self.open_file_dialog)
         btn_row.addWidget(btn_open)
 
         btn_new = QPushButton("Create New...")
         btn_new.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
-        btn_new.setStyleSheet(qt_stylesheet_button)
+        btn_new.setProperty("h5Component", "legacyButton")
         btn_new.setFixedHeight(26)
         btn_new.clicked.connect(self.new_document)
         btn_row.addWidget(btn_new)
@@ -853,11 +830,11 @@ class AudioEditor(QMainWindow):
         # play_sound signal instead of spawning its own player. We connect nothing
         # to that signal, so selecting a file (incl. the auto-selection at load)
         # makes no sound — only double-click opens a document tab.
-        self.explorer.tree.setStyleSheet("border:none")
+        self.explorer.tree.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.explorer.tree.doubleClicked.connect(self._on_explorer_double_click)
 
         explorer_border = QWidget()
-        explorer_border.setStyleSheet("border:2px solid #464649;")
+        explorer_border.setProperty("h5Component", "soundeventExplorerBorder")
         _border_lay = QVBoxLayout(explorer_border)
         _border_lay.setContentsMargins(0, 0, 0, 0)
         _border_lay.addWidget(self.explorer.frame)

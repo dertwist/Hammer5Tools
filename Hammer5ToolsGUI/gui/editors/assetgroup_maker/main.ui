@@ -550,7 +550,7 @@ color: gray;
          <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>9</number>
+         <number>0</number>
         </property>
         <item>
          <layout class="QVBoxLayout" name="layout"/>
@@ -571,7 +571,7 @@ color: gray;
             <number>0</number>
            </property>
            <property name="topMargin">
-            <number>4</number>
+            <number>0</number>
            </property>
            <property name="rightMargin">
             <number>0</number>
@@ -808,7 +808,7 @@ color: gray;
             <number>0</number>
            </property>
            <property name="topMargin">
-            <number>4</number>
+            <number>0</number>
            </property>
            <property name="rightMargin">
             <number>0</number>
@@ -1052,13 +1052,13 @@ color: gray;
             <number>0</number>
            </property>
            <property name="topMargin">
-            <number>4</number>
+            <number>0</number>
            </property>
            <property name="rightMargin">
             <number>0</number>
            </property>
            <property name="bottomMargin">
-            <number>9</number>
+            <number>0</number>
            </property>
            <item>
             <widget class="QFrame" name="frame_8">

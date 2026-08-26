@@ -372,21 +372,6 @@ class AttachmentThumbnailWidget(QFrame):
         self.setFrameShape(QFrame.NoFrame)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
-        self.setStyleSheet("""
-            QFrame#AttachmentThumbnailCard {
-                background: transparent;
-                border: none;
-                padding: 4px 0px;
-                margin: 0px;
-            }
-            QLabel {
-                background: transparent;
-                border: none;
-                padding: 0px;
-                margin: 0px;
-                qproperty-alignment: AlignCenter;
-            }
-        """)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 4, 0, 4)
@@ -397,7 +382,7 @@ class AttachmentThumbnailWidget(QFrame):
         self.preview_label = QLabel(self)
         self.preview_label.setAlignment(Qt.AlignCenter)
         self.preview_label.setText("Loading preview...")
-        self.preview_label.setStyleSheet("color: #929292; font-size: 11px; background: transparent; border: none;")
+        self.preview_label.setProperty("h5Component", "attachmentPreviewLoading")
         layout.addWidget(self.preview_label)
 
         self.setToolTip("Click to view full image in viewer")
@@ -437,7 +422,9 @@ class AttachmentThumbnailWidget(QFrame):
 
     def _on_download_error(self, err_msg: str):
         self.preview_label.setText("Image preview unavailable")
-        self.preview_label.setStyleSheet("color: #797979; font-size: 10px; font-style: italic;")
+        self.preview_label.setProperty("h5Component", "attachmentPreviewError")
+        self.preview_label.style().unpolish(self.preview_label)
+        self.preview_label.style().polish(self.preview_label)
 
     def _update_scaled_pixmap(self):
         if self.pixmap is None or self.pixmap.isNull():
@@ -479,17 +466,7 @@ class AttachmentThumbnailWidget(QFrame):
 
     def contextMenuEvent(self, event):
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #2e2e2e;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                padding: 4px;
-            }
-            QMenu::item:selected {
-                background-color: #515965;
-            }
-        """)
+        menu.setProperty("h5Component", "attachmentContextMenu")
 
         view_act = menu.addAction("View in Image Viewer")
         copy_img_act = menu.addAction("Copy Image")
@@ -516,34 +493,13 @@ class VideoAttachmentWidget(QFrame):
         self.attachment = attachment
         self.setObjectName("VideoAttachmentCard")
 
-        self.setStyleSheet("""
-            QFrame#VideoAttachmentCard {
-                background: transparent;
-                border: none;
-                padding: 2px 5px;
-                margin: 0px;
-            }
-            QPushButton {
-                background-color: #373737;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                border-radius: 3px;
-                padding: 3px 10px;
-                font-size: 11px;
-            }
-            QPushButton:hover {
-                background-color: #4a83c9;
-                color: white;
-            }
-        """)
-
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 4, 5, 4)
         layout.setSpacing(10)
 
         # Video indicator
         icon_label = QLabel("▶", self)
-        icon_label.setStyleSheet("color: #4a83c9; font-size: 14px; font-weight: bold;")
+        icon_label.setProperty("h5Component", "attachmentVideoIcon")
         layout.addWidget(icon_label)
 
         # Info text
@@ -552,11 +508,11 @@ class VideoAttachmentWidget(QFrame):
 
         title = self.attachment.alt_text or self.attachment.filename or "Video Recording"
         title_label = QLabel(title, self)
-        title_label.setStyleSheet("color: #e5e5e5; font-size: 11px; font-weight: bold;")
+        title_label.setProperty("h5Component", "attachmentCardTitle")
         text_layout.addWidget(title_label)
 
         sub_label = QLabel("Video Attachment", self)
-        sub_label.setStyleSheet("color: #a5a5a5; font-size: 10px;")
+        sub_label.setProperty("h5Component", "attachmentCardSubtitle")
         text_layout.addWidget(sub_label)
 
         layout.addLayout(text_layout, 1)
@@ -576,40 +532,19 @@ class FileAttachmentWidget(QFrame):
         self.attachment = attachment
         self.setObjectName("FileAttachmentCard")
 
-        self.setStyleSheet("""
-            QFrame#FileAttachmentCard {
-                background: transparent;
-                border: none;
-                padding: 2px 5px;
-                margin: 0px;
-            }
-            QPushButton {
-                background-color: #373737;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                border-radius: 3px;
-                padding: 3px 10px;
-                font-size: 11px;
-            }
-            QPushButton:hover {
-                background-color: #4a83c9;
-                color: white;
-            }
-        """)
-
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 4, 5, 4)
         layout.setSpacing(10)
 
         icon_label = QLabel("📁", self)
-        icon_label.setStyleSheet("font-size: 14px;")
+        icon_label.setProperty("h5Component", "attachmentFileIcon")
         layout.addWidget(icon_label)
 
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
 
         name_label = QLabel(self.attachment.filename, self)
-        name_label.setStyleSheet("color: #e5e5e5; font-size: 11px; font-weight: bold;")
+        name_label.setProperty("h5Component", "attachmentCardTitle")
         text_layout.addWidget(name_label)
 
         size_str = ""
@@ -617,7 +552,7 @@ class FileAttachmentWidget(QFrame):
             mb = self.attachment.size_bytes / (1024 * 1024)
             size_str = f"{mb:.1f} MB" if mb >= 1.0 else f"{self.attachment.size_bytes / 1024:.0f} KB"
             size_label = QLabel(size_str, self)
-            size_label.setStyleSheet("color: #a5a5a5; font-size: 10px;")
+            size_label.setProperty("h5Component", "attachmentCardSubtitle")
             text_layout.addWidget(size_label)
 
         layout.addLayout(text_layout, 1)

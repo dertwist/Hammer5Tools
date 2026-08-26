@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
 from gui.widgets import Spacer
 from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.property import compact
 
 
 class PropertyVariableOutput(QWidget):
@@ -22,14 +23,7 @@ class PropertyVariableOutput(QWidget):
         self.spacer = Spacer()
         self.ui.layout.addWidget(self.spacer)
 
-        self.ui.property_class.setStyleSheet("""
-                    border:0px;
-        background-color: rgba(255, 255, 255, 0);
-        font: 8pt "Segoe UI";
-        padding-right: 16px;
-
-        color: rgb(255, 209, 153);
-                    """)
+        compact.style_label(self.ui.property_class, color="#FFD199")
 
 
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)

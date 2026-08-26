@@ -60,9 +60,9 @@ from gui.editors.smartprop_editor.objects import (
     selection_criteria_list,
 )
 from gui.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor.props.model import ComponentRef
 from gui.styles.property_icons import IconCache
+from gui.styles import theme
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.settings.main import get_settings_bool
@@ -131,9 +131,6 @@ def _component_icon(kind: str, raw_class: str):
     return IconCache.get_modifier_icon()
 
 
-_TRANSPARENT_LABEL = "QLabel { background: transparent; padding: 0px; margin: 0px; border: none; }"
-
-
 class ElementRowWidget(QFrame):
     """The single, always-present row for the element itself (row 0). Unlike
     modifiers/criteria it's never reordered or deleted, so it stays a plain
@@ -141,9 +138,6 @@ class ElementRowWidget(QFrame):
 
     selected = Signal(object)  # ComponentRef
     addNoteRequested = Signal(object)  # ComponentRef
-
-    SELECTION_COLOR = "#5d6066"
-    HOVER_COLOR = "#43464d"
 
     def __init__(self, ref: ComponentRef, parent=None):
         super().__init__(parent)
@@ -153,6 +147,7 @@ class ElementRowWidget(QFrame):
         self.setFrameShape(QFrame.NoFrame)
         self.setFixedHeight(26)
         self.setFocusPolicy(Qt.ClickFocus)
+        self.setProperty("h5Component", "smartpropElementRow")
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 6, 2)
@@ -162,7 +157,7 @@ class ElementRowWidget(QFrame):
         self.lbl_icon.setFixedSize(18, 18)
         self.lbl_icon.setScaledContents(True)
         self.lbl_icon.setAlignment(Qt.AlignCenter)
-        self.lbl_icon.setStyleSheet(_TRANSPARENT_LABEL)
+        self.lbl_icon.setProperty("h5Component", "smartpropTransparentLabel")
         layout.addWidget(self.lbl_icon)
 
         self.lbl_title = QLabel(self)
@@ -170,14 +165,14 @@ class ElementRowWidget(QFrame):
         font.setPixelSize(12)
         font.setBold(True)
         self.lbl_title.setFont(font)
-        self.lbl_title.setStyleSheet("QLabel { background: transparent; border: none; }")
+        self.lbl_title.setProperty("h5Component", "smartpropElementTitle")
         layout.addWidget(self.lbl_title)
 
         self.lbl_id = QLabel(self)
         font_id = QFont()
         font_id.setPixelSize(11)
         self.lbl_id.setFont(font_id)
-        self.lbl_id.setStyleSheet("QLabel { background: transparent; border: none; color: #6d6d6d; }")
+        self.lbl_id.setProperty("h5Component", "smartpropElementId")
         layout.addWidget(self.lbl_id)
         layout.addStretch(1)
 
@@ -231,13 +226,9 @@ class ElementRowWidget(QFrame):
         return self._is_selected
 
     def _update_appearance(self):
-        if self._is_selected:
-            self.setStyleSheet(f"ElementRowWidget {{ background-color: {self.SELECTION_COLOR}; border-radius: 2px; }}")
-        else:
-            self.setStyleSheet(
-                f"ElementRowWidget {{ background-color: transparent; border-radius: 2px; }}"
-                f"ElementRowWidget:hover {{ background-color: {self.HOVER_COLOR}; }}"
-            )
+        self.setProperty("selected", "true" if self._is_selected else "false")
+        self.style().unpolish(self)
+        self.style().polish(self)
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.LeftButton:
@@ -289,14 +280,7 @@ class ComponentTree(HierarchyTreeWidget):
         self.header().setStretchLastSection(True)
         self.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.setStyleSheet(f"""
-            QTreeWidget {{ background: transparent; border: none; outline: none; }}
-            QTreeWidget::item {{ height: {self.ROW_H - 2}px; border: none; background: transparent; }}
-            QTreeWidget::item:alternate {{ background-color: {compact.BG_ALT}; }}
-            QTreeWidget::item:selected {{ background-color: #5d6066; }}
-            QTreeWidget::item:hover {{ background-color: #43464d; }}
-            QTreeWidget::branch {{ background: transparent; border: none; }}
-        """)
+        self.setProperty("h5Component", "smartpropComponentTree")
         self.verticalScrollBar().valueChanged.connect(self._reset_scroll)
         self.horizontalScrollBar().valueChanged.connect(self._reset_scroll)
 
@@ -608,7 +592,7 @@ class ComponentList(QWidget):
             titem = QTreeWidgetItem()
             titem.setText(0, title)
             titem.setText(1, f"ID:{eid}")
-            titem.setForeground(1, QBrush(QColor("#6d6d6d")))
+            titem.setForeground(1, QBrush(theme.qcolor("#6d6d6d")))
             titem.setTextAlignment(1, Qt.AlignLeft | Qt.AlignVCenter)
             base_icon = _component_icon(kind, raw_class)
             comp_icon = make_composite_icon(base_icon, val, size=18)
@@ -616,7 +600,7 @@ class ComponentList(QWidget):
 
             enabled_val = val.get("m_bEnabled", True)
             if enabled_val is False or enabled_val == "false":
-                titem.setForeground(0, QBrush(QColor("#777777")))
+                titem.setForeground(0, QBrush(theme.qcolor("#777777")))
 
             titem.setData(0, Qt.UserRole, ref)
             tree.addTopLevelItem(titem)

@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
 from gui.common import Kv3ToJson, SoundEventEditor_path
 from core.bridge.core import CoreBridge
 from gui.settings.main import get_cs2_path
-from gui.styles.common import qt_stylesheet_widgetlist2
 from gui.editors.soundevent_editor.thread_parking import park
 
 
@@ -282,7 +281,7 @@ class InternalSoundEventExplorer(QWidget):
         self._search.setClearButtonEnabled(True)
 
         self._view = QListView()
-        self._view.setStyleSheet(qt_stylesheet_widgetlist2)
+        self._view.setProperty("h5Component", "legacyWidgetList2")
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

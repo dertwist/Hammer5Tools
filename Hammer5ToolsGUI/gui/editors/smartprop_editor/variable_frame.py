@@ -11,6 +11,7 @@ from gui.editors.smartprop_editor.objects import variables_list
 from gui.widgets.completer.main import CompletingPlainTextEdit
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from gui.styles.common import set_style_property
 
 
 class VariableFrame(PropertyMethods, QWidget):
@@ -25,6 +26,10 @@ class VariableFrame(PropertyMethods, QWidget):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self.ui.frame.setProperty("h5Component", "smartpropHeaderFrame")
+        self.ui.label.setProperty("h5Component", "smartpropVariableHeader")
+        self.ui.hide_expression_frame.setProperty("h5Component", "smartpropExpressionFrame")
+        self.ui.label_3.setProperty("h5Component", "smartpropExpressionLabel")
         self.setAcceptDrops(True)
         self.ui.variable_name.setAcceptDrops(False)
         self.name = name
@@ -40,7 +45,6 @@ class VariableFrame(PropertyMethods, QWidget):
         self.element_id_generator = element_id_generator
 
         # Keep the full hide expression as-is (no extraction needed)
-        # m_HideExpression can contain expressions like "new_var_1 == false" or "new_var_1 < 23"
         self.var_value = {
             'default': self.var_default,
             'min': self.var_min,
@@ -60,7 +64,6 @@ class VariableFrame(PropertyMethods, QWidget):
             self.ui.id_display_label.deleteLater()
 
         # UI Setup
-        # Instead of connecting textChanged signal to update_self, we install an event filter
         self.ui.variable_name.setText(name if name is not None else "")
         self.ui.varialbe_display_name.setText(var_display_name if var_display_name is not None else "")
         self.ui.label_2.setText("Display name")
@@ -122,7 +125,7 @@ class VariableFrame(PropertyMethods, QWidget):
         # Setup Read Only Expression frame to match the style of hide_expression_frame
         self.read_only_frame = QFrame(self.ui.frame_layout)
         self.read_only_frame.setMaximumSize(QSize(16777215, 32))
-        self.read_only_frame.setStyleSheet(self.ui.hide_expression_frame.styleSheet())
+        self.read_only_frame.setProperty("h5Component", "smartpropExpressionFrame")
         self.read_only_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.read_only_frame.setFrameShadow(QFrame.Shadow.Raised)
         self.read_only_frame.setLineWidth(0)
@@ -132,7 +135,7 @@ class VariableFrame(PropertyMethods, QWidget):
         self.read_only_layout.setContentsMargins(0, 0, 0, 0)
         
         self.read_only_label = QLabel("Read only exp")
-        self.read_only_label.setStyleSheet("border:0px; background-color: rgba(255, 255, 255, 0); font: 8pt 'Segoe UI';")
+        self.read_only_label.setProperty("h5Component", "smartpropExpressionLabel")
         self.read_only_label.setFixedWidth(80)
         self.read_only_layout.addWidget(self.read_only_label)
 
@@ -212,38 +215,28 @@ class VariableFrame(PropertyMethods, QWidget):
         return CompletionUtils.get_combobox_elements(var_class)
 
     def update_colors(self):
-        color_map = {
-            'String': '#E67E22',
-            'Model': '#E67E22',
-            'Material': '#E67E22',
-            'MaterialGroup': '#E67E22',
-            'Bool': '#C0392B',
-            'Float': '#2980B9',
-            'Int': '#2471A3',
-            'Vector2D': '#8E44AD',
-            'Vector3D': '#8E44AD',
-            'Vector4D': '#8E44AD',
-            'Angles': '#8E44AD',
-            'Color': '#1B5E20',
-        }
-
         enum_types = [
             'Direction', 'CoordinateSpace', 'GridPlacementMode', 'GridOriginMode',
             'PickMode', 'ScaleMode', 'TraceNoHit', 'ApplyColorMode',
             'ChoiceSelectionMode', 'RadiusPlacementMode', 'DistributionMode', 'PathPositions'
         ]
 
-        target_color = color_map.get(self.var_class, '#363636')
-        if self.var_class in enum_types:
-            target_color = '#1D8348'
-
-        style = self.ui.label.styleSheet()
-        import re
-        if 'background-color:' in style:
-            style = re.sub(r'background-color:\s*[^;]+;', f'background-color: {target_color};', style)
-        else:
-            style += f'\nbackground-color: {target_color};'
-        self.ui.label.setStyleSheet(style)
+        role_map = {
+            'String': 'string',
+            'Model': 'string',
+            'Material': 'string',
+            'MaterialGroup': 'string',
+            'Bool': 'bool',
+            'Float': 'float',
+            'Int': 'integer',
+            'Vector2D': 'vector',
+            'Vector3D': 'vector',
+            'Vector4D': 'vector',
+            'Angles': 'vector',
+            'Color': 'color',
+        }
+        role = 'enum' if self.var_class in enum_types else role_map.get(self.var_class, 'default')
+        set_style_property(self.ui.label, "h5VarKind", role)
 
     def _setup_hide_expression_completer(self):
         """Setup completer for hide expression input with filtered type-aware completions."""
@@ -597,7 +590,7 @@ class CategoryFrame(VariableFrame):
             self.ui.frame_3.hide()
             self.ui.show_child.hide()
             self.ui.hide_expression_frame.hide()
-            self.ui.label.setStyleSheet(self.ui.label.styleSheet() + "image: none;")
+            self.ui.label.setProperty("h5End", "true")
             self.setFixedHeight(12) # Small line for end
             self.ui.label.setText("      ") # Just some space
 
@@ -655,14 +648,8 @@ class CategoryFrame(VariableFrame):
 
     def update_colors(self):
         # Categories have a distinct color
-        target_color = '#3d4d5e' if self.is_start else '#2e2e2e'
-        style = self.ui.label.styleSheet()
-        import re
-        if 'background-color:' in style:
-            style = re.sub(r'background-color:\s*[^;]+;', f'background-color: {target_color};', style)
-        else:
-            style += f'\nbackground-color: {target_color};'
-        self.ui.label.setStyleSheet(style)
+        role = "categoryStart" if self.is_start else "categoryEnd"
+        set_style_property(self.ui.label, "h5VarKind", role)
 
     def show_context_menu(self):
         context_menu = QMenu(self)

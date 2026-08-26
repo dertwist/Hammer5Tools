@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from gui.widgets.widgets import FloatWidget
 from gui.editors.smartprop_editor.property import compact
-from gui.styles.common import qt_stylesheet_combobox
+from gui.styles.common import mark_paint_through
 
 # Label colours, matching the SmartProp property editor's type coding.
 COLOR_FLOAT = "rgb(181, 255, 239)"
@@ -39,18 +39,17 @@ def style_slider(float_widget):
     """
     Slider styling, identical to the SmartProp property editor's — with one
     scoped fix: the app-wide stylesheet's blanket `QWidget { background-color:
-    #272727; }` rule (src/styles/qt_global_stylesheet.py) paints straight
+    @background_neutral; }` rule (gui/styles/qss/base.qss) paints straight
     through FloatWidget and its Slider, since neither sets its own background.
     In a normal window that's invisible against the same-coloured backdrop, but
     compact.style_slider() stretches the slider across the row, so that flat
     #272727 shows up as a solid block sitting on top of the row's zebra stripe.
-    Clearing just the container backgrounds here (not the QSlider chrome, which
-    still comes from the global stylesheet, keeping the handle/groove identical
-    to SmartProp) lets the zebra colour show through underneath.
+    Marking just the container backgrounds as paint-through lets the zebra
+    colour show underneath while the slider chrome remains globally styled.
     """
     compact.style_slider(float_widget)
-    float_widget.setStyleSheet("background-color: transparent;")
-    float_widget.Slider.setStyleSheet("background-color: transparent;")
+    mark_paint_through(float_widget)
+    mark_paint_through(float_widget.Slider)
 
 
 def pretty_name(value_class: str) -> str:
@@ -175,7 +174,8 @@ class QAngleRow(BaseRow):
         self.float_widgets = []
         for axis, name in enumerate(("P", "Y", "R")):
             tag = QLabel(name)
-            tag.setStyleSheet(f"color: {compact.VEC_PYR[axis]}; font: bold 8pt 'Segoe UI'; margin-left: 2px; margin-right: 2px; border: 0px; background: transparent;")
+            compact.style_label(tag, color=compact.VEC_PYR[axis], width=None)
+            tag.setProperty("h5Component", "detailAngleTag")
             self.ui.layout.addWidget(tag)
 
             spin = FloatWidget(
@@ -200,7 +200,7 @@ class MaterialGroupRow(BaseRow):
         super().__init__(field, COLOR_STRING, parent)
         self.combo = QComboBox()
         self.combo.setEditable(True)
-        self.combo.setStyleSheet(qt_stylesheet_combobox)
+        self.combo.setProperty("h5Component", "legacyCombobox")
         self.combo.setMaximumHeight(compact.FIELD_H)
         self.combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if self.combo.lineEdit():
@@ -239,14 +239,10 @@ class SectionHeader(QWidget):
         layout.setContentsMargins(6, 8, 4, 2)
         layout.setSpacing(0)
         label = QLabel(title.upper())
-        label.setStyleSheet(
-            'border:0px; background: transparent; font: 600 7pt "Segoe UI";'
-            ' letter-spacing: 1px; color: %s;' % compact.ACCENT
-        )
+        label.setProperty("h5Component", "detailSectionLabel")
         layout.addWidget(label)
         layout.addStretch(1)
-        self.setStyleSheet(compact.widget_qss())
-        compact.set_widget_bg(self, compact.BG)
+        self.setProperty("h5Component", "detailSectionHeader")
 
 
 def build_row(field, value, choices=None):
@@ -266,11 +262,4 @@ def build_row(field, value, choices=None):
 
 def apply_zebra(layout):
     """Paint alternating backgrounds over the rows, as PropertyFrame does."""
-    index = 0
-    for i in range(layout.count()):
-        item = layout.itemAt(i)
-        widget = item.widget() if item is not None else None
-        if widget is None or not getattr(widget, "_compact_frames", None):
-            continue
-        compact.set_row_bg(widget, compact.zebra_color(index))
-        index += 1
+    compact.assign_zebra(layout)

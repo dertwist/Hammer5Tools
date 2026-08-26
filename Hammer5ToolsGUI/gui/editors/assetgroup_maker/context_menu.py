@@ -27,16 +27,7 @@ class ReplacementsContextMenu:
     def show(self, position: QPoint) -> None:
         """Display custom context menu at the given position."""
         menu = self.widget.createStandardContextMenu()
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #2e2e2e;
-                color: #e5e5e5; 
-                border: 1px solid #464649; 
-            }
-            QMenu::item:selected {
-                background-color: #515965;
-            }
-        """)
+        menu.setProperty("h5Component", "assetgroupContextMenu")
         menu.addSeparator()
         menu.addAction(self.folder_path_action)
         menu.addAction(self.asset_name_action)

@@ -207,7 +207,7 @@ class PropertyPathEditor(QWidget):
 
         self.label = QLabel("Default Path")
         self.label.setFixedWidth(145)
-        self.label.setStyleSheet("color: rgb(255, 209, 153); font: 8pt 'Segoe UI';")
+        self.label.setProperty("h5Component", "smartpropDefaultPathLabel")
         layout.addWidget(self.label)
 
         self.edit_button = QPushButton("Edit Path...")
@@ -222,20 +222,7 @@ class PropertyPathEditor(QWidget):
     def _open_editor(self):
         dialog = _PathEditorDialog(self._path_points, self)
 
-        # Override specific generic elements to enhance the Path Editor appearance.
-        # The global stylesheet already styles QDialog/QTableWidget/QPushButton;
-        # this narrows those for the path editor specifically. Now that nothing
-        # sets a per-widget QLineEdit stylesheet ahead of this, the descendant
-        # selector below reaches the table's line-edit cells directly.
-        dialog.setStyleSheet("""
-            QDialog { background-color: #2e2e2e; }
-            QTableWidget { background-color: #272727; color: #e5e5e5; border: none; gridline-color: #3e3e41; }
-            QHeaderView::section { background-color: #363637; color: #a5a5a5; border: none; padding: 0px; }
-            QPushButton { background-color: #434343; color: #e5e5e5; border: 1px solid #636363; border-radius: 2px; padding: 4px 12px; }
-            QPushButton:hover { background-color: #535353; }
-            QPushButton:pressed { background-color: #343434; }
-            QTableWidget QLineEdit { background-color: #272727; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 12px; }
-        """)
+        dialog.setProperty("h5Component", "smartpropPathEditorDialog")
 
         if dialog.exec() == QDialog.Accepted:
             self._path_points = dialog.get_points()

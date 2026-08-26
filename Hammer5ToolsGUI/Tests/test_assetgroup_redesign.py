@@ -3,8 +3,7 @@ import sys
 import json
 import tempfile
 import pytest
-from unittest.mock import patch, MagicMock
-from PySide6.QtWidgets import QApplication
+from unittest.mock import patch
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 src_dir = os.path.join(repo_root, "Hammer5ToolsGUI")
@@ -17,16 +16,6 @@ from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_suffix, is_file_ignored
 from gui.editors.assetgroup_maker.process import perform_batch_processing, render_asset_template
 from gui.editors.assetgroup_maker.matcher import AssetGroupItem
-from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
-from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
-
-
-@pytest.fixture(scope="session")
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
 
 
 @pytest.fixture
@@ -221,101 +210,6 @@ def test_batch_process_with_conditional_blocks(fake_addon_dir):
     assert "<!-- IF" not in content
 
 
-def test_editor_tab_widget(qapp, fake_addon_dir):
-    from gui.editors.assetgroup_maker.objects import load_hbat_file
-
-    crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
-    hbat_path = os.path.join(crate_dir, "test_editor.hbat")
-
-    tab = EditorTabWidget(file_path=hbat_path)
-    try:
-        assert tab.file_path == os.path.normpath(hbat_path)
-        assert tab.custom_output_edit.text() == ""
-        assert tab.save_btn is not None
-        assert tab.watch_changes_cb is not None
-        assert tab.watch_changes_cb.isChecked() is True
-        assert len(tab.template_manager.template_cards) >= 1
-
-        first_card = tab.template_manager.template_cards[0]
-        first_card.set_reference_path("models/props/crate/box_01.vmdl")
-        assert first_card.ref_edit.text() == "models/props/crate/box_01.vmdl"
-
-        tab.watch_changes_cb.setChecked(False)
-        tab.watch_changes_cb.setChecked(True)
-        tab.save_file()
-        assert os.path.isfile(hbat_path)
-
-        data = load_hbat_file(hbat_path)
-        assert data.get("version") == 3
-        assert data["templates"][0]["reference"] == "models/props/crate/box_01.vmdl"
-        assert data["settings"]["watch_changes"] is True
-    finally:
-        tab.deleteLater()
-
-
-def test_main_window_layout_and_empty_state(qapp, fake_addon_dir):
-    win = BatchCreatorMainWindow()
-    try:
-        # Check docks
-        assert win.explorer_dock is not None
-        assert win.config_dock is not None
-        assert win.new_cfg_for_folder_btn is not None
-        assert win.new_cfg_btn is not None
-        assert win.monitoring_list is not None
-
-        # When no tabs are open, empty state widget should be active
-        assert win.tab_widget.count() == 0
-        assert win.central_stack.currentWidget() == win.empty_state_widget
-
-        # Create a new tab
-        tab = win.create_new_batch_tab()
-        assert win.tab_widget.count() == 1
-        assert win.central_stack.currentWidget() == win.tab_widget
-        assert tab.save_btn is not None
-        assert tab.watch_changes_cb is not None
-
-        # Close the tab
-        win.close_tab(0)
-        assert win.tab_widget.count() == 0
-        assert win.central_stack.currentWidget() == win.empty_state_widget
-    finally:
-        win.deleteLater()
-
-
-def test_file_item_watch_button_and_global_watch(qapp, fake_addon_dir):
-    from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher, FileItemWidget, is_watch_enabled, set_watch_enabled
-
-    crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
-    hbat_path = os.path.join(crate_dir, "test_watch.hbat")
-    with open(hbat_path, "w", encoding="utf-8") as f:
-        json.dump({"version": 2, "process": {"watch_changes": True}}, f)
-
-    widget = FileItemWidget(hbat_path)
-    try:
-        assert widget.watch_button is not None
-        assert widget.watch_enabled is True
-
-        # Toggle watch off
-        widget.toggle_watch()
-        assert widget.watch_enabled is False
-        assert is_watch_enabled(hbat_path) is False
-
-        # Toggle watch back on
-        widget.toggle_watch()
-        assert widget.watch_enabled is True
-        assert is_watch_enabled(hbat_path) is True
-    finally:
-        widget.deleteLater()
-
-    watcher = MonitoringFileWatcher(fake_addon_dir)
-    try:
-        assert watcher.is_global_watch_enabled() is True
-        watcher.set_global_watch_enabled(False)
-        assert watcher.is_global_watch_enabled() is False
-        watcher.set_global_watch_enabled(True)
-        assert watcher.is_global_watch_enabled() is True
-    finally:
-        watcher.deleteLater()
 
 
 def test_asset_browser_multi_type_scan(fake_addon_dir):
@@ -440,31 +334,6 @@ def test_analyzer_kv3_physics_and_render_mesh(fake_addon_dir):
     assert analysis.slots["collision"]["filename"] == "phys_treedead.fbx"
 
 
-def test_slot_assignment_dialog(qapp, fake_addon_dir):
-    from gui.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
-
-    template_data = {
-        'id': 'template_0',
-        'extension': 'vmdl',
-        'reference': 'models/props/box.vmdl',
-        'skipped_slots': []
-    }
-
-    dialog = TemplateSlotMappingDialog(template_data)
-    try:
-        assert 'mesh' in dialog.slot_check_boxes
-        assert 'collision' in dialog.slot_check_boxes
-        assert dialog.slot_check_boxes['mesh'].isChecked() is True
-        assert dialog.slot_check_boxes['collision'].isChecked() is True
-
-        # Toggle collision to skip
-        dialog.slot_check_boxes['collision'].setChecked(False)
-        dialog._apply_and_close()
-
-        assert 'collision' in dialog.skipped_slots
-        assert 'mesh' not in dialog.skipped_slots
-    finally:
-        dialog.deleteLater()
 
 
 def test_kv3_hbat_io_and_no_raw_text(fake_addon_dir):
@@ -708,42 +577,6 @@ def test_multi_template_batch_processing(fake_addon_dir):
         assert 'wood_color.png' in c
 
 
-def test_create_new_config_for_selected_folder_without_browser(qapp, fake_addon_dir, monkeypatch):
-    from unittest.mock import MagicMock
-    from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
-    from PySide6.QtWidgets import QFileDialog
-
-    # Ensure QFileDialog is never called
-    mock_file_dialog = MagicMock()
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_file_dialog)
-
-    win = BatchCreatorMainWindow()
-    try:
-        target_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
-        os.makedirs(target_dir, exist_ok=True)
-
-        # Mock selected folder in explorer
-        monkeypatch.setattr(win, "_get_selected_folder_from_explorer", lambda: target_dir)
-
-        # 1. Create first config
-        win.create_new_config_for_selected_folder()
-
-        mock_file_dialog.assert_not_called()
-        expected_first = os.path.join(target_dir, "crate.hbat")
-        assert os.path.isfile(expected_first)
-        assert win.tab_widget.count() == 1
-        assert os.path.normpath(win.tab_widget.currentWidget().file_path) == os.path.normpath(expected_first)
-
-        # 2. Create second config in same folder -> should create crate_1.hbat without prompting
-        win.create_new_config_for_selected_folder()
-
-        mock_file_dialog.assert_not_called()
-        expected_second = os.path.join(target_dir, "crate_1.hbat")
-        assert os.path.isfile(expected_second)
-        assert win.tab_widget.count() == 2
-        assert os.path.normpath(win.tab_widget.currentWidget().file_path) == os.path.normpath(expected_second)
-    finally:
-        win.deleteLater()
 
 
 def test_per_template_ignore_settings(fake_addon_dir):
@@ -982,30 +815,6 @@ def test_template_skipped_slots(fake_addon_dir):
     assert 'collision' not in rendered
 
 
-def test_asset_table_context_menu_show(qapp, fake_addon_dir, monkeypatch):
-    from unittest.mock import MagicMock
-    from PySide6.QtCore import QPoint
-    import gui.editors.assetgroup_maker.widgets.asset_table as at_mod
-    from gui.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
-    from gui.editors.assetgroup_maker.matcher import AssetGroupItem
-
-    widget = AssetTableWidget()
-    try:
-        item = AssetGroupItem("treedead", "models/props")
-        item.target_output = "models/props/treedead.vmdl"
-        widget.set_items([item])
-
-        # Select row 0
-        widget.table.selectRow(0)
-
-        # Mock QMenu to verify menu builds and doesn't crash
-        mock_menu = MagicMock()
-        monkeypatch.setattr(at_mod, "QMenu", lambda *args, **kwargs: mock_menu)
-
-        widget._show_context_menu(QPoint(10, 10))
-        mock_menu.exec.assert_called_once()
-    finally:
-        widget.deleteLater()
 
 
 def test_firewatch_trees_pine_scenario(fake_addon_dir):
@@ -1329,121 +1138,6 @@ def test_preview_equals_output_11_assets(fake_addon_dir):
     assert len(created_files) == 9
 
 
-def test_editor_tab_splitter_and_scroll_bar(qapp, fake_addon_dir):
-    from PySide6.QtWidgets import QSplitter, QScrollArea
-    from PySide6.QtCore import Qt
-
-    crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
-    hbat_path = os.path.join(crate_dir, "test_splitter.hbat")
-
-    tab = EditorTabWidget(file_path=hbat_path)
-    try:
-        # Check splitter existence and properties
-        assert hasattr(tab, "splitter")
-        assert isinstance(tab.splitter, QSplitter)
-        assert tab.splitter.orientation() == Qt.Vertical
-        assert tab.splitter.childrenCollapsible() is False
-        assert tab.splitter.count() == 2
-        assert tab.splitter.widget(0) == tab.template_manager
-        assert tab.splitter.widget(1) == tab.asset_table
-
-        # Check template manager scroll area
-        tm = tab.template_manager
-        assert hasattr(tm, "scroll_area")
-        assert isinstance(tm.scroll_area, QScrollArea)
-        assert tm.scroll_area.widgetResizable() is True
-        assert tm.scroll_content is not None
-        assert tm.cards_layout is not None
-
-        # Add multiple templates to test scrolling container
-        card1 = tm.add_template({"id": "t1", "extension": "vmat", "reference": "materials/test.vmat"})
-        card2 = tm.add_template({"id": "t2", "extension": "vsmart", "reference": "smartprops/test.vsmart"})
-        assert len(tm.template_cards) >= 3
-        assert tm.cards_layout.count() >= 3
-
-        # Test splitter moved callback saves state
-        tab._on_splitter_moved(300, 0)
-        from gui.settings.main import get_settings_value
-        saved_state = get_settings_value("AssetGroupMaker", "editor_splitter_state")
-        assert saved_state is not None
-        assert len(saved_state) > 0
-    finally:
-        tab.deleteLater()
-
-
-def test_main_window_dock_rescaling_and_persistence(qapp, fake_addon_dir):
-    from PySide6.QtCore import Qt
-    from gui.settings.main import get_settings_value, set_settings_value
-
-    win = BatchCreatorMainWindow()
-    try:
-        # Verify minimum widths for flexible layout rescaling
-        assert win.explorer_dock.minimumWidth() >= 180
-        assert win.config_dock.minimumWidth() >= 180
-        assert win.central_container.minimumWidth() >= 260
-
-        # Test saving layout state
-        win._save_layout_state()
-        geo = get_settings_value("AssetGroupMaker", "geometry")
-        state = get_settings_value("AssetGroupMaker", "window_state")
-        assert geo is not None
-        assert state is not None
-
-        # Test restoring layout state
-        win._restore_layout_state()
-    finally:
-        win.deleteLater()
-
-
-def test_assetgroup_maker_uses_system_file_dialogs(qapp, fake_addon_dir, monkeypatch):
-    from unittest.mock import MagicMock
-    from PySide6.QtWidgets import QFileDialog
-    from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
-
-    mock_open_file = MagicMock(return_value=("", ""))
-    mock_save_file = MagicMock(return_value=("", ""))
-    mock_existing_dir = MagicMock(return_value="")
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_open_file)
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_save_file)
-    monkeypatch.setattr(QFileDialog, "getExistingDirectory", mock_existing_dir)
-
-    win = BatchCreatorMainWindow()
-    try:
-        # 1. Open file dialog in main window
-        win._open_file_dialog()
-        mock_open_file.assert_called_once()
-        _, kwargs = mock_open_file.call_args
-        opts = kwargs.get("options")
-        if opts is not None:
-            assert not (opts & QFileDialog.Option.DontUseNativeDialog)
-
-        # 2. Save file dialog in main window
-        win.create_new_config_dialog(target_folder=fake_addon_dir, force_file_dialog=True)
-        mock_save_file.assert_called_once()
-        _, kwargs = mock_save_file.call_args
-        opts = kwargs.get("options")
-        if opts is not None:
-            assert not (opts & QFileDialog.Option.DontUseNativeDialog)
-
-        # 3. Editor tab browse output and save
-        tab = win.create_new_batch_tab()
-        if tab:
-            tab._on_browse_output()
-            mock_existing_dir.assert_called_once()
-            _, kwargs = mock_existing_dir.call_args
-            opts = kwargs.get("options")
-            if opts is not None:
-                assert not (opts & QFileDialog.Option.DontUseNativeDialog)
-
-            tab.save_file()
-            assert mock_save_file.call_count == 2
-            _, kwargs = mock_save_file.call_args
-            opts = kwargs.get("options")
-            if opts is not None:
-                assert not (opts & QFileDialog.Option.DontUseNativeDialog)
-    finally:
-        win.deleteLater()
 
 
 

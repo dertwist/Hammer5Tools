@@ -131,12 +131,15 @@ def test_goto_clipboard_path_relative(qapp):
             f.write("test")
 
         explorer = Explorer(tree_directory=addon_dir, addon="my_addon")
+        qapp.processEvents()
         
         # Put relative path on clipboard
         clipboard = QGuiApplication.clipboard()
         clipboard.setText("models/firewatch/nature/rocks/groupedrock/grouped_rock_3.vmdl")
+        qapp.processEvents()
         
         explorer.goto_clipboard_path()
+        qapp.processEvents()
         selected = explorer.get_selected_files()
         assert len(selected) == 1
         assert os.path.normpath(selected[0]) == os.path.normpath(target_file)

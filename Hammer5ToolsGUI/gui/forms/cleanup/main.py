@@ -3,10 +3,10 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QF
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QThread, Signal
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os, sys, re, subprocess, time
-from gui.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button, qt_stylesheet_table
 
 from gui.settings.main import get_addon_name, get_addon_dir, get_cs2_path
-from gui.widgets import qt_stylesheet_button, enable_dark_title_bar
+from gui.widgets import enable_dark_title_bar
+from gui.styles.common import mark_paint_through
 from gui.forms.cleanup.common import format_size
 from gui.forms.cleanup.parse import get_junk_files
 
@@ -136,53 +136,34 @@ class VerificationDialog(QDialog):
         layout = QVBoxLayout(self)
         
         title = QLabel("Verifying Addon Cleanup")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #e5e5e5;")
+        title.setProperty("h5Component", "cleanupTitle")
         layout.addWidget(title)
         
         self.status_label = QLabel("Initializing compilation check...")
-        self.status_label.setStyleSheet("color: #e5e5e5;")
+        self.status_label.setProperty("h5Component", "cleanupStatusLabel")
         layout.addWidget(self.status_label)
         
         self.progress_bar = QProgressBar()
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #5e5e5e;
-                border-radius: 2px;
-                text-align: center;
-                color: white;
-                background-color: #2e2e2e;
-            }
-            QProgressBar::chunk {
-                background-color: #1a528a;
-            }
-        """)
+        self.progress_bar.setProperty("h5Component", "cleanupProgressBar")
         self.progress_bar.setRange(0, len(vmap_paths))
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
         
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setStyleSheet("""
-            QTextEdit {
-                background-color: #303030;
-                color: #D4D4D4;
-                font-family: Consolas, Courier New, monospace;
-                font-size: 11px;
-                border: 1px solid #434343;
-            }
-        """)
+        self.log_view.setProperty("h5Component", "cleanupLogView")
         layout.addWidget(self.log_view)
         
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
         self.close_btn = QPushButton("Close")
-        self.close_btn.setStyleSheet(qt_stylesheet_button)
+        self.close_btn.setProperty("h5Component", "legacyButton")
         self.close_btn.setEnabled(False)
         self.close_btn.clicked.connect(self.accept)
         
         self.abort_btn = QPushButton("Abort")
-        self.abort_btn.setStyleSheet(qt_stylesheet_button)
+        self.abort_btn.setProperty("h5Component", "legacyButton")
         self.abort_btn.clicked.connect(self.abort_verification)
         
         btn_layout.addWidget(self.close_btn)
@@ -343,7 +324,7 @@ class CleanupDialog(QDialog):
         main_layout.addWidget(instructions_label)
 
         self.scan_meshes_checkbox = QCheckBox("Scan source mesh files (.fbx, .dmx) for material references")
-        self.scan_meshes_checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.scan_meshes_checkbox.setProperty("h5Component", "legacyCheckbox")
         self.scan_meshes_checkbox.setChecked(True)
         main_layout.addWidget(self.scan_meshes_checkbox)
 
@@ -352,12 +333,12 @@ class CleanupDialog(QDialog):
         dirtlist_label = QLabel(
             'Files listed in <b>.dirtlist</b> will be ignored during cleanup.'
         )
-        dirtlist_label.setStyleSheet("color: #a1a1a1; font-size: 11px; background-color: transparent;")
+        dirtlist_label.setProperty("h5Component", "cleanupDirtlistLabel")
         dirtlist_layout.addWidget(dirtlist_label)
         dirtlist_layout.addStretch()
 
         self.dirtlist_button = QPushButton("Open .dirtlist")
-        self.dirtlist_button.setStyleSheet(qt_stylesheet_button)
+        self.dirtlist_button.setProperty("h5Component", "legacyButton")
         self.dirtlist_button.setFixedWidth(120)
         self.dirtlist_button.clicked.connect(self.open_dirtlist)
         dirtlist_layout.addWidget(self.dirtlist_button)
@@ -385,7 +366,7 @@ class CleanupDialog(QDialog):
         filters_layout.addWidget(file_type_label)
 
         self.filter_combo = QComboBox()
-        self.filter_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.filter_combo.setProperty("h5Component", "legacyCombobox")
         self.filter_combo.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         filters_layout.addWidget(self.filter_combo)
 
@@ -402,7 +383,7 @@ class CleanupDialog(QDialog):
         self.table_view.horizontalHeader().setMinimumSectionSize(50)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.table_view.setStyleSheet(qt_stylesheet_table)
+        self.table_view.setProperty("h5Component", "legacyTable")
         main_layout.addWidget(self.table_view)
 
         # Context menu for checkbox toggling
@@ -423,15 +404,15 @@ class CleanupDialog(QDialog):
         # Wrap buttons in their own layout for better alignment control
         button_layout = QHBoxLayout()
         self.recalculate_button = QPushButton("Recalculate")
-        self.recalculate_button.setStyleSheet(qt_stylesheet_button)
+        self.recalculate_button.setProperty("h5Component", "legacyButton")
         button_layout.addWidget(self.recalculate_button)
 
         self.verify_button = QPushButton("Verify")
-        self.verify_button.setStyleSheet(qt_stylesheet_button)
+        self.verify_button.setProperty("h5Component", "legacyButton")
         button_layout.addWidget(self.verify_button)
 
         self.cleanup_button = QPushButton("Delete Selected Files")
-        self.cleanup_button.setStyleSheet(qt_stylesheet_button)
+        self.cleanup_button.setProperty("h5Component", "legacyButton")
         self.cleanup_button.setDefault(True)
         button_layout.addWidget(self.cleanup_button)
 
@@ -476,9 +457,11 @@ class CleanupDialog(QDialog):
         self.proxy_model.layoutChanged.connect(self.update_statistics)
         self.scan_meshes_checkbox.stateChanged.connect(self.recalculate)
 
-        # Style labels for dark mode
+        # Labels already get @text_primary from the global QLabel rule; only
+        # the transparency (opting out of the default opaque QWidget
+        # background) needs setting per label.
         for label in self.findChildren(QLabel):
-            label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
+            mark_paint_through(label)
 
         self.update_statistics()
 
@@ -659,7 +642,7 @@ class CleanupDialog(QDialog):
                 
             verify_dialog = VerificationDialog(cs2_path, self.addon_dir, vmaps, self)
             for label in verify_dialog.findChildren(QLabel):
-                label.setStyleSheet("color: #e5e5e5; background-color: transparent;")
+                label.setProperty("h5Component", "cleanupTransparentLabel")
             verify_dialog.exec()
         except Exception as e:
             QMessageBox.warning(self, "Verification Error", f"Failed to start verification: {e}")

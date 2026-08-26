@@ -64,7 +64,7 @@ class SmartPropEditorVariableViewport(QWidget):
             self._drop_indicator.setFrameShape(QFrame.HLine)
             self._drop_indicator.setFrameShadow(QFrame.Plain)
             self._drop_indicator.setLineWidth(2)
-            self._drop_indicator.setStyleSheet("color: #3498DB; background-color: #3498DB;")
+            self._drop_indicator.setProperty("h5Component", "smartpropDropIndicator")
             self._drop_indicator.setFixedHeight(2)
 
         if index != self._drop_index:

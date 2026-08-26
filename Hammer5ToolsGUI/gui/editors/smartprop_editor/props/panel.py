@@ -33,11 +33,6 @@ from gui.editors.smartprop_editor.props.help import HelpPanel
 from gui.editors.smartprop_editor.props.model import ComponentRef
 from gui.editors.smartprop_editor.props.legacy_property_list import LegacyPropertyList
 
-# ── Colours ────────────────────────────────────────────────────────────────
-_HDR_BG      = "#2c2c2c"
-_HDR_BG_HVR  = "#363636"
-_HDR_FG      = "#cccccc"
-_HDR_BORDER  = "#434343"
 _ARROW_OPEN  = "▼"
 _ARROW_SHUT  = "►"
 
@@ -63,15 +58,7 @@ class _CollapsibleSection(QWidget):
         # ── Header bar ─────────────────────────────────────────────────────
         self._header = QFrame(self)
         self._header.setFixedHeight(self._HEADER_H)
-        self._header.setStyleSheet(f"""
-            QFrame {{
-                background-color: {_HDR_BG};
-                border-bottom: 1px solid {_HDR_BORDER};
-            }}
-            QFrame:hover {{
-                background-color: {_HDR_BG_HVR};
-            }}
-        """)
+        self._header.setProperty("h5Component", "smartpropSectionHeader")
         hdr_layout = QVBoxLayout(self._header)
         hdr_layout.setContentsMargins(4, 0, 4, 0)
         hdr_layout.setSpacing(0)
@@ -82,16 +69,7 @@ class _CollapsibleSection(QWidget):
         self._toggle_btn.setCheckable(True)
         self._toggle_btn.setChecked(True)   # expanded by default
         self._toggle_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self._toggle_btn.setStyleSheet(f"""
-            QToolButton {{
-                background: transparent;
-                border: none;
-                text-align: left;
-                color: {_HDR_FG};
-                font: 580 8pt "Segoe UI";
-                padding: 0px 2px;
-            }}
-        """)
+        self._toggle_btn.setProperty("h5Component", "smartpropSectionToggleBtn")
         self._toggle_btn.toggled.connect(self._on_toggled)
         hdr_layout.addWidget(self._toggle_btn)
         root.addWidget(self._header)
@@ -166,14 +144,7 @@ class SmartPropPropertyPanel(QWidget):
         self.splitter = QSplitter(Qt.Vertical, self)
         self.splitter.setChildrenCollapsible(False)
         self.splitter.setHandleWidth(4)
-        self.splitter.setStyleSheet("""
-            QSplitter::handle {
-                background-color: #3b3b3b;
-            }
-            QSplitter::handle:hover {
-                background-color: #4A7EBB;
-            }
-        """)
+        self.splitter.setProperty("h5Component", "smartpropPanelSplitter")
         self.splitter.addWidget(self.property_list)
         self.splitter.addWidget(self.help_panel)
 

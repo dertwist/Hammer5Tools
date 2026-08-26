@@ -111,7 +111,7 @@ class DetailPropEditorWidget(QMainWindow):
         self.resize(1180, 780)
         self.setMinimumSize(880, 520)
         enable_dark_title_bar(self)
-        self.setStyleSheet("background-color: #272727;")
+        self.setProperty("h5Component", "detailPropEditorWindow")
 
         self.addon_dir = get_addon_dir()
         self.vdata_path = get_vdata_path(self.addon_dir)
@@ -204,8 +204,7 @@ class DetailPropEditorWidget(QMainWindow):
         self.property_area.setFrameShape(QScrollArea.NoFrame)
 
         self.property_host = QWidget()
-        self.property_host.setStyleSheet(compact.widget_qss())
-        compact.set_widget_bg(self.property_host, compact.BG)
+        self.property_host.setProperty("h5Component", "detailPropertyHost")
         self.property_layout = QVBoxLayout(self.property_host)
         self.property_layout.setContentsMargins(0, 0, 0, 8)
         self.property_layout.setSpacing(0)
@@ -400,7 +399,7 @@ class DetailPropEditorWidget(QMainWindow):
         total = sum(float(payload(item.child(j)).get("m_flWeight", 1.0))
                     for j in range(count)) or 1.0
         summary = QLabel(f"  {count} model(s), total weight {total:g}")
-        summary.setStyleSheet("color: #aaa; font: 8pt 'Segoe UI'; padding: 8px 6px;")
+        summary.setProperty("h5Component", "detailPropSummaryLabel")
         self.property_layout.addWidget(summary)
 
     def _render_model(self, item, data):

@@ -1,0 +1,176 @@
+/* Shared reusable widgets (gui/widgets/*), migrated off inline
+   setStyleSheet() calls during the styling-refactor plan. */
+
+CompletingPlainTextEdit {
+    font: 580 8pt "Segoe UI";
+    border: none;
+    height: 18px;
+    padding: 2px;
+    padding-left: 0px;
+    padding-right: 0px;
+    color: @text;
+    background-color: @background;
+}
+
+ConsoleWidget {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: @rgba_5e5e5e_255;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text;
+    background-color: @background;
+    selection-background-color: @selection;
+    selection-color: @selection_text;
+}
+ConsoleWidget::selection {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QToolButton#DocumentNewTabButton {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 1px;
+    margin: 0px;
+}
+QToolButton#DocumentNewTabButton:hover {
+    background-color: @hex_363639;
+    border: 1px solid @border;
+}
+QToolButton#DocumentNewTabButton:pressed {
+    background-color: @border;
+}
+
+/* widgets/explorer/main.py: recent-files/favorites overlay popup. */
+QFrame#explorerOverlayPanel {
+    background-color: @background;
+    border: 2px solid black;
+    border-color: @rgba_5e5e5e_255;
+    border-radius: 0px;
+}
+QLabel[h5Component="explorerPanelTitle"] {
+    color: @text;
+    font: 580 9pt "Segoe UI";
+    font-weight: bold;
+    background-color: transparent;
+}
+QToolButton[h5Component="explorerPanelCloseBtn"] {
+    color: @text_muted;
+    border: none;
+    font-size: 11px;
+    padding: 1px 4px;
+    background-color: transparent;
+}
+QToolButton[h5Component="explorerPanelCloseBtn"]:hover {
+    color: @selection_text;
+    background-color: @selection;
+}
+QLineEdit[h5Component="explorerPanelFilter"] {
+    font: 580 9pt "Segoe UI";
+    background-color: @surface;
+    color: @text;
+    border: 1px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    padding: 3px 6px;
+}
+QListWidget[h5Component="explorerPanelList"] {
+    background-color: @background;
+    color: @text;
+    font: 580 9pt "Segoe UI";
+    border: none;
+    outline: none;
+}
+QListWidget[h5Component="explorerPanelList"]::item {
+    padding: 4px 6px;
+    border-radius: 0px;
+    border-bottom: 0.5px solid @rgba_ffffff_10;
+}
+QListWidget[h5Component="explorerPanelList"]::item:hover {
+    background-color: @hex_38383a;
+    color: @text;
+}
+QListWidget[h5Component="explorerPanelList"]::item:selected {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+/* widgets/model_browser/main.py: _FacetPopup checklist panel. */
+QFrame[h5Component="modelBrowserFacetPopup"] {
+    background-color: @surface;
+    border: 1px solid @border;
+}
+
+/* widgets/popup_menu/main.py: property-picker labels. Highlight state toggles
+   via the existing "selected" dynamic property + repolish (set_highlighted());
+   no per-toggle setStyleSheet() call needed since the base rule never changes. */
+QLabel[h5Component="popupMenuLabel"] {
+    font: 580 10pt "Segoe UI";
+    border-bottom: 0.5px solid black;
+    border-radius: 0px;
+    border-color: @rgba_393939_255;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+QLabel[h5Component="popupMenuLabel"]:hover {
+    background-color: @selection;
+}
+QLabel[h5Component="popupMenuLabel"][selected="true"] {
+    background-color: @hex_3b3f48;
+}
+QLabel[h5Component="popupMenuLabelBookmarkBottom"] {
+    font: 580 10pt "Segoe UI";
+    border-bottom: 0px solid black;
+    border-radius: 0px;
+    border-color: @rgba_393939_255;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+QLabel[h5Component="popupMenuLabelBookmarkBottom"]:hover {
+    background-color: @selection;
+}
+QLabel[h5Component="popupMenuLabelBookmarkBottom"][selected="true"] {
+    background-color: @hex_3b3f48;
+}
+QFrame[h5Component="popupMenuSeparator"] {
+    background-color: @border;
+}
+
+BoxSlider QLineEdit {
+    background-color: @background;
+    color: @text;
+    border: none;
+    padding: 0px;
+    selection-background-color: @selection;
+    font: 580 10pt "Segoe UI";
+}
+QWidget[h5Component="layoutSpacer"] {
+    border: none;
+}
+QLineEdit[h5Component="floatInput"] {
+    padding: 2px;
+}
+QAbstractItemView[h5Component="completionPopup"] {
+    padding: 0px;
+    padding-right: 16px;
+}
+QTreeView[h5Component="hierarchyBranchTree"]::branch,
+QTreeWidget[h5Component="hierarchyTree"]::branch {
+    background: transparent;
+}
+QWidget#launchOverlay {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 @rgba_505864_64,
+        stop: 0.2 @rgba_505864_102,
+        stop: 0.8 @rgba_505864_102,
+        stop: 1 @rgba_505864_64
+    );
+}
+QToolButton[h5Component="mainMenuToolButton"]::menu-indicator {
+    image: none;
+    width: 0px;
+}

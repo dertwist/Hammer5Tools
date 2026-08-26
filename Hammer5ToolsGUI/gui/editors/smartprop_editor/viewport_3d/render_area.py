@@ -176,14 +176,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._wireframe_program = 0
         self._outline_program = 0
         self._locator_program = 0
-        self._group_program = 0
+        self._billboard_program = 0
 
         self._grid_vao = 0
         self._grid_vbo = 0
         self._box_vao = 0
         self._box_vbo = 0
-        self._group_vao = 0
-        self._group_vbo = 0
+        self._billboard_vao = 0
+        self._billboard_vbo = 0
         self._group_texture = 0
         self._element_texture = 0
         self._fs_vao = 0  # empty VAO for the fullscreen-triangle outline pass
@@ -247,6 +247,23 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def initializeGL(self):
         from OpenGL import GL
 
+        # Reset FBO and picking handles on context recreation
+        self._mask_fbo = 0
+        self._mask_color_tex = 0
+        self._mask_depth_rbo = 0
+        self._mask_fbo_w = 0
+        self._mask_fbo_h = 0
+
+        self._pick_fbo = 0
+        self._pick_color_rbo = 0
+        self._pick_depth_rbo = 0
+        self._pick_fbo_w = 0
+        self._pick_fbo_h = 0
+
+        # Invalidate mesh cache so stale GPU handles from previous context are re-uploaded
+        if hasattr(self, "mesh_cache") and self.mesh_cache is not None:
+            self.mesh_cache.invalidate_gpu_cache()
+
         # Debug info
         renderer = GL.glGetString(GL.GL_RENDERER).decode('utf-8')
         samples = GL.glGetIntegerv(GL.GL_SAMPLES)
@@ -267,7 +284,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._wireframe_program = link_program(WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER)
         self._outline_program = link_program(OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER)
         self._locator_program = link_program(LOCATOR_VERTEX_SHADER, LOCATOR_FRAGMENT_SHADER)
-        self._group_program = link_program(
+        self._billboard_program = link_program(
             GROUP_BILLBOARD_VERTEX_SHADER,
             GROUP_BILLBOARD_FRAGMENT_SHADER,
         )
@@ -342,12 +359,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     @gl_guard("event")
     def resizeGL(self, w, h):
+        if w <= 0 or h <= 0:
+            return
         from OpenGL import GL
         GL.glViewport(0, 0, w, h)
         self.camera.aspect = w / h if h > 0 else 1.0
 
     @gl_guard("paint")
     def paintGL(self):
+        if self.width() <= 0 or self.height() <= 0:
+            return
         from OpenGL import GL
 
         # Explicitly restore expected OpenGL states that QPainter might have left dirty:
@@ -424,100 +445,103 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._render_2d_overlay()
 
     def _render_2d_overlay(self):
+        w = self.width()
+        h = self.height()
+        if w <= 0 or h <= 0:
+            return
         from PySide6.QtGui import QPainter, QPen, QColor, QFont
+        from PySide6.QtCore import Qt
         
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
-        if self.isolated_element_id is not None:
-            pen = QPen(QColor("#b3d096"), 2) # isolated view highlight color
-            painter.setPen(pen)
-            w = self.width()
-            h = self.height()
-            painter.drawRect(1, 1, w - 2, h - 2)
+        painter = QPainter()
+        if not painter.begin(self):
+            return
+        try:
+            painter.setRenderHint(QPainter.Antialiasing)
             
-        # 2. Build the HUD text lines in the left bottom corner
-        hud_lines = []
-        
-        # Line: Isolate Mode details
-        if self.isolated_element_id is not None:
-            isolated_name = getattr(self, "isolated_element_name", None) or "Unknown Object"
-            hud_lines.append(f"Isolate Mode: {isolated_name}")
-            
-        # Line: Object count
-        rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
-        num_models = sum(1 for info in rendered_pool if not info.get("is_editor_marker"))
-        hud_lines.append(f"Objects: {num_models}")
-        
-        # Line: Active transformation details
-        transform_text = getattr(self, "current_transform_text", None)
-        if transform_text:
-            hud_lines.append(transform_text)
-
-        # Lines: preview-accuracy warnings (amber).  Marked with a leading "⚠" so
-        # the text-colour pass below can style them.
-        unsupported = getattr(self, "_warn_unsupported", None)
-        if unsupported:
-            names = ", ".join(sorted(unsupported))
-            hud_lines.append(f"⚠ Not fully previewed: {names}")
-
-        # 3. Paint the HUD text lines in the bottom-left corner with sharp stylesheet style
-        if hud_lines:
-            font = QFont("Segoe UI", 9)
-            painter.setFont(font)
-            
-            margin_left = 15
-            margin_bottom = 15
-            line_height = 20
-            box_padding = 10
-            
-            longest_line_width = 0
-            for line in hud_lines:
-                metrics = painter.fontMetrics()
-                longest_line_width = max(longest_line_width, metrics.horizontalAdvance(line))
+            # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
+            if self.isolated_element_id is not None:
+                pen = QPen(QColor("#b3d096"), 2) # isolated view highlight color
+                painter.setPen(pen)
+                painter.drawRect(1, 1, w - 2, h - 2)
                 
-            box_width = longest_line_width + (box_padding * 2) + 10
-            box_height = (len(hud_lines) * line_height) + (box_padding * 2) - 5
+            # 2. Build the HUD text lines in the left bottom corner
+            hud_lines = []
             
-            w = self.width()
-            h = self.height()
+            # Line: Isolate Mode details
+            if self.isolated_element_id is not None:
+                isolated_name = getattr(self, "isolated_element_name", None) or "Unknown Object"
+                hud_lines.append(f"Isolate Mode: {isolated_name}")
+                
+            # Line: Object count
+            rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+            num_models = sum(1 for info in rendered_pool if not info.get("is_editor_marker"))
+            hud_lines.append(f"Objects: {num_models}")
             
-            box_x = margin_left
-            box_y = h - margin_bottom - box_height
-            
-            # Sharp stylesheet box styling:
-            # - Draw sharp background box (dark gray, #303030 with 220 alpha)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(48, 48, 48, 220))
-            painter.drawRect(box_x, box_y, box_width, box_height)
-            
-            # - Draw sharp 1px border (#535353)
-            painter.setPen(QPen(QColor(83, 83, 83), 1))
-            painter.setBrush(Qt.NoBrush)
-            painter.drawRect(box_x, box_y, box_width, box_height)
-            
-            # - Draw a clean 3px left accent line
-            accent_color = QColor("#b3d096") if self.isolated_element_id is not None else QColor(0, 120, 215)
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(accent_color)
-            painter.drawRect(box_x, box_y, 3, box_height)
-            
-            # Draw text lines
-            for i, line in enumerate(hud_lines):
-                if line.startswith("⚠"):
-                    painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
-                elif line.startswith("Isolate Mode:"):
-                    painter.setPen(QColor("#b3d096")) # isolated view color
-                elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
-                    painter.setPen(QColor(255, 165, 0)) # orange for active transforms
-                else:
-                    painter.setPen(QColor(240, 240, 240)) # default white
+            # Line: Active transformation details
+            transform_text = getattr(self, "current_transform_text", None)
+            if transform_text:
+                hud_lines.append(transform_text)
+
+            # Lines: preview-accuracy warnings (amber).  Marked with a leading "⚠" so
+            # the text-colour pass below can style them.
+            unsupported = getattr(self, "_warn_unsupported", None)
+            if unsupported:
+                names = ", ".join(sorted(unsupported))
+                hud_lines.append(f"⚠ Not fully previewed: {names}")
+
+            # 3. Paint the HUD text lines in the bottom-left corner with sharp stylesheet style
+            if hud_lines:
+                font = QFont("Segoe UI", 9)
+                painter.setFont(font)
+                
+                margin_left = 15
+                margin_bottom = 15
+                line_height = 20
+                box_padding = 10
+                
+                longest_line_width = 0
+                for line in hud_lines:
+                    metrics = painter.fontMetrics()
+                    longest_line_width = max(longest_line_width, metrics.horizontalAdvance(line))
                     
-                text_y = box_y + box_padding + (i * line_height) + painter.fontMetrics().ascent()
-                painter.drawText(box_x + box_padding + 6, text_y, line)
+                box_width = longest_line_width + (box_padding * 2) + 10
+                box_height = (len(hud_lines) * line_height) + (box_padding * 2) - 5
                 
-        painter.end()
+                box_x = margin_left
+                box_y = h - margin_bottom - box_height
+                
+                # Sharp stylesheet box styling:
+                # - Draw sharp background box (dark gray, #303030 with 220 alpha)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QColor(48, 48, 48, 220))
+                painter.drawRect(box_x, box_y, box_width, box_height)
+                
+                # - Draw sharp 1px border (#535353)
+                painter.setPen(QPen(QColor(83, 83, 83), 1))
+                painter.setBrush(Qt.NoBrush)
+                painter.drawRect(box_x, box_y, box_width, box_height)
+                
+                # - Draw a clean 3px left accent line
+                accent_color = QColor("#b3d096") if self.isolated_element_id is not None else QColor(0, 120, 215)
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(accent_color)
+                painter.drawRect(box_x, box_y, 3, box_height)
+                
+                # Draw text lines
+                for i, line in enumerate(hud_lines):
+                    if line.startswith("⚠"):
+                        painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
+                    elif line.startswith("Isolate Mode:"):
+                        painter.setPen(QColor("#b3d096")) # isolated view color
+                    elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
+                        painter.setPen(QColor(255, 165, 0)) # orange for active transforms
+                    else:
+                        painter.setPen(QColor(240, 240, 240)) # default white
+                        
+                    text_y = box_y + box_padding + (i * line_height) + painter.fontMetrics().ascent()
+                    painter.drawText(box_x + box_padding + 6, text_y, line)
+        finally:
+            painter.end()
 
     def _init_editor_billboard_geometry(self):
         """Upload hierarchy marker icons and their camera-facing unit quad."""
@@ -533,10 +557,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             [-0.5,  0.5, 0.0, 1.0],
         ], dtype=np.float32)
 
-        self._group_vao = GL.glGenVertexArrays(1)
-        self._group_vbo = GL.glGenBuffers(1)
-        GL.glBindVertexArray(self._group_vao)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._group_vbo)
+        self._billboard_vao = GL.glGenVertexArrays(1)
+        self._billboard_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._billboard_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._billboard_vbo)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL.GL_STATIC_DRAW)
         GL.glVertexAttribPointer(0, 2, GL.GL_FLOAT, GL.GL_FALSE, 16, GL.ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(0)
@@ -584,30 +608,39 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         size = max(distance * 0.035, 8.0)
 
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-        GL.glUseProgram(self._group_program)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._group_program, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._group_program, "uProjection"), 1, GL.GL_FALSE, proj)
-        GL.glUniform3fv(GL.glGetUniformLocation(self._group_program, "uCenter"), 1, center)
+        GL.glUseProgram(self._billboard_program)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._billboard_program, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._billboard_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform3fv(GL.glGetUniformLocation(self._billboard_program, "uCenter"), 1, center)
         GL.glUniform3fv(
-            GL.glGetUniformLocation(self._group_program, "uCameraRight"),
+            GL.glGetUniformLocation(self._billboard_program, "uCameraRight"),
             1,
             np.asarray(self.camera.right_vector, dtype=np.float32),
         )
         GL.glUniform3fv(
-            GL.glGetUniformLocation(self._group_program, "uCameraUp"),
+            GL.glGetUniformLocation(self._billboard_program, "uCameraUp"),
             1,
             np.asarray(self.camera.up_vector, dtype=np.float32),
         )
-        GL.glUniform1f(GL.glGetUniformLocation(self._group_program, "uSize"), size)
-        GL.glUniform1i(GL.glGetUniformLocation(self._group_program, "uPicking"), pick_color is not None)
+        GL.glUniform1f(GL.glGetUniformLocation(self._billboard_program, "uSize"), size)
+        GL.glUniform1i(GL.glGetUniformLocation(self._billboard_program, "uPicking"), pick_color is not None)
         GL.glUniform3f(
-            GL.glGetUniformLocation(self._group_program, "uPickColor"),
+            GL.glGetUniformLocation(self._billboard_program, "uPickColor"),
             *(pick_color or (0.0, 0.0, 0.0)),
         )
         GL.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-        GL.glUniform1i(GL.glGetUniformLocation(self._group_program, "uIcon"), 0)
-        GL.glBindVertexArray(self._group_vao)
+        bound = False
+        if texture:
+            try:
+                if GL.glIsTexture(texture):
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+                    bound = True
+            except Exception:
+                pass
+        if not bound:
+            GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        GL.glUniform1i(GL.glGetUniformLocation(self._billboard_program, "uIcon"), 0)
+        GL.glBindVertexArray(self._billboard_vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
         GL.glBindVertexArray(0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -706,7 +739,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 marker_type = info.get("marker_type", "element")
                 if marker_type == "group" and not self.display_groups:
                     continue
-                # Draw group markers together after every model pass. This makes
+                # Draw hierarchy markers together after every model pass. This makes
                 # them true editor overlays: meshes never occlude the icon, and
                 # the picking pass resolves the visible icon before geometry.
                 marker_items.append((eid, pos, marker_type))
@@ -792,7 +825,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_CULL_FACE)
 
-        # Editor-object overlay pass. Group icons intentionally ignore scene
+        # Editor-object overlay pass. Hierarchy icons intentionally ignore scene
         # depth so their location remains visible through opaque/translucent
         # geometry. They do not write depth, keeping subsequent overlays clean.
         if marker_items:
@@ -901,9 +934,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         def bind_tex(unit, tex, sampler_name, has_name):
             GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
-            GL.glBindTexture(GL.GL_TEXTURE_2D, tex if tex else 0)
+            bound = False
+            if tex and textured:
+                try:
+                    if GL.glIsTexture(tex):
+                        GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+                        bound = True
+                except Exception:
+                    pass
+            if not bound:
+                GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             GL.glUniform1i(loc(sampler_name), unit)
-            GL.glUniform1i(loc(has_name), 1 if tex else 0)
+            GL.glUniform1i(loc(has_name), 1 if bound else 0)
 
         bind_tex(0, material.base_tex, "uBaseTex", "uHasBaseTex")
         bind_tex(1, material.normal_tex, "uNormalTex", "uHasNormalTex")
@@ -1338,14 +1380,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return []
 
         data_by_id = {}
+        parent_id_by_id = {}
 
-        def collect_data(item):
+        def collect_data(item, ancestor_id=0):
             for index in range(item.childCount()):
                 child = item.child(index)
                 data = child.data(0, Qt.UserRole)
+                child_id = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
                 if isinstance(data, dict):
-                    data_by_id[data.get("m_nElementID", 0)] = data
-                collect_data(child)
+                    data_by_id[child_id] = data
+                if child_id:
+                    parent_id_by_id[child_id] = ancestor_id
+                collect_data(child, child_id or ancestor_id)
 
         collect_data(root_item)
 
@@ -1360,7 +1406,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "rotation": world_rot,
                 "scale": world_scale,
                 "world_matrix": world_matrix,
-                "parent_world_matrix": np.eye(4, dtype=np.float32),
                 "data": data_by_id.get(model.element_id, {}),
                 "is_editor_marker": False,
                 "material_group": model.material_group,
@@ -1374,7 +1419,25 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             else:
                 self._widget_infos.append(self._widget_draw_info(widget))
 
+        # Core flattens every element to a world matrix and doesn't hand back
+        # parent linkage, so recover each element's actual parent world matrix
+        # from the tree hierarchy (skipping ancestors Core didn't evaluate,
+        # e.g. unsupported/hidden nodes) instead of assuming no parent exists.
+        id_to_world = {entry["id"]: entry["world_matrix"] for entry in evaluated}
+        for entry in evaluated:
+            entry["parent_world_matrix"] = self._resolve_parent_world_matrix(
+                entry["id"], parent_id_by_id, id_to_world
+            )
+
         return evaluated
+
+    @staticmethod
+    def _resolve_parent_world_matrix(element_id, parent_id_by_id, id_to_world):
+        """Walk up the tree hierarchy to the nearest ancestor Core evaluated."""
+        ancestor_id = parent_id_by_id.get(element_id, 0)
+        while ancestor_id and ancestor_id not in id_to_world:
+            ancestor_id = parent_id_by_id.get(ancestor_id, 0)
+        return id_to_world.get(ancestor_id, np.eye(4, dtype=np.float32))
 
     @staticmethod
     def _marker_draw_info(widget, data):
@@ -1388,7 +1451,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             "rotation": world_rotation,
             "scale": world_scale,
             "world_matrix": world_matrix,
-            "parent_world_matrix": np.eye(4, dtype=np.float32),
             "data": data,
             "is_editor_marker": True,
             "marker_type": widget.type,

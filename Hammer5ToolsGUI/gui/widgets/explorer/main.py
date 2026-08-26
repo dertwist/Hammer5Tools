@@ -441,12 +441,12 @@ class Explorer(QMainWindow):
         self.goto_button.clicked.connect(self.goto_clipboard_path)
         self.goto_button.setMaximumHeight(26)
         self.goto_button.setMaximumWidth(26)
-        self.goto_button.setStyleSheet(qt_stylesheet_toolbutton)
+        self.goto_button.setProperty("h5Component", "legacyToolButton")
         self.top_layout.addWidget(self.goto_button)
         self.recent_button = QToolButton(self)
         self.recent_button.setIcon(QIcon("://icons/acute_24dp.svg"))
         self.recent_button.setToolTip("Show recent files")
-        self.recent_button.setStyleSheet(qt_stylesheet_toolbutton)
+        self.recent_button.setProperty("h5Component", "legacyToolButton")
         self.recent_button.setMaximumHeight(26)
         self.recent_button.setMaximumWidth(26)
         self.recent_button.clicked.connect(lambda: self._toggle_panel("recent"))
@@ -454,7 +454,7 @@ class Explorer(QMainWindow):
         self.favorites_button = QToolButton(self)
         self.favorites_button.setIcon(QIcon("://icons/bookmark_24dp.svg"))
         self.favorites_button.setToolTip("Show favorites")
-        self.favorites_button.setStyleSheet(qt_stylesheet_toolbutton)
+        self.favorites_button.setProperty("h5Component", "legacyToolButton")
         self.favorites_button.setMaximumHeight(26)
         self.favorites_button.setMaximumWidth(26)
         self.favorites_button.clicked.connect(lambda: self._toggle_panel("favorites"))
@@ -1430,14 +1430,6 @@ class Explorer(QMainWindow):
         """Create the floating overlay popup widget matching program stylesheet."""
         frame = QFrame(self, Qt.Popup | Qt.FramelessWindowHint)
         frame.setObjectName("explorerOverlayPanel")
-        frame.setStyleSheet(
-            "QFrame#explorerOverlayPanel {"
-            "  background-color: #2e2e2e;"
-            "  border: 2px solid black;"
-            "  border-color: rgba(94, 94, 94, 255);"
-            "  border-radius: 0px;"
-            "}"
-        )
         vbox = QVBoxLayout(frame)
         vbox.setContentsMargins(6, 6, 6, 6)
         vbox.setSpacing(4)
@@ -1445,16 +1437,13 @@ class Explorer(QMainWindow):
         # Header row: label + close button
         header = QHBoxLayout()
         self._panel_title = QLabel("", frame)
-        self._panel_title.setStyleSheet("color: #e5e5e5; font: 580 9pt \"Segoe UI\"; font-weight: bold; background-color: transparent;")
+        self._panel_title.setProperty("h5Component", "explorerPanelTitle")
         header.addWidget(self._panel_title)
         header.addStretch()
         close_btn = QToolButton(frame)
         close_btn.setText("✕")
         close_btn.setToolTip("Close")
-        close_btn.setStyleSheet(
-            "QToolButton { color: #a5a5a5; border: none; font-size: 11px; padding: 1px 4px; background-color: transparent; }"
-            "QToolButton:hover { color: #FFFFFF; background-color: #515965; }"
-        )
+        close_btn.setProperty("h5Component", "explorerPanelCloseBtn")
         close_btn.setMaximumHeight(20)
         close_btn.clicked.connect(self._hide_panel)
         header.addWidget(close_btn)
@@ -1462,42 +1451,12 @@ class Explorer(QMainWindow):
 
         self._panel_filter = QLineEdit(frame)
         self._panel_filter.setPlaceholderText("Filter...")
-        self._panel_filter.setStyleSheet(
-            "QLineEdit {"
-            "  font: 580 9pt \"Segoe UI\";"
-            "  background-color: #272727;"
-            "  color: #e5e5e5;"
-            "  border: 1px solid rgba(94, 94, 94, 255);"
-            "  border-radius: 0px;"
-            "  padding: 3px 6px;"
-            "}"
-        )
+        self._panel_filter.setProperty("h5Component", "explorerPanelFilter")
         self._panel_filter.textChanged.connect(self._filter_panel_items)
         vbox.addWidget(self._panel_filter)
 
         self._panel_list = QListWidget(frame)
-        self._panel_list.setStyleSheet(
-            "QListWidget {"
-            "  background-color: #2e2e2e;"
-            "  color: #e5e5e5;"
-            "  font: 580 9pt \"Segoe UI\";"
-            "  border: none;"
-            "  outline: none;"
-            "}"
-            "QListWidget::item {"
-            "  padding: 4px 6px;"
-            "  border-radius: 0px;"
-            "  border-bottom: 0.5px solid rgba(255, 255, 255, 10);"
-            "}"
-            "QListWidget::item:hover {"
-            "  background-color: #38383a;"
-            "  color: #e5e5e5;"
-            "}"
-            "QListWidget::item:selected {"
-            "  background-color: #515965;"
-            "  color: white;"
-            "}"
-        )
+        self._panel_list.setProperty("h5Component", "explorerPanelList")
         self._panel_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self._panel_list.customContextMenuRequested.connect(self._panel_context_menu)
         self._panel_list.itemClicked.connect(self._on_panel_item_clicked)

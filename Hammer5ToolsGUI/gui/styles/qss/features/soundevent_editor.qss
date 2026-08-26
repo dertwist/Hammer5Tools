@@ -1,0 +1,196 @@
+/* SoundEvent editor's Property Editor header bar (main.py). editor_header_frame
+   keeps its existing objectName, set at construction, so it can be targeted
+   directly by ID selector like it was as a local stylesheet. */
+QFrame#editor_header_frame {
+    background-color: @background;
+    border: none;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+}
+QFrame#editor_header_frame QLabel {
+    font: 580 9pt "Segoe UI";
+    color: @text;
+    border: none;
+}
+
+QLineEdit[h5Component="soundeventHeaderFilterEdit"] {
+    font: 580 9pt "Segoe UI";
+    border: 2px solid black;
+    border-color: @rgba_5e5e5e_255;
+    border-radius: 2px;
+    color: @text;
+    background-color: @background;
+    padding: 2px 4px;
+}
+QLineEdit[h5Component="soundeventHeaderFilterEdit"]:focus {
+    border-color: @selection;
+}
+
+QPushButton[h5Component="soundeventHeaderSaveTemplateBtn"] {
+    font: 580 9pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding: 2px 6px;
+    color: @text;
+    background-color: @background;
+}
+QPushButton[h5Component="soundeventHeaderSaveTemplateBtn"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="soundeventHeaderSaveTemplateBtn"]:pressed {
+    background-color: @background;
+}
+
+/* audio_player.py: DBInfoOverlay popup. Keeps its objectName for the root
+   frame + nested QLabel scoping, same as it did as a local stylesheet. */
+QFrame#dbInfoOverlay {
+    background-color: @hex_2f2f31;
+    border: 1px solid @hex_4d4d51;
+    border-radius: 4px;
+}
+QFrame#dbInfoOverlay QLabel {
+    color: @text;
+    font: 9pt "Segoe UI";
+}
+QLabel[h5Component="soundeventDbInfoTitle"] {
+    font-weight: bold;
+    font-size: 10pt;
+    color: @selection_text;
+}
+QToolButton[h5Component="soundeventDbInfoCloseBtn"] {
+    color: @text_muted;
+    border: none;
+    font-size: 10px;
+    background-color: transparent;
+    padding: 2px;
+}
+QToolButton[h5Component="soundeventDbInfoCloseBtn"]:hover {
+    color: @selection_text;
+    background-color: @hex_4d4d51;
+    border-radius: 2px;
+}
+QLabel[h5Component="soundeventDbInfoBadge"] {
+    background-color: @hex_38383b;
+    font-weight: bold;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 8.5pt;
+}
+QLabel[h5Component="soundeventDbInfoDesc"] {
+    color: @hex_d0d0d0;
+    font-size: 8.5pt;
+}
+
+/* audio_player.py: the player's own background. Matches the original local
+   stylesheet's reach (self + every QWidget descendant that doesn't declare
+   its own background), not just the root widget itself. */
+QWidget[h5Component="soundeventAudioPlayerRoot"],
+QWidget[h5Component="soundeventAudioPlayerRoot"] QWidget {
+    background-color: @surface_raised;
+}
+QFrame[h5Component="soundeventAudioPlayerContent"] {
+    background-color: @surface_raised;
+    border: none;
+}
+QToolButton[h5Component="soundeventInfoButton"] {
+    background-color: @surface_raised;
+    border: 1px solid @hex_434346;
+    border-radius: 2px;
+    color: @text;
+}
+QToolButton[h5Component="soundeventInfoButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+/* property_browser.py: Properties/Templates panel headers and lists. */
+QLabel[h5Component="soundeventBrowserHeaderLabel"] {
+    font-weight: bold;
+    font-size: 11px;
+    color: @hex_d0d0d0;
+    padding-left: 2px;
+}
+QListWidget[h5Component="soundeventBrowserList"] {
+    background-color: @background;
+    alternate-background-color: @hex_363636;
+    border: 1px solid @hex_434343;
+    border-radius: 2px;
+    color: @hex_e2e2e2;
+    font: 580 10pt "Segoe UI";
+}
+QListWidget[h5Component="soundeventBrowserList"]::item {
+    padding: 2px 6px;
+}
+QListWidget[h5Component="soundeventBrowserList"]::item:hover {
+    background-color: @hex_3e434b;
+}
+QListWidget[h5Component="soundeventBrowserList"]::item:selected {
+    background-color: @hex_4d596b;
+    color: @selection_text;
+}
+
+
+QToolBar[h5Component="soundeventWaveToolbar"] {
+    background-color: @background;
+    border: none;
+    spacing: 2px;
+    padding: 2px;
+}
+QToolBar[h5Component="soundeventWaveToolbar"]::separator {
+    background: @rgba_5e5e5e_255;
+    width: 1px;
+    margin: 2px 3px;
+}
+QToolBar[h5Component="soundeventWaveToolbar"] QToolButton {
+    font: 580 8pt "Segoe UI";
+    color: @text;
+    background-color: @background;
+    border: 2px solid @rgba_5e5e5e_255;
+    border-radius: 2px;
+    padding: 1px 5px;
+}
+QToolBar[h5Component="soundeventWaveToolbar"] QToolButton:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QToolBar[h5Component="soundeventWaveToolbar"] QToolButton:pressed {
+    background-color: @background;
+}
+QToolBar[h5Component="soundeventWaveToolbar"] QToolButton:checked {
+    background-color: @selection;
+}
+
+QLabel[h5Component="soundeventWaveStatus"] {
+    color: @text_muted;
+    font: 9pt "Segoe UI";
+}
+QWidget[h5Component="soundeventExplorerBorder"] {
+    border: 2px solid @border;
+}
+QFrame[h5Component="soundeventSeparator"] {
+    color: @hex_5e5e5e;
+}
+QWidget[h5Component="soundeventBorderlessExplorer"],
+QFrame[h5Component="soundeventPropertyFrame"] {
+    border: none;
+}
+
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="c7c7bb"] { color: #C7C7BB; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="73d1bf"] { color: #73D1BF; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="4ca0ad"] { color: #4CA0AD; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d9b34c"] { color: #D9B34C; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="6a9955"] { color: #6A9955; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d1494a"] { color: #D1494A; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="7dda58"] { color: #7DDA58; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f6c273"] { color: #F6C273; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f4a9f6"] { color: #F4A9F6; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="8684b8"] { color: #8684B8; }
+
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="e53935"] { color: #E53935; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="ffb300"] { color: #FFB300; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="5ab55e"] { color: @hex_5ab55e; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="29b6f6"] { color: #29B6F6; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="97979c"] { color: @hex_97979c; }

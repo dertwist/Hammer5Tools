@@ -9,6 +9,7 @@ from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from gui.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 from gui.editors.smartprop_editor.property import compact
+from gui.styles.common import mark_paint_through
 
 class PropertyCombobox(QWidget, PooledPropertyMixin):
     edited = Signal()
@@ -46,7 +47,7 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
         spacer_layout.addSpacerItem(spacer_item)
         spacer_layout.setContentsMargins(0, 0, 0, 0)
         self.spacer.setLayout(spacer_layout)
-        self.spacer.setStyleSheet('border:None;')
+        mark_paint_through(self.spacer)
         self.spacer.setContentsMargins(0, 0, 0, 0)
         self.ui.layout.addWidget(self.spacer)
 

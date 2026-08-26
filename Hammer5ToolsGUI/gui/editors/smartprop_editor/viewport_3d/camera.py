@@ -31,8 +31,9 @@ def look_at(eye, target, up):
 def perspective(fov_deg, aspect, near, far):
     """Build a 4x4 perspective projection matrix (column-major for OpenGL)."""
     f = 1.0 / math.tan(math.radians(fov_deg) / 2.0)
+    safe_aspect = max(1e-4, float(aspect))
     m = np.zeros((4, 4), dtype=np.float32)
-    m[0, 0] = f / aspect
+    m[0, 0] = f / safe_aspect
     m[1, 1] = f
     m[2, 2] = (far + near) / (near - far)
     m[2, 3] = -1.0
@@ -179,8 +180,16 @@ class Camera:
         self.fov = 45.0
         self.near = 1.0
         self.far = 50000.0
-        self.aspect = 1.0
+        self._aspect = 1.0
         self._pan_speed = 1.0
+
+    @property
+    def aspect(self):
+        return self._aspect
+
+    @aspect.setter
+    def aspect(self, value):
+        self._aspect = max(1e-4, float(value))
 
     @property
     def position(self):
@@ -198,7 +207,7 @@ class Camera:
 
     @property
     def projection_matrix(self):
-        return perspective(self.fov, self.aspect, self.near, self.far)
+        return perspective(self.fov, self._aspect, self.near, self.far)
 
     @property
     def right_vector(self):
@@ -260,8 +269,10 @@ class Camera:
 
     def screen_to_ray(self, sx, sy, viewport_w, viewport_h):
         """Convert screen coordinates to a world-space ray (origin, direction)."""
-        ndc_x = (2.0 * sx / viewport_w) - 1.0
-        ndc_y = 1.0 - (2.0 * sy / viewport_h)
+        vw = max(1.0, float(viewport_w))
+        vh = max(1.0, float(viewport_h))
+        ndc_x = (2.0 * sx / vw) - 1.0
+        ndc_y = 1.0 - (2.0 * sy / vh)
 
         # Inverse projection.
         #

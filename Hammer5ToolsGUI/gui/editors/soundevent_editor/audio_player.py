@@ -8,6 +8,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFont
 from gui.settings.main import set_settings_bool, get_settings_bool
 from gui.editors.soundevent_editor.ui_audio_player import Ui_Form
+from gui.styles import theme
 
 
 def compute_peak_envelope(file_or_path, frame_ms=30):
@@ -71,17 +72,6 @@ class DBInfoOverlay(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent, Qt.Popup | Qt.FramelessWindowHint)
         self.setObjectName("dbInfoOverlay")
-        self.setStyleSheet(
-            "QFrame#dbInfoOverlay {"
-            "  background-color: #2f2f31;"
-            "  border: 1px solid #4d4d51;"
-            "  border-radius: 4px;"
-            "}"
-            "QLabel {"
-            "  color: #e5e5e5;"
-            "  font: 9pt \"Segoe UI\";"
-            "}"
-        )
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(6)
@@ -89,17 +79,14 @@ class DBInfoOverlay(QFrame):
         # Header: Title + Close Button
         header = QHBoxLayout()
         title = QLabel("dB Reference Guide", self)
-        title.setStyleSheet("font-weight: bold; font-size: 10pt; color: #FFFFFF;")
+        title.setProperty("h5Component", "soundeventDbInfoTitle")
         header.addWidget(title)
         header.addStretch()
 
         close_btn = QToolButton(self)
         close_btn.setText("✕")
         close_btn.setToolTip("Close")
-        close_btn.setStyleSheet(
-            "QToolButton { color: #a5a5a5; border: none; font-size: 10px; background-color: transparent; padding: 2px; }"
-            "QToolButton:hover { color: #FFFFFF; background-color: #4d4d51; border-radius: 2px; }"
-        )
+        close_btn.setProperty("h5Component", "soundeventDbInfoCloseBtn")
         close_btn.clicked.connect(self.hide)
         header.addWidget(close_btn)
         layout.addLayout(header)
@@ -119,15 +106,13 @@ class DBInfoOverlay(QFrame):
 
             badge = QLabel(db_val, self)
             badge.setFixedWidth(84)
-            badge.setStyleSheet(
-                f"background-color: #38383b; color: {color}; font-weight: bold; "
-                f"border-radius: 3px; padding: 2px 4px; font-size: 8.5pt;"
-            )
+            badge.setProperty("h5Component", "soundeventDbInfoBadge")
+            badge.setProperty("h5ColorRole", color.lstrip("#").lower())
             badge.setAlignment(Qt.AlignCenter)
             row.addWidget(badge)
 
             desc_label = QLabel(desc, self)
-            desc_label.setStyleSheet("color: #d0d0d0; font-size: 8.5pt;")
+            desc_label.setProperty("h5Component", "soundeventDbInfoDesc")
             row.addWidget(desc_label)
 
             layout.addLayout(row)
@@ -161,7 +146,7 @@ class VUMeter(QWidget):
         r = self.rect()
 
         # Background (#2f2f31)
-        p.fillRect(r, QColor(47, 47, 49))
+        p.fillRect(r, theme.qcolor("#2f2f31"))
 
         meter_h = 9
         meter_y = 13
@@ -266,7 +251,7 @@ class WaveformWidget(QWidget):
         cy = h / 2.0
 
         # Background (#2f2f31)
-        p.fillRect(self.rect(), QColor(47, 47, 49))
+        p.fillRect(self.rect(), theme.qcolor("#2f2f31"))
 
         progress_ratio = 0.0
         if self._duration_ms > 0:
@@ -319,8 +304,8 @@ class AudioPlayer(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.setStyleSheet("QWidget { background-color: #2f2f31; }")
-        self.ui.content.setStyleSheet("QFrame#content { background-color: #2f2f31; border: none; }")
+        self.setProperty("h5Component", "soundeventAudioPlayerRoot")
+        self.ui.content.setProperty("h5Component", "soundeventAudioPlayerContent")
 
         self.audio_player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -359,18 +344,7 @@ class AudioPlayer(QWidget):
             self.info_button.setIcon(icon)
         else:
             self.info_button.setText("ℹ")
-        self.info_button.setStyleSheet(
-            "QToolButton {"
-            "  background-color: #2f2f31;"
-            "  border: 1px solid #434346;"
-            "  border-radius: 2px;"
-            "  color: #e5e5e5;"
-            "}"
-            "QToolButton:hover {"
-            "  background-color: #515965;"
-            "  color: #FFFFFF;"
-            "}"
-        )
+        self.info_button.setProperty("h5Component", "soundeventInfoButton")
         row2_layout.addWidget(self.info_button)
 
         self.ui.verticalLayout.addWidget(row2_widget)

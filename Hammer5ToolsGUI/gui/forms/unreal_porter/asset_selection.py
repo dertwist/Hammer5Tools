@@ -274,7 +274,7 @@ class AssetSelectionDialog(QDialog):
         self.setWindowTitle("Select assets")
         self.resize(720, 720)
         enable_dark_title_bar(self)
-        self.setStyleSheet("background-color: #272727;")
+        self.setProperty("h5Component", "unrealAssetSelectionDialog")
 
         self._asset_keys = sorted(asset_keys)
         self._leaves = []
@@ -340,7 +340,7 @@ class AssetSelectionDialog(QDialog):
             "a material's textures) are added automatically when you confirm."
         )
         note.setWordWrap(True)
-        note.setStyleSheet("color: #8a8a8a;")
+        note.setProperty("h5Component", "unrealAssetSelectionNote")
         layout.addWidget(note)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)

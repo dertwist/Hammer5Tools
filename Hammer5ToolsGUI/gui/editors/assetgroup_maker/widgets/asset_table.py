@@ -9,9 +9,7 @@ from PySide6.QtCore import Qt, Signal, QRect
 from PySide6.QtGui import QColor, QBrush, QPen, QAction, QDropEvent, QIcon, QPainter, QFont
 
 from gui.editors.assetgroup_maker.matcher import AssetGroupItem
-from gui.styles.common import (
-    qt_stylesheet_lineedit, qt_stylesheet_combobox, qt_stylesheet_table
-)
+from gui.styles import theme
 
 try:
     from gui.other.cs2_netcon import CS2Netcon
@@ -28,9 +26,9 @@ class StatusBadgeDelegate(QStyledItemDelegate):
 
         # Selection background
         if option.state & QStyle.State_Selected:
-            painter.fillRect(option.rect, QColor("#515965"))
+            painter.fillRect(option.rect, theme.qcolor("#515965"))
         elif option.state & QStyle.State_MouseOver:
-            painter.fillRect(option.rect, QColor("#38383B"))
+            painter.fillRect(option.rect, theme.qcolor("#38383b"))
 
         text = index.data(Qt.DisplayRole) or ""
         lower = text.lower()
@@ -104,32 +102,32 @@ class AssetTableWidget(QWidget):
         filter_row.setSpacing(6)
 
         search_label = QLabel("Search:")
-        search_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        search_label.setProperty("h5Component", "assetgroupSectionLabel")
         filter_row.addWidget(search_label)
 
         self.search_edit = QLineEdit()
-        self.search_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.search_edit.setProperty("h5Component", "legacyLineEdit")
         self.search_edit.setPlaceholderText("Filter assets by name or file path...")
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.textChanged.connect(self._apply_filter)
         filter_row.addWidget(self.search_edit, 1)
 
         status_label = QLabel("Status:")
-        status_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        status_label.setProperty("h5Component", "assetgroupSectionLabel")
         filter_row.addWidget(status_label)
 
         self.status_combo = QComboBox()
-        self.status_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.status_combo.setProperty("h5Component", "legacyCombobox")
         self.status_combo.addItems(["All", "Ready", "Warnings", "Errors"])
         self.status_combo.currentIndexChanged.connect(self._apply_filter)
         filter_row.addWidget(self.status_combo)
 
         tpl_label = QLabel("Template:")
-        tpl_label.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        tpl_label.setProperty("h5Component", "assetgroupSectionLabel")
         filter_row.addWidget(tpl_label)
 
         self.template_filter_combo = QComboBox()
-        self.template_filter_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.template_filter_combo.setProperty("h5Component", "legacyCombobox")
         self.template_filter_combo.addItem("All Templates")
         self.template_filter_combo.currentIndexChanged.connect(self._apply_filter)
         filter_row.addWidget(self.template_filter_combo)
@@ -167,7 +165,7 @@ class AssetTableWidget(QWidget):
         self.table.setColumnWidth(5, 210)
 
         self.table.setItemDelegateForColumn(1, StatusBadgeDelegate(self.table))
-        self.table.setStyleSheet(qt_stylesheet_table)
+        self.table.setProperty("h5Component", "legacyTable")
 
         # Override drop event on table
         self.table.dragEnterEvent = self._table_drag_enter

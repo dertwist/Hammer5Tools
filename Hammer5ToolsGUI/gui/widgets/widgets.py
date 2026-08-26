@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
 from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer
 import math
+from gui.styles import theme
 
 # QSlider positions are 32-bit ints; clamp derived slider ranges/positions to
 # this so large user-entered values never overflow (the widget's stored float
@@ -67,7 +68,7 @@ class Spacer(QWidget):
         spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         spacer_layout.addSpacerItem(spacer_item)
         self.setLayout(spacer_layout)
-        self.setStyleSheet('border:None;')
+        self.setProperty("h5Component", "layoutSpacer")
         self.setContentsMargins(0,0,0,0)
 # Property widgets
 
@@ -123,7 +124,7 @@ class FloatWidget(QWidget):
         self.SpinBox.setText(str(value) if int_output else f"{value:.4f}".rstrip('0').rstrip('.'))
         self.SpinBox.editingFinished.connect(self._on_editing_finished)
         self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
-        self.SpinBox.setStyleSheet('padding: 2px;')
+        self.SpinBox.setProperty("h5Component", "floatInput")
         # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
         if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
             self.SpinBox.setValidator(_make_double_validator(self.slider_range[0], self.slider_range[1], digits, self))
@@ -172,6 +173,7 @@ class FloatWidget(QWidget):
 
     # Method to change text color if needed
     def set_color(self, color):
+        # Runtime-data exception: callers supply the value color dynamically.
         self.SpinBox.setStyleSheet(f"color: {color};")
 
     def _on_slider_pressed(self):
@@ -269,17 +271,6 @@ class BoxSlider(QWidget):
     slider_pressed = Signal()   # emitted once when the user begins a drag gesture
     committed = Signal()        # emitted once when the user releases the drag
 
-    STYLE = """
-    QLineEdit {
-        background-color: #2e2e2e;
-        color: #e5e5e5;
-        border: none;
-        padding: 0px;
-        selection-background-color: #515965;
-        font: 580 10pt "Segoe UI";
-    }
-    """
-
     def __init__(self, int_output=False, slider_range=[0, 0], value=0.0, only_positive=False, lock_range=False,
                  digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
         super().__init__()
@@ -325,7 +316,6 @@ class BoxSlider(QWidget):
         self.edit_box.installEventFilter(self)
 
         self.update_slider_rect()
-        self.setStyleSheet(self.STYLE)
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
@@ -390,15 +380,15 @@ class BoxSlider(QWidget):
 
         # Draw background
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor("#2e2e2e"))
+        painter.setBrush(theme.qcolor("#2e2e2e"))
         painter.drawRect(self.rect())
 
         # Draw border
-        painter.setPen(QPen(QColor("#464649")))
+        painter.setPen(QPen(theme.qcolor("#464649")))
         painter.drawRect(self.slider_rect)
 
         # Draw text
-        painter.setPen(QColor("#e5e5e5"))
+        painter.setPen(theme.qcolor("#e5e5e5"))
         value_text = f"{int(self.value) if self.int_output else self.value:.{self.digits}f}"
         painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
 
@@ -533,7 +523,7 @@ class BoolWidget(QWidget):
         # Init checkbox
         self.checkbox = QCheckBox()
         self.checkbox.stateChanged.connect(self.on_updated)
-        self.checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkbox.setProperty("h5Component", "legacyCheckbox")
         self.checkbox.setMinimumWidth(72)
         # Layout initialization
         layout = QHBoxLayout()
@@ -572,8 +562,7 @@ class ComboboxDynamicItems(QComboBox):
     def __init__(self, parent=None, items: list =None, use_search:bool = False):
         """Combobox that updates it's items when user clicked on it"""
         super().__init__(parent)
-        # self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
-        self.setStyleSheet(qt_stylesheet_combobox)
+        self.setProperty("h5Component", "legacyCombobox")
         self.items = items if items is not None else []
         self.WheelEnabled = False
 
@@ -793,8 +782,8 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         # Set up custom colors and font for specific columns
         self.custom_colors = {
-            2: QColor("#a5a5a5"),
-            3: QColor("#a5a5a5"),
+            2: theme.qcolor("#a5a5a5"),
+            3: theme.qcolor("#a5a5a5"),
         }
         self.background_colors = {
             0: QColor("#f0f0f0"),  # Light grey background in column 0
@@ -876,7 +865,7 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         if role == Qt.ForegroundRole:
             if not is_enabled:
-                return QColor("#777777")  # Dim gray for disabled elements
+                return theme.qcolor("#777777")  # Dim gray for disabled elements
             if column in self.custom_colors:
                 return self.custom_colors[column]
 

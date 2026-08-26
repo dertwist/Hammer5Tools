@@ -290,15 +290,7 @@ class ExpressionEditor(QToolButton):
 
         # Create splitter for main content
         splitter = QSplitter(Qt.Horizontal)
-        splitter.setStyleSheet("""
-            QSplitter::handle {
-                background-color: #4f4f4f;
-                width: 2px;
-            }
-            QSplitter::handle:hover {
-                background-color: #5e5e5e;
-            }
-        """)
+        splitter.setProperty("h5Component", "smartpropExprSplitter")
         main_layout.addWidget(splitter)
 
         # Left panel - Variables and functions
@@ -311,10 +303,7 @@ class ExpressionEditor(QToolButton):
         # Variables section
         variables_label = QLabel("Available Variables:")
         variables_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        # QSS has no '#' line comment — '#' starts an ID selector, so the
-        # commented-out declarations that used to sit here made Qt reject the
-        # whole sheet ("Could not parse stylesheet of object QLabel").
-        variables_label.setStyleSheet("QLabel { color: #e5e5e5; }")
+        variables_label.setProperty("h5Component", "smartpropExprSectionLabel")
         left_layout.addWidget(variables_label)
 
         variables_list = QListWidget()
@@ -354,11 +343,10 @@ class ExpressionEditor(QToolButton):
 
         functions_label = QLabel("Functions & Operators:")
         functions_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        functions_label.setStyleSheet(variables_label.styleSheet())
+        functions_label.setProperty("h5Component", "smartpropExprSectionLabel")
         left_layout.addWidget(functions_label)
 
         functions_list = QListWidget()
-        functions_list.setStyleSheet(variables_list.styleSheet())
 
         # Add common functions and operators with ternary support
         common_functions = [
@@ -396,11 +384,10 @@ class ExpressionEditor(QToolButton):
         # Examples section
         examples_label = QLabel("Common Patterns:")
         examples_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        examples_label.setStyleSheet(variables_label.styleSheet())
+        examples_label.setProperty("h5Component", "smartpropExprSectionLabel")
         left_layout.addWidget(examples_label)
 
         examples_list = QListWidget()
-        examples_list.setStyleSheet(variables_list.styleSheet())
 
         example_patterns = [
             "(var == 1) ? 16 : 0",
@@ -423,13 +410,7 @@ class ExpressionEditor(QToolButton):
         splitter.addWidget(left_panel)
 
         right_panel = QFrame()
-        right_panel.setStyleSheet("""
-            QFrame {
-                background-color: #363637;
-                border: 1px solid #4f4f4f;
-                border-radius: 4px;
-            }
-        """)
+        right_panel.setProperty("h5Component", "smartpropExprRightPanel")
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(8, 8, 8, 8)
         right_layout.setSpacing(6)
@@ -462,17 +443,7 @@ class ExpressionEditor(QToolButton):
         
         help_label = QLabel(help_text)
         help_label.setMaximumHeight(120)
-        help_label.setStyleSheet("""
-            QLabel {
-                color: #d0d0d0; 
-                font-size: 8pt; 
-                padding: 8px;
-                background-color: #3e3e3e;
-                border: 1px solid #4f4f4f;
-                border-radius: 3px;
-                line-height: 1.4;
-            }
-        """)
+        help_label.setProperty("h5Component", "smartpropExprHelpLabel")
         help_label.setWordWrap(True)
         right_layout.addWidget(help_label)
         
@@ -486,10 +457,10 @@ class ExpressionEditor(QToolButton):
         btn_layout.addStretch()
         
         save_btn = QPushButton("Save")
-        save_btn.setStyleSheet(qt_stylesheet_button)
+        save_btn.setProperty("h5Component", "legacyButton")
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet(qt_stylesheet_button)
+        cancel_btn.setProperty("h5Component", "legacyButton")
         
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)

@@ -4,12 +4,12 @@
    app.setStyle('Fusion')), not something these rules control. */
 
 QTabWidget {
-    background-color: @background_neutral;
+    background-color: @surface;
 }
 
 QTabWidget::pane {
-    border: 1px solid @stroke;
-    background-color: @background_secondary;
+    border: 1px solid @border;
+    background-color: @surface_raised;
     border-radius: 0px;
     top: -1px;
 }
@@ -19,38 +19,38 @@ QTabWidget#MainWindowTools_tabs::pane {
 }
 
 QTabBar {
-    background-color: @background_neutral;
+    background-color: @surface;
     qproperty-drawBase: 0;
     qproperty-elideMode: "ElideNone";
 }
 
 QTabBar::tab {
-    background-color: @background_neutral;
-    color: @text_neutral;
+    background-color: @surface;
+    color: @text_muted;
     border-radius: 0px;
     padding: 4px 10px;
     margin: 0px;
     font: 580 9pt "Segoe UI";
     border: 1px solid transparent;
-    border-bottom: 1px solid @stroke;
-    border-right: 1px solid rgba(94, 94, 94, 80);
+    border-bottom: 1px solid @border;
+    border-right: 1px solid @rgba_5e5e5e_80;
 }
 
 QTabBar::tab:hover:!selected {
-    background-color: #363637;
-    color: #FFFFFF;
+    background-color: @hex_363637;
+    color: @selection_text;
 }
 
 QTabBar::tab:selected {
-    border: 1px solid @stroke;
+    border: 1px solid @border;
     border-top: 2px solid @accent;
-    border-bottom: 1px solid @background_secondary;
+    border-bottom: 1px solid @surface_raised;
     border-top-left-radius: 2px;
     border-top-right-radius: 2px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
-    color: #FFFFFF;
-    background-color: @background_secondary;
+    color: @selection_text;
+    background-color: @surface_raised;
     margin-bottom: -1px;
 }
 
@@ -78,9 +78,9 @@ QToolButton#DocumentNewTabButton {
 
 QToolButton#DocumentNewTabButton:hover {
     background-color: #363639;
-    border: 1px solid @stroke;
+    border: 1px solid @border;
 }
 
 QToolButton#DocumentNewTabButton:pressed {
-    background-color: @stroke;
+    background-color: @border;
 }

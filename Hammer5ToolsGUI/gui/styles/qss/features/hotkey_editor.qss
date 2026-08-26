@@ -1,0 +1,19 @@
+/* Hotkey Editor's key-capture button (main.py: KeyButton). */
+QPushButton[h5Component="hotkeyKeyButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 1px solid black;
+    border-radius: 1px;
+    border-color: @rgba_5e5e5e_150;
+    height: 22px;
+    padding: 4px;
+    color: @hex_b2b2b2;
+    background-color: @background;
+}
+QPushButton[h5Component="hotkeyKeyButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="hotkeyKeyButton"]:pressed {
+    background-color: @background;
+    margin: 1px 2px;
+}

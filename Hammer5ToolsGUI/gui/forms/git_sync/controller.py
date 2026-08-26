@@ -167,7 +167,7 @@ class SyncButton(QPushButton):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setIcon(QIcon(_SYNC_ICON))
-        self.setStyleSheet("padding: 5px;")
+        self.setProperty("h5Component", "gitSyncButton")
         self.setToolTip(
             "<html><head/><body>"
             "<p><span style=\" font-size:11pt; font-weight:700;\">Git Sync</span></p>"

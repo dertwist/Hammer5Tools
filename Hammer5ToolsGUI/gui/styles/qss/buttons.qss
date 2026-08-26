@@ -5,56 +5,56 @@ QPushButton {
     font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(94, 94, 94, 255);
-    height: 20px;
+    border-color: @rgba_5e5e5e_255;
+    height: @control_height;
     padding-top: 2px;
     padding-bottom: 2px;
     padding-left: 4px;
     padding-right: 4px;
-    color: @text_primary;
-    background-color: @background_primary;
+    color: @text;
+    background-color: @background;
 }
 QPushButton:hover {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
 }
 QPushButton:pressed {
-    background-color: @background_primary;
+    background-color: @background;
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;
 }
 QPushButton:disabled {
-    background-color: #292929;
-    color: #7c7c85;
-    border-color: #3f3f42;
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
 }
 
 QToolButton {
     font: 580 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(94, 94, 94, 255);
-    height: 22px;
+    border: @border_width solid black;
+    border-radius: @radius;
+    border-color: @rgba_5e5e5e_255;
+    height: @control_height;
     padding-top: 2px;
     padding-bottom: 2px;
-    padding-left: 4px;
-    padding-right: 4px;
-    color: @text_primary;
-    background-color: @background_primary;
+    padding-left: @spacing_unit;
+    padding-right: @spacing_unit;
+    color: @text;
+    background-color: @background;
 }
 QToolButton:hover {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
 }
 QToolButton:pressed {
-    background-color: @background_primary;
+    background-color: @background;
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;
 }
 QToolButton:disabled {
-    background-color: #292929;
-    color: #7c7c85;
-    border-color: #3f3f42;
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
 }

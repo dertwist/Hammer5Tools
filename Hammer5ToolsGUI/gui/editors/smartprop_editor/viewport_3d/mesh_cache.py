@@ -257,6 +257,21 @@ class MeshCache(QObject):
             finally:
                 del self._pending_upload[resource_path]
 
+    def invalidate_gpu_cache(self):
+        """Called when the OpenGL context is recreated/reinitialized.
+
+        Clears all GPU-side handles and re-queues all loaded CPU models
+        for GPU upload in the new context.
+        """
+        self._gpu_cache.clear()
+        self._pending_unload.clear()
+        self._deformed_gpu_cache.clear()
+        self._pending_deformed_unload.clear()
+
+        # Re-queue all models currently in CPU cache for GPU upload in the new context
+        for path, mesh_data in self._cpu_cache.items():
+            self._pending_upload[path] = mesh_data
+
     def prune(self, referenced_paths):
         """
         Drop every cached model not in ``referenced_paths`` so the cache mirrors

@@ -1,0 +1,271 @@
+/* Shared per-widget style variants that used to live as Python string
+   constants in gui/styles/common.py (qt_stylesheet_button, _checkbox, etc.)
+   and were applied via widget.setStyleSheet(CONSTANT) at dozens of call
+   sites across the app. Scoped via the h5Component dynamic property so each
+   variant only reaches the widgets opted into it, same pattern as
+   qss/features/property_frame.qss. Values are unchanged from the old
+   constants; hex_RRGGBB-style tokens (prefixed with the usual @ sigil) are
+   used instead of raw literals so shades that don't have a named Theme
+   field still respond to the brightness setting (see theme.resolve_hex()). */
+
+QPushButton[h5Component="legacyButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QPushButton[h5Component="legacyButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="legacyButton"]:pressed {
+    background-color: @background;
+    margin: 1px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+QPushButton[h5Component="legacyButton"]:disabled {
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
+}
+
+QToolButton[h5Component="legacyToolButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QToolButton[h5Component="legacyToolButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QToolButton[h5Component="legacyToolButton"]:pressed {
+    background-color: @background;
+    margin: 1px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+QToolButton[h5Component="legacyToolButton"]:disabled {
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
+}
+
+QPushButton[h5Component="legacyIconButton"], QToolButton[h5Component="legacyIconButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 1px solid @border;
+    border-radius: 2px;
+    padding: 0px;
+    margin: 0px;
+    color: @text;
+    background-color: @background;
+}
+QPushButton[h5Component="legacyIconButton"]:hover, QToolButton[h5Component="legacyIconButton"]:hover {
+    background-color: @selection;
+    border-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="legacyIconButton"]:pressed, QToolButton[h5Component="legacyIconButton"]:pressed {
+    background-color: @accent_pressed;
+}
+QPushButton[h5Component="legacyIconButton"]:disabled, QToolButton[h5Component="legacyIconButton"]:disabled {
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
+}
+
+QCheckBox[h5Component="legacyCheckbox"] {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QCheckBox[h5Component="legacyCheckbox"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QLineEdit[h5Component="legacyLineEdit"] {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QLineEdit[h5Component="legacyLineEdit"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QPlainTextEdit[h5Component="legacyBatchPlainText"] {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 18px;
+    padding: 0px;
+    color: @text;
+    background-color: @background;
+}
+QPlainTextEdit[h5Component="legacyBatchPlainText"]:pressed {
+    background-color: @background;
+    margin: 0px;
+}
+
+QComboBox[h5Component="legacyCombobox"] {
+    font: 580 9pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QComboBox[h5Component="legacyCombobox"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QComboBox[h5Component="legacyCombobox"] QAbstractItemView,
+QComboBox[h5Component="legacyCombobox"] QListView {
+    border: 2px solid gray;
+    border-color: @rgba_5e5e5e_255;
+    selection-background-color: @selection;
+    background-color: @background;
+    alternate-background-color: @hex_37373b;
+}
+QComboBox[h5Component="legacyCombobox"] QAbstractItemView::item,
+QComboBox[h5Component="legacyCombobox"] QListView::item {
+    height: 16px;
+    padding: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: @hex_939393;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: @rgba_ffffff_10;
+}
+QComboBox[h5Component="legacyCombobox"] QAbstractItemView::item:selected,
+QComboBox[h5Component="legacyCombobox"] QListView::item:selected {
+    height: 16px;
+    padding: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: @selection;
+    color: white;
+    border: none;
+    outline: none;
+}
+QComboBox[h5Component="legacyCombobox"]:disabled {
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
+}
+
+/* Appended to legacyCombobox on individual disabled channel combos (see
+   gui/forms/unreal_porter/slot_mapping.py) via a second h5State property,
+   rather than a second full stylesheet string. */
+QComboBox[h5Component="legacyCombobox"][h5State="disabled"] {
+    background-color: @hex_292929;
+    color: @hex_7c7c85;
+    border-color: @hex_3f3f42;
+}
+
+QListWidget[h5Component="legacyWidgetList"], QListView[h5Component="legacyWidgetList"] {
+    border: 2px solid @hex_d0d0d0;
+    border-color: @rgba_5e5e5e_255;
+    border-radius: 2px;
+    padding: 2px;
+    color: @text;
+    background-color: @surface_raised;
+    alternate-background-color: @hex_363636;
+    font: 580 10pt "Segoe UI";
+    show-decoration-selected: 1;
+}
+QListWidget[h5Component="legacyWidgetList"]::item, QListView[h5Component="legacyWidgetList"]::item {
+    padding: 2px;
+}
+QListWidget[h5Component="legacyWidgetList"]::item:selected, QListView[h5Component="legacyWidgetList"]::item:selected {
+    background-color: @selection;
+    color: @selection_text;
+}
+QListWidget[h5Component="legacyWidgetList"]::item:hover, QListView[h5Component="legacyWidgetList"]::item:hover {
+    background-color: @selection;
+}
+
+QListWidget[h5Component="legacyWidgetList2"], QListView[h5Component="legacyWidgetList2"] {
+    border: 2px solid @hex_d0d0d0;
+    border-color: @rgba_5e5e5e_255;
+    border-radius: 2px;
+    padding: 2px;
+    color: @text;
+    background-color: @surface_raised;
+    alternate-background-color: @hex_363636;
+    font: 580 10pt "Segoe UI";
+}
+QListWidget[h5Component="legacyWidgetList2"]::item, QListView[h5Component="legacyWidgetList2"]::item {
+    padding: 0px;
+}
+QListWidget[h5Component="legacyWidgetList2"]::item:selected, QListView[h5Component="legacyWidgetList2"]::item:selected {
+    background-color: @selection;
+    color: @selection_text;
+}
+QListWidget[h5Component="legacyWidgetList2"]::item:hover, QListView[h5Component="legacyWidgetList2"]::item:hover {
+    background-color: @selection;
+}
+QListWidget[h5Component="legacyWidgetList2"] QLabel, QListView[h5Component="legacyWidgetList2"] QLabel {
+    background-color: none;
+}
+
+QTableView[h5Component="legacyTable"] {
+    color: @text;
+    border: none;
+    background-color: @surface;
+    alternate-background-color: @surface_raised;
+    gridline-color: @hex_3e3e41;
+    selection-background-color: @selection;
+    selection-color: @selection_text;
+    font: 580 10pt "Segoe UI";
+}
+QTableView[h5Component="legacyTable"] QHeaderView::section {
+    background-color: @background;
+    color: @text_muted;
+    padding: 5px;
+    border: none;
+    font: 600 10pt "Segoe UI";
+}
+QTableView[h5Component="legacyTable"] QTableCornerButton::section {
+    background-color: @background;
+    border: none;
+}

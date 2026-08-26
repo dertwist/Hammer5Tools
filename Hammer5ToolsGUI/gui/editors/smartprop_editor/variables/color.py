@@ -12,6 +12,7 @@ class Var_class_color(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.ui.color.setProperty("h5Component", "smartpropColorSwatch")
         self.setAcceptDrops(True)
 
         # Initialize default color
@@ -37,12 +38,8 @@ class Var_class_color(QWidget):
     def update_button_style(self):
         """Update the style of the color button to display the current color."""
         r, g, b = self.color.red(), self.color.green(), self.color.blue()
-        self.ui.color.setStyleSheet(f"""
-            background-color: rgb({r}, {g}, {b});
-            padding: 4px;
-            border: 0px;
-            border: 2px solid rgba(94, 94, 94, 100);
-        """)
+        # Runtime-data exception: the swatch background is the variable value.
+        self.ui.color.setStyleSheet(f"background-color: rgb({r}, {g}, {b});")
 
     def on_changed(self):
         """Emit the edited signal with the current RGB values."""

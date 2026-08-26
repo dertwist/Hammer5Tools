@@ -13,15 +13,7 @@ class PropertyWarning(QWidget, PooledPropertyMixin):
         self.layout.setContentsMargins(8, 4, 8, 4)
         
         self.label = QLabel("This property might not work in CS2.")
-        self.label.setStyleSheet("""
-            color: #ffaa00;
-            font-weight: bold;
-            font-size: 9pt;
-            background-color: rgba(255, 170, 0, 10);
-            border: 1px solid rgba(255, 170, 0, 30);
-            border-radius: 0px;
-            padding: 4px;
-        """)
+        self.label.setProperty("h5Component", "smartpropPropertyWarning")
         self.label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.label)
         

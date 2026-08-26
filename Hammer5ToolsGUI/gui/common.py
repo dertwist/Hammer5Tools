@@ -1,6 +1,5 @@
 # from src.preferences import get_cs2_path
 from gui.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
-from gui.styles.common import qt_stylesheet_tabbar
 import sys
 import os
 import subprocess
@@ -329,7 +328,7 @@ def set_qdock_tab_style(findChildren):
         if getattr(tab_bar, "property", lambda k: None)("is_document_tab_bar"):
             continue
         tab_bar.setElideMode(Qt.ElideNone)
-        tab_bar.setStyleSheet(qt_stylesheet_tabbar)
+        tab_bar.setProperty("h5Component", "legacyTabBar")
 
 # generic functions
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):

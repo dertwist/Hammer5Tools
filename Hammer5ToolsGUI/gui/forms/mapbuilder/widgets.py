@@ -12,7 +12,6 @@ import os
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon, QColor
 from dataclasses import fields
-from gui.styles.common import qt_stylesheet_widgetlist2
 from typing import Any, Dict, Optional
 from gui.forms.mapbuilder.preset_manager import BuildSettings
 from PySide6.QtWidgets import QPushButton, QLabel, QGridLayout, QFileDialog, QMessageBox
@@ -20,6 +19,37 @@ from PySide6.QtCore import Qt, QSize, Signal
 
 from gui.settings.common import get_addon_dir, get_addon_name
 from gui.widgets.common import Button
+
+# Map Builder keeps its own hardcoded look independent of the shared
+# app theme/token system (by design — see STYLING_REFACTOR_HANDOFF.md).
+qt_stylesheet_widgetlist2 = """
+QListWidget, QListView {
+    border: 2px solid #d0d0d0;
+    border-color: rgba(94, 94, 94, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: #e5e5e5;
+    background-color: #2f2f31;
+    alternate-background-color: #363636;
+    font: 580 10pt "Segoe UI";
+}
+
+QListWidget::item, QListView::item {
+    padding: 0px;
+}
+
+QListWidget::item:selected, QListView::item:selected {
+    background-color: #515965;
+    color: white;
+}
+
+QListWidget::item:hover, QListView::item:hover {
+    background-color: #515965;
+}
+QLabel {
+background-color: None;
+}
+"""
 
 
 class SettingWidget(QWidget):
@@ -65,6 +95,7 @@ class BoolSettingWidget(SettingWidget):
         self.setStyleSheet("border: none; padding: 0px;")
 
         self.checkbox = QCheckBox(self.display_name)
+        self.checkbox.setStyleSheet("background-color: transparent;")
         self.checkbox.setChecked(self.default_value)
         self.checkbox.stateChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
 

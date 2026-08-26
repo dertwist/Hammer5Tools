@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal
 
 from gui.forms.replace_dialog.ui_main import Ui_Dialog
 from gui.common import enable_dark_title_bar
+from gui.styles import theme
 
 
 class FindAndReplaceDialog(QDialog):
@@ -47,7 +48,7 @@ class FindAndReplaceDialog(QDialog):
     def text_highlighter(self, text_content, text_to_find, match_case, whole_words):
         cursor = self.ui.viewport_QplainText.textCursor()
         format = QTextCharFormat()
-        format.setBackground(QColor("#515965"))
+        format.setBackground(theme.qcolor("#515965"))
 
         # Determine regex flags
         flags = 0
@@ -103,7 +104,6 @@ class FindAndReplaceDialog(QDialog):
 #     import qtvscodestyle as qtvsc
 #
 #     stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-#     app.setStyleSheet(stylesheet)
 #     # app.setStyle('fusion')
 #     dialog.exec()
 #     sys.exit(app.exec())

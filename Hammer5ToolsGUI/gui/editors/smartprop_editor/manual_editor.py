@@ -316,7 +316,6 @@ class _SearchReplaceBar(QFrame):
         super().__init__(parent)
         self._editor = editor
         self._last_search = ""
-        from gui.styles.common import qt_stylesheet_button, qt_stylesheet_lineedit
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(6, 4, 6, 4)
@@ -327,22 +326,21 @@ class _SearchReplaceBar(QFrame):
         search_label = QLabel("Find:")
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("Search…")
-        self._search_input.setStyleSheet(qt_stylesheet_lineedit)
+        self._search_input.setProperty("h5Component", "legacyLineEdit")
         self._search_input.returnPressed.connect(self.find_next)
 
         self._case_cb = QCheckBox("Aa")
-        from gui.styles.common import qt_stylesheet_checkbox
-        self._case_cb.setStyleSheet(qt_stylesheet_checkbox)
+        self._case_cb.setProperty("h5Component", "legacyCheckbox")
         self._case_cb.setToolTip("Case sensitive")
 
         self._find_prev_btn = QPushButton("▲")
-        self._find_prev_btn.setStyleSheet(qt_stylesheet_button)
+        self._find_prev_btn.setProperty("h5Component", "legacyButton")
         self._find_prev_btn.setFixedWidth(28)
         self._find_prev_btn.setToolTip("Find previous")
         self._find_prev_btn.clicked.connect(self.find_prev)
 
         self._find_next_btn = QPushButton("▼")
-        self._find_next_btn.setStyleSheet(qt_stylesheet_button)
+        self._find_next_btn.setProperty("h5Component", "legacyButton")
         self._find_next_btn.setFixedWidth(28)
         self._find_next_btn.setToolTip("Find next")
         self._find_next_btn.clicked.connect(self.find_next)
@@ -350,7 +348,7 @@ class _SearchReplaceBar(QFrame):
         self._match_label = QLabel("")
 
         self._close_btn = QPushButton("✕")
-        self._close_btn.setStyleSheet(qt_stylesheet_button)
+        self._close_btn.setProperty("h5Component", "legacyButton")
         self._close_btn.setFixedWidth(24)
         self._close_btn.setToolTip("Close  (Esc)")
         self._close_btn.clicked.connect(self.hide)
@@ -365,19 +363,19 @@ class _SearchReplaceBar(QFrame):
         replace_label = QLabel("Replace:")
         self._replace_input = QLineEdit()
         self._replace_input.setPlaceholderText("Replace…")
-        self._replace_input.setStyleSheet(qt_stylesheet_lineedit)
+        self._replace_input.setProperty("h5Component", "legacyLineEdit")
 
         self._replace_btn = QPushButton("Replace")
-        self._replace_btn.setStyleSheet(qt_stylesheet_button)
+        self._replace_btn.setProperty("h5Component", "legacyButton")
         self._replace_btn.clicked.connect(self._replace_one)
 
         self._replace_all_btn = QPushButton("Replace All")
-        self._replace_all_btn.setStyleSheet(qt_stylesheet_button)
+        self._replace_all_btn.setProperty("h5Component", "legacyButton")
         self._replace_all_btn.clicked.connect(self._replace_all)
         
         # Style labels
         for w in (search_label, replace_label, self._match_label):
-            w.setStyleSheet("color: #e5e5e5;")
+            w.setProperty("h5Component", "smartpropSearchLabel")
 
         for w in (replace_label, self._replace_input, self._replace_btn, self._replace_all_btn):
             replace_row.addWidget(w)
@@ -543,7 +541,7 @@ class ManualEditor(QWidget):
 
         # ── Status label (errors) ─────────────────────────────────────────
         self._status_label = QLabel("")
-        self._status_label.setStyleSheet("color: #F44747; border: 0px;")
+        self._status_label.setProperty("h5Component", "smartpropEditorErrorLabel")
         self._status_label.setWordWrap(True)
         self._status_label.hide()
         root.addWidget(self._status_label)
@@ -564,23 +562,22 @@ class ManualEditor(QWidget):
         bottom_layout.setSpacing(6)
 
         # Search toggle buttons at the bottom
-        from gui.styles.common import qt_stylesheet_button
         self._search_btn = QPushButton("Find")
         self._search_btn.setToolTip("Find  (Ctrl+F)")
-        self._search_btn.setStyleSheet(qt_stylesheet_button)
+        self._search_btn.setProperty("h5Component", "legacyButton")
         self._search_btn.clicked.connect(self._open_find)
         bottom_layout.addWidget(self._search_btn)
 
         self._replace_btn = QPushButton("Replace")
         self._replace_btn.setToolTip("Replace  (Ctrl+H)")
-        self._replace_btn.setStyleSheet(qt_stylesheet_button)
+        self._replace_btn.setProperty("h5Component", "legacyButton")
         self._replace_btn.clicked.connect(self._open_replace)
         bottom_layout.addWidget(self._replace_btn)
 
         bottom_layout.addStretch()
 
         self._stats_label = QLabel("")
-        self._stats_label.setStyleSheet("color: #a5a5a5; font: 9pt 'Segoe UI';")
+        self._stats_label.setProperty("h5Component", "smartpropEditorStatsLabel")
         bottom_layout.addWidget(self._stats_label)
 
         root.addWidget(bottom_toolbar)

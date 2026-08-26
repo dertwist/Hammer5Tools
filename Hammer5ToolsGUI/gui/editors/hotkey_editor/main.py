@@ -26,28 +26,9 @@ class KeyButton(QPushButton):
         self.clicked.connect(self.show_dialog)
 
     def set_button_style(self, color):
-        style = f"""
-            QPushButton {{
-                font: 580 9pt "Segoe UI";
-                border: 1px solid black;
-                border-radius: 1px;
-                border-color: rgba(94, 94, 94, 150);
-                height:22px;
-                padding: 4px;
-                color: {color};
-                background-color: #2e2e2e;
-            }}
-            QPushButton:hover {{
-                background-color: #515965;
-                color: white;
-            }}
-            QPushButton:pressed {{
-                background-color: red;
-                background-color: #2e2e2e;
-                margin: 1px 2px;
-            }}
-        """
-        self.setStyleSheet(style)
+        # DEFAULT_COLOR and ACTIVE_COLOR are the same value, so this button
+        # never actually needs a per-call color override.
+        self.setProperty("h5Component", "hotkeyKeyButton")
 
     def show_dialog(self):
         dialog = KeyDialog()

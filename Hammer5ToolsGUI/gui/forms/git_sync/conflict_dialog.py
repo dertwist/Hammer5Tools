@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QWidget,
     QScrollArea, QDialogButtonBox, QMessageBox,
 )
+from gui.styles.common import set_style_property
 
 
 class ConflictDialog(QDialog):
@@ -65,7 +66,8 @@ class ConflictDialog(QDialog):
         name.setToolTip(path)
         h.addWidget(name, 1)
         status = QLabel("conflict")
-        status.setStyleSheet("color: #E5A00D;")
+        status.setProperty("h5Component", "gitConflictStatus")
+        status.setProperty("h5State", "conflict")
         h.addWidget(status)
 
         choices = []
@@ -94,7 +96,7 @@ class ConflictDialog(QDialog):
     def _mark_resolved(self, path, label):
         status, btns = self._rows[path]
         status.setText(label)
-        status.setStyleSheet("color: #7FB800;")
+        set_style_property(status, "h5State", "resolved")
         for b in btns:
             b.setEnabled(False)
         self._unresolved.discard(path)

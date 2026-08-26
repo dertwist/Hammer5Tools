@@ -316,6 +316,8 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self._sync_gizmo()
 
     def resizeGL(self, w, h):
+        if w <= 0 or h <= 0:
+            return
         from OpenGL import GL
         GL.glViewport(0, 0, w, h)
         self.camera.aspect = w / h if h > 0 else 1.0
@@ -336,6 +338,8 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         GL.glBindVertexArray(0)
 
     def paintGL(self):
+        if self.width() <= 0 or self.height() <= 0:
+            return
         from OpenGL import GL
 
         if self._perform_pick_flag:

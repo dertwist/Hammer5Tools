@@ -62,24 +62,14 @@ class AssetImportDialog(QDialog):
             "Missing assets found by Find Missing — review the list below (edit/remove as needed) before importing."
         )
         inst_lbl.setWordWrap(True)
-        inst_lbl.setStyleSheet("color: #a5a5a5; font: 580 9pt 'Segoe UI';")
+        inst_lbl.setProperty("h5Component", "sourcePorterInstructionLabel")
         layout.addWidget(inst_lbl)
 
         self.editor = QPlainTextEdit()
         self.editor.setPlaceholderText("materials/models/props_junk/wood_crate001a.vmt\nmodels/props_junk/wood_crate001a.mdl")
         if prefill_paths:
             self.editor.setPlainText("\n".join(prefill_paths))
-        self.editor.setStyleSheet("""
-            QPlainTextEdit {
-                background-color: #272727;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                border-radius: 4px;
-                font-family: "Consolas", "Courier New", monospace;
-                font-size: 9.5pt;
-                padding: 6px;
-            }
-        """)
+        self.editor.setProperty("h5Component", "sourcePorterPathsEditor")
         layout.addWidget(self.editor, stretch=1)
 
         btn_box = QHBoxLayout()
@@ -127,35 +117,6 @@ class SourcePorterWidget(QDialog):
 
     def _setup_menubar(self):
         self.menu_bar = QMenuBar(self)
-        self.menu_bar.setStyleSheet("""
-            QMenuBar {
-                background-color: #272727;
-                color: #e5e5e5;
-                font: 580 9pt "Segoe UI";
-                border-bottom: 1px solid #464649;
-            }
-            QMenuBar::item {
-                background-color: transparent;
-                padding: 5px 10px;
-            }
-            QMenuBar::item:selected {
-                background-color: #515965;
-                color: #FFFFFF;
-            }
-            QMenu {
-                background-color: #2e2e2e;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                font: 580 9pt "Segoe UI";
-            }
-            QMenu::item {
-                padding: 6px 24px 6px 10px;
-            }
-            QMenu::item:selected {
-                background-color: #515965;
-                color: #FFFFFF;
-            }
-        """)
 
         # Tools Menu
         tools_menu = self.menu_bar.addMenu("&Tools")
@@ -184,109 +145,6 @@ class SourcePorterWidget(QDialog):
         root_layout.setMenuBar(self.menu_bar)
         root_layout.setContentsMargins(10, 10, 10, 10)
         root_layout.setSpacing(6)
-
-        # Baseline dialog stylesheet
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #2e2e2e;
-                color: #e5e5e5;
-                font-family: "Segoe UI", sans-serif;
-            }
-            QGroupBox {
-                font: 700 10pt "Segoe UI";
-                color: #FFFFFF;
-                border: 1px solid #464649;
-                border-radius: 4px;
-                margin-top: 8px;
-                padding-top: 10px;
-                background-color: #272727;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 0 5px;
-                color: #4a83c9;
-            }
-            QLabel {
-                color: #e5e5e5;
-                font: 600 9pt "Segoe UI";
-            }
-            QLineEdit, QComboBox, QSpinBox {
-                background-color: #2f2f31;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                border-radius: 3px;
-                padding: 4px 8px;
-                font: 580 9pt "Segoe UI";
-            }
-            QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
-                border-color: #4a83c9;
-            }
-            QLineEdit:hover, QComboBox:hover, QSpinBox:hover {
-                background-color: #38383a;
-            }
-            QPushButton {
-                background-color: #2e2e2e;
-                color: #e5e5e5;
-                border: 1px solid #464649;
-                border-radius: 3px;
-                padding: 5px 12px;
-                font: 580 9pt "Segoe UI";
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                color: #FFFFFF;
-            }
-            QPushButton:pressed {
-                background-color: #6d7882;
-            }
-            QPushButton#btn_port {
-                background-color: #4a83c9;
-                border-color: #2b5f9e;
-                color: #FFFFFF;
-                font: 700 9.5pt "Segoe UI";
-            }
-            QPushButton#btn_port:hover {
-                background-color: #4a8ad8;
-            }
-            QPushButton#btn_find_missing {
-                background-color: #2E7D32;
-                border-color: #1b5e20;
-                color: #FFFFFF;
-                font: 700 9.5pt "Segoe UI";
-            }
-            QPushButton#btn_find_missing:hover {
-                background-color: #388e3c;
-            }
-            QPushButton#btn_stop {
-                background-color: #C62828;
-                border-color: #b71c1c;
-                color: #FFFFFF;
-            }
-            QPushButton#btn_stop:hover {
-                background-color: #D32F2F;
-            }
-            QTabWidget::pane {
-                border: 1px solid #464649;
-                background-color: #272727;
-                border-radius: 2px;
-            }
-            QTabBar::tab {
-                background-color: #272727;
-                color: #a5a5a5;
-                padding: 6px 16px;
-                font: 700 9.5pt "Segoe UI";
-                border: 1px solid #464649;
-                border-bottom: none;
-                border-top-left-radius: 3px;
-                border-top-right-radius: 3px;
-            }
-            QTabBar::tab:selected {
-                background-color: #2f2f31;
-                color: #e5e5e5;
-                border-color: #4a83c9;
-            }
-        """)
 
         # Splitter
         splitter = QSplitter(Qt.Horizontal)

@@ -1,0 +1,190 @@
+/* AssetGroupMaker-specific widget variants, migrated off inline
+   setStyleSheet() calls during the styling-refactor plan. */
+
+/* The "Ignore" pill button in the batch-creator preview dialog: same colors
+   as legacyButton (qss/legacy_widgets.qss) but smaller. */
+QPushButton[h5Component="assetgroupSmallButton"] {
+    font: 580 8pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 14px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QPushButton[h5Component="assetgroupSmallButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="assetgroupSmallButton"]:pressed {
+    background-color: @background;
+    margin: 1px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+/* Placeholder-insertion context menu (context_menu.py): a lighter surface
+   and brighter text than the default QMenu in qss/menus.qss. */
+QMenu[h5Component="assetgroupContextMenu"] {
+    background-color: @background;
+    color: @text;
+    border: 1px solid @border;
+}
+QMenu[h5Component="assetgroupContextMenu"]::item:selected {
+    background-color: @selection;
+}
+
+/* Bottom action footer panel (editor_tab.py). */
+QFrame[h5Component="assetgroupFooterFrame"] {
+    background-color: @background;
+    border: 1px solid @border;
+    border-radius: 2px;
+}
+
+/* Muted hint/status labels (editor_tab.py: "Output Directory:", status line). */
+QLabel[h5Component="assetgroupHintLabel"] {
+    color: @text_muted;
+    font: 580 9pt "Segoe UI";
+}
+
+/* Section labels in AssetTableWidget's toolbar row (search/status/template),
+   also reused by TemplateCardWidget's "Detected Slots:" label -- both were
+   the exact same literal font/color. */
+QLabel[h5Component="assetgroupSectionLabel"] {
+    font: 600 9pt "Segoe UI";
+    color: @text_muted;
+}
+
+/* reference_card.py: TemplateCardWidget's card chrome. */
+QFrame[h5Component="assetgroupTemplateCardFrame"] {
+    background-color: @background;
+    border: 1px solid @border;
+    border-radius: 2px;
+}
+QLabel[h5Component="assetgroupTemplateTitle"] {
+    font: 600 9.5pt "Segoe UI";
+    color: @text;
+}
+QLabel[h5Component="assetgroupTypeBadge"] {
+    background-color: #2D333F;
+    color: #A0C4FF;
+    border: 1px solid @accent;
+    border-radius: 0px;
+    padding: 2px 6px;
+    font: 600 8.5pt "Segoe UI";
+}
+QToolButton[h5Component="assetgroupDeleteToolButton"] {
+    color: @text_muted;
+    background: transparent;
+    border: none;
+    font: 700 9pt "Segoe UI";
+    padding: 2px 6px;
+}
+QToolButton[h5Component="assetgroupDeleteToolButton"]:hover {
+    color: #EF5350;
+    background-color: #3E2020;
+    border-radius: 2px;
+}
+
+/* Collapsible "Filter & Ignore Settings" panel, in its two size variants:
+   per-template (TemplateCardWidget, Small) and global (MultiTemplateManagerWidget, Large). */
+QToolButton[h5Component="assetgroupIgnoreToggleSmall"], QToolButton[h5Component="assetgroupIgnoreToggleLarge"] {
+    border: none;
+    background: transparent;
+    color: @text_muted;
+    font: 600 8.5pt "Segoe UI";
+    padding: 1px 2px;
+    margin: 0px;
+}
+QToolButton[h5Component="assetgroupIgnoreToggleSmall"] {
+    height: 16px;
+}
+QToolButton[h5Component="assetgroupIgnoreToggleLarge"] {
+    height: 18px;
+}
+QToolButton[h5Component="assetgroupIgnoreToggleSmall"]:hover, QToolButton[h5Component="assetgroupIgnoreToggleLarge"]:hover {
+    color: @selection_text;
+}
+
+QFrame[h5Component="assetgroupIgnorePanelSmall"] {
+    background-color: @hex_242424;
+    border: 1px solid #3E3E42;
+    border-radius: 2px;
+}
+QFrame[h5Component="assetgroupIgnorePanelLarge"] {
+    background-color: #282828;
+    border: 1px solid @border;
+    border-radius: 2px;
+}
+
+QLabel[h5Component="assetgroupIgnoreFieldLabelSmall"] {
+    color: @text_muted;
+    font: 580 8.5pt "Segoe UI";
+}
+QLabel[h5Component="assetgroupIgnoreFieldLabelLarge"] {
+    color: @text_muted;
+    font: 580 9pt "Segoe UI";
+}
+
+/* Detected-slot pill badges: skipped vs filled. */
+QLabel[h5Component="assetgroupSlotPillSkipped"] {
+    background-color: @hex_242424;
+    color: @hex_777777;
+    border: 1px dashed @hex_555555;
+    border-radius: 0px;
+    padding: 2px 6px;
+    font: 580 8.5pt "Segoe UI";
+}
+QLabel[h5Component="assetgroupSlotPillFilled"] {
+    background-color: @surface_raised;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 0px;
+    padding: 2px 6px;
+    font: 580 8.5pt "Segoe UI";
+}
+
+QScrollArea[h5Component="assetgroupTransparentScrollArea"] {
+    background: transparent;
+    border: none;
+}
+
+/* slot_editor.py: TemplateSlotMappingDialog. */
+QDialog[h5Component="assetgroupSlotDialog"] {
+    background-color: @hex_1e1e1e;
+    color: @text;
+}
+QFrame[h5Component="assetgroupSlotRowFrame"] {
+    background-color: #252527;
+    border: 1px solid #3E3E42;
+    border-radius: 2px;
+}
+QLabel[h5Component="assetgroupMaterialSectionDesc"] {
+    font: 580 8.5pt "Segoe UI";
+    color: @hex_8a8a8a;
+}
+QFrame[h5Component="assetgroupMaterialRemapRowFrame"] {
+    background-color: #2F2F32;
+    border: 1px solid #3E3E42;
+    border-radius: 2px;
+}
+QLabel[h5Component="assetgroupRemapArrowLabel"] {
+    color: @accent;
+    font: 700 10pt "Segoe UI";
+}
+QToolButton[h5Component="assetgroupDeleteToolButtonTight"] {
+    color: @text_muted;
+    background: transparent;
+    border: none;
+    font: 700 9pt "Segoe UI";
+    padding: 2px 4px;
+}
+QToolButton[h5Component="assetgroupDeleteToolButtonTight"]:hover {
+    color: #EF5350;
+    background-color: #3E2020;
+    border-radius: 2px;
+}

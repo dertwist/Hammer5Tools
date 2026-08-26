@@ -3,102 +3,102 @@
    styling-refactor migration. Behavior preserved as-is. */
 
 QProgressBar {
-    border: 2px solid #5ab55e;
+    border: 2px solid @hex_5ab55e;
     border-radius: 5px;
     text-align: center;
-    color: @text_primary;
-    background-color: @background_primary;
+    color: @text;
+    background-color: @background;
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
 }
 
 QProgressBar::chunk {
-    background-color: @selected_fill;
+    background-color: @selection;
     width: 20px;
     margin: 1px;
     border-radius: 2px;
 }
 
 QListWidget {
-    border: 2px solid #d0d0d0;
-    border-color: rgba(94, 94, 94, 255);
+    border: 2px solid @hex_d0d0d0;
+    border-color: @rgba_5e5e5e_255;
     border-radius: 2px;
     padding: 2px;
-    color: @text_primary;
-    background-color: @background_secondary;
+    color: @text;
+    background-color: @surface_raised;
     show-decoration-selected: 1;
 }
 QListWidget::item {
     padding: 2px;
-    alternate-background-color: #ff363636;
+    alternate-background-color: @hex_363636;
 }
 QListWidget::item:selected {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
 }
 
 QListWidget::item:hover {
-    background-color: @selected_fill;
+    background-color: @selection;
 }
 
 QListView {
-    border: 2px solid #d0d0d0;
-    border-color: rgba(94, 94, 94, 255);
+    border: 2px solid @hex_d0d0d0;
+    border-color: @rgba_5e5e5e_255;
     border-radius: 2px;
     padding: 2px;
-    color: @text_primary;
-    background-color: @background_secondary;
+    color: @text;
+    background-color: @surface_raised;
     show-decoration-selected: 1;
 }
 QListView::item {
     padding: 0px;
 }
 QListView::item:selected {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
 }
 
 QListView::item:hover {
-    background-color: @selected_fill;
+    background-color: @selection;
 }
 
 QHeaderView::section {
-    background-color: @background_primary;
-    color: @text_neutral;
+    background-color: @background;
+    color: @text_muted;
     padding: 5px;
     border: none;
     font: 600 10pt "Segoe UI";
 }
 QTableWidget, QTableView {
     border: none;
-    background-color: @background_neutral;
-    color: @text_primary;
-    gridline-color: #3e3e41;
+    background-color: @surface;
+    color: @text;
+    gridline-color: @hex_3e3e41;
     outline: none;
 }
 QTableWidget::item, QTableView::item {
     padding: 5px;
-    border-bottom: 1px solid #3e3e41;
+    border-bottom: 1px solid @hex_3e3e41;
 }
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    color: @selection_text;
 }
 QTableView QTableCornerButton::section {
-    background-color: @background_primary;
+    background-color: @background;
     border: none;
 }
 
 QTreeView {
-    color: @text_primary;
+    color: @text;
     border: 2px solid black;
     border-radius: 1px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
     font: 580 10pt "Segoe UI";
-    background-color: @background_neutral;
-    alternate-background-color: #ff363636;
+    background-color: @surface;
+    alternate-background-color: @hex_363636;
 }
 
 QTreeView::item {
@@ -108,18 +108,18 @@ QTreeView::item {
     padding-bottom: 2px;
     border-style: none;
     border-bottom: 0.5px solid black;
-    border-color: rgba(255, 255, 255, 10);
+    border-color: @rgba_ffffff_10;
 }
 
 QTreeView::item:selected {
-    background-color: @selected_fill;
-    alternate-background-color: @selected_fill;
-    color: white;
+    background-color: @selection;
+    alternate-background-color: @selection;
+    color: @selection_text;
 }
 
 QTreeView::item:hover {
-    background-color: #38383a;
-    color: @text_primary;
+    background-color: @hex_38383a;
+    color: @text;
 }
 
 QTreeView::branch:has-siblings {
@@ -143,17 +143,17 @@ QTreeView::item QLineEdit {
     border: none;
     margin: 0px;
     padding: 0px;
-    background-color: @background_primary;
-    color: @text_primary;
+    background-color: @background;
+    color: @text;
 }
 
 QHeaderView::section {
-    background-color: @background_secondary;
-    color: @text_primary;
+    background-color: @surface_raised;
+    color: @text;
     font: 600 10pt "Segoe UI";
     height: 16px;
     border: 0px;
     border-bottom: 2px solid black;
     border-radius: 2px;
-    border-color: rgba(94, 94, 94, 255);
+    border-color: @rgba_5e5e5e_255;
 }

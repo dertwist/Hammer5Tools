@@ -4,7 +4,6 @@ import re
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 from gui.widgets.popup_menu.main import PopupMenu
-from gui.styles.common import qt_stylesheet_button
 from gui.widgets import HierarchyItemModel
 from gui.editors.smartprop_editor.property import compact
 import uuid
@@ -23,7 +22,7 @@ class PropertyReference(QWidget):
         self.element_id_generator = element_id_generator
         self.tree_hierarchy = tree_hierarchy
 
-        self.ui.reference_show_button.setStyleSheet(qt_stylesheet_button)
+        self.ui.reference_show_button.setProperty("h5Component", "legacyButton")
 
         # Set up the property class label
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)

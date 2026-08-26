@@ -9,10 +9,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
 
 from gui.settings.main import get_addon_dir, get_addon_name
-from gui.styles.common import (
-    qt_stylesheet_button, qt_stylesheet_combobox, qt_stylesheet_lineedit,
-    qt_stylesheet_checkbox
-)
+from gui.styles.common import mark_paint_through
 from gui.editors.assetgroup_maker.analyzer import (
     ReferenceAnalysisResult, extract_fbx_materials, resolve_reference_full_path
 )
@@ -74,12 +71,7 @@ class TemplateSlotMappingDialog(QDialog):
         self.setSizeGripEnabled(True)
         self.setMinimumSize(700, 420)
         self.resize(880, 580)
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #1e1e1e;
-                color: #E5E5E5;
-            }
-        """)
+        self.setProperty("h5Component", "assetgroupSlotDialog")
         self._build_ui()
 
     def _build_ui(self):
@@ -91,10 +83,10 @@ class TemplateSlotMappingDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setProperty("h5Component", "assetgroupTransparentScrollArea")
 
         self.fields_container = QWidget()
-        self.fields_container.setStyleSheet("background: transparent;")
+        mark_paint_through(self.fields_container)
         self.fields_layout = QVBoxLayout(self.fields_container)
         self.fields_layout.setContentsMargins(0, 0, 0, 0)
         self.fields_layout.setSpacing(10)
@@ -139,7 +131,7 @@ class TemplateSlotMappingDialog(QDialog):
 
         # Standard Slot Rows Section
         slots_header_lbl = QLabel("Companion File Slots & Replacement Tokens:")
-        slots_header_lbl.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        slots_header_lbl.setProperty("h5Component", "assetgroupSectionLabel")
         self.fields_layout.addWidget(slots_header_lbl)
 
         for slot_key, slot_info in slots_def.items():
@@ -161,7 +153,7 @@ class TemplateSlotMappingDialog(QDialog):
         btn_row.addStretch(1)
 
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet(qt_stylesheet_button)
+        cancel_btn.setProperty("h5Component", "legacyButton")
         cancel_btn.setFixedHeight(28)
         cancel_btn.setMinimumWidth(80)
         cancel_btn.clicked.connect(self.reject)
@@ -169,7 +161,7 @@ class TemplateSlotMappingDialog(QDialog):
 
         apply_btn = QPushButton("Save Slot Mappings")
         apply_btn.setIcon(QIcon(":/valve_common/icons/tools/common/save.png"))
-        apply_btn.setStyleSheet(qt_stylesheet_button)
+        apply_btn.setProperty("h5Component", "legacyButton")
         apply_btn.setFixedHeight(28)
         apply_btn.setMinimumWidth(140)
         apply_btn.clicked.connect(self._apply_and_close)
@@ -179,13 +171,7 @@ class TemplateSlotMappingDialog(QDialog):
 
     def _create_slot_row(self, slot_key: str, slot_info: Dict[str, Any]) -> QWidget:
         row_frame = QFrame()
-        row_frame.setStyleSheet("""
-            QFrame {
-                background-color: #252527;
-                border: 1px solid #3E3E42;
-                border-radius: 2px;
-            }
-        """)
+        row_frame.setProperty("h5Component", "assetgroupSlotRowFrame")
         row_layout = QVBoxLayout(row_frame)
         row_layout.setContentsMargins(10, 8, 10, 8)
         row_layout.setSpacing(6)
@@ -196,21 +182,21 @@ class TemplateSlotMappingDialog(QDialog):
 
         is_skipped = slot_key in self.skipped_slots
         cb = QCheckBox("Map this slot")
-        cb.setStyleSheet(qt_stylesheet_checkbox)
+        cb.setProperty("h5Component", "legacyCheckbox")
         cb.setChecked(not is_skipped)
         self.slot_check_boxes[slot_key] = cb
         top_row.addWidget(cb)
 
         slot_label = slot_info.get('label', slot_key)
         title_lbl = QLabel(f"<b>{slot_label}</b> ({slot_key})")
-        title_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setProperty("h5Component", "assetgroupTemplateTitle")
         top_row.addWidget(title_lbl)
         top_row.addStretch(1)
 
         source_filename = slot_info.get('filename', '')
         if source_filename:
             file_lbl = QLabel(f"Reference File: <span style='color:#E0E0E0;'>{source_filename}</span>")
-            file_lbl.setStyleSheet("font: 580 8.5pt 'Segoe UI'; color: #A5A5A5;")
+            file_lbl.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
             top_row.addWidget(file_lbl)
 
         row_layout.addLayout(top_row)
@@ -221,14 +207,14 @@ class TemplateSlotMappingDialog(QDialog):
 
         tok_lbl = QLabel("Replacement Token:")
         tok_lbl.setFixedWidth(130)
-        tok_lbl.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        tok_lbl.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
         token_row.addWidget(tok_lbl)
 
         default_tok = slot_info.get('token', f'#${slot_key.upper()}$#')
         curr_tok = self.custom_tokens.get(slot_key, default_tok)
 
         tok_edit = QLineEdit(curr_tok)
-        tok_edit.setStyleSheet(qt_stylesheet_lineedit)
+        tok_edit.setProperty("h5Component", "legacyLineEdit")
         tok_edit.setFixedHeight(24)
         self.token_edits[slot_key] = tok_edit
         token_row.addWidget(tok_edit, 1)
@@ -243,13 +229,7 @@ class TemplateSlotMappingDialog(QDialog):
 
     def _build_material_remaps_section(self):
         mat_section_frame = QFrame()
-        mat_section_frame.setStyleSheet("""
-            QFrame {
-                background-color: #252527;
-                border: 1px solid #3E3E42;
-                border-radius: 2px;
-            }
-        """)
+        mat_section_frame.setProperty("h5Component", "assetgroupSlotRowFrame")
         mat_section_layout = QVBoxLayout(mat_section_frame)
         mat_section_layout.setContentsMargins(10, 8, 10, 8)
         mat_section_layout.setSpacing(8)
@@ -263,7 +243,7 @@ class TemplateSlotMappingDialog(QDialog):
         header_row.addWidget(icon_lbl)
 
         title_lbl = QLabel("<b>FBX Materials & Material Slot Remaps (VMDL MaterialGroup):</b>")
-        title_lbl.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        title_lbl.setProperty("h5Component", "assetgroupTemplateTitle")
         header_row.addWidget(title_lbl)
 
         header_row.addStretch(1)
@@ -271,7 +251,7 @@ class TemplateSlotMappingDialog(QDialog):
         research_btn = QPushButton("Research FBX Materials")
         research_btn.setIcon(QIcon(":/valve_common/icons/tools/common/refresh.png"))
         research_btn.setToolTip("Scan referenced and input FBX mesh files in the asset directory to extract embedded material names")
-        research_btn.setStyleSheet(qt_stylesheet_button)
+        research_btn.setProperty("h5Component", "legacyButton")
         research_btn.setFixedHeight(26)
         research_btn.clicked.connect(self._research_fbx_materials)
         header_row.addWidget(research_btn)
@@ -279,7 +259,7 @@ class TemplateSlotMappingDialog(QDialog):
         add_remap_btn = QPushButton("+ Add Remap")
         add_remap_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
         add_remap_btn.setToolTip("Add a new FBX material slot remap manually")
-        add_remap_btn.setStyleSheet(qt_stylesheet_button)
+        add_remap_btn.setProperty("h5Component", "legacyButton")
         add_remap_btn.setFixedHeight(26)
         add_remap_btn.clicked.connect(lambda: self._add_material_remap_row("", ""))
         header_row.addWidget(add_remap_btn)
@@ -287,7 +267,7 @@ class TemplateSlotMappingDialog(QDialog):
         mat_section_layout.addLayout(header_row)
 
         desc_lbl = QLabel("Extracts embedded FBX material names and allows swapping the target .vmat material asset path.")
-        desc_lbl.setStyleSheet("font: 580 8.5pt 'Segoe UI'; color: #8A8A8A;")
+        desc_lbl.setProperty("h5Component", "assetgroupMaterialSectionDesc")
         mat_section_layout.addWidget(desc_lbl)
 
         # Container for remap rows
@@ -307,30 +287,24 @@ class TemplateSlotMappingDialog(QDialog):
 
     def _add_material_remap_row(self, from_mat: str, to_mat: str):
         row_frame = QFrame()
-        row_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2F2F32;
-                border: 1px solid #3E3E42;
-                border-radius: 2px;
-            }
-        """)
+        row_frame.setProperty("h5Component", "assetgroupMaterialRemapRowFrame")
         row_layout = QHBoxLayout(row_frame)
         row_layout.setContentsMargins(8, 6, 8, 6)
         row_layout.setSpacing(8)
 
         from_edit = QLineEdit(from_mat)
-        from_edit.setStyleSheet(qt_stylesheet_lineedit)
+        from_edit.setProperty("h5Component", "legacyLineEdit")
         from_edit.setFixedHeight(24)
         from_edit.setPlaceholderText("material_name.vmat")
         from_edit.setMinimumWidth(140)
         row_layout.addWidget(from_edit, 1)
 
         arrow_lbl = QLabel("➔")
-        arrow_lbl.setStyleSheet("color: #4A83C9; font: 700 10pt 'Segoe UI';")
+        arrow_lbl.setProperty("h5Component", "assetgroupRemapArrowLabel")
         row_layout.addWidget(arrow_lbl)
 
         to_edit = QLineEdit(to_mat)
-        to_edit.setStyleSheet(qt_stylesheet_lineedit)
+        to_edit.setProperty("h5Component", "legacyLineEdit")
         to_edit.setFixedHeight(24)
         to_edit.setPlaceholderText("materials/.../material.vmat")
         row_layout.addWidget(to_edit, 2)
@@ -339,7 +313,7 @@ class TemplateSlotMappingDialog(QDialog):
         browse_btn = QPushButton()
         browse_btn.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
         browse_btn.setToolTip("Pick .vmat material using Asset Browser")
-        browse_btn.setStyleSheet(qt_stylesheet_button)
+        browse_btn.setProperty("h5Component", "legacyButton")
         browse_btn.setFixedSize(26, 24)
         browse_btn.clicked.connect(lambda: self._on_browse_vmat(to_edit))
         row_layout.addWidget(browse_btn)
@@ -348,20 +322,7 @@ class TemplateSlotMappingDialog(QDialog):
         del_btn = QToolButton()
         del_btn.setText("✕")
         del_btn.setToolTip("Remove this material remap")
-        del_btn.setStyleSheet("""
-            QToolButton {
-                color: #A5A5A5;
-                background: transparent;
-                border: none;
-                font: 700 9pt 'Segoe UI';
-                padding: 2px 4px;
-            }
-            QToolButton:hover {
-                color: #EF5350;
-                background-color: #3E2020;
-                border-radius: 2px;
-            }
-        """)
+        del_btn.setProperty("h5Component", "assetgroupDeleteToolButtonTight")
         row_entry = {
             'frame': row_frame,
             'from_edit': from_edit,

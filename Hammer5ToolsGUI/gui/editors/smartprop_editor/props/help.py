@@ -42,7 +42,6 @@ from gui.editors.smartprop_editor.props.components import get_summary_hint, pret
 from gui.editors.smartprop_editor.props.model import ComponentRef
 from gui.styles.property_icons import IconCache
 
-_PANEL_BG   = "#303030"
 _TITLE_COL  = "#4EC9B0"   # cyan-teal — matches Hammer's category colour
 _BODY_COL   = "#b1b1b1"
 _FONT_FACE  = "Segoe UI"
@@ -193,12 +192,7 @@ class HelpPanel(QFrame):
         self.setFrameShape(QFrame.NoFrame)
         self.setMinimumHeight(0)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.setStyleSheet(f"""
-            HelpPanel {{
-                background-color: {_PANEL_BG};
-                border-top: 1px solid #3e3e3e;
-            }}
-        """)
+        self.setProperty("h5Component", "smartpropHelpPanel")
 
         self._current_mode = self.MODE_HELP
         self._current_ref: ComponentRef | None = None
@@ -214,46 +208,19 @@ class HelpPanel(QFrame):
         # ── Top toolbar strip with Toggle button in top-left corner ──────────
         self.toolbar_frame = QFrame(self)
         self.toolbar_frame.setFixedHeight(22)
-        self.toolbar_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: #272727;
-                border-bottom: 1px solid #383838;
-            }}
-        """)
+        self.toolbar_frame.setProperty("h5Component", "smartpropHelpToolbar")
         tb_layout = QHBoxLayout(self.toolbar_frame)
         tb_layout.setContentsMargins(4, 0, 4, 0)
         tb_layout.setSpacing(6)
 
         self.btn_toggle_mode = QToolButton(self.toolbar_frame)
         self.btn_toggle_mode.setFixedSize(18, 18)
-        self.btn_toggle_mode.setStyleSheet("""
-            QToolButton {
-                background-color: transparent;
-                border: 1px solid transparent;
-                border-radius: 2px;
-                padding: 1px;
-            }
-            QToolButton:hover {
-                background-color: #4a4a4a;
-                border-color: #666666;
-            }
-            QToolButton:pressed {
-                background-color: #383838;
-            }
-        """)
+        self.btn_toggle_mode.setProperty("h5Component", "smartpropHelpToggleBtn")
         self.btn_toggle_mode.clicked.connect(self.toggle_mode)
         tb_layout.addWidget(self.btn_toggle_mode)
 
         self.lbl_mode_title = QLabel("Description", self.toolbar_frame)
-        self.lbl_mode_title.setStyleSheet("""
-            QLabel {
-                color: #8E8E8E;
-                font-family: "Segoe UI";
-                font-size: 10px;
-                font-weight: bold;
-                background: transparent;
-            }
-        """)
+        self.lbl_mode_title.setProperty("h5Component", "smartpropHelpModeTitle")
         tb_layout.addWidget(self.lbl_mode_title)
         tb_layout.addStretch(1)
 
@@ -278,34 +245,12 @@ class HelpPanel(QFrame):
         self.browser.setFrameShape(QFrame.NoFrame)
         self.browser.setMinimumHeight(0)
         self.browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
-        self.browser.setStyleSheet(f"""
-            QTextBrowser {{
-                background-color: {_PANEL_BG};
-                color: {_BODY_COL};
-                border: none;
-                padding: 6px 10px;
-                font-family: {_FONT_FACE};
-                font-size: 11px;
-            }}
-            QScrollBar:vertical {{
-                width: 6px;
-                background: transparent;
-            }}
-            QScrollBar::handle:vertical {{
-                background: #555;
-                border-radius: 0px;
-            }}
-        """)
+        self.browser.setProperty("h5Component", "smartpropHelpBrowser")
         help_layout.addWidget(self.browser, 1)
 
         self.image_frame = QFrame(self.help_widget)
         self.image_frame.setMinimumHeight(0)
-        self.image_frame.setStyleSheet("""
-            QFrame {
-                background-color: transparent;
-                border: none;
-            }
-        """)
+        self.image_frame.setProperty("h5Component", "smartpropHelpImageFrame")
         img_layout = QVBoxLayout(self.image_frame)
         img_layout.setContentsMargins(0, 0, 0, 0)
         img_layout.setSpacing(0)

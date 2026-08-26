@@ -203,34 +203,7 @@ class BatchCreatorProcessDialog(QDialog):
         """Create a preview item widget for a given file name."""
         label = QLabel(file_name)
         remove_button = QPushButton('Ignore')
-        qt_stylesheet_button = """
-            /* QPushButton default and hover styles */
-            QPushButton {
-                font: 580 8pt "Segoe UI";
-                border: 2px solid black;
-                border-radius: 2px;
-                border-color: rgba(94, 94, 94, 255);
-                height:14px;
-                padding-top: 2px;
-                padding-bottom:2px;
-                padding-left: 4px;
-                padding-right: 4px;
-                color: #e5e5e5;
-                background-color: #2e2e2e;
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                color: white;
-            }
-            QPushButton:pressed {
-                background-color: red;
-                background-color: #2e2e2e;
-                margin: 1 px;
-                margin-left: 2px;
-                margin-right: 2px;
-            }"""
-
-        remove_button.setStyleSheet(qt_stylesheet_button)
+        remove_button.setProperty("h5Component", "assetgroupSmallButton")
         font = QFont()
         font.setPointSize(12)  # Desired font size
         remove_button.setFont(font)

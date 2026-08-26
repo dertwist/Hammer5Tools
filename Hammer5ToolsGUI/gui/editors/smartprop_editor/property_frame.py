@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QMenu, QApplication
 from PySide6.QtCore import Signal, Qt, QEvent, QTimer, QThreadPool, QSize
 from PySide6.QtGui import QAction
 from gui.editors.smartprop_editor.property import compact
+from gui.styles.common import set_style_property
 
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets.element_id import ElementIDGenerator
@@ -335,18 +336,12 @@ class PropertyFrame(QWidget):
         super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-        # Two stylesheets would otherwise paint over everything paintEvent draws:
-        # the .ui's flat "background-color: #2e2e2e" on the form, and the
-        # application-wide "QWidget { background-color: #272727; }". Replace the
-        # first with an explicit transparent rule, which also beats the second
-        # (a widget's own sheet wins over the application sheet). paintEvent
-        # then supplies the base colour, the zebra stripes and the highlight.
-        self.setStyleSheet("")
         # frame_layout sits between this frame and the rows, and an opaque child
         # covers whatever paintEvent draws. Marking it beats editing its
         # stylesheet: the .ui keeps owning its border-top and margins, and a
         # dynamic property costs nothing next to restyling a whole subtree.
         mark_paint_through(self.ui.frame_layout)
+        self.ui.frame.setProperty("h5Component", "smartpropPropertyFrame")
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
@@ -1295,36 +1290,13 @@ class PropertyFrame(QWidget):
 
     def set_group_type(self, group_type):
         self._group_type = group_type
-        color_map = {
-            'modifier': '#8B5E3C',
-            'selection_criteria': '#2E6B9E',
-        }
-        color = color_map.get(group_type)
-        if color and hasattr(self.ui, 'label'):
-            self.ui.label.setStyleSheet(
-                f"image: url(:/icons/more_vert.png);\n"
-                f"padding-left: 3px;\n"
-                f"padding-right: 3px;\n"
-                f"border: 2px solid #d0d0d0;\n"
-                f"border-top: 0px;\n"
-                f"border-right: 0px;\n"
-                f"border-bottom: 0px;\n"
-                f"border-left: 3px solid {color};\n"
-                f"border-radius: 0px;\n"
-                f"background-color: #363636;"
-            )
+        if hasattr(self.ui, 'label'):
+            set_style_property(self.ui.label, "h5Component", "smartpropGroupColorLabel")
+            set_style_property(self.ui.label, "h5GroupType", group_type)
 
     def set_selected(self, selected):
         self._is_selected = selected
-        self.ui.frame.setProperty('selected', 'true' if selected else 'false')
-        self.ui.frame.style().unpolish(self.ui.frame)
-        self.ui.frame.style().polish(self.ui.frame)
-        if selected:
-            self.ui.frame.setStyleSheet(
-                'QFrame#frame { background-color: #3b3f48; }'
-            )
-        else:
-            self.ui.frame.setStyleSheet('')
+        set_style_property(self.ui.frame, 'selected', 'true' if selected else 'false')
 
     def keyPressEvent(self, event):
         from PySide6.QtGui import QKeySequence

@@ -9,9 +9,7 @@ from PySide6.QtGui import QIcon, QDropEvent
 
 from gui.settings.main import get_addon_dir
 from gui.editors.assetgroup_maker.analyzer import analyze_reference_file, ReferenceAnalysisResult
-from gui.styles.common import (
-    qt_stylesheet_button, qt_stylesheet_lineedit, qt_stylesheet_combobox
-)
+from gui.styles.common import mark_paint_through
 
 try:
     from gui.other.cs2_netcon import CS2Netcon
@@ -27,7 +25,7 @@ class DragDropReferenceLineEdit(QLineEdit):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setPlaceholderText("Select or drop a reference file (.vmdl, .vsmart, .vmat, .vtex)...")
-        self.setStyleSheet(qt_stylesheet_lineedit)
+        self.setProperty("h5Component", "legacyLineEdit")
 
     def dragEnterEvent(self, event: QDropEvent):
         if event.mimeData().hasUrls() or event.mimeData().hasText():
@@ -83,13 +81,7 @@ class TemplateCardWidget(QWidget):
 
         # 1. Main Card Frame
         card_frame = QFrame()
-        card_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2E2E2E;
-                border: 1px solid #464649;
-                border-radius: 2px;
-            }
-        """)
+        card_frame.setProperty("h5Component", "assetgroupTemplateCardFrame")
         card_layout = QVBoxLayout(card_frame)
         card_layout.setContentsMargins(8, 8, 8, 8)
         card_layout.setSpacing(6)
@@ -103,42 +95,20 @@ class TemplateCardWidget(QWidget):
         header_row.addWidget(icon_label)
 
         self.title_label = QLabel("Template Asset")
-        self.title_label.setStyleSheet("font: 600 9.5pt 'Segoe UI'; color: #E5E5E5;")
+        self.title_label.setProperty("h5Component", "assetgroupTemplateTitle")
         header_row.addWidget(self.title_label)
 
         header_row.addStretch(1)
 
         self.type_badge = QLabel("ModelDoc (.vmdl)")
-        self.type_badge.setStyleSheet("""
-            QLabel {
-                background-color: #2D333F;
-                color: #A0C4FF;
-                border: 1px solid #4A83C9;
-                border-radius: 0px;
-                padding: 2px 6px;
-                font: 600 8.5pt 'Segoe UI';
-            }
-        """)
+        self.type_badge.setProperty("h5Component", "assetgroupTypeBadge")
         self.type_badge.hide()
         header_row.addWidget(self.type_badge)
 
         self.del_btn = QToolButton()
         self.del_btn.setText("✕")
         self.del_btn.setToolTip("Remove this template from config")
-        self.del_btn.setStyleSheet("""
-            QToolButton {
-                color: #A5A5A5;
-                background: transparent;
-                border: none;
-                font: 700 9pt 'Segoe UI';
-                padding: 2px 6px;
-            }
-            QToolButton:hover {
-                color: #EF5350;
-                background-color: #3E2020;
-                border-radius: 2px;
-            }
-        """)
+        self.del_btn.setProperty("h5Component", "assetgroupDeleteToolButton")
         self.del_btn.clicked.connect(lambda: self.delete_requested.emit(self))
         header_row.addWidget(self.del_btn)
 
@@ -157,14 +127,14 @@ class TemplateCardWidget(QWidget):
         self.asset_browser_btn = QPushButton("Asset Browser...")
         self.asset_browser_btn.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
         self.asset_browser_btn.setToolTip("Pick template asset using interactive Asset Browser")
-        self.asset_browser_btn.setStyleSheet(qt_stylesheet_button)
+        self.asset_browser_btn.setProperty("h5Component", "legacyButton")
         self.asset_browser_btn.setFixedHeight(28)
         self.asset_browser_btn.clicked.connect(self._on_asset_browser_clicked)
         file_row.addWidget(self.asset_browser_btn)
 
         self.browse_btn = QPushButton("Browse...")
         self.browse_btn.setIcon(QIcon(":/valve_common/icons/tools/common/open.png"))
-        self.browse_btn.setStyleSheet(qt_stylesheet_button)
+        self.browse_btn.setProperty("h5Component", "legacyButton")
         self.browse_btn.setFixedHeight(28)
         self.browse_btn.setToolTip("Browse file system for reference template file")
         self.browse_btn.clicked.connect(self._on_browse_clicked)
@@ -173,7 +143,7 @@ class TemplateCardWidget(QWidget):
         self.open_cs2_btn = QPushButton()
         self.open_cs2_btn.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.open_cs2_btn.setToolTip("Open reference asset in CS2 Tools")
-        self.open_cs2_btn.setStyleSheet(qt_stylesheet_button)
+        self.open_cs2_btn.setProperty("h5Component", "legacyButton")
         self.open_cs2_btn.setFixedSize(28, 28)
         self.open_cs2_btn.clicked.connect(self._open_in_cs2)
         file_row.addWidget(self.open_cs2_btn)
@@ -187,7 +157,7 @@ class TemplateCardWidget(QWidget):
         self.slots_layout.setSpacing(6)
 
         slots_title = QLabel("Detected Slots:")
-        slots_title.setStyleSheet("font: 600 9pt 'Segoe UI'; color: #A5A5A5;")
+        slots_title.setProperty("h5Component", "assetgroupSectionLabel")
         self.slots_layout.addWidget(slots_title)
 
         self.slot_pills_host = QWidget()
@@ -200,7 +170,7 @@ class TemplateCardWidget(QWidget):
         self.edit_slots_btn = QPushButton("Edit Slot Mappings...")
         self.edit_slots_btn.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
         self.edit_slots_btn.setToolTip("Configure slot mappings, custom tokens, and skip options for this template")
-        self.edit_slots_btn.setStyleSheet(qt_stylesheet_button)
+        self.edit_slots_btn.setProperty("h5Component", "legacyButton")
         self.edit_slots_btn.setFixedHeight(24)
         self.edit_slots_btn.clicked.connect(self._open_slot_mappings_dialog)
         self.slots_layout.addWidget(self.edit_slots_btn)
@@ -216,31 +186,12 @@ class TemplateCardWidget(QWidget):
         self.ignore_toggle_btn.setCheckable(True)
         self.ignore_toggle_btn.setChecked(False)
         self.ignore_toggle_btn.setCursor(Qt.PointingHandCursor)
-        self.ignore_toggle_btn.setStyleSheet("""
-            QToolButton {
-                border: none;
-                background: transparent;
-                color: #A5A5A5;
-                font: 600 8.5pt 'Segoe UI';
-                padding: 1px 2px;
-                margin: 0px;
-                height: 16px;
-            }
-            QToolButton:hover {
-                color: #FFFFFF;
-            }
-        """)
+        self.ignore_toggle_btn.setProperty("h5Component", "assetgroupIgnoreToggleSmall")
         self.ignore_toggle_btn.toggled.connect(self._toggle_ignore_panel)
         card_layout.addWidget(self.ignore_toggle_btn)
 
         self.ignore_panel = QFrame()
-        self.ignore_panel.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border: 1px solid #3E3E42;
-                border-radius: 2px;
-            }
-        """)
+        self.ignore_panel.setProperty("h5Component", "assetgroupIgnorePanelSmall")
         ignore_layout = QVBoxLayout(self.ignore_panel)
         ignore_layout.setContentsMargins(6, 4, 6, 4)
         ignore_layout.setSpacing(4)
@@ -248,9 +199,9 @@ class TemplateCardWidget(QWidget):
         mode_row = QHBoxLayout()
         mode_label = QLabel("Filter Mode:")
         mode_label.setFixedWidth(120)
-        mode_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        mode_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
         self.filter_mode_combo = QComboBox()
-        self.filter_mode_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.filter_mode_combo.setProperty("h5Component", "legacyCombobox")
         self.filter_mode_combo.setFixedHeight(24)
         self.filter_mode_combo.addItems(["Exclude (Blacklist)", "Include (Whitelist)"])
         self.filter_mode_combo.currentTextChanged.connect(self._on_filter_mode_changed)
@@ -262,9 +213,9 @@ class TemplateCardWidget(QWidget):
         ext_row = QHBoxLayout()
         self.ext_label = QLabel("Filter Extensions:")
         self.ext_label.setFixedWidth(120)
-        self.ext_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        self.ext_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
         self.ignore_ext_edit = QLineEdit()
-        self.ignore_ext_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_ext_edit.setProperty("h5Component", "legacyLineEdit")
         self.ignore_ext_edit.setFixedHeight(24)
         self.ignore_ext_edit.setPlaceholderText("e.g. mb, blend, phys_, temp_*, tga (comma separated)")
         self.ignore_ext_edit.textChanged.connect(lambda _: self.template_changed.emit())
@@ -275,9 +226,9 @@ class TemplateCardWidget(QWidget):
         file_ignore_row = QHBoxLayout()
         file_ignore_label = QLabel("Ignore Files List:")
         file_ignore_label.setFixedWidth(120)
-        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        file_ignore_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
         self.ignore_files_edit = QLineEdit()
-        self.ignore_files_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_files_edit.setProperty("h5Component", "legacyLineEdit")
         self.ignore_files_edit.setFixedHeight(24)
         self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*")
         self.ignore_files_edit.textChanged.connect(lambda _: self.template_changed.emit())
@@ -495,29 +446,11 @@ class TemplateCardWidget(QWidget):
             is_skipped = hasattr(self, 'skipped_slots') and slot_key in self.skipped_slots
             if is_skipped:
                 pill = QLabel(f"<s>{label_text}</s> <span style='color:#EF5350;'>(Skipped)</span>")
-                pill.setStyleSheet("""
-                    QLabel {
-                        background-color: #242424;
-                        color: #777777;
-                        border: 1px dashed #555555;
-                        border-radius: 0px;
-                        padding: 2px 6px;
-                        font: 580 8.5pt 'Segoe UI';
-                    }
-                """)
+                pill.setProperty("h5Component", "assetgroupSlotPillSkipped")
             else:
                 display_txt = f"<b>{label_text}:</b> {filename}" if filename else f"<b>{label_text}</b>"
                 pill = QLabel(display_txt)
-                pill.setStyleSheet("""
-                    QLabel {
-                        background-color: #2F2F31;
-                        color: #E5E5E5;
-                        border: 1px solid #464649;
-                        border-radius: 0px;
-                        padding: 2px 6px;
-                        font: 580 8.5pt 'Segoe UI';
-                    }
-                """)
+                pill.setProperty("h5Component", "assetgroupSlotPillFilled")
             self.slot_pills_layout.addWidget(pill)
 
         self.slots_container.show()
@@ -614,31 +547,12 @@ class MultiTemplateManagerWidget(QWidget):
         self.ignore_toggle_btn.setCheckable(True)
         self.ignore_toggle_btn.setChecked(False)
         self.ignore_toggle_btn.setCursor(Qt.PointingHandCursor)
-        self.ignore_toggle_btn.setStyleSheet("""
-            QToolButton {
-                border: none;
-                background: transparent;
-                color: #A5A5A5;
-                font: 600 8.5pt 'Segoe UI';
-                padding: 1px 2px;
-                margin: 0px;
-                height: 18px;
-            }
-            QToolButton:hover {
-                color: #FFFFFF;
-            }
-        """)
+        self.ignore_toggle_btn.setProperty("h5Component", "assetgroupIgnoreToggleLarge")
         self.ignore_toggle_btn.toggled.connect(self._toggle_ignore_panel)
         main_layout.addWidget(self.ignore_toggle_btn)
 
         self.ignore_panel = QFrame()
-        self.ignore_panel.setStyleSheet("""
-            QFrame {
-                background-color: #282828;
-                border: 1px solid #464649;
-                border-radius: 2px;
-            }
-        """)
+        self.ignore_panel.setProperty("h5Component", "assetgroupIgnorePanelLarge")
         ignore_layout = QVBoxLayout(self.ignore_panel)
         ignore_layout.setContentsMargins(8, 6, 8, 6)
         ignore_layout.setSpacing(4)
@@ -646,9 +560,9 @@ class MultiTemplateManagerWidget(QWidget):
         mode_row = QHBoxLayout()
         mode_label = QLabel("Filter Mode:")
         mode_label.setFixedWidth(120)
-        mode_label.setStyleSheet("color: #A5A5A5; font: 580 8.5pt 'Segoe UI';")
+        mode_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelSmall")
         self.filter_mode_combo = QComboBox()
-        self.filter_mode_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.filter_mode_combo.setProperty("h5Component", "legacyCombobox")
         self.filter_mode_combo.setFixedHeight(24)
         self.filter_mode_combo.addItems(["Exclude (Blacklist)", "Include (Whitelist)"])
         self.filter_mode_combo.currentTextChanged.connect(lambda _: self.data_changed.emit())
@@ -660,9 +574,9 @@ class MultiTemplateManagerWidget(QWidget):
         ext_row = QHBoxLayout()
         ext_label = QLabel("Filter Extensions:")
         ext_label.setFixedWidth(120)
-        ext_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        ext_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelLarge")
         self.ignore_ext_edit = QLineEdit()
-        self.ignore_ext_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_ext_edit.setProperty("h5Component", "legacyLineEdit")
         self.ignore_ext_edit.setPlaceholderText("mb, ma, max, blend, blend1, tga, png, jpg, exr, hdr, phys_")
         self.ignore_ext_edit.textChanged.connect(lambda _: self.data_changed.emit())
         ext_row.addWidget(ext_label)
@@ -672,9 +586,9 @@ class MultiTemplateManagerWidget(QWidget):
         file_ignore_row = QHBoxLayout()
         file_ignore_label = QLabel("Ignore Files List:")
         file_ignore_label.setFixedWidth(120)
-        file_ignore_label.setStyleSheet("color: #A5A5A5; font: 580 9pt 'Segoe UI';")
+        file_ignore_label.setProperty("h5Component", "assetgroupIgnoreFieldLabelLarge")
         self.ignore_files_edit = QLineEdit()
-        self.ignore_files_edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ignore_files_edit.setProperty("h5Component", "legacyLineEdit")
         self.ignore_files_edit.setPlaceholderText("temp_*, draft_*, *backup*, .git*")
         self.ignore_files_edit.textChanged.connect(lambda _: self.data_changed.emit())
         file_ignore_row.addWidget(file_ignore_label)
@@ -690,15 +604,10 @@ class MultiTemplateManagerWidget(QWidget):
         self.scroll_area.setFrameShape(QFrame.NoFrame)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scroll_area.setStyleSheet("""
-            QScrollArea {
-                background: transparent;
-                border: none;
-            }
-        """)
+        self.scroll_area.setProperty("h5Component", "assetgroupTransparentScrollArea")
 
         self.scroll_content = QWidget()
-        self.scroll_content.setStyleSheet("background: transparent;")
+        mark_paint_through(self.scroll_content)
         self.cards_layout = QVBoxLayout(self.scroll_content)
         self.cards_layout.setContentsMargins(0, 0, 0, 0)
         self.cards_layout.setSpacing(6)
@@ -713,7 +622,7 @@ class MultiTemplateManagerWidget(QWidget):
 
         self.add_template_btn = QPushButton("+ Add Template")
         self.add_template_btn.setIcon(QIcon(":/valve_common/icons/tools/common/new.png"))
-        self.add_template_btn.setStyleSheet(qt_stylesheet_button)
+        self.add_template_btn.setProperty("h5Component", "legacyButton")
         self.add_template_btn.setFixedHeight(28)
         self.add_template_btn.setToolTip("Add another template configuration (e.g. for .vmat or .vsmart)")
         self.add_template_btn.clicked.connect(lambda: self.add_template())

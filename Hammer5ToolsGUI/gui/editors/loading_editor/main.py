@@ -24,7 +24,6 @@ from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
-from gui.styles.common import qt_stylesheet_combobox
 from gui.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from gui.editors.loading_editor.timeline import TimelineExplorer
@@ -33,6 +32,7 @@ from gui.widgets import ErrorInfo
 from gui.editors.loading_editor.commands.main import generate_commands
 from gui.editors.loading_editor.svg_utils import rescale_svg
 from gui.other.cs2_netcon import CS2Netcon
+from gui.styles.common import set_style_property
 
 class SvgPreviewWidget(QWidget):
     """
@@ -48,13 +48,13 @@ class SvgPreviewWidget(QWidget):
 
         self.svg_preview = QSvgWidget(self)
         self.svg_preview.setFixedSize(200, 200)
-        self.svg_preview.setStyleSheet("border: none;")
+        self.svg_preview.setProperty("h5Component", "loadingSvgPreview")
         self.svg_preview.hide()
         layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
 
         self.info_label = QLabel("Drop svg file", self)
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("margin: 0px; border: 0px; color: gray; font-size: 13px;")
+        self.info_label.setProperty("h5Component", "loadingSvgInfo")
         layout.addWidget(self.info_label, alignment=Qt.AlignCenter)
 
     def dragEnterEvent(self, event):
@@ -362,6 +362,7 @@ class UnifiedProcessingDialog(QDialog):
         self.log_text.setReadOnly(True)
         layout.addWidget(self.log_text)
         self.cancel_button = QPushButton("Cancel", self)
+        self.cancel_button.setProperty("h5Component", "loadingProgressButton")
         layout.addWidget(self.cancel_button)
 
     def update_progress(self, value: int):
@@ -374,7 +375,7 @@ class UnifiedProcessingDialog(QDialog):
         self.progress_bar.setValue(0)
         self.log_text.clear()
         self.cancel_button.setText("Cancel")
-        self.cancel_button.setStyleSheet("")
+        set_style_property(self.cancel_button, "h5State", "idle")
 
 
 class Loading_editorMainWindow(QMainWindow):
@@ -407,10 +408,10 @@ class Loading_editorMainWindow(QMainWindow):
             history_dir=self.content_history_path,
             loadingshots_dir=self.loadingscreen_path,
         )
-        self.explorer_view.setStyleSheet("padding:0")
+        self.explorer_view.setProperty("h5Component", "loadingEditorView")
         
         self.timeline_view = TimelineExplorer(history_directory=self.content_history_path)
-        self.timeline_view.setStyleSheet("padding:0")
+        self.timeline_view.setProperty("h5Component", "loadingEditorView")
         
         self.timeline_view.image_selected.connect(self.on_timeline_image_selected)
         
@@ -443,14 +444,14 @@ class Loading_editorMainWindow(QMainWindow):
         # Refresh / Create animation buttons in the timeline tab
         self.animation_format_combo = QComboBox()
         self.animation_format_combo.addItems(["GIF", "WEBP", "MP4"])
-        self.animation_format_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.animation_format_combo.setProperty("h5Component", "legacyCombobox")
         self.animation_format_combo.setToolTip("Animation output format")
         self.animation_format_combo.setMinimumHeight(32)
 
         self.animation_quality_combo = QComboBox()
         self.animation_quality_combo.addItems(["Low", "Medium", "High"])
         self.animation_quality_combo.setCurrentText("High")
-        self.animation_quality_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.animation_quality_combo.setProperty("h5Component", "legacyCombobox")
         self.animation_quality_combo.setToolTip("Animation quality (WEBP/MP4 only, ignored for GIF)")
         self.animation_quality_combo.setMinimumHeight(32)
 
@@ -580,7 +581,7 @@ class Loading_editorMainWindow(QMainWindow):
     def processing_finished(self):
         self.unified_dialog.append_log("Processing complete.")
         self.unified_dialog.cancel_button.setText("Finish")
-        self.unified_dialog.cancel_button.setStyleSheet("background-color: green; color: white;")
+        set_style_property(self.unified_dialog.cancel_button, "h5State", "complete")
         try:
             self.unified_dialog.cancel_button.clicked.disconnect()
         except Exception:

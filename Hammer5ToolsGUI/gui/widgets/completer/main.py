@@ -21,23 +21,6 @@ class CompletingPlainTextEdit(QPlainTextEdit):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred))
 
-        self.setStyleSheet("""QPlainTextEdit {
-
-            font: 580 8pt "Segoe UI";
-            border: 0px solid black;
-            border-radius: 0px;
-            border-color: rgba(94, 94, 94, 255);
-        	border:none;
-            height:18px;
-            padding: 2px;
-            padding-left: 0px;
-            padding-right: 0px;
-            color: #e5e5e5;
-            background-color: #2e2e2e;
-        }
-
-        QPlainTextEdit:pressed {
-        }""")
 
 
     def complete(self):
@@ -48,7 +31,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             self.completer.setCompletionPrefix(selected_text)
 
             popup = self.completer.popup()
-            popup.setStyleSheet('padding: 0px; padding-right: 16px;')
+            popup.setProperty("h5Component", "completionPopup")
             popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
             cr = self.cursorRect()
             cr.setWidth(popup.sizeHintForColumn(0) + popup.verticalScrollBar().sizeHint().width() * 2)

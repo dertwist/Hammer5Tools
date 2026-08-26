@@ -7,7 +7,6 @@ from .dependency_resolver import DependencyResolver
 from .exporter import ExportWorker
 from gui.settings.main import get_addon_name, get_cs2_path
 from gui.common import enable_dark_title_bar
-from gui.styles.common import qt_stylesheet_widgetlist2
 
 class AssetExporterWidget(QWidget):
     def __init__(self, parent=None):
@@ -17,7 +16,7 @@ class AssetExporterWidget(QWidget):
         
         enable_dark_title_bar(self)
         
-        self.ui.deps_list.setStyleSheet(qt_stylesheet_widgetlist2)
+        self.ui.deps_list.setProperty("h5Component", "legacyWidgetList2")
 
         self.cs2_path = get_cs2_path()
         if not self.cs2_path:

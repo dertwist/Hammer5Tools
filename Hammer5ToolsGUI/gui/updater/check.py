@@ -173,7 +173,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
             # Version Header
             version_label = QLabel(f"<h3>Version: {rel_version}</h3>")
             version_label.setTextFormat(Qt.RichText)
-            version_label.setStyleSheet("padding: 5px 5px 0px 5px;")
+            version_label.setProperty("h5Component", "updaterVersionLabel")
             content_layout.addWidget(version_label)
 
             # In-place release segments (rendered in original markdown order)
@@ -198,7 +198,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
                             note_label.setTextFormat(Qt.RichText)
                             note_label.setWordWrap(True)
                             note_label.setOpenExternalLinks(True)
-                            note_label.setStyleSheet("padding: 0px 5px;")
+                            note_label.setProperty("h5Component", "updaterNoteLabel")
                             content_layout.addWidget(note_label)
                 elif seg_type == 'attachment':
                     att = seg_data
@@ -218,7 +218,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
                 divider.setFrameShadow(QFrame.Plain)
                 divider.setLineWidth(2)
                 divider.setFixedHeight(2)
-                divider.setStyleSheet("background-color: #424242; border: none;")
+                divider.setProperty("h5Component", "settingsDivider")
                 content_layout.addWidget(divider)
     else:
         content_layout.addWidget(QLabel("No release notes found."))
@@ -272,7 +272,7 @@ class DownloadProgressDialog(QDialog):
         layout.setSpacing(12)
 
         self.status_label = QLabel("Downloading update package...")
-        self.status_label.setStyleSheet("color: #e5e5e5; font-size: 12px; font-weight: bold;")
+        self.status_label.setProperty("h5Component", "updaterStatusLabel")
         layout.addWidget(self.status_label)
 
         self.progress_bar = QProgressBar(self)
@@ -281,25 +281,11 @@ class DownloadProgressDialog(QDialog):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Downloading... 0%")
         self.progress_bar.setFixedHeight(18)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #5e5e5e;
-                border-radius: 2px;
-                text-align: center;
-                color: white;
-                font-size: 10px;
-                background-color: #2e2e2e;
-            }
-            QProgressBar::chunk {
-                background-color: #1a528a;
-                margin: 0px;
-                width: 1px;
-            }
-        """)
+        self.progress_bar.setProperty("h5Component", "mapbuilderProgressBar")
         layout.addWidget(self.progress_bar)
 
         self.details_label = QLabel("Please wait while the update is downloaded...")
-        self.details_label.setStyleSheet("color: #929292; font-size: 10px;")
+        self.details_label.setProperty("h5Component", "updaterDetailsLabel")
         layout.addWidget(self.details_label)
 
         self.progress_signal.connect(self._set_progress)

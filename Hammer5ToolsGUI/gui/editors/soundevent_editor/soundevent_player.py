@@ -16,11 +16,6 @@ from typing import Callable, Optional
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
-try:
-    from gui.styles.common import qt_stylesheet_button  # type: ignore
-except Exception:
-    qt_stylesheet_button = ""
-
 from gui.other.cs2_netcon import CS2Netcon
 
 
@@ -68,16 +63,14 @@ class SoundEventPlayerWidget(QWidget):
         # Play button with the same icon style as AudioPlayer
         self.play_button = QPushButton("Play current event", self)
         self.play_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
-        if qt_stylesheet_button:
-            self.play_button.setStyleSheet(qt_stylesheet_button)
+        self.play_button.setProperty("h5Component", "legacyButton")
         self.play_button.clicked.connect(self._on_play_clicked)
         self._layout.addWidget(self.play_button)
 
         # Stop button to stop all currently playing sound events
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_stop.png"))
-        if qt_stylesheet_button:
-            self.stop_button.setStyleSheet(qt_stylesheet_button)
+        self.stop_button.setProperty("h5Component", "legacyButton")
         self.stop_button.clicked.connect(self._on_stop_clicked)
         self._layout.addWidget(self.stop_button)
 

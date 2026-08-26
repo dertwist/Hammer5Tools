@@ -589,6 +589,88 @@ class MapBuilderDialog(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_mapbuilder_dialog()
         self.ui.setupUi(self)
+        # Map Builder keeps its own hardcoded look independent of the shared
+        # app theme/token system (by design). These two used to be baked into
+        # main.ui's Designer-set styleSheet properties, but compile_ui.py now
+        # strips inline styleSheet properties from every generated ui_*.py
+        # (so Designer-authored widgets fall through to the shared QSS) --
+        # setting them here in hand-written code sidesteps that stripping.
+        self.ui.output_list_widget.setStyleSheet("""QTextBrowser{
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
+}
+
+
+
+QTextBrowser{
+
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
+}
+
+QTextBrowser:hover {
+}
+
+QTextBrowser:pressed {
+    background-color: red;
+    background-color: #2e2e2e;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}""")
+        self.ui.system_monitor.setStyleSheet("""QFrame#system_monitor{
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height:18px;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
+}
+
+
+
+QFram#system_monitore{
+
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height:18px;
+    color: #e5e5e5;
+    background-color: #2e2e2e;
+}
+
+QFrame#system_monitor:hover {
+}
+
+QFrame#system_monitor:pressed {
+    background-color: red;
+    background-color: #2e2e2e;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}""")
         enable_dark_title_bar(self)
         self.cs2_path = get_cs2_path()
         self.ui.splitter.setSizes([200, 300])

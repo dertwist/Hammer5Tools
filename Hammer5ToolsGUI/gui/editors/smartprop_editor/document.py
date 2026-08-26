@@ -35,6 +35,7 @@ from PySide6.QtCore import Qt, QTimer, Signal, QEvent
 
 from gui.settings.common import get_addon_dir, get_cs2_path
 from gui.settings.main import get_settings_value, get_settings_bool
+from gui.other.assettypes import check_vsmart_configuration
 
 from keyvalues3 import kv3_to_json
 from gui.editors.smartprop_editor.ui_document import Ui_MainWindow
@@ -217,47 +218,14 @@ class SmartPropDocument(QMainWindow):
         self.hierarchy_add_button.setIcon(QIcon(":/valve_common/icons/tools/common/add_sm.png"))
         self.hierarchy_add_button.setToolTip("Add SmartProp Element")
         self.hierarchy_add_button.setFixedHeight(BUTTON_H)
-        self.hierarchy_add_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2e2e2e;
-                color: #e5e5e5;
-                border: 2px solid #5e5e5e;
-                border-radius: 0px;
-                padding: 2px 8px;
-                font: 580 9pt "Segoe UI";
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                border-color: #787878;
-                color: #FFFFFF;
-            }
-            QPushButton:pressed {
-                background-color: #272727;
-                border-color: #5e5e5e;
-            }
-        """)
+        self.hierarchy_add_button.setProperty("h5Component", "smartpropHierarchyAddBtn")
         self.hierarchy_add_button.clicked.connect(self.add_an_element)
 
         self.hierarchy_preset_button = QPushButton()
         self.hierarchy_preset_button.setIcon(QIcon(":/valve_common/icons/tools/common/favorite.png"))
         self.hierarchy_preset_button.setToolTip("Favorite Elements")
         self.hierarchy_preset_button.setFixedSize(BUTTON_H, BUTTON_H)
-        self.hierarchy_preset_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2e2e2e;
-                border: 2px solid #5e5e5e;
-                border-radius: 0px;
-                padding: 2px;
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                border-color: #787878;
-            }
-            QPushButton:pressed {
-                background-color: #272727;
-                border-color: #5e5e5e;
-            }
-        """)
+        self.hierarchy_preset_button.setProperty("h5Component", "smartpropHierarchyPresetBtn")
         self.hierarchy_preset_button.clicked.connect(self.open_favorite_elements)
 
         self.hierarchy_top_bar_layout.addWidget(self.hierarchy_add_button)
@@ -309,11 +277,19 @@ class SmartPropDocument(QMainWindow):
         self._viewport_dock.setFeatures(_dock_features)
         self._viewport_dock.setWidget(self._viewport_3d_placeholder)
 
-        # Collapse the central widget: all content lives in docks now.
-        _central = QWidget(self)
-        _central.setObjectName("SPE_central_collapsed")
-        _central.setMaximumSize(0, 0)
-        self.setCentralWidget(_central)
+        # Ensure all docks allow docking anywhere and share common features
+        for dock in (
+            self.ui.HierarchyDock, self._property_dock, self._manual_dock,
+            self._viewport_dock, self.ui.VariablesDock, self.ui.ChoicesDock,
+        ):
+            dock.setFeatures(_dock_features)
+            dock.setAllowedAreas(Qt.AllDockWidgetAreas)
+
+        # Enable dock nesting and remove central widget so all docks share a single seamless layout
+        self.setDockNestingEnabled(True)
+        cw = self.takeCentralWidget()
+        if cw is not None:
+            cw.deleteLater()
 
         # Create the History dock (placed by the default-layout block below).
         self._setup_history_dock()
@@ -370,6 +346,9 @@ class SmartPropDocument(QMainWindow):
         # Apply dock tab styling to the whole window.
         set_qdock_tab_style(self.findChildren)
 
+        # Initialize categorized menu bar
+        self.init_menu_bar()
+
         # Pre-warm pooled property widgets after first paint.
         # This pays widget setup cost at startup rather than on first node selection.
         QTimer.singleShot(500, self._prewarm_property_pools)
@@ -415,7 +394,7 @@ class SmartPropDocument(QMainWindow):
             from PySide6.QtWidgets import QVBoxLayout
             label = QLabel("3d preview for this smartprop unavalible due to using of unsupported properties and elements.")
             label.setAlignment(Qt.AlignCenter)
-            label.setStyleSheet("color: #929292; font-size: 11pt;")
+            label.setProperty("h5Component", "smartpropPlaceholderLabel")
             layout = QVBoxLayout(self._viewport_3d_placeholder)
             layout.addWidget(label)
             return
@@ -1336,6 +1315,7 @@ class SmartPropDocument(QMainWindow):
                 return False
 
         self._flush_choices_widget_if_pending()
+        check_vsmart_configuration()
         content_version = self.content_version_spinbox.value()
         if filename:
             try:
@@ -2168,16 +2148,20 @@ class SmartPropDocument(QMainWindow):
         Center: Property Editor (tabbed with Manual Editor)
         Right:  3D Viewport | vertical column of Variables over Choices (tabbed with History)
         """
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self._property_dock)
-        self.splitDockWidget(self.ui.HierarchyDock, self._property_dock, Qt.Horizontal)
-        self.tabifyDockWidget(self._property_dock, self._manual_dock)
+        self.setDockNestingEnabled(True)
 
-        self.addDockWidget(Qt.RightDockWidgetArea, self._viewport_dock)
-        # Right of the viewport: a single vertical column with Variables on top and
-        # Choices (tabbed with History) below it.
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
+
+        # Split horizontal columns across the window
+        self.splitDockWidget(self.ui.HierarchyDock, self._property_dock, Qt.Horizontal)
+        self.splitDockWidget(self._property_dock, self._viewport_dock, Qt.Horizontal)
         self.splitDockWidget(self._viewport_dock, self.ui.VariablesDock, Qt.Horizontal)
+
+        # Split vertical in the right column
         self.splitDockWidget(self.ui.VariablesDock, self.ui.ChoicesDock, Qt.Vertical)
+
+        # Tabify secondary panels onto their parent docks
+        self.tabifyDockWidget(self._property_dock, self._manual_dock)
         self.tabifyDockWidget(self.ui.ChoicesDock, self._history_dock)
 
         # All docks visible (a prior custom layout may have closed some).
@@ -2197,15 +2181,8 @@ class SmartPropDocument(QMainWindow):
         # 3D Viewport, a narrow Variables/Choices column, and an even split between
         # Variables and Choices.
         self.resizeDocks(
-            [self.ui.HierarchyDock, self._property_dock, self._viewport_dock],
-            [310, 670, 690],
-            Qt.Horizontal,
-        )
-        # Start the Variables/Choices column at its minimum width so the viewport
-        # gets the rest of the space by default.
-        self.resizeDocks(
-            [self._viewport_dock, self.ui.VariablesDock],
-            [10000, 1],
+            [self.ui.HierarchyDock, self._property_dock, self._viewport_dock, self.ui.VariablesDock],
+            [310, 670, 690, 300],
             Qt.Horizontal,
         )
         self.resizeDocks(
@@ -2216,18 +2193,17 @@ class SmartPropDocument(QMainWindow):
 
     def reset_layout(self):
         """Discard any saved layout and restore the built-in factory layout."""
-        self.settings.remove("SmartPropEditorMainWindow/default_windowState_v3")
-        self.settings.remove("SmartPropEditorMainWindow/windowState_v3")
+        self.settings.remove("SmartPropEditorMainWindow/default_windowState_v5")
+        self.settings.remove("SmartPropEditorMainWindow/windowState_v5")
         self._apply_default_layout()
 
     def _restore_user_prefs(self):
-        # First try to load the explicit default layout.  The key is versioned
-        # (v3) because the panel set changed when Property/Manual/Viewport became
-        # docks; older saved states describe a layout that no longer exists.
-        state = self.settings.value("SmartPropEditorMainWindow/default_windowState_v3")
+        # First try to load the explicit default layout. The key is versioned
+        # (v5) to guarantee clean single-splitter nested dock layout.
+        state = self.settings.value("SmartPropEditorMainWindow/default_windowState_v5")
         if not state:
             # Fallback to the last closed document's layout.
-            state = self.settings.value("SmartPropEditorMainWindow/windowState_v3")
+            state = self.settings.value("SmartPropEditorMainWindow/windowState_v5")
 
         if state:
             self.restoreState(state)
@@ -2244,7 +2220,7 @@ class SmartPropDocument(QMainWindow):
         current_index = self.variable_viewport.ui.add_new_variable_combobox.currentIndex()
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
         # Persist the dock layout to the 'last closed' key.
-        self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v5", self.saveState())
         # Flush immediately so the layout is not lost if the process is killed
         # (crash / debugger-stop) before QSettings' normal buffered write.
         self.settings.sync()
@@ -2252,9 +2228,9 @@ class SmartPropDocument(QMainWindow):
     def save_layout_as_default(self):
         """Saves the current dock widget layout as the default for new documents."""
         # We explicitly save to a 'default' key that takes precedence in _restore_user_prefs
-        self.settings.setValue("SmartPropEditorMainWindow/default_windowState_v3", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/default_windowState_v5", self.saveState())
         # Also save to the regular key so it's consistent
-        self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v5", self.saveState())
 
     # [Properties Panel Undo]
     def _rebuild_properties_panel(self, item):
@@ -2693,11 +2669,7 @@ class SmartPropDocument(QMainWindow):
     def _setup_history_dock(self):
         self._history_dock = QDockWidget("History", self)
         self._history_dock.setObjectName("SPE_history_dock")
-        self._history_dock.setAllowedAreas(
-            Qt.DockWidgetArea.LeftDockWidgetArea  |
-            Qt.DockWidgetArea.RightDockWidgetArea |
-            Qt.DockWidgetArea.BottomDockWidgetArea
-        )
+        self._history_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
         self._history_dock.setMinimumWidth(160)
         history_view = QUndoView(self.undo_stack, self._history_dock)
         self._history_dock.setWidget(history_view)
@@ -2780,3 +2752,291 @@ class SmartPropDocument(QMainWindow):
 
         for i in range(item.childCount()):
             self._rename_in_hierarchy_recursive(item.child(i), replace_fn)
+
+    # ── Menu Bar & Document Actions ──────────────────────────────────────────
+    def init_menu_bar(self):
+        menubar = self.menuBar()
+        menubar.clear()
+        menubar.setProperty("h5Component", "smartpropMenuBar")
+
+        # ── File Menu ────────────────────────────────────────────────────────
+        self.file_menu = menubar.addMenu("&File")
+        self.file_menu.setProperty("h5Component", "smartpropFileMenu")
+
+        self.action_new = self.file_menu.addAction("New File")
+        self.action_new.setShortcut(QKeySequence.New)
+        self.action_new.setIcon(QIcon(":/icons/add_24dp.svg"))
+        self.action_new.triggered.connect(self._create_new_file)
+
+        self.action_open = self.file_menu.addAction("Open...")
+        self.action_open.setShortcut(QKeySequence.Open)
+        self.action_open.setIcon(QIcon(":/icons/edit_document_16dp.svg"))
+        self.action_open.triggered.connect(lambda: self._open_file(external=True))
+
+        self.file_menu.addSeparator()
+
+        self.action_save = self.file_menu.addAction("Save")
+        self.action_save.setShortcut(QKeySequence.Save)
+        self.action_save.setIcon(QIcon(":/icons/save_16dp.svg"))
+        self.action_save.triggered.connect(lambda: self.save_file(external=False))
+
+        self.action_save_as = self.file_menu.addAction("Save As...")
+        self.action_save_as.setShortcut(QKeySequence.SaveAs)
+        self.action_save_as.setIcon(QIcon(":/icons/save_as_16dp.svg"))
+        self.action_save_as.triggered.connect(lambda: self.save_file(external=True))
+
+        self.action_save_all = self.file_menu.addAction("Save All")
+        self.action_save_all.triggered.connect(self._save_all_files)
+
+        self.file_menu.addSeparator()
+
+        self.action_close = self.file_menu.addAction("Close File")
+        self.action_close.setShortcut(QKeySequence("Ctrl+W"))
+        self.action_close.triggered.connect(self._close_document)
+
+        self.file_menu.addSeparator()
+
+        self.action_convert_vmap = self.file_menu.addAction("Load Vmap...")
+        self.action_convert_vmap.triggered.connect(self.load_vmap_into_hierarchy)
+
+        self.file_menu.addSeparator()
+
+        self.action_export_scene_debug = self.file_menu.addAction("Export scene (debug)")
+        self.action_export_scene_debug.triggered.connect(self.export_scene_debug)
+
+        # ── Edit Menu ────────────────────────────────────────────────────────
+        self.edit_menu = menubar.addMenu("&Edit")
+
+        self.action_undo = self.edit_menu.addAction("Undo")
+        self.action_undo.setShortcut(QKeySequence.Undo)
+        self.action_undo.triggered.connect(self.undo_stack.undo)
+
+        self.action_redo = self.edit_menu.addAction("Redo")
+        self.action_redo.setShortcuts([QKeySequence.Redo, QKeySequence("Ctrl+Shift+Z")])
+        self.action_redo.triggered.connect(self.undo_stack.redo)
+
+        self.edit_menu.addSeparator()
+
+        self.action_cut = self.edit_menu.addAction("Cut")
+        self.action_cut.setShortcut(QKeySequence.Cut)
+        self.action_cut.triggered.connect(self._cut_action)
+
+        self.action_copy = self.edit_menu.addAction("Copy")
+        self.action_copy.setShortcut(QKeySequence.Copy)
+        self.action_copy.triggered.connect(self._copy_action)
+
+        self.action_paste = self.edit_menu.addAction("Paste")
+        self.action_paste.setShortcut(QKeySequence.Paste)
+        self.action_paste.triggered.connect(self._paste_action)
+
+        self.action_paste_replace = self.edit_menu.addAction("Paste with Replacement")
+        self.action_paste_replace.setShortcut(QKeySequence("Ctrl+Shift+V"))
+        self.action_paste_replace.triggered.connect(self._paste_replace_action)
+
+        self.action_duplicate = self.edit_menu.addAction("Duplicate")
+        self.action_duplicate.setShortcut(QKeySequence("Ctrl+D"))
+        self.action_duplicate.triggered.connect(self._duplicate_action)
+
+        self.action_delete = self.edit_menu.addAction("Delete")
+        self.action_delete.setShortcut(QKeySequence("Delete"))
+        self.action_delete.triggered.connect(self._delete_action)
+
+        self.edit_menu.addSeparator()
+
+        self.action_group = self.edit_menu.addAction("Group Selected")
+        self.action_group.setShortcut(QKeySequence("Ctrl+G"))
+        self.action_group.triggered.connect(self._group_action)
+
+        # ── Element Menu ─────────────────────────────────────────────────────
+        self.element_menu = menubar.addMenu("&Element")
+
+        self.action_add_element = self.element_menu.addAction("New Element...")
+        self.action_add_element.setShortcut(QKeySequence("Ctrl+F"))
+        self.action_add_element.triggered.connect(self.add_an_element)
+
+        self.action_add_preset = self.element_menu.addAction("New from Preset...")
+        self.action_add_preset.triggered.connect(self.add_preset)
+
+        self.element_menu.addSeparator()
+
+        self.action_add_operator = self.element_menu.addAction("Add Operator / Modifier...")
+        self.action_add_operator.triggered.connect(self.add_an_operator)
+
+        self.action_add_criteria = self.element_menu.addAction("Add Selection Criteria...")
+        self.action_add_criteria.triggered.connect(self.add_a_selection_criteria)
+
+        self.element_menu.addSeparator()
+
+        self.action_add_choice = self.element_menu.addAction("Add Choice...")
+        self.action_add_choice.triggered.connect(self._add_choice_action)
+
+        self.action_add_variable = self.element_menu.addAction("Add Variable...")
+        self.action_add_variable.triggered.connect(self.variable_viewport.add_new_variable)
+
+        self.element_menu.addSeparator()
+
+        self.action_bulk_import = self.element_menu.addAction("Bulk Model Importer...")
+        self.action_bulk_import.triggered.connect(self.open_bulk_model_importer)
+
+        self.action_load_vmap = self.element_menu.addAction("Load VMAP into Hierarchy...")
+        self.action_load_vmap.triggered.connect(self.load_vmap_into_hierarchy)
+
+        # ── View Menu ────────────────────────────────────────────────────────
+        self.view_menu = menubar.addMenu("&View")
+
+        self.action_isolate = self.view_menu.addAction("Isolate in 3D Viewport")
+        self.action_isolate.setShortcut(QKeySequence("Ctrl+H"))
+        self.action_isolate.triggered.connect(self.toggle_isolation)
+
+        self.view_menu.addSeparator()
+
+        self.docks_menu = self.view_menu.addMenu("Docks & Panels")
+        self.docks_menu.aboutToShow.connect(self._update_docks_menu)
+        self._update_docks_menu()
+
+        self.action_save_layout = self.view_menu.addAction("Save Current Layout as Default")
+        self.action_save_layout.triggered.connect(self.save_layout_as_default)
+
+        self.action_reset_layout = self.view_menu.addAction("Reset Layout")
+        self.action_reset_layout.triggered.connect(self.reset_layout)
+
+    def _create_new_file(self):
+        parent_win = self.parent if self.parent and hasattr(self.parent, "create_new_file") else self.window()
+        if parent_win and hasattr(parent_win, "create_new_file"):
+            parent_win.create_new_file()
+
+    def _open_file(self, external=False):
+        parent_win = self.parent if self.parent and hasattr(self.parent, "open_file") else self.window()
+        if parent_win and hasattr(parent_win, "open_file"):
+            parent_win.open_file(external=external)
+
+    def _save_all_files(self):
+        parent_win = self.parent if self.parent and hasattr(self.parent, "save_all_files") else self.window()
+        if parent_win and hasattr(parent_win, "save_all_files"):
+            parent_win.save_all_files()
+        else:
+            self.save_file(external=False)
+
+    def _close_document(self):
+        parent_win = self.parent if self.parent and hasattr(self.parent, "close_document") else self.window()
+        if parent_win and hasattr(parent_win, "close_document") and hasattr(parent_win, "ui") and hasattr(parent_win.ui, "DocumentTabWidget"):
+            idx = parent_win.ui.DocumentTabWidget.indexOf(self)
+            if idx != -1:
+                parent_win.close_document(idx)
+                return
+        self.close()
+
+    def _exit_editor(self):
+        win = self.window()
+        if win:
+            win.close()
+        else:
+            self.close()
+
+    def _add_choice_action(self):
+        AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.variable_viewport.ui.variables_scrollArea)
+
+    def _dispatch_focused_action(self, action_name: str) -> bool:
+        focused = QApplication.focusWidget()
+        cl = None
+        if hasattr(self, 'smartprop_property_panel') and self.smartprop_property_panel:
+            cl = getattr(self.smartprop_property_panel, 'components_list', None)
+        if cl and focused and (focused == cl or cl.isAncestorOf(focused)):
+            if action_name == 'cut':
+                cl._cut_focused()
+            elif action_name == 'copy':
+                cl._copy_focused()
+            elif action_name == 'paste':
+                cl._paste_focused()
+            elif action_name == 'duplicate':
+                cl._duplicate_focused()
+            elif action_name == 'delete':
+                cl._delete_focused()
+            return True
+        return False
+
+    def _cut_action(self):
+        if self._dispatch_focused_action('cut'):
+            return
+        self.cut_item(self.ui.tree_hierarchy_widget)
+
+    def _copy_action(self):
+        if self._dispatch_focused_action('copy'):
+            return
+        self.copy_item(self.ui.tree_hierarchy_widget)
+
+    def _paste_action(self):
+        if self._dispatch_focused_action('paste'):
+            return
+        self.paste_item(self.ui.tree_hierarchy_widget)
+
+    def _paste_replace_action(self):
+        self.new_item_with_replacement(QApplication.clipboard().text())
+
+    def _duplicate_action(self):
+        if self._dispatch_focused_action('duplicate'):
+            return
+        self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator)
+
+    def _delete_action(self):
+        if self._dispatch_focused_action('delete'):
+            return
+        self.ui.tree_hierarchy_widget.DeleteSelectedItems()
+
+    def _group_action(self):
+        self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
+
+    def _update_docks_menu(self):
+        if not hasattr(self, 'docks_menu'):
+            return
+        self.docks_menu.clear()
+        parent_win = self.parent if self.parent else self.window()
+        if parent_win and hasattr(parent_win, 'ui') and hasattr(parent_win.ui, 'ExplorerDock'):
+            explorer_action = parent_win.ui.ExplorerDock.toggleViewAction()
+            explorer_action.setText("Explorer")
+            self.docks_menu.addAction(explorer_action)
+            self.docks_menu.addSeparator()
+
+        if hasattr(self, 'ui') and hasattr(self.ui, 'HierarchyDock'):
+            self.docks_menu.addAction(self.ui.HierarchyDock.toggleViewAction())
+        if hasattr(self, '_property_dock'):
+            self.docks_menu.addAction(self._property_dock.toggleViewAction())
+        if hasattr(self, 'ui') and hasattr(self.ui, 'VariablesDock'):
+            self.docks_menu.addAction(self.ui.VariablesDock.toggleViewAction())
+        if hasattr(self, 'ui') and hasattr(self.ui, 'ChoicesDock'):
+            self.docks_menu.addAction(self.ui.ChoicesDock.toggleViewAction())
+        if hasattr(self, '_viewport_dock'):
+            self.docks_menu.addAction(self._viewport_dock.toggleViewAction())
+        if hasattr(self, '_manual_dock'):
+            self.docks_menu.addAction(self._manual_dock.toggleViewAction())
+        if hasattr(self, '_history_dock'):
+            self.docks_menu.addAction(self._history_dock.toggleViewAction())
+
+    def export_scene_debug(self):
+        """Dump this document's 3D viewport scene to a .glb, textures included."""
+        if getattr(self, "_viewport_3d", None) is None:
+            self._ensure_viewport_3d()
+        viewport = getattr(self, "_viewport_3d", None)
+        render_area = getattr(viewport, "render_area", None) if viewport else None
+        if render_area is None:
+            QMessageBox.warning(self, "Export Scene", "The 3D viewport isn't available.")
+            return
+
+        default_name = "scene.glb"
+        if self.opened_file:
+            default_name = os.path.splitext(os.path.basename(self.opened_file))[0] + ".glb"
+        path, _ = QFileDialog.getSaveFileName(self, "Export Scene (debug)", default_name, "glTF Binary (*.glb)")
+        if not path:
+            return
+        if not path.lower().endswith(".glb"):
+            path += ".glb"
+
+        from gui.editors.smartprop_editor.viewport_3d.scene_export import export_scene_to_glb
+        try:
+            ok, message = export_scene_to_glb(render_area, path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Export Scene", f"Export failed: {exc}")
+            return
+
+        (QMessageBox.information if ok else QMessageBox.warning)(self, "Export Scene", message)
+

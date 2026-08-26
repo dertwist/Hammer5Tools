@@ -10,7 +10,7 @@ from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 
 from gui.settings.main import get_addon_dir
-from gui.styles.common import qt_stylesheet_button_icon, qt_stylesheet_widgetlist
+from gui.styles.common import mark_paint_through
 from gui.editors.assetgroup_maker.process import StartProcess
 from gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file
 from gui.settings.common import get_settings_value
@@ -149,7 +149,7 @@ class FileItemWidget(QWidget):
         text = '/'.join(path_parts[-2:]) if len(path_parts) >= 2 else relative_path
 
         self.label = QLabel(text)
-        self.label.setStyleSheet("background: transparent;")
+        mark_paint_through(self.label)
         self.setToolTip(self.file_path)
 
         button_size = QSize(22, 22)
@@ -158,7 +158,7 @@ class FileItemWidget(QWidget):
         self.watch_button = QPushButton()
         self.watch_button.setFixedSize(button_size)
         self.watch_button.setIconSize(icon_size)
-        self.watch_button.setStyleSheet(qt_stylesheet_button_icon)
+        self.watch_button.setProperty("h5Component", "legacyIconButton")
         self.update_watch_ui(self.watch_enabled)
 
         self.play_button = QPushButton()
@@ -173,7 +173,7 @@ class FileItemWidget(QWidget):
             btn.setFixedSize(button_size)
             btn.setIconSize(icon_size)
             btn.setIcon(QIcon(icon))
-            btn.setStyleSheet(qt_stylesheet_button_icon)
+            btn.setProperty("h5Component", "legacyIconButton")
             btn.setToolTip(tip)
 
         layout.addWidget(self.label, 1)
@@ -302,7 +302,7 @@ class MonitoringFileWatcher(QListWidget):
 
         self.setAlternatingRowColors(True)
         self.initialize_watcher()
-        self.setStyleSheet(qt_stylesheet_widgetlist)
+        self.setProperty("h5Component", "legacyWidgetList")
 
     def set_global_watch_enabled(self, enabled: bool):
         self._global_watch_enabled = enabled

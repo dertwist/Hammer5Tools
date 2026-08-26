@@ -58,8 +58,8 @@ class ErrorInfo(QDialog):
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         self.details_text.setPlainText(self.details)
-        border_color = "#E5C07B" if is_warning else "#974533"
-        self.details_text.setStyleSheet(f"background-color: #2e2e2e; border-color: {border_color}")
+        self.details_text.setProperty("h5Component", "errorInfoDetails")
+        self.details_text.setProperty("h5State", "warning" if is_warning else "error")
         main_layout.addWidget(self.details_text)
 
         buttons_layout = QHBoxLayout()
@@ -237,7 +237,7 @@ class Button(QPushButton):
         self.set_size(height, width)
         if icon is not None:
             self.set_icon(icon)
-        self.setStyleSheet(qt_stylesheet_button)
+        self.setProperty("h5Component", "legacyButton")
 
     def set_size(self, height: int = None, width: int = None):
         if height is not None:

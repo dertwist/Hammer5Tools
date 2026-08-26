@@ -1,0 +1,45 @@
+QSvgWidget[h5Component="loadingSvgPreview"] {
+    border: none;
+}
+QLabel[h5Component="loadingSvgInfo"] {
+    margin: 0px;
+    border: none;
+    color: @text_muted;
+    font-size: 13px;
+}
+QPushButton[h5Component="loadingProgressButton"][h5State="complete"] {
+    background-color: #008000;
+    color: @selection_text;
+}
+QWidget[h5Component="loadingEditorView"] {
+    padding: 0px;
+}
+QLabel[h5Component="loadingImagePlaceholder"] {
+    color: @text_muted;
+    font-size: 13px;
+}
+QLabel[h5Component="loadingImagePlaceholder"][h5Size="large"] {
+    font-size: 16px;
+}
+QLabel[h5Component="loadingImagePreview"],
+QScrollArea[h5Component="loadingImageScroll"] {
+    border: none;
+    background: transparent;
+    outline: none;
+}
+QLabel[h5Component="loadingSectionCount"] {
+    color: @text_muted;
+}
+QToolButton[h5Component="loadingSectionFolderButton"] {
+    border: none;
+    background: transparent;
+    padding: 0px;
+    margin: 0px;
+}
+QToolButton[h5Component="loadingSectionFolderButton"]:hover {
+    background-color: @rgba_ffffff_40;
+    border-radius: 2px;
+}
+QTreeView[h5Component="loadingImageTree"] {
+    outline: none;
+}

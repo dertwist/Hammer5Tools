@@ -32,23 +32,7 @@ class SoundEventEditorPropertyBase(QWidget):
         self.init_label(label_text)
         # self.on_property_update()
 
-        self.setStyleSheet(""".QFrame {
-    font: 580 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 0px;
-    border-left: 0px;
-    border-right: 0px;
-	border-top: 0px;
-    border-color: rgba(66, 66, 66, 255);
-    color: #e5e5e5;
-    background-color: #2e2e2e;
-}
-
-.QFrame::hover {
-}
-.QFrame::selected {
-    background-color: #515965;
-}""")
+        self.setProperty("h5Component", "propertyFrame")
 
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
@@ -60,8 +44,8 @@ class SoundEventEditorPropertyBase(QWidget):
             label_text = "Label"
         label_instance = QLabel()
         label_instance.setText(convert_snake_case(label_text))
-        label_instance.setStyleSheet(f"""
-        color: {self.init_label_color()}""")
+        label_instance.setProperty("h5Component", "editorPropertyLabel")
+        label_instance.setProperty("h5ColorRole", self.init_label_color().lstrip("#").lower())
         self.root_layout.addWidget(label_instance)
     def init_label_color(self):
         return "#C7C7BB"
@@ -314,7 +298,7 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         # Create a QFrame to hold the vertical layout
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
-        self.frame.setStyleSheet("""QFrame#frame {border: None;}""")
+        self.frame.setProperty("h5Component", "soundeventPropertyFrame")
         self.frame.setContentsMargins(0,0,0,0)
         self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
         self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
@@ -422,7 +406,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         # Create a QFrame to hold the vertical layout
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
-        self.frame.setStyleSheet("""QFrame#frame {border: None;}""")
+        self.frame.setProperty("h5Component", "soundeventPropertyFrame")
         self.frame.setContentsMargins(0,0,0,0)
         self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
         self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow

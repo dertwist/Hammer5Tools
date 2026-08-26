@@ -1,82 +1,116 @@
-# UI/UX & Stylesheet Guidelines
+# UI/UX and Stylesheet Guidelines
 
-This document outlines the UI/UX design rules, Qt styling principles, dark theme color tokens, custom widget guidelines, and visual design patterns for **Hammer 5 Tools**.
+Hammer 5 Tools uses one compiled, application-wide QSS theme. Keep ordinary
+widget appearance in this system so every editor and dialog responds uniformly
+to the interface-brightness setting.
 
----
+## 1. UI/UX principles
 
-## 1. UI/UX Design Philosophy
+- Match the compact visual language of Source 2 Hammer and modern desktop tools.
+- Maintain strong contrast between surfaces, controls, and text.
+- Give controls clear hover, pressed, selected, disabled, and focus states.
+- Keep widget construction and behavior in Python and reusable visual rules in QSS.
+- Do not add local `setStyleSheet()` calls for static appearance.
 
-- **Hammer / CS2 Tool Aesthetics**: Designed to match Valve's Source 2 Hammer environment and modern desktop tools with a dark, sleek appearance.
-- **Unified Global QSS**: All windows, dialogs, property inspectors, and tree views MUST consume the central global stylesheet string from `src/styles/qt_global_stylesheet.py`.
-- **High Contrast & Readability**: Maintain strong contrast between background containers (`#272727` / `#2E2E2E`) and text content (`#E5E5E5`).
-- **Interactive Feedback**: Every interactive component (buttons, inputs, tree items, combo boxes) MUST define visual hover, pressed, and focus states.
+## 2. Semantic theme tokens
 
----
+QSS fragments use `@token` references. `theme.py` defines these fields for Dark,
+Standard, and Bright explicitly; values are never derived at runtime.
 
-## 2. Color Palette & Tokens
+| Token | Standard | Purpose |
+|---|---:|---|
+| `@background` | `#2e2e2e` | Main content and dock surfaces |
+| `@surface` | `#272727` | Outer and recessed surfaces |
+| `@surface_raised` | `#2f2f31` | Raised rows and panels |
+| `@surface_input` | `#363637` | Input fields |
+| `@text` | `#e5e5e5` | Primary text |
+| `@text_muted` | `#a5a5a5` | Secondary and placeholder text |
+| `@text_disabled` | `#797979` | Disabled text |
+| `@border` | `#464649` | Borders, splitters, and dividers |
+| `@border_strong` | `#5e5e5e` | Emphasized borders |
+| `@accent` | `#4a83c9` | Primary actions and focus |
+| `@accent_hover` | `#586776` | Accent hover state |
+| `@accent_pressed` | `#6d7882` | Pressed and active state |
+| `@selection` | `#515965` | Selected rows and items |
+| `@selection_text` | `#ffffff` | Text on selections |
+| `@error` | `#d1494a` | Error state |
+| `@warning` | `#e5a00d` | Warning state |
+| `@success` | `#5ab55e` | Success state |
 
-The application uses a dark theme palette defined in `src/styles/qt_global_stylesheet.py`:
+The theme also owns `@control_height`, `@spacing_unit`, `@radius`,
+`@border_width`, and `@icon_size` metrics.
 
-| Token | Hex Code | Usage / Purpose |
-|---|---|---|
-| `background_neutral` | `#272727` | Main window background, outer containers |
-| `background_primary` | `#2E2E2E` | Central widgets, card backdrops, dock headers |
-| `background_secondary` | `#2F2F31` | Input fields, sidebar backgrounds, tree row backdrops |
-| `text_primary` | `#E5E5E5` | Primary text, label text, button captions |
-| `text_neutral` | `#A5A5A5` | Subtitles, disabled items, placeholder text |
-| `stroke` | `#464649` | Borders, splitters, dividers, groupbox rules |
-| `selected_fill` | `#515965` | Selection background in tree views and lists |
-| `pressed` | `#6D7882` | Button active/pressed states |
-| `accent` | `#4A83C9` | Primary action buttons, focused input borders |
+Use semantic tokens whenever a color expresses one of these roles. Deliberate
+legacy or feature-specific shades use `@hex_RRGGBB`; alpha variants use
+`@rgba_RRGGBB_AAA`, where `AAA` is Qt alpha from 0 to 255. Their Dark and Bright
+counterparts are explicit palette data in each `Theme`, not HSL calculations.
 
-### Interface Brightness Levels
+### Interface brightness
 
-The palette above is the **level 2 (Standard)** canonical source: every QSS color literal in the codebase is written at level 2. `src/styles/theme.py` maps all stylesheets at runtime to the user's brightness choice (Preferences → General, stored as `APP/brightness_level`):
+| Level | Name | Behavior |
+|---:|---|---|
+| 1 | Dark | Original darker palette |
+| 2 | Standard | Canonical design values |
+| 3 | Bright | Explicit light palette with dark text |
 
-| Level | Name | Mapping |
-|---|---|---|
-| 1 | Dark | Inverse of the brightening rewrite — restores the original pre-brightening palette (e.g. `#272727 → #151515`) |
-| 2 | Standard | Identity — literals pass through untouched (default) |
-| 3 | Bright | HSL-lightness inverse of the standard palette, preserving accent hues (e.g. `#272727 → #D8D8D8`) |
+The selected level is stored as `APP/brightness_level`. A switch selects one
+immutable `Theme` and reapplies the single compiled application stylesheet.
+There is no Qt monkeypatch and no retained per-widget Designer stylesheet.
 
-All colors must therefore be written as level-2 literals. New palette colors MUST be added to `_OLD_TO_LEVEL2` in `src/styles/theme.py` (and `dev/scripts/brighten_colors.py`) so they follow the brightness setting. Colors that bypass `setStyleSheet()` (QPainter pens, OpenGL clear colors) MUST resolve through `theme.qcolor()` / `theme.color()` / `theme.gl_clear_color()` instead of raw literals.
+QPainter, delegates, and OpenGL code that cannot use QSS must read
+`theme.color()`, `theme.qcolor()`, or `theme.gl_clear_color()`.
 
----
+## 3. Typography
 
-## 3. Typography Standards
+- Primary family: `"Segoe UI"` with the platform sans-serif fallback.
+- Labels: `font: 600 10pt "Segoe UI";`
+- Buttons: `font: 580 10pt "Segoe UI";`
+- Group titles: `font: 700 11pt "Segoe UI";`
+- Dock titles and tabs: `font: 9pt "Segoe UI";`
+- Consoles and code: `"Consolas"`, `"Courier New"`, or another monospace face.
 
-- **Primary Font Family**: `"Segoe UI"`, fallback to system sans-serif.
-- **Label Styling**: `font: 600 10pt "Segoe UI"; color: #E5E5E5;`
-- **Button Typography**: `font: 580 10pt "Segoe UI";`
-- **Group Titles**: `font: 700 11pt "Segoe UI"; color: #FFFFFF;`
-- **Console / Monospace**: Monospaced font (`"Consolas"`, `"Courier New"`).
+## 4. Component conventions
 
----
+- Buttons use the shared border/radius rules and defined hover, pressed, focus,
+  and disabled states.
+- Group boxes use a top divider by default; avoid decorative side and bottom
+  borders unless the component requires them.
+- Tree and table selections use `@selection` with `@selection_text`.
+- Inputs use `@surface_input`, a shared border, and `@accent` on focus.
+- Feature variants opt in with a descriptive dynamic property such as
+  `h5Component`, `h5State`, `selected`, `zebraRow`, or `paintThrough`.
 
-## 4. Component & Widget Specifications
+When changing a dynamic property after a widget is visible, use
+`gui.styles.common.set_style_property()` so Qt repolishes the widget.
 
-### Push Buttons (`QPushButton`)
-- Default Border: `1px solid #464649`, Radius: `3px`.
-- Hover State: Border highlight (`#515965` or `#4A83C9`).
-- Pressed State: Background `#6D7882`.
+## 5. Architecture and workflow
 
-### Group Boxes (`QGroupBox`)
-- Top Border: `1px solid #5E5E5E`. Bottom/Left/Right: none.
-- Indicator Icons: `url(://icons/arrow_drop_down.png)` (checked) and `url(://icons/arrow_drop_right.png)` (unchecked).
+The styling system lives in `Hammer5ToolsGUI/gui/styles/`:
 
-### Tree & Table Views (`QTreeView`, `QTreeWidget`, `QTableView`)
-- Background: `#272727` / `#2F2F31`.
-- Selected Row: Background `#515965`, Text `#E5E5E5`.
+- `theme.py` owns the `Theme` dataclass, three explicit instances, metrics,
+  brightness selection, and non-QSS color helpers.
+- `qss_compiler.py` deterministically combines `qss/*.qss` and
+  `qss/features/*.qss`, substitutes tokens, and rejects unknown tokens.
+- `manager.py` is the only application stylesheet owner. Its `apply()` and
+  `reapply()` functions are the only route to `QApplication.setStyleSheet()`.
+- `qss/*.qss` contains shared component rules.
+- `qss/features/*.qss` contains narrowly scoped feature rules.
+- `property_icons.py` owns property-icon lookup.
 
-### Input Controls (`QLineEdit`, `QSpinBox`, `QComboBox`)
-- Background: `#2F2F31`, Border: `1px solid #464649`.
-- Focus Ring: Border color shifts to `#4A83C9` on focus.
+For a new or changed widget:
 
----
+1. Reuse an existing Qt type or `h5Component` selector where appropriate.
+2. Otherwise set a descriptive dynamic property and add a rule to the narrowest
+   suitable QSS fragment.
+3. Prefer semantic tokens; use `@hex_` only for intentional one-off shades.
+4. Keep a direct widget stylesheet only when a visual value is genuinely runtime
+   data, such as a user-selected color swatch, and document the exception inline.
+5. Compile all three themes and run the affected UI tests.
 
-## 5. UI Architecture & Implementation Workflow
+Qt Designer `.ui` files remain layout sources. `compile_ui.py` deliberately
+strips generated `setStyleSheet()` statements, so Designer style properties do
+not create private cascade roots. Put their visual rules in central QSS before
+regenerating `ui_*.py`; never hand-edit generated modules.
 
-1. **Qt Designer (`.ui`) Files**: Build layout structure using Qt Designer, then compile to Python using `compile_ui.py`.
-2. **Central QSS Application**: Apply `QT_Stylesheet_global` at app startup (`src/app_core.py`).
-3. **Property Icons**: Use `src/styles/property_icons.py` to retrieve property type icons dynamically.
-4. **No Inline Hardcoded Styles**: Avoid inline `setStyleSheet()` calls with hardcoded colors inside widgets; leverage `src/styles/` helper functions.
+Application startup applies the selected theme from
+`Hammer5ToolsGUI/gui/main.py`.

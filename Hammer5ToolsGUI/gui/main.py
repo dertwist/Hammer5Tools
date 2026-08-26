@@ -330,24 +330,18 @@ if __name__ == "__main__":
         from PySide6.QtCore import QCoreApplication
         QCoreApplication.addLibraryPath(plugins_dir)
         
-    # Interface brightness (Preferences -> General): must be active before
-    # any stylesheet is set so the global QSS is mapped to the chosen level
+    # Select brightness before widgets are constructed so custom-painted
+    # controls and the global stylesheet read the same active Theme.
     from gui.styles import theme
     from gui.settings.common import get_settings_value
-    theme.install()
     try:
         brightness = int(get_settings_value('APP', 'brightness_level', 2))
     except (TypeError, ValueError):
         brightness = 2
     theme.set_brightness_level(brightness)
 
-    # Compiled at the canonical (standard) level: theme.install()'s patched
-    # setStyleSheet() above still rewrites this to the active brightness
-    # level, same as it did for the old QT_Stylesheet_global string. Once
-    # the monkey-patch is retired (styling-refactor plan, Phase 2 step 9),
-    # this becomes style_manager.apply(app, theme.get_theme(brightness)).
     from gui.styles import manager as style_manager
-    style_manager.apply(app, theme.get_theme(theme.LEVEL_STANDARD))
+    style_manager.apply(app, theme.get_theme(brightness))
 
     # Create main window
     widget = Widget()

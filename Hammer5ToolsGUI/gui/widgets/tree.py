@@ -92,7 +92,7 @@ class BranchTreeView(QTreeView):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setIndentation(18)
-        self.setStyleSheet("BranchTreeView::branch { background: transparent; }")
+        self.setProperty("h5Component", "hierarchyBranchTree")
 
     def drawBranches(self, painter: QPainter, rect: QRect, index):
         _draw_hierarchy_branches(self, painter, rect, index)
@@ -121,7 +121,7 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setDragDropMode(QTreeWidget.InternalMove)
         self.list_mode = list_mode
         self.setIndentation(18)
-        self.setStyleSheet("HierarchyTreeWidget::branch { background: transparent; }")
+        self.setProperty("h5Component", "hierarchyTree")
 
     def drawBranches(self, painter: QPainter, rect: QRect, index):
         if getattr(self, 'list_mode', False):

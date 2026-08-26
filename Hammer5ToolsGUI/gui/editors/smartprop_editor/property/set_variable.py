@@ -6,6 +6,7 @@ from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from gui.widgets import FloatWidget, BoolWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from gui.styles.common import mark_paint_through, set_style_property
 
 class Vector3DInlineWidget(QWidget):
     edited = Signal()
@@ -57,10 +58,6 @@ class Vector3DInlineWidget(QWidget):
 # There is also a conflict with legacy SetVariableBool and SetVariableFloat which have also m_VariableValue key.
 # I planed to make only one universal property - SetVariable, all related properties SetVariableFloat and SetVariableBool
 
-BOOL_COLOR = '(255, 189, 190)'
-FLOAT_COLOR = '(181, 255, 239)'
-STRING_COLOR = '(255, 209, 153)'
-
 class PropertyVariableValue(QWidget):
     edited = Signal()
 
@@ -82,13 +79,15 @@ class PropertyVariableValue(QWidget):
             self.float_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.float_widget)
 
-            # init colors
-            self.ui.property_class_4.setStyleSheet(f"color: rgb{STRING_COLOR};")
-            self.ui.property_class.setStyleSheet(f"color: rgb{STRING_COLOR};")
+            self.ui.property_class_4.setProperty("h5Component", "smartpropVariableTypeColor")
+            self.ui.property_class.setProperty("h5Component", "smartpropVariableTypeColor")
+            self.ui.logic_switch_value.setProperty("h5Component", "smartpropVariableTypeColor")
+            self.ui.property_class_4.setProperty("h5ColorRole", "string")
+            self.ui.property_class.setProperty("h5ColorRole", "string")
 
             self.bool_widget = BoolWidget(spacer_enable=False)
             self.bool_widget.edited.connect(self.on_changed)
-            self.bool_widget.checkbox.setStyleSheet('border:None; font: 580 9pt "Segoe UI";')
+            self.bool_widget.checkbox.setProperty("h5Component", "smartpropVariableBool")
             self.ui.layout_3.addWidget(self.bool_widget)
 
             # EditLine setup
@@ -122,7 +121,7 @@ class PropertyVariableValue(QWidget):
             spacer_layout.addItem(main_spacer_item)
             spacer_layout.setContentsMargins(0, 0, 0, 0)
             self.spacer.setLayout(spacer_layout)
-            self.spacer.setStyleSheet('border:None;')
+            mark_paint_through(self.spacer)
             self.spacer.setContentsMargins(0, 0, 0, 0)
             self.ui.layout.addWidget(self.spacer)
 
@@ -251,8 +250,8 @@ class PropertyVariableValue(QWidget):
                     self.bool_widget.hide()
                     self.vector_widget.hide()
                     self.spacer.show()
-                self.ui.logic_switch_value.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
-                self.ui.property_class_4.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
+                set_style_property(self.ui.logic_switch_value, "h5ColorRole", "float")
+                set_style_property(self.ui.property_class_4, "h5ColorRole", "float")
                 self.variable.combobox.filter_types = ['Float', 'Int']  # Fixed capitalization
 
             elif current_type == 'Bool':
@@ -261,8 +260,8 @@ class PropertyVariableValue(QWidget):
                     self.vector_widget.hide()
                     self.bool_widget.show()
                 self.spacer.show()
-                self.ui.logic_switch_value.setStyleSheet(f"color: rgb{BOOL_COLOR};")
-                self.ui.property_class_4.setStyleSheet(f"color: rgb{BOOL_COLOR};")
+                set_style_property(self.ui.logic_switch_value, "h5ColorRole", "bool")
+                set_style_property(self.ui.property_class_4, "h5ColorRole", "bool")
                 self.variable.combobox.filter_types = ['Bool']
                 
             elif current_type == 'Vector3D':

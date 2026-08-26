@@ -1,0 +1,285 @@
+/* One-off dialogs/forms migrated off inline setStyleSheet() calls during the
+   styling-refactor plan. Grouped here (rather than one file per form) since
+   each only contributes a handful of rules. */
+
+QMainWindow[h5Component="detailPropEditorWindow"] {
+    background-color: @surface;
+}
+QLabel[h5Component="detailPropSummaryLabel"] {
+    color: @hex_aaaaaa;
+    font: 8pt "Segoe UI";
+    padding: 8px 6px;
+}
+QWidget[h5Component="assetManagerWindow"] {
+    background-color: @surface;
+}
+
+/* forms/cleanup/main.py: compilation-check dialog. */
+QLabel[h5Component="cleanupTitle"] {
+    font-size: 20px;
+    font-weight: bold;
+    color: @text;
+}
+QLabel[h5Component="cleanupStatusLabel"] {
+    color: @text;
+}
+QProgressBar[h5Component="cleanupProgressBar"] {
+    border: 1px solid @hex_5e5e5e;
+    border-radius: 2px;
+    text-align: center;
+    color: @selection_text;
+    background-color: @background;
+}
+QProgressBar[h5Component="cleanupProgressBar"]::chunk {
+    background-color: #1a528a;
+}
+/* Shared by unreal_porter/main.py and updater/check.py (name is historical --
+   Map Builder itself now keeps its own independent hardcoded stylesheet and
+   no longer uses this). */
+QProgressBar[h5Component="mapbuilderProgressBar"] {
+    border: 1px solid @hex_5e5e5e;
+    border-radius: 2px;
+    text-align: center;
+    color: white;
+    font-size: 10px;
+    background-color: @background;
+}
+QProgressBar[h5Component="mapbuilderProgressBar"]::chunk {
+    background-color: #1a528a;
+    margin: 0px;
+    width: 1px;
+}
+QTextEdit[h5Component="cleanupLogView"] {
+    background-color: @hex_303030;
+    color: @hex_d4d4d4;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 11px;
+    border: 1px solid @hex_434343;
+}
+QLabel[h5Component="cleanupDirtlistLabel"] {
+    color: @hex_a1a1a1;
+    font-size: 11px;
+    background-color: transparent;
+}
+QLabel[h5Component="cleanupTransparentLabel"] {
+    color: @text;
+    background-color: transparent;
+}
+
+/* forms/source_porter/main.py: SourcePorterWidget dialog + asset-import
+   sub-dialog. Reproduces what used to be one big local QDialog stylesheet
+   (mostly identical to the app defaults already in qss/*.qss) so the
+   distinctive per-button color variants (btn_port/btn_find_missing/btn_stop)
+   keep working, without leaving the dialog to fall out of sync with a live
+   brightness switch. */
+QLabel[h5Component="sourcePorterInstructionLabel"] {
+    color: @text_muted;
+    font: 580 9pt "Segoe UI";
+}
+QPlainTextEdit[h5Component="sourcePorterPathsEditor"] {
+    background-color: @surface;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 4px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+    padding: 6px;
+}
+
+
+/* forms/unreal_porter/asset_selection.py: asset-picker dialog. */
+QDialog[h5Component="unrealAssetSelectionDialog"] {
+    background-color: @surface;
+}
+QLabel[h5Component="unrealAssetSelectionNote"] {
+    color: @hex_8a8a8a;
+}
+
+/* forms/unreal_porter/main.py */
+QWidget[h5Component="unrealPorterWindow"] {
+    background-color: @surface;
+}
+
+/* forms/unreal_porter/master_material_list.py: zebra-striped material cards
+   and the section divider. */
+QFrame[h5Component="unrealMasterMaterialCard"][parity="true"] {
+    background-color: @surface_raised;
+}
+QFrame[h5Component="unrealMasterMaterialCard"][parity="false"] {
+    background-color: @background;
+}
+QFrame[h5Component="unrealSectionDividerLine"] {
+    color: @border;
+}
+QLabel[h5Component="unrealSectionDividerLabel"] {
+    color: @text_muted;
+    font: 600 9pt "Segoe UI";
+    background: transparent;
+}
+
+/* settings/main.py: Preferences dialog. */
+QTabWidget[h5Component="settingsTabWidget"] {
+    background-color: @background;
+}
+QFrame[h5Component="settingsDivider"] {
+    background-color: @hex_424242;
+    border: none;
+}
+QScrollArea[h5Component="settingsScrollArea"] {
+    border: none;
+}
+
+QPushButton[h5Component="gitSyncButton"] {
+    padding: 2px 4px;
+}
+QLabel[h5Component="gitConflictStatus"][h5State="conflict"] {
+    color: #E5A00D;
+}
+QLabel[h5Component="gitConflictStatus"][h5State="resolved"] {
+    color: #7FB800;
+}
+
+QLabel[h5Component="unrealMaterialThumbnail"] {
+    border: 1px solid #3A3A3C;
+    border-radius: 3px;
+    background-color: #111111;
+}
+QLabel[h5State="available"] { color: #7AC07A; }
+QLabel[h5State="missing"] { color: #D08A4A; }
+QLabel[h5Component="unrealTextureThumbnail"] {
+    border: 1px solid #383838;
+    background-color: #1A1A1C;
+    border-radius: 4px;
+    color: @hex_999999;
+    font-size: 9px;
+    font-weight: bold;
+}
+QComboBox[h5Component="unrealChannelCombo"]:disabled {
+    color: @text_disabled;
+    background-color: @surface;
+}
+QPushButton[h5Component="unrealColorSwatch"] {
+    border: 1px solid @border_strong;
+    border-radius: 3px;
+}
+QPushButton[h5Component="unrealColorSwatch"]:hover {
+    border-color: @text_muted;
+}
+
+/* updater/attachment_preview.py: changelog attachment cards (image/video/file). */
+QFrame#AttachmentThumbnailCard {
+    background: transparent;
+    border: none;
+    padding: 4px 0px;
+    margin: 0px;
+}
+QFrame#AttachmentThumbnailCard QLabel {
+    background: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+    qproperty-alignment: AlignCenter;
+}
+QLabel[h5Component="attachmentPreviewLoading"] {
+    color: @hex_929292;
+    font-size: 11px;
+    background: transparent;
+    border: none;
+}
+QLabel[h5Component="attachmentPreviewError"] {
+    color: @hex_797979;
+    font-size: 10px;
+    font-style: italic;
+}
+QMenu[h5Component="attachmentContextMenu"] {
+    background-color: @background;
+    color: @text;
+    border: 1px solid @border;
+    padding: 4px;
+}
+QMenu[h5Component="attachmentContextMenu"]::item:selected {
+    background-color: @selection;
+}
+QFrame#VideoAttachmentCard, QFrame#FileAttachmentCard {
+    background: transparent;
+    border: none;
+    padding: 2px 5px;
+    margin: 0px;
+}
+QFrame#VideoAttachmentCard QPushButton, QFrame#FileAttachmentCard QPushButton {
+    background-color: @hex_373737;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 11px;
+}
+QFrame#VideoAttachmentCard QPushButton:hover, QFrame#FileAttachmentCard QPushButton:hover {
+    background-color: @accent;
+    color: @selection_text;
+}
+QLabel[h5Component="attachmentVideoIcon"] {
+    color: @accent;
+    font-size: 14px;
+    font-weight: bold;
+}
+QLabel[h5Component="attachmentCardTitle"] {
+    color: @text;
+    font-size: 11px;
+    font-weight: bold;
+}
+QLabel[h5Component="attachmentCardSubtitle"] {
+    color: @text_muted;
+    font-size: 10px;
+}
+QLabel[h5Component="attachmentFileIcon"] {
+    font-size: 14px;
+}
+
+/* updater/check.py: update dialog. */
+QLabel[h5Component="updaterStatusLabel"] {
+    color: @text;
+    font-size: 12px;
+    font-weight: bold;
+}
+QLabel[h5Component="updaterDetailsLabel"] {
+    color: @hex_929292;
+    font-size: 10px;
+}
+QLabel[h5Component="updaterVersionLabel"] {
+    padding: 5px 5px 0px 5px;
+}
+QLabel[h5Component="updaterNoteLabel"] {
+    padding: 0px 5px;
+}
+
+/* widgets/common.py: ErrorInfo dialog's details box. border-color varies
+   (amber for warnings, red for errors) via a small local override. */
+QTextEdit[h5Component="errorInfoDetails"] {
+    background-color: @background;
+}
+QTextEdit[h5Component="errorInfoDetails"][h5State="warning"] {
+    border-color: #E5C07B;
+}
+QTextEdit[h5Component="errorInfoDetails"][h5State="error"] {
+    border-color: #974533;
+}
+
+/* forms/unreal_porter/slot_mapping.py: shader-remapper dialog headers
+   (feature-group / texture-slots / parameter-overrides sections). */
+QLabel[h5Component="unrealShaderFeatureHeader"] {
+    background-color: @hex_3e3e41;
+    color: @hex_e2e2e2;
+    padding: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 2px;
+}
+QLabel[h5Component="unrealShaderSectionHeader"] {
+    background-color: @hex_3e3e41;
+    color: @hex_e2e2e2;
+    padding: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 2px;
+}

@@ -21,19 +21,6 @@ class ConsoleWidget(QTextEdit):
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         self.document().setMaximumBlockCount(5000)
-        self.setStyleSheet(
-            "QTextEdit {\n"
-            "    font: 580 10pt \"Segoe UI\";\n"
-            "    border: 2px solid black;\n"
-            "    border-radius: 4px;\n"
-            "    border-color: rgba(94, 94, 94, 255);\n"
-            "    padding: 4px;\n"
-            "    padding-left: 6px;\n"
-            "    padding-right: 6px;\n"
-            "    color: #e5e5e5;\n"
-            "    background-color: #2e2e2e;\n"
-            "}"
-        )
 
     def _emit(self, message: str, level: str, timestamp: bool):
         color = _LEVEL_COLORS.get(level, _LEVEL_COLORS["info"])

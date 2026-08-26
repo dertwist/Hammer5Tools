@@ -111,20 +111,13 @@ class LegacyPropertyList(QWidget):
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.NoFrame)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._scroll.setStyleSheet("""
-            QScrollArea { background-color: #2e2e2e; border: none; }
-            QScrollBar:vertical { width: 8px; background: #2e2e2e; }
-            QScrollBar::handle:vertical { background: #555; border-radius: 0px; }
-        """)
+        self._scroll.setProperty("h5Component", "smartpropLegacyListScroll")
 
         self._container = QWidget()
         # ID-qualified on purpose: an unqualified "background-color" rule is
         # inherited by every descendant and would paint over the row stripes
         # that PropertyFrame.paintEvent draws.
         self._container.setObjectName("propertyListContainer")
-        self._container.setStyleSheet(
-            "QWidget#propertyListContainer { background-color: #2e2e2e; }"
-        )
         self._container_layout = QVBoxLayout(self._container)
         self._container_layout.setContentsMargins(0, 0, 0, 0)
         self._container_layout.setSpacing(0)

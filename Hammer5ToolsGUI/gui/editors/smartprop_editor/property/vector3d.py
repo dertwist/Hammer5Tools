@@ -218,7 +218,7 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
         """Compact Source2-style vector: thin header row + 3 colour-tagged
         component rows, each aligned to the scalar-editor grid."""
         self.setObjectName(compact.ROW_OBJECT_NAME)
-        self.setStyleSheet(compact.widget_qss())
+        self.setProperty("h5Component", "smartpropCompactRow")
         # Frames that receive the alternating row background (zebra).
         self._compact_frames = [self.ui.frame_5, self.ui.frame,
                                 self.ui.frame_2, self.ui.frame_3]

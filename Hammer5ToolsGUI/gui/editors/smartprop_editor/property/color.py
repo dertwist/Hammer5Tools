@@ -20,6 +20,7 @@ class PropertyColor(QWidget, PooledPropertyMixin):
         super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.ui.value.setProperty("h5Component", "smartpropColorSwatch")
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
@@ -102,13 +103,8 @@ class PropertyColor(QWidget, PooledPropertyMixin):
         selected_color = color_dialog.getColor(QColor(*self.color))
         if selected_color.isValid():
             color = selected_color.getRgb()[:3]
-            self.ui.value.setStyleSheet(f"""background-color: rgb{color};
-                padding:4px;
-                border:0px;
-                border: 2px solid translucent;
-                border-color: rgba(94, 94, 94, 100);
-                """)
-            print("RGB Color:", color)
+            # Runtime-data exception: the swatch background is the selected value.
+            self.ui.value.setStyleSheet(f"background-color: rgb{color};")
             self.color = list(color)
             self.on_changed()
 
@@ -152,12 +148,8 @@ class PropertyColor(QWidget, PooledPropertyMixin):
             )
 
         self.change_value()
-        self.ui.value.setStyleSheet(f"""background-color: rgb{tuple(self.color)};
-            padding:4px;
-            border:0px;
-            border: 2px solid translucent;
-            border-color: rgba(94, 94, 94, 100);
-            """)
+        # Runtime-data exception: the swatch background is the property value.
+        self.ui.value.setStyleSheet(f"background-color: rgb{tuple(self.color)};")
         
     def change_value(self):
         # Default

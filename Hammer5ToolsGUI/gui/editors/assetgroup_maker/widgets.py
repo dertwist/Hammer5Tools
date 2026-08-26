@@ -32,23 +32,7 @@ class ExplorerItem(QWidget):
         self.init_label(label_text)
 
         # Set the stylesheet for the widget
-        self.setStyleSheet("""
-        .QFrame {
-            font: 580 10pt "Segoe UI";
-            border: 2px solid black;
-            border-radius: 0px;
-            border-left: 0px;
-            border-right: 0px;
-            border-top: 0px;
-            border-color: rgba(66, 66, 66, 255);
-            color: #e5e5e5;
-            background-color: #2e2e2e;
-        }
-        .QFrame::hover {
-        }
-        .QFrame::selected {
-            background-color: #515965;
-        }""")
+        self.setProperty("h5Component", "propertyFrame")
 
         # Add an open button to the layout
         self.open_button = Button()
@@ -72,7 +56,8 @@ class ExplorerItem(QWidget):
             label_text = "Label"
         label_instance = QLabel()
         label_instance.setText(convert_snake_case(label_text))
-        label_instance.setStyleSheet(f"color: {self.init_label_color()}")
+        label_instance.setProperty("h5Component", "editorPropertyLabel")
+        label_instance.setProperty("h5ColorRole", self.init_label_color().lstrip("#").lower())
         self.root_layout.addWidget(label_instance)
 
     def init_label_color(self) -> str:

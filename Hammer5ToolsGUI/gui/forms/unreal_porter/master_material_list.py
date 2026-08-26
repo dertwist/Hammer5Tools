@@ -111,10 +111,9 @@ class MasterMaterialCard(QFrame):
         self.setFrameShape(QFrame.StyledPanel)
         self.master_name = master_name
         self.bulk_dir = bulk_dir
-        # Zebra stripe — alternate-background-color the card itself. Scoped to
-        # MasterMaterialCard so it does not repaint its child widgets.
-        bg = "#2f2f31" if parity else "#2e2e2e"
-        self.setStyleSheet(f"MasterMaterialCard {{ background-color: {bg}; }}")
+        # Zebra stripe — alternate-background-color the card itself.
+        self.setProperty("h5Component", "unrealMasterMaterialCard")
+        self.setProperty("parity", "true" if parity else "false")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(10, 8, 10, 8)
@@ -212,7 +211,7 @@ class MasterMaterialCard(QFrame):
                     lbl = QLabel()
                     lbl.setFixedSize(24, 24)
                     lbl.setPixmap(pm)
-                    lbl.setStyleSheet("border: 1px solid #3A3A3C; border-radius: 3px; background-color: #111;")
+                    lbl.setProperty("h5Component", "unrealMaterialThumbnail")
                     lbl.setToolTip(f"{slot}: {param}")
                     self.thumbs_layout.addWidget(lbl)
                     count += 1
@@ -253,12 +252,12 @@ class MasterMaterialList(QScrollArea):
         def _line():
             line = QFrame()
             line.setFrameShape(QFrame.HLine)
-            line.setStyleSheet("color: #464649;")
+            line.setProperty("h5Component", "unrealSectionDividerLine")
             return line
 
         layout.addWidget(_line(), 1)
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("color: #a5a5a5; font: 600 9pt 'Segoe UI'; background: transparent;")
+        lbl.setProperty("h5Component", "unrealSectionDividerLabel")
         layout.addWidget(lbl)
         layout.addWidget(_line(), 1)
         return container

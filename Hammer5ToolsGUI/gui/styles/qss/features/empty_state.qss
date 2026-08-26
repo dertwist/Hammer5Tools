@@ -1,0 +1,11 @@
+/* "No document open yet" placeholder view shared by AssetGroupMaker,
+   SmartProp Editor, and SoundEvent Editor's main windows -- previously three
+   copies of the same inline setStyleSheet() literals. */
+QLabel[h5Component="emptyStateTitle"] {
+    font: 700 13pt "Segoe UI";
+    color: @text;
+}
+QLabel[h5Component="emptyStateDescription"] {
+    font: 500 9.5pt "Segoe UI";
+    color: @hex_9d9d9d;
+}

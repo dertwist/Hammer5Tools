@@ -1,0 +1,20 @@
+/* Shared "PropertyBase" row frame used by AssetGroupMaker, SoundEventEditor,
+   and the Explorer's item widget -- three independent PropertyBase-style
+   classes that each carried an identical inline .QFrame stylesheet (see the
+   styling-refactor plan). Scoped via a dynamic property so it doesn't reach
+   every QFrame in the app, following the same pattern as
+   qss/features/smartprop_editor.qss's smartpropFrame. The old ::hover and
+   ::selected blocks are dropped: ::selected isn't a real Qt pseudo-state and
+   nothing ever called setProperty("selected", ...) on these widgets, so both
+   were always dead. */
+QFrame[h5Component="propertyFrame"] {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-top: 0px;
+    border-color: @rgba_424242_255;
+    color: @text;
+    background-color: @background;
+}

@@ -148,9 +148,7 @@ class _ParamRow(QFrame):
         self.thumb = QLabel()
         self.thumb.setFixedSize(38, 38)
         self.thumb.setAlignment(Qt.AlignCenter)
-        self.thumb.setStyleSheet(
-            "QLabel { border: 1px solid #383838; background-color: #1A1A1C; border-radius: 4px; color: #999; font-size: 9px; font-weight: bold; }"
-        )
+        self.thumb.setProperty("h5Component", "unrealTextureThumbnail")
         self._load_thumbnail(bulk_dir, tex_path)
         head.addWidget(self.thumb)
 
@@ -237,7 +235,7 @@ class _ParamRow(QFrame):
             label = QLabel(ch_label)
             label.setAlignment(Qt.AlignCenter)
             combo = QComboBox()
-            combo.setStyleSheet(f"{qt_stylesheet_combobox}\n{_DISABLED_STYLE_APPEND}")
+            combo.setProperty("h5Component", "unrealChannelCombo")
             combo.addItem(_UNUSED)
             available = self.slots if ch_key == "rgb" else self.channel_slots
             combo.addItems(available)
@@ -369,6 +367,7 @@ class _VectorParamRow(QHBoxLayout):
         self.swatch.setFixedSize(28, 22)
         self.swatch.setToolTip("Click to pick custom color tint")
         self.swatch.setCursor(Qt.PointingHandCursor)
+        self.swatch.setProperty("h5Component", "unrealColorSwatch")
         self.swatch.clicked.connect(self._on_pick_color)
         self._update_swatch_style()
 
@@ -386,10 +385,8 @@ class _VectorParamRow(QHBoxLayout):
         r = int(self.val.get("r", 1.0) * 255)
         g = int(self.val.get("g", 1.0) * 255)
         b = int(self.val.get("b", 1.0) * 255)
-        self.swatch.setStyleSheet(
-            f"QPushButton {{ background-color: rgb({r},{g},{b}); border: 1px solid #666; border-radius: 3px; }}"
-            f"QPushButton:hover {{ border: 1px solid #999; }}"
-        )
+        # Runtime-data exception: the swatch background is the selected value.
+        self.swatch.setStyleSheet(f"background-color: rgb({r}, {g}, {b});")
 
     def _on_pick_color(self):
         r = int(self.val.get("r", 1.0) * 255)
@@ -619,9 +616,7 @@ class _FeatureInspectorWidget(QScrollArea):
 
             hdr = QLabel(f"<b>{title}</b>")
             hdr.setAlignment(Qt.AlignCenter)
-            hdr.setStyleSheet(
-                "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 3px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
-            )
+            hdr.setProperty("h5Component", "unrealShaderFeatureHeader")
             gl.addWidget(hdr)
 
             if title == "Blend Mode" and schema and schema.blend_modes:
@@ -825,9 +820,7 @@ class ShaderRemapperDialog(QDialog):
 
         tex_hdr = QLabel("<b>Texture Slot Assignments</b>")
         tex_hdr.setAlignment(Qt.AlignCenter)
-        tex_hdr.setStyleSheet(
-            "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
-        )
+        tex_hdr.setProperty("h5Component", "unrealShaderSectionHeader")
         tex_gl.addWidget(tex_hdr)
 
         self._rows = []
@@ -858,9 +851,7 @@ class ShaderRemapperDialog(QDialog):
 
         params_hdr = QLabel("<b>Shader Parameter Overrides</b>")
         params_hdr.setAlignment(Qt.AlignCenter)
-        params_hdr.setStyleSheet(
-            "QLabel { background-color: #3e3e41; color: #e2e2e2; padding: 4px; font-size: 11px; font-weight: bold; border-radius: 2px; }"
-        )
+        params_hdr.setProperty("h5Component", "unrealShaderSectionHeader")
         params_gl.addWidget(params_hdr)
 
         self._params_tab = _ParamMappingTab(scalars, vectors, switches, initial_param_overrides, shader=self.shader)
