@@ -10,7 +10,7 @@ from PySide6.QtGui import QColor, QBrush, QPen, QAction, QDropEvent, QIcon, QPai
 
 from gui.editors.assetgroup_maker.matcher import AssetGroupItem
 from gui.styles.common import (
-    qt_stylesheet_lineedit, qt_stylesheet_combobox, qt_stylesheet_table, apply_stylesheets
+    qt_stylesheet_lineedit, qt_stylesheet_combobox, qt_stylesheet_table
 )
 
 try:

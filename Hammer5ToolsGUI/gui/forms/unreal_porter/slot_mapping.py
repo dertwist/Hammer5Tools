@@ -23,55 +23,6 @@ from PySide6.QtWidgets import (
 )
 
 from gui.settings.main import get_settings_value, set_settings_value
-from gui.styles.common import (
-    apply_stylesheets,
-    qt_stylesheet_button,
-    qt_stylesheet_checkbox,
-    qt_stylesheet_combobox,
-    qt_stylesheet_toolbutton,
-    qt_stylesheet_radiobutton,
-    qt_stylesheet_groupbox,
-)
-
-
-_DISABLED_STYLE_APPEND = """
-QPushButton:disabled, QToolButton:disabled {
-    background-color: #2a2a2c;
-    color: #727272;
-    border-color: #3b3b3e;
-}
-QCheckBox:disabled {
-    color: #727272;
-}
-QRadioButton:disabled {
-    color: #727272;
-}
-QGroupBox:disabled {
-    color: #727272;
-    border-color: #3b3b3e;
-}
-QComboBox:disabled {
-    background-color: #2a2a2c;
-    color: #727272;
-    border-color: #3b3b3e;
-}
-"""
-
-
-def force_apply_stylesheets(parent: QWidget) -> None:
-    """Force-applies registered Qt stylesheets to all child widgets with crisp gray text for disabled controls."""
-    for cb in parent.findChildren(QCheckBox):
-        cb.setStyleSheet(f"{qt_stylesheet_checkbox}\n{_DISABLED_STYLE_APPEND}")
-    for rb in parent.findChildren(QRadioButton):
-        rb.setStyleSheet(f"{qt_stylesheet_radiobutton}\n{_DISABLED_STYLE_APPEND}")
-    for gb in parent.findChildren(QGroupBox):
-        gb.setStyleSheet(f"{qt_stylesheet_groupbox}\n{_DISABLED_STYLE_APPEND}")
-    for pb in parent.findChildren(QPushButton):
-        pb.setStyleSheet(f"{qt_stylesheet_button}\n{_DISABLED_STYLE_APPEND}")
-    for tb in parent.findChildren(QToolButton):
-        tb.setStyleSheet(f"{qt_stylesheet_toolbutton}\n{_DISABLED_STYLE_APPEND}")
-    for combo in parent.findChildren(QComboBox):
-        combo.setStyleSheet(f"{qt_stylesheet_combobox}\n{_DISABLED_STYLE_APPEND}")
 from .material_converter import (
     _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout, find_bulk_texture,
     get_slots_for_shader, get_channel_slots_for_shader,
@@ -685,7 +636,6 @@ class _FeatureInspectorWidget(QScrollArea):
             self.sections_layout.addWidget(group)
 
         self._update_prerequisite_states()
-        force_apply_stylesheets(self)
 
     def _build_blend_mode_group(self, gl, blend_modes):
         """Render CS2 F_BLEND_MODE options as a QGroupBox with radio buttons matching Hammer."""
@@ -949,7 +899,6 @@ class ShaderRemapperDialog(QDialog):
 
         layout.addLayout(btn_box)
 
-        force_apply_stylesheets(self)
 
     def _on_features_changed(self, feature_flags: dict):
         self.result_feature_flags = dict(feature_flags)

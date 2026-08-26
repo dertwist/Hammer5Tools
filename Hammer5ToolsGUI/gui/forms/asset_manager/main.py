@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 from .move_worker import MoveWorker
 from gui.settings.main import get_addon_name, get_cs2_path
 from gui.common import enable_dark_title_bar
-from gui.styles.common import apply_stylesheets
 from gui.widgets.console import ConsoleWidget
 from gui.widgets.explorer.main import Explorer
 
@@ -73,7 +72,6 @@ class AssetManagerWidget(QWidget):
         self.splitter.addWidget(right)
         self.splitter.setSizes([520, 580])
 
-        apply_stylesheets(self)
 
     def _rel(self, path):
         return os.path.relpath(path, self.addon_content_path).replace('\\', '/')

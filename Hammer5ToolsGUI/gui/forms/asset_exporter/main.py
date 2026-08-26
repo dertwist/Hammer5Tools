@@ -7,7 +7,7 @@ from .dependency_resolver import DependencyResolver
 from .exporter import ExportWorker
 from gui.settings.main import get_addon_name, get_cs2_path
 from gui.common import enable_dark_title_bar
-from gui.styles.common import apply_stylesheets, qt_stylesheet_widgetlist2
+from gui.styles.common import qt_stylesheet_widgetlist2
 
 class AssetExporterWidget(QWidget):
     def __init__(self, parent=None):
@@ -16,7 +16,6 @@ class AssetExporterWidget(QWidget):
         self.ui.setupUi(self)
         
         enable_dark_title_bar(self)
-        apply_stylesheets(self)
         
         self.ui.deps_list.setStyleSheet(qt_stylesheet_widgetlist2)
 

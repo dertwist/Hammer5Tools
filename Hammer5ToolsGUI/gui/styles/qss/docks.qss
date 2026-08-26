@@ -1,0 +1,58 @@
+/* QDockWidget. Split out of qt_global_stylesheet.py during the
+   styling-refactor migration. Behavior preserved as-is. */
+
+QDockWidget {
+    font: 580 9pt "Segoe UI";
+    color: @text_primary;
+    background-color: #3d3d3d;
+    border: 2px solid @background_primary;
+}
+
+QDockWidget::title {
+    background-color: @background_primary;
+    font: 580 10pt "Segoe UI";
+    color: @text_primary;
+}
+
+QDockWidget::slider {
+    color: @background_primary;
+}
+QDockWidget::close-button, QDockWidget::float-button {
+    border: 1px solid @background_primary;
+    background: @background_primary;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background: @selected_fill;
+}
+
+QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
+    background: @background_primary;
+}
+
+QDockWidget DockTitleWidget {
+  border-top: 1px solid #c0c0c0;
+  border-bottom: 1px solid #c0c0c0;
+  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+    stop: 0.0 #d4d4d4, stop: 0.3 #d0d0d0,
+    stop: 0.7 #cfcfcf, stop: 1.0 #c8c8c8);
+}
+QDockWidget DockTitleWidget QPushButton,
+QDockWidget DockTitleWidget QToolButton {
+  background: transparent;
+  border: 1px solid transparent;
+  right: 6px;
+  top: 3px;
+}
+QDockWidget DockTitleWidget QPushButton:hover,
+QDockWidget DockTitleWidget QToolButton:hover {
+  border-color: #939393;
+  border-radius: 2px;
+  background: qlineargradient(x1:0, y1 : 0, x2 : 0, y2 : 1,
+    stop : 0.0 #a8a8a8, stop : 0.3 #b3b3b3,
+    stop : 0.7 #b2b2b2, stop : 1.0 #aaaaaa);
+}
+QDockWidget DockTitleWidget QPushButton::menu-indicator,
+QDockWidget DockTitleWidget QToolButton::menu-indicator {
+  image: none;
+}

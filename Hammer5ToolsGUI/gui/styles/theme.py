@@ -24,6 +24,7 @@ bypass stylesheets entirely (QPainter pens, the OpenGL clear color) use
 import colorsys
 import re
 import weakref
+from dataclasses import dataclass, fields
 
 from PySide6.QtGui import QColor
 
@@ -349,3 +350,67 @@ def reapply():
             _ORIG_WIDGET_SSS(widget, transform_qss(raw))
         except RuntimeError:
             pass  # C++ object already deleted
+
+
+# --- Theme: semantic tokens for the new qss_compiler/manager pipeline -----
+#
+# This coexists with the setStyleSheet-patching machinery above during the
+# migration (see the styling-refactor plan). Nothing above this point is
+# used by the new pipeline; nothing below is used by the old one. Once every
+# caller goes through qss_compiler/manager, the code above is deleted.
+
+_STANDARD_HEX = {
+    "background_neutral": "#272727",
+    "background_primary": "#2e2e2e",
+    "background_secondary": "#2f2f31",
+    "text_primary": "#e5e5e5",
+    "text_neutral": "#a5a5a5",
+    "stroke": "#464649",
+    "selected_fill": "#515965",
+    "pressed": "#6d7882",
+    "accent": "#4a83c9",
+}
+
+
+@dataclass(frozen=True)
+class Theme:
+    """Semantic tokens consumed by qss_compiler.compile_stylesheet().
+
+    Field names double as the ``@token`` names QSS source files reference
+    (see gui/styles/qss/). Values are plain hex strings so they can be
+    substituted directly into QSS text.
+    """
+
+    background_neutral: str
+    background_primary: str
+    background_secondary: str
+    text_primary: str
+    text_neutral: str
+    stroke: str
+    selected_fill: str
+    pressed: str
+    accent: str
+    viewport_clear: tuple  # (r, g, b) floats 0-1, for gl_clear_color()
+
+
+def _theme_for_level(level: int) -> "Theme":
+    """Derive a Theme's hex values from the existing rewrite tables, so the
+    three instances stay pixel-identical to what transform_qss() used to
+    produce for these same tokens."""
+    palette = _LEVEL_MAPS.get(level, {})
+    values = {name: palette.get(hex2, hex2) for name, hex2 in _STANDARD_HEX.items()}
+    return Theme(**values, viewport_clear=_VIEWPORT_CLEAR[level])
+
+
+THEMES = {
+    LEVEL_DARK: _theme_for_level(LEVEL_DARK),
+    LEVEL_STANDARD: _theme_for_level(LEVEL_STANDARD),
+    LEVEL_BRIGHT: _theme_for_level(LEVEL_BRIGHT),
+}
+
+TOKEN_NAMES = frozenset(f.name for f in fields(Theme))
+
+
+def get_theme(level: int | None = None) -> Theme:
+    """The active Theme, or the Theme for a specific brightness level."""
+    return THEMES.get(level if level is not None else _LEVEL, THEMES[LEVEL_STANDARD])

@@ -11,7 +11,7 @@ from PySide6.QtGui import QIcon
 from gui.settings.main import get_addon_dir, get_addon_name
 from gui.styles.common import (
     qt_stylesheet_button, qt_stylesheet_combobox, qt_stylesheet_lineedit,
-    qt_stylesheet_checkbox, apply_stylesheets
+    qt_stylesheet_checkbox
 )
 from gui.editors.assetgroup_maker.analyzer import (
     ReferenceAnalysisResult, extract_fbx_materials, resolve_reference_full_path
@@ -81,7 +81,6 @@ class TemplateSlotMappingDialog(QDialog):
             }
         """)
         self._build_ui()
-        apply_stylesheets(self)
 
     def _build_ui(self):
         root_layout = QVBoxLayout(self)

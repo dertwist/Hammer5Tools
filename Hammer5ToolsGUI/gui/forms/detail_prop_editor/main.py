@@ -18,7 +18,6 @@ from PySide6.QtGui import (
 )
 
 from gui.common import enable_dark_title_bar, fast_deepcopy, set_qdock_tab_style
-from gui.styles.common import apply_stylesheets
 from gui.settings.common import get_addon_dir, get_addon_name
 from gui.editors.smartprop_editor.property import compact
 
@@ -142,7 +141,6 @@ class DetailPropEditorWidget(QMainWindow):
         self.hierarchy.tree.customContextMenuRequested.connect(self.open_context_menu)
         self.hierarchy.tree.installEventFilter(self)
 
-        apply_stylesheets(self)
         self._load()
 
         set_qdock_tab_style(self.findChildren)

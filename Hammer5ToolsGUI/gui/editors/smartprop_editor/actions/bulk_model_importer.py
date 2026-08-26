@@ -4,7 +4,6 @@ import uuid
 
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QPushButton, QCheckBox, QFileDialog
 from PySide6.QtCore import Signal
-from gui.styles.common import apply_stylesheets
 
 class BulkModelImporterDialog(QDialog):
     accepted_data = Signal(list, bool, int)
@@ -38,7 +37,6 @@ class BulkModelImporterDialog(QDialog):
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
 
-        apply_stylesheets(self)
 
     def browse_files(self):
         files, _ = QFileDialog.getOpenFileNames(self, "Select vmdl Files", self.current_folder, "vmdl Files (*.vmdl)")

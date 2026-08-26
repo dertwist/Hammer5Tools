@@ -1,0 +1,24 @@
+/* SmartProp editor's toolbar-style QFrame containers. Previously applied
+   via apply_stylesheets()'s findChildren(QFrame) walk (as ".QFrame", an
+   exact-class match) to any QFrame descendant of a window that called
+   apply_stylesheets() -- which incidentally reached QFrame instances well
+   outside the SmartProp editor too. That reach was accidental, not a real
+   feature (see the styling-refactor plan); this scopes it to the frames it
+   was actually meant for. */
+QFrame[h5Component="smartpropFrame"] {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-top: 0px;
+    border-color: rgba(66, 66, 66, 255);
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QFrame[h5Component="smartpropFrame"]:hover {
+}
+QFrame[h5Component="smartpropFrame"][selected="true"] {
+    background-color: @selected_fill;
+}

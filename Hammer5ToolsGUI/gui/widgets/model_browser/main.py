@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize, QTimer, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QAction, QPen, QImage, QIcon
 
-from gui.styles.common import apply_stylesheets
 from gui.editors.smartprop_editor.property import compact
 from gui.widgets.model_browser.index import (
     ModelEntry, ScanWorker, ScanSignals, active_mounts, SOURCE_ADDON, SOURCE_CORE,
@@ -115,7 +114,6 @@ class _FacetPopup(QFrame):
         self.rows_layout.setSpacing(0)
         layout.addWidget(self.rows_host)
         self.setStyleSheet("QFrame { background-color: #272727; border: 1px solid #464649; }")
-        apply_stylesheets(self)
 
     def set_values(self, values: List[str], checked: Optional[set] = None):
         self._values = list(values)
@@ -151,7 +149,6 @@ class _FacetPopup(QFrame):
             self.rows_layout.addWidget(row)
             self._rows.append((value, checkbox, row))
 
-        apply_stylesheets(self)
         self.changed.emit()
 
     def checked_values(self) -> set:
@@ -979,7 +976,6 @@ class AssetBrowserDialog(QDialog):
 
         # Apply the SmartProp editor's iconic per-widget stylesheets automatically
         # so every caller gets consistent styling without needing to remember.
-        apply_stylesheets(self)
 
     def selected_path(self) -> str:
         return self.browser.selected_path()

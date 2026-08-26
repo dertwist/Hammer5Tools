@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import enable_dark_title_bar
-from gui.styles.common import apply_stylesheets
 from gui.settings.main import (
     get_addon_name,
     get_settings_value, set_settings_value,
@@ -238,7 +237,6 @@ class UnrealPorterWidget(QDialog):
         self._installs = find_installs()
 
         self._build_ui()
-        apply_stylesheets(self)
         self._setup_progress_bar_style()
         if self._installs:
             self.console.info("UnrealPorter ready.")

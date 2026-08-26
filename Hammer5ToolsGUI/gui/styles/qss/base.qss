@@ -1,0 +1,239 @@
+/* Generic/base rules: QLabel, QGroupBox, QToolTip, QWidget, QDialog,
+   QScrollArea, QScrollBar, QSlider, QStatusBar, QSplitter.
+   Split mechanically out of the old qt_global_stylesheet.py / common.py
+   QSS_GROUPBOX during the styling-refactor migration — see the plan for
+   the reasoning. Behavior preserved as-is; not a visual redesign. */
+
+QLabel {
+    font: 600 10pt "Segoe UI";
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+}
+
+/* The shared group-box look: a single rule above the title, no box around
+   the content. Previously duplicated between qt_global_stylesheet.py and
+   common.py's apply_stylesheets() path, where the two copies drifted apart
+   (one drew a full bordered box, the other only the top rule). One copy now. */
+QGroupBox {
+    border: 1px solid #5e5e5e;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white;
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_down.png);
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+}
+
+QGroupBox:disabled {
+    color: #727272;
+    border-color: #3b3b3e;
+}
+
+QToolTip {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QScrollArea {
+    border: 2px solid #d0d0d0;
+    border-color: rgba(94, 94, 94, 255);
+    border-radius: 2px;
+    color: @text_primary;
+}
+
+QDialog {
+    background-color: @background_neutral;
+    color: @text_primary;
+}
+
+QWidget {
+    background-color: @background_neutral;
+    outline: none;
+}
+
+/* Opt-out for children that must not hide a parent's custom painting.
+   The blanket rule above gives every widget in the application an opaque
+   background, so a widget that draws in its paintEvent has its work covered
+   up by its own children. Those children are marked with
+   styles.common.mark_paint_through(). The attribute selector outranks the
+   plain type selector above, so this wins without changing anything else. */
+QWidget[paintThrough="true"] {
+    background: transparent;
+}
+
+QWidget:item:checked {
+    background-color: @background_neutral;
+    color: white;
+}
+
+QWidget:item:selected {
+    background-color: @selected_fill;
+    color: white;
+    border: 0px;
+}
+
+QScrollBar:horizontal {
+    height: 15px;
+    margin: 3px 3px 3px 3px;
+    border: 1px transparent #3b3a3a;
+    border-radius: 0px;
+    background-color: #3b3a3a;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: @selected_fill;
+    min-width: 5px;
+    border-radius: 0px;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+    height: 0px;
+}
+
+QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal {
+    width: 0px;
+    height: 0px;
+    background: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QScrollBar:vertical {
+    background-color: #3b3a3a;
+    width: 15px;
+    margin: 3px 3px 3px 3px;
+    border: 1px transparent #3b3a3a;
+    border-radius: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: @selected_fill;
+    min-height: 5px;
+    border-radius: 0px;
+}
+
+QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {
+    height: 0px;
+    width: 0px;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    height: 0px;
+    width: 0px;
+    background: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QSlider::groove:horizontal {
+    border: 2px solid black;
+    border-color: rgba(94, 94, 94, 0);
+    height: 2px;
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+    background: @selected_fill;
+    border: 2px solid black;
+    border-color: rgba(94, 94, 94, 255);
+    width: 6px;
+    height: 36px;
+    margin: -17px 0;
+}
+
+QSlider::handle:horizontal:hover {
+}
+
+QSlider::handle:horizontal:pressed {
+}
+
+QSlider::sub-page:horizontal {
+    background: #35383e;
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 2px;
+}
+
+QSlider::add-page:horizontal {
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 2px;
+}
+
+QStatusBar {
+    background-color: @background_primary;
+    color: @text_primary;
+    font: 600 10pt "Segoe UI";
+    border-top: 1px solid #585858;
+}
+
+QStatusBar::item {
+    border: none;
+}
+
+QSplitter {
+    border: none;
+}
+
+QSplitter::handle {
+    background-color: @background_primary;
+    margin: 1px 1px;
+}
+
+QSplitter::handle:hover {
+    background-color: @background_primary;
+}
+
+QSplitterHandle::hover {
+}
+
+QSplitter::handle:vertical:hover, QSplitter::handle:horizontal:hover {
+    background: #5e5e5e;
+}
+
+QSplitter::handle:vertical {
+    margin: 0px;
+}
+
+QSplitter::handle:horizontal {
+    padding: 0px;
+    margin: 0px;
+}

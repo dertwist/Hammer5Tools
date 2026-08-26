@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QToolButton, QScrollArea,
 )
 
-from gui.styles.common import apply_stylesheets
 from .material_converter import (
     _classify_textures, find_bulk_texture, _pick_scalar, _pick_boolean_flags,
 )
@@ -170,7 +169,6 @@ class MasterMaterialCard(QFrame):
 
         outer.addLayout(b_row)
 
-        apply_stylesheets(self)
         self.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
     def _on_shader_changed(self, new_shader: str):
@@ -263,7 +261,6 @@ class MasterMaterialList(QScrollArea):
         lbl.setStyleSheet("color: #a5a5a5; font: 600 9pt 'Segoe UI'; background: transparent;")
         layout.addWidget(lbl)
         layout.addWidget(_line(), 1)
-        apply_stylesheets(container)
         return container
 
     def populate(self, master_groups: dict, bulk_dir: str = None):

@@ -48,7 +48,6 @@ from gui.forms.unreal_porter.main import UnrealPorterWidget
 from gui.forms.source_porter.main import SourcePorterWidget
 from gui.forms.launch_options.main import LaunchOptionsDialog
 from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile
-from gui.styles.qt_global_stylesheet import QT_Stylesheet_global
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.quick_create.main import QuickCreateDialog
@@ -455,6 +454,8 @@ class Widget(QMainWindow):
         sound_idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
         self.ui.MainWindowTools_tabs.insertTab(sound_idx + 1, self.audio_editor_tab, ae_icon, "Audio Editor")
 
+    ADDON_COMBOBOX_PLACEHOLDERS = {"CS2 Path Not Set", "Addons Folder Not Found"}
+
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         if cs2_path is None:
@@ -687,7 +688,7 @@ class Widget(QMainWindow):
     @exception_handler
     def selected_addon_name(self, text=None):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
-        if not new_addon: return
+        if not new_addon or new_addon in self.ADDON_COMBOBOX_PLACEHOLDERS: return
         current_addon = get_addon_name()
         if current_addon == new_addon and getattr(self, 'SmartPropEditorMainWindow', None): return
 

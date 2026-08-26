@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import enable_dark_title_bar
-from gui.styles.common import apply_stylesheets
 from gui.settings.common import get_cs2_path, get_addon_name
 from gui.settings.main import (
     get_settings_value, set_settings_value,
@@ -95,7 +94,6 @@ class AssetImportDialog(QDialog):
         btn_box.addWidget(btn_ok)
 
         layout.addLayout(btn_box)
-        apply_stylesheets(self)
 
     def _on_accept(self):
         raw_text = self.editor.toPlainText()
@@ -126,7 +124,6 @@ class SourcePorterWidget(QDialog):
         self._connect_settings_signals()
         self._restoring_settings = False
 
-        apply_stylesheets(self)
 
     def _setup_menubar(self):
         self.menu_bar = QMenuBar(self)

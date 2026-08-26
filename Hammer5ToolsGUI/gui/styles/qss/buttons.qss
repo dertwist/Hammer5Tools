@@ -1,0 +1,60 @@
+/* QPushButton / QToolButton. Split out of qt_global_stylesheet.py during
+   the styling-refactor migration. Behavior preserved as-is. */
+
+QPushButton {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 20px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+QPushButton:hover {
+    background-color: @selected_fill;
+    color: white;
+}
+QPushButton:pressed {
+    background-color: @background_primary;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+QPushButton:disabled {
+    background-color: #292929;
+    color: #7c7c85;
+    border-color: #3f3f42;
+}
+
+QToolButton {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+QToolButton:hover {
+    background-color: @selected_fill;
+    color: white;
+}
+QToolButton:pressed {
+    background-color: @background_primary;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+QToolButton:disabled {
+    background-color: #292929;
+    color: #7c7c85;
+    border-color: #3f3f42;
+}

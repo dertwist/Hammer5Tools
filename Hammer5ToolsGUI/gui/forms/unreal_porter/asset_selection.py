@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
 
 from gui.common import enable_dark_title_bar
 from gui.settings.main import get_settings_bool, set_settings_bool
-from gui.styles.common import apply_stylesheets
 from gui.widgets.tree import HierarchyTreeWidget
 
 KEY_ROLE = Qt.UserRole + 1
@@ -285,7 +284,6 @@ class AssetSelectionDialog(QDialog):
         self._build_ui()
         self._populate(preselected or set())
         self._apply_filter()
-        apply_stylesheets(self)
 
     def _build_ui(self):
         layout = QVBoxLayout(self)

@@ -513,6 +513,7 @@ class ManualEditor(QWidget):
         root.setSpacing(0)
 
         toolbar = QFrame()
+        toolbar.setProperty("h5Component", "smartpropFrame")
         tb_layout = QHBoxLayout(toolbar)
         tb_layout.setContentsMargins(6, 3, 6, 3)
         tb_layout.setSpacing(6)
@@ -557,6 +558,7 @@ class ManualEditor(QWidget):
 
         # ── Statistics & Search Bar ───────────────────────────────────────────
         bottom_toolbar = QFrame()
+        bottom_toolbar.setProperty("h5Component", "smartpropFrame")
         bottom_layout = QHBoxLayout(bottom_toolbar)
         bottom_layout.setContentsMargins(6, 4, 6, 4)
         bottom_layout.setSpacing(6)
@@ -586,10 +588,6 @@ class ManualEditor(QWidget):
         self._editor.textChanged.connect(self._update_stats)
         self._editor.cursorPositionChanged.connect(self._update_stats)
         self._update_stats()
-
-        # Apply the program's standard stylesheets
-        from gui.styles.common import apply_stylesheets
-        apply_stylesheets(self)
 
     # ── Keyboard shortcuts ────────────────────────────────────────────────
 

@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QDoubleValidator
 
-from gui.styles.common import apply_stylesheets
 from gui.editors.smartprop_editor.viewport_3d.path_render_area import PathEditor3DRenderArea
 
 
@@ -223,10 +222,11 @@ class PropertyPathEditor(QWidget):
     def _open_editor(self):
         dialog = _PathEditorDialog(self._path_points, self)
 
-        # Apply standard stylesheet to children
-        apply_stylesheets(dialog)
-
-        # Override specific generic elements to enhance the Path Editor appearance
+        # Override specific generic elements to enhance the Path Editor appearance.
+        # The global stylesheet already styles QDialog/QTableWidget/QPushButton;
+        # this narrows those for the path editor specifically. Now that nothing
+        # sets a per-widget QLineEdit stylesheet ahead of this, the descendant
+        # selector below reaches the table's line-edit cells directly.
         dialog.setStyleSheet("""
             QDialog { background-color: #2e2e2e; }
             QTableWidget { background-color: #272727; color: #e5e5e5; border: none; gridline-color: #3e3e41; }
@@ -234,18 +234,8 @@ class PropertyPathEditor(QWidget):
             QPushButton { background-color: #434343; color: #e5e5e5; border: 1px solid #636363; border-radius: 2px; padding: 4px 12px; }
             QPushButton:hover { background-color: #535353; }
             QPushButton:pressed { background-color: #343434; }
-            QTableWidget QLineEdit { background-color: #363637; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 4px; }
+            QTableWidget QLineEdit { background-color: #272727; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 12px; }
         """)
-
-        # apply_stylesheets() sets a QLineEdit-specific stylesheet directly on each field,
-        # which overrides the dialog-level "QTableWidget QLineEdit" rule above. Re-apply
-        # the path editor's field style directly on each cell so it actually takes effect.
-        field_style = "background-color: #272727; color: #FFFFFF; border: none; padding: 0px 0px; font-size: 12px;"
-        for row in range(dialog.table.rowCount()):
-            for col in range(dialog.table.columnCount()):
-                field = dialog.table.cellWidget(row, col)
-                if field:
-                    field.setStyleSheet(field_style)
 
         if dialog.exec() == QDialog.Accepted:
             self._path_points = dialog.get_points()

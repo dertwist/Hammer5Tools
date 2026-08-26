@@ -1,0 +1,86 @@
+/* QTabWidget / QTabBar. Split out of qt_global_stylesheet.py during the
+   styling-refactor migration. Behavior preserved as-is. Tab alignment
+   itself is a QStyle geometry concern (see gui/main.py's
+   app.setStyle('Fusion')), not something these rules control. */
+
+QTabWidget {
+    background-color: @background_neutral;
+}
+
+QTabWidget::pane {
+    border: 1px solid @stroke;
+    background-color: @background_secondary;
+    border-radius: 0px;
+    top: -1px;
+}
+
+QTabWidget#MainWindowTools_tabs::pane {
+    border-bottom: none;
+}
+
+QTabBar {
+    background-color: @background_neutral;
+    qproperty-drawBase: 0;
+    qproperty-elideMode: "ElideNone";
+}
+
+QTabBar::tab {
+    background-color: @background_neutral;
+    color: @text_neutral;
+    border-radius: 0px;
+    padding: 4px 10px;
+    margin: 0px;
+    font: 580 9pt "Segoe UI";
+    border: 1px solid transparent;
+    border-bottom: 1px solid @stroke;
+    border-right: 1px solid rgba(94, 94, 94, 80);
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #363637;
+    color: #FFFFFF;
+}
+
+QTabBar::tab:selected {
+    border: 1px solid @stroke;
+    border-top: 2px solid @accent;
+    border-bottom: 1px solid @background_secondary;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    color: #FFFFFF;
+    background-color: @background_secondary;
+    margin-bottom: -1px;
+}
+
+QTabBar::close-button {
+    image: url(:/icons/valve_style/tab-closebutton.png);
+    subcontrol-position: right;
+    margin: 1px 1px 1px 4px;
+}
+
+QTabBar::close-button:hover {
+    image: url(:/icons/valve_style/tab-closebutton-hovered.png);
+}
+
+QTabBar::close-button:pressed {
+    image: url(:/icons/valve_style/tab-closebutton-selected-hovered.png);
+}
+
+QToolButton#DocumentNewTabButton {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 1px;
+    margin: 0px;
+}
+
+QToolButton#DocumentNewTabButton:hover {
+    background-color: #363639;
+    border: 1px solid @stroke;
+}
+
+QToolButton#DocumentNewTabButton:pressed {
+    background-color: @stroke;
+}

@@ -312,7 +312,7 @@ if __name__ == "__main__":
         existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
-    from gui.app_core import Widget, start_instance_server, QT_Stylesheet_global
+    from gui.app_core import Widget, start_instance_server
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
@@ -341,7 +341,13 @@ if __name__ == "__main__":
         brightness = 2
     theme.set_brightness_level(brightness)
 
-    app.setStyleSheet(QT_Stylesheet_global)
+    # Compiled at the canonical (standard) level: theme.install()'s patched
+    # setStyleSheet() above still rewrites this to the active brightness
+    # level, same as it did for the old QT_Stylesheet_global string. Once
+    # the monkey-patch is retired (styling-refactor plan, Phase 2 step 9),
+    # this becomes style_manager.apply(app, theme.get_theme(brightness)).
+    from gui.styles import manager as style_manager
+    style_manager.apply(app, theme.get_theme(theme.LEVEL_STANDARD))
 
     # Create main window
     widget = Widget()

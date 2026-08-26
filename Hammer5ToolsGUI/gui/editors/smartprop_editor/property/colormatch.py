@@ -4,7 +4,6 @@ from gui.editors.smartprop_editor.property.ui_colormatch import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog, QToolButton
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
-from gui.styles.qt_global_stylesheet import QT_Stylesheet_global
 
 from gui.editors.smartprop_editor.property.color import PropertyColor
 
@@ -25,7 +24,6 @@ class PropertyColorMatch(QWidget):
         self.variables_scrollArea = variables_scrollArea
 
         self.dialog = QColorDialog()
-        self.dialog.setStyleSheet(QT_Stylesheet_global)
 
 
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)

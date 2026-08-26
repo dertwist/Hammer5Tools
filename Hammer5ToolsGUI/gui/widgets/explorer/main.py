@@ -6,7 +6,8 @@ try:
 except ImportError:
     winreg = None
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
-    QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget, QApplication
+    QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, \
+    QListWidget, QApplication, QTreeView, QHeaderView, QComboBox
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator

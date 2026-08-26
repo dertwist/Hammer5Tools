@@ -5,7 +5,6 @@ from gui.editors.smartprop_editor.property.ui_filtersurface import Ui_Widget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from PySide6.QtWidgets import QWidget, QColorDialog, QTreeWidgetItem, QMenu
 from PySide6.QtCore import Signal, Qt
-from gui.styles.qt_global_stylesheet import QT_Stylesheet_global
 from gui.widgets.popup_menu.main import PopupMenu
 
 
@@ -30,7 +29,6 @@ class PropertySurface(QWidget):
         self.ui.surfaces_tree.customContextMenuRequested.connect(self.open_hierarchy_menu)
 
         self.dialog = QColorDialog()
-        self.dialog.setStyleSheet(QT_Stylesheet_global)
 
 
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)

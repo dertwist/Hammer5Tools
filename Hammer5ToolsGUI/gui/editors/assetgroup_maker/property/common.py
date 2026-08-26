@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QTreeWidget
+from PySide6.QtWidgets import QTreeWidget, QWidget, QLabel, QHBoxLayout, QPlainTextEdit
 from PySide6.QtGui import QTextOption
 from PySide6.QtCore import Qt, Signal
 from gui.common import convert_snake_case

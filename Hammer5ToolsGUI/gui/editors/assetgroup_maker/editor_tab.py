@@ -16,7 +16,7 @@ from gui.editors.assetgroup_maker.widgets.asset_table import AssetTableWidget
 from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets, AssetGroupItem
 from gui.editors.assetgroup_maker.process import perform_batch_processing
 from gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file, get_default_file
-from gui.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit, apply_stylesheets
+from gui.styles.common import qt_stylesheet_button, qt_stylesheet_checkbox, qt_stylesheet_lineedit
 
 
 class EditorTabWidget(QWidget):
@@ -151,7 +151,6 @@ class EditorTabWidget(QWidget):
         footer_layout.addLayout(action_row)
         root.addWidget(footer_frame)
 
-        apply_stylesheets(self)
 
     def _restore_splitter_state(self):
         saved_state = get_settings_value('AssetGroupMaker', 'editor_splitter_state')

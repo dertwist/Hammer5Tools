@@ -1,0 +1,413 @@
+/* QComboBox, QCheckBox, QRadioButton, QLineEdit, QTextEdit, QPlainTextEdit,
+   QTextBrowser, QSpinBox, QDoubleSpinBox. Split out of
+   qt_global_stylesheet.py during the styling-refactor migration. Behavior
+   preserved as-is, including the pre-existing duplicate QPlainTextEdit /
+   QTextBrowser blocks (harmless — later identical selectors just re-apply
+   the same rule) and the pre-existing dead QPlainTextEdit:hover comment. */
+
+QComboBox {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 26px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+QComboBox:hover {
+    background-color: @selected_fill;
+    color: white;
+}
+QComboBox:pressed {
+}
+QComboBox:item {
+    font: 600 12pt "Segoe UI";
+    color: @text_primary;
+    padding-left: 5px;
+    background-color: @background_primary;
+    border-style: none;
+}
+
+QComboBox::drop-down {
+    color: @text_primary;
+    padding: 2px;
+    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+    border-bottom: 0px solid black;
+    border-top: 0px solid black;
+    border-right: 0px;
+    border-left: 2px solid;
+    margin-left: 5px;
+    padding: 5px;
+    width: 7px;
+    border-color: rgba(94, 94, 94, 255);
+    background-color: @background_primary;
+}
+
+QComboBox QAbstractItemView {
+    border: 2px solid gray;
+    border-color: rgba(94, 94, 94, 255);
+    selection-background-color: @selected_fill;
+    background-color: @background_primary;
+    alternate-background-color: #37373b;
+}
+
+QComboBox QAbstractItemView::item {
+    height: 16px;
+    padding: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #ff939393;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: rgba(255, 255, 255, 10);
+}
+
+QComboBox QAbstractItemView::item:selected {
+    height: 16px;
+    padding: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: @selected_fill;
+    color: white;
+    border: none;
+    outline: none;
+}
+QComboBox:disabled {
+    background-color: #2a2a2c;
+    color: #727272;
+    border-color: #3b3b3e;
+}
+
+QTextBrowser {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QTextBrowser:focus {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+QTextBrowser:hover {
+    background-color: @selected_fill;
+    color: white;
+}
+QTextBrowser:pressed {
+    background-color: @background_primary;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+QCheckBox {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/check_box_outline_blank_16dp.svg);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://icons/select_check_box_16dp.svg);
+}
+
+QCheckBox:hover {
+    background-color: @selected_fill;
+    color: white;
+}
+QCheckBox:disabled {
+    color: #727272;
+}
+
+QRadioButton {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QRadioButton::indicator:unchecked {
+    image: url(://icons/radio_button_unchecked_24dp.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QRadioButton::indicator:checked {
+    image: url(://icons/radio_button_checked_24dp.svg);
+    width: 16px;
+    height: 16px;
+}
+
+QRadioButton:hover {
+    background-color: @selected_fill;
+    color: white;
+    border-radius: 2px;
+}
+QRadioButton:disabled {
+    color: #727272;
+}
+
+QListView {
+    background-color: @background_secondary;
+    border: 0px;
+    border-radius: 4px;
+    font: 600 11pt "Segoe UI";
+    color: #a2a79a;
+    padding: 2px;
+}
+
+QPlainTextEdit {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QPlainTextEdit {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+/* QPlainTextEdit:hover {
+    background-color: @selected_fill;
+    color: white;
+} */
+
+QPlainTextEdit:pressed {
+    background-color: @background_primary;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+QTextBrowser {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QTextBrowser {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(94, 94, 94, 255);
+    height: 18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QTextBrowser:hover {
+}
+
+QTextBrowser:pressed {
+    background-color: @background_primary;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+QLineEdit {
+    border: 2px solid #d0d0d0;
+    border-color: rgba(94, 94, 94, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: @text_primary;
+}
+QLineEdit:focus {
+    border: 2px solid #1495c0;
+    border-color: rgba(94, 94, 94, 255);
+}
+QLineEdit::selection {
+    background-color: @selected_fill;
+    color: white;
+}
+
+QTextEdit {
+    border: 2px solid #d0d0d0;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    padding: 2px;
+    color: @text_primary;
+}
+QTextEdit:focus {
+    border: 2px solid #1495c0;
+    background-color: @text_primary;
+}
+QTextEdit::selection {
+    background-color: @selected_fill;
+    color: white;
+}
+
+QSpinBox {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    padding-left: 2px;
+    padding-right: 2px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QSpinBox:focus {
+}
+
+QSpinBox:hover {
+}
+
+QSpinBox:pressed {
+    background-color: #252525;
+}
+
+QSpinBox::up-button {
+    border: 0px solid black;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-left: 2px solid black;
+    border-bottom: 0px solid black;
+    border-top-right-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    width: 16px;
+    margin: 0px;
+}
+
+QSpinBox::up-arrow {
+    image: url(://icons/arrow_drop_up_24dp.svg);
+    width: 20px;
+    height: 20px;
+}
+
+QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border: 0px solid black;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    border-bottom-right-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    width: 16px;
+    margin: 0px;
+}
+
+QSpinBox::down-arrow {
+    image: url(://icons/arrow_drop_down_16dp.svg);
+    width: 20px;
+    height: 20px;
+}
+
+QDoubleSpinBox {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    padding-left: 2px;
+    padding-right: 2px;
+    color: @text_primary;
+    background-color: @background_primary;
+}
+
+QDoubleSpinBox:focus {
+}
+
+QDoubleSpinBox:hover {
+}
+
+QDoubleSpinBox:pressed {
+    background-color: #252525;
+}
+
+QDoubleSpinBox::up-button {
+    border: 0px solid black;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-left: 2px solid black;
+    border-bottom: 0px solid black;
+    border-top-right-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    width: 16px;
+    margin: 0px;
+}
+
+QDoubleSpinBox::up-arrow {
+    image: url(://icons/arrow_drop_up_24dp.svg);
+    width: 20px;
+    height: 20px;
+}
+
+QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    border: 0px solid black;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+    border-bottom-right-radius: 2px;
+    border-color: rgba(94, 94, 94, 255);
+    width: 16px;
+    margin: 0px;
+}
+
+QDoubleSpinBox::down-arrow {
+    image: url(://icons/arrow_drop_down_16dp.svg);
+    width: 20px;
+    height: 20px;
+}

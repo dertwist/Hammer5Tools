@@ -3,7 +3,7 @@ from PySide6.QtCore import Signal, Qt
 import re
 
 from gui.widgets.popup_menu.main import PopupMenu
-from gui.widgets.common import Button, apply_stylesheets
+from gui.widgets.common import Button
 from gui.widgets import ComboboxDynamicItems
 from gui.editors.smartprop_editor._common import is_category_widget
 
@@ -296,7 +296,6 @@ class ComboboxVariablesWidget(QWidget):
             self.combobox.set_variable(final_name_local)
             dialog.accept()
         create_button.clicked.connect(on_create)
-        apply_stylesheets(dialog)
         dialog.show()
 
     def new_variable(self, name, var_type):
