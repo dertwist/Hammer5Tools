@@ -714,17 +714,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             deformer = info.get("deformer")
             if deformer is not None and "world_matrix" in info:
-                # Non-rigid model under an active deformer: Core left world_matrix
-                # straight on purpose (see EvaluatedSmartPropModel.Deformer) so the
-                # mesh itself can be warped instead of the instance transform.
-                # The signature must change whenever the warp would — a live edit
-                # (bend angle, placement) re-warps instead of reusing a stale mesh.
-                world_matrix_src = info["world_matrix"]
-                signature = (deformer, tuple(np.asarray(world_matrix_src, dtype=np.float32).ravel().tolist()))
-                gpu_mesh = self.mesh_cache.get_deformed_gpu_mesh(
-                    model_path, eid, signature,
-                    lambda vertices, wm=world_matrix_src, d=deformer: mesh_deform.deform_mesh_vertices(vertices, wm, d),
-                )
+                # ponytail: bend-deformer mesh warp temporarily disabled — flag as
+                # unsupported and fall back to the plain mesh instead of warping.
+                self._warn_unsupported.add("BendDeformer")
+                gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
             else:
                 gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
 
