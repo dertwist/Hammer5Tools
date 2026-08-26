@@ -128,6 +128,7 @@ public static class SmartPropEvaluator
                     options.CancellationToken.ThrowIfCancellationRequested();
                     return nestedPropResolver(path);
                 };
+            SmartPropSizerVariableEvaluator.SeedSizerVariableDefaults(root);
             var result = SmartPropEvaluation.Evaluate(root, cancellableResolver, options.MaximumDepth);
             options.CancellationToken.ThrowIfCancellationRequested();
             var models = result.Models.Take(options.MaximumModels).Select(model => new EvaluatedSmartPropModel(
@@ -173,6 +174,7 @@ public static class SmartPropEvaluator
         models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, nestedDocumentsJson, models, options);
         models = SmartPropMidpointDeformerEvaluator.ApplyMidpointDeformers(json, nestedDocumentsJson, models, options);
         models = SmartPropLayout2DGridEvaluator.ApplyGrids(json, nestedDocumentsJson, models, options);
+        models = SmartPropFitOnLineEvaluator.ApplyFitOnLine(json, nestedDocumentsJson, models, options);
         models = SmartPropPlaceInSphereEvaluator.ApplyPlaceInSphere(json, nestedDocumentsJson, models, options);
         models = SmartPropPlaceMultipleEvaluator.ApplyPlaceMultiple(json, nestedDocumentsJson, models, options);
         return models;

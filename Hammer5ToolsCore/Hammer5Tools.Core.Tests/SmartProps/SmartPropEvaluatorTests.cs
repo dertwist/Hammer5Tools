@@ -877,4 +877,153 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Diagnostics).IsEmpty();
         await Assert.That(result.Models).Count().IsEqualTo(1);
     }
+
+    [Test]
+    public async Task SizerDrivenVariableSeedsFromInitialExtentSoFitOnLineActuallyScales()
+    {
+        // Reproduces the real authoring pattern (e.g. a rope's "height" variable driven entirely
+        // by a CreateSizer, never given its own m_DefaultValue): without seeding, "height" reads
+        // as its raw declared default (0), the FitOnLine line collapses to zero length, and the
+        // model renders unscaled instead of stretched to the sizer's initial 96-unit extent.
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Variables": [{
+                "_class": "CSmartPropVariable_Float",
+                "m_VariableName": "height",
+                "m_DefaultValue": 0.0
+              }],
+              "m_Children": [{
+                "_class": "CSmartPropElement_Group",
+                "m_nElementID": 1,
+                "m_Modifiers": [{
+                  "_class": "CSmartPropOperation_CreateSizer",
+                  "m_OutputVariableMaxZ": "height",
+                  "m_flInitialMaxZ": 96.0,
+                  "m_flInitialMinZ": 0.0
+                }],
+                "m_Children": [{
+                  "_class": "CSmartPropElement_FitOnLine",
+                  "m_nElementID": 2,
+                  "m_nScaleMode": "SCALE_MAXIMIZE",
+                  "m_vEnd": { "m_Components": [0.0, 0.0, { "m_SourceName": "height" }] },
+                  "m_Children": [{
+                    "_class": "CSmartPropElement_Group",
+                    "m_nElementID": 3,
+                    "m_SelectionCriteria": [{
+                      "_class": "CSmartPropSelectionCriteria_LinearLength",
+                      "m_bAllowScale": true,
+                      "m_flLength": 60.0,
+                      "m_flMinLength": 0.0,
+                      "m_flMaxLength": 4096.0
+                    }],
+                    "m_Children": [{
+                      "_class": "CSmartPropElement_Model",
+                      "m_nElementID": 4,
+                      "m_sModelName": "models/rope_tiling.vmdl",
+                      "m_vModelScale": {
+                        "m_Components": [1.0, 1.0, { "m_Expression": "LinearScale()" }]
+                      }
+                    }]
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(1);
+        // 96-unit sizer extent over a 60-unit authored piece: scale = 96 / 60 = 1.6.
+        await Assert.That(result.Models[0].Transform.M33).IsEqualTo(1.6f).Within(0.01f);
+    }
+
+    [Test]
+    public async Task FitOnLineRepeatsAFixedLengthPieceToCoverTheLine()
+    {
+        // A piece whose criteria disallows scaling can't be stretched to close the gap — FitOnLine
+        // must instead repeat it as many whole times as fit.
+        const string json = """
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_FitOnLine",
+                "m_nElementID": 1,
+                "m_vStart": { "m_Components": [0.0, 0.0, 0.0] },
+                "m_vEnd": { "m_Components": [0.0, 0.0, 200.0] },
+                "m_Children": [{
+                  "_class": "CSmartPropElement_PickOne",
+                  "m_nElementID": 2,
+                  "m_SelectionCriteria": [{
+                    "_class": "CSmartPropSelectionCriteria_LinearLength",
+                    "m_bAllowScale": false,
+                    "m_flLength": 50.0,
+                    "m_flMinLength": 50.0,
+                    "m_flMaxLength": 50.0
+                  }],
+                  "m_Children": [{
+                    "_class": "CSmartPropElement_Model",
+                    "m_nElementID": 3,
+                    "m_sModelName": "models/segment.vmdl"
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        var result = SmartPropEvaluator.EvaluateJson(json);
+
+        await Assert.That(result.Diagnostics).IsEmpty();
+        await Assert.That(result.Models).Count().IsEqualTo(4);
+        var positions = result.Models.Select(model => model.Transform.M43).OrderBy(z => z).ToArray();
+        await Assert.That(positions).IsEquivalentTo(new[] { 0f, 50f, 100f, 150f });
+    }
+
+    [Test]
+    public async Task ScaleModesProduceDifferentPieceCountsForTheSameLine()
+    {
+        static string BuildJson(string scaleMode) => $$"""
+            {
+              "generic_data_type": "CSmartPropRoot",
+              "m_Children": [{
+                "_class": "CSmartPropElement_FitOnLine",
+                "m_nElementID": 1,
+                "m_nScaleMode": "{{scaleMode}}",
+                "m_vStart": { "m_Components": [0.0, 0.0, 0.0] },
+                "m_vEnd": { "m_Components": [0.0, 0.0, 200.0] },
+                "m_Children": [{
+                  "_class": "CSmartPropElement_Group",
+                  "m_nElementID": 2,
+                  "m_SelectionCriteria": [{
+                    "_class": "CSmartPropSelectionCriteria_LinearLength",
+                    "m_bAllowScale": true,
+                    "m_flLength": 60.0,
+                    "m_flMinLength": 30.0,
+                    "m_flMaxLength": 120.0
+                  }],
+                  "m_Children": [{
+                    "_class": "CSmartPropElement_Model",
+                    "m_nElementID": 3,
+                    "m_sModelName": "models/segment.vmdl",
+                    "m_vModelScale": { "m_Components": [1.0, 1.0, { "m_Expression": "LinearScale()" }] }
+                  }]
+                }]
+              }]
+            }
+            """;
+
+        // A 200-unit line with a 60-unit piece stretchable between 30 and 120 units:
+        // SCALE_MAXIMIZE favors the fewest, most-stretched pieces (2 pieces @ 200/120=1.667x each);
+        // SCALE_EQUALLY favors the count closest to natural size (200/60=3.33 -> 3 pieces @ 1.11x each).
+        var maximize = SmartPropEvaluator.EvaluateJson(BuildJson("SCALE_MAXIMIZE"));
+        var equally = SmartPropEvaluator.EvaluateJson(BuildJson("SCALE_EQUALLY"));
+
+        await Assert.That(maximize.Diagnostics).IsEmpty();
+        await Assert.That(equally.Diagnostics).IsEmpty();
+        await Assert.That(maximize.Models).Count().IsEqualTo(2);
+        await Assert.That(equally.Models).Count().IsEqualTo(3);
+        await Assert.That(maximize.Models[0].Transform.M33).IsEqualTo(200f / 120f).Within(0.01f);
+        await Assert.That(equally.Models[0].Transform.M33).IsEqualTo(200f / 180f).Within(0.01f);
+    }
 }

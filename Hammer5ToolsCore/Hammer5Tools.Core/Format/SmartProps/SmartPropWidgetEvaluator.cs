@@ -228,12 +228,12 @@ internal static class SmartPropWidgetEvaluator
             }));
     }
 
-    internal static SmartPropContext CreateContext(JsonObject root)
+    internal static SmartPropContext CreateContext(JsonObject root, float linearScale = 1f)
     {
         var scalars = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
         var vectors = new Dictionary<string, Vector4>(StringComparer.OrdinalIgnoreCase);
         if (root["m_Variables"] is not JsonArray variables)
-            return new();
+            return new(linearScale: linearScale);
 
         foreach (var item in variables.OfType<JsonObject>())
         {
@@ -248,7 +248,7 @@ internal static class SmartPropWidgetEvaluator
             else
                 scalars[name] = ResolveLiteralScalar(value);
         }
-        return new(scalars, vectors);
+        return new(scalars, vectors, linearScale: linearScale);
     }
 
     internal static float ResolveScalar(JsonNode? node, SmartPropContext context, float defaultValue = 0f)
@@ -462,8 +462,10 @@ internal static class SmartPropWidgetEvaluator
 
     private static bool IsElement(string className)
         => className.StartsWith("CSmartPropElement_", StringComparison.Ordinal)
-            || className is "Group" or "Model" or "ModelEntity" or "PropPhysics" or "PropDynamic"
-                or "PickOne" or "FitOnLine" or "PlaceOnPath" or "SmartProp";
+            || className is "BendDeformer" or "FitOnLine" or "Group" or "Layout2DGrid"
+                or "MidpointDeformer" or "Model" or "ModelEntity" or "ModifyState"
+                or "PickOne" or "PlaceInSphere" or "PlaceMultiple" or "PlaceOnMesh"
+                or "PlaceOnPath" or "PropDynamic" or "PropPhysics" or "SmartProp";
 
     private static bool IsDisabled(JsonObject obj)
         => obj["m_bEnabled"] is JsonValue value && value.TryGetValue<bool>(out var enabled) && !enabled;
