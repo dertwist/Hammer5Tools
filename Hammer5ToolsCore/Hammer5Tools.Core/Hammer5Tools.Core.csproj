@@ -83,6 +83,21 @@
     -->
     <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
     <!--
+      ponytail: same "unblocks the build, NOT verified against a published binary"
+      status as IL2026/IL3050 above. IL2067/IL2070/IL2072 come out of ILC (publish
+      only, not build) over CUE4Parse's own reflection: UClass.ConstructObject's
+      Activator.CreateInstance over ObjectTypeRegistry, StructFallbackUtil.MapToClass,
+      and FArchiveBigEndian.BuildLayout's Type.GetFields. All are CUE4Parse source
+      pulled in via ProjectReference, not our code, and none of the three has
+      DynamicallyAccessedMembers annotations upstream. Suppressed so `dotnet publish`
+      completes; the risk is that trimming drops UObject subclasses these look up by
+      name at runtime. Before relying on any h5t_unreal_* entry point, publish and
+      call it for real (same verification VmapApi got in commit 6140ac11). If types
+      come back missing, the fix is a TrimmerRootDescriptor / DynamicDependency
+      rooting CUE4Parse's export types, not more NoWarn.
+    -->
+    <NoWarn>$(NoWarn);IL2067;IL2070;IL2072</NoWarn>
+    <!--
       ponytail: NU1608 — CUE4Parse-Conversion pins SkiaSharp = 2.88.9 exactly, but
       this project needs the much newer SkiaSharp already referenced below (VRF
       thumbnail rendering, see commit 911f79ad). NuGet resolves the higher version
