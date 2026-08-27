@@ -18,6 +18,8 @@ def test_content_and_game_dirs(monkeypatch):
     assert common.addon_game_dir() == Path("C:/cs2/game/csgo_addons/my_addon")
     assert common.addon_content_dir("other") == Path("C:/cs2/content/csgo_addons/other")
     assert common.cs2_bin_dir() == Path("C:/cs2/game/bin/win64")
+    assert common.cs2_addons_dir() == Path("C:/cs2/content/csgo_addons")
+    assert common.cs2_addons_dir("game") == Path("C:/cs2/game/csgo_addons")
 
 
 def test_missing_configuration_gives_none(monkeypatch):
@@ -25,6 +27,7 @@ def test_missing_configuration_gives_none(monkeypatch):
     assert common.addon_content_dir() is None
     assert common.addon_game_dir() is None
     assert common.cs2_bin_dir() is None
+    assert common.cs2_addons_dir() is None
     assert common.get_addon_dir() is None
 
     _configure(monkeypatch, addon=None)
@@ -36,3 +39,13 @@ def test_missing_configuration_gives_none(monkeypatch):
 def test_get_addon_dir_is_the_string_form(monkeypatch):
     _configure(monkeypatch)
     assert common.get_addon_dir() == str(Path("C:/cs2/content/csgo_addons/my_addon"))
+
+
+def test_addon_root_rejects_unknown_cs2_layout(monkeypatch):
+    _configure(monkeypatch)
+    try:
+        common.cs2_addons_dir("tools")
+    except ValueError as error:
+        assert "tools" in str(error)
+    else:
+        raise AssertionError("unknown roots must not create arbitrary paths")

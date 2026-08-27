@@ -6,7 +6,7 @@ Thin Python wrapper over the native `h5t_vmap_merge_*` ABI
 marshals requests/responses through `CoreBridge` and manages the native
 session handle. See `VmapMerger.cs`'s doc comment for the full algorithm
 description (block identity, digesting, content re-pairing for GUID-less
-maps); it's unchanged from this module's own former pythonnet implementation.
+maps).
 
 Typical use::
 

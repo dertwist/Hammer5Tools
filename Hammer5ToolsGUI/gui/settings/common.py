@@ -109,6 +109,14 @@ def _addon_dir(root, addon):
     return Path(cs2_path) / root / 'csgo_addons' / addon
 
 
+def cs2_addons_dir(root: str = 'content', cs2_path: str | None = None) -> Path | None:
+    """The CS2 addon root for *root* (``content`` or ``game``)."""
+    if root not in {'content', 'game'}:
+        raise ValueError(f"Unsupported CS2 addon root: {root}")
+    cs2_path = cs2_path or get_cs2_path()
+    return Path(cs2_path) / root / 'csgo_addons' if cs2_path else None
+
+
 def addon_content_dir(addon: str | None = None) -> Path | None:
     """Source assets: models, materials, smartprops, sounds."""
     return _addon_dir('content', addon)

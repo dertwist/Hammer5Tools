@@ -11,6 +11,7 @@ from gui.common import default_commands
 from gui.other.addon_functions import launch_addon
 from gui.settings.common import (
     get_addon_name,
+    cs2_addons_dir,
     get_cs2_path,
     get_settings_value,
     set_addon_name,
@@ -28,7 +29,9 @@ _SWEEP_MS = 1200
 
 def list_addons(cs2_path) -> list[str]:
     """Addon folder names under content/csgo_addons, template folders excluded."""
-    addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
+    addons_folder = cs2_addons_dir(cs2_path=cs2_path)
+    if addons_folder is None:
+        return []
     if not os.path.exists(addons_folder):
         return []
     return [name for name in os.listdir(addons_folder)
@@ -54,7 +57,10 @@ class AddonSelector:
             return
 
         try:
-            addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
+            addons_folder = cs2_addons_dir()
+            if addons_folder is None:
+                self._show_placeholder("CS2 Path Not Set")
+                return
             if not os.path.exists(addons_folder):
                 self._show_placeholder("Addons Folder Not Found")
                 return

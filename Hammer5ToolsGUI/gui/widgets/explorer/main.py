@@ -19,6 +19,8 @@ from gui.settings.common import (
     get_cs2_path,
     get_addon_name,
     get_addon_dir,
+    addon_content_dir,
+    addon_game_dir,
 )
 from gui.widgets.common import ErrorInfo
 from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
@@ -371,11 +373,8 @@ class Explorer(QMainWindow):
         self.show_root_selector = show_root_selector
         self.model = CustomFileSystemModel(self)
         self.model.setRootPath(self.tree_directory)
-        cs2_path = get_cs2_path()
-        if cs2_path:
-            self.rootpath = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        else:
-            self.rootpath = self.tree_directory
+        addon_root = addon_content_dir(get_addon_name())
+        self.rootpath = str(addon_root) if addon_root else self.tree_directory
         if not os.path.exists(self.tree_directory):
             os.makedirs(self.tree_directory)
         if not self.use_internal_player:
@@ -670,10 +669,10 @@ class Explorer(QMainWindow):
             if cs2_path:
                 addon_name = self.addon or get_addon_name()
                 if addon_name:
-                    addon_content = os.path.join(cs2_path, "content", "csgo_addons", addon_name)
+                    addon_content = str(addon_content_dir(addon_name))
                     if addon_content not in base_dirs:
                         base_dirs.append(addon_content)
-                    addon_game = os.path.join(cs2_path, "game", "csgo_addons", addon_name)
+                    addon_game = str(addon_game_dir(addon_name))
                     if addon_game not in base_dirs:
                         base_dirs.append(addon_game)
 

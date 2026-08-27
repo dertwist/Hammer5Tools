@@ -193,9 +193,8 @@ class CoreBridge:
     _instance: Optional[CoreBridge] = None
 
     def __init__(self, interop=None, native_client=None) -> None:
-        # `interop` is unused (nothing here ever reads it) — kept as an accepted
-        # constructor argument for test-fake compatibility, not defaulted to a
-        # real DotNetInterop() so CoreBridge never touches pythonnet.
+        # Keep the accepted compatibility argument inert: CoreBridge only uses
+        # the NativeAOT client for Core calls.
         self._interop = interop
         self._native_client = native_client
 

@@ -19,10 +19,8 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 /// probe model. That gives child randomization modifiers a different salt per instance, so they
 /// actually scatter, while everything else about the subtree evaluates exactly as VRF intends.
 ///
-/// ponytail: each instance re-evaluates the *original* document, so PlaceMultiple nested inside a
-/// Grid/Sphere/another PlaceMultiple only multiplies at its own level — the combinations don't
-/// compose. Upgrade path: re-run the correction passes against each generated clone if that nesting
-/// shows up in practice.
+/// Nested placement widgets do not compose: each instance evaluates the
+/// original document, so multiplication applies only at its own level.
 /// </remarks>
 internal static class SmartPropPlaceMultipleEvaluator
 {
@@ -97,7 +95,7 @@ internal static class SmartPropPlaceMultipleEvaluator
             count = (int)MathF.Round(SmartPropExpression.Evaluate(
                 SmartPropWidgetEvaluator.ReadString(node, "m_Expression"), context, 1f));
 
-        // ponytail: caps generated instance count; upgrade to a per-pass MaximumModels-aware budget if this shows up.
+        // Bound generated model count for a single placement widget.
         return Math.Clamp(count, 1, 4096);
     }
 

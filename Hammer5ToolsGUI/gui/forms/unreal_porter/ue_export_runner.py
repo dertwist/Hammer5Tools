@@ -52,8 +52,7 @@ def find_editor_cmd(engine_root: str) -> str:
     install root (…/UE_5.x or …/UE_4.27, containing Engine/) or the Engine
     folder itself.
 
-    ponytail: Windows-only path (Win64) — add other platforms if H5T ever
-    needs to run this on Linux/Mac.
+    Only Windows Win64 editor binaries are supported.
     """
     for root in (os.path.join(engine_root, "Engine", "Binaries", "Win64"),
                  os.path.join(engine_root, "Binaries", "Win64")):

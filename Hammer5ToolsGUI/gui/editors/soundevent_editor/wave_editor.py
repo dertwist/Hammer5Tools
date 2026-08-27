@@ -9,8 +9,7 @@ non-WAV) inputs are decoded to WAV via QtMultimedia's QAudioDecoder on load;
 saving writes 16-bit PCM WAV and persists markers as a RIFF ``cue `` chunk (the
 same format CS2's own content uses for loop points).
 
-ponytail: single edit buffer, up to 20 undo snapshots (cheap for typical clips);
-switch to diff-based undo only if multi-minute stereo files make snapshots heavy.
+The editor retains up to 20 full-buffer undo snapshots.
 """
 import os
 import wave

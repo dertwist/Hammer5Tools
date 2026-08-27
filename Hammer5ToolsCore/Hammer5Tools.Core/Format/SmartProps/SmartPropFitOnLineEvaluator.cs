@@ -36,7 +36,8 @@ internal static class SmartPropFitOnLineEvaluator
 {
     private const string ProbeModel = "__hammer5tools_fitonline_probe__.vmdl";
     private const long IdStride = 1_000_000;
-    private const int MaxPieces = 256; // ponytail: hard cap on repeats; raise if a real prop needs more.
+    // Bounds generated model count for a single FitOnLine widget.
+    private const int MaxPieces = 256;
 
     public static IReadOnlyList<EvaluatedSmartPropModel> ApplyFitOnLine(
         string json,

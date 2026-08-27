@@ -699,8 +699,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             deformer = info.get("deformer")
             if deformer is not None and "world_matrix" in info:
-                # ponytail: bend-deformer mesh warp temporarily disabled — flag as
-                # unsupported and fall back to the plain mesh instead of warping.
+                # Bend deformers are reported as unsupported and use the plain mesh.
                 self._warn_unsupported.add("BendDeformer")
                 gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
             else:

@@ -34,11 +34,10 @@ import uuid
 import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal, QEvent
 
-from gui.settings.common import get_addon_dir, get_cs2_path
+from gui.settings.common import addon_content_dir, get_addon_dir
 from gui.settings.common import get_settings_value, get_settings_bool
 from gui.other.assettypes import check_vsmart_configuration
 
-from keyvalues3 import kv3_to_json
 from gui.editors.smartprop_editor.ui_document import Ui_MainWindow
 from gui.settings.common import settings
 from gui.editors.smartprop_editor.objects import (
@@ -1110,15 +1109,15 @@ class SmartPropDocument(QMainWindow):
             if not start_dir:
                 try:
                     from gui.settings.common import get_addon_name
-                    cs2_path = get_cs2_path()
                     addon_name = get_addon_name()
-                    if cs2_path and addon_name:
-                        smartprops_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name, "smartprops")
-                        addon_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name)
+                    addon_dir = addon_content_dir(addon_name)
+                    if addon_dir:
+                        smartprops_dir = addon_dir / "smartprops"
                         if os.path.exists(smartprops_dir):
                             start_dir = smartprops_dir
                         elif os.path.exists(addon_dir):
                             start_dir = addon_dir
+                    start_dir = str(start_dir)
                 except Exception:
                     pass
 
@@ -1519,9 +1518,9 @@ class SmartPropDocument(QMainWindow):
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         import os
         
-        cs2_path = get_cs2_path()
         addon_name = get_addon_name() or "addon"
-        start_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name, "maps") if cs2_path else ""
+        addon_dir = addon_content_dir(addon_name)
+        start_dir = str(addon_dir / "maps") if addon_dir else ""
         if not os.path.exists(start_dir):
             start_dir = ""
             

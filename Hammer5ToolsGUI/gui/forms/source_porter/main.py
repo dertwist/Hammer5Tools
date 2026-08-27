@@ -32,9 +32,8 @@ from gui.settings.common import (
 from gui.widgets.console import ConsoleWidget
 from gui.forms.source_porter.porter_client import SourcePorterClient, PorterThread
 
-# Matches a Find Missing issue line, e.g. "  [MissingImport] foo.vmdl -> materials/bar.vmat (material not imported)"
-# — the same format Program.cs's PrintReport uses for the CLI subprocess path and
-# PorterThread._run_pythonnet uses for the in-process path, so this one parser covers both.
+# Matches a Find Missing issue line, e.g.
+# "  [MissingImport] foo.vmdl -> materials/bar.vmat (material not imported)".
 _ISSUE_LINE_RE = re.compile(r"^\s*\[(\w+)]\s+.+?\s+->\s+(.+)$")
 _IMPORTABLE_ISSUE_KINDS = {"MissingImport", "MissingPrefab", "MissingSource"}
 _ISSUE_DETAIL_SUFFIX_RE = re.compile(

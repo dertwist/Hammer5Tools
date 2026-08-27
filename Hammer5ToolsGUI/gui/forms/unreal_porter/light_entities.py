@@ -202,10 +202,8 @@ CUBEMAP_COMPONENTS = ("ReflectionCapture",)
 # untouched Hammer sun instead of a 10x one.
 _UE_DEFAULT_LUX = 10.0
 
-# ponytail: Unreal's "Unitless" intensity has no physical definition to convert
-# from, so it is passed through as lumens unchanged. If converted scenes come
-# out consistently off, this is the single number to calibrate (or turn
-# brightnessscale in Hammer, which is per-light and needs no re-convert).
+# Unreal's "Unitless" intensity has no physical conversion, so it is passed
+# through as lumens. Adjust this constant to calibrate converted scenes.
 _UNITLESS_TO_LUMENS = 1.0
 
 _FOUR_PI = 12.566370614359172

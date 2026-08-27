@@ -23,8 +23,8 @@ IMPORT_ROOTS = (
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI'),
 )
 
-# .NET assemblies pythonnet materialises at runtime after clr.AddReference().
-# They never exist as Python packages, so no static check can resolve them.
+# Runtime-only .NET assembly names have no Python package for the import check
+# to resolve.
 CLR_ASSEMBLIES = {'System', 'Datamodel', 'SourcePorter', 'UnrealBridge', 'ValveResourceFormat'}
 
 # Only importable inside the Unreal Editor's embedded Python interpreter —

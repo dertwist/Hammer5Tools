@@ -9,10 +9,8 @@ namespace Hammer5Tools.Core;
 
 /// <summary>
 /// NativeAOT ABI for the Unreal content bridge (<see cref="UnrealBridgeProgram"/>).
-/// Replaces the old <c>H5T.UnrealBridge.dll</c> subprocess CLI — every command mounts
-/// its own CUE4Parse <c>DefaultFileProvider</c> per call, matching the CLI's behavior;
-/// each already produces a JSON string via Newtonsoft.Json, so these entry points just
-/// forward that string as the output buffer instead of writing it to stdout.
+/// Each command mounts its own CUE4Parse <c>DefaultFileProvider</c> and returns
+/// the JSON produced by the bridge as its output buffer.
 /// </summary>
 internal static unsafe class UnrealBridgeApi
 {

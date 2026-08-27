@@ -153,9 +153,8 @@ def _index_by_stem(keys) -> dict:
 # project before reading anything — the cost is startup, not the asset. Running
 # them concurrently hides that; the work happens in the child processes, so
 # threads are enough.
-# ponytail: one process per asset is the ceiling. A bridge command that mounts
-# once and dumps references for every asset would collapse this to a single
-# invocation and make scanning a whole project viable.
+# Each reference scan runs in its own bridge process, so worker concurrency is
+# capped to limit simultaneous project mounts.
 REF_SCAN_WORKERS = 8
 
 

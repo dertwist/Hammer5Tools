@@ -102,4 +102,10 @@ def test_mapbuilder_is_styled_through_the_shared_theme():
     assert "#32B8C6" not in qss, "the teal DesignColors accent is back"
 
 
+def test_mapbuilder_chart_colours_change_with_the_theme():
+    chart_colours = ("#ff5a5a", "#ffd700", "#32b8c6")
+    for canonical in chart_colours:
+        assert theme.resolve_hex(theme.DARK_THEME, canonical) != canonical
+        assert theme.resolve_hex(theme.BRIGHT_THEME, canonical) != canonical
+
 

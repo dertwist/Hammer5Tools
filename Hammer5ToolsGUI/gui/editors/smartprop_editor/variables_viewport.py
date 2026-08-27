@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 )
 
 
-from keyvalues3 import kv3_to_json
+from gui.editors.smartprop_editor.document_model import parse_smartprop
 from gui.editors.smartprop_editor._common import is_category_widget
 from gui.editors.smartprop_editor.variable_frame import VariableFrame, CategoryFrame
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
@@ -377,7 +377,7 @@ class SmartPropEditorVariableViewport(QWidget):
         clipboard = QApplication.clipboard()
         pasted_any = False
         try:
-            m_data = kv3_to_json(clipboard.text())
+            m_data = parse_smartprop(clipboard.text())
             if not isinstance(m_data, dict):
                 ErrorInfo(text="Clipboard data format is not valid.", details=m_data).exec()
                 return

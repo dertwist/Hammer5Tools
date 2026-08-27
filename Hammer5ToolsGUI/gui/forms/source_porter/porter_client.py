@@ -1,7 +1,7 @@
 """
 Python client & thread runner for SourcePorter.
 Drives the map-porting/asset-repair pipeline through the Hammer5Tools.Core
-NativeAOT ABI (``CoreBridge.source_porter_*``) — no pythonnet, no CLR.
+NativeAOT ABI (``CoreBridge.source_porter_*``).
 """
 
 from __future__ import annotations

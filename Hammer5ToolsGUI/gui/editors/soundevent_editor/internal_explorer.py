@@ -227,8 +227,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         """Decompile the selected .vsnd assets to the current addon content folder.
 
         Core decoding recreates the sounds/ path under it, writing .wav or .mp3 depending on the source.
-        ponytail: synchronous with a wait cursor — fine for a handful of files;
-        move to a QThread if bulk decompiles get slow.
+        Decoding is synchronous and displays a wait cursor.
         """
         dest = get_addon_dir()
         if not dest:

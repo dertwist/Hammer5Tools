@@ -13,7 +13,7 @@ def test_core_bridge_is_a_process_singleton():
 
 
 class FakeInterop:
-    """Stands in for DotNetInterop so tests never touch pythonnet."""
+    """Placeholder for CoreBridge's accepted compatibility argument."""
 
 
 class FakeNativeClient:

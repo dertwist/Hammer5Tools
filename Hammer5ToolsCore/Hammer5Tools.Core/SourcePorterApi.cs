@@ -3,20 +3,17 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-
-using Hammer5Tools.Core.IO.Domain;
-using Hammer5Tools.Core.IO.Toolchain;
 using Hammer5Tools.Core.Format.Toolchain;
 using Hammer5Tools.Core.Format.Validation;
 using Hammer5Tools.Core.Format.Vmap;
+using Hammer5Tools.Core.IO.Domain;
+using Hammer5Tools.Core.IO.Toolchain;
 
 namespace Hammer5Tools.Core;
 
 /// <summary>
 /// NativeAOT ABI for the SourcePorter map-porting/asset-repair pipeline
-/// (validate/force-import/repair/port) — a direct port of what
-/// <c>porter_client.py</c>'s pythonnet path used to drive by reflection, now
-/// calling the same C# types directly. Each entry point streams progress
+/// (validate/force-import/repair/port). Each entry point streams progress
 /// through <paramref name="logCallback"/> (matching the exact
 /// <c>"  [{Kind}] {Source} -> {Detail}"</c> issue-line format the GUI already
 /// parses) and returns a status code rather than a JSON payload, since nothing

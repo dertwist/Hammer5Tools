@@ -98,7 +98,7 @@ internal static class SmartPropPlaceInSphereEvaluator
         var countMax = (int)SmartPropWidgetEvaluator.ResolveScalar(node["m_nCountMax"], context, 1f);
         var countMin = (int)SmartPropWidgetEvaluator.ResolveScalar(node["m_nCountMin"], context, 1f);
         var count = Math.Max(1, countMax > 0 ? countMax : countMin);
-        // ponytail: caps scatter count; upgrade to a per-pass MaximumModels-aware budget if this shows up.
+        // Bound generated model count for a single scatter widget.
         count = Math.Min(count, 4096);
 
         var inner = SmartPropWidgetEvaluator.ResolveScalar(node["m_flPositionRadiusInner"], context);

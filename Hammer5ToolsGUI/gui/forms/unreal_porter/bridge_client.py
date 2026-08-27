@@ -32,8 +32,7 @@ def is_ignored_asset(key: str) -> bool:
 
 
 class UnrealBridge:
-    """Thin wrapper over CoreBridge's unreal_* calls, matching the JSON shapes
-    the old subprocess CLI returned."""
+    """Thin wrapper over CoreBridge's ``unreal_*`` calls."""
 
     def __init__(self, content_dir: str):
         self.content_dir = content_dir
@@ -53,18 +52,22 @@ class UnrealBridge:
         if not self.is_available():
             raise BridgeError(self.why_unavailable())
         from core.bridge import CoreBridge
+
+        return CoreBridge.instance()
+
+    def _call(self, method: str, *args):
+        """Invoke a Core Unreal API and expose native failures as BridgeError."""
         from core.native import NativeCoreError
 
-        return CoreBridge.instance(), NativeCoreError
+        try:
+            return getattr(self._bridge(), method)(self.content_dir, *args)
+        except NativeCoreError as e:
+            raise BridgeError(str(e)) from e
 
     # commands
 
     def info(self) -> dict:
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_info(self.content_dir)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_info")
 
     def list(self, substring: str = "") -> list:
         return self.list_counted(substring)[0]
@@ -76,11 +79,7 @@ class UnrealBridge:
         totalFiles, so anything filtered out here has to be reported or an
         intact project reads as a cut-off one.
         """
-        bridge, NativeCoreError = self._bridge()
-        try:
-            raw = bridge.unreal_list(self.content_dir, substring)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        raw = self._call("unreal_list", substring)
         kept = [k for k in raw if not is_ignored_asset(k)]
         return kept, len(raw) - len(kept)
 
@@ -103,48 +102,27 @@ class UnrealBridge:
         return mat_keys
 
     def dump(self, object_path: str) -> Any:
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_dump(self.content_dir, object_path)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_dump", object_path)
 
     def iter_refs(self, object_path: str, timeout: int = 600, is_cancelled=None) -> set:
         """Every object reference in an asset.
 
-        Runs as one blocking native call — unlike the old subprocess path,
-        cancellation can no longer interrupt an in-flight call (CUE4Parse's
-        package walk has no cancellation points of its own), only skip
-        starting one. Callers that scan many assets in a loop (e.g. the
-        reference-scan worker) still get responsive-enough cancellation
-        between assets.
+        The native package walk has no cancellation points, so cancellation
+        takes effect between assets rather than during an in-flight call.
         """
         if is_cancelled is not None and is_cancelled():
             raise BridgeError("bridge 'iter_refs' cancelled")
-        bridge, NativeCoreError = self._bridge()
-        try:
-            refs = bridge.unreal_iter_refs(self.content_dir, object_path)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
-        return set(refs)
+        return set(self._call("unreal_iter_refs", object_path))
 
     def dump_scene(self, map_path: str) -> dict:
         """Normalized actor list: {map, count, actors:[{actor, componentType,
         mesh, location, rotation, scale}]} — transforms are in UE space."""
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_dump_scene(self.content_dir, map_path)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_dump_scene", map_path)
 
     def dump_blueprint(self, bp_path: str) -> dict:
         """Normalized blueprint component tree: {blueprint, count, components:[{name,
         componentType, mesh, parent, location, rotation, scale}]} — transforms in UE space."""
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_dump_blueprint(self.content_dir, bp_path)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_dump_blueprint", bp_path)
 
     def export_landscape(self, map_path: str, out_dir: str, flags: str = "mesh") -> dict:
         """Export the map's (first) landscape actor as an OBJ mesh into out_dir.
@@ -155,19 +133,11 @@ class UnrealBridge:
         Raises BridgeError (message starts with "NO_LANDSCAPE") if the map has
         no landscape actor with components.
         """
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_export_landscape(self.content_dir, map_path, out_dir, flags)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_export_landscape", map_path, out_dir, flags)
 
     def dump_material(self, mat_path: str) -> dict:
         """Normalized material instance properties: {material, parent, textures,
         scalars, vectors, switches}. `switches` are the MI's static-switch bools
         (e.g. "Use Normal Map") — a signal for whether a param even applies,
         not currently used to gate slot selection but available for it."""
-        bridge, NativeCoreError = self._bridge()
-        try:
-            return bridge.unreal_dump_material(self.content_dir, mat_path)
-        except NativeCoreError as e:
-            raise BridgeError(str(e)) from e
+        return self._call("unreal_dump_material", mat_path)

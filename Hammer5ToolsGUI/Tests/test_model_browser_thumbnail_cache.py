@@ -1,6 +1,6 @@
 """Smoke test for the sqlite-backed model browser thumbnail cache.
 
-Covers the branch ponytail flags as needing a check: staleness compares a
+Covers staleness behavior: it compares a
 stored write time against the source file's mtime, and VPK-backed entries
 skip that comparison entirely.
 """

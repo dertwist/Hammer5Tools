@@ -241,8 +241,8 @@ class GitController:
         self._prog_timer.setInterval(200)
         self._prog_timer.timeout.connect(self._tick_progress)
 
-        # ponytail: poll git status instead of wiring a recursive filesystem
-        # watcher; swap to QFileSystemWatcher if 2s lag shows.
+        # Polling avoids the overhead and recursive-watch limitations of a
+        # filesystem watcher for repository status.
         self._local_timer = QTimer(main_window)
         self._local_timer.setInterval(2_000)
         self._local_timer.timeout.connect(self._tick_badges)

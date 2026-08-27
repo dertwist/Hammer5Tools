@@ -98,7 +98,7 @@ internal static class SmartPropLayout2DGridEvaluator
         var alternateShift = SmartPropWidgetEvaluator.ResolveScalar(node["m_bAlternateShift"], context) > 0.5f;
         var alternateShiftWidth = SmartPropWidgetEvaluator.ResolveScalar(node["m_flAlternateShiftWidth"], context);
 
-        // ponytail: caps grid instance count; upgrade to a per-pass MaximumModels-aware budget if huge grids show up.
+        // Bound each grid dimension to limit generated model count.
         countW = Math.Min(countW, 256);
         countL = Math.Min(countL, 256);
 

@@ -80,11 +80,8 @@ def _content_hash(target: dict) -> int:
 def _frame_key(ref: ComponentRef) -> tuple:
     """Cache key identifying the component a frame was built for.
 
-    ponytail: keyed on id(ref.item) — CPython can recycle an id after a tree
-    item is freed. A collision only matters if the recycled item's contents
-    also hash identically, in which case the cached frame renders the same
-    fields anyway; the ref it commits through is re-bound on every reuse
-    (see ``frame._ref``), so it can never write to the dead item.
+    The item identity is paired with a content hash before reuse. Rebinding
+    ``frame._ref`` ensures cached frames never write through a stale reference.
     """
     return (id(ref.item), ref.kind, ref.index)
 

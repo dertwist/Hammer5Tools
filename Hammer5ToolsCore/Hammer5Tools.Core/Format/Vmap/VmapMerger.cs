@@ -10,9 +10,7 @@ using DM = Datamodel.Datamodel;
 namespace Hammer5Tools.Core.Format.Vmap;
 
 /// <summary>
-/// Block-level 3-way merge for Source 2 <c>.vmap</c> files — a git merge driver's
-/// core, ported from the Python prototype (<c>gui/gitvmapmerge.py</c>) that drove
-/// this same algorithm over pythonnet-wrapped Datamodel objects.
+/// Block-level 3-way merge for Source 2 <c>.vmap</c> files.
 ///
 /// A <c>.vmap</c> is binary DMX, so git can only ever take one whole side of a
 /// conflict. This splits a map into <i>blocks</i> — the map nodes under
@@ -493,10 +491,8 @@ internal sealed class VmapMergeSession(VmapMergeDoc ours, VmapMergeDoc theirs, V
                 : block.Element;
         }
 
-        // Rebuild the node tree from merged membership. Order follows ours, with
-        // theirs' additions appended.
-        // ponytail: child order is not itself 3-way merged — only relevant if two
-        // sides reorder the same CMapPath's nodes; merge those by hand if it bites.
+        // Rebuild the node tree from merged membership. Existing order follows
+        // ours, and their additions are appended; child ordering is not merged.
         var placed = new HashSet<string>();
         var worldId = VmapMerger.WorldId;
 
