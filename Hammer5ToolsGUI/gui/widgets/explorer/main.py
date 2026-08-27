@@ -13,7 +13,13 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator
 from shiboken6 import isValid
 
-from gui.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, get_addon_dir
+from gui.settings.common import (
+    get_settings_value,
+    set_settings_value,
+    get_cs2_path,
+    get_addon_name,
+    get_addon_dir,
+)
 from gui.widgets.common import ErrorInfo
 from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from gui.widgets.tree import BranchTreeView

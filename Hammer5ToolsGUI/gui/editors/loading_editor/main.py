@@ -23,7 +23,7 @@ from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, Q
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
+from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
 from gui.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from gui.editors.loading_editor.timeline import TimelineExplorer

@@ -1493,7 +1493,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         import re
 
         from gui.common import Kv3ToJson
-        from gui.settings.main import get_addon_name, get_cs2_path
+        from gui.settings.common import get_addon_name, get_cs2_path
 
         cs2_path = get_cs2_path()
         default_addon = get_addon_name()

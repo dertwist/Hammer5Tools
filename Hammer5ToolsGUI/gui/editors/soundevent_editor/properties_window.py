@@ -4,7 +4,7 @@ from gui.common import fast_deepcopy
 from gui.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import QTimer
-from gui.settings.main import settings
+from gui.settings.common import settings
 from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.editors.soundevent_editor.objects import soundevent_editor_properties

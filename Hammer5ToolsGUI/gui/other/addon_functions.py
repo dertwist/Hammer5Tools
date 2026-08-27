@@ -1,8 +1,14 @@
 from PySide6.QtWidgets import QMessageBox
 from gui.other.ncm_setup import NCM_mode_setup
 from gui.other.assettypes import ensure_vsmart_configured
-from gui.settings.main import get_addon_name, get_cs2_path, get_settings_bool, set_settings_bool, get_settings_value, \
-    set_settings_value
+from gui.settings.common import (
+    get_addon_name,
+    get_cs2_path,
+    get_settings_bool,
+    set_settings_bool,
+    get_settings_value,
+    set_settings_value,
+)
 import shutil, psutil, os, subprocess, sys
 from gui.common import default_commands
 from gui.widgets import exception_handler

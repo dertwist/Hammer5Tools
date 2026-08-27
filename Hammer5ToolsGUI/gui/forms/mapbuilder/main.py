@@ -27,7 +27,13 @@ from gui.forms.mapbuilder.system_monitor import SystemMonitor
 from gui.forms.mapbuilder.output_formater import OutputFormatter
 from gui.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from gui.forms.mapbuilder.widgets import SettingsPanel, PresetButton
-from gui.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
+from gui.settings.common import (
+    get_addon_name,
+    get_settings_value,
+    get_addon_dir,
+    get_cs2_path,
+    set_settings_value,
+)
 from gui.common import enable_dark_title_bar, app_dir, default_commands
 from gui.other.addon_functions import launch_addon, launch_cs2_process
 from gui.other.cs2_netcon import CS2Netcon

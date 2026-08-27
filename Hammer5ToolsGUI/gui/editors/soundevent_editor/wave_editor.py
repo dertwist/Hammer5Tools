@@ -32,7 +32,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
 from gui.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from gui.widgets.explorer.main import Explorer
-from gui.settings.main import get_cs2_path, get_addon_name
+from gui.settings.common import get_cs2_path, get_addon_name
 
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
 

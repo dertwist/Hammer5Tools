@@ -19,12 +19,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QUndoStack, QIcon, QKeySequence, QAction, QPixmap
 from PySide6.QtCore import Qt
 from gui.editors.smartprop_editor.ui_main import Ui_MainWindow
-from gui.settings.main import (
-    get_addon_name,
-    settings,
-    get_settings_value,
-    set_settings_value,
-)
+from gui.settings.common import get_addon_name, settings, get_settings_value, set_settings_value
 from gui.widgets.explorer.main import Explorer
 from gui.editors.smartprop_editor.document import SmartPropDocument
 from gui.other.assettypes import check_vsmart_configuration

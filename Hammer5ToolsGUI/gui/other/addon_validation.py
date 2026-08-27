@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMessageBox
-from gui.settings.main import get_addon_name, get_addon_dir, get_settings_bool
+from gui.settings.common import get_addon_name, get_addon_dir, get_settings_bool
 from gui.widgets import ErrorInfo
 import os
 

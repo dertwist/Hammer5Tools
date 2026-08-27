@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QLabel, QWidget, QSizePolicy, QToolButton, QFrame,
 from PySide6.QtCore import QTimer, QUrl, Signal, Qt, QPoint, QBuffer, QByteArray, QIODevice
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFont
-from gui.settings.main import set_settings_bool, get_settings_bool
+from gui.settings.common import set_settings_bool, get_settings_bool
 from gui.editors.soundevent_editor.ui_audio_player import Ui_Form
 from gui.styles import theme
 

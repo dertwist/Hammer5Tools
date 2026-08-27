@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon, QDropEvent
 
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 from gui.editors.assetgroup_maker.analyzer import analyze_reference_file, ReferenceAnalysisResult
 from gui.styles.common import mark_paint_through
 
@@ -329,7 +329,7 @@ class TemplateCardWidget(QWidget):
 
     def _on_asset_browser_clicked(self):
         from gui.widgets.model_browser import pick_asset
-        from gui.settings.main import get_addon_name
+        from gui.settings.common import get_addon_name
         result = pick_asset(
             self,
             current_path=self.ref_edit.text().strip(),

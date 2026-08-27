@@ -1,7 +1,7 @@
 from gui.common import JsonToKv3, Kv3ToJson, fast_deepcopy
 import os, json
 from gui.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 from gui.editors.assetgroup_maker.process import perform_batch_processing
 
 # Optional dependencies for image processing

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 from gui.styles.common import mark_paint_through
 from gui.editors.assetgroup_maker.process import StartProcess
 from gui.editors.assetgroup_maker.objects import load_hbat_file, save_hbat_file

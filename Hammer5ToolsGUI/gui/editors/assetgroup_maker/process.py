@@ -3,7 +3,7 @@ import re
 from typing import Dict, List, Optional, Set, Tuple, Any
 from PySide6.QtCore import QThread, Signal
 
-from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
+from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
 from gui.editors.assetgroup_maker.analyzer import (
     analyze_reference_file, resolve_reference_full_path, get_addon_root_from_path

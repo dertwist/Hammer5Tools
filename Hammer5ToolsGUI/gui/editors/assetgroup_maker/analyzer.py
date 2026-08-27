@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict, List, Optional, Tuple
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 
 
 class ReferenceAnalysisResult:

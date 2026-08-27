@@ -13,10 +13,12 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import enable_dark_title_bar
-from gui.settings.main import (
+from gui.settings.common import (
     get_addon_name,
-    get_settings_value, set_settings_value,
-    get_settings_bool, set_settings_bool,
+    get_settings_value,
+    set_settings_value,
+    get_settings_bool,
+    set_settings_bool,
 )
 from gui.settings.common import get_cs2_path
 from gui.styles.common import set_style_property

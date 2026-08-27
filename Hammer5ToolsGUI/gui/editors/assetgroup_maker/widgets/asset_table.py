@@ -356,7 +356,7 @@ class AssetTableWidget(QWidget):
     def _show_in_explorer(self, item: AssetGroupItem):
         from PySide6.QtGui import QDesktopServices
         from PySide6.QtCore import QUrl
-        from gui.settings.main import get_addon_dir
+        from gui.settings.common import get_addon_dir
 
         addon_dir = get_addon_dir()
         first_file = next(iter(item.slots.values()), None)

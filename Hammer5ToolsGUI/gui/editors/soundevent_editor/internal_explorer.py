@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
 from PySide6.QtGui import QGuiApplication
-from gui.settings.main import get_cs2_path, get_addon_dir
+from gui.settings.common import get_cs2_path, get_addon_dir
 from gui.common import SoundEventEditor_path
 from gui.widgets import exception_handler
 from core.bridge.core import CoreBridge

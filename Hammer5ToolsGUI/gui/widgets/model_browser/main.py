@@ -659,7 +659,7 @@ class ModelBrowserWidget(QWidget):
 
     def _load_game_entries(self):
         """Dynamically load and merge game mount entries into self._entries."""
-        from gui.settings.main import get_cs2_path
+        from gui.settings.common import get_cs2_path
         from gui.widgets.model_browser.index import get_game_entries
         cs2_path = get_cs2_path()
         if not cs2_path:

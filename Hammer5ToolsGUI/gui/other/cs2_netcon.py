@@ -32,7 +32,7 @@ from contextlib import closing
 from typing import Callable, Optional, Sequence
 
 try:
-    from gui.settings.main import get_settings_value  # type: ignore
+    from gui.settings.common import get_settings_value
 except Exception:
     def get_settings_value(section: str, key: str, default=None):
         return default

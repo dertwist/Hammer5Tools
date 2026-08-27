@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QMessageBox
 import shutil, os, re
-from gui.settings.main import get_cs2_path, get_settings_value, set_settings_value
+from gui.settings.common import get_cs2_path, get_settings_value, set_settings_value
 from gui.forms.create_addon.ui_main import Ui_Create_addon_Dialog
 from gui.widgets import exception_handler
 from PySide6.QtCore import Qt

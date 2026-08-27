@@ -1,6 +1,13 @@
 import ast, shutil, os
 
-from gui.settings.main import get_addon_name, get_cs2_path, get_settings_bool, get_settings_value, settings, get_addon_dir
+from gui.settings.common import (
+    get_addon_name,
+    get_cs2_path,
+    get_settings_bool,
+    get_settings_value,
+    settings,
+    get_addon_dir,
+)
 from gui.editors.soundevent_editor.ui_main import Ui_MainWindow
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.widgets.explorer.main import Explorer

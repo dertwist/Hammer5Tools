@@ -4,7 +4,7 @@ from gui.editors.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushButton, QMessageBox
 from gui.editors.hotkey_editor.dialog import KeyDialog
 from gui.editors.hotkey_editor.objects import hammer_commands, hammer_default, hammer_macros
-from gui.settings.main import get_addon_name, get_cs2_path
+from gui.settings.common import get_addon_name, get_cs2_path
 from gui.other.addon_functions import launch_addon, kill_addon
 from gui.widgets.explorer.main import Explorer
 import os

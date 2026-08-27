@@ -29,8 +29,7 @@ from gui.ipc.protocol import IPCMessage, IPCCommand
 from gui.forms.about.main import AboutDialog
 from gui.forms.mapbuilder.main import MapBuilderDialog
 from gui.forms.git_sync.controller import GitController, SyncButton
-from gui.settings.main import (
-    PreferencesDialog,
+from gui.settings.common import (
     get_steam_path,
     get_cs2_path,
     get_addon_name,
@@ -40,8 +39,9 @@ from gui.settings.main import (
     get_settings_value,
     set_settings_value,
     settings,
-    get_addon_dir
+    get_addon_dir,
 )
+from gui.settings.main import PreferencesDialog
 from gui.editors.loading_editor.main import Loading_editorMainWindow
 from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from gui.forms.create_addon.main import Create_addon_Dialog

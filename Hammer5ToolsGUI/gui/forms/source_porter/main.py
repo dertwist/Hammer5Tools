@@ -23,9 +23,11 @@ from PySide6.QtWidgets import (
 
 from gui.common import enable_dark_title_bar
 from gui.settings.common import get_cs2_path, get_addon_name
-from gui.settings.main import (
-    get_settings_value, set_settings_value,
-    get_settings_bool, set_settings_bool
+from gui.settings.common import (
+    get_settings_value,
+    set_settings_value,
+    get_settings_bool,
+    set_settings_bool,
 )
 from gui.widgets.console import ConsoleWidget
 from gui.forms.source_porter.porter_client import SourcePorterClient, PorterThread

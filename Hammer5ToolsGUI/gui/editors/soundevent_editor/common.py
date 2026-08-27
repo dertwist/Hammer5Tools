@@ -1,5 +1,5 @@
 import os
-from gui.settings.main import get_cs2_path, get_addon_name, get_addon_dir
+from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
 cs2_path = get_cs2_path()
 
 try:

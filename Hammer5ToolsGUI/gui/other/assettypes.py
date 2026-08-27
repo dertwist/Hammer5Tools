@@ -1,6 +1,6 @@
 import os
 from PySide6.QtWidgets import QMessageBox
-from gui.settings.main import get_cs2_path
+from gui.settings.common import get_cs2_path
 from gui.common import editor_info
 import keyvalues3
 

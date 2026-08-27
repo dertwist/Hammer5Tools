@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QFrame, QLineEdit, QPlainTextEdit
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtCore import Signal
 from gui.widgets.popup_menu.main import PopupMenu
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 from gui.common import convert_snake_case
 try:
     from gui.editors.soundevent_editor.property.curve.ui_main import Ui_CurveWidget

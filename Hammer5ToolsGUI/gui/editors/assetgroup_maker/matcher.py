@@ -2,7 +2,7 @@ import os
 import re
 import fnmatch
 from typing import Dict, List, Optional, Set, Tuple, Any
-from gui.settings.main import get_addon_dir
+from gui.settings.common import get_addon_dir
 
 KNOWN_PREFIXES = [
     # Collision prefixes

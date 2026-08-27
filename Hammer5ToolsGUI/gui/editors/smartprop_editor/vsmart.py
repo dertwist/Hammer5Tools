@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 
 from gui.editors.smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from gui.common import editor_info, JsonToKv3, Kv3ToJson
-from gui.settings.main import get_settings_bool
+from gui.settings.common import get_settings_bool
 from gui.editors.smartprop_editor._common import (
     disable_line_value_length_limit_keys,
     get_clean_class_name,

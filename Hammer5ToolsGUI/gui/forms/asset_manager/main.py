@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QLabel,
                                QPushButton, QSplitter, QMessageBox)
 from PySide6.QtCore import Qt
 from .move_worker import MoveWorker
-from gui.settings.main import get_addon_name, get_cs2_path
+from gui.settings.common import get_addon_name, get_cs2_path
 from gui.common import enable_dark_title_bar
 from gui.widgets.console import ConsoleWidget
 from gui.widgets.explorer.main import Explorer

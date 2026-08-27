@@ -10,7 +10,13 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QByteArray
 from PySide6.QtGui import QIcon, QAction, QKeySequence, QCloseEvent, QPixmap
 
-from gui.settings.main import get_addon_name, get_cs2_path, get_addon_dir, get_settings_value, set_settings_value
+from gui.settings.common import (
+    get_addon_name,
+    get_cs2_path,
+    get_addon_dir,
+    get_settings_value,
+    set_settings_value,
+)
 from gui.widgets.explorer.main import Explorer
 from gui.editors.assetgroup_maker.monitor import MonitoringFileWatcher
 from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget

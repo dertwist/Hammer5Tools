@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog
-from gui.settings.main import get_addon_name, get_settings_value, set_settings_value
+from gui.settings.common import get_addon_name, get_settings_value, set_settings_value
 from gui.forms.launch_options.ui_main import Ui_preferences_dialog
 from gui.other.addon_functions import assemble_commands
 from gui.common import default_commands

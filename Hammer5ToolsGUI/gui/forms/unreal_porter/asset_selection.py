@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import enable_dark_title_bar
-from gui.settings.main import get_settings_bool, set_settings_bool
+from gui.settings.common import get_settings_bool, set_settings_bool
 from gui.widgets.tree import HierarchyTreeWidget
 
 KEY_ROLE = Qt.UserRole + 1

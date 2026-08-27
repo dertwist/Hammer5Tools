@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QSortFilterProxyModel, QThread, Signal
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os, sys, re, subprocess, time
 
-from gui.settings.main import get_addon_name, get_addon_dir, get_cs2_path
+from gui.settings.common import get_addon_name, get_addon_dir, get_cs2_path
 from gui.common import enable_dark_title_bar
 from gui.styles.common import mark_paint_through
 from gui.forms.cleanup.common import format_size

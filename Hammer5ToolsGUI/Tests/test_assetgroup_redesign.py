@@ -25,11 +25,8 @@ def fake_addon_dir():
         os.makedirs(os.path.join(addon_path, "models", "props", "crate"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "materials", "nature"), exist_ok=True)
         os.makedirs(os.path.join(addon_path, "smartprops", "dev"), exist_ok=True)
-        with patch("gui.settings.main.get_addon_dir", return_value=addon_path), \
-             patch("gui.settings.common.get_addon_dir", return_value=addon_path), \
-             patch("gui.settings.main.get_addon_name", return_value="test_addon"), \
+        with patch("gui.settings.common.get_addon_dir", return_value=addon_path), \
              patch("gui.settings.common.get_addon_name", return_value="test_addon"), \
-             patch("gui.settings.main.get_cs2_path", return_value=tmpdir), \
              patch("gui.settings.common.get_cs2_path", return_value=tmpdir), \
              patch("gui.common.get_cs2_path", return_value=tmpdir):
             yield addon_path

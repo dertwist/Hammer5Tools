@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Set
 
 # Local imports
 from gui.forms.cleanup.parse import get_vmap_references
-from gui.settings.main import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
+from gui.settings.common import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
 from gui.common import enable_dark_title_bar
 from gui.styles.common import mark_paint_through
 

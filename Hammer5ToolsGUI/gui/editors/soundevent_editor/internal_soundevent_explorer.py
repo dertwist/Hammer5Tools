@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from gui.common import Kv3ToJson, SoundEventEditor_path
 from core.bridge.core import CoreBridge
-from gui.settings.main import get_cs2_path
+from gui.settings.common import get_cs2_path
 from gui.editors.soundevent_editor.thread_parking import park
 
 

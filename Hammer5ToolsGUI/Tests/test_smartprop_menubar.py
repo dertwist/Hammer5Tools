@@ -20,7 +20,7 @@ app = QApplication.instance() or QApplication(sys.argv)
 from gui.editors.smartprop_editor.document import SmartPropDocument
 from gui.editors.smartprop_editor import main as smartprop_main
 from gui.editors.smartprop_editor.main import SmartPropEditorMainWindow
-from gui.settings.main import settings as _smartprop_settings
+from gui.settings.common import settings as _smartprop_settings
 
 # SmartPropDocument persists its dock layout to the real, on-disk settings.ini
 # (SmartPropEditorMainWindow/*_windowState_v5) and restores it via a deferred

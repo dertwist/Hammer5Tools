@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QColorDialog, QCheckBox, QRadioButton, QGroupBox, QSplitter,
 )
 
-from gui.settings.main import get_settings_value, set_settings_value
+from gui.settings.common import get_settings_value, set_settings_value
 from .material_converter import (
     _SLOT_TOKENS, CHANNELS, CHANNEL_SLOTS, packed_layout, find_bulk_texture,
     get_slots_for_shader, get_channel_slots_for_shader,

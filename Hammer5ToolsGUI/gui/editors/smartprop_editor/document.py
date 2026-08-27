@@ -34,12 +34,12 @@ import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal, QEvent
 
 from gui.settings.common import get_addon_dir, get_cs2_path
-from gui.settings.main import get_settings_value, get_settings_bool
+from gui.settings.common import get_settings_value, get_settings_bool
 from gui.other.assettypes import check_vsmart_configuration
 
 from keyvalues3 import kv3_to_json
 from gui.editors.smartprop_editor.ui_document import Ui_MainWindow
-from gui.settings.main import settings
+from gui.settings.common import settings
 from gui.editors.smartprop_editor.objects import (
     variables_list,
     variable_prefix,
@@ -923,7 +923,7 @@ class SmartPropDocument(QMainWindow):
         self.popup_menu.show()
 
     def open_favorite_elements(self):
-        from gui.settings.main import get_settings_value
+        from gui.settings.common import get_settings_value
         saved = get_settings_value('Bookmarks', 'SPE_elements')
         bookmarked_items = set(saved.split(',')) if saved else set()
 

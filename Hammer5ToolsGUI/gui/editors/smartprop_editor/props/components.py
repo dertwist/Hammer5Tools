@@ -65,7 +65,7 @@ from gui.styles.property_icons import IconCache
 from gui.styles import theme
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets.tree import HierarchyTreeWidget
-from gui.settings.main import get_settings_bool
+from gui.settings.common import get_settings_bool
 
 
 def get_summary_hint(data: dict) -> str:

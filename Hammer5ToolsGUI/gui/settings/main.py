@@ -8,7 +8,15 @@ from PySide6.QtWidgets import (
     QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
     QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox, QMessageBox
 )
-from gui.settings.common import *
+from gui.settings.common import (
+    get_cs2_path,
+    get_manual_cs2_path,
+    get_settings_bool,
+    get_settings_value,
+    set_manual_cs2_path,
+    set_settings_bool,
+    set_settings_value,
+)
 from gui.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
 from gui.widgets.common import Button  # Using the internal Button class
 from gui.other.file_association import setup_all_associations

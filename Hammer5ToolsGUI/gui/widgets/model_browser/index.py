@@ -86,7 +86,7 @@ def invalidate_all_caches() -> None:
 def is_index_cached(active_addon: Optional[str] = None, addon_only: bool = False) -> bool:
     """Check if all necessary entries are already in memory cache."""
     global _game_cache, _addon_cache
-    from gui.settings.main import get_cs2_path, get_addon_name
+    from gui.settings.common import get_cs2_path, get_addon_name
     cs2_path = get_cs2_path()
     if not cs2_path:
         return False
@@ -431,7 +431,7 @@ def scan_all(
     use_addon_cache: bool = True
 ) -> List[ModelEntry]:
     """Build or combine the asset index. Blocking — call from ScanWorker, not the GUI thread."""
-    from gui.settings.main import get_cs2_path, get_addon_name
+    from gui.settings.common import get_cs2_path, get_addon_name
 
     cs2_path = get_cs2_path()
     if not cs2_path:
@@ -481,7 +481,7 @@ def load_cached_index(
     """Legacy helper: return cached index if available."""
     if addon_only:
         return None
-    from gui.settings.main import get_cs2_path
+    from gui.settings.common import get_cs2_path
     cs2_path = get_cs2_path()
     if not cs2_path:
         return None
@@ -496,7 +496,7 @@ def load_cached_index(
 
 def save_cached_index(active_addon: Optional[str], entries: List[ModelEntry]) -> None:
     """Legacy helper: save entries to cache."""
-    from gui.settings.main import get_cs2_path
+    from gui.settings.common import get_cs2_path
     cs2_path = get_cs2_path()
     if cs2_path:
         save_cached_game_index(cs2_path, entries)

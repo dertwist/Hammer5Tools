@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
 
-from gui.settings.main import get_addon_dir, get_addon_name
+from gui.settings.common import get_addon_dir, get_addon_name
 from gui.styles.common import mark_paint_through
 from gui.editors.assetgroup_maker.analyzer import (
     ReferenceAnalysisResult, extract_fbx_materials, resolve_reference_full_path

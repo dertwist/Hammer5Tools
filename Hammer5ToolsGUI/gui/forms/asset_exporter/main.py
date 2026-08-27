@@ -5,7 +5,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from .ui_main import Ui_AssetExporterWidget
 from .dependency_resolver import DependencyResolver
 from .exporter import ExportWorker
-from gui.settings.main import get_addon_name, get_cs2_path
+from gui.settings.common import get_addon_name, get_cs2_path
 from gui.common import enable_dark_title_bar
 
 class AssetExporterWidget(QWidget):

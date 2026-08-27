@@ -8,7 +8,7 @@ def extract_vmap_references(vmap_path):
     """Return VMAP asset references through the shared Core reader."""
     return list(CoreBridge.instance().read_valve_map(vmap_path).asset_references)
 import unittest
-from gui.settings.main import get_addon_name, get_addon_dir
+from gui.settings.common import get_addon_name, get_addon_dir
 import os
 import re
 

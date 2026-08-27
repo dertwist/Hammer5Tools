@@ -18,7 +18,7 @@ from PySide6.QtCore import QEvent, Qt, Signal
 from shiboken6 import Shiboken
 from gui.widgets.popup_menu.ui_main import Ui_PoPupMenu
 from gui.widgets.common import Button
-from gui.settings.main import set_settings_value, get_settings_value
+from gui.settings.common import set_settings_value, get_settings_value
 from gui.widgets.popup_menu.common import LABEL_COMPONENT, LABEL_BOOKMARK_BOTTOM_COMPONENT
 
 
