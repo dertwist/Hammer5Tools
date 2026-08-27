@@ -15,30 +15,15 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QTimer, Qt, QThread, QObject, Signal, Slot
 from PySide6.QtGui import QColor, QFont
 
+from gui.styles import theme
+from gui.styles.common import set_style_property
 
-# Design System Colors (Hammer5Tools)
-class DesignColors:
-    """Hammer5Tools design system color palette"""
-    # Backgrounds
-    BG_PRIMARY = "#1F2121"  # Charcoal-700
-    BG_SURFACE = "#262828"  # Charcoal-800
-
-    TEXT_PRIMARY = "#F5F5F5"  # Gray-200
-    TEXT_SECONDARY = "#aeb0b0"  # Gray-300 (dimmed)
-
-    # Accents
-    PRIMARY = "#32B8C6"  # Teal-300
-    PRIMARY_HOVER = "#2DA6B2"  # Teal-400
-
-    # Data visualization
-    CPU_COLOR = "#FF5A5A"  # Red (warm)
-    GPU_COLOR = "#32B8C6"  # Teal (cool)
-    MEMORY_COLOR = "#FFD700"  # Gold (warning)
-
-    # Chart background
-    CHART_BG = "#262828"
-    CHART_GRID = "#3A3C3C"
-    CHART_TEXT = "#aeb0b0"
+# Chart series colors. These are data-visualisation colors, not chrome, so
+# they stay here rather than in features/mapbuilder.qss -- but they go through
+# theme.color() so a palette entry for a brightness level would apply.
+CPU_COLOR = "#ff5a5a"
+MEMORY_COLOR = "#ffd700"
+GPU_COLOR = "#32b8c6"
 
 
 # Helper: safe numeric parse
@@ -417,10 +402,11 @@ class GPUStatsWorker(QObject):
 class HistoryGraph(QWidget):
     """Graph widget with design system styling"""
 
-    def __init__(self, title, max_points=60, color=DesignColors.PRIMARY):
+    def __init__(self, title, max_points=60, color=None):
         super().__init__()
         self.title = title
-        self.color = color
+        self.color = theme.color(color) if color else theme.get_theme().accent
+        set_style_property(self, "h5Component", "systemMonitorGraph")
         self.setContentsMargins(0, 0, 0, 0)
         self.max_points = max_points
         self.values = deque([0.0] * max_points, maxlen=max_points)
@@ -434,12 +420,12 @@ class HistoryGraph(QWidget):
         label_font.setPointSize(11)
         label_font.setWeight(QFont.Medium)
         self.label.setFont(label_font)
-        self.label.setStyleSheet(f"color: {DesignColors.TEXT_PRIMARY}; background: transparent;")
+        set_style_property(self.label, "h5Component", "systemMonitorGraphLabel")
         layout.addWidget(self.label)
 
         # pyqtgraph plot with dark theme
         self.plot = pg.PlotWidget()
-        self.plot.setBackground(DesignColors.CHART_BG)
+        self.plot.setBackground(theme.get_theme().surface_raised)
         self.plot.setYRange(0, 100, padding=0)
         self.plot.setXRange(0, max_points, padding=0)
         self.plot.hideAxis('bottom')
@@ -448,23 +434,16 @@ class HistoryGraph(QWidget):
         self.plot.setMouseEnabled(x=False, y=False)
         self.plot.setMenuEnabled(False)
         self.plot.hideButtons()
-        self.plot.setStyleSheet(f"background-color: {DesignColors.CHART_BG}; border: none;")
+        set_style_property(self.plot, "h5Component", "systemMonitorChart")
 
-        fill_color = QColor(color)
+        fill_color = QColor(self.color)
         fill_color.setAlphaF(0.15)
         self.curve = self.plot.plot(
-            pen=pg.mkPen(color, width=2),
+            pen=pg.mkPen(self.color, width=2),
             fillLevel=0,
             brush=pg.mkBrush(fill_color),
         )
         layout.addWidget(self.plot)
-
-        # Container frame for visual separation
-        self.setStyleSheet(f"""
-            QWidget {{
-                background-color: {DesignColors.BG_SURFACE};
-            }}
-        """)
 
         self.setLayout(layout)
 
@@ -493,17 +472,12 @@ class SystemMonitor(QWidget):
         self.setMinimumWidth(200)
         self.setContentsMargins(0, 0, 0, 0)
 
-        # Apply stylesheet
-        self.setStyleSheet(f"""
-            SystemMonitor {{
-                background-color: {DesignColors.BG_PRIMARY};
-            }}
-        """)
+        set_style_property(self, "h5Component", "systemMonitor")
 
         # Create graphs with different colors
-        self.cpu_graph = HistoryGraph("CPU Usage", color=DesignColors.CPU_COLOR)
-        self.ram_graph = HistoryGraph("Memory Usage", color=DesignColors.MEMORY_COLOR)
-        self.gpu_graph = HistoryGraph("GPU Usage", color=DesignColors.GPU_COLOR)
+        self.cpu_graph = HistoryGraph("CPU Usage", color=CPU_COLOR)
+        self.ram_graph = HistoryGraph("Memory Usage", color=MEMORY_COLOR)
+        self.gpu_graph = HistoryGraph("GPU Usage", color=GPU_COLOR)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(8, 8, 8, 8)

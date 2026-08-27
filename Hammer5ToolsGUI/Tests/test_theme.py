@@ -84,17 +84,22 @@ def test_smartprop_headers_present_in_compiled_qss():
     assert "h5VarKind=\"float\"" in qss
 
 
-def test_mapbuilder_progress_bar_style_present_in_compiled_qss():
-    """mapbuilderProgressBar is shared by unreal_porter and the updater dialog
-    (the name is historical). Map Builder itself keeps its own independent
-    hardcoded stylesheet by design and must NOT be styled through the shared
-    token system -- see docs/STYLING_REFACTOR_HANDOFF.md."""
+def test_mapbuilder_is_styled_through_the_shared_theme():
+    """Map Builder used to carry its own hardcoded palette (a teal DesignColors
+    class and inline setStyleSheet calls). Its chrome now lives in
+    features/mapbuilder.qss like every other feature, so it follows the theme."""
     qss = compile_stylesheet(theme.STANDARD_THEME)
-    assert "h5Component=\"mapbuilderProgressBar\"" in qss
-    assert "h5Component=\"mapbuilderOutputLog\"" not in qss
-    assert "h5Component=\"mapbuilderSystemMonitorFrame\"" not in qss
-    assert "h5Component=\"mapbuilderGroupHeader\"" not in qss
-    assert "h5Component=\"mapbuilderToggleBtn\"" not in qss
+    for component in (
+        "mapbuilderProgressBar",
+        "mapbuilderOutput",
+        "mapbuilderMonitorFrame",
+        "mapbuilderGroupHeader",
+        "mapbuilderMapList",
+        "mapbuilderPreset",
+        "systemMonitor",
+    ):
+        assert f'h5Component="{component}"' in qss
+    assert "#32B8C6" not in qss, "the teal DesignColors accent is back"
 
 
 

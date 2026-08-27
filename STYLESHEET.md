@@ -70,6 +70,19 @@ There is no Qt monkeypatch and no retained per-widget Designer stylesheet.
 QPainter, delegates, and OpenGL code that cannot use QSS must read
 `theme.color()`, `theme.qcolor()`, or `theme.gl_clear_color()`.
 
+### The one exemption: colors the user picked
+
+A `setStyleSheet()` call whose color comes from the user is not static
+appearance and cannot live in the compiled sheet. The color swatches in
+`smartprop_editor/property/color.py`, `smartprop_editor/variables/color.py` and
+`unreal_porter/slot_mapping.py` are the whole list. Leave them alone; a cleanup
+pass that "fixes" them removes the feature.
+
+Data-visualisation colors are the near miss. A chart series (Map Builder's
+CPU/GPU/memory curves) is data, not chrome, so it stays in Python -- but it
+goes through `theme.color()` on a canonical hex, so a palette entry for a
+theme still applies to it.
+
 ## 3. Typography
 
 - Primary family: `"Segoe UI"` with the platform sans-serif fallback.

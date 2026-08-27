@@ -19,37 +19,7 @@ from PySide6.QtCore import Qt, QSize, Signal
 
 from gui.settings.common import get_addon_dir, get_addon_name
 from gui.widgets.common import Button
-
-# Map Builder keeps its own hardcoded look independent of the shared
-# app theme/token system (by design — see STYLING_REFACTOR_HANDOFF.md).
-qt_stylesheet_widgetlist2 = """
-QListWidget, QListView {
-    border: 2px solid #d0d0d0;
-    border-color: rgba(94, 94, 94, 255);
-    border-radius: 2px;
-    padding: 2px;
-    color: #e5e5e5;
-    background-color: #2f2f31;
-    alternate-background-color: #363636;
-    font: 580 10pt "Segoe UI";
-}
-
-QListWidget::item, QListView::item {
-    padding: 0px;
-}
-
-QListWidget::item:selected, QListView::item:selected {
-    background-color: #515965;
-    color: white;
-}
-
-QListWidget::item:hover, QListView::item:hover {
-    background-color: #515965;
-}
-QLabel {
-background-color: None;
-}
-"""
+from gui.styles.common import set_style_property
 
 
 class SettingWidget(QWidget):
@@ -92,10 +62,10 @@ class BoolSettingWidget(SettingWidget):
     def setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.setStyleSheet("border: none; padding: 0px;")
+        set_style_property(self, "h5Component", "mapbuilderBoolSetting")
 
         self.checkbox = QCheckBox(self.display_name)
-        self.checkbox.setStyleSheet("background-color: transparent;")
+        set_style_property(self.checkbox, "h5Component", "mapbuilderBoolSettingBox")
         self.checkbox.setChecked(self.default_value)
         self.checkbox.stateChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
 
@@ -217,7 +187,7 @@ class FolderSettingWidget(SettingWidget):
         from PySide6.QtWidgets import QListWidget, QAbstractItemView
         self.map_list = QListWidget()
         self.map_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.map_list.setStyleSheet(qt_stylesheet_widgetlist2)
+        set_style_property(self.map_list, "h5Component", "mapbuilderMapList")
 
         btn_layout = QHBoxLayout()
         self.add_btn = QPushButton("Add vmap")
@@ -365,18 +335,18 @@ class SettingsGroup(QWidget):
         header_frame.setMaximumHeight(32)
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(8, 4, 8, 4)
-        header_frame.setStyleSheet('background-color: #2f2f31;')
+        set_style_property(header_frame, "h5Component", "mapbuilderGroupHeader")
 
         self.collapse_button = QToolButton()
         self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp.svg"))
         self.collapse_button.setIconSize(QSize(24, 24))
-        self.collapse_button.setStyleSheet('padding: 0px; margin: 0px;')
+        set_style_property(self.collapse_button, "h5Component", "mapbuilderGroupCollapse")
         self.collapse_button.setFixedSize(24, 24)
         self.collapse_button.clicked.connect(self.toggle_collapse)
 
         self.group_label = QLabel(self.group_name)
         self.group_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.group_label.setStyleSheet("font-weight: 500; font-size: 16px;")
+        set_style_property(self.group_label, "h5Component", "mapbuilderGroupTitle")
 
         header_layout.addStretch()
         header_layout.addWidget(self.group_label)
@@ -574,6 +544,7 @@ class PresetButton(QPushButton):
 
         self.setMinimumSize(QSize(64, 64))
         self.setMaximumSize(QSize(64, 64))
+        set_style_property(self, "h5Component", "mapbuilderPreset")
 
         layout = QGridLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
@@ -584,7 +555,7 @@ class PresetButton(QPushButton):
 
         self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        self.label.setStyleSheet("font-size: 10px; background-color: transparent; color: white;")
+        set_style_property(self.label, "h5Component", "mapbuilderPresetLabel")
 
         layout.addWidget(self.label, 0, 0)
 
@@ -607,26 +578,4 @@ class PresetButton(QPushButton):
 
     def update_style(self):
         """Update button style based on state"""
-        if self.is_active:
-            self.setStyleSheet("""
-                QPushButton {
-                    font-size: 12px;
-                    background-color: #2a82da;
-                    color: white;
-                    border: 2px solid #1a5fb4;
-                    border-radius: 2px;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QPushButton {
-                    font-size: 12px;
-                    background-color: #2f2f31;
-                    color: #c0c0c0;
-                    border: 1px solid #6d6d6d;
-                    border-radius: 2px;
-                }
-                QPushButton:hover {
-                    background-color: #5e5e5e;
-                }
-            """)
+        set_style_property(self, "h5State", "active" if self.is_active else "idle")

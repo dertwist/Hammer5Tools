@@ -33,9 +33,8 @@ QProgressBar[h5Component="cleanupProgressBar"] {
 QProgressBar[h5Component="cleanupProgressBar"]::chunk {
     background-color: #1a528a;
 }
-/* Shared by unreal_porter/main.py and updater/check.py (name is historical --
-   Map Builder itself now keeps its own independent hardcoded stylesheet and
-   no longer uses this). */
+/* Shared by Map Builder's two progress bars, unreal_porter/main.py and
+   updater/check.py. */
 QProgressBar[h5Component="mapbuilderProgressBar"] {
     border: 1px solid @hex_5e5e5e;
     border-radius: 2px;
@@ -45,7 +44,7 @@ QProgressBar[h5Component="mapbuilderProgressBar"] {
     background-color: @background;
 }
 QProgressBar[h5Component="mapbuilderProgressBar"]::chunk {
-    background-color: #1a528a;
+    background-color: @hex_1a528a;
     margin: 0px;
     width: 1px;
 }

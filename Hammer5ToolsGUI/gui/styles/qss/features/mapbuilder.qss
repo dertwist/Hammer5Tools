@@ -1,0 +1,92 @@
+/* Map Builder. Chrome only -- the CPU/GPU/memory series colors are chart data
+   and stay in system_monitor.py, resolved through theme.color(). */
+
+QTextBrowser[h5Component="mapbuilderOutput"] {
+    font: 580 10pt "Segoe UI";
+    border: @border_width solid @border_strong;
+    border-radius: @radius;
+    padding: 4px 6px;
+    color: @text;
+    background-color: @background;
+}
+
+QFrame[h5Component="mapbuilderMonitorFrame"] {
+    border: @border_width solid @border_strong;
+    border-radius: @radius;
+    color: @text;
+    background-color: @background;
+}
+
+QListWidget[h5Component="mapbuilderMapList"] {
+    border: @border_width solid @border_strong;
+    border-radius: @radius;
+    padding: 2px;
+    color: @text;
+    background-color: @surface_raised;
+    alternate-background-color: @hex_363636;
+    font: 580 10pt "Segoe UI";
+}
+QListWidget[h5Component="mapbuilderMapList"]::item {
+    padding: 0px;
+}
+QListWidget[h5Component="mapbuilderMapList"]::item:selected,
+QListWidget[h5Component="mapbuilderMapList"]::item:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QWidget[h5Component="mapbuilderBoolSetting"] {
+    border: none;
+    padding: 0px;
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"] {
+    background-color: transparent;
+}
+
+QFrame[h5Component="mapbuilderGroupHeader"] {
+    background-color: @surface_raised;
+}
+QLabel[h5Component="mapbuilderGroupTitle"] {
+    font-weight: 500;
+    font-size: 16px;
+}
+QToolButton[h5Component="mapbuilderGroupCollapse"] {
+    padding: 0px;
+    margin: 0px;
+}
+
+QPushButton[h5Component="mapbuilderPreset"] {
+    font-size: 12px;
+    background-color: @surface_raised;
+    color: @text_muted;
+    border: @border_width solid @border_strong;
+    border-radius: @radius;
+}
+QPushButton[h5Component="mapbuilderPreset"]:hover {
+    background-color: @accent_hover;
+}
+QPushButton[h5Component="mapbuilderPreset"][h5State="active"] {
+    background-color: @accent;
+    color: @selection_text;
+    border: @border_width solid @accent_pressed;
+}
+QLabel[h5Component="mapbuilderPresetLabel"] {
+    font-size: 10px;
+    background-color: transparent;
+    color: @text;
+}
+
+QWidget[h5Component="systemMonitor"] {
+    background-color: @surface;
+}
+QWidget[h5Component="systemMonitorGraph"] {
+    background-color: @surface_raised;
+}
+QLabel[h5Component="systemMonitorGraphLabel"] {
+    color: @text;
+    background: transparent;
+}
+QGraphicsView[h5Component="systemMonitorChart"] {
+    background-color: @surface_raised;
+    border: none;
+}
