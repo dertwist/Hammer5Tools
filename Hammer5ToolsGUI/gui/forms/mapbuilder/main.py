@@ -633,14 +633,12 @@ class MapBuilderDialog(QMainWindow):
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFormat("Idle")
         self.progress_bar.setFixedHeight(14)
-        set_style_property(self.progress_bar, "h5Component", "mapbuilderProgressBar")
         self.ui.verticalLayout_3.addWidget(self.progress_bar)
         
         self.total_progress_bar = QProgressBar(self.ui.layoutWidget1)
         self.total_progress_bar.setTextVisible(True)
         self.total_progress_bar.setFormat("Idle")
         self.total_progress_bar.setFixedHeight(14)
-        set_style_property(self.total_progress_bar, "h5Component", "mapbuilderProgressBar")
         self.total_progress_bar.setVisible(False)
         self.ui.verticalLayout_3.addWidget(self.total_progress_bar)
 

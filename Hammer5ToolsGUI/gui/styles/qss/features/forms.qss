@@ -23,31 +23,7 @@ QLabel[h5Component="cleanupTitle"] {
 QLabel[h5Component="cleanupStatusLabel"] {
     color: @text;
 }
-QProgressBar[h5Component="cleanupProgressBar"] {
-    border: 1px solid @hex_5e5e5e;
-    border-radius: 2px;
-    text-align: center;
-    color: @selection_text;
-    background-color: @background;
-}
-QProgressBar[h5Component="cleanupProgressBar"]::chunk {
-    background-color: @hex_1a528a;
-}
-/* Shared by Map Builder's two progress bars, unreal_porter/main.py and
-   updater/check.py. */
-QProgressBar[h5Component="mapbuilderProgressBar"] {
-    border: 1px solid @hex_5e5e5e;
-    border-radius: 2px;
-    text-align: center;
-    color: white;
-    font-size: 10px;
-    background-color: @background;
-}
-QProgressBar[h5Component="mapbuilderProgressBar"]::chunk {
-    background-color: @hex_1a528a;
-    margin: 0px;
-    width: 1px;
-}
+
 QTextEdit[h5Component="cleanupLogView"] {
     background-color: @hex_303030;
     color: @hex_d4d4d4;

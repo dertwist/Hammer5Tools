@@ -284,7 +284,6 @@ class DownloadProgressDialog(QDialog):
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Downloading... 0%")
         self.progress_bar.setFixedHeight(18)
-        self.progress_bar.setProperty("h5Component", "mapbuilderProgressBar")
         layout.addWidget(self.progress_bar)
 
         self.details_label = QLabel("Please wait while the update is downloaded...")

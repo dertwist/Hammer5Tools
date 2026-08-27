@@ -222,25 +222,40 @@ QSplitter {
 
 QSplitter::handle {
     background-color: @background;
-    margin: 1px 1px;
-}
-
-QSplitter::handle:hover {
-    background-color: @background;
-}
-
-QSplitterHandle::hover {
-}
-
-QSplitter::handle:vertical:hover, QSplitter::handle:horizontal:hover {
-    background: @hex_5e5e5e;
-}
-
-QSplitter::handle:vertical {
     margin: 0px;
+    padding: 0px;
 }
 
 QSplitter::handle:horizontal {
-    padding: 0px;
-    margin: 0px;
+    width: 4px;
 }
+
+QSplitter::handle:vertical {
+    height: 4px;
+}
+
+QSplitter::handle:hover,
+QSplitter::handle:pressed {
+    background-color: @border_strong;
+}
+
+QMainWindow::separator {
+    background-color: @background;
+    margin: 0px;
+    padding: 0px;
+}
+
+QMainWindow::separator:horizontal {
+    height: 4px;
+}
+
+QMainWindow::separator:vertical {
+    width: 4px;
+}
+
+QMainWindow::separator:hover,
+QMainWindow::separator:pressed {
+    background-color: @border_strong;
+}
+
+

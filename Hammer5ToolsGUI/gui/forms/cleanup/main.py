@@ -147,7 +147,6 @@ class VerificationDialog(QDialog):
         layout.addWidget(self.status_label)
         
         self.progress_bar = QProgressBar()
-        self.progress_bar.setProperty("h5Component", "cleanupProgressBar")
         self.progress_bar.setRange(0, len(vmap_paths))
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)

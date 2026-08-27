@@ -126,7 +126,6 @@ def test_mapbuilder_is_styled_through_the_shared_theme():
     features/mapbuilder.qss like every other feature, so it follows the theme."""
     qss = compile_stylesheet(theme.STANDARD_THEME)
     for component in (
-        "mapbuilderProgressBar",
         "mapbuilderOutput",
         "mapbuilderMonitorFrame",
         "mapbuilderGroupHeader",
@@ -136,6 +135,16 @@ def test_mapbuilder_is_styled_through_the_shared_theme():
     ):
         assert f'h5Component="{component}"' in qss
     assert "#32B8C6" not in qss, "the teal DesignColors accent is back"
+
+
+def test_progress_bar_is_styled_in_compiled_qss():
+    """QProgressBar uses the compact Map Builder progress bar style globally."""
+    qss = compile_stylesheet(theme.STANDARD_THEME)
+    assert "QProgressBar {" in qss
+    assert "border: 1px solid" in qss
+    assert "font-size: 10px;" in qss
+    assert "QProgressBar::chunk {" in qss
+    assert "background-color: #1a528a;" in qss
 
 
 def test_mapbuilder_chart_colours_change_with_the_theme():
@@ -215,3 +224,15 @@ def test_vintage_theme_covers_every_canonical_shade():
     missing = [canonical for canonical, _ in theme.BRIGHT_THEME.palette
                if theme.resolve_hex(theme.VINTAGE_THEME, canonical) == canonical]
     assert not missing, "no Vintage counterpart for: " + ", ".join(missing)
+
+
+def test_set_style_property_supports_item_views():
+    """QAbstractItemView defines update(QModelIndex), shadowing QWidget.update().
+    set_style_property must use QWidget.update(widget) so it works on list/table/tree views."""
+    from PySide6.QtWidgets import QApplication, QListWidget, QTableView, QTreeWidget
+    from gui.styles.common import set_style_property
+
+    _app = QApplication.instance() or QApplication([])
+    for widget in (QListWidget(), QTableView(), QTreeWidget()):
+        set_style_property(widget, "h5Component", "testView")
+        assert widget.property("h5Component") == "testView"

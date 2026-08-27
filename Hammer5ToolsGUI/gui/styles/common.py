@@ -30,4 +30,4 @@ def set_style_property(widget: QWidget, name: str, value) -> None:
     style = widget.style()
     style.unpolish(widget)
     style.polish(widget)
-    widget.update()
+    QWidget.update(widget)

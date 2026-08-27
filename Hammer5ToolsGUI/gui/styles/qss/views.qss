@@ -3,22 +3,18 @@
    styling-refactor migration. Behavior preserved as-is. */
 
 QProgressBar {
-    border: 2px solid @hex_5ab55e;
-    border-radius: 5px;
+    border: 1px solid @hex_5e5e5e;
+    border-radius: 2px;
     text-align: center;
-    color: @text;
+    color: white;
+    font-size: 10px;
     background-color: @background;
-    font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: @rgba_5e5e5e_255;
 }
 
 QProgressBar::chunk {
-    background-color: @selection;
-    width: 20px;
-    margin: 1px;
-    border-radius: 2px;
+    background-color: @hex_1a528a;
+    margin: 0px;
+    width: 1px;
 }
 
 QListWidget {

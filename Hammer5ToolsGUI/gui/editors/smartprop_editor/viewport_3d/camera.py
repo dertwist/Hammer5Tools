@@ -179,7 +179,7 @@ class Camera:
         self.target = np.array([0.0, 0.0, 0.0], dtype=np.float32)
         self.fov = 45.0
         self.near = 1.0
-        self.far = 50000.0
+        self.far = 200000.0
         self._aspect = 1.0
         self._pan_speed = 1.0
 
@@ -274,7 +274,7 @@ class Camera:
     def zoom(self, delta):
         """Zoom via scroll wheel delta (positive = zoom in)."""
         factor = 1.15 if delta > 0 else 1.0 / 1.15
-        self.distance = max(1.0, min(50000.0, self.distance / factor))
+        self.distance = max(1.0, min(200000.0, self.distance / factor))
 
     def fit_to_bounds(self, bbox_min, bbox_max):
         """Adjust camera to fit the given bounding box in view."""
@@ -283,7 +283,7 @@ class Camera:
         if extent < 1.0:
             extent = 100.0
         self.target = center.astype(np.float32)
-        self.distance = extent * 1.5
+        self.distance = min(extent * 1.5, self.far * 0.5)
 
     def set_preset(self, name):
         """Set camera to a named view preset."""

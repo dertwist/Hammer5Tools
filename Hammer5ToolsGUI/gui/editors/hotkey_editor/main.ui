@@ -57,7 +57,7 @@
           <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="handleWidth">
-          <number>8</number>
+          <number>4</number>
          </property>
          <property name="childrenCollapsible">
           <bool>false</bool>

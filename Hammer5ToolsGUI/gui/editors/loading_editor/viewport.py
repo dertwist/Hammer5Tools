@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QToolButton,
     QFrame,
-    QProgressBar,
     QGraphicsScene,
     QGraphicsPixmapItem,
     QGraphicsBlurEffect

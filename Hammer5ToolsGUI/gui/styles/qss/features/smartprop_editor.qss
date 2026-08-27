@@ -1125,7 +1125,7 @@ QPlainTextEdit[h5Component="smartpropNoteEdit"] QScrollBar::handle:vertical {
     border-radius: 0px;
 }
 
-/* props/panel.py: collapsible section header, and the main panel's splitter. */
+/* props/panel.py: collapsible section header. */
 QFrame[h5Component="smartpropSectionHeader"] {
     background-color: @background;
     border: none;

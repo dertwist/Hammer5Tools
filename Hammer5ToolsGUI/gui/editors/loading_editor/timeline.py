@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QTreeWidget,
     QTreeWidgetItem,
-    QSplitter,
     QLabel,
     QScrollArea,
     QMenu,

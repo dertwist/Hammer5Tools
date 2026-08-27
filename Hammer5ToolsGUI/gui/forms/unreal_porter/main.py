@@ -240,7 +240,6 @@ class UnrealPorterWidget(QDialog):
         self._installs = find_installs()
 
         self._build_ui()
-        self._setup_progress_bar_style()
         if self._installs:
             self.console.info("UnrealPorter ready.")
         else:
@@ -272,9 +271,6 @@ class UnrealPorterWidget(QDialog):
         # Restores the port picker and re-enables Prepare from cache, without a
         # bridge call when the project has not changed since last time.
         self.ensure_analysis()
-
-    def _setup_progress_bar_style(self):
-        self.progress_bar.setProperty("h5Component", "mapbuilderProgressBar")
 
     # UI
 
