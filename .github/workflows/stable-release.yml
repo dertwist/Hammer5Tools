@@ -34,6 +34,22 @@ jobs:
       - name: Verify imports resolve
         run: python verify_imports.py
 
+      - name: Run Python tests
+        run: python -m pytest -q
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      # Star imports hide these from every reader; a NameError only shows up when
+      # the branch runs. Unused-import warnings are not gated on yet.
+      - name: Check for undefined names
+        shell: pwsh
+        run: |
+          pip install pyflakes
+          # The quote matters: it excludes the "unable to detect undefined
+          # names" warnings that every remaining star import emits.
+          $undefined = python -m pyflakes Hammer5ToolsGUI/gui | Select-String "undefined name '"
+          if ($undefined) { $undefined; throw 'pyflakes reported undefined names' }
+
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v5
         with:
@@ -54,6 +70,13 @@ jobs:
           git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
           echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
           echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV
+
+      # TUnit runs as its own executable; the legacy xUnit suite still needs
+      # `dotnet test` until it moves to Microsoft Testing Platform.
+      - name: Run Core tests
+        run: |
+          dotnet run --project Hammer5ToolsCore/Hammer5Tools.Core.Tests -c Release
+          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release
 
       - name: Build All
 
