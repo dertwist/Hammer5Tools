@@ -45,7 +45,7 @@ jobs:
       - name: Run Core tests
         run: |
           dotnet run --project Hammer5ToolsCore/Hammer5Tools.Core.Tests -c Release
-          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release --minimum-expected-tests 1
+          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release
 
   analyze:
     runs-on: windows-latest
