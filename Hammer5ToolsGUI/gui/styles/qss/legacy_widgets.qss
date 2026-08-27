@@ -178,15 +178,6 @@ QComboBox[h5Component="legacyCombobox"]:disabled {
     border-color: @hex_3f3f42;
 }
 
-/* Appended to legacyCombobox on individual disabled channel combos (see
-   gui/forms/unreal_porter/slot_mapping.py) via a second h5State property,
-   rather than a second full stylesheet string. */
-QComboBox[h5Component="legacyCombobox"][h5State="disabled"] {
-    background-color: @hex_292929;
-    color: @hex_7c7c85;
-    border-color: @hex_3f3f42;
-}
-
 QListWidget[h5Component="legacyWidgetList"], QListView[h5Component="legacyWidgetList"] {
     border: 2px solid @hex_d0d0d0;
     border-color: @rgba_5e5e5e_255;
