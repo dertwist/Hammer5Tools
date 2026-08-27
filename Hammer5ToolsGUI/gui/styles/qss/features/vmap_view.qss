@@ -1,0 +1,4 @@
+QLabel[h5Component="vmapViewStatus"] {
+    color: @text_muted;
+    padding: @spacing_unit;
+}

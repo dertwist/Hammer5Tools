@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -94,6 +95,145 @@ internal static unsafe class VmapApi
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
         });
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Reads an uncompiled VMAP into flattened, drawable scene geometry.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_read_scene_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadValveMapSceneJson(byte* path, int pathLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            var scene = new ValveMapSceneReader().Read(NativeInterop.ReadUtf8(path, pathLength));
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            WriteValveMapScene(writer, scene);
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        });
+
+    private static void WriteValveMapScene(Utf8JsonWriter writer, ValveMapScene scene)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("path", scene.Path);
+
+        writer.WriteStartArray("meshes");
+        foreach (var mesh in scene.Meshes)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("name", mesh.Name);
+            WriteFloatsBase64(writer, "positionsBytes", mesh.Positions);
+            WriteFloatsBase64(writer, "normalsBytes", mesh.Normals);
+            WriteFloatsBase64(writer, "uvsBytes", mesh.TextureCoordinates);
+            writer.WriteBase64String("indicesBytes", MemoryMarshal.AsBytes(mesh.Indices.AsSpan()));
+            writer.WriteStartArray("submeshes");
+            foreach (var submesh in mesh.SubMeshes)
+            {
+                writer.WriteStartObject();
+                writer.WriteNumber("indexOffset", submesh.IndexOffset);
+                writer.WriteNumber("indexCount", submesh.IndexCount);
+                writer.WriteString("material", submesh.Material);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+
+        writer.WriteStartArray("props");
+        foreach (var prop in scene.Props)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("name", prop.Name);
+            writer.WriteString("className", prop.ClassName);
+            writer.WriteString("model", prop.Model);
+            WriteTransform(writer, prop.Transform);
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+
+        writer.WriteStartArray("smartProps");
+        foreach (var smartProp in scene.SmartProps)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("name", smartProp.Name);
+            writer.WriteString("file", smartProp.File);
+            WriteTransform(writer, smartProp.Transform);
+            writer.WriteStartObject("variables");
+            foreach (var (name, value) in smartProp.Variables)
+            {
+                writer.WritePropertyName(name);
+                WriteScalar(writer, value);
+            }
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+
+        writer.WriteStartArray("diagnostics");
+        foreach (var diagnostic in scene.Diagnostics)
+            writer.WriteStringValue(diagnostic);
+        writer.WriteEndArray();
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteFloatsBase64(Utf8JsonWriter writer, string name, ImmutableArray<float> values) =>
+        writer.WriteBase64String(name, MemoryMarshal.AsBytes(values.AsSpan()));
+
+    private static void WriteTransform(Utf8JsonWriter writer, ImmutableArray<float> transform)
+    {
+        writer.WriteStartArray("transform");
+        foreach (var component in transform)
+            writer.WriteNumberValue(component);
+        writer.WriteEndArray();
+    }
+
+    /// <summary>Writes a SmartProp parameter override as its closest JSON form.</summary>
+    private static void WriteScalar(Utf8JsonWriter writer, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                writer.WriteNullValue();
+                break;
+            case bool boolean:
+                writer.WriteBooleanValue(boolean);
+                break;
+            case string text:
+                writer.WriteStringValue(text);
+                break;
+            case float number:
+                writer.WriteNumberValue(number);
+                break;
+            case int number:
+                writer.WriteNumberValue(number);
+                break;
+            case System.Numerics.Vector2 vector:
+                writer.WriteStartArray();
+                writer.WriteNumberValue(vector.X);
+                writer.WriteNumberValue(vector.Y);
+                writer.WriteEndArray();
+                break;
+            case System.Numerics.Vector3 vector:
+                writer.WriteStartArray();
+                writer.WriteNumberValue(vector.X);
+                writer.WriteNumberValue(vector.Y);
+                writer.WriteNumberValue(vector.Z);
+                writer.WriteEndArray();
+                break;
+            case Datamodel.Color color:
+                writer.WriteStartArray();
+                writer.WriteNumberValue(color.R);
+                writer.WriteNumberValue(color.G);
+                writer.WriteNumberValue(color.B);
+                writer.WriteEndArray();
+                break;
+            default:
+                writer.WriteStringValue(value.ToString());
+                break;
+        }
+    }
 
     private static void WriteValveMapDocument(Utf8JsonWriter writer, ValveMapDocument document)
     {
