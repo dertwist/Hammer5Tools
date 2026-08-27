@@ -168,6 +168,41 @@ internal static unsafe class ResourcesApi
             return buffer.WrittenSpan.ToArray();
         });
 
+    /// <summary>Request: {gameDirectory, activeAddon, resourcePath, contextAddon?, maximumTextureDimension?, baseColorOnly?}.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_compiled_material_read_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int CompiledMaterialReadJson(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
+            CompiledModelReader reader;
+            lock (ModelReaderLock)
+            {
+                reader = GetModelReader(root);
+            }
+            var result = reader.ReadStandaloneMaterial(
+                root.GetProperty("resourcePath").GetString()!,
+                GetOptionalString(root, "contextAddon"),
+                GetInt32(root, "maximumTextureDimension", 1024),
+                GetBoolean(root, "baseColorOnly", true));
+
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            writer.WriteStartObject();
+            if (result.IsSuccess && result.Value is { } material)
+            {
+                writer.WritePropertyName("value");
+                WriteCompiledMaterial(writer, material);
+            }
+            else
+            {
+                writer.WriteNull("value");
+            }
+            WriteDiagnostics(writer, result.Diagnostics);
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        });
+
     /// <summary>Request: {vpkPath, resourcePath, soundEvents?}. Mounts a scratch VpkIndex for one read.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_compiled_resource_read_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int CompiledResourceReadJson(byte* request, int requestLength, byte** output, int* outputLength) =>

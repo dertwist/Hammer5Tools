@@ -9,6 +9,7 @@ Mod is the only facet with real values — the content mount a model comes from.
 Hammer's Tags facet has no analogue in the Hammer5Tools index, and Asset Types
 is fixed at .vmdl, so neither gets a working chip.
 """
+import os
 from typing import Optional, List, Dict
 
 from PySide6.QtWidgets import (
@@ -20,12 +21,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize, QTimer, Signal
 from PySide6.QtGui import QPixmap, QPainter, QColor, QAction, QPen, QImage, QIcon
 
-from gui.editors.smartprop_editor.property import compact
 from gui.widgets.model_browser.index import (
     ModelEntry, ScanWorker, ScanSignals, active_mounts, SOURCE_ADDON, SOURCE_CORE,
     GAME_MOUNTS, get_game_entries,
 )
-from gui.widgets.model_browser.thumbnails import ThumbnailService, THUMB_SIZE
+from gui.widgets.model_browser.thumbnails import ThumbnailService, THUMB_SIZE, THUMBNAIL_ASSET_TYPES
 from gui.styles import theme
 
 try:
@@ -304,7 +304,7 @@ def _asset_icon_pixmap(asset_type: str, size: int, grayscaled: bool = False) -> 
     """Tile with the asset type icon."""
     from gui.styles import theme
     pixmap = QPixmap(size, size)
-    pixmap.fill(QColor(theme.color(compact.BG)))
+    pixmap.fill(theme.qcolor("#2e2e2e"))
 
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
@@ -325,6 +325,18 @@ def _asset_icon_pixmap(asset_type: str, size: int, grayscaled: bool = False) -> 
 
     painter.end()
     return pixmap
+
+
+#: Item -> resource path lives on the item itself; QListWidgetItem is unhashable
+#: in PySide6, so a dict keyed by the item is not an option.
+_PATH_ROLE = Qt.UserRole
+
+
+def _item_path(item) -> str:
+    if item is None:
+        return ""
+    path = item.data(0, _PATH_ROLE) if isinstance(item, QTreeWidgetItem) else item.data(_PATH_ROLE)
+    return path or ""
 
 
 _PLACEHOLDER_CACHE = {}
@@ -393,7 +405,6 @@ class ModelBrowserWidget(QWidget):
         super().__init__(parent)
         self._entries: List[ModelEntry] = []
         self._visible: List[ModelEntry] = []
-        self._item_paths = {}
         self._selected_path = current_path or ""
         self._thumb_size = THUMB_SIZE
         self.show_accept = show_accept
@@ -731,7 +742,6 @@ class ModelBrowserWidget(QWidget):
         self.list.setUpdatesEnabled(False)
         self.grid.clear()
         self.list.clear()
-        self._item_paths.clear()
 
         item_size = QSize(self._thumb_size + 16, self._thumb_size + 38)
         self.grid.setIconSize(QSize(self._thumb_size, self._thumb_size))
@@ -747,7 +757,7 @@ class ModelBrowserWidget(QWidget):
             placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)
             item = QListWidgetItem(entry.name)
             item.setIcon(placeholder)
-            self._item_paths[item] = entry.path
+            item.setData(_PATH_ROLE, entry.path)
             item.setToolTip(f"{entry.path}\n{entry.mod} · {entry.source}")
             item.setTextAlignment(Qt.AlignHCenter | Qt.AlignTop)
             item.setSizeHint(item_size)
@@ -758,7 +768,7 @@ class ModelBrowserWidget(QWidget):
             row = QTreeWidgetItem([
                 entry.path, entry.source, entry.mod, _human_size(entry.size)
             ])
-            self._item_paths[row] = entry.path
+            row.setData(0, _PATH_ROLE, entry.path)
             row.setIcon(0, _get_sm_icon(entry.asset_type))
             row.setForeground(1, _source_qcolor(entry.source, default_color))
             tree_rows.append(row)
@@ -808,10 +818,10 @@ class ModelBrowserWidget(QWidget):
                 if rect.isValid() and rect.top() > viewport_rect.bottom():
                     break
                 continue
-            path = self._item_paths.get(item, "")
+            path = _item_path(item)
             if path in by_path:
                 entry = by_path[path]
-                if entry.asset_type.lower() == 'vmdl':
+                if entry.asset_type.lower() in THUMBNAIL_ASSET_TYPES:
                     visible_items.append((item, entry))
                     visible_paths.add(path)
                 else:
@@ -849,7 +859,7 @@ class ModelBrowserWidget(QWidget):
 
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            path = self._item_paths.get(item, "")
+            path = _item_path(item)
             if self.thumbnails.is_pending(path):
                 item.setIcon(loading_icon)
 
@@ -863,7 +873,7 @@ class ModelBrowserWidget(QWidget):
     def _on_thumbnail_ready(self, path: str, pixmap: QPixmap):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if self._item_paths.get(item) == path:
+            if _item_path(item) == path:
                 item.setIcon(self._scaled(pixmap))
                 break
         if not self.thumbnails.has_pending():
@@ -872,8 +882,9 @@ class ModelBrowserWidget(QWidget):
     def _on_thumbnail_failed(self, path: str):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if self._item_paths.get(item) == path:
-                item.setIcon(_placeholder_pixmap(self._thumb_size, "vmdl"))
+            if _item_path(item) == path:
+                item.setIcon(_placeholder_pixmap(
+                    self._thumb_size, os.path.splitext(path)[1].lstrip(".").lower() or "vmdl"))
                 break
         if not self.thumbnails.has_pending():
             self._anim_timer.stop()
@@ -899,11 +910,11 @@ class ModelBrowserWidget(QWidget):
 
     def _on_grid_selection(self):
         item = self.grid.currentItem()
-        self._set_selected(self._item_paths.get(item, "") if item else "")
+        self._set_selected(_item_path(item))
 
     def _on_list_selection(self):
         item = self.list.currentItem()
-        self._set_selected(self._item_paths.get(item, "") if item else "")
+        self._set_selected(_item_path(item))
 
     def _on_item_double_clicked(self, *_):
         if self._selected_path:
@@ -919,14 +930,14 @@ class ModelBrowserWidget(QWidget):
         selected_grid_item = None
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if self._item_paths.get(item) == self._selected_path:
+            if _item_path(item) == self._selected_path:
                 selected_grid_item = item
                 break
 
         selected_list_item = None
         for index in range(self.list.topLevelItemCount()):
             item = self.list.topLevelItem(index)
-            if self._item_paths.get(item) == self._selected_path:
+            if _item_path(item) == self._selected_path:
                 selected_list_item = item
                 break
 

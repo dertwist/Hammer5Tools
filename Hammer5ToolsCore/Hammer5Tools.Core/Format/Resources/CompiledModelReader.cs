@@ -142,6 +142,26 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         }
     }
 
+    /// <summary>Reads one material on its own, for previews that have no model to hang it on.</summary>
+    public CoreResult<CompiledMaterial> ReadStandaloneMaterial(
+        string resourcePath, string? contextAddon = null, int maximumTextureDimension = 1024,
+        bool baseColorOnly = false)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourcePath);
+        try
+        {
+            var (addon, relativePath) = Resolve(resourcePath, contextAddon, ".vmat");
+            using var lease = RentLoader(addon, relativePath);
+            return CoreResult.Success(
+                ReadMaterial(lease.Loader, relativePath, maximumTextureDimension, baseColorOnly));
+        }
+        catch (Exception exception)
+        {
+            return CoreResult.Failure<CompiledMaterial>(
+                "compiled_material_read_failed", $"Could not read '{resourcePath}': {exception.Message}");
+        }
+    }
+
     /// <summary>
     /// Takes exclusive use of a loader for the caller's whole read. VRF's
     /// <see cref="GameFileLoader"/> keeps mutable current-file state, so one loader serves
@@ -518,7 +538,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         return (minimum, maximum);
     }
 
-    private (string Addon, string RelativePath) Resolve(string resourcePath, string? contextAddon)
+    private (string Addon, string RelativePath) Resolve(string resourcePath, string? contextAddon,
+        string extension = ".vmdl")
     {
         var path = resourcePath.Replace('\\', '/').Trim('/');
         var addon = string.IsNullOrWhiteSpace(contextAddon) ? activeAddon : contextAddon;
@@ -533,9 +554,9 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         {
             path = coreMatch.Groups[1].Value;
         }
-        path = path.EndsWith(".vmdl_c", StringComparison.OrdinalIgnoreCase)
+        path = path.EndsWith(extension + "_c", StringComparison.OrdinalIgnoreCase)
             ? path[..^2]
-            : path.EndsWith(".vmdl", StringComparison.OrdinalIgnoreCase) ? path : path + ".vmdl";
+            : path.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? path : path + extension;
         return (addon ?? activeAddon, path);
     }
 

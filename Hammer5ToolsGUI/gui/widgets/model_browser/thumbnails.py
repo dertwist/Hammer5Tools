@@ -140,7 +140,7 @@ void main() {
 }
 """
 
-# Tile background, matching compact.BG so tiles sit flush on the grid.
+# Tile background, matching the placeholder tile fill so tiles sit flush on the grid.
 # RGB comes from the active theme brightness (alpha is 1.0).
 def _clear_color():
     from gui.styles import theme
@@ -270,12 +270,106 @@ def _store_thumbnail_bytes(resource_path: str, size: int, data: bytes):
         pass
 
 
+#: Asset types that get a rendered (or decoded) thumbnail; everything else keeps
+#: its type icon. A .vmat resolves to its base-color map, a .vsmart is evaluated
+#: and its placed models baked into one preview mesh.
+THUMBNAIL_ASSET_TYPES = frozenset({"vmdl", "vmat", "vsmart"})
+
+#: Instances baked into one SmartProp preview. A prop may place thousands, and a
+#: 128px tile stops gaining anything long before that.
+SMARTPROP_MAX_INSTANCES = 64
+
+
+def _load_smartprop_mesh(entry) -> Optional[MeshData]:
+    """Evaluate a SmartProp and bake its placed models into one preview mesh.
+
+    Only a loose .vsmart can be previewed: Core evaluates the *uncompiled*
+    document, and a VPK-only .vsmart_c has no source to hand it.
+    """
+    if not entry.fs_path or not entry.fs_path.lower().endswith(".vsmart"):
+        return None
+
+    from core.bridge import CoreBridge
+    from gui.editors.smartprop_editor.document_model import collect_nested_smartprops, parse_smartprop
+    from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
+
+    with open(entry.fs_path, "r", encoding="utf-8") as handle:
+        document = parse_smartprop(handle.read())
+    evaluation = CoreBridge.instance().evaluate_smartprop(
+        document,
+        nested_documents=collect_nested_smartprops(document, entry.mod),
+        maximum_models=SMARTPROP_MAX_INSTANCES,
+    )
+
+    meshes: Dict[str, Optional[MeshData]] = {}
+    placements = []
+    for model in evaluation.models[:SMARTPROP_MAX_INSTANCES]:
+        if model.model_name not in meshes:
+            meshes[model.model_name] = load_model(
+                model.model_name, context_addon=entry.mod,
+                max_texture_dim=THUMB_TEXTURE_DIM, base_color_only=True)
+        mesh = meshes[model.model_name]
+        if mesh is None or mesh.vertices is None or len(mesh.vertices) == 0:
+            continue
+        placements.append((mesh, np.asarray(model.transform, dtype=np.float32).reshape(4, 4)))
+    return _bake_placements(placements)
+
+
+def _bake_placements(placements) -> Optional[MeshData]:
+    """Merge placed meshes into one MeshData so the single-mesh renderer still applies.
+
+    Transforms are row-vector style (translation in the last row), matching
+    camera.decompose_trs and the rest of the SmartProp pipeline.
+    """
+    if not placements:
+        return None
+
+    from gui.editors.smartprop_editor.viewport_3d.mesh_cache import SubMeshData
+
+    vertices, normals, uvs, indices, submeshes = [], [], [], [], []
+    vertex_offset = index_offset = 0
+    for mesh, matrix in placements:
+        basis = matrix[:3, :3]
+        source = mesh.vertices.astype(np.float32)
+        vertices.append(source @ basis + matrix[3, :3])
+
+        source_normals = mesh.normals.astype(np.float32)
+        try:
+            rotated = source_normals @ np.linalg.inv(basis).T
+        except np.linalg.LinAlgError:
+            rotated = source_normals @ basis
+        lengths = np.linalg.norm(rotated, axis=1, keepdims=True)
+        normals.append(rotated / np.maximum(lengths, 1e-8))
+
+        mesh_uvs = mesh.uvs
+        if mesh_uvs is None or len(mesh_uvs) != len(source):
+            mesh_uvs = np.zeros((len(source), 2), dtype=np.float32)
+        uvs.append(mesh_uvs.astype(np.float32))
+
+        mesh_indices = mesh.indices.astype(np.uint32)
+        indices.append(mesh_indices + vertex_offset)
+        for submesh in (mesh.submeshes or []):
+            submeshes.append(SubMeshData(
+                submesh.index_offset + index_offset, submesh.index_count, submesh.material))
+
+        vertex_offset += len(source)
+        index_offset += len(mesh_indices)
+
+    merged_vertices = np.concatenate(vertices)
+    return MeshData(
+        vertices=merged_vertices, normals=np.concatenate(normals),
+        indices=np.concatenate(indices), uvs=np.concatenate(uvs),
+        bbox_min=merged_vertices.min(axis=0), bbox_max=merged_vertices.max(axis=0),
+        submeshes=submeshes)
+
+
 class _MeshLoadSignals(QObject):
-    loaded = Signal(str, object)    # resource path, MeshData | None
+    # resource path, and MeshData (render it) | ndarray (RGBA image) | None (failed)
+    loaded = Signal(str, object)
 
 
 class _MeshLoadWorker(QRunnable):
-    """High-performance direct VRF in-memory mesh loader off the GUI thread."""
+    """High-performance direct VRF in-memory asset loader off the GUI thread."""
 
     def __init__(self, entry, signals: _MeshLoadSignals):
         super().__init__()
@@ -284,15 +378,23 @@ class _MeshLoadWorker(QRunnable):
 
     @Slot()
     def run(self):
-        mesh = None
+        result = None
         try:
-            from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
-            mesh = load_model(self.entry.path, context_addon=self.entry.mod,
-                              max_texture_dim=THUMB_TEXTURE_DIM, base_color_only=True)
+            asset_type = self.entry.asset_type.lower()
+            if asset_type == "vmat":
+                from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_material_base_color
+                result = load_material_base_color(
+                    self.entry.path, context_addon=self.entry.mod, max_texture_dim=THUMB_TEXTURE_DIM)
+            elif asset_type == "vsmart":
+                result = _load_smartprop_mesh(self.entry)
+            else:
+                from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
+                result = load_model(self.entry.path, context_addon=self.entry.mod,
+                                    max_texture_dim=THUMB_TEXTURE_DIM, base_color_only=True)
         except Exception as exc:
             msg = str(exc).splitlines()[0] if str(exc) else "Load error"
             log.error(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
-        self.signals.loaded.emit(self.entry.path, mesh)
+        self.signals.loaded.emit(self.entry.path, result)
 
 
 class _ThumbnailStoreWorker(QRunnable):
@@ -427,17 +529,36 @@ class ThumbnailService(QObject):
     # internals
 
     @Slot(str, object)
-    def _on_mesh_loaded(self, resource_path: str, mesh):
+    def _on_mesh_loaded(self, resource_path: str, result):
         self._in_flight.discard(resource_path)
         if resource_path not in self._visible_paths:
             return
-        if mesh is None or getattr(mesh, "vertices", None) is None or len(mesh.vertices) == 0:
+        # A material arrives as a decoded RGBA image: there is nothing to render,
+        # so it skips the GL queue entirely and is published straight away.
+        if isinstance(result, np.ndarray):
+            self._publish_image(resource_path, _image_from_rgba(result, self.size))
+            return
+        if result is None or getattr(result, "vertices", None) is None or len(result.vertices) == 0:
             self._failed.add(resource_path)
             self.failed.emit(resource_path)
             return
-        self._render_queue.append((resource_path, mesh))
+        self._render_queue.append((resource_path, result))
         if not self._timer.isActive():
             self._timer.start()
+
+    def _publish_image(self, resource_path: str, image: Optional[QImage]):
+        """Hand a finished tile to the view and queue the disk-cache write."""
+        if image is None or image.isNull():
+            self._failed.add(resource_path)
+            self.failed.emit(resource_path)
+            return
+        pixmap = QPixmap.fromImage(image)
+        self._store_memory_pixmap(resource_path, pixmap)
+        self.ready.emit(resource_path, pixmap)
+        # The tile is on screen at this point. PNG encoding and the sqlite write
+        # only populate the cache for next launch, so they go to a worker rather
+        # than costing GUI frame time.
+        self._pool.start(_ThumbnailStoreWorker(resource_path, self.size, image))
 
     def _drain_render_queue(self):
         if not self._render_queue:
@@ -449,20 +570,7 @@ class ThumbnailService(QObject):
                 break
             resource_path, mesh = self._render_queue.pop(0)
 
-            image = self._render_mesh(mesh)
-            if image is None or image.isNull():
-                self._failed.add(resource_path)
-                self.failed.emit(resource_path)
-                continue
-
-            pixmap = QPixmap.fromImage(image)
-            self._store_memory_pixmap(resource_path, pixmap)
-            self.ready.emit(resource_path, pixmap)
-
-            # The tile is on screen at this point. PNG encoding and the sqlite write
-            # only populate the cache for next launch, so they go to a worker rather
-            # than costing GUI frame time once per drained render.
-            self._pool.start(_ThumbnailStoreWorker(resource_path, self.size, image))
+            self._publish_image(resource_path, self._render_mesh(mesh))
 
     def _ensure_context(self) -> bool:
         """Create the shared offscreen GL context and compile the shader once."""
@@ -631,6 +739,19 @@ _SOURCE_TO_GL = np.array([
     [0, -1,  0, 0],
     [0,  0,  0, 1],
 ], dtype=np.float32)
+
+
+def _image_from_rgba(rgba: np.ndarray, size: int) -> Optional[QImage]:
+    """Build a tile-sized QImage from a decoded RGBA texture."""
+    if rgba is None or rgba.size == 0 or rgba.ndim != 3 or rgba.shape[2] != 4:
+        return None
+    rgba = np.ascontiguousarray(rgba)
+    height, width = rgba.shape[0], rgba.shape[1]
+    # copy(): QImage does not take ownership of the numpy buffer.
+    image = QImage(rgba.data, width, height, width * 4, QImage.Format_RGBA8888).copy()
+    if width != size or height != size:
+        image = image.scaled(size, size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    return image
 
 
 def _upload_attribute(location: int, data: np.ndarray, components: int):
