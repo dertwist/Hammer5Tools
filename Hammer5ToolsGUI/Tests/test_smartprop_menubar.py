@@ -7,7 +7,7 @@ Unit tests for the SmartProp Editor menubar refactor:
 import os
 import sys
 import pytest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyle
 from PySide6.QtGui import QKeySequence
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -18,6 +18,7 @@ if gui_root not in sys.path:
 app = QApplication.instance() or QApplication(sys.argv)
 
 from gui.editors.smartprop_editor.document import SmartPropDocument
+from gui.editors.smartprop_editor import main as smartprop_main
 from gui.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from gui.settings.main import settings as _smartprop_settings
 
@@ -145,8 +146,13 @@ def test_smartprop_document_docks_menu():
     assert len(action_texts) > 0
 
 
-def test_smartprop_main_window_fallback_shortcuts():
+def test_smartprop_main_window_fallback_shortcuts(monkeypatch, tmp_path):
     """Verify SmartPropEditorMainWindow has fallback global shortcuts and no document menubar."""
+    # The module captures get_cs2_path() at import time, so on a machine with no
+    # CS2 path configured (every CI runner) it is None and the explorer's
+    # os.path.join raises. Give it a directory instead of requiring an install.
+    monkeypatch.setattr(smartprop_main, "cs2_path", str(tmp_path), raising=False)
+
     window = SmartPropEditorMainWindow()
 
     assert hasattr(window, "action_new_global")
@@ -175,7 +181,12 @@ def test_smartprop_document_layout_single_splitter():
     p_rect = doc._property_dock.geometry()
     v_rect = doc._viewport_dock.geometry()
     gap = v_rect.left() - (p_rect.left() + p_rect.width())
-    assert gap == 4, f"Expected a single 4px separator between Property and Viewport, got {gap}px"
+    # The separator width is style-dependent (4px on Windows, 6px on Fusion), so
+    # compare against the metric: one extent means one separator, not two.
+    separator = doc.style().pixelMetric(QStyle.PM_DockWidgetSeparatorExtent)
+    assert gap == separator, (
+        f"Expected a single {separator}px separator between Property and Viewport, got {gap}px"
+    )
 
 
 if __name__ == "__main__":

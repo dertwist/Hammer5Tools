@@ -1,6 +1,9 @@
+import ctypes
 import importlib
 import sys
 from pathlib import Path
+
+import pytest
 
 from core.runtime_paths import resolve_runtime_paths
 
@@ -47,6 +50,10 @@ def test_frozen_common_resolves_paths_without_error(monkeypatch, tmp_path):
     assert gui.common.user_data_dir == (tmp_path / "userdata").resolve()
 
 
+@pytest.mark.skipif(
+    not hasattr(ctypes, "windll"),
+    reason="the crash handler reports through ctypes.windll, which is Windows-only",
+)
 def test_crash_handler_writes_crash_logs(monkeypatch, tmp_path):
     install = tmp_path / "installed"
     user_data = tmp_path / "userdata"

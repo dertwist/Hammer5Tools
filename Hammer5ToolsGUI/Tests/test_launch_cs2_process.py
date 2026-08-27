@@ -63,6 +63,15 @@ def test_launch_cs2_process_wmi_powershell_fallback():
         assert "Win32_Process" in cmd_args[-1]
 
 
+# ctypes.windll only exists on Windows, so these two cannot even be patched
+# elsewhere. They still run in CI, which is windows-latest.
+requires_windll = pytest.mark.skipif(
+    not hasattr(__import__("ctypes"), "windll"),
+    reason="ctypes.windll is Windows-only",
+)
+
+
+@requires_windll
 def test_launch_cs2_process_shellexecute_success():
     mock_shell = MagicMock()
     mock_windows = MagicMock()
@@ -82,6 +91,7 @@ def test_launch_cs2_process_shellexecute_success():
         mock_shell_api.assert_called_once()
 
 
+@requires_windll
 def test_launch_cs2_process_fallback_to_popen():
     mock_run_result = MagicMock(returncode=1)
 
