@@ -40,6 +40,7 @@ from gui.settings.common import (
     set_settings_value,
     settings,
     get_addon_dir,
+    cs2_addons_dir,
 )
 from gui.settings.main import PreferencesDialog
 from gui.editors.loading_editor.main import Loading_editorMainWindow
@@ -168,12 +169,10 @@ class Widget(QMainWindow):
         QTimer.singleShot(2000, self.quick_actions.prompt_for_file_associations)
 
         self.addon_watcher = QFileSystemWatcher(self)
-        cs2_path = get_cs2_path()
-        if cs2_path is not None:
-            addon_folder_path = os.path.join(cs2_path, "content", "csgo_addons")
-            if os.path.exists(addon_folder_path):
-                self.addon_watcher.addPath(addon_folder_path)
-                self.addon_watcher.directoryChanged.connect(self.addon_selector.refresh)
+        addons_dir = cs2_addons_dir("content")
+        if addons_dir is not None and addons_dir.exists():
+            self.addon_watcher.addPath(str(addons_dir))
+            self.addon_watcher.directoryChanged.connect(self.addon_selector.refresh)
 
         set_docks_visible(self, True)
         validate_addon_structure()

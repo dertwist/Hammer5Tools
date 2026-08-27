@@ -32,9 +32,6 @@ try:
 except Exception:
     CS2Netcon = None
 
-# Resource path carried on each item, used to marry thumbnails back to rows.
-_PATH_ROLE = Qt.UserRole + 1
-
 COLUMNS = ["Name", "Source", "Mod", "Size"]
 COL_NAME, COL_SOURCE, COL_MOD, COL_SIZE = range(4)
 
@@ -392,6 +389,7 @@ class ModelBrowserWidget(QWidget):
         super().__init__(parent)
         self._entries: List[ModelEntry] = []
         self._visible: List[ModelEntry] = []
+        self._item_paths = {}
         self._selected_path = current_path or ""
         self._thumb_size = THUMB_SIZE
         self.show_accept = show_accept
@@ -729,6 +727,7 @@ class ModelBrowserWidget(QWidget):
         self.list.setUpdatesEnabled(False)
         self.grid.clear()
         self.list.clear()
+        self._item_paths.clear()
 
         item_size = QSize(self._thumb_size + 16, self._thumb_size + 38)
         self.grid.setIconSize(QSize(self._thumb_size, self._thumb_size))
@@ -744,7 +743,7 @@ class ModelBrowserWidget(QWidget):
             placeholder = _placeholder_pixmap(self._thumb_size, entry.asset_type)
             item = QListWidgetItem(entry.name)
             item.setIcon(placeholder)
-            item.setData(_PATH_ROLE, entry.path)
+            self._item_paths[item] = entry.path
             item.setToolTip(f"{entry.path}\n{entry.mod} · {entry.source}")
             item.setTextAlignment(Qt.AlignHCenter | Qt.AlignTop)
             item.setSizeHint(item_size)
@@ -755,7 +754,7 @@ class ModelBrowserWidget(QWidget):
             row = QTreeWidgetItem([
                 entry.path, entry.source, entry.mod, _human_size(entry.size)
             ])
-            row.setData(0, _PATH_ROLE, entry.path)
+            self._item_paths[row] = entry.path
             row.setIcon(0, _get_sm_icon(entry.asset_type))
             row.setForeground(1, _SOURCE_QCOLOR.get(entry.source, default_color))
             tree_rows.append(row)
@@ -805,7 +804,7 @@ class ModelBrowserWidget(QWidget):
                 if rect.isValid() and rect.top() > viewport_rect.bottom():
                     break
                 continue
-            path = item.data(_PATH_ROLE)
+            path = self._item_paths.get(item, "")
             if path in by_path:
                 entry = by_path[path]
                 if entry.asset_type.lower() == 'vmdl':
@@ -846,7 +845,7 @@ class ModelBrowserWidget(QWidget):
 
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            path = item.data(_PATH_ROLE)
+            path = self._item_paths.get(item, "")
             if self.thumbnails.is_pending(path):
                 item.setIcon(loading_icon)
 
@@ -860,7 +859,7 @@ class ModelBrowserWidget(QWidget):
     def _on_thumbnail_ready(self, path: str, pixmap: QPixmap):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if item.data(_PATH_ROLE) == path:
+            if self._item_paths.get(item) == path:
                 item.setIcon(self._scaled(pixmap))
                 break
         if not self.thumbnails.has_pending():
@@ -869,7 +868,7 @@ class ModelBrowserWidget(QWidget):
     def _on_thumbnail_failed(self, path: str):
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if item.data(_PATH_ROLE) == path:
+            if self._item_paths.get(item) == path:
                 item.setIcon(_placeholder_pixmap(self._thumb_size, "vmdl"))
                 break
         if not self.thumbnails.has_pending():
@@ -896,11 +895,11 @@ class ModelBrowserWidget(QWidget):
 
     def _on_grid_selection(self):
         item = self.grid.currentItem()
-        self._set_selected(item.data(_PATH_ROLE) if item else "")
+        self._set_selected(self._item_paths.get(item, "") if item else "")
 
     def _on_list_selection(self):
         item = self.list.currentItem()
-        self._set_selected(item.data(0, _PATH_ROLE) if item else "")
+        self._set_selected(self._item_paths.get(item, "") if item else "")
 
     def _on_item_double_clicked(self, *_):
         if self._selected_path:
@@ -916,14 +915,14 @@ class ModelBrowserWidget(QWidget):
         selected_grid_item = None
         for index in range(self.grid.count()):
             item = self.grid.item(index)
-            if item.data(_PATH_ROLE) == self._selected_path:
+            if self._item_paths.get(item) == self._selected_path:
                 selected_grid_item = item
                 break
 
         selected_list_item = None
         for index in range(self.list.topLevelItemCount()):
             item = self.list.topLevelItem(index)
-            if item.data(0, _PATH_ROLE) == self._selected_path:
+            if self._item_paths.get(item) == self._selected_path:
                 selected_list_item = item
                 break
 
@@ -1083,4 +1082,3 @@ def pick_asset(
     if dialog.exec() == QDialog.Accepted:
         return dialog.selected_path() or None
     return None
-

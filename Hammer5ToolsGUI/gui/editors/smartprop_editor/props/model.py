@@ -8,13 +8,12 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from PySide6.QtCore import Qt
-
 _CONTAINER = {
     "modifier": "m_Modifiers",
     "criterion": "m_SelectionCriteria",
     "selection_criteria": "m_SelectionCriteria",
 }
+_USER_ROLE = 256
 
 # 'm_Modifiers[2].m_flAmount' / 'm_SelectionCriteria[0]' — same shape document.py parses.
 _DIFF_KEY_RE = re.compile(r"^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$")
@@ -43,7 +42,8 @@ class ComponentRef:
     def prop_class(self) -> str:
         if self.item is None:
             return ""
-        data = self.item.data(0, Qt.UserRole)
+        node = getattr(self.item, "smartprop_node", None)
+        data = node.data if node is not None else self.item.data(0, _USER_ROLE)
         target = self.target(data) if isinstance(data, dict) else None
         raw = (target or {}).get("_class", "") or ""
         return raw.split("_", 1)[-1] if raw else ""

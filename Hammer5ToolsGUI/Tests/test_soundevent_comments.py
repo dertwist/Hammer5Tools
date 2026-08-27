@@ -377,6 +377,22 @@ def test_event_modifications_with_comments():
 #  Case 8: QTreeWidget Load and Save Integration with Case 01 & Case 02
 # ──────────────────────────────────────────────────────────────────────────────
 
+
+def test_document_model_owns_events_and_moves_comments_on_rename():
+    from gui.editors.soundevent_editor.document_model import SoundEventDocument
+
+    text = open(CASE_01_PATH, "r", encoding="utf-8").read()
+    document = SoundEventDocument.from_text(text)
+    old_name = next(iter(document.events))
+    old_comment = document.event_comments.get(old_name)
+    document.rename(old_name, "renamed_event")
+
+    assert old_name not in document.events
+    assert "renamed_event" in document.events
+    if old_comment is not None:
+        assert document.event_comments["renamed_event"] == old_comment
+    assert "renamed_event" in document.to_text()
+
 @pytest.mark.parametrize("asset_path", [CASE_01_PATH, CASE_02_PATH])
 def test_load_and_save_integration_with_assets(qapp, asset_path):
     """Test LoadSoundEvents and SaveSoundEvents with real test assets."""
@@ -387,8 +403,8 @@ def test_load_and_save_integration_with_assets(qapp, asset_path):
     LoadSoundEvents(tree=tree, path=asset_path)
 
     assert tree.invisibleRootItem().childCount() > 0
-    assert hasattr(tree, "file_header_comments")
-    assert "// For soundevents to compile into the addon" in tree.file_header_comments
+    assert hasattr(tree, "soundevent_document")
+    assert "// For soundevents to compile into the addon" in tree.soundevent_document.file_header_comments
 
     with tempfile.NamedTemporaryFile(suffix=".vsndevts", delete=False) as tmp:
         tmp_path = tmp.name

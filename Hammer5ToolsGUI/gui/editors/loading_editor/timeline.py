@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from collections import defaultdict
+from gui.editors.loading_editor.timeline_model import camera_name, scan_timeline
 from typing import Dict, List, Tuple
 from PIL import Image
 import re
@@ -281,6 +282,7 @@ class TimelineTreeWidget(QTreeWidget):
         self.thumbnail_timer.setSingleShot(True)
         self.thumbnail_timer.timeout.connect(self.load_pending_thumbnails)
         self.pending_thumbnails = []
+        self.timeline_model = []
 
     def on_item_clicked(self, item: QTreeWidgetItem, column: int):
         """Handle item click - emit signal if it's an image item"""
@@ -392,41 +394,12 @@ class TimelineTreeWidget(QTreeWidget):
         if not os.path.exists(history_path):
             return
         
-        # Group images by camera name
-        camera_data = defaultdict(list)
-        
-        try:
-            # Iterate through timestamp folders
-            for timestamp_folder in os.listdir(history_path):
-                timestamp_path = os.path.join(history_path, timestamp_folder)
-                if not os.path.isdir(timestamp_path):
-                    continue
-                
-                # Parse timestamp
-                try:
-                    timestamp = datetime.strptime(timestamp_folder, "%Y-%m-%d_%H-%M-%S")
-                except ValueError:
-                    continue
-                
-                # Find images in this timestamp folder
-                for filename in os.listdir(timestamp_path):
-                    if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tga')):
-                        # Extract camera name from filename (e.g., "CT Spawn_0000.jpg" -> "CT Spawn")
-                        camera_name = self.extract_camera_name(filename)
-                        if camera_name:
-                            image_path = os.path.join(timestamp_path, filename)
-                            camera_data[camera_name].append((timestamp, image_path))
-        
-        except Exception as e:
-            return
-        
-        for camera_name, images in camera_data.items():
-            # Sort images by timestamp (oldest first)
-            images.sort(key=lambda x: x[0])
-            
+        self.timeline_model = scan_timeline(history_path)
+        for camera in self.timeline_model:
             camera_item = QTreeWidgetItem(self)
-            camera_item.setText(0, f"{camera_name} ({len(images)} images)")
-            camera_item.camera_name = camera_name
+            camera_item.setText(0, f"{camera.name} ({len(camera.frames)} images)")
+            camera_item.camera_timeline = camera
+            camera_item.camera_name = camera.name
             camera_item.setExpanded(False)
             
             try:
@@ -436,32 +409,19 @@ class TimelineTreeWidget(QTreeWidget):
                 folder_icon = QIcon()
                 camera_item.setIcon(0, folder_icon)
             
-            for timestamp, image_path in images:
+            for frame in camera.frames:
                 image_item = QTreeWidgetItem(camera_item)
-                image_item.setText(0, timestamp.strftime("%Y-%m-%d %H:%M:%S"))
-                image_item.image_path = image_path
-                image_item.timestamp = timestamp
+                image_item.setText(0, frame.timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+                image_item.timeline_frame = frame
+                image_item.image_path = frame.path
+                image_item.timestamp = frame.timestamp
                 
-                self.schedule_thumbnail_load(image_item, image_path)
+                self.schedule_thumbnail_load(image_item, frame.path)
         
 
     def extract_camera_name(self, filename: str) -> str:
         """Extract camera name from filename, treating different numbered cameras as separate"""
-        base_name = os.path.splitext(filename)[0]
-
-        # Extract camera name and number (e.g., "Site_0000" -> "Site", "Site_0001" -> "Site 1")
-        match = re.match(r'^(.+?)_(\d+)$', base_name)
-        if match:
-            camera_base = match.group(1)
-            camera_number = int(match.group(2))
-            
-            if camera_number == 0:
-                return camera_base  # "Site_0000" -> "Site"
-            else:
-                return f"{camera_base} {camera_number}"  # "Site_0001" -> "Site 1"
-
-        # If no underscore pattern, return the base name
-        return base_name
+        return camera_name(filename)
 
     def schedule_thumbnail_load(self, item: QTreeWidgetItem, image_path: str):
         """Schedule thumbnail loading for an item"""

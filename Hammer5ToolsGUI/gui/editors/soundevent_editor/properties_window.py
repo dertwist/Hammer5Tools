@@ -44,7 +44,7 @@ class PropertyStateCommand(QUndoCommand):
             for i in range(root.childCount()):
                 child = root.child(i)
                 try:
-                    data = child.data(0, Qt.UserRole)
+                    data = self.window._data_for_item(child)
                     if isinstance(self.target_key, int):
                         if isinstance(data, dict) and data.get('m_nElementID') == self.target_key:
                             return child
@@ -76,7 +76,7 @@ class PropertyStateCommand(QUndoCommand):
             # Write the restored data back into the tree item so tree stays in sync
             if item is not None:
                 try:
-                    item.setData(0, Qt.UserRole, fast_deepcopy(self.window.value))
+                    self.window._set_data_for_item(item, self.window.value)
                 except Exception:
                     pass
         finally:
@@ -149,6 +149,23 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         redo_shortcut_alt.activated.connect(self.undo_stack.redo)
 
         self.properties_groups_hide()
+
+    def _data_for_item(self, item) -> dict:
+        if item is None or self.tree is None:
+            return {}
+        document = getattr(self.tree, "soundevent_document", None)
+        if document is not None:
+            return document.events.get(item.text(0), {})
+        value = item.data(0, Qt.UserRole)
+        return value if isinstance(value, dict) else {}
+
+    def _set_data_for_item(self, item, value: dict) -> None:
+        if item is None:
+            return
+        document = getattr(self.tree, "soundevent_document", None)
+        if document is not None:
+            document.events[item.text(0)] = fast_deepcopy(value)
+        item.setData(0, Qt.UserRole, fast_deepcopy(value))
 
     def load_value(self, value):
         if isinstance(value, str):
@@ -406,7 +423,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             current_item = self.tree.currentItem()
             if current_item is not None:
                 element_name = current_item.text(0)
-                data = current_item.data(0, Qt.UserRole)
+                data = self._data_for_item(current_item)
                 if isinstance(data, dict) and 'm_nElementID' in data:
                     element_key = data.get('m_nElementID')
                 else:
@@ -547,7 +564,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         # Try to get a dict value for the item
         try:
-            data = item.data(0, Qt.UserRole)
+            data = self._data_for_item(item)
             if not isinstance(data, dict):
                 data = {}
         except Exception:
@@ -578,7 +595,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             root = self.tree.invisibleRootItem()
             for i in range(root.childCount()):
                 child = root.child(i)
-                data = child.data(0, Qt.UserRole)
+                data = self._data_for_item(child)
                 if isinstance(key, int):
                     if isinstance(data, dict) and data.get('m_nElementID') == key:
                         return child

@@ -68,6 +68,29 @@ from gui.widgets.tree import HierarchyTreeWidget
 from gui.settings.common import get_settings_bool
 
 
+def _item_ref(item) -> ComponentRef | None:
+    return getattr(item, "component_ref", None) if item is not None else None
+
+
+def _item_element_data(item) -> dict | None:
+    if item is None:
+        return None
+    node = getattr(item, "smartprop_node", None)
+    if node is not None and isinstance(node.data, dict):
+        return node.data
+    data = item.data(0, Qt.UserRole)
+    return data if isinstance(data, dict) else None
+
+
+def _set_item_element_data(item, new_data: dict) -> None:
+    if item is None:
+        return
+    node = getattr(item, "smartprop_node", None)
+    if node is not None:
+        node.data = fast_deepcopy(new_data)
+    item.setData(0, Qt.UserRole, new_data)
+
+
 def get_summary_hint(data: dict) -> str:
     """Extract a short display hint for a component's property data."""
     if not isinstance(data, dict):
@@ -483,11 +506,11 @@ class ComponentList(QWidget):
         if self.elem_row.is_selected() and self.elem_row.ref is not None and self.elem_row.ref.item is not None:
             refs.append(self.elem_row.ref)
         for it in self.modifiers_tree.selectedItems():
-            ref = it.data(0, Qt.UserRole)
+            ref = _item_ref(it)
             if ref is not None and getattr(ref, 'item', None) is not None:
                 refs.append(ref)
         for it in self.criteria_tree.selectedItems():
-            ref = it.data(0, Qt.UserRole)
+            ref = _item_ref(it)
             if ref is not None and getattr(ref, 'item', None) is not None:
                 refs.append(ref)
         return refs
@@ -541,7 +564,7 @@ class ComponentList(QWidget):
             self.componentSelected.emit(None)
             return
 
-        element_data = self.tree_item.data(0, Qt.UserRole)
+        element_data = _item_element_data(self.tree_item)
         if not isinstance(element_data, dict):
             self.modifiers_tree.clear()
             self.criteria_tree.clear()
@@ -600,7 +623,7 @@ class ComponentList(QWidget):
             if enabled_val is False or enabled_val == "false":
                 titem.setForeground(0, QBrush(theme.qcolor("#777777")))
 
-            titem.setData(0, Qt.UserRole, ref)
+            titem.component_ref = ref
             tree.addTopLevelItem(titem)
         tree.blockSignals(False)
         tree.refresh_height()
@@ -625,7 +648,7 @@ class ComponentList(QWidget):
         if ref is not None:
             for i in range(tree.topLevelItemCount()):
                 titem = tree.topLevelItem(i)
-                if titem.data(0, Qt.UserRole) == ref:
+                if _item_ref(titem) == ref:
                     tree.setCurrentItem(titem)
                     titem.setSelected(True)
                     break
@@ -650,7 +673,7 @@ class ComponentList(QWidget):
         self.criteria_tree.blockSignals(True)
         self.criteria_tree.clearSelection()
         self.criteria_tree.blockSignals(False)
-        ref = items[-1].data(0, Qt.UserRole)
+        ref = _item_ref(items[-1])
         if ref is not None:
             self.componentSelected.emit(ref)
 
@@ -662,7 +685,7 @@ class ComponentList(QWidget):
         self.modifiers_tree.blockSignals(True)
         self.modifiers_tree.clearSelection()
         self.modifiers_tree.blockSignals(False)
-        ref = items[-1].data(0, Qt.UserRole)
+        ref = _item_ref(items[-1])
         if ref is not None:
             self.componentSelected.emit(ref)
 
@@ -710,7 +733,7 @@ class ComponentList(QWidget):
             return
 
         norm_group = "modifier" if group_type == "modifier" else "criterion"
-        old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
+        old_data = fast_deepcopy(_item_element_data(self.tree_item))
         new_data = fast_deepcopy(old_data)
         container_key = "m_Modifiers" if norm_group == "modifier" else "m_SelectionCriteria"
         arr = new_data.setdefault(container_key, [])
@@ -741,7 +764,7 @@ class ComponentList(QWidget):
             arr.insert(curr_insert, new_comp)
             added_refs.append(ComponentRef(self.tree_item, norm_group, curr_insert))
 
-        self.tree_item.setData(0, Qt.UserRole, new_data)
+        _set_item_element_data(self.tree_item, new_data)
         self._push_snapshot_command(old_data, new_data)
         self.rebuild()
 
@@ -754,34 +777,34 @@ class ComponentList(QWidget):
     def _on_paste_criterion(self):
         self._paste_component_for_group("selection_criteria")
 
-    def _paste_component_for_group(self, target_group: str, insert_after_idx: int = -1):
+    def _paste_component_for_group(self, group_type: str, insert_after_idx: int = -1):
         if not self.tree_item:
             return
         clip_text = QApplication.clipboard().text()
-        clip_group, pasted_dicts = parse_component_clipboard(clip_text)
-        if not pasted_dicts or not clip_group:
+        parsed_group, item_dicts = parse_component_clipboard(clip_text)
+        if not item_dicts:
             return
 
-        target_norm = "modifier" if target_group in ("modifier", "modifiers", "operators") else "criterion"
-        clip_norm = "modifier" if clip_group in ("modifier", "modifiers", "operators") else "criterion"
+        expected_group = "modifier" if group_type == "modifier" else "selection_criteria"
+        if parsed_group != expected_group:
+            return
 
-        if target_norm == clip_norm:
-            self._add_component_dicts(target_norm, pasted_dicts, insert_after_idx=insert_after_idx)
+        self._add_component_dicts(group_type, item_dicts, insert_after_idx=insert_after_idx)
 
 
     def _copy_selected_from_tree(self, tree: ComponentTree):
-        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        refs = [ref for it in tree.selectedItems() if (ref := _item_ref(it)) is not None]
         if refs:
             self._copy_components(refs)
 
     def _cut_selected_from_tree(self, tree: ComponentTree):
-        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        refs = [ref for it in tree.selectedItems() if (ref := _item_ref(it)) is not None]
         if refs:
             self._copy_components(refs)
             self._delete_components(refs)
 
     def _duplicate_selected_from_tree(self, tree: ComponentTree):
-        refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+        refs = [ref for it in tree.selectedItems() if (ref := _item_ref(it)) is not None]
         if refs:
             self._duplicate_components(refs)
 
@@ -792,7 +815,7 @@ class ComponentList(QWidget):
     def _copy_components(self, refs: list[ComponentRef]):
         if not self.tree_item or not refs:
             return
-        data = self.tree_item.data(0, Qt.UserRole)
+        data = _item_element_data(self.tree_item)
         if not isinstance(data, dict):
             return
 
@@ -824,7 +847,7 @@ class ComponentList(QWidget):
     def _duplicate_components(self, refs: list[ComponentRef]):
         if not self.tree_item or not refs:
             return
-        data = self.tree_item.data(0, Qt.UserRole)
+        data = _item_element_data(self.tree_item)
         if not isinstance(data, dict):
             return
 
@@ -874,7 +897,7 @@ class ComponentList(QWidget):
         tree = self._get_active_tree()
         group_type = "modifier" if tree is self.modifiers_tree else "selection_criteria"
         sel = tree.selectedItems() if tree else []
-        ref = sel[-1].data(0, Qt.UserRole) if sel else None
+        ref = _item_ref(sel[-1]) if sel else None
         idx = ref.index if ref else -1
         self._paste_component_for_group(group_type, insert_after_idx=idx)
 
@@ -888,7 +911,7 @@ class ComponentList(QWidget):
         if tree:
             items = tree.selectedItems()
             if items:
-                self._delete_components([it.data(0, Qt.UserRole) for it in items if it.data(0, Qt.UserRole) is not None])
+                self._delete_components([ref for it in items if (ref := _item_ref(it)) is not None])
 
     def _tree_context_menu(self, tree: ComponentTree, pos):
         tree.setFocus()
@@ -897,7 +920,7 @@ class ComponentList(QWidget):
             tree.setCurrentItem(item)
             item.setSelected(True)
 
-        ref = item.data(0, Qt.UserRole) if item else None
+        ref = _item_ref(item)
 
         menu = QMenu(tree)
         act_copy = menu.addAction("Copy (Ctrl+C)")
@@ -934,15 +957,15 @@ class ComponentList(QWidget):
         elif action == act_dup:
             self._duplicate_selected_from_tree(tree)
         elif action == act_delete:
-            refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
+            refs = [ref for it in tree.selectedItems() if (ref := _item_ref(it)) is not None]
             self._delete_components(refs)
 
 
     def _on_modifiers_delete_requested(self, items: list):
-        self._delete_components([it.data(0, Qt.UserRole) for it in items if it.data(0, Qt.UserRole) is not None])
+        self._delete_components([ref for it in items if (ref := _item_ref(it)) is not None])
 
     def _on_criteria_delete_requested(self, items: list):
-        self._delete_components([it.data(0, Qt.UserRole) for it in items if it.data(0, Qt.UserRole) is not None])
+        self._delete_components([ref for it in items if (ref := _item_ref(it)) is not None])
 
     def _on_delete_component(self, ref: ComponentRef):
         """Delete a single component. Kept as a direct, single-ref API distinct
@@ -952,7 +975,7 @@ class ComponentList(QWidget):
     def _delete_components(self, refs: list):
         if not self.tree_item or not refs:
             return
-        old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
+        old_data = fast_deepcopy(_item_element_data(self.tree_item))
         new_data = fast_deepcopy(old_data)
 
         by_container: dict[str, list[int]] = {}
@@ -978,7 +1001,7 @@ class ComponentList(QWidget):
         if not touched:
             return
 
-        self.tree_item.setData(0, Qt.UserRole, new_data)
+        _set_item_element_data(self.tree_item, new_data)
         self._push_snapshot_command(old_data, new_data)
         self.rebuild()
         self._select_ref(ComponentRef(self.tree_item, "element", -1))
@@ -993,7 +1016,7 @@ class ComponentList(QWidget):
     def _apply_tree_order(self, tree: ComponentTree, container_key: str):
         if not self.tree_item:
             return
-        old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
+        old_data = fast_deepcopy(_item_element_data(self.tree_item))
         live_arr = old_data.get(container_key) or []
 
         # Read the *current* item order from the tree, but pull each item's
@@ -1006,7 +1029,7 @@ class ComponentList(QWidget):
         # the tree was last rebuilt, silently discarding them.
         new_order = []
         for i in range(tree.topLevelItemCount()):
-            ref = tree.topLevelItem(i).data(0, Qt.UserRole)
+            ref = _item_ref(tree.topLevelItem(i))
             if ref is not None and 0 <= ref.index < len(live_arr):
                 new_order.append(fast_deepcopy(live_arr[ref.index]))
         if not new_order:
@@ -1017,7 +1040,7 @@ class ComponentList(QWidget):
         if new_data == old_data:
             return
 
-        self.tree_item.setData(0, Qt.UserRole, new_data)
+        _set_item_element_data(self.tree_item, new_data)
         self._push_snapshot_command(old_data, new_data)
         self.rebuild()
 
@@ -1025,7 +1048,7 @@ class ComponentList(QWidget):
     def _reorder_component(self, kind: str, from_idx: int, to_idx: int):
         if not self.tree_item:
             return
-        old_data = fast_deepcopy(self.tree_item.data(0, Qt.UserRole))
+        old_data = fast_deepcopy(_item_element_data(self.tree_item))
         new_data = fast_deepcopy(old_data)
         container_key = "m_Modifiers" if kind == "modifier" else "m_SelectionCriteria"
         arr = new_data.get(container_key, [])
@@ -1033,7 +1056,7 @@ class ComponentList(QWidget):
         if 0 <= from_idx < len(arr) and 0 <= to_idx < len(arr):
             item = arr.pop(from_idx)
             arr.insert(to_idx, item)
-            self.tree_item.setData(0, Qt.UserRole, new_data)
+            _set_item_element_data(self.tree_item, new_data)
             self._push_snapshot_command(old_data, new_data)
             self.rebuild()
             self._select_ref(ComponentRef(self.tree_item, kind, to_idx))

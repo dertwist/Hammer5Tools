@@ -158,6 +158,25 @@ class LegacyPropertyList(QWidget):
                 return
 
 
+def _element_data(item) -> dict | None:
+    if item is None:
+        return None
+    node = getattr(item, "smartprop_node", None)
+    if node is not None and isinstance(node.data, dict):
+        return node.data
+    data = item.data(0, Qt.UserRole)
+    return data if isinstance(data, dict) else None
+
+
+def _set_element_data(item, new_data: dict) -> None:
+    if item is None:
+        return
+    node = getattr(item, "smartprop_node", None)
+    if node is not None:
+        node.data = fast_deepcopy(new_data)
+    item.setData(0, Qt.UserRole, new_data)
+
+
     def _resolve(self, ref) -> dict | None:
         """The dict a frame for ``ref`` is built from, or None if unresolvable.
 
@@ -166,7 +185,7 @@ class LegacyPropertyList(QWidget):
         """
         if ref.item is None:
             return None
-        data = ref.item.data(0, Qt.UserRole)
+        data = _element_data(ref.item)
         if not isinstance(data, dict):
             return None
         target = ref.target(data)
@@ -339,7 +358,7 @@ class LegacyPropertyList(QWidget):
         if self.document is None or ref.item is None or frame.value is None:
             return
         item = ref.item
-        old_data = fast_deepcopy(item.data(0, Qt.UserRole))
+        old_data = fast_deepcopy(_element_data(item))
         if not isinstance(old_data, dict):
             return
 
@@ -373,7 +392,7 @@ class LegacyPropertyList(QWidget):
         if new_data == old_data:
             return
 
-        item.setData(0, Qt.UserRole, new_data)
+        _set_element_data(item, new_data)
         # setData replaced the backing dict — re-fingerprint so the next
         # set_components() recognises this frame as still current.
         self._refresh_digest(ref)

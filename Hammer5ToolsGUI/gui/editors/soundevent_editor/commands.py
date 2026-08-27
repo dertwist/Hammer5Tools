@@ -72,10 +72,11 @@ class DuplicateSoundEventsCommand(QUndoCommand):
             for orig, new_item in self.added:
                 idx = self.tree.indexOfTopLevelItem(orig) + 1
                 self.tree.insertTopLevelItem(idx, new_item)
+        self.tree.notify_structure_changed()
 
     def undo(self):
         for _orig, new_item in reversed(self.added):
             idx = self.tree.indexOfTopLevelItem(new_item)
             if idx != -1:
                 self.tree.takeTopLevelItem(idx)
-
+        self.tree.notify_structure_changed()

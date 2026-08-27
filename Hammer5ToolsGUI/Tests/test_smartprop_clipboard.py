@@ -1,4 +1,6 @@
 import pytest
+import subprocess
+import sys
 from gui.editors.smartprop_editor._common import (
     CLIPBOARD_PREFIX,
     CLIPBOARD_BATCH_PREFIX,
@@ -112,6 +114,19 @@ def test_component_ref_containers():
 
     ref_crit2 = ComponentRef(item=None, kind="selection_criteria", index=0)
     assert ref_crit2.container() == "m_SelectionCriteria"
+
+
+def test_component_model_does_not_import_qt():
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "import sys; sys.path.insert(0, 'Hammer5ToolsGUI');"
+         " import gui.editors.smartprop_editor.props.model;"
+         " print('PySide6' in sys.modules)"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "False"
 
 
 def test_batch_append_and_id_assignment():

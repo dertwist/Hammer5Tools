@@ -3,6 +3,7 @@ import shutil
 
 from gui.editors.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushButton, QMessageBox
+from PySide6.QtCore import Signal
 from gui.editors.hotkey_editor.dialog import KeyDialog
 from gui.editors.hotkey_editor.objects import hammer_commands, hammer_default, hammer_macros
 from gui.settings.common import get_addon_name, get_cs2_path
@@ -12,10 +13,12 @@ import os
 import datetime
 import keyvalues3 as kv3
 from gui.common import editor_info, app_dir, Hotkeys_Path, user_data_dir
+from gui.editors.hotkey_editor.document_model import HotkeyDocument
 
 log = logging.getLogger(__name__)
 
 class KeyButton(QPushButton):
+    key_changed = Signal(object)
     DEFAULT_COLOR = "#b2b2b2"
     ACTIVE_COLOR = "#b2b2b2"
     BUTTON_TEXT_DEFAULT = 'Press a key'
@@ -44,6 +47,7 @@ class KeyButton(QPushButton):
                 self.setText(val)
                 self.key = val
                 self.set_button_style(self.ACTIVE_COLOR)
+            self.key_changed.emit(self.key)
         else:
             pass
 class HotkeyEditorMainWindow(QMainWindow):
@@ -56,7 +60,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         # variables definition
         self.selected_preset = ''
         self.hotkeys_path = ''
-        self.data = {}
+        self.document = HotkeyDocument()
         self.opened_file = ''
         self.editor = ''
         self.explorer_instance = None
@@ -148,22 +152,23 @@ class HotkeyEditorMainWindow(QMainWindow):
                         return root_item.child(i)
             return None
 
-        for key, value in self.data.items():
-            if key == 'm_Bindings':
-                for item in value:
-                    context = item['m_Context']
-                    command = item['m_Command']
-                    input_value = item['m_Input']
-                    context_item = add_context_if_not_exist(context)
+        for binding in self.document.bindings:
+            context = binding.context
+            command = binding.command
+            input_value = binding.input
+            context_item = add_context_if_not_exist(context)
 
-                    if not is_command_exist(context, command, input_value):
-                        existing_items[context].add((command, input_value))
-                        new_item = QTreeWidgetItem(context_item)
-                        new_item.setText(0, command)
+            if not is_command_exist(context, command, input_value):
+                existing_items[context].add((command, input_value))
+                new_item = QTreeWidgetItem(context_item)
+                new_item.setText(0, command)
 
-                        key_editor = KeyButton(name=input_value)
-                        context_item.addChild(new_item)
-                        self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+                key_editor = KeyButton(name=input_value)
+                key_editor.key_changed.connect(
+                    lambda value, target=binding: setattr(target, "input", value)
+                )
+                context_item.addChild(new_item)
+                self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
         for context, commands in hammer_commands.items():
             context_item = add_context_if_not_exist(context)
@@ -177,6 +182,10 @@ class HotkeyEditorMainWindow(QMainWindow):
                     new_item = QTreeWidgetItem(context_item)
                     new_item.setText(0, command)
                     key_editor = KeyButton(name="")  # Assuming no specific input for additional actions
+                    binding = self.document.ensure(context, command)
+                    key_editor.key_changed.connect(
+                        lambda value, target=binding: setattr(target, "input", value)
+                    )
                     context_item.addChild(new_item)
                     self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
@@ -187,7 +196,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         filename = self.explorer_instance.get_current_path()
         self.explorer_instance.add_recent_file(filename)
         try:
-            self.data.update(kv3.read(filename).value)
+            self.document = HotkeyDocument.from_mapping(kv3.read(filename).value)
         except Exception as error:
             log.error(error)
         self.opened_file = filename
@@ -201,20 +210,13 @@ class HotkeyEditorMainWindow(QMainWindow):
             output = editor_info
             if self.editor == 'hammer':
                 output.update(hammer_macros)
-            output.update({'m_Bindings': self.serializing()})
+            output.update(self.document.to_mapping())
             # There is a huge problem with python interpretation, avoid \\ in string. GizmoDebugHook have \\ as input.
             # So in output it would be only one \ test
             kv3.write(output, self.opened_file)
             print('Preset saved')
     def serializing(self):
-        output = []
-        root = self.ui.keybindings_tree.invisibleRootItem()
-        for context_index in range(root.childCount()):
-            for command_index in range(root.child(context_index).childCount()):
-                input_widget = (self.ui.keybindings_tree.itemWidget(root.child(context_index).child(command_index), 1)).key
-                if input_widget is not None:
-                    output.append({'m_Context': root.child(context_index).text(0), 'm_Command': root.child(context_index).child(command_index).text(0), 'm_Input': input_widget})
-        return output
+        return self.document.to_mapping()["m_Bindings"]
     def new_preset(self):
         name = f'{self.editor}_new_keybindings_{datetime.datetime.now().strftime("%m_%d_%Y")}'
         path = os.path.join(self.hotkeys_path, f'{name}.keybindings')

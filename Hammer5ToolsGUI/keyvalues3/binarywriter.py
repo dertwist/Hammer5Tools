@@ -152,10 +152,18 @@ class BinaryV1UncompressedWriter:
         return blob
 
 
-import lz4.block
+try:
+    import lz4.block
+except ImportError:
+    lz4 = None
+
+
 class BinaryLZ4(BinaryV1UncompressedWriter):
     encoding = kv3.ENCODING_BINARY_BLOCK_LZ4
+
     def __bytes__(self):
+        if lz4 is None:
+            raise ImportError("lz4 is required for BinaryLZ4 serialization")
         self.strings.clear()
         blob = self.encode_header()
         body_uncompressed = self.encode_body()

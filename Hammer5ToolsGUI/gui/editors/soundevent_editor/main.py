@@ -21,7 +21,7 @@ from gui.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCom
 from gui.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from gui.editors.soundevent_editor.property_browser import PropertyBrowserWidget
 from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton, QLineEdit
-from gui.common import kv3, editor_info, generate_unique_name, set_qdock_tab_style, Kv3ToJson, JsonToKv3
+from gui.common import fast_deepcopy, kv3, editor_info, generate_unique_name, set_qdock_tab_style, Kv3ToJson, JsonToKv3
 from gui.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from gui.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
 from gui.editors.soundevent_editor.soundevent_player import play_soundevent
@@ -80,10 +80,7 @@ class CopyDefaultSoundFolders:
                     shutil.copytree(source_item, destination_item, dirs_exist_ok=True)
                 else:
                     shutil.copy2(source_item, destination_item)
-from gui.editors.soundevent_editor.comment_handler import (
-    extract_vsndevts_comments,
-    serialize_vsndevts_with_comments,
-)
+from gui.editors.soundevent_editor.document_model import SoundEventDocument
 
 class LoadSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
@@ -91,51 +88,37 @@ class LoadSoundEvents:
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        file_header_comments, event_comments, file_footer_comments = extract_vsndevts_comments(content)
-        tree.file_header_comments = file_header_comments
-        tree.file_footer_comments = file_footer_comments
-        tree.editor_info_comments = event_comments.get("editor_info", "")
-
-        data = Kv3ToJson(content)
-        tree.editor_info_data = data.get("editor_info")
+        self.document = SoundEventDocument.from_text(content)
+        tree.soundevent_document = self.document
 
         self.tree = tree
         self.tree.clear()
         self.root = self.tree.invisibleRootItem()
-        for key in data:
-            if key != "editor_info":
-                new_item = HierarchyItemModel(_data=data[key], _name=key, _class='Event')
-                if key in event_comments:
-                    new_item.setData(0, Qt.UserRole + 1, event_comments[key])
-                self.root.addChild(new_item)
+        for key, value in self.document.events.items():
+            new_item = HierarchyItemModel(_data=value, _name=key, _class='Event')
+            new_item.soundevent_name = key
+            self.root.addChild(new_item)
 
 class SaveSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
         super().__init__()
         data = {}
-        event_comments = {}
-        file_header_comments = getattr(tree, "file_header_comments", "")
-        file_footer_comments = getattr(tree, "file_footer_comments", "")
-        editor_info_comments = getattr(tree, "editor_info_comments", "")
-        editor_info_data = getattr(tree, "editor_info_data", None)
+        document = getattr(tree, "soundevent_document", SoundEventDocument())
 
         for index in range(tree.invisibleRootItem().childCount()):
             item = tree.invisibleRootItem().child(index)
             key = str(item.text(0))
+            original_key = getattr(item, "soundevent_name", key)
+            if original_key != key and original_key in document.events:
+                document.rename(original_key, key)
+                item.soundevent_name = key
             value = item.data(0, Qt.UserRole)
-            comment = item.data(0, Qt.UserRole + 1)
             data[key] = value
-            if comment:
-                event_comments[key] = comment
-
-        output_text = serialize_vsndevts_with_comments(
-            data,
-            file_header_comments=file_header_comments,
-            event_comments=event_comments,
-            file_footer_comments=file_footer_comments,
-            editor_info_data=editor_info_data,
-            editor_info_comments=editor_info_comments,
-        )
+        document.event_comments = {
+            key: comment for key, comment in document.event_comments.items() if key in data
+        }
+        document.events = data
+        output_text = document.to_text()
         with open(path, 'w', encoding="utf-8") as output:
             output.write(output_text)
 
@@ -163,6 +146,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Init Hierarchy
         self.ui.hierarchy_widget.deleteLater()
         self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
+        self.ui.hierarchy_widget.soundevent_document = SoundEventDocument()
+        self.ui.hierarchy_widget.structure_changed = self._sync_soundevent_model_from_tree
         self.ui.addon_soundevents_tab.layout().insertWidget(1, self.ui.hierarchy_widget)
 
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
@@ -645,9 +630,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             return
         
         template_name = template_name.strip()
-        data = item.data(0, Qt.UserRole)
-        if not isinstance(data, dict):
-            data = {}
+        data = self.ui.hierarchy_widget.soundevent_document.events.get(event_name, {})
             
         from gui.common import SoundEventEditor_Preset_Path, JsonToKv3
         os.makedirs(SoundEventEditor_Preset_Path, exist_ok=True)
@@ -667,6 +650,29 @@ class SoundEventEditorMainWindow(QMainWindow):
     def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
         item.setData(0, Qt.UserRole, _data)
+        document = self.ui.hierarchy_widget.soundevent_document
+        document.events[item.text(0)] = fast_deepcopy(_data)
+
+    def _sync_soundevent_model_from_tree(self):
+        """Synchronize visible event order/names into the Qt-free document model."""
+        tree = self.ui.hierarchy_widget
+        document = tree.soundevent_document
+        events = {}
+        for index in range(tree.topLevelItemCount()):
+            item = tree.topLevelItem(index)
+            name = item.text(0)
+            old_name = getattr(item, "soundevent_name", name)
+            if old_name != name and old_name in document.event_comments:
+                document.event_comments[name] = document.event_comments.pop(old_name)
+            value = document.events.get(old_name)
+            if value is None:
+                value = item.data(0, Qt.UserRole) or {}
+            events[name] = fast_deepcopy(value)
+            item.soundevent_name = name
+        document.events = events
+        document.event_comments = {
+            key: value for key, value in document.event_comments.items() if key in events
+        }
 
     def filter_editor_properties(self, text: str):
         """Filter active property frames in Property Editor by property name."""
@@ -725,7 +731,15 @@ class SoundEventEditorMainWindow(QMainWindow):
         new_name = item.text(0)
         if old_name is None or old_name == new_name:
             return
-        cmd = RenameItemCommand(item, old_name, new_name, on_renamed=self.update_properties_label)
+        cmd = RenameItemCommand(
+            item,
+            old_name,
+            new_name,
+            on_renamed=lambda: (
+                self._sync_soundevent_model_from_tree(),
+                self.update_properties_label(),
+            ),
+        )
         self.undo_stack.push(cmd)
 
     # [Tree widget hierarchy filter]
@@ -893,7 +907,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     def serialization_hierarchy_items_single(self, item):
         """Convert single tree item to dict"""
         data = {}
-        value_row = item.data(0, Qt.UserRole)
+        value_row = self.ui.hierarchy_widget.soundevent_document.events.get(item.text(0), {})
         name_row = item.text(0)
         parent_data = value_row
         data.update({name_row: parent_data})
@@ -906,7 +920,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         if data is None:
             data = {}
         for item in tree.selectedItems():
-            value_row = item.data(0, Qt.UserRole)
+            value_row = self.ui.hierarchy_widget.soundevent_document.events.get(item.text(0), {})
             name_row = item.text(0)
             parent_data = value_row
             data.update({name_row:parent_data})
