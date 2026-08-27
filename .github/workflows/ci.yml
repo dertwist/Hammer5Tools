@@ -38,11 +38,9 @@ jobs:
       # Star imports hide these from every reader; a NameError only shows up when
       # the branch runs. Unused-import warnings are not gated on yet.
       - name: Check for undefined names
-        shell: pwsh
         run: |
           pip install pyflakes
-          $undefined = python -m pyflakes Hammer5ToolsGUI/gui | Select-String "undefined name '"
-          if ($undefined) { $undefined; throw 'pyflakes reported undefined names' }
+          python -c "import subprocess, sys; out = subprocess.run([sys.executable, '-m', 'pyflakes', 'Hammer5ToolsGUI/gui'], capture_output=True, text=True); undefined = [l for l in out.stdout.splitlines() if \"undefined name '\" in l]; (print('\n'.join(undefined)), sys.exit(1)) if undefined else None"
 
       # TUnit runs as its own executable; the legacy xUnit suite still needs
       # `dotnet test` until it moves to Microsoft Testing Platform.
