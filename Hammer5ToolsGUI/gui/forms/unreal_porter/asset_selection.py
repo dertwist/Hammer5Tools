@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QDialogButtonBox,
 )
 
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.settings.common import get_settings_bool, set_settings_bool
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.forms.unreal_porter.asset_tree_model import (
@@ -285,7 +285,7 @@ class AssetSelectionDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Select assets")
         self.resize(720, 720)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setProperty("h5Component", "unrealAssetSelectionDialog")
 
         self._asset_keys = sorted(asset_keys)

@@ -13,6 +13,13 @@ QLabel {
     color: @text;
 }
 
+QLabel#console_label {
+    color: @text_muted;
+    font: 580 9pt "Segoe UI";
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
 /* The shared group-box look: a single rule above the title, no box around
    the content. Previously duplicated between qt_global_stylesheet.py and
    common.py's apply_stylesheets() path, where the two copies drifted apart
@@ -200,7 +207,7 @@ QSlider::add-page:horizontal {
 
 QStatusBar {
     background-color: @background;
-    color: @text;
+    color: @text_muted;
     font: 600 10pt "Segoe UI";
     border-top: 1px solid @hex_585858;
 }

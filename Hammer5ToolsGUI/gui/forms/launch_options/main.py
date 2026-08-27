@@ -3,14 +3,14 @@ from gui.settings.common import get_addon_name, get_settings_value, set_settings
 from gui.forms.launch_options.ui_main import Ui_preferences_dialog
 from gui.other.addon_functions import assemble_commands
 from gui.common import default_commands
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 
 class LaunchOptionsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_preferences_dialog()
         self.ui.setupUi(self)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.commands = get_settings_value("LAUNCH", "commands")
         if not self.commands:
             self.commands = default_commands

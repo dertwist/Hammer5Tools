@@ -44,17 +44,30 @@ def test_compiled_qss_does_not_contain_invalid_combobox_item_pseudo_state():
     assert "QComboBox:item" not in qss
 
 
-def test_dark_theme_matches_pre_brightening_palette():
-    dark = theme.get_theme(theme.LEVEL_DARK)
-    assert dark.background == "#1c1c1c"
-    assert dark.surface == "#151515"
-    assert dark.surface_raised == "#1d1d1f"
-    assert dark.surface_input == "#242426"
-    assert dark.border == "#363639"
-    assert dark.border_strong == "#505050"
-    assert dark.selection == "#414956"
-    assert dark.accent == "#3a78c4"
-    assert dark.text == "#e3e3e3"
+def test_combobox_alternate_background_present_in_compiled_qss():
+    qss = compile_stylesheet(theme.STANDARD_THEME)
+    assert "QComboBox QAbstractItemView::item:alternate" in qss
+    assert "alternate-background-color" in qss
+    assert "qproperty-alternatingRowColors: true;" in qss
+
+
+def test_legacy_dark_level_falls_back_to_standard():
+    theme.set_level(1)
+    try:
+        assert theme.get_theme() is theme.STANDARD_THEME
+        assert theme.selected() == theme.LEVEL_STANDARD
+    finally:
+        theme.set_level(theme.LEVEL_STANDARD)
+
+
+def test_system_level_resolves_to_an_explicit_theme():
+    theme.set_level(theme.LEVEL_SYSTEM)
+    try:
+        assert theme.selected() == theme.LEVEL_SYSTEM
+        assert theme.level() in (theme.LEVEL_STANDARD, theme.LEVEL_BRIGHT)
+        assert theme.level() == theme.system_level()
+    finally:
+        theme.set_level(theme.LEVEL_STANDARD)
 
 
 def test_standard_theme_matches_canonical_palette():
@@ -79,9 +92,32 @@ def test_smartprop_headers_present_in_compiled_qss():
     assert "QFrame#frame > QLineEdit#variable_name" in qss
     assert "QFrame#frame > QPushButton#add_button" in qss
     assert "QFrame#frame_layout" in qss
+    assert 'h5Component="smartpropPropertyFrame"' in qss
+    assert 'h5Component="smartpropGroupHeaderFrame"' in qss
+    assert 'h5Component="smartpropVariableBody"' in qss
+    assert 'h5Component="smartpropDisplayNameFrame"' in qss
+    assert 'h5Component="smartpropFrameLayout"' in qss
     assert "h5VarKind=\"string\"" in qss
     assert "h5VarKind=\"bool\"" in qss
     assert "h5VarKind=\"float\"" in qss
+
+
+def test_soundevent_property_headers_present_in_compiled_qss():
+    qss = compile_stylesheet(theme.STANDARD_THEME)
+    assert 'h5Component="soundeventPropertyHeader"' in qss
+    assert "QFrame#header QLabel#label_2" in qss
+    assert "QFrame#header QCheckBox#show_child" in qss
+    assert "QFrame#header QToolButton#gf" in qss
+    assert "QFrame#header QLineEdit#property_class" in qss
+    assert "QFrame#header QLineEdit#element_id_display" in qss
+    assert "QFrame#header QPushButton#delete_button" in qss
+    assert "QFrame#header QPushButton#copy_button" in qss
+
+
+def test_status_line_console_label_present_in_compiled_qss():
+    qss = compile_stylesheet(theme.STANDARD_THEME)
+    assert "QLabel#console_label" in qss
+    assert f"color: {theme.STANDARD_THEME.text_muted};" in qss
 
 
 def test_mapbuilder_is_styled_through_the_shared_theme():
@@ -105,7 +141,6 @@ def test_mapbuilder_is_styled_through_the_shared_theme():
 def test_mapbuilder_chart_colours_change_with_the_theme():
     chart_colours = ("#ff5a5a", "#ffd700", "#32b8c6")
     for canonical in chart_colours:
-        assert theme.resolve_hex(theme.DARK_THEME, canonical) != canonical
         assert theme.resolve_hex(theme.BRIGHT_THEME, canonical) != canonical
 
 
@@ -137,3 +172,46 @@ def test_bright_theme_darkens_foreground_feature_colours():
         assert bright != canonical, f"{canonical} has no Bright counterpart"
         assert int(bright[1:3], 16) + int(bright[3:5], 16) + int(bright[5:7], 16) < \
                int(canonical[1:3], 16) + int(canonical[3:5], 16) + int(canonical[5:7], 16)
+
+
+def test_audio_editor_meter_shades_have_bright_counterparts():
+    """The level meters paint canonical hexes; each needs a Bright counterpart."""
+    for canonical in ("#242428", "#32c85a", "#dcc832", "#e63232",
+                      "#4b525f", "#4ba0f0", "#ff5050", "#ffd54f", "#ffc850"):
+        assert theme.resolve_hex(theme.BRIGHT_THEME, canonical) != canonical, canonical
+
+
+def test_audio_editor_painters_carry_no_literal_colours():
+    """The VU meters and waveform used raw RGB literals, so they stayed dark on
+    Bright while the rest of the editor followed the theme. QPainter and
+    pyqtgraph colours must come from theme.color()/qcolor() or a token."""
+    from pathlib import Path
+
+    editor = Path(__file__).resolve().parents[1] / "gui" / "editors" / "soundevent_editor"
+    literal = re.compile(r"QColor\(\s*(?:\d|0x)|mk(?:Pen|Brush)\(\s*\(")
+    offenders = []
+    for name in ("audio_player.py", "wave_editor.py"):
+        path = editor / name
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if literal.search(line):
+                offenders.append(f"{name}:{number}: {line.strip()}")
+    assert not offenders, "literal colours in audio painters:\n" + "\n".join(offenders)
+
+
+def test_vintage_theme_is_registered_and_olive():
+    """Vintage Steam recolours the whole chrome; every neutral must land on the
+    olive ramp, not stay a grey the palette forgot to map."""
+    vintage = theme.get_theme(theme.LEVEL_VINTAGE)
+
+    assert theme.THEMES[theme.LEVEL_VINTAGE] is vintage
+    for token in ("background", "surface", "surface_input", "border", "selection"):
+        red, green, blue = (int(getattr(vintage, token)[i:i + 2], 16) for i in (1, 3, 5))
+        assert green > red > blue, f"{token} is not an olive green"
+
+
+def test_vintage_theme_covers_every_canonical_shade():
+    """A canonical shade with no Vintage counterpart falls through as its dark
+    grey and punches a hole in the olive."""
+    missing = [canonical for canonical, _ in theme.BRIGHT_THEME.palette
+               if theme.resolve_hex(theme.VINTAGE_THEME, canonical) == canonical]
+    assert not missing, "no Vintage counterpart for: " + ", ".join(missing)

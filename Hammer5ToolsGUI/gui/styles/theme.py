@@ -4,9 +4,10 @@ from dataclasses import dataclass, fields
 
 from PySide6.QtGui import QColor
 
-LEVEL_DARK = 1
+LEVEL_SYSTEM = 0
 LEVEL_STANDARD = 2
 LEVEL_BRIGHT = 3
+LEVEL_VINTAGE = 4
 
 
 @dataclass(frozen=True)
@@ -39,50 +40,6 @@ class Theme:
     palette: tuple[tuple[str, str], ...]
     level: int
 
-
-_DARK_COLORS = (
-    ("#292929", "#161616"), ("#2c2c2c", "#1a1a1a"),
-    ("#2e2e2e", "#1c1c1c"), ("#2f2f31", "#1d1d1f"),
-    ("#303030", "#1e1e1e"), ("#343434", "#222222"),
-    ("#353535", "#232323"), ("#363636", "#242424"),
-    ("#363637", "#242426"), ("#373737", "#262626"),
-    ("#37373c", "#26262b"), ("#38383a", "#272729"),
-    ("#38383b", "#27272a"), ("#3b3a3a", "#2a2929"),
-    ("#3b3b3b", "#2a2a2a"), ("#3b3f48", "#2a2e38"),
-    ("#3d4d5e", "#2c3e50"), ("#3e3e3e", "#2d2d2d"),
-    ("#3e3e41", "#2d2d30"), ("#3e434b", "#2d333b"),
-    ("#3f3f42", "#2e2e32"), ("#424242", "#323232"),
-    ("#434343", "#333333"), ("#434346", "#333336"),
-    ("#43464d", "#33363d"), ("#464649", "#363639"),
-    ("#4a4a4a", "#3a3a3a"), ("#4d4d51", "#3d3d42"),
-    ("#4d596b", "#3e4b5e"), ("#4f4f4f", "#404040"),
-    ("#515965", "#414956"), ("#535353", "#444444"),
-    ("#586776", "#4a5a6a"), ("#5d6066", "#4f5259"),
-    ("#5e5e5e", "#505050"), ("#636363", "#555555"),
-    ("#6d6d6d", "#606060"), ("#727272", "#666666"),
-    ("#777777", "#6b6b6b"), ("#787878", "#6c6c6c"),
-    ("#797979", "#6d6d6d"), ("#7c7c85", "#71717a"),
-    ("#8a8a8a", "#808080"), ("#929292", "#888888"),
-    ("#a1a1a1", "#999999"), ("#a2a8b1", "#9aa0aa"),
-    ("#a5a5a5", "#9d9d9d"), ("#aaaaaa", "#a3a3a3"),
-    ("#b1b1b1", "#aaaaaa"), ("#b2b2b2", "#ababab"),
-    ("#b3d096", "#accc8d"), ("#b6b6b6", "#b0b0b0"),
-    ("#bebebe", "#b8b8b8"), ("#c0c0c0", "#bababa"),
-    ("#cccccc", "#c8c8c8"), ("#d0d0d0", "#cccccc"),
-    ("#d4d4d4", "#d0d0d0"), ("#e2e2e2", "#e0e0e0"),
-    ("#e5e5e5", "#e3e3e3"),
-    ("#1495c0", "#008cba"), ("#252525", "#121212"),
-    ("#2a2a2c", "#18181a"), ("#35383e", "#23272d"),
-    ("#37373b", "#26262a"), ("#3d3d3d", "#2c2c2c"),
-    ("#585858", "#4a4a4a"), ("#5ab55e", "#4caf50"),
-    ("#6e727a", "#61666e"), ("#939393", "#8a8a8a"),
-    ("#97979c", "#8e8e93"), ("#999999", "#909090"),
-    ("#a2a79a", "#9a9f91"), ("#a8a8a8", "#a0a0a0"),
-    ("#b3b3b3", "#acacac"), ("#c8c8c8", "#c3c3c3"),
-    ("#cfcfcf", "#cbcbcb"),
-    ("#ff5a5a", "#d94a4a"), ("#ffd700", "#c69b00"),
-    ("#32b8c6", "#28949f"),
-)
 
 _BRIGHT_COLORS = (
     ("#292929", "#d6d6d6"), ("#2c2c2c", "#d3d3d3"),
@@ -198,9 +155,12 @@ _BRIGHT_COLORS = (
     ("#134f87", "#78b4ec"),  # bg
     ("#1ab8e0", "#1fbde5"),  # bg
     ("#233827", "#c7dccb"),  # bg
+    ("#242428", "#c4c4c8"),  # bg - recessed level-meter channel
     ("#2e7d32", "#82d186"),  # border
+    ("#32c85a", "#1e8a3f"),  # fg - level meter, safe zone
     ("#3e341b", "#e4dac1"),  # bg
     ("#4ba0f0", "#0d589f"),  # fg
+    ("#4b525f", "#a6acb8"),  # fg - unplayed waveform bars
     ("#4ec9b0", "#1d6153"),  # fg
     ("#5aa0e0", "#1b5890"),  # fg
     ("#5fb96a", "#2a5f30"),  # fg
@@ -208,9 +168,11 @@ _BRIGHT_COLORS = (
     ("#81c784", "#2c642f"),  # fg
     ("#c62828", "#d73939"),  # border
     ("#d64545", "#a52424"),  # fg
+    ("#dcc832", "#8a7614"),  # fg - level meter, hot zone
     ("#e05656", "#a71f1f"),  # fg
     ("#e0a030", "#704e11"),  # fg
     ("#e57373", "#aa2020"),  # fg
+    ("#e63232", "#c01f1f"),  # fg - level meter, clip zone
     ("#e65100", "#9f3800"),  # fg
     ("#f0f0f0", "#c0c0c0"),  # bg - subtle band, stays a band on Bright
     ("#f57f17", "#e8720a"),  # border
@@ -220,6 +182,103 @@ _BRIGHT_COLORS = (
 )
 
 
+#: Every canonical shade re-cut for Vintage Steam. Neutrals are placed on one
+#: olive ramp (the 2003 Steam skin's hue, anchored so #2e2e2e reads as the
+#: window green and #e5e5e5 stays the text off-white); chromatic shades keep
+#: their hue, lose a fifth of their saturation and, when dark, are lifted so
+#: they sit on the olive instead of punching holes in it.
+_VINTAGE_COLORS = (
+    ("#292929", "#545d49"), ("#2c2c2c", "#56604a"),
+    ("#2e2e2e", "#58624c"), ("#2f2f31", "#59644d"),
+    ("#303030", "#59644d"), ("#343434", "#5c684f"),
+    ("#353535", "#5d6950"), ("#363636", "#5e6a51"),
+    ("#363637", "#5e6a51"), ("#373737", "#5f6a51"),
+    ("#37373c", "#616d53"), ("#38383a", "#606c53"),
+    ("#38383b", "#616d53"), ("#3b3a3a", "#626e53"),
+    ("#3b3b3b", "#626e54"), ("#3b3f48", "#677458"),
+    ("#3d4d5e", "#71805f"), ("#3e3e3e", "#647156"),
+    ("#3e3e41", "#657357"), ("#3e434b", "#69775a"),
+    ("#3f3f42", "#667357"), ("#424242", "#677558"),
+    ("#434343", "#687659"), ("#434346", "#69775a"),
+    ("#43464d", "#6c7b5c"), ("#464649", "#6c7a5b"),
+    ("#4a4a4a", "#6e7d5d"), ("#4d4d51", "#728160"),
+    ("#4d596b", "#7c8e68"), ("#4f4f4f", "#728160"),
+    ("#515965", "#7b8d67"), ("#535353", "#758562"),
+    ("#586776", "#859770"), ("#5d6066", "#80936b"),
+    ("#5e5e5e", "#7e9069"), ("#636363", "#82946c"),
+    ("#6d6d6d", "#899a76"), ("#727272", "#8d9d7b"),
+    ("#777777", "#91a07f"), ("#787878", "#92a180"),
+    ("#797979", "#92a181"), ("#7c7c85", "#98a689"),
+    ("#8a8a8a", "#a0ac92"), ("#929292", "#a6b199"),
+    ("#a1a1a1", "#b1baa7"), ("#a2a8b1", "#b8c0af"),
+    ("#a5a5a5", "#b4bdab"), ("#aaaaaa", "#b8c0af"),
+    ("#b1b1b1", "#bec4b6"), ("#b2b2b2", "#bec5b7"),
+    ("#b3d096", "#b5caa0"), ("#b6b6b6", "#c1c8ba"),
+    ("#bebebe", "#c8cdc1"), ("#c0c0c0", "#c9cec3"),
+    ("#cccccc", "#d2d6ce"), ("#d0d0d0", "#d5d9d1"),
+    ("#d4d4d4", "#d9dcd5"), ("#e2e2e2", "#e3e6e1"),
+    ("#e5e5e5", "#e6e8e4"), ("#ffffff", "#fafafa"),
+    ("#1495c0", "#2e90ac"), ("#252525", "#515a46"),
+    ("#2a2a2c", "#555f4a"), ("#35383e", "#616d53"),
+    ("#37373b", "#606c53"), ("#3d3d3d", "#637055"),
+    ("#585858", "#798a65"), ("#5ab55e", "#6bad6c"),
+    ("#6e727a", "#8f9e7d"), ("#939393", "#a6b19a"),
+    ("#97979c", "#abb5a0"), ("#999999", "#abb5a0"),
+    ("#a2a79a", "#b1baa7"), ("#a8a8a8", "#b7bfad"),
+    ("#b3b3b3", "#bfc6b7"), ("#c8c8c8", "#cfd4ca"),
+    ("#cfcfcf", "#d5d8d0"), ("#ff5a5a", "#e97573"),
+    ("#ffd700", "#ddc327"), ("#32b8c6", "#49aeb4"),
+    ("#111111", "#414739"), ("#1a1a1c", "#495040"),
+    ("#1a528a", "#336694"), ("#1b5e20", "#317335"),
+    ("#1d8348", "#359159"), ("#242424", "#505945"),
+    ("#2471a3", "#3e81a7"), ("#252527", "#515b47"),
+    ("#282828", "#535c48"), ("#2980b9", "#3f83a9"),
+    ("#29b6f6", "#4bafd8"), ("#2d333f", "#5e6a51"),
+    ("#2e6b9e", "#407092"), ("#2f2f32", "#5a644d"),
+    ("#3498db", "#5098c3"), ("#363639", "#5f6b52"),
+    ("#383838", "#606b52"), ("#3a3a3c", "#626e54"),
+    ("#3b3b3e", "#637055"), ("#3e2020", "#563634"),
+    ("#3e3e42", "#667357"), ("#4ca0ad", "#5c9da2"),
+    ("#555555", "#768763"), ("#666666", "#84966f"),
+    ("#6a9955", "#71965f"), ("#6c87ff", "#8398ea"),
+    ("#73d1bf", "#84c7b7"), ("#7ac07a", "#86b985"),
+    ("#7dda58", "#88cb6d"), ("#7fb800", "#8bbd1d"),
+    ("#8684b8", "#8f90b1"), ("#8b5e3c", "#957150"),
+    ("#8e44ad", "#8c58a1"), ("#8e8e8e", "#a3ae95"),
+    ("#8fb0ff", "#a0b9ef"), ("#974533", "#9e5c49"),
+    ("#9d9d9d", "#aeb8a3"), ("#a0c4ff", "#afc9f2"),
+    ("#a375ff", "#ab8ceb"), ("#a4b6ef", "#b0bee5"),
+    ("#b0a66e", "#a9a479"), ("#b5ffef", "#c0f5e9"),
+    ("#b6efa2", "#bde6ae"), ("#c0392b", "#b14e3f"),
+    ("#c1c1c1", "#cacfc4"), ("#c7c7bb", "#cacfc4"),
+    ("#d08a4a", "#bf905f"), ("#d1494a", "#c0625f"),
+    ("#d9b34c", "#c7ae62"), ("#e53935", "#ce5750"),
+    ("#e5a00d", "#cd9c2a"), ("#e5c07b", "#d7bf8b"),
+    ("#e67e22", "#cd8640"), ("#eca4a0", "#e2b0ac"),
+    ("#ef5350", "#da6e68"), ("#f2c94c", "#dcc065"),
+    ("#f44747", "#dd6562"), ("#f4a9f6", "#ebb5eb"),
+    ("#f6c273", "#e5c187"), ("#ff7b7d", "#ed9090"),
+    ("#ffb300", "#dda927"), ("#ffbdbe", "#f6c7c7"),
+    ("#ffd199", "#f1d1a8"), ("#134f87", "#2c6392"),
+    ("#1ab8e0", "#38aec7"), ("#233827", "#57624b"),
+    ("#242428", "#515b47"), ("#2e7d32", "#458b47"),
+    ("#32c85a", "#4aba64"), ("#3e341b", "#564c30"),
+    ("#4ba0f0", "#66a3d9"), ("#4b525f", "#768763"),
+    ("#4ec9b0", "#63bca6"), ("#5aa0e0", "#70a3cd"),
+    ("#5fb96a", "#6fb175"), ("#65666d", "#869872"),
+    ("#81c784", "#8dc08f"), ("#c62828", "#b6423e"),
+    ("#d64545", "#c3605c"), ("#dcc832", "#c6ba4c"),
+    ("#e05656", "#ce6e6b"), ("#e0a030", "#c99e4b"),
+    ("#e57373", "#d78784"), ("#e63232", "#ce524e"),
+    ("#e65100", "#cc601f"), ("#f0f0f0", "#eeefed"),
+    ("#f57f17", "#d78739"), ("#ff5050", "#e86e6b"),
+    ("#ffc850", "#e8c26b"), ("#ffd54f", "#e8cb6a"),
+    ("#1e1e1e", "#4b5342"), ("#252528", "#525b47"),
+    ("#393939", "#606c53"), ("#505864", "#7a8c66"),
+    ("#707070", "#8c9c79"), ("#878787", "#9daa8f"),
+    ("#e0d28a", "#d5cc97"), ("#fff8be", "#f6f2c7"),
+)
+
 def _make_theme(*, level, palette, viewport_clear, **colors):
     return Theme(
         **colors, control_height="22px", spacing_unit="4px", radius="2px",
@@ -228,15 +287,6 @@ def _make_theme(*, level, palette, viewport_clear, **colors):
     )
 
 
-DARK_THEME = _make_theme(
-    level=LEVEL_DARK, palette=_DARK_COLORS, viewport_clear=(0.11, 0.11, 0.11),
-    background="#1c1c1c", surface="#151515", surface_raised="#1d1d1f",
-    surface_input="#242426", text="#e3e3e3", text_muted="#9d9d9d",
-    text_disabled="#6d6d6d", border="#363639", border_strong="#505050",
-    accent="#3a78c4", accent_hover="#4a5a6a", accent_pressed="#606c77",
-    selection="#414956", selection_text="#ffffff", error="#d1494a",
-    warning="#e5a00d", success="#4caf50",
-)
 STANDARD_THEME = _make_theme(
     level=LEVEL_STANDARD, palette=(), viewport_clear=(0.18, 0.18, 0.18),
     background="#2e2e2e", surface="#272727", surface_raised="#2f2f31",
@@ -256,21 +306,61 @@ BRIGHT_THEME = _make_theme(
     warning="#e5a00d", success="#4aa54e",
 )
 
-THEMES = {LEVEL_DARK: DARK_THEME, LEVEL_STANDARD: STANDARD_THEME, LEVEL_BRIGHT: BRIGHT_THEME}
+VINTAGE_THEME = _make_theme(
+    level=LEVEL_VINTAGE, palette=_VINTAGE_COLORS, viewport_clear=(0.35, 0.38, 0.30),
+    background="#58624c", surface="#525c47", surface_raised="#59644d",
+    surface_input="#4b5442", text="#e6e8e4", text_muted="#b4bdab",
+    text_disabled="#92a181", border="#6c7a5b", border_strong="#7e9069",
+    accent="#c3c87b", accent_hover="#859770", accent_pressed="#91a080",
+    selection="#66754f", selection_text="#ffffff", error="#c0625f",
+    warning="#cd9c2a", success="#6bad6c",
+)
+
+THEMES = {
+    LEVEL_STANDARD: STANDARD_THEME,
+    LEVEL_BRIGHT: BRIGHT_THEME,
+    LEVEL_VINTAGE: VINTAGE_THEME,
+}
 _PALETTE_MAPS = {level: dict(theme.palette) for level, theme in THEMES.items()}
 _ACTIVE_THEME = STANDARD_THEME
+_SELECTED_LEVEL = LEVEL_STANDARD
 _NON_TOKEN_FIELDS = {"viewport_clear", "palette", "level"}
 TOKEN_NAMES = frozenset(f.name for f in fields(Theme) if f.name not in _NON_TOKEN_FIELDS)
 
 
+def system_level():
+    """Bright while the OS reports a light colour scheme, Standard otherwise."""
+    try:
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QGuiApplication
+        hints = QGuiApplication.styleHints()
+        if hints is not None and hints.colorScheme() == Qt.ColorScheme.Light:
+            return LEVEL_BRIGHT
+    except Exception:
+        pass
+    return LEVEL_STANDARD
+
+
 def set_level(level):
-    """Select the active explicit theme (invalid values select Standard)."""
-    global _ACTIVE_THEME
+    """Select the active theme (invalid values select Standard).
+
+    LEVEL_SYSTEM resolves to Standard or Bright from the OS colour scheme; the
+    selection itself is kept so a later scheme change can re-resolve it.
+    """
+    global _ACTIVE_THEME, _SELECTED_LEVEL
     try:
         selected = int(level)
     except (TypeError, ValueError):
         selected = LEVEL_STANDARD
-    _ACTIVE_THEME = THEMES.get(selected, STANDARD_THEME)
+    if selected != LEVEL_SYSTEM and selected not in THEMES:
+        selected = LEVEL_STANDARD
+    _SELECTED_LEVEL = selected
+    _ACTIVE_THEME = THEMES[system_level() if selected == LEVEL_SYSTEM else selected]
+
+
+def selected():
+    """The level the user picked, which may be LEVEL_SYSTEM."""
+    return _SELECTED_LEVEL
 
 
 def level():
@@ -289,11 +379,6 @@ def resolve_hex(theme: Theme, canonical: str) -> str:
 
 
 _RGB_BY_LEVEL = {
-    LEVEL_DARK: {
-        (135, 135, 135): (125, 125, 125), (112, 112, 112): (100, 100, 100),
-        (80, 88, 100): (65, 73, 86), (193, 193, 193): (188, 188, 188),
-        (57, 57, 57): (40, 40, 40),
-    },
     LEVEL_BRIGHT: {
         (135, 135, 135): (120, 120, 120), (112, 112, 112): (143, 143, 143),
         (80, 88, 100): (155, 163, 175), (193, 193, 193): (62, 62, 62),

@@ -30,6 +30,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             # Init UI file
             self.ui = Ui_Form()
             self.ui.setupUi(self)
+            self.ui.header.setProperty("h5Component", "soundeventPropertyHeader")
             self.setAcceptDrops(True)
 
             # Variables

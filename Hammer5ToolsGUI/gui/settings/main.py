@@ -17,7 +17,7 @@ from gui.settings.common import (
     set_settings_bool,
     set_settings_value,
 )
-from gui.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
+from gui.common import apply_title_bar_theme, refresh_title_bars, Presets_Path, app_dir, get_channel, get_build_channel
 from gui.widgets.common import Button
 from gui.other.file_association import setup_all_associations
 
@@ -52,7 +52,7 @@ class PreferencesDialog(QDialog):
     def __init__(self, app_version, parent=None):
         super().__init__(parent)
         self.app_version = app_version
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setMinimumSize(830, 300)
         self.setWindowTitle('Settings')
         self.main_layout = QVBoxLayout(self)
@@ -125,9 +125,10 @@ class PreferencesDialog(QDialog):
         layout_theme.addWidget(label_theme)
         self.appearance_combo_theme = QComboBox(frame_theme)
         self.appearance_combo_theme.setProperty("h5Component", "legacyCombobox")
-        self.appearance_combo_theme.addItem("1 · Dark", 1)
-        self.appearance_combo_theme.addItem("2 · Standard", 2)
-        self.appearance_combo_theme.addItem("3 · Bright", 3)
+        self.appearance_combo_theme.addItem("System", 0)
+        self.appearance_combo_theme.addItem("Dark", 2)
+        self.appearance_combo_theme.addItem("Bright", 3)
+        self.appearance_combo_theme.addItem("Vintage Steam", 4)
         self.appearance_combo_theme.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.appearance_combo_theme.setMinimumWidth(200)
         layout_theme.addWidget(self.appearance_combo_theme)
@@ -344,12 +345,12 @@ class PreferencesDialog(QDialog):
 
     def populate_preferences(self):
         try:
-            theme_level = int(get_settings_value('APP', 'theme_level', 2))
+            theme_level = int(get_settings_value('APP', 'theme_level', 0))
         except (TypeError, ValueError):
-            theme_level = 2
+            theme_level = 0
         theme_idx = self.appearance_combo_theme.findData(theme_level)
         self.appearance_combo_theme.setCurrentIndex(
-            theme_idx if theme_idx != -1 else self.appearance_combo_theme.findData(2))
+            theme_idx if theme_idx != -1 else self.appearance_combo_theme.findData(0))
         self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
         manual_cs2_path = get_manual_cs2_path()
         if manual_cs2_path:
@@ -419,11 +420,12 @@ class PreferencesDialog(QDialog):
         # reapply() repolishes every live widget in the application, which costs
         # seconds on a loaded session. Re-selecting the level already in effect
         # must not pay that.
-        if level == theme.level():
+        if level == theme.selected():
             return
         set_settings_value('APP', 'theme_level', level)
         theme.set_level(level)
-        style_manager.reapply(theme.get_theme(level))
+        style_manager.reapply(theme.get_theme())
+        refresh_title_bars()
 
     def connect_signals(self):
         # activated, not currentIndexChanged: the latter also fires while the user

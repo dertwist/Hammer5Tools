@@ -2,7 +2,7 @@ from gui.forms.about.ui_main import Ui_documentation_dialog
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
-from gui.common import enable_dark_title_bar, discord_feedback_channel
+from gui.common import apply_title_bar_theme, discord_feedback_channel
 from gui.settings.common import get_settings_bool, set_settings_bool
 
 class AboutDialog(QDialog):
@@ -11,7 +11,7 @@ class AboutDialog(QDialog):
         self.ui = Ui_documentation_dialog()
         self.ui.setupUi(self)
         self.ui.version.setText(f"Version: {version}")
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
 
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)

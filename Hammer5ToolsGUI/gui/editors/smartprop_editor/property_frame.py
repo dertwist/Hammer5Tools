@@ -341,6 +341,7 @@ class PropertyFrame(QWidget):
         # stylesheet: the .ui keeps owning its border-top and margins, and a
         # dynamic property costs nothing next to restyling a whole subtree.
         mark_paint_through(self.ui.frame_layout)
+        self.ui.frame_layout.setProperty("h5Component", "smartpropFrameLayout")
         self.ui.frame.setProperty("h5Component", "smartpropPropertyFrame")
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []

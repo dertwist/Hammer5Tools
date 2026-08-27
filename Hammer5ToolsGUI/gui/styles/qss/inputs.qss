@@ -6,11 +6,11 @@
    the same rule) and the pre-existing dead QPlainTextEdit:hover comment. */
 
 QComboBox {
-    font: 700 10pt "Segoe UI";
+    font: 580 9pt "Segoe UI";
     border: 2px solid black;
     border-radius: 2px;
     border-color: @rgba_5e5e5e_255;
-    height: 26px;
+    height: 22px;
     padding-top: 2px;
     padding-bottom: 2px;
     padding-left: 4px;
@@ -23,6 +23,8 @@ QComboBox:hover {
     color: white;
 }
 QComboBox:pressed {
+    background-color: @selection;
+    color: white;
 }
 
 QComboBox::drop-down {
@@ -40,38 +42,50 @@ QComboBox::drop-down {
     background-color: @background;
 }
 
-QComboBox QAbstractItemView,
-QComboBox QListView {
-    border: 2px solid gray;
+/* Popup mirrors the QMenu look from menus.qss, plus alternating rows. */
+QComboBox QAbstractItemView {
+    qproperty-alternatingRowColors: true;
+    background-color: @surface_raised;
+    alternate-background-color: @surface_input;
+    border: 2px solid black;
+    border-radius: 1px;
     border-color: @rgba_5e5e5e_255;
     selection-background-color: @selection;
-    background-color: @background;
-    alternate-background-color: @hex_37373b;
+    color: @text;
+    outline: 0px;
+    padding: 0px;
 }
 
-QComboBox QAbstractItemView::item,
-QComboBox QListView::item {
-    height: 16px;
-    padding: 4px;
-    padding-left: 5px;
-    padding-right: 5px;
-    color: @hex_939393;
-    border-style: none;
-    border-bottom: 0.5px solid black;
-    border-color: @rgba_ffffff_10;
+QComboBox QAbstractItemView::item {
+    font: 600 10pt "Segoe UI";
+    border: 1px solid transparent;
+    border-radius: 1px;
+    border-top: 0px;
+    border-bottom: 2px solid transparent;
+    border-color: @rgba_5e5e5e_105;
+    padding: 4px 8px 4px 8px;
+    color: @text;
 }
 
-QComboBox QAbstractItemView::item:selected,
-QComboBox QListView::item:selected {
-    height: 16px;
-    padding: 4px;
-    padding-left: 5px;
-    padding-right: 5px;
+QComboBox QAbstractItemView::item:alternate {
+    background-color: @surface_input;
+}
+
+QComboBox QAbstractItemView::item:selected {
     background-color: @selection;
-    color: white;
-    border: none;
-    outline: none;
+    color: @selection_text;
+    border: 1px solid transparent;
+    border-radius: 1px;
+    border-top: 0px;
+    border-bottom: 2px solid transparent;
+    border-color: @rgba_5e5e5e_105;
 }
+
+QComboBox QAbstractItemView::item:disabled {
+    color: @text_disabled;
+    background-color: transparent;
+}
+
 QComboBox:disabled {
     background-color: @hex_2a2a2c;
     color: @hex_727272;

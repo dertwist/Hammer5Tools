@@ -25,7 +25,7 @@ from gui.settings.common import (
 from gui.widgets.common import ErrorInfo
 from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, fix_pbr_range, QuickVsmart
 from gui.widgets.tree import BranchTreeView
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 
 class ZebraMenu(QMenu):
     """QMenu with alternating (zebra-striped) row backgrounds, since QSS has no nth-child selector for QMenu::item."""
@@ -1270,15 +1270,28 @@ class Explorer(QMainWindow):
 
     def open_folder_in_explorer(self, index):
         folder_path = self.model.filePath(index)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
+        self._safe_open_url(QUrl.fromLocalFile(folder_path))
 
     def open_file(self, index):
         file_path = self.model.filePath(index)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
+        self._safe_open_url(QUrl.fromLocalFile(file_path))
 
     def open_path_file(self, index):
         file_path = self.model.filePath(index)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(file_path)))
+        self._safe_open_url(QUrl.fromLocalFile(os.path.dirname(file_path)))
+
+    def _safe_open_url(self, url):
+        # Prevent spawned child processes from inheriting the GUI's launcher-owned state,
+        # which would cause them to bypass the single-instance IPC check and spawn duplicate windows.
+        env_backup = {}
+        for var in ("H5T_LAUNCHER_OWNS_INSTANCE", "H5T_LAUNCHER_HANDOFF", "H5T_GUI_RELAUNCHED"):
+            if var in os.environ:
+                env_backup[var] = os.environ.pop(var)
+        try:
+            QDesktopServices.openUrl(url)
+        finally:
+            for var, val in env_backup.items():
+                os.environ[var] = val
 
     def delete_item(self, index):
         path = self.model.filePath(index)

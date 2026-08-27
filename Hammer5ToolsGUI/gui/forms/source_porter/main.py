@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QSpacerItem, QSizePolicy
 )
 
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.settings.common import get_cs2_path, get_addon_name
 from gui.settings.common import (
     get_settings_value,
@@ -48,7 +48,7 @@ class AssetImportDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Asset Import")
         self.setMinimumSize(640, 420)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
 
         self.paths: List[str] = []
 
@@ -102,7 +102,7 @@ class SourcePorterWidget(QDialog):
         self.setMinimumSize(1080, 680)
         self.resize(1200, 720)
 
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
 
         self.client = SourcePorterClient()
         self.worker: Optional[PorterThread] = None

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QLabel,
 from PySide6.QtCore import Qt
 from .move_worker import MoveWorker
 from gui.settings.common import get_addon_name, get_cs2_path
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.widgets.console import ConsoleWidget
 from gui.widgets.explorer.main import Explorer
 
@@ -15,7 +15,7 @@ class AssetManagerWidget(QWidget):
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle("Move Assets")
         self.resize(1100, 620)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setProperty("h5Component", "assetManagerWindow")
 
         self.sources_to_move = []

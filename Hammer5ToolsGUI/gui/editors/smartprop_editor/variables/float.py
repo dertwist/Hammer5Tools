@@ -9,6 +9,7 @@ class FloatVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.setProperty("h5Component", "smartpropVariableBody")
         self.setAcceptDrops(True)
         # Cap displayed precision at 2 decimal places while keeping a very wide
         # magnitude range on all spin boxes.

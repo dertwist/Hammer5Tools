@@ -70,6 +70,18 @@ def compute_peak_envelope(file_or_path, frame_ms=30):
         return None, 0.0
 
 
+def apply_meter_gradient(grad):
+    """Green→amber→red level ramp, shared by the horizontal and vertical meters."""
+    grad.setColorAt(0.0, theme.qcolor("#32c85a"))
+    grad.setColorAt(0.65, theme.qcolor("#dcc832"))
+    grad.setColorAt(1.0, theme.qcolor("#e63232"))
+
+
+def meter_peak_color(peak):
+    """Peak-hold marker: red once the signal is effectively clipping, amber below."""
+    return theme.qcolor("#ff5050" if peak >= 0.95 else "#ffd54f")
+
+
 class DBInfoOverlay(QFrame):
     """Floating overlay popup displaying dB Reference Guide matching #2f2f31 background styling."""
     def __init__(self, parent=None):
@@ -148,8 +160,8 @@ class VUMeter(QWidget):
         p.setRenderHint(QPainter.Antialiasing, True)
         r = self.rect()
 
-        # Background (#2f2f31)
-        p.fillRect(r, theme.qcolor("#2f2f31"))
+        colors = theme.get_theme()
+        p.fillRect(r, QColor(colors.surface_raised))
 
         meter_h = 9
         meter_y = 13
@@ -167,28 +179,25 @@ class VUMeter(QWidget):
             x_text = max(0, x - (8 if not label.endswith("dB") else 12))
             if x_text + 18 > meter_w:
                 x_text = meter_w - 18
-            p.setPen(QColor(140, 145, 150))
+            p.setPen(QColor(colors.text_muted))
             p.drawText(x_text, 10, label)
-            p.setPen(QColor(60, 60, 65))
+            p.setPen(QColor(colors.border))
             p.drawLine(x, 11, x, meter_y)
 
         # Meter background bar
-        p.fillRect(0, meter_y, meter_w, meter_h, QColor(36, 36, 40))
+        p.fillRect(0, meter_y, meter_w, meter_h, theme.qcolor("#242428"))
 
         # Filled level bar
         w = int(meter_w * self._level)
         if w > 0:
             grad = QLinearGradient(0, 0, meter_w, 0)
-            grad.setColorAt(0.0, QColor(50, 200, 90))
-            grad.setColorAt(0.65, QColor(220, 200, 50))
-            grad.setColorAt(1.0, QColor(230, 50, 50))
+            apply_meter_gradient(grad)
             p.fillRect(0, meter_y, w, meter_h, QBrush(grad))
 
         # Peak indicator line
         peak_x = int(meter_w * self._peak)
         if peak_x > 0 and peak_x <= meter_w:
-            peak_color = QColor(255, 60, 60) if self._peak >= 0.95 else QColor(255, 230, 100)
-            p.fillRect(max(0, peak_x - 1), meter_y, 2, meter_h, peak_color)
+            p.fillRect(max(0, peak_x - 1), meter_y, 2, meter_h, meter_peak_color(self._peak))
 
 
 class WaveformWidget(QWidget):
@@ -253,8 +262,8 @@ class WaveformWidget(QWidget):
         w, h = self.width(), self.height()
         cy = h / 2.0
 
-        # Background (#2f2f31)
-        p.fillRect(self.rect(), theme.qcolor("#2f2f31"))
+        colors = theme.get_theme()
+        p.fillRect(self.rect(), QColor(colors.surface_raised))
 
         progress_ratio = 0.0
         if self._duration_ms > 0:
@@ -281,23 +290,25 @@ class WaveformWidget(QWidget):
 
                 # Color: played part vs unplayed part
                 if x_center <= playhead_x:
-                    col = QColor(60, 160, 240)  # Active blue/cyan accent for played section
+                    col = theme.qcolor("#4ba0f0")  # played section
                 else:
-                    col = QColor(75, 82, 95)    # Subtle gray for unplayed section
+                    col = theme.qcolor("#4b525f")  # unplayed section
 
                 p.fillRect(x_left, int(y_top), max(1, int(bar_width - 1)), int(amp_h), col)
         else:
             # Fallback center line if no waveform data (e.g. idle or mp3)
-            p.setPen(QColor(70, 75, 85))
+            p.setPen(QColor(colors.border))
             p.drawLine(0, int(cy), w, int(cy))
 
         # Playhead vertical line
         if self._duration_ms > 0:
-            p.fillRect(max(0, playhead_x - 1), 0, 2, h, QColor(255, 75, 75))
+            p.fillRect(max(0, playhead_x - 1), 0, 2, h, theme.qcolor("#ff5050"))
 
         # Hover indicator line
         if self._is_hovering and 0 <= self._hover_x <= w:
-            p.fillRect(int(self._hover_x), 0, 1, h, QColor(255, 255, 255, 120))
+            hover = QColor(colors.text)
+            hover.setAlpha(120)
+            p.fillRect(int(self._hover_x), 0, 1, h, hover)
 
 
 class AudioPlayer(QWidget):

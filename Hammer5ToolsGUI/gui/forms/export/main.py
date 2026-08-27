@@ -8,7 +8,7 @@ from typing import List, Dict, Optional, Set
 # Local imports
 from gui.forms.cleanup.parse import get_vmap_references
 from gui.settings.common import addon_content_dir, addon_game_dir, get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.styles.common import mark_paint_through
 
 from PySide6.QtCore import Qt, QModelIndex, QUrl, QSize
@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 class ExportAndImportAddonDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setWindowTitle("Export Addon")
         self.cs2_path = get_cs2_path()
         self.setMinimumSize(750, 650)
@@ -505,7 +505,8 @@ class ExportAndImportAddonDialog(QDialog):
 
     def open_folder(self, path: str):
         if not os.path.isdir(path): return
-        QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+        from gui.common import safe_open_url
+        safe_open_url(QUrl.fromLocalFile(path))
 
     @staticmethod
     def convert_size(size_bytes: int) -> str:

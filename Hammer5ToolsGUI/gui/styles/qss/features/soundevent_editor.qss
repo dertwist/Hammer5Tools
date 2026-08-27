@@ -174,9 +174,173 @@ QFrame[h5Component="soundeventSeparator"] {
     color: @hex_5e5e5e;
 }
 QWidget[h5Component="soundeventBorderlessExplorer"],
-QFrame[h5Component="soundeventPropertyFrame"] {
+QFrame[h5Component="soundeventPropertyFrame"],
+QFrame#frame[h5Component="soundeventPropertyFrame"] {
+    background: transparent;
+    background-color: transparent;
     border: none;
 }
+
+/* property/frame.py: SoundEventEditorPropertyFrame header bar. */
+QFrame[h5Component="soundeventPropertyHeader"],
+QFrame#header {
+    background-color: @hex_363636;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QFrame#frame_2,
+QFrame#header QFrame#frame_2 {
+    background-color: transparent;
+    border: none;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QLabel#label_2,
+QFrame#header QLabel#label_2 {
+    image: url(:/icons/more_vert.png);
+    padding-left: 3px;
+    padding-right: 3px;
+    border: 2px solid @hex_d0d0d0;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    background-color: @hex_363636;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child,
+QFrame#header QCheckBox#show_child {
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-color: @rgba_5e5e5e_255;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    height: 14px;
+    padding-top: 2px;
+    padding-bottom: 4px;
+    padding-left: 5px;
+    color: @text;
+    background-color: @hex_363636;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child::indicator:checked,
+QFrame#header QCheckBox#show_child::indicator:checked {
+    image: url(://icons/arrow_drop_down.png);
+    height: 14px;
+    width: 14px;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child::indicator:unchecked,
+QFrame#header QCheckBox#show_child::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+    height: 14px;
+    width: 14px;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child:hover,
+QFrame#header QCheckBox#show_child:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QToolButton#gf,
+QFrame#header QToolButton#gf {
+    border: 2px solid black;
+    border-color: @rgba_5e5e5e_255;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    padding: 2px;
+    color: @text;
+    background-color: @hex_363636;
+    height: 16px;
+    width: 16px;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QToolButton#gf:hover,
+QFrame#header QToolButton#gf:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#property_class,
+QFrame#header QLineEdit#property_class {
+    font: 8pt "Segoe UI";
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    padding: 2px;
+    color: @text;
+    background-color: @hex_363636;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#property_class:focus,
+QFrame#header QLineEdit#property_class:focus {
+    border-color: @rgba_5e5e5e_255;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#property_class::selection,
+QFrame#header QLineEdit#property_class::selection {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#element_id_display,
+QFrame#header QLineEdit#element_id_display {
+    font: 8pt "Segoe UI";
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    padding: 2px;
+    color: @text_disabled;
+    background-color: @hex_363636;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#element_id_display:focus,
+QFrame#header QLineEdit#element_id_display:focus {
+    border-color: @rgba_5e5e5e_255;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QLineEdit#element_id_display::selection,
+QFrame#header QLineEdit#element_id_display::selection {
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#delete_button,
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#copy_button,
+QFrame#header QPushButton#delete_button,
+QFrame#header QPushButton#copy_button {
+    font: 580 8pt "Segoe UI";
+    border: 2px solid black;
+    border-color: @rgba_5e5e5e_255;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid @rgba_5e5e5e_255;
+    border-radius: 0px;
+    height: 14px;
+    padding-top: 2px;
+    padding-bottom: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    color: @text;
+    background-color: @hex_363636;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#delete_button:hover,
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#copy_button:hover,
+QFrame#header QPushButton#delete_button:hover,
+QFrame#header QPushButton#copy_button:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#delete_button:pressed,
+QFrame[h5Component="soundeventPropertyHeader"] QPushButton#copy_button:pressed,
+QFrame#header QPushButton#delete_button:pressed,
+QFrame#header QPushButton#copy_button:pressed {
+    background-color: @hex_363636;
+    color: @text;
+}
+
 
 QLabel[h5Component="editorPropertyLabel"][h5ColorRole="c7c7bb"] { color: @hex_c7c7bb; }
 QLabel[h5Component="editorPropertyLabel"][h5ColorRole="73d1bf"] { color: @hex_73d1bf; }

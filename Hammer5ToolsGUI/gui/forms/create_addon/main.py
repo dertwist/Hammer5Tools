@@ -6,7 +6,7 @@ from gui.widgets import exception_handler
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
-from gui.common import Presets_Path, Internal_Presets_Path, enable_dark_title_bar, app_dir
+from gui.common import Presets_Path, Internal_Presets_Path, apply_title_bar_theme, app_dir
 from core.bridge import CoreBridge
 from PySide6.QtGui import QPixmap
 import binascii
@@ -18,7 +18,7 @@ class CreateAddonDialog(QDialog):
         self.ui = Ui_Create_addon_Dialog()
         self.ui.setupUi(self)
         self.ui.create_addon_button.clicked.connect(self.create_addon)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
 
         self.ui.lineEdit_addon_name.textChanged.connect(self.validate_addon_name_input)
         self._invalid_input_shown = False

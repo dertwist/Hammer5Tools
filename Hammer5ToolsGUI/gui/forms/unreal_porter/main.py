@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QSplitter, QSpacerItem, QSizePolicy,
 )
 
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.settings.common import (
     get_addon_name,
     get_settings_value,
@@ -228,7 +228,7 @@ class UnrealPorterWidget(QDialog):
         self.setWindowTitle("UnrealPorter")
         self.resize(1280, 850)
         self.setMinimumSize(960, 600)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setProperty("h5Component", "unrealPorterWindow")
 
         self.groups = {}

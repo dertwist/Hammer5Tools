@@ -62,7 +62,7 @@ def _substitute(qss_text: str, theme: Theme, source: Path) -> str:
 def compile_stylesheet(theme: Theme) -> str:
     """Concatenate every qss/*.qss and qss/features/*.qss fragment, with
     ``@token`` references resolved against ``theme``. Cached per Theme
-    instance (there are only 3: dark/standard/bright)."""
+    instance (there are only 2: standard/bright)."""
     chunks = []
     for path in _base_fragment_paths() + _feature_fragment_paths():
         text = path.read_text(encoding="utf-8")

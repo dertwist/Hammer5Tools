@@ -24,12 +24,14 @@ from PySide6.QtWidgets import (
     QToolBar, QToolButton, QSizePolicy, QMainWindow, QDockWidget,
     QPushButton, QStackedWidget,
 )
-from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize
+from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize, QEvent
 from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
-from gui.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
+from gui.editors.soundevent_editor.audio_player import (
+    compute_peak_envelope, DBInfoOverlay, apply_meter_gradient, meter_peak_color,
+)
 from gui.widgets.explorer.main import Explorer
 from gui.settings.common import get_cs2_path, get_addon_name
 from gui.styles import theme
@@ -151,6 +153,13 @@ def save_wav(path, samples, sr, cue_positions=None):
 
 
 
+def _alpha(canonical, alpha):
+    """Theme colour at a given Qt alpha, for painters and pyqtgraph brushes."""
+    color = theme.qcolor(canonical)
+    color.setAlpha(alpha)
+    return color
+
+
 def _sep():
     line = QFrame()
     line.setFrameShape(QFrame.VLine)
@@ -206,7 +215,8 @@ class VerticalVUMeter(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
         r = self.rect()
-        p.fillRect(r, QColor(0x1D, 0x1D, 0x1F))  # #2f2f31
+        colors = theme.get_theme()
+        p.fillRect(r, QColor(colors.surface_raised))
 
         pad_top, pad_bot = 8, 8
         bar_x, bar_w = 6, 18
@@ -215,22 +225,19 @@ class VerticalVUMeter(QWidget):
             return
 
         # meter background channel
-        p.fillRect(bar_x, pad_top, bar_w, meter_h, QColor(32, 34, 38))
+        p.fillRect(bar_x, pad_top, bar_w, meter_h, theme.qcolor("#242428"))
 
         # filled level, growing up from the bottom
         fill_h = int(self._level * meter_h)
         if fill_h > 0:
             grad = QLinearGradient(0, pad_top + meter_h, 0, pad_top)  # bottom→top
-            grad.setColorAt(0.0, QColor(50, 200, 90))
-            grad.setColorAt(0.65, QColor(220, 200, 50))
-            grad.setColorAt(1.0, QColor(230, 50, 50))
+            apply_meter_gradient(grad)
             p.fillRect(bar_x, pad_top + meter_h - fill_h, bar_w, fill_h, QBrush(grad))
 
         # peak-hold line
         peak_y = pad_top + int((1.0 - self._peak) * meter_h)
         if self._peak > 0.0:
-            p.fillRect(bar_x, max(pad_top, peak_y - 1), bar_w, 2,
-                       QColor(255, 60, 60) if self._peak >= 0.95 else QColor(255, 230, 100))
+            p.fillRect(bar_x, max(pad_top, peak_y - 1), bar_w, 2, meter_peak_color(self._peak))
 
         # reference scale: ticks + dB labels to the right of the bar
         font = p.font()
@@ -240,9 +247,9 @@ class VerticalVUMeter(QWidget):
         for db, label in self._MARKS:
             norm = (db + 60.0) / 60.0  # 0 dB → 1.0 (top)
             y = pad_top + int((1.0 - norm) * meter_h)
-            p.setPen(QColor(70, 72, 78))
+            p.setPen(QColor(colors.border))
             p.drawLine(bar_x, y, bar_x + bar_w, y)
-            p.setPen(QColor(140, 145, 150))
+            p.setPen(QColor(colors.text_muted))
             p.drawText(text_x, y + 3, label)
 
 
@@ -390,22 +397,22 @@ class AudioDocument(QWidget):
         pg.setConfigOptions(antialias=True)
         self._vb = _SelectViewBox(self._set_selection, self._seek_to)
         self.plot = pg.PlotWidget(viewBox=self._vb)
-        self.plot.setBackground(theme.color("#2e2e2e"))
         self.plot.showGrid(x=True, y=False, alpha=0.15)
         self.plot.setYRange(-1.05, 1.05)
         self.plot.setMouseEnabled(x=True, y=False)
         self.plot.setLabel("bottom", "Time", units="s")
-        self.curve = self.plot.plot(pen=pg.mkPen(theme.color("#4ba0f0"), width=1))
+        self.curve = self.plot.plot()
         self.curve.setDownsampling(auto=True)
         self.curve.setClipToView(True)
 
-        self.region = pg.LinearRegionItem(brush=(80, 140, 240, 40))
+        self.region = pg.LinearRegionItem()
         self.region.setZValue(-10)
         self.plot.addItem(self.region)
 
-        self.playhead = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen(theme.color("#ff5050"), width=2))
+        self.playhead = pg.InfiniteLine(pos=0, angle=90)
         self.playhead.setZValue(20)
         self.plot.addItem(self.playhead)
+        self._apply_plot_theme()
 
         plot_row.addWidget(self.plot, 1)
 
@@ -435,6 +442,31 @@ class AudioDocument(QWidget):
                              "Single-click to move the play line; left-drag to select.")
         self.status.setProperty("h5Component", "soundeventWaveStatus")
         root.addWidget(self.status)
+
+    def _apply_plot_theme(self):
+        """Repaint pyqtgraph items from the active theme.
+
+        pyqtgraph pens and brushes are plain objects, not stylesheet-driven, so
+        they have to be re-made whenever the theme changes.
+        """
+        self.plot.setBackground(theme.get_theme().background)
+        self.curve.setPen(pg.mkPen(theme.color("#4ba0f0"), width=1))
+        self.region.setBrush(_alpha("#4ba0f0", 40))
+        self.playhead.setPen(pg.mkPen(theme.color("#ff5050"), width=2))
+        for marker in self._markers:
+            self._style_marker(marker)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        # A live theme switch repolishes every widget, which lands here.
+        if event.type() == QEvent.StyleChange:
+            self._apply_plot_theme()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Qt only repolishes widgets it has already shown, so a document built
+        # before the switch catches up here instead.
+        self._apply_plot_theme()
 
     def _seek_to(self, x):
         """Single-click on the waveform → move the playhead / seek playback."""
@@ -631,14 +663,18 @@ class AudioDocument(QWidget):
         if self.samples is not None:
             self._add_marker_at(self.playhead.value())
 
+    def _style_marker(self, line):
+        line.setPen(pg.mkPen(theme.color("#ffc850"), width=1, style=Qt.DashLine))
+        line.label.setColor(theme.qcolor("#ffc850"))
+        line.label.fill = pg.mkBrush(_alpha(theme.get_theme().surface_raised, 200))
+        line.label.update()
+
     def _add_marker_at(self, seconds):
         line = pg.InfiniteLine(
-            pos=seconds, angle=90, movable=True,
-            pen=pg.mkPen(theme.color("#ffc850"), width=1, style=Qt.DashLine),
-            label="{value:.2f}s",
-            labelOpts={"position": 0.92, "color": theme.color("#ffc850"),
-                       "movable": True, "fill": (29, 29, 31, 200)})
+            pos=seconds, angle=90, movable=True, label="{value:.2f}s",
+            labelOpts={"position": 0.92, "movable": True})
         line.setZValue(15)
+        self._style_marker(line)
         self.plot.addItem(line)
         self._markers.append(line)
 

@@ -9,6 +9,7 @@ class IntVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.setProperty("h5Component", "smartpropVariableBody")
         self.setAcceptDrops(True)
         # Remove the artificial digit cap from the generated UI; use the full
         # 32-bit range that QSpinBox supports.

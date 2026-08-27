@@ -448,7 +448,8 @@ class AttachmentThumbnailWidget(QFrame):
     def _open_viewer(self):
         if not self.local_path or not os.path.exists(self.local_path):
             # Fallback to browser if local path not yet ready
-            QDesktopServices.openUrl(QUrl(self.attachment.url))
+            from gui.common import safe_open_url
+            safe_open_url(QUrl(self.attachment.url))
             return
 
         from gui.editors.smartprop_editor.props.help import HelpImageDialog
@@ -479,7 +480,8 @@ class AttachmentThumbnailWidget(QFrame):
         elif action == copy_url_act:
             QApplication.clipboard().setText(self.attachment.url)
         elif action == open_web_act:
-            QDesktopServices.openUrl(QUrl(self.attachment.url))
+            from gui.common import safe_open_url
+            safe_open_url(QUrl(self.attachment.url))
 
 
 class VideoAttachmentWidget(QFrame):
@@ -517,7 +519,8 @@ class VideoAttachmentWidget(QFrame):
 
         play_btn = QPushButton("Play Video", self)
         play_btn.setCursor(Qt.PointingHandCursor)
-        play_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self.attachment.url)))
+        from gui.common import safe_open_url
+        play_btn.clicked.connect(lambda: safe_open_url(QUrl(self.attachment.url)))
         layout.addWidget(play_btn)
 
 
@@ -557,5 +560,6 @@ class FileAttachmentWidget(QFrame):
 
         download_btn = QPushButton("Download", self)
         download_btn.setCursor(Qt.PointingHandCursor)
-        download_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self.attachment.url)))
+        from gui.common import safe_open_url
+        download_btn.clicked.connect(lambda: safe_open_url(QUrl(self.attachment.url)))
         layout.addWidget(download_btn)

@@ -8,16 +8,62 @@ is the only thing that hands that text to Qt.
 import os
 import time
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import (
+    QAbstractItemDelegate, QApplication, QComboBox, QProxyStyle, QStyle,
+    QStyledItemDelegate,
+)
 
 from gui.styles.qss_compiler import compile_stylesheet
 from gui.styles.theme import Theme
 
 _TIMING = os.environ.get("H5T_STYLE_TIMING") == "1"
+#: Keeps the Python half of the installed proxy style alive; app.style() hands
+#: back a plain QCommonStyle wrapper once Qt owns it.
+_PROXY_STYLE = None
+
+
+class _ComboBoxStyle(QProxyStyle):
+    """Fix the two things Fusion does to QComboBox popups.
+
+    ``polish``: the built-in popup delegate paints rows itself and ignores the
+    stylesheet's ``QComboBox QAbstractItemView::item`` rules, so alternating
+    rows and the menu-matching item padding never show. QStyledItemDelegate
+    honours them. Delegates set by our own code (always QStyledItemDelegate
+    subclasses) are left alone.
+
+    ``polish`` also lifts the default 10-item popup cap to 20: the menu-mode
+    popup used to size itself to the whole list, so keeping the cap low would
+    read as a regression on the addon and map lists. Qt still clamps the popup
+    to the screen and adds a scrollbar when it has to.
+
+    ``styleHint``: Fusion answers SH_ComboBox_Popup with true, which pops the
+    list as a menu centred on the current item -- clipped to a couple of rows
+    with scroll arrows when the combo sits near a screen edge. Off means a
+    plain drop-down list under the combo, sized to its items.
+    """
+
+    def polish(self, target):
+        if isinstance(target, QComboBox):
+            if type(target.itemDelegate()) is QAbstractItemDelegate:
+                target.setItemDelegate(QStyledItemDelegate(target))
+            if target.maxVisibleItems() == 10:  # Qt's default, i.e. unset
+                target.setMaxVisibleItems(20)
+        super().polish(target)
+
+    def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.SH_ComboBox_Popup:
+            return 0
+        return super().styleHint(hint, option, widget, returnData)
 
 
 def apply(app: QApplication, theme: Theme) -> None:
     """Compile and set the application-wide stylesheet for ``theme``."""
+    global _PROXY_STYLE
+    if _PROXY_STYLE is None:
+        # By name: QProxyStyle takes ownership of a style object, and the one
+        # app.style() returns is still owned by the application.
+        _PROXY_STYLE = _ComboBoxStyle(app.style().objectName() or "Fusion")
+        app.setStyle(_PROXY_STYLE)
     app.setStyleSheet(compile_stylesheet(theme))
 
 

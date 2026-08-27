@@ -59,9 +59,10 @@ counterparts are explicit palette data in each `Theme`, not HSL calculations.
 
 | Level | Name | Behavior |
 |---:|---|---|
-| 1 | Dark | Original darker palette |
+| 0 | System | Follows the OS colour scheme (Standard or Bright) |
 | 2 | Standard | Canonical design values |
 | 3 | Bright | Explicit light palette with dark text |
+| 4 | Vintage Steam | Olive recolour of the 2003 Steam skin |
 
 The selected level is stored as `APP/theme_level`. A switch selects one
 immutable `Theme` and reapplies the single compiled application stylesheet.

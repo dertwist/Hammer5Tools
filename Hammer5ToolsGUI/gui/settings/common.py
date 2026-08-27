@@ -11,6 +11,10 @@ settings = QSettings(str(settings_file), QSettings.IniFormat)
 
 def set_settings_value(section, key, value):
     settings.setValue(f"{section}/{key}", value)
+    # Flush immediately. QSettings only writes on sync() or destruction, so a
+    # setting changed shortly before an update restart, a crash or a kill was
+    # silently lost -- the theme selection reverting on its own was this.
+    settings.sync()
 
 def set_settings_bool(section, key, bool_value):
     set_settings_value(section, key, bool_value)
@@ -48,7 +52,7 @@ def default_settings():
         set_settings_bool('APP', 'minimize_to_tray', False)
         set_settings_bool('APP', 'show_about_on_startup', True)
         set_settings_bool('APP', 'show_project_structure_warning', True)
-        set_settings_value('APP', 'theme_level', 2)
+        set_settings_value('APP', 'theme_level', 0)
         settings.sync()
 
 default_settings()

@@ -98,7 +98,7 @@ class BranchTreeView(QTreeView):
         _draw_hierarchy_branches(self, painter, rect, index)
 
 class HierarchyTreeWidget(QTreeWidget):
-    def __init__(self, undo_stack, list_mode=False):
+    def __init__(self, undo_stack=None, list_mode=False):
         """
         :param undo_stack:
         :param list_mode:
@@ -106,7 +106,8 @@ class HierarchyTreeWidget(QTreeWidget):
         """
         super().__init__()
         self.undo_stack = undo_stack
-        self.undo_stack.setUndoLimit(400)
+        if self.undo_stack is not None:
+            self.undo_stack.setUndoLimit(400)
         self.setDragEnabled(True)
         self.setAcceptDrops(False)
         self.setDropIndicatorShown(True)

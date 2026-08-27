@@ -12,6 +12,7 @@ class MaterialVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.setProperty("h5Component", "smartpropVariableBody")
         self.setAcceptDrops(True)
         self.min = None
         self.max = None

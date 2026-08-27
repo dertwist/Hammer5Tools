@@ -9,6 +9,7 @@ class Vector3DVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.setProperty("h5Component", "smartpropVariableBody")
         self.setAcceptDrops(True)
         # Remove the digit limits baked into the generated UI: allow high
         # precision and a very wide magnitude range on each component.

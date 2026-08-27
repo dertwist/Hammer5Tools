@@ -200,6 +200,9 @@ class FloatWidget(QWidget):
         """Called when user presses Enter or the SpinBox loses focus.
         Immediately commits the current value."""
         self._commit_timer.stop()
+        if not self.SpinBox.hasAcceptableInput():
+            self.set_value(self.value)
+            return
         self._sync_value_from_spinbox()
         self.edited.emit(self.value)
 

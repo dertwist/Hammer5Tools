@@ -298,9 +298,9 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
         self.frame.setProperty("h5Component", "soundeventPropertyFrame")
-        self.frame.setContentsMargins(0,0,0,0)
-        self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
-        self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
+        self.frame.setContentsMargins(0, 0, 0, 0)
+        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShadow(QFrame.Plain)
 
 
         self.vertical_layout = QVBoxLayout(self.frame)
@@ -403,9 +403,9 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
         self.frame.setProperty("h5Component", "soundeventPropertyFrame")
-        self.frame.setContentsMargins(0,0,0,0)
-        self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
-        self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
+        self.frame.setContentsMargins(0, 0, 0, 0)
+        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShadow(QFrame.Plain)
 
 
         self.vertical_layout = QVBoxLayout(self.frame)

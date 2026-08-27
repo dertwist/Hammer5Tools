@@ -75,7 +75,6 @@ from gui.editors.smartprop_editor._common import (
 )
 
 from gui.common import (
-    enable_dark_title_bar,
     Kv3ToJson,
     JsonToKv3,
     SmartPropEditor_Preset_Path,
@@ -110,7 +109,6 @@ class SmartPropDocument(QMainWindow):
         self.document_state = SmartPropDocumentState.from_mapping({"m_Children": []})
         self.opened_file = None
         self.update_title = update_title
-        enable_dark_title_bar(self)
 
         self.undo_stack = QUndoStack(self)
         self.undo_stack.cleanChanged.connect(self._on_undo_clean_changed)

@@ -6,7 +6,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os, sys, re, subprocess, time
 
 from gui.settings.common import get_addon_name, get_addon_dir, get_cs2_path
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 from gui.styles.common import mark_paint_through
 from gui.forms.cleanup.common import format_size
 from gui.forms.cleanup.parse import get_junk_files
@@ -132,7 +132,7 @@ class VerificationDialog(QDialog):
     def __init__(self, cs2_path, addon_dir, vmap_paths, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Verification - Cleanup Addon")
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setMinimumSize(700, 450)
         self.setModal(True)
         
@@ -315,7 +315,7 @@ class CleanupDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Cleanup Addon")
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setMinimumSize(600, 400)
         self.setModal(True)
         self.setAttribute(Qt.WA_DeleteOnClose)

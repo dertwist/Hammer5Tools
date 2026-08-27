@@ -20,7 +20,7 @@ import os, webbrowser
 from gui.common import discord_feedback_channel
 from logging import error
 import traceback, ctypes
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 
 log = logging.getLogger(__name__)
 try:
@@ -35,7 +35,7 @@ class ErrorInfo(QDialog):
         dialog_title = title if title is not None else ("Warning" if is_warning else "Error")
         self.setWindowTitle(dialog_title)
         self.setWindowIcon(QIcon("../appicon.ico"))
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setMinimumSize(600, 400)
         self.setModal(True)
         self.setAttribute(Qt.WA_DeleteOnClose)
@@ -133,7 +133,7 @@ class UnsavedFilesDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Unsaved Files")
         self.setWindowIcon(QIcon("../appicon.ico"))
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.setModal(True)
         self.setMinimumWidth(520)
 

@@ -38,7 +38,7 @@ from gui.settings.common import (
     get_cs2_path,
     set_settings_value,
 )
-from gui.common import enable_dark_title_bar, app_dir, default_commands
+from gui.common import apply_title_bar_theme, app_dir, default_commands
 from gui.other.addon_functions import launch_addon, launch_cs2_process
 from gui.other.cs2_netcon import CS2Netcon
 
@@ -599,7 +599,7 @@ class MapBuilderDialog(QMainWindow):
         self.ui.setupUi(self)
         set_style_property(self.ui.output_list_widget, "h5Component", "mapbuilderOutput")
         set_style_property(self.ui.system_monitor, "h5Component", "mapbuilderMonitorFrame")
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         self.cs2_path = get_cs2_path()
         self.ui.splitter.setSizes([200, 300])
 

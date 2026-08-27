@@ -368,7 +368,8 @@ class AssetTableWidget(QWidget):
             folder = addon_dir or os.getcwd()
 
         if os.path.isdir(folder):
-            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+            from gui.common import safe_open_url
+            safe_open_url(QUrl.fromLocalFile(folder))
 
     def _open_asset_in_cs2(self, item: AssetGroupItem):
         if CS2Netcon and item.target_output:

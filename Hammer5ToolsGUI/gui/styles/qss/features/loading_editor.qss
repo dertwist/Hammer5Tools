@@ -1,11 +1,4 @@
 
-QLabel[h5Component="loadingImagePlaceholder"] {
-    color: @text_muted;
-    font-size: 13px;
-}
-QLabel[h5Component="loadingImagePlaceholder"][h5Size="large"] {
-    font-size: 16px;
-}
 QLabel[h5Component="loadingImagePreview"],
 QScrollArea[h5Component="loadingImageScroll"] {
     border: none;
@@ -27,4 +20,28 @@ QToolButton[h5Component="loadingSectionFolderButton"]:hover {
 }
 QTreeView[h5Component="loadingImageTree"] {
     outline: none;
+}
+
+QFrame[h5Component="loadingSvgDropArea"] {
+    border: 1px dashed @border_strong;
+    border-radius: 4px;
+    background-color: @surface_input;
+}
+QFrame[h5Component="loadingSvgDropArea"][h5DragOver="true"] {
+    border-color: @accent;
+    background-color: @surface_raised;
+}
+QFrame[h5Component="loadingSvgDropArea"] QLabel,
+QFrame[h5Component="loadingSvgDropArea"] QSvgWidget,
+QFrame[h5Component="loadingSvgDropArea"] > QWidget {
+    background: transparent;
+}
+QLabel[h5Component="loadingSvgDropLabel"] {
+    color: @text_muted;
+    font-size: 11px;
+    background: transparent;
+}
+QLabel[h5Component="loadingSvgTips"] {
+    color: @text_muted;
+    font-size: 11px;
 }

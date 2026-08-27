@@ -6,7 +6,7 @@ from .ui_main import Ui_AssetExporterWidget
 from .dependency_resolver import DependencyResolver
 from .exporter import ExportWorker
 from gui.settings.common import get_addon_name, get_cs2_path
-from gui.common import enable_dark_title_bar
+from gui.common import apply_title_bar_theme
 
 class AssetExporterWidget(QWidget):
     def __init__(self, parent=None):
@@ -14,7 +14,7 @@ class AssetExporterWidget(QWidget):
         self.ui = Ui_AssetExporterWidget()
         self.ui.setupUi(self)
         
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
         
         self.ui.deps_list.setProperty("h5Component", "legacyWidgetList2")
 
