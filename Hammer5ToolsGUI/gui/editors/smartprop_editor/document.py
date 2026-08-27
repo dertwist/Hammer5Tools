@@ -93,11 +93,6 @@ log = logging.getLogger(__name__)
 # Regex for parsing diff keys like 'm_Modifiers[2].m_flAmount' or 'm_SelectionCriteria[0]'
 _DIFF_KEY_RE = re.compile(r'^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$')
 
-#TODO Future improvement: Implement a node view for elements.
-# In the node view, users will click on a node to edit its properties, triggering a context menu similar to that found in the Hammer editor (using, for example, Alt+Enter) or just show and hide properties in the viewport.
-# The node view should be arranged vertically. All node-related information will be stored within the elements themselves.
-# Nodes that are not connected via the Child input (i.e. isolated nodes) will be automatically attached as children of the root.
-
 class SmartPropDocument(QMainWindow):
     _edited = Signal()
     def __init__(self, parent=None, update_title=None):
@@ -217,7 +212,6 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_search_bar_widget.setPlaceholderText("Filter...")
         self.ui.tree_hierarchy_filter_bar_widget = self.ui.tree_hierarchy_search_bar_widget
 
-        # ── Hierarchy Top Action Bar (+ Add & Favorites Star Button) ───────────
         self.hierarchy_top_bar_layout = QHBoxLayout()
         self.hierarchy_top_bar_layout.setContentsMargins(0, 0, 0, 4)
         self.hierarchy_top_bar_layout.setSpacing(4)
@@ -247,7 +241,6 @@ class SmartPropDocument(QMainWindow):
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
 
-        # ── Dockable panels ─────────────────────────────────────────────
         # Every major panel (Property Editor, Manual Editor, 3D Viewport,
         # Hierarchy, History, Variables, Choices) is a QDockWidget, so the user
         # can freely rearrange, float, tab, or hide any of them.  The central
@@ -304,7 +297,6 @@ class SmartPropDocument(QMainWindow):
 
         self._apply_default_layout()
 
-        # ── Continuous layout persistence ───────────────────────────────
         # The dock/viewport arrangement is saved (debounced) whenever a dock is
         # moved, floated, or resized, so the layout survives crashes and abrupt
         # termination (e.g. stopping the debugger) rather than only a clean
@@ -1452,7 +1444,7 @@ class SmartPropDocument(QMainWindow):
         self._edited.emit()
 
     def open_bulk_model_importer(self):
-        from gui.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
+        from gui.editors.smartprop_editor.bulk_model_importer import BulkModelImporterDialog
         from gui.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value
         from gui.widgets import HierarchyItemModel
         current_folder = ""
@@ -1998,8 +1990,6 @@ class SmartPropDocument(QMainWindow):
         if data_input is None:
             data_input = QApplication.clipboard().text()
 
-            # Clipboard text is an element fragment, not a whole document, so
-            # it stays on the KV3 reader that tolerates one.
         # Check if clipboard contains modifier or selection criteria components
         clip_group, comp_dicts = parse_component_clipboard(data_input)
         if comp_dicts and clip_group:
@@ -2008,6 +1998,8 @@ class SmartPropDocument(QMainWindow):
             return
 
         try:
+            # Clipboard text is an element fragment, not a whole document, so
+            # it stays on the KV3 reader that tolerates one.
             obj = Kv3ToJson(normalize_kv3_text(data_input))
             items = []
             parent = tree.currentItem() or tree.invisibleRootItem()
@@ -2643,13 +2635,11 @@ class SmartPropDocument(QMainWindow):
         for i in range(item.childCount()):
             self._rename_in_hierarchy_recursive(item.child(i), replace_fn)
 
-    # ── Menu Bar & Document Actions ──────────────────────────────────────────
     def init_menu_bar(self):
         menubar = self.menuBar()
         menubar.clear()
         menubar.setProperty("h5Component", "smartpropMenuBar")
 
-        # ── File Menu ────────────────────────────────────────────────────────
         self.file_menu = menubar.addMenu("&File")
         self.file_menu.setProperty("h5Component", "smartpropFileMenu")
 
@@ -2694,7 +2684,6 @@ class SmartPropDocument(QMainWindow):
         self.action_export_scene_debug = self.file_menu.addAction("Export scene (debug)")
         self.action_export_scene_debug.triggered.connect(self.export_scene_debug)
 
-        # ── Edit Menu ────────────────────────────────────────────────────────
         self.edit_menu = menubar.addMenu("&Edit")
 
         self.action_undo = self.edit_menu.addAction("Undo")
@@ -2737,7 +2726,6 @@ class SmartPropDocument(QMainWindow):
         self.action_group.setShortcut(QKeySequence("Ctrl+G"))
         self.action_group.triggered.connect(self._group_action)
 
-        # ── Element Menu ─────────────────────────────────────────────────────
         self.element_menu = menubar.addMenu("&Element")
 
         self.action_add_element = self.element_menu.addAction("New Element...")
@@ -2771,7 +2759,6 @@ class SmartPropDocument(QMainWindow):
         self.action_load_vmap = self.element_menu.addAction("Load VMAP into Hierarchy...")
         self.action_load_vmap.triggered.connect(self.load_vmap_into_hierarchy)
 
-        # ── View Menu ────────────────────────────────────────────────────────
         self.view_menu = menubar.addMenu("&View")
 
         self.action_isolate = self.view_menu.addAction("Isolate in 3D Viewport")
@@ -2931,4 +2918,3 @@ class SmartPropDocument(QMainWindow):
             return
 
         (QMessageBox.information if ok else QMessageBox.warning)(self, "Export Scene", message)
-

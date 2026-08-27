@@ -1,5 +1,5 @@
 from core.bridge import CoreBridge, ValveMapDocument, ValveMapEntity, ValveMapNode
-from gui.editors.loading_editor.commands.vmap_parser import parse
+from gui.editors.loading_editor.vmap_parser import parse
 
 
 def test_parse_returns_point_camera_presentation_data(monkeypatch):

@@ -461,7 +461,6 @@ class ComponentList(QWidget):
 
         self.container_layout.addStretch(1)
 
-    # ── Public API ────────────────────────────────────────────────────────────
 
     def set_element(self, tree_item) -> None:
         """Rebuild component list from hierarchy tree item."""
@@ -566,7 +565,6 @@ class ComponentList(QWidget):
 
         self.updateGeometry()
 
-    # ── Internal: populate / select ─────────────────────────────────────────────
 
     def _populate_tree(self, tree: ComponentTree, kind: str, values: list):
         tree.blockSignals(True)
@@ -633,7 +631,6 @@ class ComponentList(QWidget):
                     break
         tree.blockSignals(False)
 
-    # ── Selection signal handlers ────────────────────────────────────────────
 
     def _on_elem_selected(self, ref: ComponentRef):
         self.modifiers_tree.blockSignals(True)
@@ -669,7 +666,6 @@ class ComponentList(QWidget):
         if ref is not None:
             self.componentSelected.emit(ref)
 
-    # ── Add / Paste / Copy / Cut / Duplicate ───────────────────────────────
 
     def _on_add_modifier(self):
         if not self.tree_item:
@@ -772,7 +768,6 @@ class ComponentList(QWidget):
         if target_norm == clip_norm:
             self._add_component_dicts(target_norm, pasted_dicts, insert_after_idx=insert_after_idx)
 
-    # ── Copy / Cut / Duplicate ───────────────────────────────────────────────
 
     def _copy_selected_from_tree(self, tree: ComponentTree):
         refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
@@ -851,7 +846,6 @@ class ComponentList(QWidget):
         if dup_dicts:
             self._add_component_dicts(group_type, dup_dicts, insert_after_idx=max_idx)
 
-    # ── Focused Action Handlers (for window menu & hotkeys) ────────────────
 
     def _get_active_tree(self) -> ComponentTree | None:
         focused = QApplication.focusWidget()
@@ -943,7 +937,6 @@ class ComponentList(QWidget):
             refs = [it.data(0, Qt.UserRole) for it in tree.selectedItems() if it.data(0, Qt.UserRole) is not None]
             self._delete_components(refs)
 
-    # ── Delete ───────────────────────────────────────────────────────────────
 
     def _on_modifiers_delete_requested(self, items: list):
         self._delete_components([it.data(0, Qt.UserRole) for it in items if it.data(0, Qt.UserRole) is not None])
@@ -990,7 +983,6 @@ class ComponentList(QWidget):
         self.rebuild()
         self._select_ref(ComponentRef(self.tree_item, "element", -1))
 
-    # ── Reorder (from ComponentTree.reordered, after a drag-drop) ────────────
 
     def _on_modifiers_reordered(self):
         self._apply_tree_order(self.modifiers_tree, "m_Modifiers")
@@ -1029,7 +1021,6 @@ class ComponentList(QWidget):
         self._push_snapshot_command(old_data, new_data)
         self.rebuild()
 
-    # ── Reorder (direct, single-move API — kept for programmatic/test use) ──
 
     def _reorder_component(self, kind: str, from_idx: int, to_idx: int):
         if not self.tree_item:

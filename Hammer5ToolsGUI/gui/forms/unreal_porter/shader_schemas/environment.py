@@ -22,7 +22,6 @@ from .core import (
     KIND_SCALAR, KIND_INT, KIND_VECTOR2, KIND_COLOR, KIND_TEXTURE,
 )
 
-# ── gates ──
 _ALPHA_TEST = lambda c: c.flag("F_ALPHA_TEST") and bool(c.slots.get("opacity") or c.slots.get("trans"))
 _BACKFACES = lambda c: c.flag("F_RENDER_BACKFACES")
 
@@ -38,16 +37,13 @@ def _uniform_from(scale_name, default=1.0):
 def _env_blocks(shader_name):
     """The shared PBR block layout for environment/glass/foliage/character."""
     return (
-        # ── Translucent flag (alpha-test) ──
         Block("Translucent", (
             Param("F_ALPHA_TEST", "int", default=1),
         ), when=_ALPHA_TEST),
-        # ── Faces flag ──
         Block("Faces", (
             Param("F_RENDER_BACKFACES", "int", default=1),
         ), when=_BACKFACES),
 
-        # ── Color ──
         Block("Color", (
             Param("g_flModelTintAmount", KIND_SCALAR, default=1.0),
             Param("g_nScaleTexCoordUByModelScaleAxis", KIND_INT, default=0, comment="// None"),
@@ -55,12 +51,10 @@ def _env_blocks(shader_name):
             Param("g_vColorTint", KIND_COLOR, default=(1.0, 1.0, 1.0)),
         )),
 
-        # ── Fog ──
         Block("Fog", (
             Param("g_bFogEnabled", KIND_INT, default=1),
         )),
 
-        # ── Material1 ──
         Block("Material1", (
             Param("g_bSnowLayer1", KIND_INT, default=0),
             Param("g_flTexCoordRotation1", KIND_SCALAR, default=0.0),
@@ -81,13 +75,11 @@ def _env_blocks(shader_name):
                   when=_ALPHA_TEST),
         )),
 
-        # ── Texture Address Mode ──
         Block("Texture Address Mode", (
             Param("g_nTextureAddressModeU", KIND_INT, default=0, comment="// Wrap"),
             Param("g_nTextureAddressModeV", KIND_INT, default=0, comment="// Wrap"),
         )),
 
-        # ── Translucent params (alpha-test tail) ──
         Block("Translucent", (
             Param("g_flAlphaTestReference", KIND_SCALAR, default=0.5, when=_ALPHA_TEST),
             Param("g_flAntiAliasedEdgeStrength", KIND_SCALAR, default=1.0, when=_ALPHA_TEST),

@@ -1,12 +1,4 @@
-# This code was originally decompiled C code extracted directly from the Counter Strike 2 executable using Ghidra.
-# Then, it was rewritten with some minor C++ syntax, and then converted into python for the sake of this project.
-# So what you see here is as close as possible to how the machine code that executes inside the CS2, determines the volume from these curves.
-# Reason I am saying any of this is because, I'm sure there are way better ways to write this code, but I know this works correctly.
-
-# If rafactors are needed, it would definately be worth writing some sort of tests to assure that the outside is the same after refactoring.
-
-# Also, some of the below comments are understandably long. My intent is to remove most of them once everyone is happy with the way this code is written.
-# A lot of things should be renamed to somthing better.
+# Ported from CS2's curve evaluation. Preserve behavior unless covered by tests.
 
 class CurvePoint:
     def __init__(self, xValue, yValue, slopeLeft, slopeRight, modeLeft, modeRight):
@@ -18,10 +10,7 @@ class CurvePoint:
         self.modeRight: int = modeRight
 
 
-# In the CS2 executable, it seems to take data that exists in one place in memory,
-# coppies the data to another place in memory, and then runs this function on that copy.
-# and it appears that this happens each frame before the yValue is calculated.
-# This is done to preserve the original curve data that originally came from the sound event file.
+# Initializes an evaluation copy without changing the source curve.
 def _setup_curve_point(point, prev_point, next_point):
     delta_x2 = 0
     delta_y2 = 0
@@ -57,20 +46,7 @@ def _setup_curve_point(point, prev_point, next_point):
     if first_point:
         slope3 = slope
 
-    # This is the logic that "explains" what those strange numbers do in the sound event files.
-    # In total there are 6 numbers, previously we understood that the first 2 represent "distance" and "volume" [distance, volume, ?, ?, ?, ?]
-    # The last 2 numbers in each curve point are actually integer modes that determine how to interpolate values near the points themselves.
-    # Contrary to what is told, the values "0, 0, 2, 3" does not give you a straight linear interpolation. It's more like an S curve.
-    # Linear would be "0, 0, 0, 0" and you may be able to see that by reading this code. But it is understandably strange.
-
-    # The first 2 of the 4 numbers that nobody understood up to this point, are actually just "slope" values.
-    # So they essentially represent an angle for how the curve "tangents" away from each curve point. Which makes sence, but it means that configuring the values directly is hard.
-
-    # I suspect that Valve has an internal tool for visualising/editing these curves, or, whoever decided to setup the interface like this was just feeling smart one day,
-    # but then never wrote a tool to allow people to use his code to the extent of what it could do, and everyone just said: "use 0,0,2,3 and you'll be fine".
-    # Rant over.
-
-    # Here we are setting the slope for the left side of the curve point.
+    # Modes choose the left and right tangent interpolation.
     if point.modeLeft == 0:
         point.slopeLeft = slope2
     elif point.modeLeft == 1:
@@ -88,7 +64,6 @@ def _setup_curve_point(point, prev_point, next_point):
         else:
             point.slopeLeft = (1.0 / delta_x) * -0.0413377
 
-    # Here we are setting the slope for the right side of the curve point.
     if point.modeRight == 0:
         point.slopeRight = slope
     elif point.modeRight == 1:

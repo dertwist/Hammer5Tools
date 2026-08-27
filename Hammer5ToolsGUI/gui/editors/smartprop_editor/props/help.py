@@ -205,7 +205,6 @@ class HelpPanel(QFrame):
         main_vbox.setContentsMargins(0, 0, 0, 0)
         main_vbox.setSpacing(0)
 
-        # ── Top toolbar strip with Toggle button in top-left corner ──────────
         self.toolbar_frame = QFrame(self)
         self.toolbar_frame.setFixedHeight(22)
         self.toolbar_frame.setProperty("h5Component", "smartpropHelpToolbar")
@@ -226,7 +225,6 @@ class HelpPanel(QFrame):
 
         main_vbox.addWidget(self.toolbar_frame)
 
-        # ── Stacked widget for Help content vs Note Editor ──────────────────
         self.stacked = QStackedWidget(self)
         self.stacked.setMinimumHeight(0)
         self.stacked.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -289,7 +287,6 @@ class HelpPanel(QFrame):
     def minimumSizeHint(self) -> QSize:
         return QSize(0, 0)
 
-    # ── Mode switching (Help vs Note) ───────────────────────────────────────
 
     def _update_mode_ui(self):
         if self._current_mode == self.MODE_NOTE:
@@ -328,7 +325,6 @@ class HelpPanel(QFrame):
         self.set_mode(self.MODE_NOTE)
         self.note_editor.focus_editor()
 
-    # ── Internal Image Display Scaling & Click Handler ──────────────────────
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -371,7 +367,6 @@ class HelpPanel(QFrame):
         self._image_dialog.raise_()
         self._image_dialog.activateWindow()
 
-    # ── Public API ──────────────────────────────────────────────────────────
 
     def set_help(self, title: str, body: str, image_path: str | None = None):
         """Set help text and optional right-side image."""

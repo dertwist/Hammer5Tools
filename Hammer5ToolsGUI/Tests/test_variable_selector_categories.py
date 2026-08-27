@@ -16,7 +16,7 @@ if repo_root not in sys.path:
 app = QApplication.instance() or QApplication(sys.argv)
 
 from gui.editors.smartprop_editor._common import is_category_variable_name, is_category_widget
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariables, ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariables, ComboboxVariablesWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.widgets.element_id import ElementIDGenerator
 

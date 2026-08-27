@@ -1,4 +1,4 @@
-from gui.ipc.protocol import IPCCommand, IPCMessage
+from gui.shell.ipc_protocol import IPCCommand, IPCMessage
 
 
 def test_messages_include_current_protocol_version():

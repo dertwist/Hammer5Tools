@@ -92,10 +92,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
 
-        # Request a multisampled (anti-aliased) framebuffer.  This must be set
-        # before the widget's GL context is created; glEnable(GL_MULTISAMPLE) in
-        # initializeGL is a no-op without a multisampled surface behind it.  The
-        # sample count follows the SmartProp Editor's Anti-aliasing setting.
+        # MSAA format must be set before Qt creates the GL context.
         from gui.editors.smartprop_editor.viewport_3d.gl_settings import (
             make_viewport_surface_format, get_viewport_msaa_samples,
         )
@@ -108,11 +105,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.mesh_cache = MeshCache(self)
         self.mesh_cache.model_ready.connect(self.update)
 
-        # Anti-crash state (see crash_guard.gl_guard).  Exceptions in the GL
-        # callbacks/event handlers are caught and counted here instead of
-        # unwinding into Qt's C++ paint loop and aborting the whole editor; once
-        # the viewport gives up, _gl_disabled stays True and it renders an inert
-        # "disabled" frame.
+        # Prevent GL callback failures from unwinding into Qt's paint loop.
         self._gl_disabled = False
         self._gl_crash_count = 0
 
@@ -232,11 +225,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._mask_fbo_w = 0
         self._mask_fbo_h = 0
 
-        # Dedicated single-sample framebuffer for color-ID picking.  The visible
-        # surface is multisampled (MSAA), and glReadPixels is invalid on a
-        # multisampled buffer — plus MSAA would blend neighbouring IDs at edges
-        # and corrupt the lookup.  Picking therefore renders into this private
-        # non-multisampled FBO instead.
+        # Picking uses a non-MSAA FBO because antialiasing corrupts color IDs.
         self._pick_fbo = 0
         self._pick_color_rbo = 0
         self._pick_depth_rbo = 0

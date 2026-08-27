@@ -6,7 +6,7 @@ except:
     try:
         from vmap_parser import parse
     except:
-        from gui.editors.loading_editor.commands.vmap_parser import parse
+        from gui.editors.loading_editor.vmap_parser import parse
 
 try:
     from gui.other.cs2_netcon import CS2Netcon

@@ -22,9 +22,7 @@ from gui.settings.common import get_cs2_path
 from gui.editors.soundevent_editor.thread_parking import park
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  Lazy path helpers
-# ──────────────────────────────────────────────────────────────────────────────
 
 def _get_vpk_path() -> str:
     return os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
@@ -33,9 +31,7 @@ def _get_soundevents_cache_path() -> str:
     return os.path.join(SoundEventEditor_path, 'soundevents_cache')
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  Fast event name scanner — HOT PATH
-# ──────────────────────────────────────────────────────────────────────────────
 
 def scan_event_names(path: str) -> List[str]:
     names: List[str] = []
@@ -57,9 +53,7 @@ def scan_event_names(path: str) -> List[str]:
     return names
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  extract_vsndevts_file
-# ──────────────────────────────────────────────────────────────────────────────
 
 def extract_vsndevts_file(
     inner_path: str,
@@ -87,9 +81,7 @@ def extract_vsndevts_file(
     return out_path
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  Full KV3 parse helpers — COLD PATH
-# ──────────────────────────────────────────────────────────────────────────────
 
 def parse_vsndevts_text(content: str, source_name: str) -> Dict[str, Dict[str, Any]]:
     try:
@@ -120,9 +112,7 @@ def parse_vsndevts_file(path: str) -> Dict[str, Dict[str, Any]]:
         return {}
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  Background loader thread
-# ──────────────────────────────────────────────────────────────────────────────
 
 # CS2's built-in sound events are global, not per-addon. Cache the scan so an
 # addon switch reuses it instead of re-decompiling the VPK on a fresh thread
@@ -219,10 +209,8 @@ class SoundEventLoaderThread(QThread):
             self.events_loaded.emit({})
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  List model
 #  DecorationRole returns Qt's built-in SP_MediaPlay icon — no custom resources.
-# ──────────────────────────────────────────────────────────────────────────────
 
 class _EventListModel(QAbstractListModel):
     _play_icon: Optional[QIcon] = None  # resolved once, shared by all rows
@@ -254,9 +242,7 @@ class _EventListModel(QAbstractListModel):
 
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 #  Main explorer widget
-# ──────────────────────────────────────────────────────────────────────────────
 
 class InternalSoundEventExplorer(QWidget):
     """
@@ -313,7 +299,6 @@ class InternalSoundEventExplorer(QWidget):
 
         self.reload()
 
-    # ── Public API ────────────────────────────────────────────────────────
 
     def reload(self) -> None:
         self._source_model.set_names([])
@@ -360,7 +345,6 @@ class InternalSoundEventExplorer(QWidget):
                 except Exception:
                     pass
 
-    # ── Internals ─────────────────────────────────────────────────────────
 
     def _on_events_loaded(self, name_to_file: Dict[str, str]) -> None:
         global _EVENTS_CACHE

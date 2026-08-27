@@ -18,7 +18,7 @@ from gui.settings.common import (
     set_settings_value,
 )
 from gui.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
-from gui.widgets.common import Button  # Using the internal Button class
+from gui.widgets.common import Button
 from gui.other.file_association import setup_all_associations
 
 
@@ -30,7 +30,6 @@ class ActionButtonsPanel(QFrame):
     def setup_ui(self):
         h_layout_bottom = QHBoxLayout(self)
         h_layout_bottom.setContentsMargins(9, 9, 9, 9)
-        # Create buttons using the internal Button class
         self.open_userdata_folder_button = Button(text=" Open UserData")
         self.open_userdata_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_userdata_folder_button)
@@ -54,14 +53,12 @@ class PreferencesDialog(QDialog):
         super().__init__(parent)
         self.app_version = app_version
         enable_dark_title_bar(self)
-        # Set the minimum size and window title
         self.setMinimumSize(830, 300)
         self.setWindowTitle('Settings')
         self.main_layout = QVBoxLayout(self)
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setProperty("h5Component", "settingsTabWidget")
         self.main_layout.addWidget(self.tabWidget)
-        # Create tabs and bottom action panel
         self.create_general_tab()
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
@@ -75,7 +72,6 @@ class PreferencesDialog(QDialog):
         divider.setFrameShape(QFrame.HLine)
         divider.setFrameShadow(QFrame.Sunken)
         divider.setLineWidth(2)
-        # Enforcing height of 2 pixels and divider color #424242
         divider.setFixedHeight(2)
         divider.setProperty("h5Component", "settingsDivider")
         return divider
@@ -92,7 +88,6 @@ class PreferencesDialog(QDialog):
         general_tab_content = QWidget()
         layout = QVBoxLayout(general_tab_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # Paths Subcategory
         label_paths_header = QLabel("Paths", general_tab_content)
         layout.addWidget(label_paths_header)
         self.frame_paths = QFrame(general_tab_content)
@@ -102,14 +97,12 @@ class PreferencesDialog(QDialog):
         layout_paths.addWidget(archive_label)
         self.preferences_lineedit_archive_path = QLineEdit(self.frame_paths)
         layout_paths.addWidget(self.preferences_lineedit_archive_path)
-        # Add "Browse" button using internal Button class to locate archive path
         self.browse_archive_button = Button()
         self.browse_archive_button.set_icon_folder_open()
         self.browse_archive_button.set_size(27)
         layout_paths.addWidget(self.browse_archive_button)
         layout.addWidget(self.frame_paths)
         
-        # CS2 Path row
         self.frame_cs2_path = QFrame(general_tab_content)
         layout_cs2_path = QHBoxLayout(self.frame_cs2_path)
         cs2_label = QLabel("CS2 path:", self.frame_cs2_path)
@@ -117,15 +110,12 @@ class PreferencesDialog(QDialog):
         layout_cs2_path.addWidget(cs2_label)
         self.preferences_lineedit_cs2_path = QLineEdit(self.frame_cs2_path)
         layout_cs2_path.addWidget(self.preferences_lineedit_cs2_path)
-        # Add "Browse" button for CS2 path
         self.browse_cs2_button = Button()
         self.browse_cs2_button.set_icon_folder_open()
         self.browse_cs2_button.set_size(27)
         layout_cs2_path.addWidget(self.browse_cs2_button)
         layout.addWidget(self.frame_cs2_path)
-        # Add divider after Paths Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-        # Appearance Subcategory
         label_appearance_header = QLabel("Appearance", general_tab_content)
         layout.addWidget(label_appearance_header)
         frame_theme = QFrame(general_tab_content)
@@ -143,9 +133,7 @@ class PreferencesDialog(QDialog):
         layout_theme.addWidget(self.appearance_combo_theme)
         layout_theme.addStretch()
         layout.addWidget(frame_theme)
-        # Add divider after Appearance Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-        # Other Subcategory
         label_other_header = QLabel("Other", general_tab_content)
         layout.addWidget(label_other_header)
         self.frame_other = QFrame(general_tab_content)
@@ -195,7 +183,6 @@ class PreferencesDialog(QDialog):
         smartprop_content = QWidget()
         layout = QVBoxLayout(smartprop_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # ------------- Interface Subcategory -------------
         label_interface_header = QLabel("Interface", smartprop_content)
         layout.addWidget(label_interface_header)
         frame_interface = QFrame(smartprop_content)
@@ -212,9 +199,7 @@ class PreferencesDialog(QDialog):
         )
         layout_interface.addWidget(self.spe_hide_experimental)
         layout.addWidget(frame_interface)
-        # Divider between subcategories
         layout.addWidget(self.create_divider(smartprop_content))
-        # Format Subcategory
         label_format_header = QLabel("Format", smartprop_content)
         layout.addWidget(label_format_header)
         frame_format = QFrame(smartprop_content)
@@ -225,14 +210,12 @@ class PreferencesDialog(QDialog):
         layout_format.addWidget(self.spe_export_properties)
         layout.addWidget(frame_format)
 
-        # Divider for VMAP Import Subcategory
         layout.addWidget(self.create_divider(smartprop_content))
         label_vmap_import = QLabel("VMAP Importing", smartprop_content)
         layout.addWidget(label_vmap_import)
         frame_vmap_import = QFrame(smartprop_content)
         layout_vmap_import = QVBoxLayout(frame_vmap_import)
         
-        # VMAP Importing row (checkbox, label and combobox in one horizontal row)
         row_vmap_import = QHBoxLayout()
         
         self.spe_round_vmap_values = QCheckBox("Round values during VMAP import (recommended)", frame_vmap_import)
@@ -246,7 +229,6 @@ class PreferencesDialog(QDialog):
         
         self.spe_round_vmap_decimals = QComboBox(frame_vmap_import)
         self.spe_round_vmap_decimals.setProperty("h5Component", "legacyCombobox")
-        # Options: 2, 3, 4, 5, 6, 1, 0
         for opt in ["2", "3", "4", "5", "6", "1", "0"]:
             self.spe_round_vmap_decimals.addItem(opt, int(opt))
         row_vmap_import.addWidget(self.spe_round_vmap_decimals)
@@ -255,21 +237,18 @@ class PreferencesDialog(QDialog):
         layout_vmap_import.addLayout(row_vmap_import)
         layout.addWidget(frame_vmap_import)
 
-        # Divider for 3D Viewport Subcategory
         layout.addWidget(self.create_divider(smartprop_content))
         label_viewport = QLabel("3D Viewport", smartprop_content)
         layout.addWidget(label_viewport)
         frame_viewport = QFrame(smartprop_content)
         layout_viewport = QVBoxLayout(frame_viewport)
 
-        # Anti-aliasing (MSAA) row
         row_msaa = QHBoxLayout()
         label_msaa = QLabel("Anti-aliasing (reopen file to apply):", frame_viewport)
         label_msaa.setMinimumWidth(130)
         row_msaa.addWidget(label_msaa)
         self.spe_viewport_msaa = QComboBox(frame_viewport)
         self.spe_viewport_msaa.setProperty("h5Component", "legacyCombobox")
-        # Value stored is the MSAA sample count (0 == off).
         for text, samples in [("Off", 0), ("2x MSAA", 2), ("4x MSAA", 4), ("8x MSAA", 8)]:
             self.spe_viewport_msaa.addItem(text, samples)
         self.spe_viewport_msaa.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -287,7 +266,6 @@ class PreferencesDialog(QDialog):
         assetgroupmaker_content = QWidget()
         layout = QVBoxLayout(assetgroupmaker_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # Monitor Subcategory
         label_monitor_header = QLabel("Monitor", assetgroupmaker_content)
         layout.addWidget(label_monitor_header)
         frame_monitor = QFrame(assetgroupmaker_content)
@@ -298,13 +276,11 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
         layout_monitor.addWidget(self.assetgroupmaker_lineedit_monitor)
         layout.addWidget(frame_monitor)
-        # Divider before Default File Subcategory
         layout.addWidget(self.create_divider(assetgroupmaker_content))
         label_default_file = QLabel("Default File", assetgroupmaker_content)
         layout.addWidget(label_default_file)
         frame_default_file = QFrame(assetgroupmaker_content)
         layout_default_file = QVBoxLayout(frame_default_file)
-        # Extension editline
         row_ext = QHBoxLayout()
         label_ext = QLabel("Extension:", frame_default_file)
         label_ext.setMinimumWidth(130)
@@ -312,7 +288,6 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_extension = QLineEdit(frame_default_file)
         row_ext.addWidget(self.assetgroupmaker_edit_extension)
         layout_default_file.addLayout(row_ext)
-        # Ignore List editline
         row_ignore = QHBoxLayout()
         label_ignore = QLabel("Ignore List:", frame_default_file)
         label_ignore.setMinimumWidth(130)
@@ -320,14 +295,12 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_ignore_list = QLineEdit(frame_default_file)
         row_ignore.addWidget(self.assetgroupmaker_edit_ignore_list)
         layout_default_file.addLayout(row_ignore)
-        # Algorithm combobox
         row_algo = QHBoxLayout()
         label_algo = QLabel("Algorithm:", frame_default_file)
         label_algo.setMinimumWidth(130)
         row_algo.addWidget(label_algo)
         self.assetgroupmaker_combo_algorithm = QComboBox(frame_default_file)
         self.assetgroupmaker_combo_algorithm.setProperty("h5Component", "legacyCombobox")
-        # Add the two algorithm options:
         self.assetgroupmaker_combo_algorithm.addItem("Process without interpretation", 0)
         self.assetgroupmaker_combo_algorithm.addItem("Remove underscore from the end", 1)
         self.assetgroupmaker_combo_algorithm.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -335,7 +308,6 @@ class PreferencesDialog(QDialog):
         row_algo.addWidget(self.assetgroupmaker_combo_algorithm)
         row_algo.addStretch()
         layout_default_file.addLayout(row_algo)
-        # Ignore Extensions editline
         row_ignore_ext = QHBoxLayout()
         label_ignore_ext = QLabel("Ignore Extensions:", frame_default_file)
         label_ignore_ext.setMinimumWidth(130)
@@ -344,18 +316,15 @@ class PreferencesDialog(QDialog):
         row_ignore_ext.addWidget(self.assetgroupmaker_edit_ignore_ext)
         layout_default_file.addLayout(row_ignore_ext)
         layout.addWidget(frame_default_file)
-        # Divider after Default File Subcategory
         layout.addWidget(self.create_divider(assetgroupmaker_content))
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
         assetgroupmaker_scroll = self.wrap_in_scroll_area(assetgroupmaker_content)
         self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
 
     def create_sound_event_editor_tab(self):
-        # Create the SoundEventEditor tab with AudioPlayer subcategory and Internal Sounds subcategory
         sound_editor_content = QWidget()
         layout = QVBoxLayout(sound_editor_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # ------------- AudioPlayer Subcategory -------------
         label_audio_header = QLabel("AudioPlayer", sound_editor_content)
         layout.addWidget(label_audio_header)
         self.frame_audio = QFrame(sound_editor_content)
@@ -370,12 +339,10 @@ class PreferencesDialog(QDialog):
 
 
     def create_bottom_panel(self):
-        # Use the new ActionButtonsPanel for the bottom buttons
         self.action_buttons_panel = ActionButtonsPanel(self)
         self.main_layout.addWidget(self.action_buttons_panel)
 
     def populate_preferences(self):
-        # Theme (General tab)
         try:
             theme_level = int(get_settings_value('APP', 'theme_level', 2))
         except (TypeError, ValueError):
@@ -384,12 +351,10 @@ class PreferencesDialog(QDialog):
         self.appearance_combo_theme.setCurrentIndex(
             theme_idx if theme_idx != -1 else self.appearance_combo_theme.findData(2))
         self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
-        # Populate CS2 path
         manual_cs2_path = get_manual_cs2_path()
         if manual_cs2_path:
             self.preferences_lineedit_cs2_path.setText(manual_cs2_path)
         else:
-            # Show current detected path if any
             current_cs2_path = get_cs2_path()
             if current_cs2_path:
                 self.preferences_lineedit_cs2_path.setPlaceholderText(f"Auto-detected: {current_cs2_path}")
@@ -398,9 +363,7 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
         self.checkBox_git_generate_commit_messages.setChecked(
             get_settings_bool('GitSync', 'generate_commit_messages', True))
-        # Same default as get_channel(), so a dev build shows the box already ticked
         self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
-        # The label describes the running build, not the channel being followed
         version_text = f"Version: {self.app_version}"
         if get_build_channel() == 'dev':
             version_text += " (dev)"
@@ -408,9 +371,7 @@ class PreferencesDialog(QDialog):
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.spe_hide_experimental.setChecked(get_settings_bool('SmartPropEditor', 'hide_experimental', True))
-        # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
-        # Populate Default File Subcategory fields
         try:
             default_file = ast.literal_eval(get_settings_value('AssetGroupMaker', 'default_file') or "{}")
             process = default_file.get('process', {})
@@ -419,14 +380,11 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_extension.setText(process.get('extension', 'vmdl'))
         self.assetgroupmaker_edit_ignore_list.setText(process.get('ignore_list', ''))
         algo = process.get('algorithm', 0)
-        # Set combobox current index based on stored algorithm value
         index = 0 if algo == 0 else 1
         self.assetgroupmaker_combo_algorithm.setCurrentIndex(index)
         self.assetgroupmaker_edit_ignore_ext.setText(process.get('ignore_extensions', 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'))
-        # Populate SoundEventEditor preferences
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
 
-        # Populate VMAP Import settings
         self.spe_round_vmap_values.setChecked(get_settings_bool('SmartPropEditor', 'round_vmap_values', False))
         self.spe_round_vmap_decimals.setEnabled(self.spe_round_vmap_values.isChecked())
         
@@ -437,7 +395,6 @@ class PreferencesDialog(QDialog):
         else:
             self.spe_round_vmap_decimals.setCurrentText("4")
 
-        # Populate 3D Viewport anti-aliasing (MSAA sample count)
         try:
             msaa_val = int(get_settings_value('SmartPropEditor', 'viewport_msaa', 4))
         except (TypeError, ValueError):
@@ -446,7 +403,6 @@ class PreferencesDialog(QDialog):
         self.spe_viewport_msaa.setCurrentIndex(msaa_idx if msaa_idx != -1 else self.spe_viewport_msaa.findData(4))
 
     def update_default_file_setting(self):
-        # Collect current settings from Default File subcategory fields (removed folder options)
         process = {
             'extension': self.assetgroupmaker_edit_extension.text(),
             'ignore_list': self.assetgroupmaker_edit_ignore_list.text(),
@@ -503,7 +459,6 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_lineedit_monitor.textChanged.connect(
             lambda: set_settings_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
-        # Connect Default File subcategory widgets to update_default_file_setting
         self.assetgroupmaker_edit_extension.textChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_edit_ignore_list.textChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
@@ -515,7 +470,6 @@ class PreferencesDialog(QDialog):
         self.checkBox_play_on_click.toggled.connect(
             lambda: set_settings_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
         )
-        # Connect VMAP Import rounding signals
         self.spe_round_vmap_values.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'round_vmap_values', self.spe_round_vmap_values.isChecked())
         )
@@ -523,7 +477,6 @@ class PreferencesDialog(QDialog):
         self.spe_round_vmap_decimals.currentIndexChanged.connect(
             lambda: set_settings_value('SmartPropEditor', 'round_vmap_decimals', str(self.spe_round_vmap_decimals.currentData()))
         )
-        # Connect 3D Viewport anti-aliasing signal (stored as an int sample count)
         self.spe_viewport_msaa.currentIndexChanged.connect(
             lambda: set_settings_value('SmartPropEditor', 'viewport_msaa', int(self.spe_viewport_msaa.currentData()))
         )
@@ -538,18 +491,15 @@ class PreferencesDialog(QDialog):
     def browse_cs2_path(self):
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Counter Strike 2 Installation Path", os.getcwd())
         if selected_dir:
-            # Validate that this looks like a CS2 installation
             cs2_exe_path = os.path.join(selected_dir, "game", "bin", "win64", "cs2.exe")
             if os.path.exists(cs2_exe_path):
                 self.preferences_lineedit_cs2_path.setText(selected_dir)
                 set_manual_cs2_path(selected_dir)
-                # Show success message
                 from PySide6.QtWidgets import QMessageBox
                 QMessageBox.information(self, "CS2 Path Set", 
                                       f"CS2 path successfully set to:\n{selected_dir}\n\n"
                                       "Please restart the application for changes to take effect.")
             else:
-                # Show error message
                 from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, "Invalid CS2 Path", 
                                   f"The selected directory does not appear to be a valid CS2 installation.\n\n"
@@ -604,7 +554,6 @@ class PreferencesDialog(QDialog):
         self.action_buttons_panel.check_update_button.setEnabled(False)
         self.action_buttons_panel.version_label.setText("Checking for updates...")
         
-        # We use a property on the parent to trigger the actual check
         if hasattr(self.parent(), "trigger_update_check"):
             self.parent().trigger_update_check()
         

@@ -318,7 +318,7 @@ def prepare_for_update():
     """
     # 1. Stop IPC server
     try:
-        from gui.ipc.server_utils import stop_ipc_server
+        from gui.shell.ipc_server_utils import stop_ipc_server
         stop_ipc_server()
     except Exception as e:
         log.error(f"Failed to stop IPC server: {e}")

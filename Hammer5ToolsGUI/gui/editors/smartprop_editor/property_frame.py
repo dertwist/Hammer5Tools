@@ -416,7 +416,6 @@ class PropertyFrame(QWidget):
             self.value = {'m_bEnabled': True}
             self.value.update(value)
 
-            #===========================================================<  Element ID  >========================================================
             self.element_id_generator.update_value(self.value)
             self.element_id = self.element_id_generator.get_key(self.value)
             self.ui.element_id_display.setText(str(self.element_id))
@@ -534,7 +533,6 @@ class PropertyFrame(QWidget):
         self._zebra_pending = False
         compact.assign_zebra(self.ui.layout, selected=self._selected_row)
 
-    # ── Per-property selection ──────────────────────────────────────────────
 
     def eventFilter(self, obj, event):
         """Select the property row the user pressed on.
@@ -580,7 +578,6 @@ class PropertyFrame(QWidget):
                 pass
         return getattr(widget, 'value_class', '') or ''
 
-    # ── Per-property copy / paste ───────────────────────────────────────────
 
     def copy_property(self) -> bool:
         """Put the selected row's value on the clipboard. False if nothing to copy."""
@@ -1221,7 +1218,6 @@ class PropertyFrame(QWidget):
             if prefix and name:
                 self.clicked.emit(f"{prefix}_{name}")
 
-    # ── Drag-and-drop disabled for property-list rows ───────────────────────
     # Property rows are not reorderable here (order is schema-driven, and the
     # old dropEvent reordered the layout + emitted spurious edits). The shared
     # PropertyMethods drag handlers are NOT assigned, and setAcceptDrops(False)
@@ -1249,7 +1245,6 @@ class PropertyFrame(QWidget):
     def show_context_menu(self):
         context_menu = QMenu()
 
-        # ── Selected property row ───────────────────────────────────────────
         copy_property_action = paste_property_action = None
         row = self._selected_row
         if row is not None:
@@ -1259,7 +1254,6 @@ class PropertyFrame(QWidget):
             paste_property_action.setEnabled(self._clipboard_has_property())
             context_menu.addActions([copy_property_action, paste_property_action])
 
-        # ── Whole component ─────────────────────────────────────────────────
         # In element mode Section 1 owns delete/copy of the component itself.
         delete_action = copy_action = None
         if not self.element:

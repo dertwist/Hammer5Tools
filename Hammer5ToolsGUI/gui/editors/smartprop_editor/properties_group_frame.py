@@ -3,7 +3,7 @@ from gui.editors.smartprop_editor.ui_properties_group_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QFrame, QApplication
 from PySide6.QtCore import Signal, QSize
-from gui.property.methods import PropertyMethods
+from gui.widgets.property_methods import PropertyMethods
 from gui.widgets import ErrorInfo
 from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor._common import parse_component_clipboard

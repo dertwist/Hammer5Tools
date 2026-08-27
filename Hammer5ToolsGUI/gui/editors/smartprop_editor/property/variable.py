@@ -3,7 +3,7 @@ from gui.editors.smartprop_editor.property.ui_float import Ui_Widget
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
 from gui.widgets import Spacer
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.editors.smartprop_editor.property import compact
 
 

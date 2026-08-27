@@ -283,7 +283,7 @@ if __name__ == "__main__":
 
     # 3. Check for existing instance via IPC (loads QtNetwork ONLY)
     from PySide6.QtNetwork import QLocalSocket
-    from gui.ipc.protocol import IPCMessage, IPCCommand
+    from gui.shell.ipc_protocol import IPCMessage, IPCCommand
     INSTANCE_KEY = "Hammer5ToolsIPC"
 
     from gui.lifecycle import launcher_supervises_process

@@ -225,9 +225,7 @@ class NewFromPresetCommand(QUndoCommand):
             log.error(f"[SPE][NewFromPreset] undo: ERROR — {e}")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # Properties Panel — snapshot-based undo (actions 11-20)
-# ──────────────────────────────────────────────────────────────────────────────
 
 class PropertySnapshotCommand(QUndoCommand):
     """Snapshot the full data of one hierarchy tree item before/after a property edit.
@@ -433,9 +431,7 @@ class PropertySnapshotCommand(QUndoCommand):
             log.error(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # Variables Panel — full-snapshot undo (actions 21-31)
-# ──────────────────────────────────────────────────────────────────────────────
 
 class VariablesSnapshotCommand(QUndoCommand):
     """Store a serialised snapshot of all variables before and after an edit.
@@ -515,9 +511,7 @@ class VariablesSnapshotCommand(QUndoCommand):
             log.error(f"[SPE][Variables] undo: ERROR — {e}")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 # Choices Panel — full-snapshot undo (actions 32-40)
-# ──────────────────────────────────────────────────────────────────────────────
 
 class ChoicesSnapshotCommand(QUndoCommand):
     """Store a serialised snapshot of the entire choices tree before/after an edit.

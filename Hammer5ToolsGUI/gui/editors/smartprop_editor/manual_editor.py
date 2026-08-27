@@ -41,13 +41,11 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
         header_fmt.setFontItalic(True)
         self.highlighting_rules.append((re.compile(r'<!--.*?-->'), header_fmt))
 
-        # ── Class values  (e.g. "CSmartProp…") ──
         class_fmt = QTextCharFormat()
         class_fmt.setForeground(QColor(78, 201, 176))  # Teal
         class_fmt.setFontWeight(QFont.Bold)
         self.highlighting_rules.append((re.compile(r'"CSmartProp\w*"'), class_fmt))
 
-        # ── Keys (word followed by '=') ──
         key_fmt = QTextCharFormat()
         key_fmt.setForeground(QColor(156, 220, 254))   # #9CDCFE — light blue
         self.highlighting_rules.append((re.compile(r'\b(\w+)\s*='), key_fmt, 1))
@@ -60,18 +58,15 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
         number_fmt.setForeground(QColor(181, 206, 168))  # #B5CEA8 — green
         self.highlighting_rules.append((re.compile(r'\b-?\d+(?:\.\d+)?\b'), number_fmt))
 
-        # ── Booleans / null ──
         keyword_fmt = QTextCharFormat()
         keyword_fmt.setForeground(QColor(86, 156, 214))  # #569CD6 — blue
         keyword_fmt.setFontWeight(QFont.Bold)
         self.highlighting_rules.append((re.compile(r'\b(?:true|false|null)\b'), keyword_fmt))
 
-        # ── Brackets & braces ──
         bracket_fmt = QTextCharFormat()
         bracket_fmt.setForeground(QColor(220, 220, 170))  # #DCDCAA — yellow
         self.highlighting_rules.append((re.compile(r'[\[\]{}]'), bracket_fmt))
 
-        # ── Comments (applied last to override everything) ──
         self.comment_format = QTextCharFormat()
         self.comment_format.setForeground(QColor(106, 153, 85))  # #6A9955 — green
         self.comment_format.setFontItalic(True)
@@ -95,7 +90,6 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
             self.setFormat(m.start(), m.end() - m.start(), self.comment_format)
 
 
-# ── Line Number Area (same pattern as ExpressionEditor) ───────────────────────
 
 class _LineNumberArea(QWidget):
     def __init__(self, editor):
@@ -109,7 +103,6 @@ class _LineNumberArea(QWidget):
         self.code_editor.line_number_area_paint_event(event)
 
 
-# ── KV3 Code Editor (line numbers + highlight + completions) ──────────────────
 
 # Common KV3 property keys used across SmartProp documents
 _KV3_COMPLETIONS = sorted({
@@ -168,7 +161,6 @@ class Kv3CodeEditor(QPlainTextEdit):
         self.setTabStopDistance(28)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
 
-    # ── Completions ───────────────────────────────────────────────────────
 
     def _trigger_completion(self):
         tc = self.textCursor()
@@ -229,7 +221,6 @@ class Kv3CodeEditor(QPlainTextEdit):
             if indent:
                 tc.insertText(indent)
 
-    # ── Line numbers (same as ExpressionEditor) ──────────────────────────
 
     def line_number_area_width(self):
         digits = 1
@@ -307,7 +298,6 @@ class Kv3CodeEditor(QPlainTextEdit):
         self.setExtraSelections(extra)
 
 
-# ── Search & Replace Bar ──────────────────────────────────────────────────────
 
 class _SearchReplaceBar(QFrame):
     """Inline search / replace bar shown above the editor."""
@@ -384,7 +374,6 @@ class _SearchReplaceBar(QFrame):
 
         self.hide()
 
-    # ── Public ────────────────────────────────────────────────────────────
 
     def open_find(self):
         self.show()
@@ -396,7 +385,6 @@ class _SearchReplaceBar(QFrame):
         self._replace_input.setFocus()
         self._replace_input.selectAll()
 
-    # ── Search logic ──────────────────────────────────────────────────────
 
     def _flags(self, backward=False):
         from PySide6.QtGui import QTextDocument
@@ -449,7 +437,6 @@ class _SearchReplaceBar(QFrame):
             count = content.lower().count(text.lower())
         self._match_label.setText(f"{count} matches" if count else "No matches")
 
-    # ── Replace logic ─────────────────────────────────────────────────────
 
     def _replace_one(self):
         tc = self._editor.textCursor()
@@ -479,14 +466,12 @@ class _SearchReplaceBar(QFrame):
         super().keyPressEvent(event)
 
 
-# ── Focus modes ───────────────────────────────────────────────────────────────
 
 FOCUS_HIERARCHY = "Hierarchy Element"
 FOCUS_VARIABLES = "Variables"
 FOCUS_CHOICES   = "Choices"
 
 
-# ── Main widget ──────────────────────────────────────────────────────────────
 
 class ManualEditor(QWidget):
     """Raw KV3 text editor for the SmartProp document.
@@ -539,22 +524,18 @@ class ManualEditor(QWidget):
 
         root.addWidget(toolbar)
 
-        # ── Status label (errors) ─────────────────────────────────────────
         self._status_label = QLabel("")
         self._status_label.setProperty("h5Component", "smartpropEditorErrorLabel")
         self._status_label.setWordWrap(True)
         self._status_label.hide()
         root.addWidget(self._status_label)
 
-        # ── Search/Replace bar ────────────────────────────────────────────
         self._editor = Kv3CodeEditor(self)
         self._search_bar = _SearchReplaceBar(self._editor, self)
         root.addWidget(self._search_bar)
 
-        # ── Code editor ──────────────────────────────────────────────────
         root.addWidget(self._editor)
 
-        # ── Statistics & Search Bar ───────────────────────────────────────────
         bottom_toolbar = QFrame()
         bottom_toolbar.setProperty("h5Component", "smartpropFrame")
         bottom_layout = QHBoxLayout(bottom_toolbar)
@@ -586,7 +567,6 @@ class ManualEditor(QWidget):
         self._editor.cursorPositionChanged.connect(self._update_stats)
         self._update_stats()
 
-    # ── Keyboard shortcuts ────────────────────────────────────────────────
 
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
@@ -598,7 +578,6 @@ class ManualEditor(QWidget):
                 return
         super().keyPressEvent(event)
 
-    # ── Public API ────────────────────────────────────────────────────────
 
     def refresh(self):
         """Re-read the current focus source and populate the editor."""
@@ -612,7 +591,6 @@ class ManualEditor(QWidget):
         if idx >= 0:
             self._focus_combo.setCurrentIndex(idx)
 
-    # ── Serialisation helpers ─────────────────────────────────────────────
 
     def _serialise_focus(self) -> str:
         """Return a KV3-formatted string for the current focus."""
@@ -718,7 +696,6 @@ class ManualEditor(QWidget):
             })
         return JsonToKv3({"m_Choices": choices})
 
-    # ── Apply (write back) ────────────────────────────────────────────────
 
     def _on_apply(self):
         """Parse editor text and apply changes back to the document."""
@@ -737,7 +714,6 @@ class ManualEditor(QWidget):
             self._status_label.show()
 
     def _apply_hierarchy_internal(self, item, text):
-        from gui.common import Kv3ToJson
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         from gui.common import fast_deepcopy
 
@@ -892,7 +868,6 @@ class ManualEditor(QWidget):
         cmd = ChoicesSnapshotCommand(self._document, old_state, state, "Manual Edit Choices")
         self._document.undo_stack.push(cmd)
 
-    # ── Internal ──────────────────────────────────────────────────────────
 
     def _on_focus_changed(self, text):
         self._current_focus = text

@@ -1,5 +1,4 @@
 import logging
-# from src.preferences import get_cs2_path
 from gui.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 import sys
 import os
@@ -29,13 +28,8 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
     If base_name already ends in [separator]NN, it increments that number.
     It skips any names already present in existing_names.
     """
-    # Strip whitespace to avoid regex match failures
     base_name = base_name.strip()
-    
-    # Escape separator for regex
     sep_esc = re.escape(separator)
-    
-    # Regex to match a suffix like [separator]01, [separator]02, etc. at the end of the string.
     match = re.search(f'{sep_esc}(\\d+)$', base_name)
     
     if match:
@@ -147,7 +141,6 @@ def get_update_source():
     from velopack import HttpSource
     return HttpSource(get_update_url())
 
-# Title
 def enable_dark_title_bar(window):
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20
     try:
@@ -161,8 +154,6 @@ def enable_dark_title_bar(window):
         )
     except Exception as e:
         log.error(f"Failed to set dark mode title bar: {e}")
-
-# Variables
 
 editor_info = {
     'editor_info':
@@ -185,12 +176,10 @@ def get_app_paths() -> tuple[Path, Path]:
         exe_path = Path(sys.executable)
         current_dir = exe_path.parent
         
-        # Persistent folder for user data (survives updates and uninstalls).
-        # We store it in the user's home directory to keep it 'outside of appdata'
-        # as requested, avoiding any Velopack cleanup logic.
+        # Keep user data outside installer-managed directories.
         user_data = Path.home() / "Hammer5Tools"
-        
-        # Migration: If old userdata exists in the root_dir, move it to the new home location
+
+        # Migrate legacy install-local user data.
         try:
             if current_dir.name.lower() in ('app', 'current'):
                 old_root = current_dir.parent
@@ -208,14 +197,11 @@ def get_app_paths() -> tuple[Path, Path]:
             
         return current_dir, user_data
     
-    # Dev mode uses the same repository-root contract as the Core facade.
     return runtime_paths.install_root, runtime_paths.user_data_root
 
-# Initialize Paths
 app_dir, user_data_dir = get_app_paths()
 user_data_dir.mkdir(parents=True, exist_ok=True)
 
-# Preset Paths
 SoundEventEditor_Path = user_data_dir / "SoundEventEditor"
 SoundEventEditor_path = SoundEventEditor_Path
 SmartPropEditor_Path = user_data_dir / "SmartPropEditor"
@@ -224,18 +210,16 @@ Hotkeys_Path = user_data_dir / "Hotkeys"
 
 SoundEventEditor_Preset_Path = SoundEventEditor_Path / "Presets"
 SmartPropEditor_Preset_Path = SmartPropEditor_Path / "Presets"
-# Aliases for compatibility with various editor versions
+# Compatibility aliases used by older editors.
 SoundEventEditor_User_Preset_Path = SoundEventEditor_Preset_Path
 SmartPropEditor_User_Preset_Path = SmartPropEditor_Preset_Path
 
-# Bundled presets (read-only, updated with app)
 if getattr(sys, 'frozen', False):
     runtime_paths = resolve_runtime_paths()
     internal_base = runtime_paths.runtime_resource("defaults")
     if not internal_base.exists():
         internal_base = runtime_paths.runtime_root
 else:
-    # Dev mode: defaults are in the 'Hammer5Tools' subfolder of the repo root
     internal_base = app_dir / "Hammer5Tools"
     if not internal_base.exists():
         internal_base = app_dir
@@ -244,11 +228,9 @@ Internal_Presets_Path = internal_base / "Presets"
 SoundEventEditor_Internal_Preset_Path = internal_base / "SoundEventEditor" / "Presets"
 SmartPropEditor_Internal_Preset_Path = internal_base / "SmartPropEditor" / "Presets"
 
-# Data paths for SoundEventEditor
 SoundEventEditor_sounds_path = SoundEventEditor_Path / 'sounds'
 SoundEventEditor_soundevents_path = SoundEventEditor_Path / 'soundevents'
 
-# Ensure critical directories exist even if not seeded
 for p in [Presets_Path, Hotkeys_Path, SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path,
           SoundEventEditor_sounds_path, SoundEventEditor_soundevents_path]:
     p.mkdir(parents=True, exist_ok=True)
@@ -258,7 +240,6 @@ def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
     presets = []
     seen_names = set()
 
-    # Internal presets (Software) - these will be updated with the app
     if internal_path.is_dir():
         for file in internal_path.rglob("*"):
             if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
@@ -268,7 +249,6 @@ def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
                     seen_names.add(display_name)
                     presets.append({display_name: str(file.absolute())})
 
-    # User presets - these are persistent in ~/Hammer5Tools
     if user_path.is_dir():
         for file in user_path.rglob("*"):
             if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
@@ -290,12 +270,10 @@ def seed_user_data():
     
     def copy_if_not_exists(src: Path, dest: Path):
         if src.is_dir():
-            # Skip internal app folders
             if src.name.lower() in ('app', '_internal'):
                 return
-            
-            # Skip Presets folders - they should stay internal for updates
-            # unless the user wants to copy them manually.
+
+            # Presets remain bundled so app updates can replace them.
             if src.name.lower() == 'presets':
                 return
                 
@@ -303,7 +281,6 @@ def seed_user_data():
             for item in src.iterdir():
                 copy_if_not_exists(item, dest / item.name)
         else:
-            # Skip executables
             if src.suffix == '.exe':
                 return
             if not dest.exists():
@@ -315,16 +292,11 @@ def seed_user_data():
 
     copy_if_not_exists(defaults_path, user_data_dir)
 
-# Run seeding
 seed_user_data()
 
-# web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
 
-# other
 default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
-
-# QT functions
 
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
@@ -333,7 +305,6 @@ def set_qdock_tab_style(findChildren):
         tab_bar.setElideMode(Qt.ElideNone)
         tab_bar.setProperty("h5Component", "legacyTabBar")
 
-# generic functions
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
     """Compiling a file through game resourcecompiler
 
@@ -390,7 +361,6 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
         except Exception as e:
             log.error(f"Error running ResourceCompiler: {e}")
 
-    # Create a new thread for the compile function
     thread = threading.Thread(target=run_rc, args=(input_file,), daemon=True)
     thread.start()
 
@@ -403,14 +373,10 @@ def convert_snake_case(name: str = None):
     if name is None:
         raise ValueError
     else:
-        # Split the snake_case string by underscores
         words = name.split('_')
-
-        # Capitalize the first letter of each word and join them with spaces
         pretty_label = ' '.join(word.capitalize() for word in words)
         return pretty_label
 
-# Kv3 Format
 def Kv3ToJson(input):
     if '<!-- kv3 encoding:' in input:
         pass
@@ -434,7 +400,6 @@ def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=N
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary or list')
 
-# Fast Copy
 import copy
 
 try:

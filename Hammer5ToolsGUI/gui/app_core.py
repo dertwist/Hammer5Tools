@@ -26,7 +26,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtNetwork import QLocalServer
 
-from gui.ipc.protocol import IPCMessage, IPCCommand
+from gui.shell.ipc_protocol import IPCMessage, IPCCommand
 from gui.forms.about.main import AboutDialog
 from gui.forms.mapbuilder.main import MapBuilderDialog
 from gui.forms.git_sync.controller import GitController, SyncButton
@@ -642,7 +642,7 @@ def handle_new_connection(server, widget):
     socket.disconnectFromServer()
 
 def start_instance_server(widget):
-    from gui.ipc.server_utils import set_ipc_server
+    from gui.shell.ipc_server_utils import set_ipc_server
     server = QLocalServer()
     set_ipc_server(server)
     if not server.listen(INSTANCE_KEY):

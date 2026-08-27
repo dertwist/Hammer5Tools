@@ -146,7 +146,6 @@ class LegacyPropertyList(QWidget):
         if app is not None:
             app.focusChanged.connect(self._on_focus_changed)
 
-    # ── Property row selection ────────────────────────────────────────────────
 
     def _on_focus_changed(self, _old, new):
         if new is None:
@@ -161,7 +160,6 @@ class LegacyPropertyList(QWidget):
                         other.select_row(None)
                 return
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _resolve(self, ref) -> dict | None:
         """The dict a frame for ``ref`` is built from, or None if unresolvable.
@@ -301,7 +299,6 @@ class LegacyPropertyList(QWidget):
             return
         entry.content = _content_hash(value)
 
-    # ── AbstractPropertyList interface ─────────────────────────────────────────
 
     def set_components(self, refs: list) -> None:
         """Show a PropertyFrame per selected ComponentRef.

@@ -1,4 +1,4 @@
-from gui.property.methods import QDrag
+from gui.widgets.property_methods import QDrag
 import os
 import time
 from PySide6.QtWidgets import (
@@ -87,7 +87,6 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.setAcceptDrops(True)
         self.setDragDropMode(QTreeWidget.InternalMove)
 
-        # ── Multi-select: Ctrl+Click and Shift+Click ──
         self.setSelectionMode(QTreeWidget.ExtendedSelection)
 
         self.itemClicked.connect(self.on_item_clicked)
@@ -105,9 +104,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             self.vpk_loader_thread.vpk_load_failed.connect(self.on_vpk_load_failed)
             self.vpk_loader_thread.start()
 
-    # ──────────────────────────────────────────────
     #  Filter
-    # ──────────────────────────────────────────────
 
     def filter_tree(self, filter_text):
         """Filter tree items based on search text and expand matching items"""
@@ -151,9 +148,7 @@ class InternalSoundFileExplorer(QTreeWidget):
                 self.expandItem(current)
                 current = current.parent()
 
-    # ──────────────────────────────────────────────
     #  Audio playback helpers
-    # ──────────────────────────────────────────────
 
     def play_audio_file(self, path):
         if self._decode_thread is not None and self._decode_thread.isRunning():
@@ -169,9 +164,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         self._decode_thread.decoded.connect(self.play_audio_data.emit)
         self._decode_thread.start()
 
-    # ──────────────────────────────────────────────
     #  Path helpers
-    # ──────────────────────────────────────────────
 
     def assemble_path(self, item):
         """Build the full relative vsnd path from a tree item's hierarchy."""
@@ -190,10 +183,8 @@ class InternalSoundFileExplorer(QTreeWidget):
         """Return only the selected items that are actual .vsnd leaf files."""
         return [item for item in self.selectedItems() if self._is_vsnd_item(item)]
 
-    # ──────────────────────────────────────────────
     #  Click handler  (single-select plays audio,
     #                   multi-select does NOT)
-    # ──────────────────────────────────────────────
 
     def on_item_clicked(self, item, column):
         """
@@ -206,9 +197,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             if 'vsnd' in assembled_path:
                 self.play_audio_file(assembled_path)
 
-    # ──────────────────────────────────────────────
     #  Context menu  — "Copy N Asset Names"
-    # ──────────────────────────────────────────────
 
     def contextMenuEvent(self, event):
         """
@@ -292,9 +281,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             clipboard_text = '\n'.join(paths)
             QGuiApplication.clipboard().setText(clipboard_text)
 
-    # ──────────────────────────────────────────────
     #  Drag-and-drop  (supports multi-select)
-    # ──────────────────────────────────────────────
 
     def mouseMoveEvent(self, event):
         """
@@ -349,9 +336,7 @@ class InternalSoundFileExplorer(QTreeWidget):
     def dragEnterEvent(self, event):
         event.accept()
 
-    # ──────────────────────────────────────────────
     #  Tree population
-    # ──────────────────────────────────────────────
 
     def on_vpk_load_failed(self, reason):
         QMessageBox.critical(self, "Error", f"Failed to load VPK file:\n{reason}")

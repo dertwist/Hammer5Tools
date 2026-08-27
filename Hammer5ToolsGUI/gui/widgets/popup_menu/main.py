@@ -1,7 +1,3 @@
-###############################################################################
-# script.py (excerpt with bookmark toggle fix for immediate UI feedback)
-###############################################################################
-
 import webbrowser
 from PySide6.QtWidgets import (
     QApplication,
@@ -57,23 +53,19 @@ class PropertyItemWidget(QWidget):
         self._apply_styles()
 
     def _setup_ui(self):
-        # Main layout for this property widget
         self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
 
-        # Label that displays the property name/key
         self.label = QLabel(self.key, self)
         self.label.mousePressEvent = self._on_label_clicked
         self._layout.addWidget(self.label)
 
-        # Optional help button
         if self.help_url:
             self.help_button = Button(size=32)
             self.help_button.set_icon_question()
             self.help_button.clicked.connect(self._on_help_clicked)
             self._layout.addWidget(self.help_button)
 
-        # Optional bookmark button
         if self.window_name:
             self.bookmark_button = Button(size=32)
             if self.key in self.bookmarked_items:
@@ -125,11 +117,9 @@ class PropertyItemWidget(QWidget):
             self.bookmarked_items.add(self.key)
             self.bookmark_button.set_icon_bookmark_added()
 
-        # Persist the updated bookmarks
         if self.window_name:
             set_settings_value('Bookmarks', self.window_name, ','.join(self.bookmarked_items))
 
-        # Immediately refresh the popup menu's layout to reflect the new bookmark status
         if self._popup_menu:
             self._popup_menu.bookmarked_items = self.bookmarked_items
             self._popup_menu.repopulate_items()
@@ -166,12 +156,10 @@ class PopupMenu(QDialog):
         window_name=None
     ):
         super().__init__(parent)
-        # Store configuration parameters
         self.properties = properties
         self.help_url = help_url
         self.window_name = window_name
 
-        # Set up the UI from generated .ui file
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
 

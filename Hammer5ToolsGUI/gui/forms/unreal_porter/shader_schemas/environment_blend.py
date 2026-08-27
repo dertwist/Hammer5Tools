@@ -22,7 +22,6 @@ from .core import (
     KIND_SCALAR, KIND_INT, KIND_VECTOR2, KIND_VECTOR3, KIND_COLOR, KIND_TEXTURE,
 )
 
-# ── feature gates ──
 _BACKFACES = lambda c: c.flag("F_RENDER_BACKFACES")
 _NEW_BLEND = lambda c: c.flag("F_USE_NEW_BLENDING")
 _SHARED_OVERLAY = lambda c: c.flag("F_SHARED_COLOR_OVERLAY") or bool(c.slots.get("sharedcoloroverlay"))
@@ -96,7 +95,6 @@ SCHEMA = ShaderSchema(
     ),
 
     blocks=(
-        # ── Feature flag sections (each emitted when active) ──
         Block("2-Sided Rendering", (Param("F_RENDER_BACKFACES", "int", default=1),), when=_BACKFACES),
         Block("Blending", (Param("F_USE_NEW_BLENDING", "int", default=1),), when=_NEW_BLEND),
         Block("Color Effects", (Param("F_SHARED_COLOR_OVERLAY", "int", default=1),), when=_SHARED_OVERLAY),
@@ -113,7 +111,6 @@ SCHEMA = ShaderSchema(
         Block("Translucent", (Param("F_ALPHA_TEST", "int", default=1),), when=_ALPHA_TEST),
         Block("Wetness", (Param("F_WETNESS", "int", default=1),), when=_WETNESS),
 
-        # ── Blend Effects (when L2 or L3 effects active) ──
         Block("Blend Effects", (
             Param("g_bBorderTintMask2", KIND_INT, default=0),
             Param("g_bBorderTintMask3", KIND_INT, default=0),
@@ -141,7 +138,6 @@ SCHEMA = ShaderSchema(
             Param("g_vBorderTint3", KIND_COLOR, default=(1.0, 1.0, 1.0)),
         ), when=_BLEND_EFFECTS),
 
-        # ── Color Overlay (F_SHARED_COLOR_OVERLAY) ──
         Block("Color Overlay", (
             Param("g_flOverlayBrightnessContrast", KIND_SCALAR, default=1.0),
             Param("g_flOverlayDarknessContrast", KIND_SCALAR, default=1.0),
@@ -155,7 +151,6 @@ SCHEMA = ShaderSchema(
             Param("TextureSharedColorOverlay", KIND_TEXTURE, default="", slot="sharedcoloroverlay"),
         ), when=_SHARED_OVERLAY),
 
-        # ── Color + Fog ──
         Block("Color", (
             Param("g_flBlendSoftnessDistanceModifierStrength", KIND_SCALAR, default=1.0),
             Param("g_flModelTintAmount", KIND_SCALAR, default=1.0),
@@ -167,7 +162,6 @@ SCHEMA = ShaderSchema(
         )),
         Block("Fog", (Param("g_bFogEnabled", KIND_INT, default=1),)),
 
-        # ── Layer 1 ──
         Block("Layer 1", (
             Param("TextureAmbientOcclusion1", KIND_TEXTURE, default_fn=_layer_texture("ao", "ao1")),
             Param("TextureColor1", KIND_TEXTURE, default_fn=_layer_texture("color", "color1")),
@@ -180,7 +174,6 @@ SCHEMA = ShaderSchema(
             Param("TextureTranslucency1", KIND_TEXTURE, default="", slot="opacity", when=_ALPHA_TEST),
         )),
 
-        # ── Layer 2 ──
         Block("Layer 2", (
             Param("TextureAmbientOcclusion2", KIND_TEXTURE, default="", slot="ao2"),
             Param("TextureColor2", KIND_TEXTURE, default="", slot="color2"),
@@ -192,7 +185,6 @@ SCHEMA = ShaderSchema(
             Param("TextureTintMask2", KIND_TEXTURE, default="", slot="tintmask2"),
         )),
 
-        # ── Layer 3 (F_ENABLE_LAYER_3) ──
         Block("Layer 3", (
             Param("TextureAmbientOcclusion3", KIND_TEXTURE, default="", slot="ao3", defined=_L3_ENABLED),
             Param("TextureColor3", KIND_TEXTURE, default="", slot="color3", defined=_L3_ENABLED),
@@ -205,19 +197,16 @@ SCHEMA = ShaderSchema(
             Param("TextureTintMask3", KIND_TEXTURE, default="", slot="tintmask3", defined=_L3_ENABLED),
         ), when=_L3_ENABLED),
 
-        # ── Texture Address Mode ──
         Block("Texture Address Mode", (
             Param("g_nTextureAddressModeU", KIND_INT, default=0),
             Param("g_nTextureAddressModeV", KIND_INT, default=0),
         )),
 
-        # ── Translucent (alpha-test) ──
         Block("Translucent", (
             Param("g_flAlphaTestReference", KIND_SCALAR, default=0.5),
             Param("g_flAntiAliasedEdgeStrength", KIND_SCALAR, default=1.0),
         ), when=_ALPHA_TEST),
 
-        # ── Wetness ──
         Block("Wetness", (
             Param("g_flHorizontalSurfaceTolerance", KIND_SCALAR, default=32.0),
             Param("g_flWetnessUnderlyingHeightMapInfluence", KIND_SCALAR, default=1.0),

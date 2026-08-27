@@ -35,7 +35,6 @@ def _blend_comment(v, _ctx=None) -> str:
     return f"// {name}" if name else ""
 
 
-# ── gates ──
 _LIT = lambda c: c.flag("F_LIT")
 _BLEND_NONZERO = lambda c: c.blend_mode != 0
 _ANIM = lambda c: c.flag("F_TEXTURE_ANIMATION")
@@ -94,28 +93,23 @@ SCHEMA = ShaderSchema(
     ),
 
     blocks=(
-        # ── Blend Mode flag (modes 1..6 only) ──
         Block("Blend Mode", (
             Param("F_BLEND_MODE", "int", default=0, comment_fn=_blend_comment),
         ), when=_BLEND_NONZERO),
 
-        # ── Animation flag (F_TEXTURE_ANIMATION only) ──
         # The flag sits near the top, before Color — matches textureanimation.vmat.
         Block("Animation", (
             Param("F_TEXTURE_ANIMATION", "int", default=1),
         ), when=_ANIM),
 
-        # ── Lighting flag ──
         Block("Lighting", (
             Param("F_LIT", "int", default=1),
         ), when=_LIT),
 
-        # ── Ambient Occlusion (lit only) ──
         Block("Ambient Occlusion", (
             Param("TextureAmbientOcclusion", KIND_TEXTURE, default="", slot="ao", defined=_LIT_DEFINED),
         ), when=_LIT),
 
-        # ── Color (always) ──
         Block("Color", (
             Param("g_flModelTintAmount", KIND_SCALAR, default=1.0),
             Param("g_flTexCoordRotation", KIND_SCALAR, default=0.0),
@@ -133,12 +127,10 @@ SCHEMA = ShaderSchema(
             Param("TextureColor", KIND_TEXTURE, default="", slot="color"),
         )),
 
-        # ── Fog (always) ──
         Block("Fog", (
             Param("g_bFogEnabled", KIND_INT, default=1),
         )),
 
-        # ── Lighting: roughness/metalness (lit only) ──
         Block("Lighting", (
             Param("g_fTextureRoughnessBrightness", KIND_SCALAR, default=1.0, defined=_LIT_DEFINED),
             Param("g_fTextureRoughnessContrast", KIND_SCALAR, default=1.0, defined=_LIT_DEFINED),
@@ -146,13 +138,11 @@ SCHEMA = ShaderSchema(
             Param("TextureRoughness", KIND_TEXTURE, default="", slot="rough", defined=_LIT_DEFINED),
         ), when=_LIT),
 
-        # ── Normal Map (lit only) ──
         Block("Normal Map", (
             Param("g_fTextureNormalContrast", KIND_SCALAR, default=1.0, defined=_LIT_DEFINED),
             Param("TextureNormal", KIND_TEXTURE, default="", slot="normal", defined=_LIT_DEFINED),
         ), when=_LIT),
 
-        # ── Self Illum (lit only) ──
         Block("Self Illum", (
             Param("g_flSelfIllumAlbedoFactor", KIND_SCALAR, default=1.0, defined=_LIT_DEFINED),
             Param("g_flSelfIllumBrightness", KIND_SCALAR, default=0.0, defined=_LIT_DEFINED),
@@ -162,13 +152,11 @@ SCHEMA = ShaderSchema(
             Param("TextureSelfIllumMask", KIND_TEXTURE, default="", slot="emissive", defined=_LIT_DEFINED),
         ), when=_LIT),
 
-        # ── Texture Address Mode (always) ──
         Block("Texture Address Mode", (
             Param("g_nTextureAddressModeU", KIND_INT, default=0),
             Param("g_nTextureAddressModeV", KIND_INT, default=0),
         )),
 
-        # ── Texture Animation params (F_TEXTURE_ANIMATION only) ──
         Block("Texture Animation", (
             Param("g_flAnimationFrame", KIND_SCALAR, default=0.0, defined=_ANIM),
             Param("g_flAnimationTimeOffset", KIND_SCALAR, default=0.0, defined=_ANIM),
@@ -177,7 +165,6 @@ SCHEMA = ShaderSchema(
             Param("g_vAnimationGrid", KIND_IVECTOR2, default=(1, 1), defined=_ANIM),
         ), when=_ANIM),
 
-        # ── Translucent (blend modes 1..6) ──
         # Opacity pair (OpacityScale): modes 1,3,4,5,6.
         # Alpha-test pair (AlphaTestReference + AntiAliasedEdgeStrength): mode 2.
         # TextureTranslucency: all blend modes 1..6 (emitted in every variant).

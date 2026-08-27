@@ -40,12 +40,35 @@ C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> ext
 
 Follow VRF conventions for all new or migrated C# code: latest supported .NET, nullable references, file-scoped namespaces, 4 spaces, LF, final newlines, Allman braces. `var` for locals; collection expressions; pattern matching/switch expressions; null-coalescing/throw expressions; string interpolation; `MathF`; `using` declarations; early returns. Expression bodies for properties/indexers/accessors, block bodies for methods/constructors. `System` usings first, remove unused. PascalCase types/members/private fields, camelCase locals/parameters, `I`-prefixed interfaces. Prefer exact names (`Reader`, `Writer`, `Evaluator`, `Context`, `Document`, `Service`) over `Manager`/`Handler`/`Controller`. Seal internal types when appropriate; concise XML docs on public core APIs. Comments explain non-obvious reasons only, plain ASCII, no narration of changes/sessions.
 
+## Python Style
+
+`snake_case` for functions, methods, variables, and module names; `PascalCase` for classes; `UPPER_SNAKE` for constants; a single leading underscore for module-private names. 4 spaces, LF, final newlines. Prefer exact names (`Reader`, `Writer`, `Document`, `Evaluator`, `Viewport`) over `Manager`/`Handler`/`Utils`/`Methods`/`Objects`. No Hungarian notation. Name a module for what it contains rather than its position in the tree — prefer `mapbuilder/dialog.py` over another `main.py`. Type hints on new public functions. Comments explain non-obvious reasons only; no narration of changes or sessions.
+
+**Qt virtual overrides keep Qt's camelCase.** `paintEvent`, `eventFilter`, `sizeHint`, `filterAcceptsRow`, `mimeData`, `rowCount`, `initializeGL`, `mergeWith`, `drawBranches`, `showPopup`, `tabInserted` and the rest are framework dispatch points. Renaming one to `snake_case` does not raise — Qt simply stops calling it and the feature dies silently. Never bulk-convert method casing: most camelCase methods under `gui/` are framework overrides, not project-owned names.
+
+Renaming a class means updating four places Python tooling does not reach: `.ui` `<class>` entries (or `pyside6-uic` regenerates the old name), QSS type selectors (`BoxSlider`, `CompletingPlainTextEdit`, `ConsoleWidget` are styled by class name, and `Tests/test_qss_selectors.py` guards only `#objectName` and `[prop="value"]`), `resources.qrc` paths, and any `QSettings` key string — which must *not* follow the rename, or users lose their preferences on upgrade. One symbol per commit; `git grep -w` the old name across `*.py`, `*.ui`, `*.qss`, `*.qrc` before and after.
+
 ## Python and UI Rules
 
 - Keep Python domain-free: use bridge adapters (`CoreBridge`) rather than exposing .NET namespaces or assembly loading to editors.
 - UI code is view composition, binding, input routing, dialogs, rendering, and user feedback only.
 - Use the global style system in `Hammer5ToolsGUI/gui/styles/`; no hard-coded inline palettes. Follow [STYLESHEET.md](STYLESHEET.md).
+- No `from x import *`. `gui/` is star-import-free — keep it that way so pyflakes can see every name; star imports hide undefined names from static analysis entirely.
+- Read configuration at point of use. No module-level `value = get_something()` snapshots: they freeze the value at import time, so a Preferences change silently does nothing until restart.
+- Import settings accessors from `gui.settings.common`. `gui.settings.main` is the Preferences dialog and nothing else — importing config from it drags a `QDialog` and its widget tree into every consumer.
+- Report failures through `log = logging.getLogger(__name__)`, not `print()`. Shipped builds have no console (`no_console.py`), so a printed diagnostic in an `except` block is invisible in the field; `gui/logs.py` writes to the same `logs/` directory as the crash handler.
 - Preserve existing behavior while migrating. Add characterization tests/fixtures before moving uncovered behavior.
+
+## Code Comments
+
+Before adding a code comment, answer these questions:
+
+1. Is it necessary because the code is difficult to understand without it?
+2. How important is the information it conveys?
+3. Is it concise enough to justify the reader's time?
+4. Does it help a user or maintainer make a better decision or avoid a mistake?
+
+Prefer no comment when the code is self-explanatory. Keep necessary comments short, specific, and focused on non-obvious constraints or reasoning.
 
 ## Commits & Branches
 
@@ -58,5 +81,6 @@ Conventional Commits: `type(scope): description`, e.g. `feat(smartprop): add vec
 1. Keep the change small and modular; update this file when module ownership or public contracts change.
 2. Build the project being changed while iterating. For a completed .NET change: Release build, `dotnet format`, relevant test suites. Run new TUnit core suites with `dotnet run --project <test-project>` until the legacy xUnit suite is migrated to Microsoft Testing Platform.
 3. Run affected Python tests for Python or bridge changes.
-4. Remove debug logging and commented-out code introduced by the change.
-5. Use focused Conventional Commits. Do not include AI agent names in branches, commits, or credits.
+4. For Python changes, `python -m pyflakes Hammer5ToolsGUI/gui` must report no `undefined name`.
+5. Remove debug logging and commented-out code introduced by the change.
+6. Use focused Conventional Commits. Do not include AI agent names in branches, commits, or credits.

@@ -1,9 +1,9 @@
 from gui.editors.smartprop_editor.property.ui_comparison import Ui_Widget
 import ast
-from gui.widgets.completer.main import CompletingPlainTextEdit
+from gui.widgets.completer_widget import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 
 

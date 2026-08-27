@@ -20,7 +20,6 @@ All whitespace is CRLF + tabs to match Hammer's authoring format on Windows.
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-# ───────────────────────── data model ─────────────────────────
 
 # Parameter kinds. "scalar"/"int"/"bool" are single numbers; "vector2"/"vector3"
 # are plain numeric tuples; "color" is an RGB tuple rendered to 6-decimal gamma
@@ -147,7 +146,6 @@ class ShaderSchema:
         return ""
 
 
-# ───────────────────────── runtime context ─────────────────────────
 
 class Ctx:
     """Resolved authoring state passed to Block/Param when-conditions and the
@@ -186,7 +184,6 @@ def _truthy(v: Any) -> bool:
     return bool(v)
 
 
-# ───────────────────────── value formatting ─────────────────────────
 
 def _fmt_scalar(v: Any, precision: int = 3) -> str:
     if isinstance(v, str):
@@ -256,7 +253,6 @@ def _fmt_value(param: Param, v: Any, *, compact: bool = False) -> str:
     return _fmt_scalar(v, precision=3)
 
 
-# ───────────────────────── emitter ─────────────────────────
 
 def _resolve_value(param: Param, ctx: Ctx) -> Any:
     """Source a parameter value: explicit override → bound slot → declared default."""
@@ -377,7 +373,6 @@ def _unused_entry(param: Param, v: Any) -> str:
     return f'"{param.name}" "{s}"'
 
 
-# ───────────────────────── feature-flag validation ─────────────────────────
 
 def validate_feature_flags(schema: ShaderSchema, flags: Dict[str, Any]) -> Dict[str, Any]:
     """Return a normalized copy of `flags` with all FeatureRule constraints

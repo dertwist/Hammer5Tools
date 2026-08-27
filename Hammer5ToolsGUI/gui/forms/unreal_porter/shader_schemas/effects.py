@@ -24,7 +24,6 @@ from .core import (
 )
 
 
-# ── gates ──
 _BACKFACES = lambda c: c.flag("F_RENDER_BACKFACES")
 _DONT_FLIP = lambda c: c.flag("F_DONT_FLIP_BACKFACE_NORMALS")
 _DEPTH_FEATHER = lambda c: c.flag("F_DEPTH_FEATHER")
@@ -59,7 +58,6 @@ SCHEMA = ShaderSchema(
     ),
 
     blocks=(
-        # ── Active feature-flag sections (each emitted only when on) ──
         Block("2-Sided Rendering", (
             Param("F_RENDER_BACKFACES", "int", default=1),
         ), when=_BACKFACES),
@@ -76,7 +74,6 @@ SCHEMA = ShaderSchema(
             Param("F_DISABLE_Z_BUFFERING", "int", default=1),
         ), when=_DISABLE_Z),
 
-        # ── Color (always) ──
         Block("Color", (
             Param("g_flColorBoost", KIND_SCALAR, default=1.0),
             Param("g_vColorTint", KIND_COLOR, default=(1.0, 1.0, 1.0)),
@@ -86,13 +83,11 @@ SCHEMA = ShaderSchema(
                   when=_TINT_MASK),
         )),
 
-        # ── Depth Feather params (F_DEPTH_FEATHER only) ──
         Block("Depth Feather", (
             Param("g_flFeatherDistance", KIND_SCALAR, default=0.0, defined=_DEPTH_FEATHER),
             Param("g_flFeatherFalloff", KIND_SCALAR, default=1.0, defined=_DEPTH_FEATHER),
         ), when=_DEPTH_FEATHER),
 
-        # ── Distance Fade (always) ──
         Block("Distance Fade", (
             Param("g_flFadeDistance", KIND_SCALAR, default=1.0),
             Param("g_flFadeFalloff", KIND_SCALAR, default=1.0),
@@ -100,12 +95,10 @@ SCHEMA = ShaderSchema(
             Param("g_flFadeMin", KIND_SCALAR, default=0.0),
         )),
 
-        # ── Fog (always) ──
         Block("Fog", (
             Param("g_bFogEnabled", KIND_INT, default=1),
         )),
 
-        # ── Fresnel (always) ──
         Block("Fresnel", (
             Param("g_flFresnelExponent", KIND_SCALAR, default=0.001),
             Param("g_flFresnelFalloff", KIND_SCALAR, default=1.0),
@@ -113,34 +106,29 @@ SCHEMA = ShaderSchema(
             Param("g_flFresnelMin", KIND_SCALAR, default=0.0),
         )),
 
-        # ── Mask 1 (always) ──
         Block("Mask 1", (
             Param("g_vMask1PanSpeed", KIND_VECTOR2, default=(0.0, 0.0)),
             Param("g_vMask1Scale", KIND_VECTOR2, default=(1.0, 1.0)),
             Param("TextureMask1", KIND_TEXTURE, default="", slot="mask1"),
         )),
 
-        # ── Mask 2 (always) ──
         Block("Mask 2", (
             Param("g_vMask2PanSpeed", KIND_VECTOR2, default=(0.0, 0.0)),
             Param("g_vMask2Scale", KIND_VECTOR2, default=(1.0, 1.0)),
             Param("TextureMask2", KIND_TEXTURE, default="", slot="mask2"),
         )),
 
-        # ── Mask 3 (always) ──
         Block("Mask 3", (
             Param("g_vMask3PanSpeed", KIND_VECTOR2, default=(0.0, 0.0)),
             Param("g_vMask3Scale", KIND_VECTOR2, default=(1.0, 1.0)),
             Param("TextureMask3", KIND_TEXTURE, default="", slot="mask3"),
         )),
 
-        # ── Texture Address Mode (always) ──
         Block("Texture Address Mode", (
             Param("g_nTextureAddressModeU", KIND_INT, default=0),
             Param("g_nTextureAddressModeV", KIND_INT, default=0),
         )),
 
-        # ── Translucent params (always) ──
         Block("Translucent", (
             Param("g_flOpacityScale", KIND_SCALAR, default=1.0),
             Param("TextureTranslucency", KIND_TEXTURE, default="", slot="opacity"),

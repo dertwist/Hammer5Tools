@@ -1,12 +1,12 @@
 import logging
 from gui.editors.smartprop_editor.property.ui_set_variable import Ui_Widget
-from gui.widgets.completer.main import CompletingPlainTextEdit
+from gui.widgets.completer_widget import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.widgets import FloatWidget, BoolWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
-from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from gui.editors.smartprop_editor.expression_editor import ExpressionEditor
 from gui.styles.common import mark_paint_through, set_style_property
 
 log = logging.getLogger(__name__)
@@ -46,20 +46,7 @@ class Vector3DInlineWidget(QWidget):
                 pass
 
 
-# m_VariableValue =
-# {
-#       m_TargetName = "end_weight"
-#       m_DataType = "FLOAT"
-#       m_Value = 1.000000
-# }
-
-# The SetVariable property should output m_Variable.
-# The widget must include a combobox to select the variable type,
-# and a specialized widget for each variable type.
-# Currently, the planned variable types are: bool, float, and string.
-
-# There is also a conflict with legacy SetVariableBool and SetVariableFloat which have also m_VariableValue key.
-# I planed to make only one universal property - SetVariable, all related properties SetVariableFloat and SetVariableBool
+# Shares m_VariableValue with legacy SetVariableBool and SetVariableFloat.
 
 class PropertyVariableValue(QWidget):
     edited = Signal()

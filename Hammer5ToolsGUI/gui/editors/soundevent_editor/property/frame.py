@@ -6,7 +6,7 @@ from PySide6.QtCore import Signal
 from gui.editors.soundevent_editor.objects import mixgroup_objects, dsp_preset_objects, type_objects
 from gui.editors.soundevent_editor.property.common import SoundEventEditorPropertyList
 from gui.editors.soundevent_editor.property.ui_frame import Ui_Form
-from gui.property.methods import PropertyMethods
+from gui.widgets.property_methods import PropertyMethods
 from gui.common import convert_snake_case
 from gui.editors.soundevent_editor.common import vsnd_filepath_convert
 

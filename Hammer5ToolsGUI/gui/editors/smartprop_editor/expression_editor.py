@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QToolButton, QDialog, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QLabel, QSplitter, QListWidget, QListWidgetItem, QFrame, QWidget
 from PySide6.QtCore import QSize, Qt, QRect
 from PySide6.QtGui import QIcon, QFont, QPainter, QColor, QTextFormat, QSyntaxHighlighter, QTextCharFormat, QFontMetrics
-from gui.widgets.completer.main import CompletingPlainTextEdit
+from gui.widgets.completer_widget import CompletingPlainTextEdit
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.objects import expression_completer
 from gui.editors.smartprop_editor._common import is_category_widget, is_category_variable_name

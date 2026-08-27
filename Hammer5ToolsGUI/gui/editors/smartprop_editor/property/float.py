@@ -1,13 +1,13 @@
 import ast
 import re
 from gui.editors.smartprop_editor.property.ui_float import Ui_Widget
-from gui.widgets.completer.main import CompletingPlainTextEdit
+from gui.widgets.completer_widget import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from gui.widgets import FloatWidget
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
-from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from gui.editors.smartprop_editor.expression_editor import ExpressionEditor
 from gui.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 from gui.editors.smartprop_editor.property import compact
 from gui.styles.common import mark_paint_through

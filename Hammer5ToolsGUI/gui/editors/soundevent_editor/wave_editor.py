@@ -61,7 +61,6 @@ _IC = {
 }
 
 
-# ─────────────────────────────── WAV I/O ────────────────────────────────
 
 def _read_cue_positions(path):
     """Return a list of cue-point sample offsets from a RIFF WAV, or []."""
@@ -149,10 +148,8 @@ def save_wav(path, samples, sr, cue_positions=None):
         f.write(b"RIFF" + struct.pack("<I", 4 + len(body)) + b"WAVE" + body)
 
 
-# ─────────────────────────────── DSP ops ────────────────────────────────
 
 
-# ─────────────────────────────── Editor ─────────────────────────────────
 
 def _sep():
     line = QFrame()

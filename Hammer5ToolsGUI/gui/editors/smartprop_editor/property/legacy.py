@@ -1,7 +1,7 @@
 import ast
 
 from gui.editors.smartprop_editor.property.ui_legacy import Ui_Widget
-from gui.widgets.completer.main import CompletingPlainTextEdit
+from gui.widgets.completer_widget import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils

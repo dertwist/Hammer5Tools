@@ -217,9 +217,7 @@ def extract_attachments(
     return "\n\n".join(text_chunks), attachments
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Cache & Async Downloader
-# ─────────────────────────────────────────────────────────────────────────────
 
 class AttachmentCache(QObject):
     """Singleton cache manager for downloaded attachments."""
@@ -351,9 +349,7 @@ class AttachmentCache(QObject):
                 log.error(f"Error in attachment error callback: {e}")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Attachment Preview UI Components
-# ─────────────────────────────────────────────────────────────────────────────
 
 class AttachmentThumbnailWidget(QFrame):
     """

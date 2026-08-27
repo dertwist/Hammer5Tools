@@ -29,7 +29,7 @@ from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_na
 from gui.editors.loading_editor.timeline import TimelineExplorer
 from gui.common import compile
 from gui.widgets import ErrorInfo
-from gui.editors.loading_editor.commands.main import generate_commands
+from gui.editors.loading_editor.commands import generate_commands
 from gui.editors.loading_editor.svg_utils import rescale_svg
 from gui.other.cs2_netcon import CS2Netcon
 from gui.styles.common import set_style_property

@@ -55,7 +55,6 @@ class _CollapsibleSection(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Header bar ─────────────────────────────────────────────────────
         self._header = QFrame(self)
         self._header.setFixedHeight(self._HEADER_H)
         self._header.setProperty("h5Component", "smartpropSectionHeader")
@@ -74,7 +73,6 @@ class _CollapsibleSection(QWidget):
         hdr_layout.addWidget(self._toggle_btn)
         root.addWidget(self._header)
 
-        # ── Content ────────────────────────────────────────────────────────
         self._content = content
         self._content.setParent(self)
         root.addWidget(self._content, 1)
@@ -109,7 +107,6 @@ class _CollapsibleSection(QWidget):
         self._toggle_btn.setChecked(value)
 
 
-# ── Main Panel ──────────────────────────────────────────────────────────────
 
 class SmartPropPropertyPanel(QWidget):
     """Unified 3-section SmartProp Property Editor Panel."""
@@ -125,22 +122,18 @@ class SmartPropPropertyPanel(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Section 1: Component List ──────────────────────────────────────
         self.components_list = ComponentList(document=self.document, parent=self)
         self.components_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        # ── Section 2: Property List ───────────────────────────────────────
         self.property_list = LegacyPropertyList(
             document=self.document, parent=self
         )
         self.property_panel = self.property_list
 
-        # ── Section 3: Help strip ──────────────────────────────────────────
         self.help_panel = HelpPanel(parent=self)
         self.help_panel.setMinimumHeight(0)
         self.help_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        # ── Splitter holds Section 2 + Section 3 ────────────────────────────
         self.splitter = QSplitter(Qt.Vertical, self)
         self.splitter.setChildrenCollapsible(False)
         self.splitter.setHandleWidth(4)
@@ -160,7 +153,6 @@ class SmartPropPropertyPanel(QWidget):
         root.addWidget(self.components_list, 0)
         root.addWidget(self.splitter, 1)
 
-        # ── Wire signals ───────────────────────────────────────────────────
         self.components_list.componentSelected.connect(self._on_component_selected)
         self.components_list.addNoteRequested.connect(self._on_add_note_requested)
         self.property_list.propertySelected.connect(self.help_panel.set_property_help)
@@ -175,7 +167,6 @@ class SmartPropPropertyPanel(QWidget):
             prop_h = max(100, total_h - help_h)
             self.splitter.setSizes([prop_h, help_h])
 
-    # ── Public API ──────────────────────────────────────────────────────────
 
     def set_element(self, tree_item) -> None:
         """Point property panel at hierarchy tree item."""
@@ -208,7 +199,6 @@ class SmartPropPropertyPanel(QWidget):
                 self.help_panel.set_component_help(selected)
         self.property_list.apply_external_data(item, new_data, changed_keys)
 
-    # ── Internal slots ──────────────────────────────────────────────────────
 
     def _on_component_selected(self, ref: ComponentRef | None):
         if not ref:

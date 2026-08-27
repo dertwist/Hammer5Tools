@@ -972,21 +972,7 @@ QToolButton[h5Component="smartpropSectionToggleBtn"] {
 QToolButton[h5Component="smartpropSectionToggleBtn"]:hover {
     color: @selection_text;
 }
-QSplitter[h5Component="smartpropPanelSplitter"]::handle {
-    background-color: @hex_3b3b3b;
-}
-QSplitter[h5Component="smartpropPanelSplitter"]::handle:hover {
-    background-color: #4A7EBB;
-}
-
 /* widgets/expression_editor/main.py: Expression Editor dialog. */
-QSplitter[h5Component="smartpropExprSplitter"]::handle {
-    background-color: @hex_4f4f4f;
-    width: 2px;
-}
-QSplitter[h5Component="smartpropExprSplitter"]::handle:hover {
-    background-color: @hex_5e5e5e;
-}
 QLabel[h5Component="smartpropExprSectionLabel"] {
     color: @text;
 }

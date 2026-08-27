@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QCheckBox
 )
 from PySide6.QtCore import Qt
-from gui.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.editors.smartprop_editor._common import is_category_widget
 from gui.widgets import ComboboxTreeChild
 

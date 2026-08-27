@@ -64,7 +64,6 @@ def write_vmat(
         # Unknown shader — fall back to environment so we never crash a conversion.
         schema = get_shader_schema("csgo_environment.vfx")
 
-    # ── build the authoring context ──
     flags = dict(feature_flags or {})
     values = {}
 

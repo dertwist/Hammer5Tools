@@ -1138,6 +1138,9 @@ class Explorer(QMainWindow):
         parent = self.parent()
         curr = parent
         while curr is not None:
+            if hasattr(curr, 'open_file_in_batchcreator'):
+                curr.open_file_in_batchcreator(filepath)
+                return
             if hasattr(curr, 'BatchCreator_MainWindow') and curr.BatchCreator_MainWindow is not None:
                 curr.BatchCreator_MainWindow.open_filepath(filepath)
                 return
