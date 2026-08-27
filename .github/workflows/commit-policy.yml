@@ -1,0 +1,46 @@
+name: Commit Policy
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  commit-messages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check new commit messages
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            range="$PR_BASE..HEAD"
+          elif [[ -n "$BEFORE" && "$BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+            range="$BEFORE..HEAD"
+          else
+            range="HEAD"
+          fi
+
+          failed=0
+          while read -r commit; do
+            message_file="$RUNNER_TEMP/commit-message-$commit"
+            git show -s --format=%B "$commit" > "$message_file"
+            if ! .githooks/commit-msg "$message_file"; then
+              echo "Invalid commit: $commit"
+              failed=1
+            fi
+          done < <(git rev-list "$range")
+
+          exit "$failed"

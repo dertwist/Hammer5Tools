@@ -1,0 +1,9 @@
+#!/bin/sh
+
+message_file=$1
+
+if grep -Eiq '(^|[^[:alnum:]_])(claude|codex|gemini|chatgpt)([^[:alnum:]_]|$)|noreply@(anthropic|openai)\.com' "$message_file"; then
+    echo "Commit rejected: commit messages and attribution must not mention AI coding agents." >&2
+    echo "Remove AI names, generated-by notices, and AI Co-Authored-By trailers." >&2
+    exit 1
+fi
