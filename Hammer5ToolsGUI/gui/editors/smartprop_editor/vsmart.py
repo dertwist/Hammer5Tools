@@ -4,7 +4,8 @@ import re
 from PySide6.QtWidgets import QTreeWidget
 from PySide6.QtCore import Qt
 
-from gui.editors.smartprop_editor.choices import AddChoice, AddOption, AddVariable
+from gui.editors.smartprop_editor.choices import build_choices_tree, read_choices_tree
+from gui.editors.smartprop_editor.choices_model import format_choices, parse_choices
 from gui.common import editor_info, JsonToKv3, Kv3ToJson
 from gui.settings.common import get_settings_bool
 from gui.editors.smartprop_editor._common import (
@@ -291,58 +292,15 @@ class VsmartOpen:
                         self.populate_tree(item, child_item)
 
     def populate_choices(self, data):
-        """Populate choices based on provided data."""
         if data is None:
-            print("No choices")
+            log.info("No choices")
             return False
-        else:
-            for choice in data:
-                name = (
-                    choice.get("m_Name") or
-                    choice.get("m_sChoiceName") or
-                    choice.get("m_sName") or
-                    "Choice"
-                )
-                default = choice.get("m_DefaultOption", None)
-                options = choice.get("m_Options", []) or []
-                choice_item = AddChoice(
-                    name=name,
-                    tree=self.choices_tree,
-                    default=default,
-                    variables_scrollArea=self.variables_scrollArea
-                ).item
-                for option in options:
-                    opt_name = (
-                        option.get("m_Name") or
-                        option.get("m_sName") or
-                        option.get("m_sOptionName") or
-                        "Option"
-                    )
-                    option_item = AddOption(parent=choice_item, name=opt_name).item
-                    variables = option.get("m_VariableValues", []) or []
-                    for variable in variables:
-                        target_name = (
-                            variable.get("m_TargetName") or
-                            variable.get("m_sVariableName") or
-                            variable.get("m_VariableName") or
-                            variable.get("m_Name") or
-                            ""
-                        )
-                        target_type = (
-                            variable.get("m_DataType") or
-                            variable.get("m_sDataType") or
-                            variable.get("m_Type") or
-                            ""
-                        )
-                        target_val = variable.get("m_Value", variable.get("m_sValue", ""))
-                        AddVariable(
-                            self.element_id_generator,
-                            parent=option_item,
-                            variables_scrollArea=self.variables_scrollArea,
-                            name=target_name,
-                            type=target_type,
-                            value=target_val
-                        )
+        build_choices_tree(
+            self.choices_tree,
+            parse_choices(data),
+            variables_scrollArea=self.variables_scrollArea,
+            element_id_generator=self.element_id_generator,
+        )
 
     def fix_names(self, parent):
         """Fix tree item names by using m_sLabel or appending a counter suffix."""
@@ -549,49 +507,9 @@ class VsmartSave:
         return None
 
     def choices(self, parent):
-        m_Choices = []
-        for choice_index in range(parent.childCount()):
-            child = parent.child(choice_index)
-            widget = parent.treeWidget().itemWidget(child, 1)
-            options = []
-            for option_index in range(child.childCount()):
-                option_child = child.child(option_index)
-                variables = []
-                for variable_index in range(option_child.childCount()):
-                    variable_child = option_child.child(variable_index)
-                    variable_widget = parent.treeWidget().itemWidget(variable_child, 1)
-                    variable_combobox = parent.treeWidget().itemWidget(variable_child, 0)
-                    
-                    var_name = ""
-                    if variable_combobox and hasattr(variable_combobox, "combobox"):
-                        var_name = variable_combobox.combobox.currentText()
-                        if var_name == "None":
-                            var_name = ""
-                    elif variable_combobox and hasattr(variable_combobox, "currentText"):
-                        var_name = variable_combobox.currentText()
-                    if not var_name:
-                        var_name = variable_child.text(0)
-
-                    out = {"m_TargetName": var_name}
-                    if variable_widget and hasattr(variable_widget, "data"):
-                        out.update(variable_widget.data)
-                    else:
-                        out["m_DataType"] = "String"
-                        out["m_Value"] = variable_child.text(1)
-                    variables.append(out)
-                options.append({
-                    "_class": "CSmartPropChoiceOption",
-                    "m_Name": option_child.text(0),
-                    "m_VariableValues": variables
-                })
-            default_val = widget.currentText() if widget and hasattr(widget, "currentText") else None
-            choice = {
-                "_class": "CSmartPropChoice",
-                "m_Name": child.text(0),
-                "m_Options": options,
-                "m_DefaultOption": default_val if default_val and default_val != "None" else "",
-                "m_nElementID": set_ElementID(force=True)
-            }
+        """The KV3 m_Choices list for the tree under `parent`, with element IDs."""
+        m_Choices = format_choices(read_choices_tree(parent.treeWidget()))
+        for choice in m_Choices:
+            choice["m_nElementID"] = set_ElementID(force=True)
             update_child_ElementID_value(choice, force=True)
-            m_Choices.append(choice)
         return m_Choices

@@ -1,4 +1,11 @@
-import ast
+"""Widgets that render the SmartProp choices tree.
+
+What a choice *means* -- the KV3 key aliases, which editor a variable class
+gets, how a raw value coerces -- lives in choices_model.py. This module only
+draws it.
+"""
+from functools import partial
+
 from PySide6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QSlider,
     QHBoxLayout, QCheckBox
@@ -6,28 +13,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
 from gui.editors.smartprop_editor._common import is_category_widget
+from gui.editors.smartprop_editor.choices_model import (
+    DEFAULT_TYPE_NAME, KIND_BOOL, KIND_COLOR, KIND_FLOAT, KIND_INT,
+    KIND_STRING, KIND_VECTOR2D, KIND_VECTOR3D, KIND_VECTOR4D,
+    clamp_channel, coerce, to_float, to_int, value_kind,
+)
 from gui.widgets import ComboboxTreeChild
-
-var_choice_identification_bool = ['boolean', 'bool', 'csmartpropvariable_bool']
-var_choice_identification_int = ['integer', 'int', 'csmartpropvariable_int']
-var_choice_identification_float = ['float', 'csmartpropvariable_float']
-var_choice_identification_color = ['color', 'csmartpropvariable_color']
-var_choice_identification_vector2d = ['vector2d', 'csmartpropvariable_vector2d']
-var_choice_identification_vector3d = [
-    'vector3d', 'csmartpropvariable_vector3d', 'vector', 'vector3', 'angles',
-    'csmartpropvariable_angles'
-]
-var_choice_identification_vector4d = ['vector4d', 'csmartpropvariable_vector4d']
-var_choice_identification_string = [
-    'string', 'csmartpropvariable_string',
-    'model', 'csmartpropvariable_model',
-    'material', 'csmartpropvariable_material',
-    'materialgroup', 'csmartpropvariable_materialgroup',
-    'scalemode', 'pickmode', 'tracenohit', 'applycolormode', 'choiceselectionmode',
-    'colorselectionmode', 'orientationmode', 'coordinatespace', 'direction',
-    'distributionmode', 'radiusplacementmode', 'gridplacementmode', 'gridoriginmode',
-    'pathpositions', 'surfaceproperty'
-]
 
 
 class AddChoice:
@@ -81,7 +72,6 @@ class AddVariable:
         )
         combobox.combobox.set_variable(name or "")
 
-        from functools import partial
         combobox._type_change_handler = partial(self.variable_edit_line, parent=item)
         combobox.combobox.changed.connect(combobox._type_change_handler)
 
@@ -103,7 +93,7 @@ class AddVariable:
             parent.treeWidget().setItemWidget(item, 0, combobox)
 
     def variable_edit_line(self, value_dict, parent):
-        """Select widget based on the variable type"""
+        """Swap in the editor that matches the variable's type."""
         if not parent or not parent.treeWidget():
             return
 
@@ -115,456 +105,243 @@ class AddVariable:
         if old_widget:
             old_widget.deleteLater()
 
-        var_class = value_dict.get('class') or ''
-        var_type = str(var_class).lower().strip()
-        val = value_dict.get('m_default')
-
-        if var_type in var_choice_identification_bool:
-            widget = VariableBool(value=val, type=var_class or 'Bool', parent_item=parent)
-        elif var_type in var_choice_identification_int:
-            widget = VariableInt(value=val, type=var_class or 'Int', parent_item=parent)
-        elif var_type in var_choice_identification_float:
-            widget = VariableFloat(value=val, type=var_class or 'Float', parent_item=parent)
-        elif var_type in var_choice_identification_color:
-            widget = VariableColor(value=val, type=var_class or 'Color', parent_item=parent)
-        elif var_type in var_choice_identification_vector2d:
-            widget = VariableVector2d(value=val, type=var_class or 'Vector2D', parent_item=parent)
-        elif var_type in var_choice_identification_vector4d:
-            widget = VariableVector4d(value=val, type=var_class or 'Vector4D', parent_item=parent)
-        elif var_type in var_choice_identification_vector3d:
-            widget = VariableVector3d(value=val, type=var_class or 'Vector3D', parent_item=parent)
-        elif var_type in var_choice_identification_string:
-            widget = VariableString(value=val, type=var_class or 'String', parent_item=parent)
-        else:
-            widget = VariableWidget(value=val, type=var_class or 'String', parent_item=parent)
-
-        parent.treeWidget().setItemWidget(parent, 1, widget)
+        parent.treeWidget().setItemWidget(parent, 1, make_value_editor(
+            value_dict.get('class') or '', value_dict.get('m_default'), parent))
 
 
-def _sync_item_text(parent_item, value):
-    if parent_item:
-        parent_item.setText(1, str(value if value is not None else ""))
+def make_value_editor(var_class, value, parent_item=None):
+    """The editor widget for a variable of `var_class`, showing `value`."""
+    kind = value_kind(var_class)
+    return _EDITORS[kind](kind, value, var_class, parent_item)
 
 
-def _parse_seq(val, default, count):
-    if val is None:
-        return default
-    if isinstance(val, (list, tuple)):
-        lst = list(val)
-        while len(lst) < count:
-            lst.append(default[len(lst)] if len(lst) < len(default) else 0)
-        return lst[:count]
-    if isinstance(val, str):
-        try:
-            parsed = ast.literal_eval(val)
-            if isinstance(parsed, (list, tuple)):
-                lst = list(parsed)
-                while len(lst) < count:
-                    lst.append(default[len(lst)] if len(lst) < len(default) else 0)
-                return lst[:count]
-        except Exception:
-            pass
-    return default
+class ValueEditor(QWidget):
+    """Base for the inline value editors in the choices tree.
 
+    `data` is what the document and the KV3 writer read back off the widget,
+    and column 1 of the tree item mirrors it so a row still reads correctly
+    when no editor is attached.
+    """
 
-class VariableWidget(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
+    def __init__(self, kind, value, var_class=None, parent_item=None):
         super().__init__()
+        self.kind = kind
         self.parent_item = parent_item
-        self.data = {'m_DataType': type or 'String', 'm_Value': value if value is not None else ""}
-        self.setupUI()
-
-    def setupUI(self):
+        self.data = {
+            'm_DataType': var_class or DEFAULT_TYPE_NAME[kind],
+            'm_Value': coerce(kind, value),
+        }
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.editline = QLineEdit()
-        self.editline.setText(str(self.data['m_Value']))
-        self.editline.setFocusPolicy(Qt.StrongFocus)
-        self.editline.textChanged.connect(self.set_value)
-        self.layout.addWidget(self.editline)
+        self.setupUI()
         self.setLayout(self.layout)
+
+    def setupUI(self):
+        raise NotImplementedError
+
+    def _commit(self, value):
+        self.data['m_Value'] = value
+        if self.parent_item:
+            self.parent_item.setText(1, str(value if value is not None else ""))
+
+    def _line_edit(self, text):
+        edit = QLineEdit()
+        edit.setText(str(text))
+        edit.setFocusPolicy(Qt.StrongFocus)
+        self.layout.addWidget(edit)
+        return edit
+
+
+class StringEditor(ValueEditor):
+    def setupUI(self):
+        self.editline = self._line_edit(self.data['m_Value'])
+        self.editline.textChanged.connect(self.set_value)
 
     def set_value(self):
-        val = self.editline.text()
-        self.data.update({'m_Value': val})
-        _sync_item_text(self.parent_item, val)
+        self._commit(self.editline.text())
 
 
-class VariableString(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        if value is None:
-            value = ""
-        self.data = {'m_DataType': type or 'String', 'm_Value': str(value)}
-        self.setupUI()
-
+class BoolEditor(ValueEditor):
     def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.editline = QLineEdit()
-        self.editline.setText(str(self.data['m_Value']))
-        self.editline.setFocusPolicy(Qt.StrongFocus)
-        self.editline.textChanged.connect(self.set_value)
-        self.layout.addWidget(self.editline)
-        self.setLayout(self.layout)
-
-    def set_value(self):
-        val = self.editline.text()
-        self.data['m_Value'] = val
-        _sync_item_text(self.parent_item, val)
-
-
-class VariableInt(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        int_val = 0
-        if value is not None:
-            try:
-                int_val = int(float(value))
-            except (ValueError, TypeError):
-                int_val = 0
-        self.data = {'m_DataType': type or 'Int', 'm_Value': int_val}
-        self.setupUI()
-
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.editline = QLineEdit()
-        self.editline.setMaximumWidth(64)
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(-100)
-        self.slider.setMaximum(100)
-        self.slider.setFocusPolicy(Qt.StrongFocus)
-        self.slider.wheelEvent = lambda event: None
-        self.editline.setFocusPolicy(Qt.StrongFocus)
-
-        self.layout.addWidget(self.editline)
-        self.layout.addWidget(self.slider)
-
-        value = self.data['m_Value']
-        self.editline.setText(str(value))
-        try:
-            self.slider.setValue(int(value))
-        except Exception:
-            pass
-
-        self.editline.textChanged.connect(self.on_editline_changed)
-        self.slider.valueChanged.connect(self.on_slider_changed)
-
-        self.setLayout(self.layout)
-
-    def on_editline_changed(self):
-        text = self.editline.text()
-        try:
-            value = int(float(text))
-        except (ValueError, TypeError):
-            value = 0
-        if value > self.slider.maximum() or value < self.slider.minimum():
-            self.slider.setMaximum(int(abs(value) * 2 + 100))
-            self.slider.setMinimum(int(-abs(value) * 2 - 100))
-        try:
-            self.slider.blockSignals(True)
-            self.slider.setValue(value)
-        except (ValueError, TypeError, OverflowError):
-            pass
-        finally:
-            self.slider.blockSignals(False)
-        self.data['m_Value'] = value
-        _sync_item_text(self.parent_item, value)
-
-    def on_slider_changed(self):
-        value = self.slider.value()
-        self.editline.setText(str(value))
-        self.data['m_Value'] = value
-        _sync_item_text(self.parent_item, value)
-
-    def set_value(self, value):
-        try:
-            int_val = int(float(value))
-        except (ValueError, TypeError):
-            int_val = 0
-        self.editline.setText(str(int_val))
-        try:
-            self.slider.setValue(int_val)
-        except Exception:
-            pass
-        self.data['m_Value'] = int_val
-        _sync_item_text(self.parent_item, int_val)
-
-
-class VariableFloat(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        flt_val = 0.0
-        if value is not None:
-            try:
-                flt_val = float(value)
-            except (ValueError, TypeError):
-                flt_val = 0.0
-        self.data = {'m_DataType': type or 'Float', 'm_Value': flt_val}
-        self.setupUI()
-
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.editline = QLineEdit()
-        self.editline.setMaximumWidth(64)
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(-1000)
-        self.slider.setMaximum(1000)
-        self.slider.setFocusPolicy(Qt.StrongFocus)
-        self.slider.wheelEvent = lambda event: None
-        self.editline.setFocusPolicy(Qt.StrongFocus)
-
-        self.layout.addWidget(self.editline)
-        self.layout.addWidget(self.slider)
-
-        value = self.data['m_Value']
-        self.editline.setText(str(value))
-        try:
-            self.slider.setValue(int(float(value) * 100))
-        except Exception:
-            pass
-
-        self.editline.textChanged.connect(self.on_editline_changed)
-        self.slider.valueChanged.connect(self.on_slider_changed)
-
-        self.setLayout(self.layout)
-
-    def on_editline_changed(self):
-        try:
-            value = float(self.editline.text())
-        except (ValueError, TypeError):
-            value = 0.0
-        if value > self.slider.maximum() / 100 or value < self.slider.minimum() / 100:
-            self.slider.setMaximum(int(abs(value) * 10 * 100 + 1000))
-            self.slider.setMinimum(int(-abs(value) * 10 * 100 - 1000))
-        try:
-            self.slider.blockSignals(True)
-            self.slider.setValue(int(value * 100))
-        except (ValueError, TypeError, OverflowError):
-            pass
-        finally:
-            self.slider.blockSignals(False)
-        self.data['m_Value'] = value
-        _sync_item_text(self.parent_item, value)
-
-    def on_slider_changed(self):
-        value = self.slider.value() / 100
-        self.editline.setText(str(value))
-        self.data['m_Value'] = value
-        _sync_item_text(self.parent_item, value)
-
-    def set_value(self, value):
-        self.editline.setText(str(value))
-        try:
-            self.slider.setValue(int(float(value) * 100))
-        except Exception:
-            pass
-        try:
-            self.data['m_Value'] = float(value)
-        except (ValueError, TypeError):
-            self.data['m_Value'] = 0.0
-        _sync_item_text(self.parent_item, self.data['m_Value'])
-
-
-class VariableBool(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        if isinstance(value, str):
-            value = value.lower() in ('true', '1', 'yes')
-        self.data = {'m_DataType': type or 'Bool', 'm_Value': bool(value) if value is not None else False}
-        self.setupUI()
-
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
         self.checkbox = QCheckBox()
         self.layout.addWidget(self.checkbox)
-
         self.checkbox.setChecked(self.data['m_Value'])
         self.checkbox.setText(str(self.checkbox.isChecked()))
-        self.checkbox.checkStateChanged.connect(self.on_checkbox_changed)
+        self.checkbox.checkStateChanged.connect(self.set_value)
 
-        self.setLayout(self.layout)
-
-    def on_checkbox_changed(self):
+    def set_value(self):
         self.checkbox.setText(str(self.checkbox.isChecked()))
-        self.set_value()
-
-    def set_value(self):
-        val = self.checkbox.isChecked()
-        self.data.update({'m_Value': val})
-        _sync_item_text(self.parent_item, val)
+        self._commit(self.checkbox.isChecked())
 
 
-class VariableVector2d(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        parsed = _parse_seq(value, [0.0, 0.0], 2)
-        self.data = {'m_DataType': type or 'Vector2D', 'm_Value': [float(x) for x in parsed]}
-        self.setupUI()
+# Per kind: how many slider steps make one unit, the slider's starting bound,
+# and how far past a typed value the bound grows when it no longer fits.
+_SLIDER = {
+    KIND_INT: (1, 100, 2),
+    KIND_FLOAT: (100, 1000, 10),
+}
+
+
+class NumberEditor(ValueEditor):
+    def setupUI(self):
+        self.scale, base, self.growth = _SLIDER[self.kind]
+        value = self.data['m_Value']
+
+        self.editline = self._line_edit(value)
+        self.editline.setMaximumWidth(64)
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setMinimum(-base)
+        self.slider.setMaximum(base)
+        self.slider.setFocusPolicy(Qt.StrongFocus)
+        self.slider.wheelEvent = lambda event: None
+        self.layout.addWidget(self.slider)
+
+        try:
+            self.slider.setValue(int(value * self.scale))
+        except (ValueError, TypeError, OverflowError):
+            pass
+
+        self.editline.textChanged.connect(self.on_editline_changed)
+        self.slider.valueChanged.connect(self.on_slider_changed)
+
+    def _to_number(self, text):
+        return to_int(text) if self.kind == KIND_INT else to_float(text)
+
+    def on_editline_changed(self):
+        value = self._to_number(self.editline.text())
+        steps = value * self.scale
+        if steps > self.slider.maximum() or steps < self.slider.minimum():
+            bound = int(abs(steps) * self.growth + _SLIDER[self.kind][1])
+            self.slider.setMaximum(bound)
+            self.slider.setMinimum(-bound)
+        # The slider is a second view of the same number; moving it to match
+        # what was typed must not read back as a fresh edit.
+        try:
+            self.slider.blockSignals(True)
+            self.slider.setValue(int(steps))
+        except (ValueError, TypeError, OverflowError):
+            pass
+        finally:
+            self.slider.blockSignals(False)
+        self._commit(value)
+
+    def on_slider_changed(self):
+        value = self.slider.value() / self.scale
+        if self.kind == KIND_INT:
+            value = int(value)
+        self.editline.setText(str(value))
+        self._commit(value)
+
+
+# Per kind: the labels of the components, in order.
+_COMPONENTS = {
+    KIND_VECTOR2D: ('x', 'y'),
+    KIND_VECTOR3D: ('x', 'y', 'z'),
+    KIND_VECTOR4D: ('x', 'y', 'z', 'w'),
+    KIND_COLOR: ('r', 'g', 'b'),
+}
+
+
+class VectorEditor(ValueEditor):
+    """One line edit per component, for vectors and for colours."""
 
     def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.x_edit = QLineEdit()
-        self.y_edit = QLineEdit()
-
-        for idx, edit in enumerate((self.x_edit, self.y_edit)):
-            try:
-                edit.setText(str(self.data['m_Value'][idx]))
-            except Exception:
-                edit.setText("0.0")
-            edit.setFocusPolicy(Qt.StrongFocus)
+        self.edits = []
+        for name, value in zip(_COMPONENTS[self.kind], self.data['m_Value']):
+            edit = self._line_edit(value)
             edit.textChanged.connect(self.set_value)
-            self.layout.addWidget(edit)
-
-        self.setLayout(self.layout)
+            setattr(self, f'{name}_edit', edit)
+            self.edits.append(edit)
 
     def set_value(self):
-        def _get_val(edit):
-            try:
-                return float(edit.text())
-            except Exception:
-                return 0.0
-        val = [_get_val(self.x_edit), _get_val(self.y_edit)]
-        self.data['m_Value'] = val
-        _sync_item_text(self.parent_item, val)
+        read = clamp_channel if self.kind == KIND_COLOR else to_float
+        self._commit([read(edit.text()) for edit in self.edits])
 
 
-class VariableVector3d(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        parsed = _parse_seq(value, [1.0, 1.0, 1.0], 3)
-        self.data = {'m_DataType': type or 'Vector3D', 'm_Value': [float(x) for x in parsed]}
-        self.setupUI()
-
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.x_edit = QLineEdit()
-        self.y_edit = QLineEdit()
-        self.z_edit = QLineEdit()
-
-        for idx, edit in enumerate((self.x_edit, self.y_edit, self.z_edit)):
-            try:
-                edit.setText(str(self.data['m_Value'][idx]))
-            except Exception:
-                edit.setText("1.0")
-            edit.setFocusPolicy(Qt.StrongFocus)
-            edit.textChanged.connect(self.set_value)
-            self.layout.addWidget(edit)
-
-        self.setLayout(self.layout)
-
-    def set_value(self):
-        def _get_val(edit):
-            try:
-                return float(edit.text())
-            except Exception:
-                return 0.0
-        val = [
-            _get_val(self.x_edit),
-            _get_val(self.y_edit),
-            _get_val(self.z_edit)
-        ]
-        self.data['m_Value'] = val
-        _sync_item_text(self.parent_item, val)
+_EDITORS = {
+    KIND_STRING: StringEditor,
+    KIND_BOOL: BoolEditor,
+    KIND_INT: NumberEditor,
+    KIND_FLOAT: NumberEditor,
+    KIND_COLOR: VectorEditor,
+    KIND_VECTOR2D: VectorEditor,
+    KIND_VECTOR3D: VectorEditor,
+    KIND_VECTOR4D: VectorEditor,
+}
 
 
-class VariableVector4d(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        parsed = _parse_seq(value, [0.0, 0.0, 0.0, 0.0], 4)
-        self.data = {'m_DataType': type or 'Vector4D', 'm_Value': [float(x) for x in parsed]}
-        self.setupUI()
-
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.x_edit = QLineEdit()
-        self.y_edit = QLineEdit()
-        self.z_edit = QLineEdit()
-        self.w_edit = QLineEdit()
-
-        for idx, edit in enumerate((self.x_edit, self.y_edit, self.z_edit, self.w_edit)):
-            try:
-                edit.setText(str(self.data['m_Value'][idx]))
-            except Exception:
-                edit.setText("0.0")
-            edit.setFocusPolicy(Qt.StrongFocus)
-            edit.textChanged.connect(self.set_value)
-            self.layout.addWidget(edit)
-
-        self.setLayout(self.layout)
-
-    def set_value(self):
-        def _get_val(edit):
-            try:
-                return float(edit.text())
-            except Exception:
-                return 0.0
-        val = [
-            _get_val(self.x_edit),
-            _get_val(self.y_edit),
-            _get_val(self.z_edit),
-            _get_val(self.w_edit)
-        ]
-        self.data['m_Value'] = val
-        _sync_item_text(self.parent_item, val)
+def build_choices_tree(tree, state, variables_scrollArea=None, element_id_generator=None):
+    """Append the choices in `state` to `tree`, rows and inline editors both."""
+    for choice in state:
+        choice_item = AddChoice(
+            tree=tree,
+            name=choice.get('name', 'Choice'),
+            default=choice.get('default', ''),
+            variables_scrollArea=variables_scrollArea,
+        ).item
+        for option in choice.get('options', []):
+            option_item = AddOption(
+                parent=choice_item, name=option.get('name', 'Option')
+            ).item
+            for variable in option.get('variables', []):
+                AddVariable(
+                    element_id_generator=element_id_generator,
+                    parent=option_item,
+                    variables_scrollArea=variables_scrollArea,
+                    name=variable.get('name', ''),
+                    type=variable.get('type', ''),
+                    value=variable.get('value', ''),
+                )
+            option_item.setExpanded(option.get('expanded', False))
+        choice_item.setExpanded(choice.get('expanded', False))
 
 
-class VariableColor(QWidget):
-    def __init__(self, value=None, type=None, parent_item=None):
-        super().__init__()
-        self.parent_item = parent_item
-        parsed = _parse_seq(value, [255, 255, 255], 3)
-        self.data = {'m_DataType': type or 'Color', 'm_Value': [int(float(x)) for x in parsed]}
-        self.setupUI()
+def read_choices_tree(tree):
+    """Read `tree` back into the choices state shape."""
+    state = []
+    root = tree.invisibleRootItem()
+    for ci in range(root.childCount()):
+        choice = root.child(ci)
+        combo = tree.itemWidget(choice, 1)
+        default_txt = combo.currentText() if combo and hasattr(combo, 'currentText') else ''
+        if default_txt == "None":
+            default_txt = ""
+        options = []
+        for oi in range(choice.childCount()):
+            option = choice.child(oi)
+            variables = []
+            for vi in range(option.childCount()):
+                var_item = option.child(vi)
+                name_widget = tree.itemWidget(var_item, 0)
+                var_name = (
+                    name_widget.combobox.currentText()
+                    if name_widget and hasattr(name_widget, 'combobox')
+                    else var_item.text(0)
+                )
+                if var_name == "None" or not var_name:
+                    var_name = var_item.text(0)
 
-    def setupUI(self):
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.r_edit = QLineEdit()
-        self.g_edit = QLineEdit()
-        self.b_edit = QLineEdit()
-
-        for idx, edit in enumerate((self.r_edit, self.g_edit, self.b_edit)):
-            try:
-                edit.setText(str(self.data['m_Value'][idx]))
-            except Exception:
-                edit.setText("255")
-            edit.setFocusPolicy(Qt.StrongFocus)
-            edit.textChanged.connect(self.set_value)
-            self.layout.addWidget(edit)
-
-        self.setLayout(self.layout)
-
-    def set_value(self):
-        def _get_val(edit):
-            try:
-                return max(0, min(255, int(float(edit.text()))))
-            except Exception:
-                return 255
-        val = [
-            _get_val(self.r_edit),
-            _get_val(self.g_edit),
-            _get_val(self.b_edit)
-        ]
-        self.data['m_Value'] = val
-        _sync_item_text(self.parent_item, val)
+                val_widget = tree.itemWidget(var_item, 1)
+                if val_widget and hasattr(val_widget, 'data'):
+                    var_type = val_widget.data.get('m_DataType', '')
+                    var_value = val_widget.data.get('m_Value', '')
+                else:
+                    var_type = ''
+                    var_value = var_item.text(1)
+                variables.append({
+                    'name': var_name,
+                    'type': var_type,
+                    'value': var_value,
+                })
+            options.append({
+                'name': option.text(0),
+                'expanded': option.isExpanded(),
+                'variables': variables,
+            })
+        state.append({
+            'name': choice.text(0),
+            'default': default_txt,
+            'expanded': choice.isExpanded(),
+            'options': options,
+        })
+    return state

@@ -25,6 +25,7 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, Signal, QRect, QSize, QStringListModel
 
 from gui.common import JsonToKv3, fast_deepcopy
+from gui.editors.smartprop_editor.choices_model import format_choices
 from gui.editors.smartprop_editor.document_model import parse_smartprop
 
 
@@ -670,32 +671,7 @@ class ManualEditor(QWidget):
         state = self._document._snapshot_choices()
         if not state:
             return "// No choices defined"
-        # Build full KV3-compatible structure
-        from gui.widgets.element_id import set_ElementID
-        choices = []
-        for ch in state:
-            options = []
-            for opt in ch.get('options', []):
-                var_vals = []
-                for v in opt.get('variables', []):
-                    var_vals.append({
-                        "m_TargetName": v['name'],
-                        "m_DataType": v['type'] or 'String',
-                        "m_Value": v['value'],
-                    })
-                options.append({
-                    "_class": "CSmartPropChoiceOption",
-                    "m_Name": opt['name'],
-                    "m_VariableValues": var_vals,
-                })
-            choices.append({
-                "_class": "CSmartPropChoice",
-                "m_Name": ch['name'],
-                "m_DefaultOption": ch['default'],
-                "m_Options": options,
-            })
-        return JsonToKv3({"m_Choices": choices})
-
+        return JsonToKv3({"m_Choices": format_choices(state)})
 
     def _on_apply(self):
         """Parse editor text and apply changes back to the document."""

@@ -54,7 +54,10 @@ from gui.editors.smartprop_editor.vsmart import (
 )
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.props.panel import SmartPropPropertyPanel
-from gui.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
+from gui.editors.smartprop_editor.choices import (
+    AddChoice, AddOption, AddVariable, build_choices_tree, read_choices_tree,
+)
+from gui.editors.smartprop_editor.choices_model import parse_choices
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.editors.smartprop_editor.commands import (
     GroupElementsCommand, BulkModelImportCommand, NewFromPresetCommand, PasteItemsCommand,
@@ -789,54 +792,12 @@ class SmartPropDocument(QMainWindow):
     def _populate_choices(self, data):
         if data is None:
             return
-        for choice in data:
-            name = (
-                choice.get("m_Name") or
-                choice.get("m_sChoiceName") or
-                choice.get("m_sName") or
-                "Choice"
-            )
-            default = choice.get("m_DefaultOption", None)
-            options = choice.get("m_Options", []) or []
-            new_choice = AddChoice(
-                name=name,
-                tree=self.ui.choices_tree_widget,
-                default=default,
-                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
-            ).item
-            if options:
-                for option in options:
-                    opt_name = (
-                        option.get("m_Name") or
-                        option.get("m_sName") or
-                        option.get("m_sOptionName") or
-                        "Option"
-                    )
-                    option_item = AddOption(parent=new_choice, name=opt_name).item
-                    variables_list_ = option.get("m_VariableValues", []) or []
-                    for variable in variables_list_:
-                        target_name = (
-                            variable.get("m_TargetName") or
-                            variable.get("m_sVariableName") or
-                            variable.get("m_VariableName") or
-                            variable.get("m_Name") or
-                            ""
-                        )
-                        target_type = (
-                            variable.get("m_DataType") or
-                            variable.get("m_sDataType") or
-                            variable.get("m_Type") or
-                            ""
-                        )
-                        target_val = variable.get("m_Value", variable.get("m_sValue", ""))
-                        AddVariable(
-                            element_id_generator=self.element_id_generator,
-                            parent=option_item,
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            name=target_name,
-                            type=target_type,
-                            value=target_val
-                        )
+        build_choices_tree(
+            self.ui.choices_tree_widget,
+            parse_choices(data),
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+            element_id_generator=self.element_id_generator,
+        )
 
     def _populate_variables(self, data):
         if not isinstance(data, list):
@@ -2260,78 +2221,19 @@ class SmartPropDocument(QMainWindow):
     # [Choices Panel Undo]
     def _snapshot_choices(self):
         """Serialise the choices tree to a list of dicts."""
-        tree = self.ui.choices_tree_widget
-        state = []
-        root = tree.invisibleRootItem()
-        for ci in range(root.childCount()):
-            choice = root.child(ci)
-            combo = tree.itemWidget(choice, 1)
-            default_txt = combo.currentText() if combo and hasattr(combo, 'currentText') else ''
-            if default_txt == "None":
-                default_txt = ""
-            choice_data = {
-                'name': choice.text(0),
-                'default': default_txt,
-                'expanded': choice.isExpanded(),
-                'options': [],
-            }
-            for oi in range(choice.childCount()):
-                option = choice.child(oi)
-                option_data = {'name': option.text(0), 'expanded': option.isExpanded(), 'variables': []}
-                for vi in range(option.childCount()):
-                    var_item = option.child(vi)
-                    val_widget = tree.itemWidget(var_item, 1)
-                    name_widget = tree.itemWidget(var_item, 0)
-                    var_name = (
-                        name_widget.combobox.currentText()
-                        if name_widget and hasattr(name_widget, 'combobox')
-                        else var_item.text(0)
-                    )
-                    if var_name == "None" or not var_name:
-                        var_name = var_item.text(0)
-
-                    if val_widget and hasattr(val_widget, 'data'):
-                        var_type = val_widget.data.get('m_DataType', '')
-                        var_value = val_widget.data.get('m_Value', '')
-                    else:
-                        var_type = ''
-                        var_value = var_item.text(1)
-                    option_data['variables'].append({
-                        'name': var_name,
-                        'type': var_type,
-                        'value': var_value,
-                    })
-                choice_data['options'].append(option_data)
-            state.append(choice_data)
-        return state
+        return read_choices_tree(self.ui.choices_tree_widget)
 
     def _restore_choices(self, state):
         """Clear the choices tree and rebuild it from a serialised state list."""
         self.ui.choices_tree_widget.blockSignals(True)
         try:
             self.ui.choices_tree_widget.clear()
-            for choice_data in state:
-                choice_item = AddChoice(
-                    tree=self.ui.choices_tree_widget,
-                    name=choice_data.get('name', 'Choice'),
-                    default=choice_data.get('default', ''),
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                ).item
-                for option_data in choice_data.get('options', []):
-                    option_item = AddOption(
-                        parent=choice_item, name=option_data.get('name', 'Option')
-                    ).item
-                    for var_data in option_data.get('variables', []):
-                        AddVariable(
-                            element_id_generator=self.element_id_generator,
-                            parent=option_item,
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            name=var_data.get('name', ''),
-                            value=var_data.get('value', ''),
-                            type=var_data.get('type', ''),
-                        )
-                    option_item.setExpanded(option_data.get('expanded', False))
-                choice_item.setExpanded(choice_data.get('expanded', False))
+            build_choices_tree(
+                self.ui.choices_tree_widget,
+                state,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                element_id_generator=self.element_id_generator,
+            )
         finally:
             self.ui.choices_tree_widget.blockSignals(False)
         self._connect_choices_widget_signals()
