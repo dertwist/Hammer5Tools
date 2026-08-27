@@ -737,6 +737,7 @@ class ModelBrowserWidget(QWidget):
         selected_grid_item = None
         selected_list_item = None
         tree_rows = []
+        from gui.styles import theme
         default_color = theme.qcolor("#e5e5e5")
 
         for entry in self._visible:

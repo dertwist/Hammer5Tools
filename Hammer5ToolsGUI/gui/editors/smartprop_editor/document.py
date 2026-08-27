@@ -3014,6 +3014,8 @@ class SmartPropDocument(QMainWindow):
 
     def export_scene_debug(self):
         """Dump this document's 3D viewport scene to a .glb, textures included."""
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
         if getattr(self, "_viewport_3d", None) is None:
             self._ensure_viewport_3d()
         viewport = getattr(self, "_viewport_3d", None)

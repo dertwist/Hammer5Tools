@@ -399,9 +399,9 @@ class _SearchReplaceBar(QFrame):
     # ── Search logic ──────────────────────────────────────────────────────
 
     def _flags(self, backward=False):
+        from PySide6.QtGui import QTextDocument
         flags = QTextDocument.FindFlags(0)
         if self._case_cb.isChecked():
-            from PySide6.QtGui import QTextDocument
             flags |= QTextDocument.FindCaseSensitively
         if backward:
             from PySide6.QtGui import QTextDocument

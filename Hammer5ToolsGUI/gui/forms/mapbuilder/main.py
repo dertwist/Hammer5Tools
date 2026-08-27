@@ -351,12 +351,10 @@ class BuildCubemapsThread(QThread):
                 self.outputReceived.emit(f"Closing CS2 for addon '{addon_name}' to switch to next addon...")
                 CS2Netcon.send("quit")
                 _time.sleep(5)
-                # Ensure process is dead
-                if process:
-                    try:
-                        process.terminate()
-                    except:
-                        pass
+                # launch_cs2_process() detaches and returns no handle, so make
+                # sure the quit above actually took effect.
+                _subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'],
+                                capture_output=True, check=False)
                 # wait a bit for port to free up
                 _time.sleep(2)
 
