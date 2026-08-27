@@ -41,6 +41,7 @@ from gui.settings.common import (
     settings,
     get_addon_dir,
     cs2_addons_dir,
+    addon_content_dir,
 )
 from gui.settings.main import PreferencesDialog
 from gui.editors.loading_editor.main import Loading_editorMainWindow
@@ -62,6 +63,7 @@ from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.quick_create.main import QuickCreateDialog
 from gui.widgets import UnsavedFilesDialog, exception_handler
 from gui.shell.addon_selector import AddonSelector, PLACEHOLDERS as ADDON_PLACEHOLDERS
+from gui.shell.editors import EditorSlot, collect_unsaved, register_builders, teardown
 from gui.shell.quick_actions import QuickActions
 from gui.shell.tabs import insert_tab_after
 from gui.shell.tray import TrayIcon, set_docks_visible
@@ -457,23 +459,37 @@ class MainWindow(QMainWindow):
             self.show_minimize_message_once()
         else: self.exit_application()
 
+    def _editor_slots(self):
+        """Every editor this window hosts. Add a new editor here and nowhere else.
+
+        Order is the order unsaved files are listed in and editors are torn down
+        in. Slots without a build callable are constructed once in setup_tabs and
+        survive an addon switch.
+        """
+        ui = self.ui
+        return (
+            EditorSlot('BatchCreator_MainWindow', "AssetGroup Maker",
+                       ui.BatchCreator_tab, self._build_batchcreator),
+            # SmartProp opens standalone for authoring and GUI testing even when
+            # CS2 is unavailable: its explorer falls back to the working
+            # directory and CS2-dependent operations stay guarded. So no
+            # requires_cs2 here, unlike the editors below.
+            EditorSlot('SmartPropEditorMainWindow', "SmartProp Editor",
+                       ui.smartpropeditor_tab, self._build_smartprop),
+            EditorSlot('SoundEventEditorMainWindow', "SoundEvent Editor",
+                       ui.soundeditor_tab, self._build_soundevent, requires_cs2=True),
+            EditorSlot('AudioEditor_instance', "Wave Editor",
+                       getattr(self, 'audio_editor_tab', None)),
+            EditorSlot('DetailPropEditorWidget_instance', "DetailProp Editor",
+                       getattr(self, 'detailpropeditor_tab', None),
+                       self._build_detailprop, requires_cs2=True),
+            EditorSlot('LoadingEditorMainWindow', "Loading Editor",
+                       ui.Loading_Editor_Tab, self._build_loading, requires_cs2=True),
+        )
+
     def collect_unsaved_files(self):
         """(editor_name, file_label, save_callable) for every unsaved file in the open editors."""
-        editors = (
-            ('BatchCreator_MainWindow', "AssetGroup Maker"),
-            ('SmartPropEditorMainWindow', "SmartProp Editor"),
-            ('SoundEventEditorMainWindow', "SoundEvent Editor"),
-            ('AudioEditor_instance', "Wave Editor"),
-            ('DetailPropEditorWidget_instance', "DetailProp Editor"),
-        )
-        unsaved = []
-        for attr, editor_name in editors:
-            editor = getattr(self, attr, None)
-            if editor is None:
-                continue
-            for label, save in getattr(editor, 'unsaved_files', list)():
-                unsaved.append((editor_name, label, save))
-        return unsaved
+        return collect_unsaved(self, self._editor_slots())
 
     @exception_handler
     def selected_addon_name(self, text=None):
@@ -493,34 +509,15 @@ class MainWindow(QMainWindow):
                 return
 
         set_addon_name(new_addon)
-        if getattr(self, 'SoundEventEditorMainWindow', None):
-            self.SoundEventEditorMainWindow.close(); self.SoundEventEditorMainWindow.deleteLater(); self.SoundEventEditorMainWindow = None
-        if getattr(self, 'SmartPropEditorMainWindow', None):
-            self.ui.smartpropeditor_tab.layout().removeWidget(self.SmartPropEditorMainWindow)
-            self.SmartPropEditorMainWindow.close(); self.SmartPropEditorMainWindow.deleteLater(); self.SmartPropEditorMainWindow = None
-        if getattr(self, 'DetailPropEditorWidget_instance', None) and hasattr(self, 'detailpropeditor_tab'):
-            self.detailpropeditor_tab.layout().removeWidget(self.DetailPropEditorWidget_instance)
-            self.DetailPropEditorWidget_instance.close(); self.DetailPropEditorWidget_instance.deleteLater(); self.DetailPropEditorWidget_instance = None
-        if getattr(self, 'BatchCreator_MainWindow', None):
-            self.BatchCreator_MainWindow.close(); self.BatchCreator_MainWindow.deleteLater(); self.BatchCreator_MainWindow = None
-        if getattr(self, 'LoadingEditorMainWindow', None):
-            self.LoadingEditorMainWindow.close(); self.LoadingEditorMainWindow.deleteLater(); self.LoadingEditorMainWindow = None
+        slots = self._editor_slots()
+        teardown(self, slots)
         self._tab_builders.clear()
-        self._tab_builders[self.ui.BatchCreator_tab] = self._build_batchcreator
         cs2_path = get_cs2_path()
-        # SmartProp can be opened as a standalone editor for authoring and GUI
-        # testing even when CS2 is unavailable. Its explorer falls back to the
-        # current working directory; CS2-dependent operations remain guarded.
-        self._tab_builders[self.ui.smartpropeditor_tab] = self._build_smartprop
+        register_builders(slots, self._tab_builders, cs2_path is not None)
         if cs2_path is not None:
-            self._tab_builders[self.ui.soundeditor_tab] = self._build_soundevent
-            self._tab_builders[self.ui.Loading_Editor_Tab] = self._build_loading
-            if hasattr(self, 'detailpropeditor_tab'):
-                self._tab_builders[self.detailpropeditor_tab] = self._build_detailprop
-
             if getattr(self, 'AudioEditor_instance', None):
                 self.AudioEditor_instance.set_root(
-                    os.path.join(cs2_path, 'content', 'csgo_addons', new_addon, 'sounds'))
+                    str(addon_content_dir(new_addon) / 'sounds'))
         self._addon_initialised = True
         self._ensure_tab()
 
