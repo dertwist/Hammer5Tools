@@ -21,6 +21,7 @@ certifi
 pefile
 altgraph
 pytest
+pyflakes
 vdf
 
 Pillow
