@@ -122,3 +122,77 @@ def test_loading_editor_layout_persistence(loading_window):
 
     # Restoring should succeed without error
     loading_window._restore_layout_state()
+
+
+def test_loading_editor_empty_state_placeholder(loading_window):
+    """Verify that the empty state placeholder widget is structured correctly with icon and labels."""
+    viewer = loading_window.image_viewer
+    assert hasattr(viewer, "empty_state_widget")
+    assert not viewer.empty_state_widget.isHidden()
+    assert viewer.scroll_area.isHidden()
+
+    # Find labels inside the empty state widget
+    from PySide6.QtWidgets import QLabel, QPushButton
+    labels = viewer.empty_state_widget.findChildren(QLabel)
+    assert len(labels) == 3  # icon, title, description
+
+    title_labels = [lbl for lbl in labels if lbl.property("h5Component") == "emptyStateTitle"]
+    desc_labels = [lbl for lbl in labels if lbl.property("h5Component") == "emptyStateDescription"]
+    icon_labels = [lbl for lbl in labels if not lbl.pixmap().isNull()]
+
+    assert len(title_labels) == 1
+    assert len(desc_labels) == 1
+    assert len(icon_labels) == 1
+    assert title_labels[0].text() == "Select an image to preview"
+
+    # Confirm no buttons were added to the empty state placeholder
+    buttons = viewer.empty_state_widget.findChildren(QPushButton)
+    assert len(buttons) == 0
+
+    # Test toggling placeholder state
+    viewer.clear_placeholder_text()
+    assert viewer.empty_state_widget.isHidden()
+    assert not viewer.scroll_area.isHidden()
+
+    viewer.set_placeholder_text()
+    assert not viewer.empty_state_widget.isHidden()
+    assert viewer.scroll_area.isHidden()
+
+
+def test_loading_editor_svg_drop_area(loading_window, tmp_path):
+    """Verify that SvgPreviewWidget has a styled drop zone, correct text, and proper properties."""
+    svg_widget = loading_window.svg_preview_widget
+    assert svg_widget.property("h5Component") == "loadingSvgDropArea"
+    assert svg_widget.info_label.property("h5Component") == "loadingSvgDropLabel"
+    assert loading_window.svg_tips_label.property("h5Component") == "loadingSvgTips"
+
+    # Confirm no buttons inside drop area
+    from PySide6.QtWidgets import QPushButton
+    assert len(svg_widget.findChildren(QPushButton)) == 0
+
+    # Clear SVG to test empty placeholder state
+    svg_widget.clear_svg()
+    assert svg_widget.file_path is None
+    assert not svg_widget.placeholder_widget.isHidden()
+    assert svg_widget.svg_preview.isHidden()
+    assert svg_widget.info_label.text() == "Drag and drop a SVG"
+
+    # Create dummy SVG and load it
+    svg_file = tmp_path / "test_icon.svg"
+    svg_file.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="red"/></svg>', encoding="utf-8")
+    svg_widget.load_svg(str(svg_file))
+
+    assert svg_widget.file_path == str(svg_file)
+    assert svg_widget.placeholder_widget.isHidden()
+    assert not svg_widget.svg_preview.isHidden()
+
+    # Clear SVG again
+    svg_widget.clear_svg()
+    assert svg_widget.file_path is None
+    assert not svg_widget.placeholder_widget.isHidden()
+    assert svg_widget.svg_preview.isHidden()
+    assert svg_widget.info_label.text() == "Drag and drop a SVG"
+
+
+
+

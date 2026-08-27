@@ -151,6 +151,7 @@ def build_libraries() -> None:
     """Builds and publishes the Hammer5Tools.Core native AOT library."""
     core_project = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'Hammer5Tools.Core.csproj')
     core_publish = os.path.join(core_csharp_root, 'Hammer5Tools.Core', 'publish')
+    native_aot_output = os.path.join(build_root, 'native-aot')
     if os.path.exists(core_project):
         print("Building Hammer5Tools.Core (win-x64 NativeAOT)...")
         subprocess.run([
@@ -159,6 +160,9 @@ def build_libraries() -> None:
             '--runtime', 'win-x64',
             '--self-contained', 'true',
             '--output', core_publish,
+            # Source-mode Python may have the normal bin/.../native DLL loaded.
+            # Link in disposable build staging so that lock cannot break packaging.
+            f'-p:BaseOutputPath={native_aot_output}{os.sep}',
         ], check=True)
 
 

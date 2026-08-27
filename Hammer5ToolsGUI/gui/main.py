@@ -307,6 +307,8 @@ if __name__ == "__main__":
             ext = os.path.splitext(file_path)[1].lower()
             if ext == '.vsndevts':
                 message = IPCMessage.create_open_file(file_path, "soundevent")
+            elif ext == '.vsnap':
+                message = IPCMessage.create_open_file(file_path, "vsnap")
             else:
                 message = IPCMessage.create_open_file(file_path)
         else:
@@ -340,18 +342,39 @@ if __name__ == "__main__":
     from gui.styles import theme
     from gui.settings.common import get_settings_value
     try:
-        level = int(get_settings_value('APP', 'theme_level', 2))
+        level = int(get_settings_value('APP', 'theme_level', 0))
     except (TypeError, ValueError):
-        level = 2
+        level = 0
     theme.set_level(level)
 
     from gui.styles import manager as style_manager
-    style_manager.apply(app, theme.get_theme(level))
+    style_manager.apply(app, theme.get_theme())
+
+    # "System" follows the OS scheme for as long as it stays selected.
+    def _on_system_scheme_changed(_scheme):
+        if theme.selected() != theme.LEVEL_SYSTEM:
+            return
+        theme.set_level(theme.LEVEL_SYSTEM)
+        style_manager.reapply(theme.get_theme())
+        from gui.common import refresh_title_bars
+        refresh_title_bars()
+
+    app.styleHints().colorSchemeChanged.connect(_on_system_scheme_changed)
 
     widget = MainWindow()
+    # Adding the first QOpenGLWidget to a visible window makes Qt switch the
+    # top level to an RHI-backed backing store, which destroys and recreates the
+    # native window -- the app looks like it closed and reopened when a 3D
+    # viewport tab is first opened. A throwaway GL child forces that switch here,
+    # while nothing is on screen yet; the window stays RHI-backed after it goes.
+    from PySide6.QtOpenGLWidgets import QOpenGLWidget
+    _rhi_primer = QOpenGLWidget(widget)
+    _rhi_primer.hide()
     from gui.other.taskbar_identity import apply_taskbar_identity
     apply_taskbar_identity(widget)
     widget.show()
+    _rhi_primer.setParent(None)
+    _rhi_primer.deleteLater()
     
     instance_server = start_instance_server(widget)
 
@@ -374,6 +397,8 @@ if __name__ == "__main__":
                 widget.open_file_in_smartprop(file_path)
             elif ext == '.vsndevts':
                 widget.open_file_in_soundevent(file_path)
+            elif ext == '.vsnap':
+                widget.open_file_in_vsnap(file_path)
 
     QTimer.singleShot(200, handle_initial_args)
     sys.exit(app.exec())

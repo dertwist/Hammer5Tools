@@ -1,6 +1,6 @@
-import os
 import shutil
 import re
+import os
 from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF, QRect, QRectF, QUrl
 from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent, QDragEnterEvent, QDropEvent, QColor, QPainter, QFont, QFontMetrics, QPen, QLinearGradient, QBrush, QFontDatabase, QDesktopServices
 from PySide6.QtWidgets import (
@@ -438,10 +438,33 @@ class Viewport(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.placeholder_label = QLabel(self.container)
-        self.placeholder_label.setAlignment(Qt.AlignCenter)
-        self.placeholder_label.setText("Select image in the screenshots")
-        self.placeholder_label.setProperty("h5Component", "loadingImagePlaceholder")
+        # Empty state placeholder view matching other editors
+        self.empty_state_widget = QWidget(self.container)
+        empty_layout = QVBoxLayout(self.empty_state_widget)
+        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setContentsMargins(24, 24, 24, 24)
+        empty_layout.setSpacing(12)
+
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(
+            QPixmap(":/valve_common/icons/tools/common/image.png").scaled(
+                32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+        )
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("Select an image to preview")
+        title_lbl.setProperty("h5Component", "emptyStateTitle")
+        title_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(title_lbl)
+
+        desc_lbl = QLabel("Select an image in the Screenshots panel on the left to preview it.")
+        desc_lbl.setProperty("h5Component", "emptyStateDescription")
+        desc_lbl.setAlignment(Qt.AlignCenter)
+        empty_layout.addWidget(desc_lbl)
+
+        self.placeholder_widget = self.empty_state_widget
 
         self.image_label = QLabel(self.container)
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -455,10 +478,10 @@ class Viewport(QMainWindow):
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setProperty("h5Component", "loadingImageScroll")
 
-        layout.addWidget(self.placeholder_label)
+        layout.addWidget(self.empty_state_widget)
         layout.addWidget(self.scroll_area)
 
-        self.placeholder_label.show()
+        self.empty_state_widget.show()
         self.scroll_area.hide()
 
     def set_loadingshots_dir(self, directory: str):
@@ -503,21 +526,18 @@ class Viewport(QMainWindow):
 
     def set_placeholder_text(self):
         """
-        Show a placeholder label and hide the scroll area when no valid image is loaded.
+        Show the empty state placeholder widget and hide the scroll area when no valid image is loaded.
         """
-        self.placeholder_label.setText("Select image in the screenshots")
-        self.placeholder_label.setProperty("h5Size", "large")
-        self.placeholder_label.show()
+        self.empty_state_widget.show()
         self.scroll_area.hide()
         self.image_label.clear()
         self._is_preview_active = False
 
     def clear_placeholder_text(self):
         """
-        Clear placeholder text and reveal the scroll area when a valid image is displayed.
+        Hide the empty state placeholder widget and reveal the scroll area when a valid image is displayed.
         """
-        self.placeholder_label.hide()
-        self.placeholder_label.clear()
+        self.empty_state_widget.hide()
         self.scroll_area.show()
 
     def load_images_from_directory(self, directory):
@@ -852,7 +872,8 @@ class SectionHeader(QWidget):
             if os.name == 'nt':
                 os.startfile(self.directory)
             else:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(self.directory))
+                from gui.common import safe_open_url
+                safe_open_url(QUrl.fromLocalFile(self.directory))
 
     def set_expanded(self, expanded: bool):
         self.arrow_label.setText(self.ARROW_EXPANDED if expanded else self.ARROW_COLLAPSED)

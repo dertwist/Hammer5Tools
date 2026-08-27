@@ -17,7 +17,7 @@ from PySide6.QtGui import (
     QUndoStack, QUndoCommand, QShortcut, QKeySequence,
 )
 
-from gui.common import enable_dark_title_bar, fast_deepcopy, set_qdock_tab_style
+from gui.common import fast_deepcopy, set_qdock_tab_style
 from gui.settings.common import get_addon_dir, get_addon_name
 from gui.editors.smartprop_editor.property import compact
 
@@ -108,9 +108,6 @@ class DetailPropEditorWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Detail Prop Editor")
-        self.resize(1180, 780)
-        self.setMinimumSize(880, 520)
-        enable_dark_title_bar(self)
         self.setProperty("h5Component", "detailPropEditorWindow")
 
         self.addon_dir = get_addon_dir()
@@ -179,12 +176,16 @@ class DetailPropEditorWidget(QMainWindow):
         type_btn = QPushButton("Type")
         type_btn.setIcon(compact.cs2_icon("add"))
         type_btn.setToolTip("Add a new detail prop type")
+        type_btn.setFixedHeight(24)
+        type_btn.setProperty("h5Component", "smartpropHierarchyAddBtn")
         type_btn.clicked.connect(self.add_type)
         buttons.addWidget(type_btn)
 
         model_btn = QPushButton("Model")
         model_btn.setIcon(compact.cs2_icon("add"))
         model_btn.setToolTip("Add a model to the selected type")
+        model_btn.setFixedHeight(24)
+        model_btn.setProperty("h5Component", "smartpropHierarchyAddBtn")
         model_btn.clicked.connect(self.hierarchy.add_model)
         buttons.addWidget(model_btn)
 
@@ -192,6 +193,8 @@ class DetailPropEditorWidget(QMainWindow):
         self.save_button = QPushButton("Save")
         self.save_button.setIcon(QIcon(":/icons/save_16dp.svg"))
         self.save_button.setToolTip("Save detail prop types (Ctrl+S)")
+        self.save_button.setFixedHeight(24)
+        self.save_button.setProperty("h5Component", "smartpropHierarchyAddBtn")
         self.save_button.clicked.connect(self.save)
         buttons.addWidget(self.save_button)
 

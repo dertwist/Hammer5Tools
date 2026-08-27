@@ -64,7 +64,7 @@ def check_association(extension):
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\Classes\\{extension}", 0, winreg.KEY_READ) as key:
             prog_id, _ = winreg.QueryValueEx(key, "")
-            is_us = prog_id in ["Hammer5Tools.SmartProp", "Hammer5Tools.SoundEvent", "Hammer5Tools.Batch"]
+            is_us = prog_id in ["Hammer5Tools.SmartProp", "Hammer5Tools.SoundEvent", "Hammer5Tools.VSnap", "Hammer5Tools.Batch"]
             return prog_id, is_us
     except FileNotFoundError:
         return None, False
@@ -95,8 +95,8 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"{prog_key_path}\\shell\\open\\command") as key:
             winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{open_cmd}" "%1"')
             
-        # Add "Edit with Hammer5Tools" context menu for smartprops and soundevents
-        if extension in [".vsmart", ".vsndevts"]:
+        # Add "Edit with Hammer5Tools" for source asset formats handled by an editor.
+        if extension in [".vsmart", ".vsndevts", ".vsnap"]:
             edit_key_path = f"{prog_key_path}\\shell\\editwith"
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, edit_key_path) as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "Edit With Hammer5Tools")
@@ -111,7 +111,7 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
 
 def setup_all_associations(force=False, parent_window=None):
     """
-    Sets up all associations (.vsmart, .vsndevts, .hbat).
+    Sets up all associations (.vsmart, .vsndevts, .vsnap, .hbat).
     If force is False, it will prompt the user if an extension is already taken.
     """
     fileedit = get_fileedit_path()
@@ -121,6 +121,7 @@ def setup_all_associations(force=False, parent_window=None):
     associations = [
         (".vsmart", "Hammer5Tools.SmartProp", "SmartProp File", smartprop_icon),
         (".vsndevts", "Hammer5Tools.SoundEvent", "SoundEvent File", vsnd_icon),
+        (".vsnap", "Hammer5Tools.VSnap", "Particle Snapshot File", smartprop_icon),
         (".hbat", "Hammer5Tools.Batch", "Hammer Batch File", smartprop_icon)
     ]
     

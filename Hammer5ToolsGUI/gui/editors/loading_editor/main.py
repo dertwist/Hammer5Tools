@@ -6,12 +6,15 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QDialog,
+    QFileDialog,
     QPlainTextEdit,
     QVBoxLayout,
     QProgressBar,
     QPushButton,
     QLabel,
     QWidget,
+    QFrame,
+    QSizePolicy,
     QHBoxLayout,
     QComboBox,
     QDockWidget,
@@ -32,7 +35,7 @@ from gui.settings.common import (
 )
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from gui.editors.loading_editor.timeline import TimelineExplorer
-from gui.common import compile, enable_dark_title_bar
+from gui.common import compile
 from gui.widgets import ErrorInfo
 from gui.editors.loading_editor.commands import generate_commands
 from gui.editors.loading_editor.svg_utils import rescale_svg
@@ -40,44 +43,74 @@ from gui.other.cs2_netcon import CS2Netcon
 from gui.styles.common import set_style_property
 
 
-class SvgPreviewWidget(QWidget):
+class SvgPreviewWidget(QFrame):
     """
-    A widget for drag and drop of SVG files. Displays a placeholder until an SVG is dropped.
+    A widget for drag and drop of SVG files. Displays a styled drop zone until an SVG is loaded.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.file_path = None
+        self.setProperty("h5Component", "loadingSvgDropArea")
+        self.setProperty("h5DragOver", "false")
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(12, 12, 12, 12)
+        main_layout.setSpacing(8)
+        main_layout.setAlignment(Qt.AlignCenter)
 
-        self.svg_preview = QSvgWidget(self)
-        self.svg_preview.setFixedSize(200, 200)
-        self.svg_preview.hide()
-        layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
+        # Placeholder State Container
+        self.placeholder_widget = QWidget(self)
+        placeholder_layout = QVBoxLayout(self.placeholder_widget)
+        placeholder_layout.setContentsMargins(0, 0, 0, 0)
+        placeholder_layout.setSpacing(6)
+        placeholder_layout.setAlignment(Qt.AlignCenter)
 
-        self.info_label = QLabel("Drop svg file", self)
+        self.placeholder_icon = QLabel(self.placeholder_widget)
+        self.placeholder_icon.setPixmap(QIcon(":/icons/upload_2_16dp.svg").pixmap(28, 28))
+        self.placeholder_icon.setAlignment(Qt.AlignCenter)
+        placeholder_layout.addWidget(self.placeholder_icon)
+
+        self.info_label = QLabel("Drag and drop a SVG", self.placeholder_widget)
         self.info_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.info_label, alignment=Qt.AlignCenter)
+        self.info_label.setProperty("h5Component", "loadingSvgDropLabel")
+        placeholder_layout.addWidget(self.info_label)
+
+        main_layout.addWidget(self.placeholder_widget)
+
+        # Loaded SVG Preview (transparent background, replaces placeholder)
+        self.svg_preview = QSvgWidget(self)
+        self.svg_preview.setFixedSize(140, 140)
+        self.svg_preview.setAttribute(Qt.WA_TranslucentBackground, True)
+        main_layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
+        self.svg_preview.hide()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
-            if all(url.toLocalFile().lower().endswith('.svg') for url in urls):
+            if any(url.toLocalFile().lower().endswith('.svg') for url in urls):
+                self.setProperty("h5DragOver", "true")
+                self.style().unpolish(self)
+                self.style().polish(self)
                 event.acceptProposedAction()
                 return
         event.ignore()
 
+    def dragLeaveEvent(self, event):
+        self.setProperty("h5DragOver", "false")
+        self.style().unpolish(self)
+        self.style().polish(self)
+        event.accept()
+
     def dropEvent(self, event):
+        self.setProperty("h5DragOver", "false")
+        self.style().unpolish(self)
+        self.style().polish(self)
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
                 if file_path.lower().endswith('.svg'):
-                    self.file_path = file_path
-                    self.svg_preview.load(file_path)
-                    self.info_label.hide()
-                    self.svg_preview.show()
+                    self.load_svg(file_path)
                     break
             else:
                 self.info_label.setText("Only SVG files are accepted.")
@@ -94,8 +127,14 @@ class SvgPreviewWidget(QWidget):
         if os.path.exists(svg_path) and svg_path.lower().endswith('.svg'):
             self.file_path = svg_path
             self.svg_preview.load(svg_path)
-            self.info_label.hide()
+            self.placeholder_widget.hide()
             self.svg_preview.show()
+
+    def clear_svg(self):
+        self.file_path = None
+        self.svg_preview.hide()
+        self.info_label.setText("Drag and drop a SVG")
+        self.placeholder_widget.show()
 
 
 class ApplyScreenshotsSignals(QObject):
@@ -376,7 +415,6 @@ class UnifiedProcessingDialog(QDialog):
 class LoadingEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        enable_dark_title_bar(self)
 
         self.threadpool = QThreadPool()
         game_dir, content_dir = addon_game_dir(), addon_content_dir()
@@ -408,7 +446,6 @@ class LoadingEditorMainWindow(QMainWindow):
     def _build_ui(self):
         self.setWindowTitle("Loading Screen Editor")
         self.setObjectName("LoadingEditor_MainWindow")
-        self.resize(1065, 566)
 
         self.setDockOptions(
             QMainWindow.AnimatedDocks |
@@ -566,26 +603,28 @@ class LoadingEditorMainWindow(QMainWindow):
 
         icon_widget = QWidget()
         icon_layout = QVBoxLayout(icon_widget)
-        icon_layout.setContentsMargins(4, 4, 4, 4)
-        icon_layout.setSpacing(4)
+        icon_layout.setContentsMargins(6, 6, 6, 6)
+        icon_layout.setSpacing(6)
 
         self.svg_preview_widget = SvgPreviewWidget()
-        icon_layout.addWidget(self.svg_preview_widget)
+        icon_layout.addWidget(self.svg_preview_widget, 1)
 
         self.svg_tips_label = QLabel("Tips: Convert text to paths. Avoid rasterized layers.")
         self.svg_tips_label.setWordWrap(True)
-        icon_layout.addWidget(self.svg_tips_label)
+        self.svg_tips_label.setProperty("h5Component", "loadingSvgTips")
+        self.svg_tips_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        icon_layout.addWidget(self.svg_tips_label, 0)
 
         self.fit_viewbox_checkbox = QCheckBox("Fit content to viewbox")
         self.fit_viewbox_checkbox.setChecked(True)
         self.fit_viewbox_checkbox.setToolTip("Rescale the SVG content to fit a 32x32 viewBox and remove hidden elements.")
-        icon_layout.addWidget(self.fit_viewbox_checkbox)
+        icon_layout.addWidget(self.fit_viewbox_checkbox, 0)
 
         self.apply_icon_button = QPushButton("Apply Icon")
         self.apply_icon_button.setIcon(QIcon(":/icons/check_24dp.svg"))
         self.apply_icon_button.setIconSize(QSize(20, 20))
         self.apply_icon_button.setMinimumHeight(32)
-        icon_layout.addWidget(self.apply_icon_button)
+        icon_layout.addWidget(self.apply_icon_button, 0)
 
         self.icon_dock.setWidget(icon_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.icon_dock)
@@ -597,18 +636,18 @@ class LoadingEditorMainWindow(QMainWindow):
 
         description_widget = QWidget()
         description_layout = QVBoxLayout(description_widget)
-        description_layout.setContentsMargins(4, 4, 4, 4)
-        description_layout.setSpacing(4)
+        description_layout.setContentsMargins(6, 6, 6, 6)
+        description_layout.setSpacing(6)
 
         self.PlainTextEdit_Description_2 = QPlainTextEdit()
         self.PlainTextEdit_Description_2.setPlaceholderText("A community map created by:")
-        description_layout.addWidget(self.PlainTextEdit_Description_2)
+        description_layout.addWidget(self.PlainTextEdit_Description_2, 1)
 
         self.apply_description_button = QPushButton("Apply description")
         self.apply_description_button.setIcon(QIcon(":/icons/check_24dp.svg"))
         self.apply_description_button.setIconSize(QSize(20, 20))
         self.apply_description_button.setMinimumHeight(32)
-        description_layout.addWidget(self.apply_description_button)
+        description_layout.addWidget(self.apply_description_button, 0)
 
         self.description_dock.setWidget(description_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.description_dock)

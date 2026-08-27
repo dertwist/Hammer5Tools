@@ -228,6 +228,17 @@ class MeshCache(QObject):
         worker.signals.loaded.connect(self._on_model_loaded)
         self._thread_pool.start(worker)
 
+    def put_mesh(self, resource_path: str, mesh_data: MeshData):
+        """Insert a mesh built outside the compiled-model loader (VMAP brush geometry).
+
+        Goes straight into the CPU cache and the upload queue, so ``get_gpu_mesh``
+        serves it from the next paint on and ``request_model`` never fires for it.
+        """
+        self._cpu_cache[resource_path] = mesh_data
+        self._pending_upload[resource_path] = mesh_data
+        self._failed.discard(resource_path)
+        self.model_ready.emit(resource_path)
+
     def _on_model_loaded(self, resource_path: str, mesh_data):
         """Runs on the UI thread when a load worker finishes (queued signal).
 

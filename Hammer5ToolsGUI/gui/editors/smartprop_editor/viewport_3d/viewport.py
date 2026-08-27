@@ -178,7 +178,7 @@ class SmartProp3DViewport(QWidget):
 
         layout.addWidget(toolbar)
 
-        self.render_area = SmartProp3DRenderArea(document=document, parent=self)
+        self.render_area = self.make_render_area(document)
         self.render_area.elementClicked.connect(self.elementClicked.emit)
         self.render_area.gizmoModeChanged.connect(self._sync_gizmo_mode_button)
         # Expanding (with no minimum) lets the viewport claim available space by
@@ -193,6 +193,11 @@ class SmartProp3DViewport(QWidget):
         self._on_display_groups_changed(True)
         self._on_show_widgets_changed(True)
         self._on_view_mode_changed("Textured")
+
+    def make_render_area(self, document):
+        """The render area this viewport hosts. Overridden by viewports whose scene
+        does not come from a SmartProp document."""
+        return SmartProp3DRenderArea(document=document, parent=self)
 
     def _make_toggle_button(self, tooltip, icon_off, icon_on=None):
         """Create a compact checkable icon toggle button for the toolbar.

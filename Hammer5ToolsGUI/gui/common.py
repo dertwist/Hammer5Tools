@@ -11,6 +11,25 @@ from keyvalues3.textwriter import KV3EncoderOptions
 import ctypes
 from typing import Dict, List, Optional, Set
 import re
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QUrl
+
+def safe_open_url(url: QUrl) -> bool:
+    """
+    Open a URL or file path using the desktop's default handler, temporarily
+    stripping the launcher ownership environment variables. This prevents
+    spawned child processes (e.g. Hammer5Tools.exe) from inheriting the GUI's
+    supervisor state, which would cause them to bypass IPC and spawn duplicate UI.
+    """
+    env_backup = {}
+    for var in ("H5T_LAUNCHER_OWNS_INSTANCE", "H5T_LAUNCHER_HANDOFF", "H5T_GUI_RELAUNCHED"):
+        if var in os.environ:
+            env_backup[var] = os.environ.pop(var)
+    try:
+        return QDesktopServices.openUrl(url)
+    finally:
+        for var, val in env_backup.items():
+            os.environ[var] = val
 
 log = logging.getLogger(__name__)
 
@@ -141,11 +160,16 @@ def get_update_source():
     from velopack import HttpSource
     return HttpSource(get_update_url())
 
-def enable_dark_title_bar(window):
+def apply_title_bar_theme(window):
+    """Paint the Windows title bar to match the active theme: white on Bright,
+    black on the dark themes."""
+    if not hasattr(window, "isWindow") or not window.isWindow():
+        return
+    from gui.styles import theme
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20
     try:
         hwnd = int(window.winId())
-        set_dark_mode = ctypes.c_int(1)
+        set_dark_mode = ctypes.c_int(0 if theme.level() == theme.LEVEL_BRIGHT else 1)
         ctypes.windll.dwmapi.DwmSetWindowAttribute(
             hwnd,
             DWMWA_USE_IMMERSIVE_DARK_MODE,
@@ -153,7 +177,18 @@ def enable_dark_title_bar(window):
             ctypes.sizeof(set_dark_mode)
         )
     except Exception as e:
-        log.error(f"Failed to set dark mode title bar: {e}")
+        log.error(f"Failed to set title bar theme: {e}")
+
+
+def refresh_title_bars():
+    """Re-tint every open window's title bar after a theme switch."""
+    from PySide6.QtWidgets import QApplication
+    app = QApplication.instance()
+    if app is None:
+        return
+    for window in app.topLevelWidgets():
+        if window.isWindow():
+            apply_title_bar_theme(window)
 
 editor_info = {
     'editor_info':

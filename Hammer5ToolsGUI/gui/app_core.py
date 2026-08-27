@@ -57,7 +57,7 @@ from gui.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from gui.forms.unreal_porter.main import UnrealPorterWidget
 from gui.forms.source_porter.main import SourcePorterWidget
 from gui.forms.launch_options.main import LaunchOptionsDialog
-from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, enable_dark_title_bar
+from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, apply_title_bar_theme
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.quick_create.main import QuickCreateDialog
@@ -113,10 +113,13 @@ class AlternatingMenu(QMenu):
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.settings = settings
+        self.window_state = WindowStateSaver(self, settings)
+
         from gui.ui_main import Ui_MainWindow
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        enable_dark_title_bar(self)
+        apply_title_bar_theme(self)
 
         self.preferences_dialog = None
         # Editors are built on first tab activation: every live widget makes an
@@ -153,8 +156,6 @@ class MainWindow(QMainWindow):
         self.setup_tabs()
         self.setup_buttons()
         self.current_tab(False)
-        self.settings = settings
-        self.window_state = WindowStateSaver(self, settings)
 
         self.setWindowTitle("Hammer 5 Tools")
 
@@ -309,8 +310,18 @@ class MainWindow(QMainWindow):
             return
         self.SoundEventEditorMainWindow.load_soundevents(filepath=file_path)
 
+    def open_file_in_vsnap(self, file_path):
+        if not file_path:
+            return
+        tab_index = self.ui.MainWindowTools_tabs.indexOf(self.vsnapeditor_tab)
+        if tab_index >= 0:
+            self.ui.MainWindowTools_tabs.setCurrentIndex(tab_index)
+            self._ensure_tab()
+        if getattr(self, 'VSnapEditorMainWindow', None):
+            self.VSnapEditorMainWindow.open_file(os.path.normpath(file_path))
+
     def setup_tabs(self):
-        self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
+        self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow(parent=self)
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
 
         # Programmatically create DetailProp Editor tab
@@ -325,6 +336,26 @@ class MainWindow(QMainWindow):
             self.ui.MainWindowTools_tabs, self.ui.hotkeyeditor_tab, self.detailpropeditor_tab,
             QIcon(":/valve_common/icons/tools/hammer/displacement_tool_icon.png"), "DetailProp Editor",
         )
+
+        self.vsnapeditor_tab = QWidget()
+        self.vsnapeditor_tab.setObjectName("vsnapeditor_tab")
+        vsnap_layout = QVBoxLayout(self.vsnapeditor_tab)
+        vsnap_layout.setContentsMargins(0, 0, 0, 0)
+        insert_tab_after(
+            self.ui.MainWindowTools_tabs, self.detailpropeditor_tab, self.vsnapeditor_tab,
+            QIcon(":/valve_common/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png"), "VSnap Editor",
+        )
+
+        # Vmap View is a test editor: source checkouts only, never a shipped build.
+        if not getattr(sys, 'frozen', False):
+            self.vmapview_tab = QWidget()
+            self.vmapview_tab.setObjectName("vmapview_tab")
+            vmapview_layout = QVBoxLayout(self.vmapview_tab)
+            vmapview_layout.setContentsMargins(0, 0, 0, 0)
+            insert_tab_after(
+                self.ui.MainWindowTools_tabs, self.vsnapeditor_tab, self.vmapview_tab,
+                QIcon(":/valve_common/icons/tools/hammer/mapmanifest_icon.png"), "Vmap View",
+            )
 
         # Programmatically create Audio Editor tab (addon-independent, created once)
         from gui.editors.soundevent_editor.wave_editor import AudioEditor
@@ -373,6 +404,18 @@ class MainWindow(QMainWindow):
         self.DetailPropEditorWidget_instance = DetailPropEditorWidget(parent=self)
         self.detailpropeditor_tab.layout().addWidget(self.DetailPropEditorWidget_instance)
         self._hook_undo_console(getattr(self.DetailPropEditorWidget_instance, 'undo_stack', None))
+
+    def _build_vsnap(self):
+        if getattr(self, 'VSnapEditorMainWindow', None) is not None:
+            return
+        from gui.editors.vsnap_editor.main import VSnapEditorMainWindow
+        self.VSnapEditorMainWindow = VSnapEditorMainWindow(parent=self.vsnapeditor_tab)
+        self.vsnapeditor_tab.layout().addWidget(self.VSnapEditorMainWindow)
+
+    def _build_vmapview(self):
+        from gui.editors.vmap_view.main import VmapViewMainWindow
+        self.VmapViewMainWindow = VmapViewMainWindow(parent=self.vmapview_tab)
+        self.vmapview_tab.layout().addWidget(self.VmapViewMainWindow)
 
     def setup_buttons(self):
         self.git_sync_button = SyncButton(self.centralWidget())
@@ -485,6 +528,12 @@ class MainWindow(QMainWindow):
                        self._build_detailprop, requires_cs2=True),
             EditorSlot('LoadingEditorMainWindow', "Loading Editor",
                        ui.Loading_Editor_Tab, self._build_loading, requires_cs2=True),
+            EditorSlot('VSnapEditorMainWindow', "VSnap Editor",
+                       getattr(self, 'vsnapeditor_tab', None), self._build_vsnap),
+            # Absent in frozen builds: setup_tabs never creates the tab, so the
+            # slot's page is None and it is skipped everywhere.
+            EditorSlot('VmapViewMainWindow', "Vmap View",
+                       getattr(self, 'vmapview_tab', None), self._build_vmapview),
         )
 
     def collect_unsaved_files(self):
@@ -620,6 +669,8 @@ def handle_new_connection(server, widget):
                     ext = os.path.splitext(file_path)[1].lower()
                     if editor_type == "soundevent" or ext == '.vsndevts':
                         widget.open_file_in_soundevent(file_path)
+                    elif editor_type == "vsnap" or ext == '.vsnap':
+                        widget.open_file_in_vsnap(file_path)
                     else:
                         widget.open_file_in_smartprop(file_path)
             elif command == IPCCommand.CREATE_VMDL.value:
@@ -650,4 +701,3 @@ def start_instance_server(widget):
             raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
     server.newConnection.connect(lambda: handle_new_connection(server, widget))
     return server
-

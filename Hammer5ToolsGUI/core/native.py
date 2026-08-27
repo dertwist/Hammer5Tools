@@ -58,9 +58,11 @@ class SmartPropNativeClient:
                 "Hammer5Tools Native Core was not found; publish Hammer5Tools.Core first"
             )
 
-        self._dll_directory = None
+        self._dll_directories = []
         if hasattr(os, "add_dll_directory"):
-            self._dll_directory = os.add_dll_directory(str(path.parent))
+            self._dll_directories.append(os.add_dll_directory(str(path.parent)))
+            if path.parent.parent.is_dir():
+                self._dll_directories.append(os.add_dll_directory(str(path.parent.parent)))
         # NativeAOT's own P/Invoke module resolution fails to find sibling native
         # DLLs (e.g. libSkiaSharp.dll) when this library is loaded via ctypes from
         # a non-.NET host process, even with add_dll_directory pointed at the same
@@ -68,12 +70,14 @@ class SmartPropNativeClient:
         # Loading the dependency ourselves first makes Windows resolve later
         # same-named LoadLibrary calls (including NativeAOT's internal one) against
         # the already-loaded module instead of re-searching.
-        skia = path.parent / "libSkiaSharp.dll"
-        if skia.is_file():
-            try:
-                ctypes.CDLL(str(skia))
-            except OSError:
-                pass
+        for candidate_dir in (path.parent, path.parent.parent, path.parent.parent / "runtimes" / "win-x64" / "native"):
+            skia = candidate_dir / "libSkiaSharp.dll"
+            if skia.is_file():
+                try:
+                    ctypes.CDLL(str(skia))
+                except OSError:
+                    pass
+                break
         try:
             self._library = ctypes.CDLL(str(path))
         except OSError as error:
@@ -216,6 +220,12 @@ class SmartPropNativeClient:
             self._library.h5t_compiled_model_read_json, *self._buffer_arguments(self._json_bytes(request)),
         ))
 
+    def read_compiled_material(self, request: dict) -> dict:
+        """Reads one compiled material. Returns {"value": {...} | None, "diagnostics": [...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_compiled_material_read_json, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
     def read_compiled_model_material_groups(self, request: dict) -> list[str]:
         """Reads the material group names of a compiled model."""
         return json.loads(self._invoke(
@@ -233,6 +243,41 @@ class SmartPropNativeClient:
         """Reads an uncompiled VMAP into the shared read-only projection (path/world/nodes/entities/...)."""
         return json.loads(self._invoke(
             self._library.h5t_vmap_read_json, *self._buffer_arguments(path.encode("utf-8")),
+        ))
+
+    def read_valve_map_scene(self, path: str) -> dict:
+        """Reads an uncompiled VMAP into flattened, drawable scene geometry."""
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_read_scene_json, *self._buffer_arguments(path.encode("utf-8")),
+        ))
+
+    def read_vsnap(self, text: str) -> dict:
+        return json.loads(self._invoke(
+            self._library.h5t_vsnap_read_json, *self._buffer_arguments(text.encode("utf-8")),
+        ))
+
+    def serialize_vsnap(self, document: dict) -> str:
+        return self._invoke(
+            self._library.h5t_vsnap_serialize_json,
+            *self._buffer_arguments(self._json_bytes(document)),
+        )
+
+    def generate_vsnap(self, request: dict) -> dict:
+        return json.loads(self._invoke(
+            self._library.h5t_vsnap_generate_json,
+            *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def light_vsnap(self, request: dict) -> dict:
+        return json.loads(self._invoke(
+            self._library.h5t_vsnap_light_json,
+            *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
+    def generate_vsnap_lightning(self, request: dict) -> dict:
+        return json.loads(self._invoke(
+            self._library.h5t_vsnap_lightning_json,
+            *self._buffer_arguments(self._json_bytes(request)),
         ))
 
     def rewrite_vmap_references(self, path: str, renames: dict) -> dict:
@@ -413,9 +458,16 @@ class SmartPropNativeClient:
             "h5t_smartprop_deserialize_text",
             "h5t_compiled_model_read_json",
             "h5t_compiled_model_material_groups_json",
+            "h5t_compiled_material_read_json",
             "h5t_compiled_resource_read_json",
             "h5t_vmap_read_json",
+            "h5t_vmap_read_scene_json",
             "h5t_vmap_rewrite_references_json",
+            "h5t_vsnap_read_json",
+            "h5t_vsnap_serialize_json",
+            "h5t_vsnap_generate_json",
+            "h5t_vsnap_light_json",
+            "h5t_vsnap_lightning_json",
             "h5t_unreal_info",
             "h5t_unreal_list",
             "h5t_unreal_dump",
@@ -516,7 +568,16 @@ class SmartPropNativeClient:
             Path(override) if override else None,
             paths.runtime_resource("smartprop_native", cls.LIBRARY_NAME),
             paths.application_resource("smartprop_native", cls.LIBRARY_NAME),
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "publish" / cls.LIBRARY_NAME,
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
         ]
-        return next((candidate.resolve() for candidate in candidates if candidate and candidate.is_file()), None)
+        for candidate in candidates:
+            if candidate and candidate.is_file():
+                return candidate.resolve()
+
+        dev_candidates = [
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
+            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "publish" / cls.LIBRARY_NAME,
+        ]
+        existing_dev = [candidate.resolve() for candidate in dev_candidates if candidate.is_file()]
+        if existing_dev:
+            return max(existing_dev, key=lambda p: p.stat().st_mtime)
+        return None

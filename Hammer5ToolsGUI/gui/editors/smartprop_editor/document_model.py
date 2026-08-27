@@ -312,3 +312,59 @@ def variable_rows_to_kv3(rows):
 
         variables.append(variable)
     return variables
+
+
+def collect_nested_smartprops(document, default_addon: str | None = None) -> dict:
+    """Load the nested SmartProp graph a document references, keyed by resource path.
+
+    Core needs every nested .vsmart inlined to resolve a document, so this walks
+    the tree, reads each referenced source file from its owning addon, and recurses.
+    """
+    import os
+    import re
+
+    from gui.settings.common import addon_content_dir, get_addon_name, get_cs2_path
+
+    cs2_path = get_cs2_path()
+    default_addon = default_addon or get_addon_name()
+    if not (cs2_path and default_addon):
+        return {}
+
+    documents = {}
+    visited = set()
+
+    def load(resource_path, context_addon):
+        addon = context_addon or default_addon
+        normalized_path = resource_path.replace("\\", "/").lstrip("/")
+        addon_match = re.search(
+            r"(?:^|/)csgo_addons/([^/]+)/(.*)$",
+            normalized_path,
+            re.IGNORECASE,
+        )
+        if addon_match:
+            addon = addon_match.group(1)
+            normalized_path = addon_match.group(2)
+
+        full_path = os.path.join(addon_content_dir(addon), normalized_path)
+        visit_key = os.path.normcase(os.path.normpath(full_path))
+        if visit_key in visited or not os.path.isfile(full_path):
+            return
+        visited.add(visit_key)
+
+        with open(full_path, "r", encoding="utf-8") as nested_file:
+            nested_document = parse_smartprop(nested_file.read())
+        documents[resource_path] = nested_document
+        scan(nested_document, addon)
+
+    def scan(value, context_addon=default_addon):
+        if isinstance(value, dict):
+            for child_value in value.values():
+                scan(child_value, context_addon)
+        elif isinstance(value, list):
+            for child_value in value:
+                scan(child_value, context_addon)
+        elif isinstance(value, str) and value.lower().endswith(".vsmart"):
+            load(value, context_addon)
+
+    scan(document)
+    return documents

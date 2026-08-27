@@ -187,6 +187,69 @@ class ValveMapDocument:
     thumbnail_format: str | None
 
 
+@dataclass(frozen=True)
+class ValveMapSceneSubMesh:
+    """One contiguous index range of a scene mesh sharing a material."""
+
+    index_offset: int
+    index_count: int
+    material: str
+
+
+@dataclass(frozen=True)
+class ValveMapSceneMesh:
+    """A brush/displacement mesh triangulated into world space."""
+
+    name: str
+    vertices: object
+    normals: object
+    uvs: object
+    indices: object
+    submeshes: tuple[ValveMapSceneSubMesh, ...]
+
+
+@dataclass(frozen=True)
+class ValveMapScenePlacement:
+    """A model or SmartProp placement flattened to a world transform."""
+
+    name: str
+    class_name: str
+    resource: str
+    transform: tuple[float, ...]
+    variables: dict
+
+
+@dataclass(frozen=True)
+class ValveMapSceneDocument:
+    """The drawable projection of an uncompiled Valve map."""
+
+    path: str
+    meshes: tuple[ValveMapSceneMesh, ...]
+    props: tuple[ValveMapScenePlacement, ...]
+    smart_props: tuple[ValveMapScenePlacement, ...]
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SnapshotStream:
+    """One Python-native VSnap stream."""
+
+    name: str
+    type: str
+    values: tuple[float | tuple[float, ...], ...]
+
+
+@dataclass(frozen=True)
+class SnapshotDocument:
+    """Python-native particle snapshot returned by Core."""
+
+    streams: tuple[SnapshotStream, ...]
+
+    @property
+    def count(self) -> int:
+        return len(self.streams[0].values) if self.streams else 0
+
+
 class CoreBridge:
     """Owns one initialized connection to Hammer5Tools.Core for a process."""
 
@@ -291,6 +354,87 @@ class CoreBridge:
             None if thumbnail is None else base64.b64decode(thumbnail),
             document["thumbnailFormat"],
         )
+
+    def read_valve_map_scene(self, path: str) -> ValveMapSceneDocument:
+        """Reads a VMAP into world-space meshes and placements for a viewport."""
+        import numpy as np
+
+        scene = self._smartprop_native().read_valve_map_scene(path)
+
+        def floats(value: str):
+            return np.frombuffer(base64.b64decode(value), dtype=np.float32)
+
+        return ValveMapSceneDocument(
+            scene["path"],
+            tuple(ValveMapSceneMesh(
+                mesh["name"], floats(mesh["positionsBytes"]), floats(mesh["normalsBytes"]),
+                floats(mesh["uvsBytes"]),
+                np.frombuffer(base64.b64decode(mesh["indicesBytes"]), dtype=np.uint32),
+                tuple(ValveMapSceneSubMesh(item["indexOffset"], item["indexCount"], item["material"])
+                      for item in mesh["submeshes"]),
+            ) for mesh in scene["meshes"]),
+            tuple(ValveMapScenePlacement(
+                prop["name"], prop["className"], prop["model"], tuple(prop["transform"]), {},
+            ) for prop in scene["props"]),
+            tuple(ValveMapScenePlacement(
+                smart_prop["name"], "CMapSmartProp", smart_prop["file"],
+                tuple(smart_prop["transform"]), dict(smart_prop["variables"]),
+            ) for smart_prop in scene["smartProps"]),
+            tuple(scene["diagnostics"]),
+        )
+
+    def read_vsnap(self, text: str) -> SnapshotDocument:
+        """Parses KeyValues3 VSnap text through Core."""
+        return self._convert_snapshot(self._smartprop_native().read_vsnap(text))
+
+    def serialize_vsnap(self, document: SnapshotDocument) -> str:
+        """Serializes a VSnap through Core."""
+        return self._smartprop_native().serialize_vsnap(self._snapshot_json(document))
+
+    def generate_vsnap(self, primitive: str, count: int, size: float) -> SnapshotDocument:
+        """Generates a primitive point cloud through Core."""
+        return self._convert_snapshot(self._smartprop_native().generate_vsnap({
+            "primitive": primitive, "count": count, "size": size,
+        }))
+
+    def generate_drawn_vsnap(self, positions: Sequence[Sequence[float]]) -> SnapshotDocument:
+        """Converts authored points to a VSnap through Core."""
+        return self._convert_snapshot(self._smartprop_native().generate_vsnap({
+            "positions": [list(point) for point in positions],
+        }))
+
+    def apply_vsnap_lighting(
+        self, document: SnapshotDocument, first_index: int, second_index: int,
+    ) -> SnapshotDocument:
+        """Generates a two-point lighting gradient through Core."""
+        return self._convert_snapshot(self._smartprop_native().light_vsnap({
+            "document": self._snapshot_json(document),
+            "firstIndex": first_index,
+            "secondIndex": second_index,
+        }))
+
+    def generate_vsnap_lightning(
+        self,
+        start: Sequence[float],
+        end: Sequence[float],
+        point_count: int,
+        roughness: float,
+        branch_probability: float,
+        recursion_depth: int,
+        radius: float,
+        seed: int,
+    ) -> SnapshotDocument:
+        """Generates a seeded, branching lightning snapshot through Core."""
+        return self._convert_snapshot(self._smartprop_native().generate_vsnap_lightning({
+            "start": list(start),
+            "end": list(end),
+            "pointCount": point_count,
+            "roughness": roughness,
+            "branchProbability": branch_probability,
+            "recursionDepth": recursion_depth,
+            "radius": radius,
+            "seed": seed,
+        }))
 
     def rewrite_vmap_references(self, path: str, renames: Mapping[str, str]) -> VmapRewriteResult:
         """Rewrites VMAP body and prefix references through SourcePorter Core."""
@@ -459,6 +603,21 @@ class CoreBridge:
             tuple(CompiledSubMeshData(item["indexOffset"], item["indexCount"], materials[item["materialIndex"]])
                   for item in model["submeshes"]), diagnostics)
 
+    def read_compiled_material(self, game_directory: str, active_addon: str, resource_path: str,
+                               *, context_addon: str | None = None, maximum_texture_dimension: int = 1024,
+                               base_color_only: bool = True) -> CompiledMaterialData | None:
+        """Reads a standalone compiled material — a .vmat with no model to hang it on."""
+        result = self._smartprop_native().read_compiled_material({
+            "gameDirectory": game_directory,
+            "activeAddon": active_addon,
+            "resourcePath": resource_path,
+            "contextAddon": context_addon,
+            "maximumTextureDimension": maximum_texture_dimension,
+            "baseColorOnly": base_color_only,
+        })
+        material = result["value"]
+        return None if material is None else self._compiled_material(material)
+
     def read_compiled_model_material_groups(self, game_directory: str, active_addon: str,
                                             resource_path: str, context_addon: str | None = None) -> tuple[str, ...]:
         groups = self._smartprop_native().read_compiled_model_material_groups({
@@ -519,6 +678,31 @@ class CoreBridge:
             None if tint is None else tuple(float(value) for value in tint),
             CoreBridge._convert_native_smartprop_deformer(model.get("deformer")),
         )
+
+    @staticmethod
+    def _convert_snapshot(document: Mapping) -> SnapshotDocument:
+        streams = []
+        for stream in document["streams"]:
+            values = tuple(
+                tuple(float(component) for component in value)
+                if isinstance(value, list) else float(value)
+                for value in stream["values"]
+            )
+            streams.append(SnapshotStream(str(stream["name"]), str(stream["type"]), values))
+        return SnapshotDocument(tuple(streams))
+
+    @staticmethod
+    def _snapshot_json(document: SnapshotDocument) -> dict:
+        return {
+            "streams": [
+                {
+                    "name": stream.name,
+                    "type": stream.type,
+                    "values": [list(value) if isinstance(value, tuple) else value for value in stream.values],
+                }
+                for stream in document.streams
+            ],
+        }
 
     @staticmethod
     def _convert_native_smartprop_deformer(deformer: Mapping | None) -> SmartPropDeformer | None:

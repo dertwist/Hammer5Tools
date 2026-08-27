@@ -370,6 +370,7 @@
   <qresource prefix="/valve_common">
     <file alias="icons/tools/model_editor/hierarchy_sequence_group_referenced.png">assets/icons/tools/model_editor/hierarchy_sequence_group_referenced.png</file>
     <file alias="icons/tools/hammer/displacement_tool_icon.png">assets/icons/tools/hammer/displacement_tool_icon.png</file>
+    <file alias="icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png">assets/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png</file>
     <file alias="icons/tools/common/add.png">assets/icons/tools/common/add.png</file>
     <file alias="icons/tools/common/add_editor_node.png">assets/icons/tools/common/add_editor_node.png</file>
     <file alias="icons/tools/common/add_med.png">assets/icons/tools/common/add_med.png</file>

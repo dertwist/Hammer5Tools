@@ -142,6 +142,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.current_transform_text = None
 
         self._model_infos = {}  # id -> info dict (primary entry per element id)
+        self._nested_smartprops_cache = None  # nested .vsmart docs, held across a drag
+        self._drag_parent_world_matrix = None  # selection's parent frame, pinned per drag
         self._model_instances = []  # list of all individual model instances to render
         self._path_infos = []  # list of PlaceOnPath curve and control point data
 
@@ -1303,13 +1305,19 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             }
             self.mesh_cache.prune(referenced_paths)
 
-        # Sync selection gizmo transform if selection exists
-        if self._selected_id in self._model_infos:
-            sel = self._model_infos[self._selected_id]
-            self.gizmo.set_transform(sel["position"], sel["rotation"], sel["scale"])
-            self._apply_gizmo_availability(sel.get("data"))
-        else:
-            self.gizmo.hide()
+        # Sync selection gizmo transform if selection exists.  Not mid-drag: the
+        # drag already owns the transform, and re-seeding it from this rebuild
+        # would feed the round-tripped (lossy) value back into the drag it came
+        # from -- the handles jitter, and for a child instantiated more than once
+        # (FitOnLine/PickOne repeats) they snap between instances every event.
+        # mouseReleaseEvent's rebuild re-syncs from Core once the drag ends.
+        if not self.gizmo.is_dragging:
+            if self._selected_id in self._model_infos:
+                sel = self._model_infos[self._selected_id]
+                self.gizmo.set_transform(sel["position"], sel["rotation"], sel["scale"])
+                self._apply_gizmo_availability(sel.get("data"))
+            else:
+                self.gizmo.hide()
 
         self.update()
 
@@ -1442,56 +1450,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         }
 
     def _collect_nested_smartprops(self, document):
-        """Load the nested SmartProp graph for the Core resolver payload."""
-        import os
-        import re
+        """Load the nested SmartProp graph for the Core resolver payload.
 
-        from gui.editors.smartprop_editor.document_model import parse_smartprop
-        from gui.settings.common import addon_content_dir, get_addon_name, get_cs2_path
-
-        cs2_path = get_cs2_path()
-        default_addon = get_addon_name()
-        if not (cs2_path and default_addon):
-            return {}
-
-        documents = {}
-        visited = set()
-
-        def load(resource_path, context_addon):
-            addon = context_addon or default_addon
-            normalized_path = resource_path.replace("\\", "/").lstrip("/")
-            addon_match = re.search(
-                r"(?:^|/)csgo_addons/([^/]+)/(.*)$",
-                normalized_path,
-                re.IGNORECASE,
-            )
-            if addon_match:
-                addon = addon_match.group(1)
-                normalized_path = addon_match.group(2)
-
-            full_path = os.path.join(addon_content_dir(addon), normalized_path)
-            visit_key = os.path.normcase(os.path.normpath(full_path))
-            if visit_key in visited or not os.path.isfile(full_path):
-                return
-            visited.add(visit_key)
-
-            with open(full_path, "r", encoding="utf-8") as nested_file:
-                nested_document = parse_smartprop(nested_file.read())
-            documents[resource_path] = nested_document
-            scan(nested_document, addon)
-
-        def scan(value, context_addon=default_addon):
-            if isinstance(value, dict):
-                for child_value in value.values():
-                    scan(child_value, context_addon)
-            elif isinstance(value, list):
-                for child_value in value:
-                    scan(child_value, context_addon)
-            elif isinstance(value, str) and value.lower().endswith(".vsmart"):
-                load(value, context_addon)
-
-        scan(document)
-        return documents
+        Reused for the duration of a gizmo drag: this reads and KV3-parses every
+        referenced .vsmart off disk, and a drag rebuilds the scene on every
+        mouse-move event.  The files can't change while the button is held.
+        """
+        if self.gizmo.is_dragging and self._nested_smartprops_cache is not None:
+            return self._nested_smartprops_cache
+        from gui.editors.smartprop_editor.document_model import collect_nested_smartprops
+        nested = collect_nested_smartprops(document)
+        self._nested_smartprops_cache = nested if self.gizmo.is_dragging else None
+        return nested
 
     def _follow_selection_isolation(self):
         """Point the isolation at the current selection while dynamic mode is on.
@@ -1567,6 +1537,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             if axis != GizmoAxis.NONE:
                 self.gizmo.begin_drag(axis, (event.position().x(), event.position().y()))
+                sel_info = self._model_infos.get(self._selected_id) or {}
+                self._drag_parent_world_matrix = np.array(
+                    sel_info.get("parent_world_matrix", np.eye(4, dtype=np.float32)),
+                    dtype=np.float32,
+                )
                 # Arm the one-shot panel-rebuild guard for this drag (used when a
                 # transform modifier is created on the first move).
                 if self.document is not None:
@@ -1638,13 +1613,19 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     # expression bindings on the other two axes.
                     axis_idx = self._active_axis_index()
                     is_center = self.gizmo.active_axis == GizmoAxis.CENTER
-                    info = self._model_infos[self._selected_id]
-                    parent_world_matrix = info.get("parent_world_matrix", np.eye(4, dtype=np.float32))
+                    parent_world_matrix = self._drag_parent_world_matrix
+                    if parent_world_matrix is None:
+                        parent_world_matrix = np.eye(4, dtype=np.float32)
 
-                    # 1. Build the updated world matrix based on the delta
-                    world_pos = delta.get("position", info.get("position", [0.0, 0.0, 0.0]))
-                    world_rot = delta.get("rotation", info.get("rotation", [0.0, 0.0, 0.0]))
-                    world_scale = delta.get("scale", info.get("scale", [1.0, 1.0, 1.0]))
+                    # 1. Build the updated world matrix based on the delta.  The
+                    # channels this drag doesn't touch come from the gizmo (fixed
+                    # for the whole drag), not from the rebuilt Core result --
+                    # re-reading them each event lets a repeated child's other
+                    # two channels flip between placements and drag the element
+                    # around on its own.
+                    world_pos = delta.get("position", self.gizmo.position.tolist())
+                    world_rot = delta.get("rotation", self.gizmo.rotation.tolist())
+                    world_scale = delta.get("scale", self.gizmo.scale_val.tolist())
 
                     M_new_world = (
                         scale_matrix(*world_scale)
@@ -1760,6 +1741,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.gizmo.is_dragging:
             self.gizmo.end_drag()
+            self._nested_smartprops_cache = None
+            self._drag_parent_world_matrix = None
             # Push changes to undo stack
             if self.document and hasattr(self.document, "_gizmo_commit_drag"):
                 self.document._gizmo_commit_drag()

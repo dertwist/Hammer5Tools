@@ -17,10 +17,11 @@ read with payload() and write back with set_payload().
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QTreeWidget, QTreeWidgetItem,
-    QAbstractItemView,
+    QAbstractItemView, QHeaderView,
 )
 
 from gui.widgets import HierarchyItemModel, on_three_hierarchyitem_clicked
+from gui.widgets.tree import HierarchyTreeWidget
 
 from .schema import default_model, default_type
 from .hierarchy_model import (
@@ -35,15 +36,20 @@ KIND_TYPE = "Detail Type"
 KIND_MODEL = "Model"
 
 
-class _DropSignalTree(QTreeWidget):
-    """QTreeWidget that reports when an internal-move drop has completed."""
+class _DropSignalTree(HierarchyTreeWidget):
+    """HierarchyTreeWidget that reports when an internal-move drop has completed."""
 
     dropped = Signal()
     about_to_drop = Signal()
 
+    def __init__(self, parent=None, undo_stack=None):
+        super().__init__(undo_stack=undo_stack)
+        if parent is not None:
+            self.setParent(parent)
+
     def dropEvent(self, event):
         self.about_to_drop.emit()
-        super().dropEvent(event)
+        QTreeWidget.dropEvent(self, event)
         self.dropped.emit()
 
 
@@ -107,13 +113,14 @@ class DetailPropTree(QWidget):
         layout.setSpacing(2)
 
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.setFixedHeight(24)
+        self.search_bar.setPlaceholderText("Filter...")
         self.search_bar.textChanged.connect(
             lambda text: self.search_hierarchy(text, self.tree.invisibleRootItem())
         )
         layout.addWidget(self.search_bar)
 
-        self.tree = _DropSignalTree()
+        self.tree = _DropSignalTree(undo_stack=getattr(self.editor, 'undo_stack', None))
         header = QTreeWidgetItem()
         header.setText(0, "Label")
         header.setText(1, "Data")
@@ -133,6 +140,8 @@ class DetailPropTree(QWidget):
         self.tree.header().setMinimumSectionSize(20)
         self.tree.header().setDefaultSectionSize(135)
         self.tree.header().setStretchLastSection(True)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tree.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         layout.addWidget(self.tree, 1)
 
         # Column 0 is the only editable column, same rule as SmartProp.

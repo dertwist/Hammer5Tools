@@ -1,5 +1,5 @@
-using Hammer5Tools.Core.IO.Toolchain;
 using Hammer5Tools.Core.Format.Toolchain;
+using Hammer5Tools.Core.IO.Toolchain;
 
 namespace SourcePorter.Core.Tests;
 

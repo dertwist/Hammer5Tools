@@ -24,23 +24,19 @@ from gui.widgets.explorer.main import Explorer
 from gui.editors.smartprop_editor.document import SmartPropDocument
 from gui.other.assettypes import check_vsmart_configuration
 from gui.widgets import ErrorInfo, exception_handler
-from gui.common import (
-    enable_dark_title_bar,
-    set_qdock_tab_style
-)
+from gui.common import set_qdock_tab_style
 
 from gui.widgets.document_tab import DocumentTabBar
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
-        super().__init__()
+        super().__init__(parent)
         self.parent = parent
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
         self.opened_file = None
         self.update_title = update_title
-        enable_dark_title_bar(self)
 
         # Setup DocumentTabBar on DocumentTabWidget (supports middle-click close and adjacent Valve new-tab button)
         self.doc_tab_bar = DocumentTabBar(self.ui.DocumentTabWidget)

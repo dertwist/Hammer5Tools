@@ -1,7 +1,7 @@
 using System.Numerics;
 using Datamodel;
-using Hammer5Tools.Core.IO.Domain;
 using Hammer5Tools.Core.Format.Vmap;
+using Hammer5Tools.Core.IO.Domain;
 using DM = Datamodel.Datamodel;
 
 namespace SourcePorter.Core.Tests;

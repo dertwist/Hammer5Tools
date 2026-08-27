@@ -145,6 +145,7 @@ class Gizmo:
         self._drag_start_gl_pos = None
         self._drag_start_value = None
         self._drag_plane_start_hit = None
+        self._drag_rotation = None
         self._accumulated_angle = 0.0
         self._last_angle = None
 
@@ -193,11 +194,22 @@ class Gizmo:
         dist = float(np.linalg.norm(camera_pos - gl_pos))
         return max(dist * (0.08 / 1.5), 1e-4)
 
+    def _basis_rotation(self) -> np.ndarray:
+        """Rotation defining the Local-space axis basis.
+
+        Frozen at drag start: the drag writes back into ``self.rotation``, and
+        deriving the axis from a rotation the drag itself is changing feeds the
+        result back into its own input (the gizmo swims away under the cursor).
+        """
+        if self._dragging and self._drag_rotation is not None:
+            return self._drag_rotation
+        return self.rotation
+
     def get_axis_direction(self, axis_name: str) -> np.ndarray:
         """Get the direction of the given axis in GL space."""
         axis_name = axis_name.lower()
         if self.coordinate_space == "Local":
-            R = rotation_matrix_euler(*self.rotation)
+            R = rotation_matrix_euler(*self._basis_rotation())
             s2_dir = R[{"x": 0, "y": 1, "z": 2}[axis_name], :3]
             gl_dir = (SOURCE2_TO_GL.T @ np.append(s2_dir, 0.0))[:3]
             return _normalize(gl_dir)
@@ -219,7 +231,7 @@ class Gizmo:
         """Get the direction of the given axis in Source 2 space."""
         axis_name = axis_name.lower()
         if self.coordinate_space == "Local":
-            R = rotation_matrix_euler(*self.rotation)
+            R = rotation_matrix_euler(*self._basis_rotation())
             return _normalize(R[{"x": 0, "y": 1, "z": 2}[axis_name], :3])
         elif self.coordinate_space == "Screen":
             gl_dir = {
@@ -709,9 +721,28 @@ class Gizmo:
             GizmoMode.ROTATE: self.rotation.copy(),
             GizmoMode.SCALE: self.scale_val.copy(),
         }.get(self.mode)
+        self._drag_rotation = self.rotation.copy()
         self._accumulated_angle = 0.0
         self._last_angle = None
         self._drag_plane_start_hit = None
+
+    def _commit(self, delta: dict) -> dict:
+        """Adopt the drag result as the gizmo's own transform and return it.
+
+        The gizmo is authoritative for its position while a drag is running.
+        Waiting for the document round-trip (write modifier -> re-evaluate ->
+        set_transform) to move the handles makes them lag, and any loss in that
+        round-trip -- restricted axes, expression-bound components, a repeated
+        child whose parent matrix isn't the one Core reported -- shows up as the
+        handles drifting or jittering while the cursor is still.
+        """
+        if "position" in delta:
+            self.position = np.array(delta["position"], dtype=np.float32)
+        if "rotation" in delta:
+            self.rotation = np.array(delta["rotation"], dtype=np.float32)
+        if "scale" in delta:
+            self.scale_val = np.array(delta["scale"], dtype=np.float32)
+        return delta
 
     def update_drag(self, screen_pos: Tuple[float, float], view_matrix, proj_matrix, w, h, camera_pos) -> Optional[dict]:
         """Update the drag and return the new transform delta dict, or None."""
@@ -742,7 +773,7 @@ class Gizmo:
                     s2_delta = np.array([round(val / self.grid_step) * self.grid_step for val in s2_delta], dtype=np.float32)
 
                 new_pos = self._drag_start_value + s2_delta
-                return {"position": new_pos.tolist()}
+                return self._commit({"position": new_pos.tolist()})
 
             # 2. Planar Translation (XY, XZ, YZ rectangles)
             elif self.active_axis in (GizmoAxis.XY, GizmoAxis.XZ, GizmoAxis.YZ):
@@ -786,7 +817,7 @@ class Gizmo:
                     delta_v = round(delta_v / self.grid_step) * self.grid_step
 
                 new_pos = self._drag_start_value + delta_u * s2_u + delta_v * s2_v
-                return {"position": new_pos.tolist()}
+                return self._commit({"position": new_pos.tolist()})
 
             # 3. Single-axis Translation (X, Y, Z arrows)
             else:
@@ -813,7 +844,7 @@ class Gizmo:
                 s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
                 new_pos = self._drag_start_value + gl_delta_val * s2_axis_dir
 
-                return {"position": new_pos.tolist()}
+                return self._commit({"position": new_pos.tolist()})
 
         elif self.mode == GizmoMode.ROTATE:
             center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
@@ -855,7 +886,7 @@ class Gizmo:
             R_new = R_start @ R_delta
 
             _, new_rot, _ = decompose_trs(R_new)
-            return {"rotation": new_rot}
+            return self._commit({"rotation": new_rot})
 
         elif self.mode == GizmoMode.SCALE:
             if self.active_axis == GizmoAxis.CENTER:
@@ -873,7 +904,7 @@ class Gizmo:
                     factor = max(snap_step, round(factor / snap_step) * snap_step)
 
                 new_scale = self._drag_start_value * factor
-                return {"scale": new_scale.tolist()}
+                return self._commit({"scale": new_scale.tolist()})
             else:
                 # Single-axis scale along screen direction
                 axis_dir_GL = self.get_axis_direction(self.active_axis)
@@ -901,7 +932,7 @@ class Gizmo:
                 else:
                     new_scale[axis_idx] *= factor
 
-                return {"scale": new_scale.tolist()}
+                return self._commit({"scale": new_scale.tolist()})
 
         return None
 
@@ -913,6 +944,7 @@ class Gizmo:
         self._drag_start_gl_pos = None
         self._drag_start_value = None
         self._drag_plane_start_hit = None
+        self._drag_rotation = None
         self._accumulated_angle = 0.0
         self._last_angle = None
 

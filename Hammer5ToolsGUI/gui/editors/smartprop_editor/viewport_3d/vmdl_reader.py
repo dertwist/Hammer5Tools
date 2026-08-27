@@ -69,6 +69,15 @@ def load_model(resource_path: str, context_addon: str = None, max_texture_dim: i
                    for item in model.submeshes])
 
 
+def load_material_base_color(resource_path: str, context_addon: str = None,
+                             max_texture_dim: int = None) -> Optional[np.ndarray]:
+    """Decode a standalone .vmat's base-color map as an RGBA array, or None."""
+    material = CoreBridge.instance().read_compiled_material(
+        _game_directory(), _active_addon(), resource_path, context_addon=context_addon,
+        maximum_texture_dimension=max_texture_dim or MAX_TEXTURE_DIM)
+    return None if material is None else _texture(material.textures[0])
+
+
 @functools.lru_cache(maxsize=512)
 def get_model_material_groups(resource_path: str, context_addon: str = None) -> List[str]:
     if not isinstance(resource_path, str) or not resource_path.strip():
