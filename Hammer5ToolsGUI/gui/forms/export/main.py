@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Set
 
 # Local imports
 from gui.forms.cleanup.parse import get_vmap_references
-from gui.settings.common import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
+from gui.settings.common import addon_content_dir, addon_game_dir, get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
 from gui.common import enable_dark_title_bar
 from gui.styles.common import mark_paint_through
 
@@ -387,7 +387,7 @@ class ExportAndImportAddonDialog(QDialog):
         current_addon_name = get_addon_name()
         if not current_addon_name or not self.cs2_path: return {}
         _, include_content_folders = self.get_folder_filters()
-        content_folder = os.path.join(self.cs2_path, 'content', 'csgo_addons', current_addon_name)
+        content_folder = str(addon_content_dir(current_addon_name))
         ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
         return self._collect_files(content_folder, ignored_extensions, include_subs=include_content_folders)
 
@@ -395,7 +395,7 @@ class ExportAndImportAddonDialog(QDialog):
         current_addon_name = get_addon_name()
         if not current_addon_name or not self.cs2_path:
             return {}
-        game_folder = os.path.join(self.cs2_path, 'game', 'csgo_addons', current_addon_name)
+        game_folder = str(addon_game_dir(current_addon_name))
         ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
         include_game_folders = ['']
         if self.compiled_maps_checkbox.isChecked(): include_game_folders.append('maps')
@@ -433,8 +433,8 @@ class ExportAndImportAddonDialog(QDialog):
         if not file_path: return
         if not self.cs2_path: return QMessageBox.warning(self, "Error", "CS2 path not found.")
         addon_name = os.path.splitext(os.path.basename(file_path))[0]
-        target_content_path = os.path.join(self.cs2_path, "content", "csgo_addons", addon_name)
-        target_game_path = os.path.join(self.cs2_path, "game", "csgo_addons", addon_name)
+        target_content_path = str(addon_content_dir(addon_name))
+        target_game_path = str(addon_game_dir(addon_name))
         if os.path.exists(target_content_path) or os.path.exists(target_game_path):
             reply = QMessageBox.question(self, 'Addon Exists', f"The addon '{addon_name}' already exists. Overwrite?",
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QMessageBox
 import shutil, os, re
-from gui.settings.common import get_cs2_path, get_settings_value, set_settings_value
+from gui.settings.common import addon_content_dir, addon_game_dir, get_cs2_path, get_settings_value, set_settings_value
 from gui.forms.create_addon.ui_main import Ui_Create_addon_Dialog
 from gui.widgets import exception_handler
 from PySide6.QtCore import Qt
@@ -135,7 +135,7 @@ class Create_addon_Dialog(QDialog):
             return
 
         preset_src = os.path.join(preset_root, preset, 'content')
-        preset_dist = os.path.join(cs2_path, 'content', 'csgo_addons', new_addon_name)
+        preset_dist = str(addon_content_dir(new_addon_name))
 
         try:
             shutil.copytree(preset_src, preset_dist, dirs_exist_ok=True)
@@ -146,7 +146,7 @@ class Create_addon_Dialog(QDialog):
             return
 
         preset_src = os.path.join(preset_root, preset, 'game')
-        preset_dist = os.path.join(cs2_path, 'game', 'csgo_addons', new_addon_name)
+        preset_dist = str(addon_game_dir(new_addon_name))
         if os.path.exists(preset_src):
             try:
                 shutil.copytree(preset_src, preset_dist, dirs_exist_ok=True)

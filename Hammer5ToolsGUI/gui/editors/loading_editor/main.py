@@ -23,7 +23,7 @@ from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, Q
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
+from gui.settings.common import addon_content_dir, addon_game_dir, get_addon_name, get_addon_dir
 from gui.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from gui.editors.loading_editor.timeline import TimelineExplorer
@@ -109,11 +109,8 @@ class ApplyScreenshotsWorker(QRunnable):
         self.camera_name_mode = camera_name_mode
         self.signals = ApplyScreenshotsSignals()
         self._is_aborted = False
-        cs2_path = get_cs2_path()
-        if cs2_path:
-            self.addon_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        else:
-            self.addon_path = ""
+        content_dir = addon_content_dir()
+        self.addon_path = str(content_dir) if content_dir else ""
 
     def run(self):
         try:
@@ -197,11 +194,10 @@ class ApplyScreenshotsWorker(QRunnable):
         if self.delete_existing:
             self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
             try:
-                cs2_path = get_cs2_path()
-                if cs2_path:
-                    base = os.path.join(cs2_path, "game", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons", "screenshots")
-                else:
+                game_dir = addon_game_dir()
+                if not game_dir:
                     return
+                base = str(game_dir / "panorama" / "images" / "map_icons" / "screenshots")
                 for res in ["1080p", "720p", "360p"]:
                     shutil.rmtree(os.path.join(base, res))
                 self.signals.log.emit("Deleted compiled vtex_c files from game location")
@@ -385,15 +381,12 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.threadpool = QThreadPool()
-        cs2_path = get_cs2_path()
-        if cs2_path:
-            self.game_screenshot_path = os.path.join(cs2_path, "game", "csgo_addons", get_addon_name(), "screenshots", "Hammer5Tools")
+        game_dir, content_dir = addon_game_dir(), addon_content_dir()
+        if game_dir and content_dir:
+            self.game_screenshot_path = str(game_dir / "screenshots" / "Hammer5Tools")
             self.loadingscreen_path = os.path.join(self.game_screenshot_path, "LoadingScreen")
             self.history_path = os.path.join(self.game_screenshot_path, "History")
-            self.content_history_path = os.path.join(
-                cs2_path, "content", "csgo_addons", get_addon_name(),
-                "panorama", "history_screenshots"
-            )
+            self.content_history_path = str(content_dir / "panorama" / "history_screenshots")
             os.makedirs(self.loadingscreen_path, exist_ok=True)
             os.makedirs(self.content_history_path, exist_ok=True)
         else:
@@ -507,9 +500,9 @@ class Loading_editorMainWindow(QMainWindow):
         """
         icon_path = self.svg_preview_widget.file_path
         if not icon_path or not os.path.exists(icon_path):
-            cs2_path = get_cs2_path()
-            if cs2_path:
-                possible_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons", f"map_icon_{get_addon_name()}.svg")
+            content_dir = addon_content_dir()
+            if content_dir:
+                possible_path = str(content_dir / "panorama" / "images" / "map_icons" / f"map_icon_{get_addon_name()}.svg")
                 if os.path.exists(possible_path):
                     icon_path = possible_path
 
@@ -526,9 +519,9 @@ class Loading_editorMainWindow(QMainWindow):
         }
 
     def load_existing_icon(self):
-        cs2_path = get_cs2_path()
-        if cs2_path:
-            folder_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
+        content_dir = addon_content_dir()
+        if content_dir:
+            folder_path = str(content_dir / "panorama" / "images" / "map_icons")
             svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
             svg_path = os.path.join(folder_path, svg_icon_filename)
             if os.path.exists(svg_path):
@@ -536,10 +529,10 @@ class Loading_editorMainWindow(QMainWindow):
                 return
 
     def load_existing_description(self):
-        cs2_path = get_cs2_path()
-        if not cs2_path:
+        game_dir = addon_game_dir()
+        if not game_dir:
             return
-        description_file = os.path.join(cs2_path, "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
+        description_file = str(game_dir / "maps" / f"{get_addon_name()}.txt")
         if os.path.exists(description_file):
             try:
                 with open(description_file, "r") as f:
@@ -659,10 +652,10 @@ class Loading_editorMainWindow(QMainWindow):
                     "Make sure CS2 is running with -netconport 2121.")
 
     def loading_editor_cs2_description(self, description_text: str):
-        cs2_path = get_cs2_path()
-        if not cs2_path:
+        game_dir = addon_game_dir()
+        if not game_dir:
             return
-        file_name = os.path.join(cs2_path, "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
+        file_name = str(game_dir / "maps" / f"{get_addon_name()}.txt")
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         with open(file_name, "w") as f:
             f.write("COMMUNITYMAPCREDITS:\n")
@@ -673,10 +666,10 @@ class Loading_editorMainWindow(QMainWindow):
             svg_path = os.path.normpath(self.svg_preview_widget.get_svg_path())
         except ValueError:
             return
-        cs2_path = get_cs2_path()
-        if not cs2_path:
+        content_dir = addon_content_dir()
+        if not content_dir:
             return
-        folder_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
+        folder_path = str(content_dir / "panorama" / "images" / "map_icons")
         os.makedirs(folder_path, exist_ok=True)
         svg_dst = os.path.join(folder_path, f"map_icon_{get_addon_name()}.svg")
         if os.path.exists(svg_dst):

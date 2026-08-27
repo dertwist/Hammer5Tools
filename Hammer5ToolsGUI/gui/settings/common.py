@@ -101,13 +101,32 @@ def get_addon_name():
 def set_addon_name(addon_name):
     set_settings_value('LAUNCH', 'addon', addon_name)
 
-def get_addon_dir():
+def _addon_dir(root, addon):
+    """<cs2>/<root>/csgo_addons/<addon>, or None if either half is unset."""
     cs2_path = get_cs2_path()
-    if not cs2_path:
+    addon = addon or get_addon_name()
+    if not cs2_path or not addon:
         return None
+    return Path(cs2_path) / root / 'csgo_addons' / addon
 
-    addon_name = get_addon_name()
-    if not addon_name:
-        return None
 
-    return str(Path(cs2_path) / 'content' / 'csgo_addons' / addon_name)
+def addon_content_dir(addon: str | None = None) -> Path | None:
+    """Source assets: models, materials, smartprops, sounds."""
+    return _addon_dir('content', addon)
+
+
+def addon_game_dir(addon: str | None = None) -> Path | None:
+    """Compiled output the game loads."""
+    return _addon_dir('game', addon)
+
+
+def cs2_bin_dir() -> Path | None:
+    """<cs2>/game/bin/win64 - cs2.exe and resourcecompiler.exe live here."""
+    cs2_path = get_cs2_path()
+    return Path(cs2_path) / 'game' / 'bin' / 'win64' if cs2_path else None
+
+
+def get_addon_dir():
+    """String form of addon_content_dir(), for the call sites that join onto it."""
+    directory = addon_content_dir()
+    return str(directory) if directory else None

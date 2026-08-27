@@ -2,6 +2,9 @@ from PySide6.QtWidgets import QMessageBox
 from gui.other.ncm_setup import NCM_mode_setup
 from gui.other.assettypes import ensure_vsmart_configured
 from gui.settings.common import (
+    addon_content_dir,
+    addon_game_dir,
+    cs2_bin_dir,
     get_addon_name,
     get_cs2_path,
     get_settings_bool,
@@ -29,8 +32,8 @@ def delete_addon(ui=None):
         return False
         
     delete_paths = [
-        os.path.join(cs2_path, 'content', 'csgo_addons', addon_name),
-        os.path.join(cs2_path, 'game', 'csgo_addons', addon_name)
+        str(addon_content_dir(addon_name)),
+        str(addon_game_dir(addon_name))
     ]
     
     reply = QMessageBox.question(None, 'Remove Addon', 
@@ -204,7 +207,7 @@ def __launch_addon():
     if '-disable_workshop_command_filtering' not in commands:
         commands += ' -disable_workshop_command_filtering'
 
-    cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
+    cs2_exe_path = str(cs2_bin_dir() / "cs2.exe")
     
     if not os.path.exists(cs2_exe_path):
         QMessageBox.warning(None, "CS2 Executable Not Found", 
