@@ -331,8 +331,8 @@ class ComboboxVariablesWidget(QWidget):
             'm_nElementID': None,
         }
         # Always assign a new unique element ID to avoid duplication
-        from gui.widgets.element_id import set_ElementID
-        var_value['m_nElementID'] = set_ElementID(force=True)
+        from gui.widgets.element_id import set_element_id
+        var_value['m_nElementID'] = set_element_id(force=True)
         self.add_variable(
             name=final_name,
             var_class=var_type,

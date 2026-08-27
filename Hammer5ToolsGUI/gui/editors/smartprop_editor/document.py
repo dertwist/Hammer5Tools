@@ -71,6 +71,7 @@ from gui.editors.smartprop_editor._common import (
     get_clean_class_name,
     get_label_id_from_value,
     parse_component_clipboard,
+    read_variable_rows,
 )
 
 from gui.common import (
@@ -793,7 +794,7 @@ class SmartPropDocument(QMainWindow):
         for item in data:
             variable = decode_variable(item)
 
-            existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
+            existing_variables = read_variable_rows(self.variable_viewport.ui.variables_scrollArea, only_names=True)
             if any(existing[0] == variable.name for existing in existing_variables.values()):
                 continue
 
@@ -1103,7 +1104,7 @@ class SmartPropDocument(QMainWindow):
             filename="",
             tree=self.ui.tree_hierarchy_widget,
             choices_tree=self.ui.choices_tree_widget,
-            variables_layout=self.variable_viewport.ui.variables_scrollArea,
+            variables=read_variable_rows(self.variable_viewport.ui.variables_scrollArea),
             content_version=self.content_version_spinbox.value(),
             write_file=False,
             document_state=self.document_state,
@@ -1167,7 +1168,7 @@ class SmartPropDocument(QMainWindow):
                     filename=filename,
                     tree=self.ui.tree_hierarchy_widget,
                     choices_tree=self.ui.choices_tree_widget,
-                    variables_layout=self.variable_viewport.ui.variables_scrollArea,
+                    variables=read_variable_rows(self.variable_viewport.ui.variables_scrollArea),
                     content_version=content_version
                 )
             except Exception as e:
@@ -1291,33 +1292,6 @@ class SmartPropDocument(QMainWindow):
 
     # [Variables Other]
 
-    def get_variables(self, layout, only_names=False):
-        if only_names:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    item_ = {i: [widget.name, widget.var_class, widget.var_display_name]}
-                    data_out.update(item_)
-            return data_out
-        else:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    item_ = {
-                        i: [
-                            widget.name,
-                            widget.var_class,
-                            widget.var_value,
-                            widget.var_visible_in_editor,
-                            widget.var_display_name
-                        ]
-                    }
-                    data_out.update(item_)
-            return data_out
-
-    # [Tree widget hierarchy filter]
     def search_hierarchy(self, filter_text, parent_item):
         self.filter_tree_item(parent_item, filter_text.lower(), True)
 

@@ -29,6 +29,7 @@ from gui.editors.smartprop_editor.viewport_3d.shaders import (
 )
 
 from core.bridge import CoreBridge
+from gui.styles import theme
 
 
 def compile_shader(shader_type, source):
@@ -438,7 +439,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             
             # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
             if self.isolated_element_id is not None:
-                pen = QPen(QColor("#b3d096"), 2) # isolated view highlight color
+                pen = QPen(theme.qcolor("#b3d096"), 2) # isolated view highlight color
                 painter.setPen(pen)
                 painter.drawRect(1, 1, w - 2, h - 2)
                 
@@ -500,7 +501,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 painter.drawRect(box_x, box_y, box_width, box_height)
                 
                 # - Draw a clean 3px left accent line
-                accent_color = QColor("#b3d096") if self.isolated_element_id is not None else QColor(0, 120, 215)
+                accent_color = theme.qcolor("#b3d096") if self.isolated_element_id is not None else QColor(0, 120, 215)
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(accent_color)
                 painter.drawRect(box_x, box_y, 3, box_height)
@@ -509,7 +510,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     if line.startswith("⚠"):
                         painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
                     elif line.startswith("Isolate Mode:"):
-                        painter.setPen(QColor("#b3d096")) # isolated view color
+                        painter.setPen(theme.qcolor("#b3d096")) # isolated view color
                     elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
                         painter.setPen(QColor(255, 165, 0)) # orange for active transforms
                     else:

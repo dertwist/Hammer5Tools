@@ -3,8 +3,8 @@ from gui.editors.smartprop_editor.ui_variable_frame import Ui_Form
 from PySide6.QtWidgets import QWidget, QMenu, QApplication, QHBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QCursor, QAction
-from gui.widgets.property_methods import PropertyMethods
-from gui.widgets.element_id import get_ElementID
+from gui.widgets.property_methods import PropertyDragDropMixin
+from gui.widgets.element_id import get_element_id
 from gui.settings.common import get_settings_bool
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.editors.smartprop_editor.objects import variables_list
@@ -14,7 +14,7 @@ from gui.editors.smartprop_editor.expression_editor import ExpressionEditor
 from gui.styles.common import set_style_property
 
 
-class VariableFrame(PropertyMethods, QWidget):
+class VariableFrame(PropertyDragDropMixin, QWidget):
     duplicate = Signal(list, int)
     delete_requested = Signal()
     pre_change = Signal()    # fires BEFORE var_value/name/etc. are updated
@@ -50,13 +50,13 @@ class VariableFrame(PropertyMethods, QWidget):
             'min': self.var_min,
             'max': self.var_max,
             'model': self.var_model,
-            'm_nElementID': get_ElementID(var_value),
+            'm_nElementID': get_element_id(var_value),
             'm_HideExpression': self.hide_expression,
             'm_ReadOnlyExpression': self.read_only_expression
         }
 
         # ID Handling
-        self.element_id = get_ElementID(self.var_value)
+        self.element_id = get_element_id(self.var_value)
         if get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', default=False):
             self.ui.id_display.setText(str(self.element_id))
         else:
@@ -457,15 +457,15 @@ class VariableFrame(PropertyMethods, QWidget):
 
         return super().eventFilter(obj, event)
 
-    mousePressEvent = PropertyMethods.mousePressEvent
-    mouseMoveEvent = PropertyMethods.mouseMoveEvent
-    dragEnterEvent = PropertyMethods.dragEnterEvent
-    dragMoveEvent = PropertyMethods.dragMoveEvent
-    dragLeaveEvent = PropertyMethods.dragLeaveEvent
+    mousePressEvent = PropertyDragDropMixin.mousePressEvent
+    mouseMoveEvent = PropertyDragDropMixin.mouseMoveEvent
+    dragEnterEvent = PropertyDragDropMixin.dragEnterEvent
+    dragMoveEvent = PropertyDragDropMixin.dragMoveEvent
+    dragLeaveEvent = PropertyDragDropMixin.dragLeaveEvent
 
     def dropEvent(self, event):
         self.pre_change.emit()
-        PropertyMethods.dropEvent(self, event)
+        PropertyDragDropMixin.dropEvent(self, event)
         self.content_changed.emit()
 
     def show_context_menu(self):

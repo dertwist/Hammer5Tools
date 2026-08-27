@@ -1,5 +1,5 @@
 from gui.editors.smartprop_editor.objects import element_prefix
-from gui.widgets.element_id import get_ElementID_key
+from gui.widgets.element_id import get_element_id_key
 
 disable_line_value_length_limit_keys = [
     "m_vRandomPositionMax", "m_vRandomPositionMin", "m_flRandomScaleMax", "m_vRandomRotationMax",
@@ -13,6 +13,35 @@ disable_line_value_length_limit_keys = [
     'm_flRandomScaleMax', 'm_flMaxLength', 'm_flMinLength', 'm_vRandomRotationMin', 'm_vRandomRotationMax',
     'm_flLength', 'm_vStart', 'm_vEnd', 'm_MaterialGroupName', 'm_bEnabled', 'm_flSpacing'
 ]
+def read_variable_rows(layout, only_names=False):
+    """The variable widgets in `layout`, as {index: [field, ...]}.
+
+    The variables scroll-area layout is still the store for the variable list,
+    so this is the one place that walks it. Reading it in a single function
+    keeps the widget-attribute contract in one place for the day the document
+    model owns the list instead.
+    """
+    rows = {}
+    if layout is None:
+        return rows
+    for index in range(layout.count()):
+        item = layout.itemAt(index)
+        widget = item.widget() if item is not None else None
+        if widget is None:
+            continue
+        if only_names:
+            rows[index] = [widget.name, widget.var_class, widget.var_display_name]
+        else:
+            rows[index] = [
+                widget.name,
+                widget.var_class,
+                widget.var_value,
+                widget.var_visible_in_editor,
+                widget.var_display_name,
+            ]
+    return rows
+
+
 def get_clean_class_name(input):
     if element_prefix in input:
         return input.replace(element_prefix, '')
@@ -22,7 +51,7 @@ def get_clean_class_name_value(value):
     _class = value.get('_class', 'class')
     return get_clean_class_name(_class)
 def get_label_id_from_value(value):
-    suffix = get_ElementID_key(value)
+    suffix = get_element_id_key(value)
     prefix = get_clean_class_name(value.get('_class', 'None'))
     if prefix == 'None':
         prefix = 'element'
@@ -113,4 +142,4 @@ def parse_component_clipboard(clip_text: str) -> tuple[str | None, list[dict]]:
 
     return None, []
 
-
+

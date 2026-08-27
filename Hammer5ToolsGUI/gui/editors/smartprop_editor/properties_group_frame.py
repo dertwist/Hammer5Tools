@@ -3,7 +3,7 @@ from gui.editors.smartprop_editor.ui_properties_group_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QFrame, QApplication
 from PySide6.QtCore import Signal, QSize
-from gui.widgets.property_methods import PropertyMethods
+from gui.widgets.property_methods import PropertyDragDropMixin
 from gui.widgets import ErrorInfo
 from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor._common import parse_component_clipboard
@@ -101,9 +101,9 @@ class PropertiesGroupFrame(QWidget):
             self._drop_indicator.deleteLater()
             self._drop_indicator = None
 
-    mousePressEvent = PropertyMethods.mousePressEvent
-    mouseMoveEvent = PropertyMethods.mouseMoveEvent
-    dragEnterEvent = PropertyMethods.dragEnterEvent
-    dragMoveEvent = PropertyMethods.dragMoveEvent
-    dragLeaveEvent = PropertyMethods.dragLeaveEvent
-    dropEvent = PropertyMethods.dropEvent
+    mousePressEvent = PropertyDragDropMixin.mousePressEvent
+    mouseMoveEvent = PropertyDragDropMixin.mouseMoveEvent
+    dragEnterEvent = PropertyDragDropMixin.dragEnterEvent
+    dragMoveEvent = PropertyDragDropMixin.dragMoveEvent
+    dragLeaveEvent = PropertyDragDropMixin.dragLeaveEvent
+    dropEvent = PropertyDragDropMixin.dropEvent

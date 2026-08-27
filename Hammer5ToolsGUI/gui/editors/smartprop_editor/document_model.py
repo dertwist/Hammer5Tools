@@ -238,3 +238,77 @@ def format_smartprop(document: Mapping, one_line_properties: bool = False) -> st
     except Exception as error:
         log.error("Core failed to serialize SmartProp document", exc_info=True)
         raise RuntimeError("SmartProp serialization requires Hammer5Tools Core") from error
+
+
+#: Per-class fallback when a variable has no default value yet.
+_VARIABLE_DEFAULTS = {
+    "Color": [255, 255, 255],
+    "Bool": False,
+    "Vector3D": [1, 1, 1],
+    "Vector2D": [0, 0],
+    "Vector4D": [0, 0, 0, 0],
+    "Int": 0,
+    "Float": 0.0,
+}
+
+_CATEGORY_LABEL_RE = re.compile(r"---------- (.*) ----------")
+
+
+def _variable_default(var_class, value):
+    """The default to serialize for a variable, filling in a per-class fallback."""
+    if value is None:
+        return deepcopy(_VARIABLE_DEFAULTS.get(var_class, ""))
+    if var_class == "Color" and (
+        value == "" or not isinstance(value, (list, tuple)) or len(value) < 3
+    ):
+        return [255, 255, 255]
+    return value
+
+
+def variable_rows_to_kv3(rows):
+    """Convert variable rows into the document's ``m_Variables`` list.
+
+    ``rows`` is {index: [name, var_class, var_value, visible_in_editor,
+    display_name]} as produced by ``_common.read_variable_rows``. Pure data in,
+    pure data out: no Qt, so the mapping rules are testable on their own.
+    """
+    variables = []
+    for _index, row in sorted(rows.items()):
+        name, var_class, var_value, visible_in_editor, display_name = row
+        variable = {
+            "_class": variable_prefix + var_class,
+            "m_VariableName": name,
+            "m_bExposeAsParameter": visible_in_editor,
+            "m_DefaultValue": _variable_default(var_class, var_value["default"]),
+            "m_nElementID": var_value["m_nElementID"],
+        }
+        if display_name not in (None, ""):
+            variable["m_DisplayName"] = display_name
+
+        if name and is_category_marker(name):
+            if name.endswith("_start"):
+                match = _CATEGORY_LABEL_RE.search(display_name or "")
+                variable["m_Hammer5ToolsCategoryName"] = (
+                    match.group(1).strip() if match else "Category name"
+                )
+            else:
+                variable["m_Hammer5ToolsCategoryName"] = "New category"
+
+        minimum, maximum = var_value["min"], var_value["max"]
+        if minimum is not None and var_class in ("Float", "Int"):
+            key = "m_flParamaterMinValue" if var_class == "Float" else "m_nParamaterMinValue"
+            variable[key] = minimum
+        if maximum is not None and var_class in ("Float", "Int"):
+            key = "m_flParamaterMaxValue" if var_class == "Float" else "m_nParamaterMaxValue"
+            variable[key] = maximum
+
+        if var_value["model"] is not None:
+            variable["m_sModelName"] = var_value["model"]
+        if var_value["m_HideExpression"] is not None:
+            variable["m_HideExpression"] = var_value["m_HideExpression"]
+        read_only = var_value.get("m_ReadOnlyExpression")
+        if read_only is not None:
+            variable["m_ReadOnlyExpression"] = read_only
+
+        variables.append(variable)
+    return variables

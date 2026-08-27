@@ -19,7 +19,7 @@ from PySide6.QtGui import (
 
 
 from gui.editors.smartprop_editor.document_model import parse_smartprop
-from gui.editors.smartprop_editor._common import is_category_widget
+from gui.editors.smartprop_editor._common import is_category_widget, read_variable_rows
 from gui.editors.smartprop_editor.variable_frame import VariableFrame, CategoryFrame
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.objects import (
@@ -161,7 +161,7 @@ class SmartPropEditorVariableViewport(QWidget):
         else:
             # For regular variables, unique name generation is handled on focus out, 
             # but let's make it unique initially to avoid collision.
-            existing = [v[0] for k, v in self.get_variables(self.ui.variables_scrollArea, only_names=True).items()]
+            existing = [v[0] for k, v in read_variable_rows(self.ui.variables_scrollArea, only_names=True).items()]
             base_name = name
             suffix = 1
             while name in existing:
@@ -184,7 +184,7 @@ class SmartPropEditorVariableViewport(QWidget):
 
         name = "new_var"
         existing_variables = []
-        variables_ = self.get_variables(self.ui.variables_scrollArea)
+        variables_ = read_variable_rows(self.ui.variables_scrollArea)
         for key, value in variables_.items():
             existing_variables.append(value[0])
 
@@ -334,32 +334,6 @@ class SmartPropEditorVariableViewport(QWidget):
     # [Variables Other]
     def search_variables(self, search_term=None):
         self.update_indentation()
-
-    def get_variables(self, layout, only_names=False):
-        if only_names:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    item_ = {i: [widget.name, widget.var_class, widget.var_display_name]}
-                    data_out.update(item_)
-            return data_out
-        else:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    item_ = {
-                        i: [
-                            widget.name,
-                            widget.var_class,
-                            widget.var_value,
-                            widget.var_visible_in_editor,
-                            widget.var_display_name
-                        ]
-                    }
-                    data_out.update(item_)
-            return data_out
 
     # [Variables Context menu]
     def contextMenuEvent(self, event):

@@ -41,6 +41,7 @@ from gui.editors.smartprop_editor.property_tooltips import (
 from gui.editors.smartprop_editor.props.components import get_summary_hint, prettify_class_name
 from gui.editors.smartprop_editor.props.model import ComponentRef
 from gui.styles.property_icons import IconCache
+from gui.styles import theme
 
 _TITLE_COL  = "#4EC9B0"   # cyan-teal — matches Hammer's category colour
 _BODY_COL   = "#b1b1b1"
@@ -53,10 +54,10 @@ def _render_html(title: str, body: str) -> str:
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return (
         f'<p style="margin:0 0 4px 0;">'
-        f'<span style="font-family:{_FONT_FACE};font-size:12px;font-weight:bold;color:{_TITLE_COL};">'
+        f'<span style="font-family:{_FONT_FACE};font-size:12px;font-weight:bold;color:{theme.color(_TITLE_COL)};">'
         f'{_esc(title)}</span></p>'
         f'<p style="margin:0;">'
-        f'<span style="font-family:{_FONT_FACE};font-size:11px;color:{_BODY_COL};">'
+        f'<span style="font-family:{_FONT_FACE};font-size:11px;color:{theme.color(_BODY_COL)};">'
         f'{_esc(body)}</span></p>'
     )
 

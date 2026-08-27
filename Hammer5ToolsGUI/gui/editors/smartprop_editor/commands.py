@@ -7,7 +7,8 @@ from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtGui import QUndoCommand
 
 from gui.widgets import HierarchyItemModel
-from gui.editors.smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
+from gui.editors.smartprop_editor._common import get_clean_class_name_value
+from gui.widgets.element_id import get_element_id_key
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class GroupElementsCommand(QUndoCommand):
                 'm_Modifiers': [],
                 'm_SelectionCriteria': []
             }
-            group_id = get_ElementID_key(group_data)
+            group_id = get_element_id_key(group_data)
             self.group_element = HierarchyItemModel(
                 _data=group_data, _name='Group',
                 _class='Group', _id=group_id

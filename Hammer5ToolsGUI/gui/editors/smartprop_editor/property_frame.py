@@ -1218,9 +1218,9 @@ class PropertyFrame(QWidget):
 
     # Property rows are not reorderable here (order is schema-driven, and the
     # old dropEvent reordered the layout + emitted spurious edits). The shared
-    # PropertyMethods drag handlers are NOT assigned, and setAcceptDrops(False)
+    # PropertyDragDropMixin drag handlers are NOT assigned, and setAcceptDrops(False)
     # is set in __init__, so these no-op overrides reject any inbound drag and
-    # never start one. PropertyMethods itself is left intact for the other
+    # never start one. PropertyDragDropMixin itself is left intact for the other
     # editors that depend on it (assetgroup_maker, variable_frame, etc.).
     # NOTE: mousePressEvent above is kept (it drives selection/click signaling);
     # only its drag-start bookkeeping line was removed.

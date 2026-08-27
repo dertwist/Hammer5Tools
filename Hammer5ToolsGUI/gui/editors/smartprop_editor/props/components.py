@@ -229,8 +229,8 @@ class ElementRowWidget(QFrame):
             if doc and hasattr(doc, "element_id_generator"):
                 eid = doc.element_id_generator.get_element_id(data)
             else:
-                from gui.widgets.element_id import get_ElementID
-                eid = get_ElementID(data)
+                from gui.widgets.element_id import get_element_id
+                eid = get_element_id(data)
             data["m_nElementID"] = eid
 
         if eid is not None:
@@ -606,8 +606,8 @@ class ComponentList(QWidget):
                 if doc_gen is not None:
                     eid = doc_gen.get_element_id(val)
                 else:
-                    from gui.widgets.element_id import get_ElementID
-                    eid = get_ElementID(val)
+                    from gui.widgets.element_id import get_element_id
+                    eid = get_element_id(val)
                 val["m_nElementID"] = eid
 
             titem = QTreeWidgetItem()
@@ -756,8 +756,8 @@ class ComponentList(QWidget):
             if doc_gen is not None:
                 eid = doc_gen.get_element_id(new_comp)
             else:
-                from gui.widgets.element_id import get_ElementID
-                eid = get_ElementID(new_comp)
+                from gui.widgets.element_id import get_element_id
+                eid = get_element_id(new_comp)
             new_comp["m_nElementID"] = eid
 
             curr_insert = target_idx + offset

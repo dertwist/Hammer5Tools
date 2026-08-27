@@ -15,12 +15,11 @@ from gui.editors.smartprop_editor._common import (
     get_label_id_from_value
 )
 from gui.widgets.element_id import (
-    set_ElementID,
-    reset_ElementID,
-    get_ElementID_last,
-    get_ElementID_key,
-    update_value_ElementID,
-    update_child_ElementID_value
+    set_element_id,
+    get_element_id_last,
+    get_element_id_key,
+    update_value_element_id,
+    update_child_element_id_value,
 )
 from gui.widgets import HierarchyItemModel, exception_handler
 from gui.editors.smartprop_editor.objects import variable_prefix, element_prefix
@@ -29,6 +28,7 @@ from gui.editors.smartprop_editor.document_model import (
     SmartPropNode,
     format_smartprop,
     parse_smartprop,
+    variable_rows_to_kv3,
 )
 
 log = logging.getLogger(__name__)
@@ -279,13 +279,13 @@ class VsmartOpen:
         parent = parent or self.tree.invisibleRootItem()
         migrate_legacy_comments(node.data)
         if self.next_element_id is None:
-            update_value_ElementID(node.data)
-            node.data = update_child_ElementID_value(node.data)
+            update_value_element_id(node.data)
+            node.data = update_child_element_id_value(node.data)
         child_item = HierarchyItemModel(
             _name=node.data.get("m_sLabel", get_label_id_from_value(node.data)),
             _data=node.data,
             _class=get_clean_class_name(node.data.get("_class")),
-            _id=get_ElementID_key(node.data),
+            _id=get_element_id_key(node.data),
         )
         child_item.smartprop_node = node
         parent.addChild(child_item)
@@ -320,11 +320,11 @@ class VsmartOpen:
                 self.fix_names(child_item)
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None,
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables=None,
                  content_version=None, write_file=True, document_state=None):
         self.filename = filename
         self.tree = tree
-        self.variables_layout = variables_layout
+        self.variables = variables or {}
         self.choices_tree = choices_tree
         self.ref_objects = {}  # To store non-processed reference objects
         self.var_data = self.save_variables()
@@ -335,113 +335,14 @@ class VsmartSave:
         if write_file:
             self.save_file()
 
-    def get_variables(self, layout, only_names=False):
-        if layout is None:
-            return {}
-        if only_names:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    data_out[i] = [widget.name, widget.var_class, widget.var_display_name]
-            return data_out
-        else:
-            data_out = {}
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                if widget:
-                    data_out[i] = [
-                        widget.name,
-                        widget.var_class,
-                        widget.var_value,
-                        widget.var_visible_in_editor,
-                        widget.var_display_name
-                    ]
-            return data_out
-
     def save_variables(self):
-        variables_ = []
-        raw_variables = self.get_variables(self.variables_layout)
-        for var_key, var_key_value in raw_variables.items():
-            var_default = var_key_value[2]["default"]
-            var_class = var_key_value[1]
-            if var_default is None:
-                if var_class == "Color":
-                    var_default = [255, 255, 255]
-                elif var_class == "Bool":
-                    var_default = False
-                elif var_class == "Vector3D":
-                    var_default = [1, 1, 1]
-                elif var_class == "Vector2D":
-                    var_default = [0, 0]
-                elif var_class == "Vector4D":
-                    var_default = [0, 0, 0, 0]
-                elif var_class == "Int":
-                    var_default = 0
-                elif var_class == "Float":
-                    var_default = 0.0
-                else:
-                    var_default = ""
-            elif var_class == "Color" and (var_default == "" or not isinstance(var_default, (list, tuple)) or len(var_default) < 3):
-                var_default = [255, 255, 255]
-            var_min = var_key_value[2]["min"]
-            var_max = var_key_value[2]["max"]
-            var_model = var_key_value[2]["model"]
-            var_id = var_key_value[2]["m_nElementID"]
-            var_hide_expression = var_key_value[2]["m_HideExpression"]
-            var_read_only_expression = var_key_value[2].get("m_ReadOnlyExpression")
-
-            var_dict = {
-                "_class": variable_prefix + var_class,
-                "m_VariableName": var_key_value[0],
-                "m_bExposeAsParameter": var_key_value[3],
-                "m_DefaultValue": var_default,
-                "m_nElementID": var_id
-            }
-            if var_key_value[4] in (None, ""):
-                var_dict.pop("m_DisplayName", None)
-            else:
-                var_dict.update({"m_DisplayName": var_key_value[4]})
-                
-            import re
-            is_category = False
-            is_start = False
-            if var_key_value[0]:
-                if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_key_value[0]) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_key_value[0]):
-                    is_category = True
-                    is_start = var_key_value[0].endswith('_start')
-                    
-            if is_category:
-                if is_start:
-                    match = re.search(r"---------- (.*) ----------", var_key_value[4] if var_key_value[4] else "")
-                    cat_name = match.group(1).strip() if match else "Category name"
-                    var_dict["m_Hammer5ToolsCategoryName"] = cat_name
-                else:
-                    var_dict["m_Hammer5ToolsCategoryName"] = "New category"
-
-            if var_min is not None:
-                if var_class == "Float":
-                    var_dict.update({"m_flParamaterMinValue": var_min})
-                elif var_class == "Int":
-                    var_dict.update({"m_nParamaterMinValue": var_min})
-            if var_max is not None:
-                if var_class == "Float":
-                    var_dict.update({"m_flParamaterMaxValue": var_max})
-                elif var_class == "Int":
-                    var_dict.update({"m_nParamaterMaxValue": var_max})
-            if var_model is not None:
-                var_dict.update({"m_sModelName": var_model})
-            if var_hide_expression is not None:
-                var_dict.update({"m_HideExpression": var_hide_expression})
-            if var_read_only_expression is not None:
-                var_dict.update({"m_ReadOnlyExpression": var_read_only_expression})
-            variables_.append(var_dict)
-        return variables_
+        """The document's ``m_Variables`` list, mapped from the extracted rows."""
+        return variable_rows_to_kv3(self.variables)
 
     def build_document(self):
         """Build a JSON-compatible SmartProp document from the editor state."""
         out_data = {"generic_data_type": "CSmartPropRoot", "m_nContentVersion": self.content_version}
-        editor_info["editor_info"].update({"m_nElementID": get_ElementID_last()})
+        editor_info["editor_info"].update({"m_nElementID": get_element_id_last()})
         out_data.update(editor_info)
         if self.var_data is not None:
             out_data.update({"m_Variables": self.var_data})
@@ -536,6 +437,6 @@ class VsmartSave:
         """The KV3 m_Choices list for the tree under `parent`, with element IDs."""
         m_Choices = format_choices(read_choices_tree(parent.treeWidget()))
         for choice in m_Choices:
-            choice["m_nElementID"] = set_ElementID(force=True)
-            update_child_ElementID_value(choice, force=True)
+            choice["m_nElementID"] = set_element_id(force=True)
+            update_child_element_id_value(choice, force=True)
         return m_Choices
