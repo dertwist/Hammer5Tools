@@ -295,3 +295,72 @@ def test_vpk_index_rejects_calls_after_close():
         assert str(error) == "VpkIndex is closed"
     else:
         raise AssertionError("Closed VpkIndex accepted a call")
+
+
+class FakeCompiledModelNative:
+    """Returns one model whose two submeshes share a single material entry."""
+
+    ABI_VERSION = 1
+
+    def __init__(self, payload):
+        self.payload = payload
+        self.requests = []
+
+    def read_compiled_model(self, request):
+        self.requests.append(request)
+        return self.payload
+
+
+def _material_payload(name):
+    return {
+        "name": name,
+        "baseColor": {"width": 1, "height": 1, "rgba": "AAAAAA=="},
+        "normal": None, "metallicRoughness": None, "ambientOcclusion": None, "emissive": None,
+        "baseColorFactor": [1.0, 1.0, 1.0, 1.0], "metallicFactor": 1.0, "roughnessFactor": 1.0,
+        "emissiveFactor": [0.0, 0.0, 0.0], "alphaMode": "OPAQUE", "alphaCutoff": 0.5,
+        "doubleSided": False, "wrapU": 0, "wrapV": 0, "uvSet": 0,
+        "uvScale": [1.0, 1.0], "uvOffset": [0.0, 0.0], "uvCenter": [0.5, 0.5], "uvRotation": 0.0,
+    }
+
+
+def _compiled_model_payload():
+    return {
+        "value": {
+            "verticesBytes": "", "normalsBytes": "", "uvsBytes": "", "indicesBytes": "",
+            "boundsMinimum": [0.0, 0.0, 0.0], "boundsMaximum": [1.0, 1.0, 1.0],
+            "materials": [_material_payload("shared"), _material_payload("other")],
+            "submeshes": [
+                {"indexOffset": 0, "indexCount": 3, "materialIndex": 0},
+                {"indexOffset": 3, "indexCount": 3, "materialIndex": 0},
+                {"indexOffset": 6, "indexCount": 3, "materialIndex": 1},
+            ],
+        },
+        "diagnostics": [],
+    }
+
+
+def test_submeshes_sharing_a_material_share_one_material_object():
+    """The viewport dedupes GPU texture uploads by id(material), so submeshes that
+    share a material must come back holding the same object, not equal copies."""
+    native = FakeCompiledModelNative(_compiled_model_payload())
+    bridge = CoreBridge(FakeInterop(), native_client=native)
+
+    model = bridge.read_compiled_model("game", "addon", "models/example.vmdl")
+
+    first, second, third = model.submeshes
+    assert first.material is second.material
+    assert first.material is not third.material
+    assert first.material.name == "shared"
+    assert third.material.name == "other"
+
+
+def test_compiled_model_texture_payload_is_decoded_once_per_material():
+    """Each material entry is decoded once; a shared material is not re-decoded."""
+    native = FakeCompiledModelNative(_compiled_model_payload())
+    bridge = CoreBridge(FakeInterop(), native_client=native)
+
+    model = bridge.read_compiled_model("game", "addon", "models/example.vmdl")
+
+    base_colors = [submesh.material.textures[0] for submesh in model.submeshes]
+    assert base_colors[0] is base_colors[1]
+    assert base_colors[0] is not base_colors[2]

@@ -14,8 +14,9 @@ namespace Hammer5Tools.Core;
 internal static unsafe class ResourcesApi
 {
     private static readonly ConcurrentDictionary<long, VpkIndex> VpkHandles = new();
-    // VRF keeps mutable current-file state, so one lazy reader belongs to the active addon
-    // and all of its resource reads remain serialized until the addon changes.
+    // One lazy reader belongs to the active addon so its material and texture caches are
+    // shared by every caller. The reader leases a loader per read, so concurrent reads run
+    // in parallel; this lock only guards swapping the reader when the addon changes.
     private static readonly Lock ModelReaderLock = new();
     private static ModelReaderKey? currentModelReaderKey;
     private static CompiledModelReader? currentModelReader;
@@ -253,14 +254,32 @@ internal static unsafe class ResourcesApi
         WriteVector3(writer, model.BoundsMinimum);
         writer.WritePropertyName("boundsMaximum");
         WriteVector3(writer, model.BoundsMaximum);
+        // Submeshes sharing a material share the CompiledMaterial instance (the reader's
+        // per-read materialCache), so the texture payload is written once into "materials"
+        // and referenced by index. Inlining it per submesh multiplied a 5-map 1024px
+        // material by the submesh count on every read.
+        var materialIndices = new Dictionary<CompiledMaterial, int>(ReferenceEqualityComparer.Instance);
+        var orderedMaterials = new List<CompiledMaterial>();
+        foreach (var subMesh in model.SubMeshes)
+        {
+            if (materialIndices.ContainsKey(subMesh.Material))
+                continue;
+            materialIndices[subMesh.Material] = orderedMaterials.Count;
+            orderedMaterials.Add(subMesh.Material);
+        }
+
+        writer.WriteStartArray("materials");
+        foreach (var material in orderedMaterials)
+            WriteCompiledMaterial(writer, material);
+        writer.WriteEndArray();
+
         writer.WriteStartArray("submeshes");
         foreach (var subMesh in model.SubMeshes)
         {
             writer.WriteStartObject();
             writer.WriteNumber("indexOffset", subMesh.IndexOffset);
             writer.WriteNumber("indexCount", subMesh.IndexCount);
-            writer.WritePropertyName("material");
-            WriteCompiledMaterial(writer, subMesh.Material);
+            writer.WriteNumber("materialIndex", materialIndices[subMesh.Material]);
             writer.WriteEndObject();
         }
         writer.WriteEndArray();

@@ -56,3 +56,36 @@ def test_clear_cache_removes_sqlite_db(monkeypatch, tmp_path):
 
     import os
     assert not os.path.exists(cache.thumbnail_db_path())
+
+
+def test_thumbnails_written_from_a_worker_thread_are_readable(monkeypatch, tmp_path):
+    """The cache is written off the GUI thread, so each thread needs its own
+    sqlite connection — a shared one raises ProgrammingError across threads."""
+    import gui.common
+    monkeypatch.setattr(gui.common, "SmartPropEditor_Path", tmp_path, raising=False)
+
+    from gui.widgets.model_browser import thumbnails
+
+    entry = _entry("models/threaded.vmdl_c", in_vpk=True)
+
+    # Open this thread's connection first: the GUI thread reads the cache in
+    # request() before any worker writes, which is what made a single shared
+    # connection fail once the write moved off the GUI thread.
+    assert thumbnails._cached_thumbnail_bytes(entry, 128) is None
+
+    errors = []
+
+    def store():
+        try:
+            thumbnails._store_thumbnail_bytes(entry.path, 128, b"worker-png")
+        except Exception as exc:   # pragma: no cover - failure path documents the bug
+            errors.append(exc)
+
+    import threading
+    worker = threading.Thread(target=store)
+    worker.start()
+    worker.join()
+
+    assert not errors
+    # Readable from this (different) thread, which opens its own connection.
+    assert thumbnails._cached_thumbnail_bytes(entry, 128) == b"worker-png"

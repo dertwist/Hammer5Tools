@@ -47,12 +47,26 @@ def load_model(resource_path: str, context_addon: str = None, max_texture_dim: i
     if model is None:
         return None
     vertices = np.asarray(model.vertices, dtype=np.float32).reshape(-1, 3)
+    # One MaterialData per distinct CompiledMaterialData. The bridge hands the same
+    # object to every submesh sharing a material, and MeshCache._upload_mesh dedupes
+    # GPU texture uploads by id(MaterialData) — building a fresh one per submesh
+    # defeated that and re-uploaded every texture once per submesh.
+    materials: dict = {}
+
+    def material_for(value) -> MaterialData:
+        cached = materials.get(id(value))
+        if cached is None:
+            cached = _material(value)
+            materials[id(value)] = cached
+        return cached
+
     return MeshData(
         vertices=vertices, normals=np.asarray(model.normals, dtype=np.float32).reshape(-1, 3),
         indices=np.asarray(model.indices, dtype=np.uint32), uvs=np.asarray(model.uvs, dtype=np.float32).reshape(-1, 2),
         bbox_min=np.asarray(model.bounds_minimum, dtype=np.float32),
         bbox_max=np.asarray(model.bounds_maximum, dtype=np.float32),
-        submeshes=[SubMeshData(item.index_offset, item.index_count, _material(item.material)) for item in model.submeshes])
+        submeshes=[SubMeshData(item.index_offset, item.index_count, material_for(item.material))
+                   for item in model.submeshes])
 
 
 @functools.lru_cache(maxsize=512)

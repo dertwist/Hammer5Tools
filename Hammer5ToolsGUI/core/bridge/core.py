@@ -448,10 +448,15 @@ class CoreBridge:
             uvs = tuple(model.get("uvs", ()))
             indices = tuple(model.get("indices", ()))
 
+        # Materials arrive once in "materials" and are referenced by index, so a material
+        # shared by several submeshes is decoded once and the same object is handed to
+        # every submesh that uses it — which is also what makes the viewport's
+        # id()-keyed GPU texture dedupe work.
+        materials = tuple(self._compiled_material(item) for item in model["materials"])
         return CompiledModelData(
             vertices, normals, uvs, indices,
             tuple(model["boundsMinimum"]), tuple(model["boundsMaximum"]),
-            tuple(CompiledSubMeshData(item["indexOffset"], item["indexCount"], self._compiled_material(item["material"]))
+            tuple(CompiledSubMeshData(item["indexOffset"], item["indexCount"], materials[item["materialIndex"]])
                   for item in model["submeshes"]), diagnostics)
 
     def read_compiled_model_material_groups(self, game_directory: str, active_addon: str,

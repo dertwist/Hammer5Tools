@@ -28,6 +28,27 @@ public sealed class CompiledModelReaderTests
     }
 
     [Test]
+    public async Task ConcurrentReadsShareOneMountAndReturnTheirLoaders()
+    {
+        using var reader = new CompiledModelReader(Path.GetTempPath(), "addon");
+
+        // More concurrent readers than the per-mount loader budget, so the exhaustion
+        // path (wait for a lease to come back) is exercised rather than only creation.
+        var readers = Enumerable.Range(0, Environment.ProcessorCount * 4)
+            .Select(index => Task.Run(() => reader.Read($"models/missing_{index}.vmdl")))
+            .ToArray();
+
+        var results = await Task.WhenAll(readers);
+
+        await Assert.That(results.All(result => !result.IsSuccess)).IsTrue();
+        await Assert.That(reader.LoaderCount).IsEqualTo(1);
+
+        // Every lease came back, so a later sequential read still succeeds in acquiring one.
+        var afterwards = reader.Read("models/missing_final.vmdl");
+        await Assert.That(afterwards.Diagnostics).HasSingleItem();
+    }
+
+    [Test]
     public async Task ReadsProductionModelWhenFixtureRootIsAvailable()
     {
         var gameDirectory = Environment.GetEnvironmentVariable("H5T_TEST_GAME_DIR");

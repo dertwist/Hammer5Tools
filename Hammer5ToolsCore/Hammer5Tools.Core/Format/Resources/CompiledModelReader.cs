@@ -26,18 +26,47 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         "", null, null, null, null, null, Vector4.One, 1, 1, Vector3.Zero,
         "OPAQUE", 0.5f, false, 0, 0, 0, Vector2.One, Vector2.Zero,
         new Vector2(0.5f), 0);
-    private readonly Lock loaderLock = new();
-    private readonly Dictionary<LoaderKey, GameFileLoader> loaders = [];
+    /// <summary>Concurrent loads permitted per mount before callers wait for a free loader.</summary>
+    private static readonly int MaximumLoadersPerKey = Math.Clamp(Environment.ProcessorCount, 2, 8);
+
+    // A plain monitor rather than System.Threading.Lock: leases block on Monitor.Wait
+    // for a free loader, and Monitor.Wait/Pulse are not available on Lock.
+    private readonly object loaderLock = new();
+    private readonly Dictionary<LoaderKey, LoaderPool> loaders = [];
     private readonly ConcurrentDictionary<string, CompiledMaterial> sharedMaterialCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, CompiledTexture> sharedTextureCache = new(StringComparer.Ordinal);
     private bool disposed;
 
+    /// <summary>Distinct mounts this reader has opened a loader for.</summary>
     internal int LoaderCount
     {
         get
         {
             lock (loaderLock)
                 return loaders.Count;
+        }
+    }
+
+    /// <summary>Every <see cref="GameFileLoader"/> created for one mount, and the idle subset.</summary>
+    private sealed class LoaderPool
+    {
+        public readonly List<GameFileLoader> All = [];
+        public readonly Stack<GameFileLoader> Idle = new();
+    }
+
+    /// <summary>Exclusive use of one loader for the duration of a read.</summary>
+    private readonly struct LoaderLease(CompiledModelReader reader, LoaderPool pool, GameFileLoader loader)
+        : IDisposable
+    {
+        public GameFileLoader Loader { get; } = loader;
+
+        public void Dispose()
+        {
+            lock (reader.loaderLock)
+            {
+                pool.Idle.Push(Loader);
+                Monitor.Pulse(reader.loaderLock);
+            }
         }
     }
 
@@ -53,14 +82,11 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
-            GameFileLoader loader;
-            Resource? resource;
-            lock (loaderLock)
-            {
-                loader = GetLoader(addon, relativePath);
-                resource = loader.LoadFileCompiled(relativePath);
-            }
-            using (resource)
+            // The lease is held for the whole read, so the nested material/texture/mesh
+            // loads below need no further locking — they all run on this loader alone.
+            using var lease = RentLoader(addon, relativePath);
+            var loader = lease.Loader;
+            using (var resource = loader.LoadFileCompiled(relativePath))
             {
                 if (resource?.DataBlock is not Model model)
                     return CoreResult.Failure<CompiledModel>("compiled_model_missing", $"Could not read '{relativePath}'.");
@@ -99,14 +125,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
-            GameFileLoader loader;
-            Resource? resource;
-            lock (loaderLock)
-            {
-                loader = GetLoader(addon, relativePath);
-                resource = loader.LoadFileCompiled(relativePath);
-            }
-            using (resource)
+            using var lease = RentLoader(addon, relativePath);
+            using (var resource = lease.Loader.LoadFileCompiled(relativePath))
             {
                 if (resource?.DataBlock is not Model model)
                     return CoreResult.Failure<IReadOnlyList<string>>(
@@ -122,25 +142,56 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         }
     }
 
-    private GameFileLoader GetLoader(string addon, string relativePath)
+    /// <summary>
+    /// Takes exclusive use of a loader for the caller's whole read. VRF's
+    /// <see cref="GameFileLoader"/> keeps mutable current-file state, so one loader serves
+    /// one read at a time — but several loaders may serve the same mount concurrently,
+    /// which is what lets parallel thumbnail workers overlap instead of queueing behind a
+    /// single global lock. Blocks once <see cref="MaximumLoadersPerKey"/> are in flight.
+    /// </summary>
+    private LoaderLease RentLoader(string addon, string relativePath)
     {
         var addonFolder = Path.Combine(gameDirectory, "csgo_addons", addon);
         var addonFile = Path.Combine(addonFolder, relativePath.Replace('/', Path.DirectorySeparatorChar) + "_c");
         var coreFile = Path.Combine(gameDirectory, "csgo", relativePath.Replace('/', Path.DirectorySeparatorChar) + "_c");
         var useAddonFile = File.Exists(addonFile);
         var key = new LoaderKey(addon.ToUpperInvariant(), useAddonFile);
-        ObjectDisposedException.ThrowIf(disposed, this);
-        if (loaders.TryGetValue(key, out var existing))
-            return existing;
 
-        var loader = new GameFileLoader(null!, useAddonFile ? addonFile : coreFile);
+        lock (loaderLock)
+        {
+            while (true)
+            {
+                ObjectDisposedException.ThrowIf(disposed, this);
+                if (!loaders.TryGetValue(key, out var pool))
+                {
+                    pool = new LoaderPool();
+                    loaders.Add(key, pool);
+                }
+
+                if (pool.Idle.Count > 0)
+                    return new LoaderLease(this, pool, pool.Idle.Pop());
+
+                if (pool.All.Count < MaximumLoadersPerKey)
+                {
+                    var created = CreateLoader(addonFolder, useAddonFile ? addonFile : coreFile);
+                    pool.All.Add(created);
+                    return new LoaderLease(this, pool, created);
+                }
+
+                Monitor.Wait(loaderLock);
+            }
+        }
+    }
+
+    private GameFileLoader CreateLoader(string addonFolder, string packageFile)
+    {
+        var loader = new GameFileLoader(null!, packageFile);
         if (Directory.Exists(addonFolder))
             loader.AddDiskPathToSearch(addonFolder);
         var activeFolder = Path.Combine(gameDirectory, "csgo_addons", activeAddon);
         if (!string.Equals(activeFolder, addonFolder, StringComparison.OrdinalIgnoreCase)
             && Directory.Exists(activeFolder))
             loader.AddDiskPathToSearch(activeFolder);
-        loaders.Add(key, loader);
         return loader;
     }
 
@@ -151,8 +202,9 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         {
             if (disposed)
                 return;
-            foreach (var loader in loaders.Values)
-                loader.Dispose();
+            foreach (var pool in loaders.Values)
+                foreach (var loader in pool.All)
+                    loader.Dispose();
             loaders.Clear();
             sharedMaterialCache.Clear();
             sharedTextureCache.Clear();
@@ -251,12 +303,7 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
 
         try
         {
-            Resource? resource;
-            lock (loaderLock)
-            {
-                resource = loader.LoadFileCompiled(materialPath);
-            }
-            using (resource)
+            using (var resource = loader.LoadFileCompiled(materialPath))
             {
                 if (resource?.DataBlock is not Material material)
                     return DefaultMaterial with { Name = materialPath };
@@ -303,11 +350,7 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         if (sharedTextureCache.TryGetValue(cacheKey, out var cached))
             return cached;
 
-        Resource? resource;
-        lock (loaderLock)
-        {
-            resource = loader.LoadFileCompiled(texturePath);
-        }
+        var resource = loader.LoadFileCompiled(texturePath);
         if (resource is null)
             return null;
         using (resource)
@@ -405,12 +448,7 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         {
             if (entry.Item3 != 0 && (entry.Item3 & 1) == 0)
                 continue;
-            Resource? resource;
-            lock (loaderLock)
-            {
-                resource = loader.LoadFileCompiled(entry.Item2);
-            }
-            using (resource)
+            using (var resource = loader.LoadFileCompiled(entry.Item2))
             {
                 if (resource?.DataBlock is Mesh mesh)
                     yield return mesh;

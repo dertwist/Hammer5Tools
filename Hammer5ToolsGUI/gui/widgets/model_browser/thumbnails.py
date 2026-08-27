@@ -24,6 +24,7 @@ import logging
 import os
 import hashlib
 import sqlite3
+import threading
 import time
 from contextlib import closing
 from typing import Optional, Dict
@@ -162,10 +163,11 @@ _ALPHA_MODE_CODE = {"OPAQUE": 0, "MASK": 1, "BLEND": 2}
 def _worker_thread_count() -> int:
     """Loader threads — every core the machine has.
 
-    Reads run fully in parallel: each worker keeps its own VRF file loader, so
-    unlike the old glTF path there is no global decompile lock to queue behind.
-    Only the tiles actually on screen are ever queued, so a burst is bounded by
-    a screenful of work rather than the whole index.
+    Reads overlap: the Core reader leases one VRF file loader per read from a
+    per-mount pool, so workers run in parallel up to that pool's size instead of
+    queueing behind a single lock. Only the tiles actually on screen are ever
+    queued, so a burst is bounded by a screenful of work rather than the whole
+    index.
     """
     try:
         return max(1, os.cpu_count() or 1)
@@ -181,23 +183,25 @@ CREATE TABLE IF NOT EXISTS thumbnails (
 )
 """
 
-_local_conn = None
-_local_conn_path = None
+#: sqlite3 connections may only be used on the thread that opened them, and writes
+#: now happen on the encode worker as well as the GUI thread, so each thread keeps
+#: its own connection. WAL mode is what makes those concurrent writers safe.
+_connections = threading.local()
 
 
 def _get_db_conn():
-    global _local_conn, _local_conn_path
     from gui.widgets.model_browser.cache import thumbnail_db_path
     path = thumbnail_db_path()
-    if _local_conn is not None:
-        if _local_conn_path == path and os.path.exists(path):
-            return _local_conn
+    conn = getattr(_connections, "conn", None)
+    if conn is not None:
+        if getattr(_connections, "path", None) == path and os.path.exists(path):
+            return conn
         try:
-            _local_conn.close()
+            conn.close()
         except Exception:
             pass
-        _local_conn = None
-        _local_conn_path = None
+        _connections.conn = None
+        _connections.path = None
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path, timeout=5.0)
@@ -207,20 +211,21 @@ def _get_db_conn():
         conn.execute("PRAGMA synchronous = NORMAL")
     except Exception:
         pass
-    _local_conn = conn
-    _local_conn_path = path
+    _connections.conn = conn
+    _connections.path = path
     return conn
 
 
 def _close_db_conn():
-    global _local_conn, _local_conn_path
-    if _local_conn is not None:
+    """Close this thread's connection. Only the caller's thread is affected."""
+    conn = getattr(_connections, "conn", None)
+    if conn is not None:
         try:
-            _local_conn.close()
+            conn.close()
         except Exception:
             pass
-        _local_conn = None
-        _local_conn_path = None
+        _connections.conn = None
+        _connections.path = None
 
 
 def _thumbnail_key(resource_path: str, size: int) -> str:
@@ -288,6 +293,33 @@ class _MeshLoadWorker(QRunnable):
             msg = str(exc).splitlines()[0] if str(exc) else "Load error"
             log.error(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
         self.signals.loaded.emit(self.entry.path, mesh)
+
+
+class _ThumbnailStoreWorker(QRunnable):
+    """PNG-encodes a rendered thumbnail and writes it to the disk cache.
+
+    Runs off the GUI thread. The QImage is handed over by the render loop and not
+    touched again there, so no copy is needed; the sqlite connection is thread-local
+    and the database is in WAL mode, which is what allows this concurrent writer.
+    """
+
+    def __init__(self, resource_path: str, size: int, image: QImage):
+        super().__init__()
+        self.resource_path = resource_path
+        self.size = size
+        self.image = image
+
+    @Slot()
+    def run(self):
+        try:
+            buffer = QByteArray()
+            qbuf = QBuffer(buffer)
+            qbuf.open(QIODevice.WriteOnly)
+            self.image.save(qbuf, "PNG")
+            qbuf.close()
+            _store_thumbnail_bytes(self.resource_path, self.size, bytes(buffer))
+        except Exception as exc:
+            log.debug(f"[model_browser] thumbnail cache write skipped for {self.resource_path}: {exc}")
 
 
 class ThumbnailService(QObject):
@@ -425,15 +457,12 @@ class ThumbnailService(QObject):
 
             pixmap = QPixmap.fromImage(image)
             self._store_memory_pixmap(resource_path, pixmap)
-
-            buffer = QByteArray()
-            qbuf = QBuffer(buffer)
-            qbuf.open(QIODevice.WriteOnly)
-            image.save(qbuf, "PNG")
-            qbuf.close()
-            _store_thumbnail_bytes(resource_path, self.size, bytes(buffer))
-
             self.ready.emit(resource_path, pixmap)
+
+            # The tile is on screen at this point. PNG encoding and the sqlite write
+            # only populate the cache for next launch, so they go to a worker rather
+            # than costing GUI frame time once per drained render.
+            self._pool.start(_ThumbnailStoreWorker(resource_path, self.size, image))
 
     def _ensure_context(self) -> bool:
         """Create the shared offscreen GL context and compile the shader once."""
