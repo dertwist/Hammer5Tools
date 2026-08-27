@@ -92,6 +92,26 @@ class _CachedFrame:
     content: int
 
 
+
+def _element_data(item) -> dict | None:
+    if item is None:
+        return None
+    node = getattr(item, "smartprop_node", None)
+    if node is not None and isinstance(node.data, dict):
+        return node.data
+    data = item.data(0, Qt.UserRole)
+    return data if isinstance(data, dict) else None
+
+
+def _set_element_data(item, new_data: dict) -> None:
+    if item is None:
+        return
+    node = getattr(item, "smartprop_node", None)
+    if node is not None:
+        node.data = fast_deepcopy(new_data)
+    item.setData(0, Qt.UserRole, new_data)
+
+
 class LegacyPropertyList(QWidget):
     """Section 2 backend — PropertyFrame-based property list."""
 
@@ -143,7 +163,6 @@ class LegacyPropertyList(QWidget):
         if app is not None:
             app.focusChanged.connect(self._on_focus_changed)
 
-
     def _on_focus_changed(self, _old, new):
         if new is None:
             return
@@ -156,26 +175,6 @@ class LegacyPropertyList(QWidget):
                     if other is not frame:
                         other.select_row(None)
                 return
-
-
-def _element_data(item) -> dict | None:
-    if item is None:
-        return None
-    node = getattr(item, "smartprop_node", None)
-    if node is not None and isinstance(node.data, dict):
-        return node.data
-    data = item.data(0, Qt.UserRole)
-    return data if isinstance(data, dict) else None
-
-
-def _set_element_data(item, new_data: dict) -> None:
-    if item is None:
-        return
-    node = getattr(item, "smartprop_node", None)
-    if node is not None:
-        node.data = fast_deepcopy(new_data)
-    item.setData(0, Qt.UserRole, new_data)
-
 
     def _resolve(self, ref) -> dict | None:
         """The dict a frame for ``ref`` is built from, or None if unresolvable.

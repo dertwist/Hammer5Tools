@@ -562,8 +562,10 @@ class MainWindow(QMainWindow):
         # maximized state captured in closeEvent with a stale/normal geometry.
         if self.isVisible():
             self.window_state.save()
-        if self.tray_icon: self.tray_icon.hide()
+        if getattr(self, "tray", None) and getattr(self.tray, "icon", None):
+            self.tray.icon.hide()
         QApplication.quit()
+
 
     def open_about(self):
         AboutDialog(app_version, self).exec()
@@ -645,9 +647,13 @@ def start_instance_server(widget):
     server = QLocalServer()
     set_ipc_server(server)
     if not server.listen(INSTANCE_KEY):
-        raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
+        # On POSIX/macOS, a stale socket file from an unclean exit can prevent listen.
+        QLocalServer.removeServer(INSTANCE_KEY)
+        if not server.listen(INSTANCE_KEY):
+            raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
     server.newConnection.connect(lambda: handle_new_connection(server, widget))
     return server
+
 
 
 Widget = MainWindow

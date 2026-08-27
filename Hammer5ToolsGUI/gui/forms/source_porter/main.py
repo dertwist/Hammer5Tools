@@ -442,7 +442,6 @@ class SourcePorterWidget(QDialog):
         if not self._restoring_settings and mode == "BSP":
             self.cb_nomerge.setChecked(True)
             self.cb_unpack.setChecked(True)
-            self.cb_uv_fix.setChecked(True)
 
     def _browse_map_file(self):
         mode = self.mode_combo.currentText()

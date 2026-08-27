@@ -1,7 +1,5 @@
 import os
 import shutil
-import sys
-import tempfile
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -15,31 +13,39 @@ from PySide6.QtWidgets import (
     QLabel,
     QWidget,
     QHBoxLayout,
-    QButtonGroup,
-    QRadioButton,
-    QComboBox
+    QComboBox,
+    QDockWidget,
+    QTabWidget,
+    QCheckBox,
 )
-from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer, QSize
-from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon
+from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer, QSize, QByteArray
+from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent, QIcon, QCloseEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from gui.settings.common import addon_content_dir, addon_game_dir, get_addon_name, get_addon_dir
-from gui.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
+from gui.settings.common import (
+    addon_content_dir,
+    addon_game_dir,
+    get_addon_name,
+    get_addon_dir,
+    get_settings_value,
+    set_settings_value,
+)
 from gui.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from gui.editors.loading_editor.timeline import TimelineExplorer
-from gui.common import compile
+from gui.common import compile, enable_dark_title_bar
 from gui.widgets import ErrorInfo
 from gui.editors.loading_editor.commands import generate_commands
 from gui.editors.loading_editor.svg_utils import rescale_svg
 from gui.other.cs2_netcon import CS2Netcon
 from gui.styles.common import set_style_property
 
+
 class SvgPreviewWidget(QWidget):
     """
     A widget for drag and drop of SVG files. Displays a placeholder until an SVG is dropped.
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setAcceptDrops(True)
         self.file_path = None
 
@@ -48,13 +54,11 @@ class SvgPreviewWidget(QWidget):
 
         self.svg_preview = QSvgWidget(self)
         self.svg_preview.setFixedSize(200, 200)
-        self.svg_preview.setProperty("h5Component", "loadingSvgPreview")
         self.svg_preview.hide()
         layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
 
         self.info_label = QLabel("Drop svg file", self)
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setProperty("h5Component", "loadingSvgInfo")
         layout.addWidget(self.info_label, alignment=Qt.AlignCenter)
 
     def dragEnterEvent(self, event):
@@ -138,7 +142,7 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.progress.emit(100)
 
             self.signals.finished.emit()
-        except Exception as e:
+        except Exception:
             import traceback
             error_message = traceback.format_exc()
             self.signals.error.emit(error_message)
@@ -176,7 +180,6 @@ class ApplyScreenshotsWorker(QRunnable):
         for idx, file_name in enumerate(files):
             original_path = os.path.join(self.game_screenshot_path, file_name)
             new_base_name = f"{get_addon_name()}_png" if idx == 0 else f"{get_addon_name()}_{idx}_png"
-            # Extract camera name prefix if camera_name_mode is enabled
             camera_name = None
             if self.camera_name_mode:
                 camera_name = extract_camera_name(file_name, get_addon_name())
@@ -229,8 +232,7 @@ class ApplyScreenshotsWorker(QRunnable):
             msg = f"Error loading image {original_file_path} with QPixmap."
             self.signals.log.emit(msg)
             return
-        
-        # Add camera name label if enabled and camera name exists
+
         if self.camera_name_mode and camera_name:
             pixmap = self.add_camera_name_label(pixmap, camera_name)
 
@@ -337,8 +339,6 @@ class ApplyScreenshotsWorker(QRunnable):
         painter.end()
         return result
 
-
-
     def abort(self):
         self._is_aborted = True
         self.signals.log.emit("Abort signal received. Terminating processing.")
@@ -358,7 +358,6 @@ class UnifiedProcessingDialog(QDialog):
         self.log_text.setReadOnly(True)
         layout.addWidget(self.log_text)
         self.cancel_button = QPushButton("Cancel", self)
-        self.cancel_button.setProperty("h5Component", "loadingProgressButton")
         layout.addWidget(self.cancel_button)
 
     def update_progress(self, value: int):
@@ -377,8 +376,7 @@ class UnifiedProcessingDialog(QDialog):
 class LoadingEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ui = Ui_Loading_editorMainWindow()
-        self.ui.setupUi(self)
+        enable_dark_title_bar(self)
 
         self.threadpool = QThreadPool()
         game_dir, content_dir = addon_game_dir(), addon_content_dir()
@@ -395,88 +393,292 @@ class LoadingEditorMainWindow(QMainWindow):
             self.history_path = ""
             self.content_history_path = ""
 
-        # Create both views – the explorer shows the two real directories as
-        # separate collapsible groups (no filesystem junction shortcuts).
+        self._build_ui()
+        self._wire_signals()
+
+        self.unified_dialog = UnifiedProcessingDialog(self)
+
+        self.load_existing_icon()
+        self.load_existing_description()
+
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._save_layout_state)
+
+    def _build_ui(self):
+        self.setWindowTitle("Loading Screen Editor")
+        self.setObjectName("LoadingEditor_MainWindow")
+        self.resize(1065, 566)
+
+        self.setDockOptions(
+            QMainWindow.AnimatedDocks |
+            QMainWindow.AllowNestedDocks |
+            QMainWindow.AllowTabbedDocks |
+            QMainWindow.GroupedDragging
+        )
+        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+        self.setCorner(Qt.BottomLeftCorner, Qt.LeftDockWidgetArea)
+        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
+        self.setCorner(Qt.BottomRightCorner, Qt.RightDockWidgetArea)
+
+        dock_features = QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable
+
+        # --- Views and Central Viewport ---
         self.explorer_view = ImageExplorer(
             history_dir=self.content_history_path,
             loadingshots_dir=self.loadingscreen_path,
         )
-        self.explorer_view.setProperty("h5Component", "loadingEditorView")
-        
         self.timeline_view = TimelineExplorer(history_directory=self.content_history_path)
-        self.timeline_view.setProperty("h5Component", "loadingEditorView")
-        
-        self.timeline_view.image_selected.connect(self.on_timeline_image_selected)
-        
-        self.ui.explorer.layout().addWidget(self.explorer_view)
-        
-        self.ui.timeline_tab.layout().insertWidget(0, self.timeline_view)
-        
-        # Setup shared viewport
-        self.ui.screenshot_preview.layout().addWidget(self.explorer_view.image_viewer)
-        self.ui.splitter_2.setSizes([200, 100])
-        
-        # Store reference to the image viewer for camera position functionality
+
         self.image_viewer = self.explorer_view.image_viewer
         self.image_viewer.set_preview_data_provider(self.get_loading_preview_data)
-        
-        self.ui.screenshots_tabwidget.currentChanged.connect(self.on_tab_changed)
+        self.setCentralWidget(self.image_viewer)
 
-        self.svg_preview_widget = SvgPreviewWidget()
-        self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
+        # --- Left Dock: Screenshots ---
+        self.screenshots_dock = QDockWidget("Screenshots", self)
+        self.screenshots_dock.setObjectName("LoadingEditor_ScreenshotsDock")
+        self.screenshots_dock.setFeatures(dock_features)
 
-        self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
-        self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
-        self.ui.apply_icon_button.clicked.connect(self.icon_processs)
-        self.ui.take_history_shots.clicked.connect(self.take_history_shots_action)
-        self.ui.take_loading_screen_shots.clicked.connect(self.take_loading_screen_shots_action)
-        self.ui.refresh.clicked.connect(self.refresh_timeline)
-        self.ui.generate_gifs.clicked.connect(self.export_all_animations)
+        screenshots_widget = QWidget()
+        screenshots_layout = QVBoxLayout(screenshots_widget)
+        screenshots_layout.setContentsMargins(4, 4, 4, 4)
+        screenshots_layout.setSpacing(4)
 
-        # Animation export settings (format + quality), inserted next to the
-        # Refresh / Create animation buttons in the timeline tab
+        self.screenshots_tabwidget = QTabWidget()
+        self.screenshots_tabwidget.setObjectName("screenshots_tabwidget")
+
+        # Explorer Tab
+        explorer_tab = QWidget()
+        explorer_layout = QVBoxLayout(explorer_tab)
+        explorer_layout.setContentsMargins(0, 0, 0, 0)
+        explorer_layout.setSpacing(0)
+        explorer_layout.addWidget(self.explorer_view)
+        self.screenshots_tabwidget.addTab(explorer_tab, "Explorer")
+
+        # Timeline Tab
+        timeline_tab = QWidget()
+        timeline_layout = QVBoxLayout(timeline_tab)
+        timeline_layout.setContentsMargins(0, 0, 0, 0)
+        timeline_layout.setSpacing(4)
+
+        timeline_top_row = QHBoxLayout()
+        timeline_top_row.setContentsMargins(0, 0, 0, 0)
+        timeline_top_row.setSpacing(4)
+
+        self.refresh = QPushButton("Refresh")
+        self.refresh.setIcon(QIcon(":/valve_common/icons/tools/common/refresh.png"))
+        self.refresh.setIconSize(QSize(20, 20))
+        self.refresh.setMinimumHeight(32)
+        self.refresh.setToolTip("Refresh timeline screenshots")
+
         self.animation_format_combo = QComboBox()
         self.animation_format_combo.addItems(["GIF", "WEBP", "MP4"])
-        self.animation_format_combo.setProperty("h5Component", "legacyCombobox")
         self.animation_format_combo.setToolTip("Animation output format")
         self.animation_format_combo.setMinimumHeight(32)
 
         self.animation_quality_combo = QComboBox()
         self.animation_quality_combo.addItems(["Low", "Medium", "High"])
         self.animation_quality_combo.setCurrentText("High")
-        self.animation_quality_combo.setProperty("h5Component", "legacyCombobox")
         self.animation_quality_combo.setToolTip("Animation quality (WEBP/MP4 only, ignored for GIF)")
         self.animation_quality_combo.setMinimumHeight(32)
 
-        self.ui.horizontalLayout_6.insertWidget(1, self.animation_format_combo)
-        self.ui.horizontalLayout_6.insertWidget(2, self.animation_quality_combo)
+        self.generate_gifs = QPushButton("Create animation")
+        self.generate_gifs.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
+        self.generate_gifs.setIconSize(QSize(20, 20))
+        self.generate_gifs.setMinimumHeight(32)
+        self.generate_gifs.setToolTip("Create animations for all cameras")
+
+        timeline_top_row.addWidget(self.refresh)
+        timeline_top_row.addWidget(self.animation_format_combo)
+        timeline_top_row.addWidget(self.animation_quality_combo)
+        timeline_top_row.addWidget(self.generate_gifs)
+
+        timeline_layout.addLayout(timeline_top_row)
+        timeline_layout.addWidget(self.timeline_view, 1)
+
+        self.screenshots_tabwidget.addTab(timeline_tab, "Timeline")
+        screenshots_layout.addWidget(self.screenshots_tabwidget, 1)
+
+        # Capture Actions
+        shots_row = QHBoxLayout()
+        shots_row.setContentsMargins(0, 0, 0, 0)
+        shots_row.setSpacing(4)
+
+        self.take_history_shots = QPushButton("Take History Shots")
+        self.take_history_shots.setIcon(QIcon(":/icons/acute_24dp.svg"))
+        self.take_history_shots.setIconSize(QSize(20, 20))
+        self.take_history_shots.setMinimumHeight(32)
+        self.take_history_shots.setToolTip(
+            "Generate commands and send them to CS2 to take history screenshots. "
+            "Images will be saved in: game/screenshots/Hammer5Tools/History/Date"
+        )
+
+        self.take_loading_screen_shots = QPushButton("Take Loading Screen Shots")
+        self.take_loading_screen_shots.setIcon(QIcon(":/icons/data_object_24dp.png"))
+        self.take_loading_screen_shots.setIconSize(QSize(20, 20))
+        self.take_loading_screen_shots.setMinimumHeight(32)
+        self.take_loading_screen_shots.setToolTip(
+            "Generate commands and send them to CS2 to take loading screen screenshots. "
+            "Previous images in game/screenshots/Hammer5Tools/LoadingScreen will be deleted first."
+        )
+
+        shots_row.addWidget(self.take_history_shots)
+        shots_row.addWidget(self.take_loading_screen_shots)
+        screenshots_layout.addLayout(shots_row)
+
+        # Apply Options
+        apply_row = QHBoxLayout()
+        apply_row.setContentsMargins(0, 0, 0, 0)
+        apply_row.setSpacing(4)
+
+        self.delete_existings = QCheckBox("Delete existing")
+        self.delete_existings.setIcon(QIcon(":/icons/delete_sweep_16dp.svg"))
+        self.delete_existings.setIconSize(QSize(20, 20))
+        self.delete_existings.setChecked(True)
+        self.delete_existings.setToolTip("Deletes all existing screenshots on the loading screen.")
+
+        self.camera_name_mode = QCheckBox("Camera Name")
+        self.camera_name_mode.setIcon(QIcon(":/icons/colors_24dp.png"))
+        self.camera_name_mode.setIconSize(QSize(20, 20))
+        self.camera_name_mode.setChecked(False)
+        self.camera_name_mode.setToolTip("Adds name of point_camera to image")
+
+        self.apply_screenshots_button = QPushButton("Set loading images")
+        self.apply_screenshots_button.setIcon(QIcon(":/icons/check_24dp.svg"))
+        self.apply_screenshots_button.setIconSize(QSize(20, 20))
+        self.apply_screenshots_button.setMinimumHeight(32)
+        self.apply_screenshots_button.setToolTip(
+            "Apply images that are located in game/screenshots/Hammer5Tools/LoadingScreen as loading screen images"
+        )
+
+        apply_row.addWidget(self.delete_existings)
+        apply_row.addWidget(self.camera_name_mode)
+        apply_row.addWidget(self.apply_screenshots_button)
+        screenshots_layout.addLayout(apply_row)
+
+        self.screenshots_dock.setWidget(screenshots_widget)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.screenshots_dock)
+
+        # --- Right Dock 1: Icon ---
+        self.icon_dock = QDockWidget("Icon", self)
+        self.icon_dock.setObjectName("LoadingEditor_IconDock")
+        self.icon_dock.setFeatures(dock_features)
+
+        icon_widget = QWidget()
+        icon_layout = QVBoxLayout(icon_widget)
+        icon_layout.setContentsMargins(4, 4, 4, 4)
+        icon_layout.setSpacing(4)
+
+        self.svg_preview_widget = SvgPreviewWidget()
+        icon_layout.addWidget(self.svg_preview_widget)
+
+        self.svg_tips_label = QLabel("Tips: Convert text to paths. Avoid rasterized layers.")
+        self.svg_tips_label.setWordWrap(True)
+        icon_layout.addWidget(self.svg_tips_label)
+
+        self.fit_viewbox_checkbox = QCheckBox("Fit content to viewbox")
+        self.fit_viewbox_checkbox.setChecked(True)
+        self.fit_viewbox_checkbox.setToolTip("Rescale the SVG content to fit a 32x32 viewBox and remove hidden elements.")
+        icon_layout.addWidget(self.fit_viewbox_checkbox)
+
+        self.apply_icon_button = QPushButton("Apply Icon")
+        self.apply_icon_button.setIcon(QIcon(":/icons/check_24dp.svg"))
+        self.apply_icon_button.setIconSize(QSize(20, 20))
+        self.apply_icon_button.setMinimumHeight(32)
+        icon_layout.addWidget(self.apply_icon_button)
+
+        self.icon_dock.setWidget(icon_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.icon_dock)
+
+        # --- Right Dock 2: Description ---
+        self.description_dock = QDockWidget("Description", self)
+        self.description_dock.setObjectName("LoadingEditor_DescriptionDock")
+        self.description_dock.setFeatures(dock_features)
+
+        description_widget = QWidget()
+        description_layout = QVBoxLayout(description_widget)
+        description_layout.setContentsMargins(4, 4, 4, 4)
+        description_layout.setSpacing(4)
+
+        self.PlainTextEdit_Description_2 = QPlainTextEdit()
+        self.PlainTextEdit_Description_2.setPlaceholderText("A community map created by:")
+        description_layout.addWidget(self.PlainTextEdit_Description_2)
+
+        self.apply_description_button = QPushButton("Apply description")
+        self.apply_description_button.setIcon(QIcon(":/icons/check_24dp.svg"))
+        self.apply_description_button.setIconSize(QSize(20, 20))
+        self.apply_description_button.setMinimumHeight(32)
+        description_layout.addWidget(self.apply_description_button)
+
+        self.description_dock.setWidget(description_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.description_dock)
+
+        self.splitDockWidget(self.icon_dock, self.description_dock, Qt.Vertical)
+
+        self._restore_layout_state()
+
+    def _wire_signals(self):
+        self.timeline_view.image_selected.connect(self.on_timeline_image_selected)
+        self.screenshots_tabwidget.currentChanged.connect(self.on_tab_changed)
+
+        self.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
+        self.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
+        self.apply_icon_button.clicked.connect(self.icon_processs)
+        self.take_history_shots.clicked.connect(self.take_history_shots_action)
+        self.take_loading_screen_shots.clicked.connect(self.take_loading_screen_shots_action)
+        self.refresh.clicked.connect(self.refresh_timeline)
+        self.generate_gifs.clicked.connect(self.export_all_animations)
 
         self.animation_format_combo.currentTextChanged.connect(self.update_animation_settings)
         self.animation_quality_combo.currentTextChanged.connect(self.update_animation_settings)
         self.update_animation_settings()
 
-        self.unified_dialog = UnifiedProcessingDialog(self)
+        self.PlainTextEdit_Description_2.textChanged.connect(self.image_viewer.update_preview_content)
+        self.camera_name_mode.stateChanged.connect(self.image_viewer.update_preview_content)
+        self.camera_name_mode.toggled.connect(self.image_viewer.update_preview_content)
 
-        self.ui.PlainTextEdit_Description_2.textChanged.connect(self.image_viewer.update_preview_content)
-        if hasattr(self.ui, 'camera_name_mode'):
-            self.ui.camera_name_mode.stateChanged.connect(self.image_viewer.update_preview_content)
-            self.ui.camera_name_mode.toggled.connect(self.image_viewer.update_preview_content)
+    def _save_layout_state(self):
+        try:
+            geo_hex = self.saveGeometry().toHex().data().decode("utf-8")
+            state_hex = self.saveState().toHex().data().decode("utf-8")
+            set_settings_value("LoadingEditor", "geometry", geo_hex)
+            set_settings_value("LoadingEditor", "window_state", state_hex)
+        except Exception:
+            pass
 
-        self.load_existing_icon()
-        self.load_existing_description()
+    def _restore_layout_state(self):
+        try:
+            geo_hex = get_settings_value("LoadingEditor", "geometry")
+            if geo_hex:
+                self.restoreGeometry(QByteArray.fromHex(geo_hex.encode("utf-8")))
+            state_hex = get_settings_value("LoadingEditor", "window_state")
+            if state_hex:
+                restored = self.restoreState(QByteArray.fromHex(state_hex.encode("utf-8")))
+                if not restored:
+                    self._apply_default_dock_sizes()
+            else:
+                self._apply_default_dock_sizes()
+        except Exception:
+            self._apply_default_dock_sizes()
+
+    def _apply_default_dock_sizes(self):
+        total_w = self.width() if self.width() > 400 else 1200
+        side_w = max(260, int(total_w * 0.25))
+        self.resizeDocks([self.screenshots_dock, self.icon_dock, self.description_dock], [side_w, side_w, side_w], Qt.Horizontal)
+        self.resizeDocks([self.icon_dock, self.description_dock], [320, 200], Qt.Vertical)
+
+    def closeEvent(self, event: QCloseEvent):
+        self._save_layout_state()
+        super().closeEvent(event)
 
     def refresh_timeline(self):
         """Refresh timeline data"""
         self.timeline_view.load_timeline_data()
 
-
     def on_tab_changed(self, index: int):
         """Handle tab change between Explorer and Timeline"""
-        if index == 1:  # Timeline tab
-            # Refresh timeline data when switching to timeline tab
+        if index == 1:
             self.timeline_view.load_timeline_data()
-        else:  # Explorer tab
-            pass
 
     def on_timeline_image_selected(self, image_path: str):
         """Handle image selection from timeline view"""
@@ -505,15 +707,13 @@ class LoadingEditorMainWindow(QMainWindow):
                 if os.path.exists(possible_path):
                     icon_path = possible_path
 
-        show_camera_name = False
-        if hasattr(self.ui, 'camera_name_mode'):
-            show_camera_name = self.ui.camera_name_mode.isChecked()
+        show_camera_name = self.camera_name_mode.isChecked()
 
         return {
             "icon_path": icon_path,
             "map_name": get_addon_name(),
             "gamemode_text": "Competitive",
-            "description_html": self.ui.PlainTextEdit_Description_2.toPlainText(),
+            "description_html": self.PlainTextEdit_Description_2.toPlainText(),
             "show_camera_name": show_camera_name,
         }
 
@@ -525,7 +725,6 @@ class LoadingEditorMainWindow(QMainWindow):
             svg_path = os.path.join(folder_path, svg_icon_filename)
             if os.path.exists(svg_path):
                 self.svg_preview_widget.load_svg(svg_path)
-                return
 
     def load_existing_description(self):
         game_dir = addon_game_dir()
@@ -537,15 +736,15 @@ class LoadingEditorMainWindow(QMainWindow):
                 with open(description_file, "r") as f:
                     lines = f.readlines()
                 description = "".join(lines[1:]).strip() if len(lines) > 1 else ""
-                self.ui.PlainTextEdit_Description_2.setPlainText(description)
-            except Exception as e:
+                self.PlainTextEdit_Description_2.setPlainText(description)
+            except Exception:
                 pass
 
     def start_apply_screenshots(self):
         try:
             file_count = len([f for f in os.listdir(self.loadingscreen_path)
                               if os.path.isfile(os.path.join(self.loadingscreen_path, f))])
-        except Exception as e:
+        except Exception:
             file_count = 0
 
         if file_count > 10:
@@ -553,9 +752,9 @@ class LoadingEditorMainWindow(QMainWindow):
 
         self.unified_dialog.reset()
         worker = ApplyScreenshotsWorker(
-            self.loadingscreen_path, 
-            self.ui.delete_existings.isChecked(),
-            self.ui.camera_name_mode.isChecked()
+            self.loadingscreen_path,
+            self.delete_existings.isChecked(),
+            self.camera_name_mode.isChecked()
         )
         worker.signals.progress.connect(self.unified_dialog.update_progress)
         worker.signals.error.connect(self.show_error)
@@ -581,31 +780,24 @@ class LoadingEditorMainWindow(QMainWindow):
         self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
     def take_history_shots_action(self):
-        """Generate commands for history screenshots and send directly to CS2 via netcon.
-
-        After sending the commands, a QTimer fires after a calculated delay to copy
-        the freshly captured images from
-            game/.../screenshots/Hammer5Tools/History/<date>/
-        into
-            content/.../panorama/history_screenshots/<date>/
-        """
+        """Generate commands for history screenshots and send directly to CS2 via netcon."""
         vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
         commands, session_date = generate_commands(vmap_path, history=True)
         if not commands:
             return
 
         if not CS2Netcon.send_many(commands):
-            QMessageBox.warning(self, "CS2 Not Reachable",
-                "Could not send commands to CS2.\n"
-                "Make sure CS2 is running with -netconport 2121.")
+            QMessageBox.warning(
+                self,
+                "CS2 Not Reachable",
+                "Could not send commands to CS2.\nMake sure CS2 is running with -netconport 2121."
+            )
             return
 
         if not session_date or not self.content_history_path:
             return
 
-        # Each camera takes ~10 ticks at 64 Hz plus a 1-second buffer after the
-        # last shot, so estimate: cameras * (10/64) + 1 s, with a minimum of 3 s.
-        camera_count = max(1, (len(commands) - 8) // 6)  # rough estimate
+        camera_count = max(1, (len(commands) - 8) // 6)
         delay_ms = max(3000, int(camera_count * (10 / 64) * 1000) + 2000)
 
         src_folder = os.path.join(self.history_path, session_date)
@@ -619,13 +811,11 @@ class LoadingEditorMainWindow(QMainWindow):
             return
         try:
             os.makedirs(dst_folder, exist_ok=True)
-            copied = 0
             for filename in os.listdir(src_folder):
                 src_file = os.path.join(src_folder, filename)
                 if os.path.isfile(src_file):
                     shutil.copy2(src_file, os.path.join(dst_folder, filename))
-                    copied += 1
-        except Exception as e:
+        except Exception:
             pass
 
     def take_loading_screen_shots_action(self):
@@ -638,16 +828,18 @@ class LoadingEditorMainWindow(QMainWindow):
                         os.remove(file_path)
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
-                except Exception as e:
+                except Exception:
                     pass
 
         path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
         commands, _ = generate_commands(path, history=False)
         if commands:
             if not CS2Netcon.send_many(commands):
-                QMessageBox.warning(self, "CS2 Not Reachable",
-                    "Could not send commands to CS2.\n"
-                    "Make sure CS2 is running with -netconport 2121.")
+                QMessageBox.warning(
+                    self,
+                    "CS2 Not Reachable",
+                    "Could not send commands to CS2.\nMake sure CS2 is running with -netconport 2121."
+                )
 
     def loading_editor_cs2_description(self, description_text: str):
         game_dir = addon_game_dir()
@@ -672,16 +864,16 @@ class LoadingEditorMainWindow(QMainWindow):
         svg_dst = os.path.join(folder_path, f"map_icon_{get_addon_name()}.svg")
         if os.path.exists(svg_dst):
             os.remove(svg_dst)
-        if self.ui.fit_viewbox_checkbox.isChecked():
+        if self.fit_viewbox_checkbox.isChecked():
             try:
                 rescale_svg(svg_path, svg_dst)
-            except Exception as e:
+            except Exception:
                 shutil.copy2(svg_path, svg_dst)
         else:
             shutil.copy2(svg_path, svg_dst)
 
     def do_loading_editor_cs2_description(self):
-        self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
+        self.loading_editor_cs2_description(self.PlainTextEdit_Description_2.toPlainText())
 
     def keyPressEvent(self, event: QKeyEvent):
         """
@@ -689,7 +881,6 @@ class LoadingEditorMainWindow(QMainWindow):
         F key: Reset camera viewport position
         """
         if event.key() == Qt.Key_F:
-            # Check if we're not typing in a text field
             focused_widget = QApplication.focusWidget()
             if not isinstance(focused_widget, (QPlainTextEdit,)):
                 self.image_viewer.restoreCameraPosition()
