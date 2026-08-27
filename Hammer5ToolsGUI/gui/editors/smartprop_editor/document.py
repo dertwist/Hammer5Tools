@@ -81,8 +81,6 @@ from gui.widgets.tree import HierarchyTreeWidget
 from gui.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 from gui.editors.smartprop_editor.manual_editor import ManualEditor
 
-cs2_path = get_cs2_path()
-
 # Regex for parsing diff keys like 'm_Modifiers[2].m_flAmount' or 'm_SelectionCriteria[0]'
 _DIFF_KEY_RE = re.compile(r'^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$')
 
@@ -1293,7 +1291,6 @@ class SmartPropDocument(QMainWindow):
             if not start_dir:
                 try:
                     from gui.settings.common import get_addon_name
-                    from gui.common import get_cs2_path
                     cs2_path = get_cs2_path()
                     addon_name = get_addon_name()
                     if cs2_path and addon_name:
@@ -1697,7 +1694,6 @@ class SmartPropDocument(QMainWindow):
         self._viewport_3d.update_viewport()
 
     def load_vmap_into_hierarchy(self):
-        from gui.common import get_cs2_path
         from gui.settings.common import get_addon_name
         from PySide6.QtWidgets import QFileDialog, QMessageBox
         from core.bridge import CoreBridge

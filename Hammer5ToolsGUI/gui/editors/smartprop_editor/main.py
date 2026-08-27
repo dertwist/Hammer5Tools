@@ -19,19 +19,17 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QUndoStack, QIcon, QKeySequence, QAction, QPixmap
 from PySide6.QtCore import Qt
 from gui.editors.smartprop_editor.ui_main import Ui_MainWindow
-from gui.settings.common import get_addon_name, settings, get_settings_value, set_settings_value
+from gui.settings.common import get_addon_name, get_addon_dir, settings, get_settings_value, set_settings_value
 from gui.widgets.explorer.main import Explorer
 from gui.editors.smartprop_editor.document import SmartPropDocument
 from gui.other.assettypes import check_vsmart_configuration
 from gui.widgets import ErrorInfo, exception_handler
 from gui.common import (
     enable_dark_title_bar,
-    get_cs2_path,
     set_qdock_tab_style
 )
 
 from gui.widgets.document_tab import DocumentTabBar
-cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
@@ -161,7 +159,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def init_explorer(self, dir: str = None, editor_name: str = None):
         if dir is None:
-            self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
+            self.tree_directory = get_addon_dir()
         else:
             self.tree_directory = dir
         if editor_name is None:
@@ -221,7 +219,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 filename, _ = QFileDialog.getOpenFileName(
                     self,
                     "Open File",
-                    os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
+                    get_addon_dir() or "",
                     "VSmart Files (*.vsmart *.vdata);;All Files (*)"
                 )
                 if not filename:

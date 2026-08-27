@@ -148,10 +148,9 @@ def test_smartprop_document_docks_menu():
 
 def test_smartprop_main_window_fallback_shortcuts(monkeypatch, tmp_path):
     """Verify SmartPropEditorMainWindow has fallback global shortcuts and no document menubar."""
-    # The module captures get_cs2_path() at import time, so on a machine with no
-    # CS2 path configured (every CI runner) it is None and the explorer's
-    # os.path.join raises. Give it a directory instead of requiring an install.
-    monkeypatch.setattr(smartprop_main, "cs2_path", str(tmp_path), raising=False)
+    # No CS2 path is configured on a CI runner, so point the explorer at a
+    # directory rather than requiring an install.
+    monkeypatch.setattr(smartprop_main, "get_addon_dir", lambda: str(tmp_path))
 
     window = SmartPropEditorMainWindow()
 
