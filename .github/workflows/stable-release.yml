@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -35,15 +39,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Velopack CLI
-        run: |
-          dotnet tool install -g vpk
-          echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
-
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
+
+      - name: Install Velopack CLI
+        run: |
+          dotnet tool install -g vpk
+          echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
 
       - name: Read app version
         id: version

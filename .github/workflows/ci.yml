@@ -5,7 +5,8 @@ on:
     inputs:
       channel:
         description: 'Release channel (dev or stable)'
-        required: true
+        required: false
+        default: 'dev'
         type: string
 
 permissions:
@@ -22,14 +23,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
+      - uses: ./.github/actions/setup-project
 
       # PyInstaller only warns about modules it cannot find, so an import of a
       # package missing from requirements.txt ships and crashes on launch.
@@ -50,25 +44,28 @@ jobs:
           $undefined = python -m pyflakes Hammer5ToolsGUI/gui | Select-String "undefined name '"
           if ($undefined) { $undefined; throw 'pyflakes reported undefined names' }
 
-      - name: Set up .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Clone CUE4Parse
-        run: |
-          # Pinned: CUE4Parse master restructured CUE4Parse_Conversion.Landscape
-          # into Exporters/Dto. Bump only together with Format/Unreal/UnrealBridgeProgram.cs.
-          git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
-          echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV
-
       # TUnit runs as its own executable; the legacy xUnit suite still needs
       # `dotnet test` until it moves to Microsoft Testing Platform.
       - name: Run Core tests
         run: |
           dotnet run --project Hammer5ToolsCore/Hammer5Tools.Core.Tests -c Release
-          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release
+          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release --minimum-expected-tests 1
+
+  analyze:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: false
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Check formatting
+        run: dotnet format --verify-no-changes Hammer5ToolsCore/Hammer5Tools.Core/Hammer5Tools.Core.csproj
+        continue-on-error: true
 
   build:
     needs: test
@@ -81,30 +78,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-
-      - name: Set up .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
+      - uses: ./.github/actions/setup-project
 
       - name: Install Velopack CLI
         run: |
           dotnet tool install -g vpk
           echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
-
-      - name: Clone CUE4Parse
-        run: |
-          git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
-          echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV
 
       - name: Build All
         run: python makefile.py --build-all --${{ inputs.channel }}
