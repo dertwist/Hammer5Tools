@@ -85,8 +85,6 @@ Hammer5Tools.spec
 Hammer5Tools_Updater.spec
 
 # Project-specific ignores
-/src/editors/soundevent_editor/resource/parsing/soundevents.build/
-/src/editors/soundevent_editor/resource/parsing/soundevents.dist/
 .qodo
 settings.ini
 /application.zip
@@ -147,14 +145,12 @@ docs
 !Hammer5ToolsCore/Hammer5Tools.Core/**
 !Hammer5ToolsCore/Hammer5Tools.slnx
 
-# Build artifacts (mirrors the local src/net_core/UnrealBridge/.gitignore).
+# Build artifacts.
 # Placed AFTER the negation above so last-match-wins keeps them ignored even
 # inside SourcePorter.Core/.
 Hammer5ToolsCore/**/bin/
 Hammer5ToolsCore/**/obj/
 Hammer5ToolsCore/**/publish/
-src/net_core/**/publish/
-src/net_core/**/TestResults/
 TestResults/
 /SoundEventEditor/*
 Hammer5Tools/userdata

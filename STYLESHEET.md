@@ -12,6 +12,16 @@ to the interface-brightness setting.
 - Keep widget construction and behavior in Python and reusable visual rules in QSS.
 - Do not add local `setStyleSheet()` calls for static appearance.
 
+### Qt Designer previews are not the app
+
+`.ui` files still carry hundreds of hardcoded Designer colors. Every one of them
+is discarded at compile time: `strip_designer_stylesheets()` in `compile_ui.py`
+deletes the `setStyleSheet(...)` statements `pyside6-uic` emits, and raises if one
+is not a standalone statement it can remove. What you see in Designer's preview is
+therefore never what ships — the compiled application QSS is. Do not spend time
+tuning colors in Designer, and do not treat a `.ui` color as the source of truth
+for anything.
+
 ## 2. Semantic theme tokens
 
 QSS fragments use `@token` references. `theme.py` defines these fields for Dark,

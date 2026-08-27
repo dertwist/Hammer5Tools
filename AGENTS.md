@@ -22,7 +22,7 @@ C++ launcher (optional) -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> ext
 - Consume external libraries as dependencies; keep Hammer5Tools behavior in Hammer5Tools-owned code.
 - `Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
 - `Hammer5ToolsGUI/gui/tools/`: bundled external tools and scripts (bspsrc, import/UE scripts) shipped alongside the packaged app.
-- `makefile.py`: build and packaging entry point; `src/common.py`/root `version.json` own the application version.
+- `makefile.py`: build and packaging entry point; `Hammer5ToolsGUI/gui/common.py`/root `version.json` own the application version.
 
 ## Before Writing New Code
 
@@ -44,7 +44,7 @@ Follow VRF conventions for all new or migrated C# code: latest supported .NET, n
 
 - Keep Python domain-free: use bridge adapters (`CoreBridge`) rather than exposing .NET namespaces or assembly loading to editors.
 - UI code is view composition, binding, input routing, dialogs, rendering, and user feedback only.
-- Use the global style system in `src/styles/`; no hard-coded inline palettes. Follow [STYLESHEET.md](STYLESHEET.md).
+- Use the global style system in `Hammer5ToolsGUI/gui/styles/`; no hard-coded inline palettes. Follow [STYLESHEET.md](STYLESHEET.md).
 - Preserve existing behavior while migrating. Add characterization tests/fixtures before moving uncovered behavior.
 
 ## Commits & Branches
