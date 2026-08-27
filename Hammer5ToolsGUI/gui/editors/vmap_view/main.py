@@ -1,8 +1,9 @@
-"""Vmap View: load an uncompiled .vmap and draw it in the SmartProp 3D viewport.
+"""Vmap reading experiments: load an uncompiled .vmap and draw it in the SmartProp 3D viewport.
 
-A test/inspection editor, not a map editor: nothing here writes. It reuses the
-SmartProp viewport wholesale and only swaps where the scene comes from — a Core
-VMAP projection instead of a SmartProp document.
+Experimental project, disabled in dev and stable releases. A test/inspection editor,
+not a map editor: nothing here writes. It reuses the SmartProp viewport wholesale
+and only swaps where the scene comes from — a Core VMAP projection instead of a
+SmartProp document.
 """
 
 from __future__ import annotations
@@ -87,7 +88,6 @@ class _SceneLoader(QThread):
         super().__init__(parent)
         self.path = path
         self.addon = addon
-        self._material_images: dict[str, object | None] = {}
 
     def run(self):
         try:
@@ -96,22 +96,12 @@ class _SceneLoader(QThread):
             models = self._evaluate_smart_props(document, messages)
             if self.isInterruptionRequested():
                 return
-            infos, meshes = build_scene(document, models, self._material_image)
+            infos, meshes = build_scene(document, models, lambda _path: None)
         except Exception as error:
             log.error("Failed to load %s", self.path, exc_info=True)
             self.failed.emit(str(error))
             return
         self.loaded.emit(infos, meshes, messages)
-
-    def _material_image(self, resource_path: str):
-        if resource_path not in self._material_images:
-            from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_material_base_color
-            try:
-                self._material_images[resource_path] = load_material_base_color(resource_path)
-            except Exception:
-                log.warning("Could not load material %s", resource_path, exc_info=True)
-                self._material_images[resource_path] = None
-        return self._material_images[resource_path]
 
     def _evaluate_smart_props(self, document, messages: list[str]):
         """(placement index, model path, world matrix) for every SmartProp instance.
@@ -234,7 +224,7 @@ class VmapViewMainWindow(QWidget):
         render_area.set_scene(infos)
         # Upload now rather than on the next paint: fit_view frames loaded meshes by
         # their real bounds and everything else by a placeholder box at its origin, and
-        # brush geometry is baked into world space � so its box would sit at the origin
+        # brush geometry is baked into world space — so its box would sit at the origin
         # and a brush-only map would open framed on nothing.
         try:
             render_area.makeCurrent()

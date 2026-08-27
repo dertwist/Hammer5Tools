@@ -1,3 +1,5 @@
+"""Vmap reading experiments: tests for the experimental VMAP scene projection."""
+
 import os
 
 import numpy as np

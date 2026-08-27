@@ -1,1 +1,1 @@
-"""Vmap View — a read-only 3D preview of an uncompiled .vmap."""
+"""Vmap reading experiments — experimental read-only 3D preview of an uncompiled .vmap."""

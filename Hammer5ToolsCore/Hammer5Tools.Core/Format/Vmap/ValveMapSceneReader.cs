@@ -7,9 +7,9 @@ using Datamodel;
 namespace Hammer5Tools.Core.Format.Vmap;
 
 /// <summary>
-/// Projects an uncompiled <c>.vmap</c> into drawable geometry: brush/displacement meshes
-/// triangulated from their half-edge <c>CDmePolygonMesh</c> form, model placements, and
-/// SmartProp placements with their per-placement parameter overrides.
+/// Vmap reading experiments: projects an uncompiled <c>.vmap</c> into drawable geometry:
+/// brush/displacement meshes triangulated from their half-edge <c>CDmePolygonMesh</c> form,
+/// model placements, and SmartProp placements with their per-placement parameter overrides.
 ///
 /// This is a viewer-side projection, not an importer: it flattens the node tree into world
 /// space and keeps only what a preview needs.

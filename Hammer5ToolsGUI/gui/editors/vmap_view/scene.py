@@ -1,4 +1,4 @@
-"""Turning a Core VMAP scene projection into viewport draw data.
+"""Vmap reading experiments: turning a Core VMAP scene projection into viewport draw data.
 
 Pure data in, pure data out — no Qt and no GL — so the mapping from map nodes to
 the SmartProp viewport's draw schema is testable on its own.

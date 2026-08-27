@@ -346,16 +346,7 @@ class MainWindow(QMainWindow):
             QIcon(":/valve_common/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png"), "VSnap Editor",
         )
 
-        # Vmap View is a test editor: source checkouts only, never a shipped build.
-        if not getattr(sys, 'frozen', False):
-            self.vmapview_tab = QWidget()
-            self.vmapview_tab.setObjectName("vmapview_tab")
-            vmapview_layout = QVBoxLayout(self.vmapview_tab)
-            vmapview_layout.setContentsMargins(0, 0, 0, 0)
-            insert_tab_after(
-                self.ui.MainWindowTools_tabs, self.vsnapeditor_tab, self.vmapview_tab,
-                QIcon(":/valve_common/icons/tools/hammer/mapmanifest_icon.png"), "Vmap View",
-            )
+        # Vmap reading experiments: disabled from dev and stable releases (experimental project).
 
         # Programmatically create Audio Editor tab (addon-independent, created once)
         from gui.editors.soundevent_editor.wave_editor import AudioEditor
@@ -413,6 +404,9 @@ class MainWindow(QMainWindow):
         self.vsnapeditor_tab.layout().addWidget(self.VSnapEditorMainWindow)
 
     def _build_vmapview(self):
+        # Vmap reading experiments: experimental project, disabled in dev and stable releases.
+        if getattr(self, 'vmapview_tab', None) is None:
+            return
         from gui.editors.vmap_view.main import VmapViewMainWindow
         self.VmapViewMainWindow = VmapViewMainWindow(parent=self.vmapview_tab)
         self.vmapview_tab.layout().addWidget(self.VmapViewMainWindow)
@@ -530,8 +524,8 @@ class MainWindow(QMainWindow):
                        ui.Loading_Editor_Tab, self._build_loading, requires_cs2=True),
             EditorSlot('VSnapEditorMainWindow', "VSnap Editor",
                        getattr(self, 'vsnapeditor_tab', None), self._build_vsnap),
-            # Absent in frozen builds: setup_tabs never creates the tab, so the
-            # slot's page is None and it is skipped everywhere.
+            # Vmap reading experiments: disabled in dev and stable releases (experimental project).
+            # The slot's page is None when the tab is not created, so it is skipped everywhere.
             EditorSlot('VmapViewMainWindow', "Vmap View",
                        getattr(self, 'vmapview_tab', None), self._build_vmapview),
         )

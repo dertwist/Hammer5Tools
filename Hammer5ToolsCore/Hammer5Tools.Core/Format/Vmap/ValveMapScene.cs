@@ -34,7 +34,7 @@ public sealed record ValveMapSceneSmartProp(
     ImmutableArray<float> Transform,
     IReadOnlyDictionary<string, object?> Variables);
 
-/// <summary>The renderable projection of an uncompiled VMAP.</summary>
+/// <summary>Vmap reading experiments: the renderable projection of an uncompiled VMAP.</summary>
 public sealed record ValveMapScene(
     string Path,
     ImmutableArray<ValveMapSceneMesh> Meshes,
