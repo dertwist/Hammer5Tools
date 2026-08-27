@@ -16,12 +16,34 @@ namespace Hammer5Tools.Core.Format.Resources;
 [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Public resource operations return structured diagnostics for parser and filesystem failures.")]
 public sealed partial class CompiledModelReader(string gameDirectory, string activeAddon) : ICompiledModelReader, IDisposable
 {
-    private static readonly string[] BaseTextures = ["g_tColor", "g_tColor1", "g_tColor2", "g_tColor3", "g_tColor0", "g_tColorA"];
-    private static readonly string[] NormalTextures = ["g_tNormal", "g_tNormal1", "g_tNormal2", "g_tNormal3", "g_tNormal0", "g_tNormalA"];
-    private static readonly string[] MetalTextures = ["g_tMetalness", "g_tMetalness1", "g_tMetalness2", "g_tMetalness3", "g_tMetalness0"];
-    private static readonly string[] RoughnessTextures = ["g_tRoughness", "g_tRoughness1", "g_tRoughness2", "g_tRoughness3", "g_tRoughness0"];
-    private static readonly string[] AmbientOcclusionTextures = ["g_tAmbientOcclusion", "g_tAmbientOcclusion1", "g_tAmbientOcclusion2"];
-    private static readonly string[] EmissiveTextures = ["g_tSelfIllumMask", "g_tEmissiveMask", "g_tSelfIllum"];
+    private static readonly string[] BaseTextures = [
+        "g_tColor", "g_tColor1", "g_tColor2", "g_tColor3", "g_tColor0", "g_tColorA", "g_tColorB", "g_tColorC",
+        "g_tBaseColor", "g_tAlbedo", "g_tBaseTexture", "g_tGlassTintColor", "g_tGlassMaskColor", "g_tTintColor"
+    ];
+    private static readonly string[] NormalTextures = [
+        "g_tNormal", "g_tNormal1", "g_tNormal2", "g_tNormal3", "g_tNormal0", "g_tNormalA",
+        "g_tNormalRoughness", "g_tNormalMap", "g_tBumpMap"
+    ];
+    private static readonly string[] MetalTextures = [
+        "g_tMetalness", "g_tMetalness1", "g_tMetalness2", "g_tMetalness3", "g_tMetalness0",
+        "g_tMetallic", "g_tMetal"
+    ];
+    private static readonly string[] RoughnessTextures = [
+        "g_tRoughness", "g_tRoughness1", "g_tRoughness2", "g_tRoughness3", "g_tRoughness0",
+        "g_tGlassRoughness"
+    ];
+    private static readonly string[] AmbientOcclusionTextures = [
+        "g_tAmbientOcclusion", "g_tAmbientOcclusion1", "g_tAmbientOcclusion2", "g_tAO"
+    ];
+    private static readonly string[] EmissiveTextures = [
+        "g_tSelfIllumMask", "g_tEmissiveMask", "g_tSelfIllum", "g_tEmissive", "g_tSelfIllumMask1"
+    ];
+    private static readonly string[] TranslucencyTextures = [
+        "g_tTranslucency", "g_tTranslucency1", "g_tTranslucency2", "g_tTranslucency3", "g_tTranslucencyA",
+        "g_tOpacity", "g_tOpacity1", "g_tOpacity2",
+        "g_tOpacityMask", "g_tOpacityMask1", "g_tOpacityMask2",
+        "g_tGlassMaskTranslucency", "g_tGlassMaskTransmission", "g_tGlassMask", "g_tAlpha", "g_tAlphaMask"
+    ];
     private static readonly CompiledMaterial DefaultMaterial = new(
         "", null, null, null, null, null, Vector4.One, 1, 1, Vector3.Zero,
         "OPAQUE", 0.5f, false, 0, 0, 0, Vector2.One, Vector2.Zero,
@@ -328,24 +350,75 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                 if (resource?.DataBlock is not Material material)
                     return DefaultMaterial with { Name = materialPath };
 
+                var shaderName = material.ShaderName ?? "";
+                var isGlassShader = shaderName.Contains("glass", StringComparison.OrdinalIgnoreCase);
+                var isWaterShader = shaderName.Contains("water", StringComparison.OrdinalIgnoreCase);
+                var isTranslucentShader = isGlassShader || isWaterShader || shaderName.Contains("translucent", StringComparison.OrdinalIgnoreCase) || shaderName.Contains("refract", StringComparison.OrdinalIgnoreCase) || shaderName.Contains("particle", StringComparison.OrdinalIgnoreCase);
+
+                var alphaTest = IntParameter(material, "F_ALPHA_TEST") != 0
+                    || IntParameter(material, "F_OPACITY_MASK") != 0
+                    || IntParameter(material, "F_CUTOUT") != 0;
+
+                var translucent = isTranslucentShader
+                    || IntParameter(material, "F_TRANSLUCENT") != 0
+                    || IntParameter(material, "F_TRANSLUCENCY") != 0
+                    || IntParameter(material, "F_TRANSLUCENT_DECAL") != 0
+                    || IntParameter(material, "F_BLEND_MODE") != 0
+                    || IntParameter(material, "F_OVERLAY") != 0
+                    || IntParameter(material, "F_ADDITIVE_BLEND") != 0;
+
+                var alphaCutoff = FloatParameter(material, "g_flAlphaTestReference",
+                    FloatParameter(material, "g_flAlphaCutoff",
+                    FloatParameter(material, "g_flOpacityMaskAlphaReference",
+                    FloatParameter(material, "g_flAlphaTestRef", 0.5f))));
+
+                var doubleSided = IntParameter(material, "F_RENDER_BACKFACES") != 0
+                    || IntParameter(material, "F_DO_NOT_CULL_BACKFACES") != 0
+                    || isGlassShader;
+
                 var textures = material.TextureParams.ToDictionary(entry => entry.Key, entry => entry.Value);
                 var baseName = BaseTextures.FirstOrDefault(textures.ContainsKey);
                 var baseColor = ReadTexture(loader, TexturePath(textures, BaseTextures), maximumTextureDimension);
+                var translucency = ReadTexture(loader, TexturePath(textures, TranslucencyTextures), maximumTextureDimension);
+
+                var colorTint = VectorParameter(material, "g_vColorTint",
+                    VectorParameter(material, "GlassMaskColor",
+                    VectorParameter(material, "g_vGlassTintColor",
+                    VectorParameter(material, "g_vColorTint1",
+                    VectorParameter(material, "g_vColorTint0", Vector4.One)))));
+
+                if (isGlassShader && colorTint.W >= 1.0f)
+                    colorTint = new Vector4(colorTint.X, colorTint.Y, colorTint.Z, 0.35f);
+
+                if (translucency is not null)
+                {
+                    if (baseColor is not null)
+                        baseColor = CombineBaseColorWithTranslucency(baseColor, translucency);
+                    else if (translucent || alphaTest || isTranslucentShader)
+                        baseColor = CreateBaseColorFromTranslucency(translucency, colorTint);
+                }
+
                 var normal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, NormalTextures), maximumTextureDimension);
                 var metal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, MetalTextures), maximumTextureDimension);
                 var roughness = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, RoughnessTextures), maximumTextureDimension);
+                var roughnessFallback = isGlassShader
+                    ? FloatParameter(material, "g_flRoughness", FloatParameter(material, "g_flGlassRoughness", 0.15f))
+                    : FloatParameter(material, "g_flRoughness", 1);
                 var metallicRoughness = baseColorOnly ? null : CombineMetallicRoughness(normal, metal, roughness,
-                    FloatParameter(material, "g_flMetalness", 0), FloatParameter(material, "g_flRoughness", 1));
-                var alphaTest = IntParameter(material, "F_ALPHA_TEST") != 0;
-                var translucent = IntParameter(material, "F_TRANSLUCENT") != 0;
+                    FloatParameter(material, "g_flMetalness", 0), roughnessFallback);
+
+                var alphaMode = translucent ? "BLEND" : alphaTest ? "MASK" : "OPAQUE";
+                if (alphaMode == "OPAQUE" && translucency is not null)
+                    alphaMode = alphaCutoff > 0 ? "MASK" : "BLEND";
+
                 var suffix = baseName is not null && "123".Contains(baseName[^1], StringComparison.Ordinal) ? baseName[^1].ToString() : "";
                 var compiled = new CompiledMaterial(
                     materialPath, baseColor, normal, metallicRoughness,
                     baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, AmbientOcclusionTextures), maximumTextureDimension),
                     baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, EmissiveTextures), maximumTextureDimension),
-                    VectorParameter(material, "g_vColorTint", Vector4.One), metallicRoughness is null ? FloatParameter(material, "g_flMetalness", 0) : 1,
-                    1, Vector3.Zero, translucent ? "BLEND" : alphaTest ? "MASK" : "OPAQUE",
-                    FloatParameter(material, "g_flAlphaTestReference", 0.5f), IntParameter(material, "F_RENDER_BACKFACES") != 0,
+                    colorTint, metallicRoughness is null ? FloatParameter(material, "g_flMetalness", 0) : 1,
+                    roughnessFallback, Vector3.Zero, alphaMode,
+                    alphaCutoff, doubleSided,
                     IntParameter(material, "g_nTextureAddressModeU"), IntParameter(material, "g_nTextureAddressModeV"), 0,
                     Vector2Parameter(material, $"g_vTexCoordScale{suffix}", Vector2Parameter(material, "g_vTexCoordScale", Vector2.One)),
                     Vector2Parameter(material, $"g_vTexCoordOffset{suffix}", Vector2Parameter(material, "g_vTexCoordOffset", Vector2.Zero)),
@@ -418,6 +491,51 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
             data[offset + 3] = 255;
         }
         return new CompiledTexture(reference.Width, reference.Height, [.. data]);
+    }
+
+    private static CompiledTexture CombineBaseColorWithTranslucency(CompiledTexture baseColor, CompiledTexture translucency)
+    {
+        var width = baseColor.Width;
+        var height = baseColor.Height;
+        var data = new byte[width * height * 4];
+        for (var pixel = 0; pixel < width * height; pixel++)
+        {
+            var offset = pixel * 4;
+            data[offset] = baseColor.Rgba[offset];
+            data[offset + 1] = baseColor.Rgba[offset + 1];
+            data[offset + 2] = baseColor.Rgba[offset + 2];
+            data[offset + 3] = SampleTranslucency(translucency, pixel, baseColor);
+        }
+        return new CompiledTexture(width, height, [.. data]);
+    }
+
+    private static CompiledTexture CreateBaseColorFromTranslucency(CompiledTexture trans, Vector4 tint)
+    {
+        var width = trans.Width;
+        var height = trans.Height;
+        var data = new byte[width * height * 4];
+        var r = ToByte(tint.X);
+        var g = ToByte(tint.Y);
+        var b = ToByte(tint.Z);
+        for (var pixel = 0; pixel < width * height; pixel++)
+        {
+            var offset = pixel * 4;
+            data[offset] = r;
+            data[offset + 1] = g;
+            data[offset + 2] = b;
+            data[offset + 3] = SampleTranslucency(trans, pixel, trans);
+        }
+        return new CompiledTexture(width, height, [.. data]);
+    }
+
+    private static byte SampleTranslucency(CompiledTexture trans, int pixel, CompiledTexture target)
+    {
+        var x = pixel % target.Width * trans.Width / target.Width;
+        var y = pixel / target.Width * trans.Height / target.Height;
+        var offset = (y * trans.Width + x) * 4;
+        var r = trans.Rgba[offset];
+        var a = trans.Rgba[offset + 3];
+        return a < 255 ? a : r;
     }
 
     private static byte Sample(CompiledTexture texture, int pixel, CompiledTexture target, int channel)

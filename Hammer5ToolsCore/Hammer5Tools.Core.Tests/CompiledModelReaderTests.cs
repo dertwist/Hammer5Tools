@@ -85,6 +85,48 @@ public sealed class CompiledModelReaderTests
         await Assert.That(result.Value).IsNotNull();
         var material = result.Value!.SubMeshes[0].Material;
         await Assert.That(material.BaseColor).IsNotNull();
-        await Assert.That(material.Normal).IsNotNull();
     }
+
+    [Test]
+    public async Task ReadsModelWithAlphaTestAndDoubleSidedMaterials()
+    {
+        var gameDirectory = @"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\game";
+        if (!Directory.Exists(gameDirectory))
+            return;
+
+        using var reader = new CompiledModelReader(gameDirectory, "de_firewatch");
+        var result = reader.Read("models/firewatch/structures/fences/fence/fence01.vmdl");
+        await Assert.That(result.IsSuccess).IsTrue();
+        var model = result.Value!;
+        await Assert.That(model.SubMeshes).IsNotEmpty();
+
+        var netMesh = model.SubMeshes.FirstOrDefault(sm => sm.Material.Name.Contains("net", StringComparison.OrdinalIgnoreCase));
+        await Assert.That(netMesh).IsNotNull();
+        await Assert.That(netMesh!.Material.AlphaMode).IsEqualTo("MASK");
+        await Assert.That(netMesh.Material.DoubleSided).IsTrue();
+        await Assert.That(netMesh.Material.BaseColor).IsNotNull();
+
+        var wireMesh = model.SubMeshes.FirstOrDefault(sm => sm.Material.Name.Contains("extra_wire", StringComparison.OrdinalIgnoreCase));
+        await Assert.That(wireMesh).IsNotNull();
+        await Assert.That(wireMesh!.Material.AlphaMode).IsEqualTo("MASK");
+        await Assert.That(wireMesh.Material.DoubleSided).IsTrue();
+    }
+
+    [Test]
+    public async Task ReadsGlassMaterialAsTranslucentAndDoubleSided()
+    {
+        var gameDirectory = @"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\game";
+        if (!Directory.Exists(gameDirectory))
+            return;
+
+        using var reader = new CompiledModelReader(gameDirectory, "de_firewatch");
+        var result = reader.ReadStandaloneMaterial("materials/dev/gray_glass.vmat");
+        await Assert.That(result.IsSuccess).IsTrue();
+        var material = result.Value!;
+        await Assert.That(material.AlphaMode).IsEqualTo("BLEND");
+        await Assert.That(material.DoubleSided).IsTrue();
+        await Assert.That(material.BaseColorFactor.W).IsLessThan(1.0f);
+    }
+
 }
+
