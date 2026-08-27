@@ -142,4 +142,4 @@ def test_goto_clipboard_path_relative(qapp):
         qapp.processEvents()
         selected = explorer.get_selected_files()
         assert len(selected) == 1
-        assert os.path.normpath(selected[0]) == os.path.normpath(target_file)
+        assert os.path.samefile(selected[0], target_file)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using ValveKeyValue;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
@@ -64,9 +65,13 @@ internal static class SmartPropSizerVariableEvaluator
                 if (node.TryGetValue(output, out var outputNode) && !outputNode.IsNull
                     && node.TryGetValue(initial, out var initialNode) && !initialNode.IsNull)
                 {
-                    var variableName = outputNode.ToString(null);
+                    var variableName = outputNode.ToString(CultureInfo.InvariantCulture);
                     if (variableName.Length > 0)
-                        overrides[variableName] = initialNode.ToSingle();
+                    {
+                        var raw = initialNode.ToString(CultureInfo.InvariantCulture).Replace('−', '-');
+                        if (float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+                            overrides[variableName] = value;
+                    }
                 }
             }
         }

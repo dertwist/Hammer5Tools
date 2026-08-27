@@ -1,4 +1,4 @@
-﻿using Hammer5Tools.Core.Format.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps;
 
 namespace Hammer5Tools.Core.Tests.SmartProps;
 
@@ -611,8 +611,9 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Models).Count().IsEqualTo(1);
         await Assert.That(result.Models[0].ElementId).IsEqualTo(8);
         await Assert.That(result.Models[0].ModelName).IsEqualTo("models/nested.vmdl");
-        await Assert.That(result.Widgets).Count().IsEqualTo(1);
-        await Assert.That(result.Widgets[0].ElementId).IsEqualTo(13);
+        await Assert.That(result.Widgets).Count().IsEqualTo(2);
+        await Assert.That(result.Widgets.Any(w => w.ElementId == 13 && w.Type == "locator")).IsTrue();
+        await Assert.That(result.Widgets.Any(w => w.ElementId == 4 && w.Type == "element")).IsTrue();
     }
 
     [Test]

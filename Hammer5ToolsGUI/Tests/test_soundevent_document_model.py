@@ -52,8 +52,12 @@ def test_soundevent_document_rename():
 
     text = doc.to_text()
     assert '"amb.base_custom"' in text
-    assert '"amb.base"' not in text
+    assert '"amb.base" =' not in text
     assert "Base template comment" in text
+
+    reloaded = SoundEventDocument.from_text(text)
+    assert "amb.base" not in reloaded.events
+    assert "amb.base_custom" in reloaded.events
 
 
 def test_soundevent_document_does_not_import_qt():

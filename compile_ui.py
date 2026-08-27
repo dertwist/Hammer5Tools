@@ -43,9 +43,29 @@ def strip_designer_stylesheets(generated: str) -> str:
     return stripped
 
 
+import shutil
+
+
+def _find_tool(name: str) -> str:
+    found = shutil.which(name)
+    if found:
+        return found
+    bindir = os.path.dirname(sys.executable)
+    for candidate in (
+        os.path.join(bindir, name),
+        os.path.join(bindir, f"{name}.exe"),
+        os.path.join(bindir, "Scripts", name),
+        os.path.join(bindir, "Scripts", f"{name}.exe"),
+    ):
+        if os.path.isfile(candidate):
+            return candidate
+    return name
+
+
 def compile_ui(ui_file: str, out_file: str) -> None:
     try:
-        subprocess.run(['pyside6-uic', ui_file, '-o', out_file], check=True)
+        uic = _find_tool('pyside6-uic')
+        subprocess.run([uic, ui_file, '-o', out_file], check=True)
         with open(out_file, encoding='utf-8') as generated_file:
             generated = generated_file.read()
         generated = generated.replace(
@@ -83,7 +103,8 @@ def compile_qrc(qrc_file: str, out_file: str) -> None:
     Compile a Qt .qrc file to a Python resources_rc.py file using pyside6-rcc.
     """
     try:
-        subprocess.run(['pyside6-rcc', qrc_file, '-o', out_file], check=True)
+        rcc = _find_tool('pyside6-rcc')
+        subprocess.run([rcc, qrc_file, '-o', out_file], check=True)
         print(f"Compiled {qrc_file} -> {out_file}")
     except subprocess.CalledProcessError as e:
         print(f"Failed to compile {qrc_file}: {e}")
