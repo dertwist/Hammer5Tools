@@ -1,7 +1,10 @@
+import logging
 from PySide6.QtWidgets import QMessageBox
 from gui.settings.common import get_addon_name, get_addon_dir, get_settings_bool
 from gui.widgets import ErrorInfo
 import os
+
+log = logging.getLogger(__name__)
 
 def validate_addon_structure():
     """
@@ -17,7 +20,7 @@ def validate_addon_structure():
         addon_dir = get_addon_dir()
     except (ValueError, TypeError) as e:
         # CS2 path not found or addon name not set - skip validation
-        print(f"Skipping addon validation: {e}")
+        log.error(f"Skipping addon validation: {e}")
         return True
 
     if not addon_name or not addon_dir:

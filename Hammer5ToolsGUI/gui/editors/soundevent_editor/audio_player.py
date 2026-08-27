@@ -1,3 +1,4 @@
+import logging
 import os
 import io
 import wave
@@ -9,6 +10,8 @@ from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFon
 from gui.settings.common import set_settings_bool, get_settings_bool
 from gui.editors.soundevent_editor.ui_audio_player import Ui_Form
 from gui.styles import theme
+
+log = logging.getLogger(__name__)
 
 
 def compute_peak_envelope(file_or_path, frame_ms=30):
@@ -472,7 +475,7 @@ class AudioPlayer(QWidget):
             self._env, self._env_frame_dur = compute_peak_envelope(io.BytesIO(data))
             self.waveform_widget.set_waveform(self._env)
         except Exception as e:
-            print(f"Error loading audio bytes: {e}")
+            log.error(f"Error loading audio bytes: {e}")
             self.filepath = None
             self._env, self._env_frame_dur = None, 0.0
             self.waveform_widget.set_waveform(None)
@@ -486,7 +489,7 @@ class AudioPlayer(QWidget):
             self.set_audio_bytes(data, ext)
             self.filepath = path
         except Exception as e:
-            print(f"Error loading file '{path}': {e}")
+            log.error(f"Error loading file '{path}': {e}")
             self.filepath = None
             self._env, self._env_frame_dur = None, 0.0
             self.waveform_widget.set_waveform(None)

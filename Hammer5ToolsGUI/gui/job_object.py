@@ -6,9 +6,12 @@ Hammer 5 Tools (dotnet bridge, resourcecompiler, ffmpeg, git, bspsrc, etc.)
 will automatically be terminated by the Windows kernel if the main process
 exits, is terminated, or crashes.
 """
+import logging
 import sys
 import ctypes
 from typing import Optional
+
+log = logging.getLogger(__name__)
 
 _job_handle = None
 
@@ -103,7 +106,7 @@ def install_job_object() -> Optional[int]:
         _job_handle = job
         return job
     except Exception as e:
-        print(f"[Hammer5Tools] Failed to initialize Windows Job Object: {e}", file=sys.stderr)
+        log.error(f"Failed to initialize Windows Job Object: {e}")
         return None
 
 

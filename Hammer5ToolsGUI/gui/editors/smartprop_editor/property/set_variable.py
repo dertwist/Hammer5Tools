@@ -1,3 +1,4 @@
+import logging
 from gui.editors.smartprop_editor.property.ui_set_variable import Ui_Widget
 from gui.widgets.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
@@ -7,6 +8,8 @@ from gui.widgets import FloatWidget, BoolWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from gui.styles.common import mark_paint_through, set_style_property
+
+log = logging.getLogger(__name__)
 
 class Vector3DInlineWidget(QWidget):
     edited = Signal()
@@ -157,7 +160,7 @@ class PropertyVariableValue(QWidget):
             self.on_changed(emit=False)
 
         except Exception as e:
-            print(f"Error in PropertyVariableValue.__init__: {e}")
+            log.error(f"Error in PropertyVariableValue.__init__: {e}")
             raise
 
     def reconfigure(self, value_class=None, value=None, variables_scrollArea=None, element_id_generator=None, **kwargs):
@@ -206,7 +209,7 @@ class PropertyVariableValue(QWidget):
                 self.variable.combobox.set_variable(self.m_TargetName)
 
         except Exception as e:
-            print(f"Error in initialize_values: {e}")
+            log.error(f"Error in initialize_values: {e}")
 
     def logic_switch_value(self):
         """Handle switching between Value and Expression modes"""
@@ -237,7 +240,7 @@ class PropertyVariableValue(QWidget):
                 self.bool_widget.hide()
                 self.vector_widget.hide()
         except Exception as e:
-            print(f"Error in logic_switch_value: {e}")
+            log.error(f"Error in logic_switch_value: {e}")
 
     def logic_switch(self):
         """Handle switching between data types (Bool, Float, Int)"""
@@ -277,7 +280,7 @@ class PropertyVariableValue(QWidget):
 
             self.m_DataType = current_type.upper()
         except Exception as e:
-            print(f"Error in logic_switch: {e}")
+            log.error(f"Error in logic_switch: {e}")
 
     def on_changed(self, emit=True):
         """Handle any change in the widget state"""
@@ -298,7 +301,7 @@ class PropertyVariableValue(QWidget):
             if emit:
                 self.edited.emit()
         except Exception as e:
-            print(f"Error in on_changed: {e}")
+            log.error(f"Error in on_changed: {e}")
 
     def change_value(self):
         """Update the internal value based on current widget state"""
@@ -331,7 +334,7 @@ class PropertyVariableValue(QWidget):
                 }
             }
         except Exception as e:
-            print(f"Error in change_value: {e}")
+            log.error(f"Error in change_value: {e}")
 
     def get_variables(self, search_term=None):
         """Get list of available variable names"""

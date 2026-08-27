@@ -1,6 +1,9 @@
+import logging
 import sys
 from PySide6.QtWidgets import QMessageBox
 from core.runtime_paths import resolve_runtime_paths
+
+log = logging.getLogger(__name__)
 
 try:
     import winreg
@@ -103,7 +106,7 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
                 
         return True
     except Exception as e:
-        print(f"Failed to register extension {extension}: {e}")
+        log.error(f"Failed to register extension {extension}: {e}")
         return False
 
 def setup_all_associations(force=False, parent_window=None):

@@ -1,4 +1,7 @@
+import logging
 import sys
+
+log = logging.getLogger(__name__)
 
 _ipc_server = None
 
@@ -17,5 +20,5 @@ def stop_ipc_server():
         try:
             _ipc_server.close()
         except Exception as e:
-            print(f"[IPC] Error closing server: {e}")
+            log.error(f"[IPC] Error closing server: {e}")
         _ipc_server = None

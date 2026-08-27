@@ -1,6 +1,9 @@
+import logging
 import os
 import shutil
 from PySide6.QtCore import QThread, Signal
+
+log = logging.getLogger(__name__)
 
 class ExportWorker(QThread):
     progress = Signal(int)
@@ -55,7 +58,7 @@ class ExportWorker(QThread):
                     shutil.copy2(src, dest)
                 self.file_copied.emit(src)
             except Exception as e:
-                print(f"Error copying {src} to {dest}: {e}")
+                log.error(f"Error copying {src} to {dest}: {e}")
             self.progress.emit(int((i + 1) / len(self.files) * 100))
 
         if self.export_to_zip:

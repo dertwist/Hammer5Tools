@@ -1,3 +1,4 @@
+import logging
 import ast
 import re
 from PySide6.QtWidgets import QTreeWidget
@@ -22,6 +23,8 @@ from gui.widgets.element_id import (
 )
 from gui.widgets import HierarchyItemModel, exception_handler
 from gui.editors.smartprop_editor.objects import variable_prefix, element_prefix
+
+log = logging.getLogger(__name__)
 
 # [Reference handling / merging logic]
 
@@ -166,7 +169,7 @@ def serialization_hierarchy_items(item, data=None):
                 if child_container["m_Children"]:
                     parent_data["m_Children"].append(child_container["m_Children"][0])
     except Exception as e:
-        print(f"Error in serialization: {e}")
+        log.error(f"Error in serialization: {e}")
 
     return data
 def migrate_legacy_comments(data: dict):

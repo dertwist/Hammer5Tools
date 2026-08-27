@@ -1,3 +1,4 @@
+import logging
 # from src.preferences import get_cs2_path
 from gui.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 import sys
@@ -11,6 +12,8 @@ from keyvalues3.textwriter import KV3EncoderOptions
 import ctypes
 from typing import Dict, List, Optional, Set
 import re
+
+log = logging.getLogger(__name__)
 
 GUI_ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
@@ -157,7 +160,7 @@ def enable_dark_title_bar(window):
             ctypes.sizeof(set_dark_mode)
         )
     except Exception as e:
-        print(f"Failed to set dark mode title bar: {e}")
+        log.error(f"Failed to set dark mode title bar: {e}")
 
 # Variables
 
@@ -201,7 +204,7 @@ def get_app_paths() -> tuple[Path, Path]:
                 user_data.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(old_user_data), str(user_data))
         except Exception as me:
-            print(f"Migration failed: {me}")
+            log.error(f"Migration failed: {me}")
             
         return current_dir, user_data
     
@@ -385,7 +388,7 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
             process = subprocess.Popen(cmd_args)
             process.wait()
         except Exception as e:
-            print(f"Error running ResourceCompiler: {e}")
+            log.error(f"Error running ResourceCompiler: {e}")
 
     # Create a new thread for the compile function
     thread = threading.Thread(target=run_rc, args=(input_file,), daemon=True)

@@ -1,9 +1,12 @@
+import logging
 import sys
 import json
 import webbrowser
 import markdown2
 import threading
 import urllib.request
+
+log = logging.getLogger(__name__)
 try:
     import velopack
     from velopack import UpdateManager
@@ -54,7 +57,7 @@ class UpdateWorker(QObject):
                     mgr = UpdateManager(get_update_source(), options=get_update_options())
                     update = mgr.check_for_updates()
                 except Exception as ve:
-                    print(f"Velopack check failed: {ve}")
+                    log.error(f"Velopack check failed: {ve}")
             
             # 2. GitHub Releases check (for changelog)
             parts = self.repo_url.rstrip('/').split('/')
@@ -76,7 +79,7 @@ class UpdateWorker(QObject):
                         # Filter out pre-releases for stable channel
                         releases = [r for r in all_releases if not r.get('prerelease')][:10]
                 except Exception as je:
-                    print(f"Failed to parse releases JSON: {je}")
+                    log.error(f"Failed to parse releases JSON: {je}")
             
             # 3. Emit results
             if update:
@@ -92,7 +95,7 @@ class UpdateWorker(QObject):
                     self.no_update.emit(releases, owner, repo, mgr)
                     
         except Exception as e:
-            print(f"General update check error: {e}")
+            log.error(f"General update check error: {e}")
             if not self.silent:
                 self.error.emit(str(e))
 
@@ -318,7 +321,7 @@ def prepare_for_update():
         from gui.ipc.server_utils import stop_ipc_server
         stop_ipc_server()
     except Exception as e:
-        print(f"Failed to stop IPC server: {e}")
+        log.error(f"Failed to stop IPC server: {e}")
 
     # 2. Terminate child processes and lingering helpers
     try:
@@ -345,7 +348,7 @@ def prepare_for_update():
                 except Exception:
                     pass
         except Exception as e:
-            print(f"Error terminating child processes: {e}")
+            log.error(f"Error terminating child processes: {e}")
 
         # Kill any other background Hammer5Tools instances (e.g. tray instances) or specific locking tools
         target_names = {'hammer5tools.exe', 'hammer5tools_core.exe', 'resourcecompiler.exe', 'bspsrc.exe'}
@@ -364,7 +367,7 @@ def prepare_for_update():
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
     except Exception as e:
-        print(f"Error during process cleanup: {e}")
+        log.error(f"Error during process cleanup: {e}")
 
     # 3. Flush / wait for global threadpool
     try:

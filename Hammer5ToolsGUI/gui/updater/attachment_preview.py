@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -23,6 +24,8 @@ from PySide6.QtWidgets import (
 )
 
 from gui.common import user_data_dir
+
+log = logging.getLogger(__name__)
 
 # Supported extensions
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.svg', '.webp'}
@@ -335,7 +338,7 @@ class AttachmentCache(QObject):
             try:
                 fn(path, mtype)
             except Exception as e:
-                print(f"Error in attachment callback: {e}")
+                log.error(f"Error in attachment callback: {e}")
 
     @Slot(str, str)
     def _on_download_failed(self, url: str, error: str):
@@ -345,7 +348,7 @@ class AttachmentCache(QObject):
             try:
                 fn(error)
             except Exception as e:
-                print(f"Error in attachment error callback: {e}")
+                log.error(f"Error in attachment error callback: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

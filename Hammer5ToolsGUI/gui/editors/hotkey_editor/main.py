@@ -1,3 +1,4 @@
+import logging
 import shutil
 
 from gui.editors.hotkey_editor.ui_main import Ui_MainWindow
@@ -11,6 +12,8 @@ import os
 import datetime
 import keyvalues3 as kv3
 from gui.common import editor_info, app_dir, Hotkeys_Path, user_data_dir
+
+log = logging.getLogger(__name__)
 
 class KeyButton(QPushButton):
     DEFAULT_COLOR = "#b2b2b2"
@@ -190,7 +193,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         try:
             self.data.update(kv3.read(filename).value)
         except Exception as error:
-            print(error)
+            log.error(error)
         self.opened_file = filename
 
         self.populate_editor()

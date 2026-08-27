@@ -1,3 +1,4 @@
+import logging
 from gui.editors.smartprop_editor.property.ui_reference import Ui_Widget
 import ast
 import re
@@ -7,6 +8,8 @@ from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets import HierarchyItemModel
 from gui.editors.smartprop_editor.property import compact
 import uuid
+
+log = logging.getLogger(__name__)
 
 class PropertyReference(QWidget):
     edited = Signal()
@@ -71,7 +74,7 @@ class PropertyReference(QWidget):
                         if item.childCount() > 0:
                             items.extend(collect_tree_items(item))
             except Exception as e:
-                print(f"Error collecting tree items: {e}")
+                log.error(f"Error collecting tree items: {e}")
             return items
 
         # Collect all items from the tree hierarchy
@@ -79,7 +82,7 @@ class PropertyReference(QWidget):
             root_item = self.tree_hierarchy.invisibleRootItem()
             all_items = collect_tree_items(root_item)
         except Exception as e:
-            print(f"Error getting root item: {e}")
+            log.error(f"Error getting root item: {e}")
             return
 
         # Create a list of property dictionaries for the PopupMenu
@@ -129,7 +132,7 @@ class PropertyReference(QWidget):
                 properties.append({display_text: element_id})
                 
             except Exception as e:
-                print(f"Error processing item: {e}")
+                log.error(f"Error processing item: {e}")
                 continue
 
         if not properties:
@@ -142,7 +145,7 @@ class PropertyReference(QWidget):
             self.hierarchy_menu.add_property_signal.connect(self.on_hierarchy_item_selected)
             self.hierarchy_menu.show()
         except Exception as e:
-            print(f"Error creating popup menu: {e}")
+            log.error(f"Error creating popup menu: {e}")
 
     def on_hierarchy_item_selected(self, name, element_id):
         """Handle the selection of a hierarchy item from the popup menu."""
@@ -184,7 +187,7 @@ class PropertyReference(QWidget):
                             if found_item:
                                 return found_item
             except Exception as e:
-                print(f"Error searching for item: {e}")
+                log.error(f"Error searching for item: {e}")
             return None
         
         try:
@@ -208,7 +211,7 @@ class PropertyReference(QWidget):
                 print(f"Element with ID {ref_id} not found in hierarchy")
                 
         except Exception as e:
-            print(f"Error showing reference in hierarchy: {e}")
+            log.error(f"Error showing reference in hierarchy: {e}")
 
     def reference_object_id_get(self):
         """Generate a new reference object ID."""

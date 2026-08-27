@@ -16,10 +16,13 @@ Typical use::
     r.write("merged.vmap")
     r.close()
 """
-
 from __future__ import annotations
 
+import logging
+
 import os
+
+log = logging.getLogger(__name__)
 
 OURS = "ours"
 THEIRS = "theirs"
@@ -155,7 +158,7 @@ def main(argv=None):
     try:
         r = merge(args.ours, args.theirs, args.base, args.allow_unrelated)
     except ValueError as e:
-        print("error: %s" % e)
+        log.error("error: %s" % e)
         return 2
     print(r.summary())
     for kind, blocks in (("+", r.added), ("-", r.removed), ("~", r.changed)):

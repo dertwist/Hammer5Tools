@@ -40,8 +40,9 @@ off the selection path:
 Both are keyed on a content fingerprint, so a frame is only ever reused for
 data it still matches.
 """
-
 from __future__ import annotations
+
+import logging
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -57,6 +58,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+log = logging.getLogger(__name__)
 
 # How many built frames to keep alive for instant reselection. Each frame is
 # ~580 QWidgets, so this trades a few MB for a ~0 ms selection change.
@@ -214,7 +217,7 @@ class LegacyPropertyList(QWidget):
             frame.ui.frame.setVisible(False)
             return frame
         except Exception as exc:
-            print(f"[LegacyPropertyList] Could not create PropertyFrame: {exc}")
+            log.error(f"[LegacyPropertyList] Could not create PropertyFrame: {exc}")
             return None
 
     def _build(self, key, ref, value: dict, digest: int):

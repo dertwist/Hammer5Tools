@@ -1,3 +1,4 @@
+import logging
 import os.path
 import sys
 import subprocess
@@ -11,6 +12,8 @@ import re
 from pathlib import Path
 from datetime import datetime
 from dataclasses import fields
+
+log = logging.getLogger(__name__)
 
 try:
     import winsound
@@ -61,7 +64,7 @@ class BuildHistoryCache:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
                 __import__('json').dump(self.cache, f, indent=4)
         except Exception as e:
-            print(f"Error saving build history: {e}")
+            log.error(f"Error saving build history: {e}")
 
     def get_estimated_time(self, map_path: str, settings) -> float:
         data = self.cache.get(map_path)
@@ -530,7 +533,7 @@ class CompilationThread(QThread):
             self.finished.emit(exit_code, elapsed)
 
         except Exception as e:
-            print(f"Compilation error: {e}")
+            log.error(f"Compilation error: {e}")
             self.finished.emit(-1, 0)
 
     def abort(self):
@@ -1084,7 +1087,7 @@ class MapBuilderDialog(QMainWindow):
         try:
             set_settings_value("MapBuilder", "LastBuildTime", time_str)
         except Exception as e:
-            print(f"Failed to save LastBuildTime: {e}")
+            log.error(f"Failed to save LastBuildTime: {e}")
 
         if exit_code == 0:
             map_path = os.path.abspath(self.map_queue[self.current_map_index - 1])
@@ -1230,7 +1233,7 @@ class MapBuilderDialog(QMainWindow):
             text = self.ui.output_list_widget.toPlainText()
             log_file.write_text(text, encoding="utf-8")
         except Exception as e:
-            print(f"Error saving auto log: {e}")
+            log.error(f"Error saving auto log: {e}")
 
     def launch_map_after_build(self, map_list: list):
         if self.build_was_aborted:
@@ -1502,7 +1505,7 @@ class MapBuilderDialog(QMainWindow):
             print(f"Build log saved to: {log_file}")
 
         except Exception as e:
-            print(f"Error saving build log: {e}")
+            log.error(f"Error saving build log: {e}")
 
     def format_time(self, seconds: float) -> str:
         if seconds < 60:

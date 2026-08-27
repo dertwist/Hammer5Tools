@@ -1,3 +1,4 @@
+import logging
 import os.path
 import re
 import ast
@@ -80,6 +81,8 @@ from gui.common import (
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 from gui.editors.smartprop_editor.manual_editor import ManualEditor
+
+log = logging.getLogger(__name__)
 
 # Regex for parsing diff keys like 'm_Modifiers[2].m_flAmount' or 'm_SelectionCriteria[0]'
 _DIFF_KEY_RE = re.compile(r'^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$')
@@ -388,7 +391,7 @@ class SmartPropDocument(QMainWindow):
             self._viewport_3d.elementClicked.connect(self._on_viewport_element_clicked)
         except Exception as e:
             # The viewport depends on OpenGL/VRF; never let it break the editor.
-            print(f"[SmartProp3D] 3D Viewport unavailable: {e}")
+            log.error(f"[SmartProp3D] 3D Viewport unavailable: {e}")
             self._viewport_3d_failed = True
             from PySide6.QtWidgets import QVBoxLayout
             label = QLabel("3d preview for this smartprop unavalible due to using of unsupported properties and elements.")
@@ -1334,7 +1337,7 @@ class SmartPropDocument(QMainWindow):
                 if app is not None:
                     ErrorInfo(text=error_message, details=error_details).exec_()
                 else:
-                    print("Error: QApplication instance is not available.")
+                    log.error("Error: QApplication instance is not available.")
                 return False
 
             self.opened_file = VsmartSaveInstance.filename

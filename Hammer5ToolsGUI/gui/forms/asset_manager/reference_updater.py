@@ -1,5 +1,8 @@
+import logging
 import os
 import re
+
+log = logging.getLogger(__name__)
 
 class ReferenceUpdater:
     SCANNABLE_EXTS = {'.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vsnd', '.vmap', '.vpost', '.vanim', '.vseq', '.vphys'}
@@ -94,5 +97,5 @@ class ReferenceUpdater:
                                 file.write(new_text)
                             modified.append(abs_path)
                 except Exception as e:
-                    print(f"Error updating references in {abs_path}: {e}")
+                    log.error(f"Error updating references in {abs_path}: {e}")
         return modified

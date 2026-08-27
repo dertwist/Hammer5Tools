@@ -1,3 +1,4 @@
+import logging
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QLineEdit, \
     QDialog, QPushButton, QTableView, QComboBox, QMessageBox, QHeaderView, QMenu, QSizePolicy, QTextEdit, QProgressBar
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QThread, Signal
@@ -9,6 +10,8 @@ from gui.common import enable_dark_title_bar
 from gui.styles.common import mark_paint_through
 from gui.forms.cleanup.common import format_size
 from gui.forms.cleanup.parse import get_junk_files
+
+log = logging.getLogger(__name__)
 
 
 class VerificationThread(QThread):
@@ -536,7 +539,7 @@ class CleanupDialog(QDialog):
                 os.remove(file_path)
                 deleted_files.append(file_path)
             except Exception as e:
-                print(f"Error deleting '{file_path}': {e}")
+                log.error(f"Error deleting '{file_path}': {e}")
 
         QMessageBox.information(self, "Cleanup Completed", f"Deleted {len(deleted_files)} files")
         self.accept()

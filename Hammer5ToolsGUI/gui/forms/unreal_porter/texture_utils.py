@@ -1,5 +1,8 @@
+import logging
 import os
 from PIL import Image
+
+log = logging.getLogger(__name__)
 
 def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool = False, is_orm: bool = False):
     """
@@ -37,7 +40,7 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
             "height": height_path
         }
     except Exception as e:
-        print(f"Error unpacking RMA/ORM: {e}")
+        log.error(f"Error unpacking RMA/ORM: {e}")
         return None
 
 def unpack_orh(orh_path: str, output_dir: str, base_name: str):
@@ -63,7 +66,7 @@ def unpack_orh(orh_path: str, output_dir: str, base_name: str):
             "height": height_path
         }
     except Exception as e:
-        print(f"Error unpacking ORH: {e}")
+        log.error(f"Error unpacking ORH: {e}")
         return None
 
 def extract_alpha(color_path: str, out_path: str, mid_band=(32, 223), max_mid=0.10, min_off=0.02):
@@ -99,7 +102,7 @@ def extract_alpha(color_path: str, out_path: str, mid_band=(32, 223), max_mid=0.
         alpha.save(out_path, rle=True)
         return out_path
     except Exception as e:
-        print(f"Error extracting alpha from {color_path}: {e}")
+        log.error(f"Error extracting alpha from {color_path}: {e}")
         return None
 
 
@@ -140,7 +143,7 @@ def convert_to_tga(input_path: str, output_dir: str, new_suffix: str, invert_y: 
             img.save(output_path)
         return output_path
     except Exception as e:
-        print(f"Error converting texture: {e}")
+        log.error(f"Error converting texture: {e}")
         return None
 
 def is_metallic(metal_map_path: str):

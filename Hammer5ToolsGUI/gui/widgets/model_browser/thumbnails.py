@@ -20,6 +20,7 @@ The shader here is deliberately *not* the viewport's PBR one: a 128px tile does
 not benefit from metallic-roughness, and a small self-contained program avoids
 coupling thumbnails to the viewport's uniform layout.
 """
+import logging
 import os
 import hashlib
 import sqlite3
@@ -36,6 +37,8 @@ from gui.editors.smartprop_editor.viewport_3d.mesh_cache import MeshData
 
 
 from collections import OrderedDict
+
+log = logging.getLogger(__name__)
 
 THUMB_VERTEX_SHADER = """
 #version 330 core
@@ -248,7 +251,7 @@ class _MeshLoadWorker(QRunnable):
                               max_texture_dim=THUMB_TEXTURE_DIM, base_color_only=True)
         except Exception as exc:
             msg = str(exc).splitlines()[0] if str(exc) else "Load error"
-            print(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
+            log.error(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
         self.signals.loaded.emit(self.entry.path, mesh)
 
 
@@ -433,7 +436,7 @@ class ThumbnailService(QObject):
             GL.glEnable(GL.GL_DEPTH_TEST)
             return True
         except Exception as exc:
-            print(f"[model_browser] offscreen GL unavailable, thumbnails disabled: {exc}")
+            log.error(f"[model_browser] offscreen GL unavailable, thumbnails disabled: {exc}")
             self._gl_failed = True
             return False
 
@@ -532,7 +535,7 @@ class ThumbnailService(QObject):
             GL.glFinish()
             return fbo.toImage()
         except Exception as exc:
-            print(f"[model_browser] thumbnail render failed: {exc}")
+            log.error(f"[model_browser] thumbnail render failed: {exc}")
             return None
         finally:
             try:

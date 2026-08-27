@@ -1,3 +1,4 @@
+import logging
 import re
 from gui.common import fast_deepcopy
 
@@ -7,6 +8,8 @@ from PySide6.QtGui import QUndoCommand
 
 from gui.widgets import HierarchyItemModel
 from gui.editors.smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
+
+log = logging.getLogger(__name__)
 
 
 class GroupElementsCommand(QUndoCommand):
@@ -56,7 +59,7 @@ class GroupElementsCommand(QUndoCommand):
             self.group_element.setSelected(True)
             self.tree.scrollToItem(self.group_element)
         except Exception as e:
-            print(f"[SPE][GroupSelected] redo: ERROR — {e}")
+            log.error(f"[SPE][GroupSelected] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][GroupSelected] undo: restoring {len(self.moved_items_info)} item(s) to original parents")
@@ -79,7 +82,7 @@ class GroupElementsCommand(QUndoCommand):
                 self.tree.scrollToItem(item)
             self._item_refs = [item for item, _, _ in self.moved_items_info]
         except Exception as e:
-            print(f"[SPE][GroupSelected] undo: ERROR — {e}")
+            log.error(f"[SPE][GroupSelected] undo: ERROR — {e}")
 
 
 class PasteItemsCommand(QUndoCommand):
@@ -105,7 +108,7 @@ class PasteItemsCommand(QUndoCommand):
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
         except Exception as e:
-            print(f"[SPE][Paste] redo: ERROR — {e}")
+            log.error(f"[SPE][Paste] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][Paste] undo: removing {len(self.added)} pasted item(s)")
@@ -120,7 +123,7 @@ class PasteItemsCommand(QUndoCommand):
                     print(f"[SPE][Paste] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
             self.added.clear()
         except Exception as e:
-            print(f"[SPE][Paste] undo: ERROR — {e}")
+            log.error(f"[SPE][Paste] undo: ERROR — {e}")
 
 
 class BulkModelImportCommand(QUndoCommand):
@@ -147,7 +150,7 @@ class BulkModelImportCommand(QUndoCommand):
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
         except Exception as e:
-            print(f"[SPE][BulkImport] redo: ERROR — {e}")
+            log.error(f"[SPE][BulkImport] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][BulkImport] undo: removing {len(self.added)} imported model(s)")
@@ -162,7 +165,7 @@ class BulkModelImportCommand(QUndoCommand):
                     print(f"[SPE][BulkImport] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
             self.added.clear()
         except Exception as e:
-            print(f"[SPE][BulkImport] undo: ERROR — {e}")
+            log.error(f"[SPE][BulkImport] undo: ERROR — {e}")
 
 
 class NewFromPresetCommand(QUndoCommand):
@@ -204,7 +207,7 @@ class NewFromPresetCommand(QUndoCommand):
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
         except Exception as e:
-            print(f"[SPE][NewFromPreset] redo: ERROR — {e}")
+            log.error(f"[SPE][NewFromPreset] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][NewFromPreset] undo: removing {len(self.added)} preset item(s) and restoring old state")
@@ -219,7 +222,7 @@ class NewFromPresetCommand(QUndoCommand):
             self.document._restore_variables(self.old_variables)
             self.document._restore_choices(self.old_choices)
         except Exception as e:
-            print(f"[SPE][NewFromPreset] undo: ERROR — {e}")
+            log.error(f"[SPE][NewFromPreset] undo: ERROR — {e}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -412,7 +415,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
         except Exception as e:
-            print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
+            log.error(f"[SPE][PropertyEdit] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][PropertyEdit] undo: '{self.item.text(0)}' — {self.text()}")
@@ -427,7 +430,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
         except Exception as e:
-            print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
+            log.error(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -502,14 +505,14 @@ class VariablesSnapshotCommand(QUndoCommand):
         try:
             self.document._restore_variables(self.new_state)
         except Exception as e:
-            print(f"[SPE][Variables] redo: ERROR — {e}")
+            log.error(f"[SPE][Variables] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][Variables] undo: {self.text()}")
         try:
             self.document._restore_variables(self.old_state)
         except Exception as e:
-            print(f"[SPE][Variables] undo: ERROR — {e}")
+            log.error(f"[SPE][Variables] undo: ERROR — {e}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -539,14 +542,14 @@ class ChoicesSnapshotCommand(QUndoCommand):
         try:
             self.document._restore_choices(self.new_state)
         except Exception as e:
-            print(f"[SPE][Choices] redo: ERROR — {e}")
+            log.error(f"[SPE][Choices] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][Choices] undo: {self.text()}")
         try:
             self.document._restore_choices(self.old_state)
         except Exception as e:
-            print(f"[SPE][Choices] undo: ERROR — {e}")
+            log.error(f"[SPE][Choices] undo: ERROR — {e}")
 
 
 class HierarchyItemRenameCommand(QUndoCommand):

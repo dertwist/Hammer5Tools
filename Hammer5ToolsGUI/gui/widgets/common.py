@@ -1,3 +1,4 @@
+import logging
 import ast
 from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, \
@@ -20,6 +21,8 @@ from gui.common import discord_feedback_channel
 from logging import error
 import traceback, ctypes
 from gui.common import enable_dark_title_bar
+
+log = logging.getLogger(__name__)
 try:
     import winsound
 except ImportError:
@@ -216,7 +219,7 @@ def exception_handler(func):
             if app is not None:
                 ErrorInfo(text=error_message, details=error_details).exec_()
             else:
-                print("Error: QApplication instance is not available.")
+                log.error("Error: QApplication instance is not available.")
 
             # Return None or a default value
             return None
@@ -299,4 +302,4 @@ class DeleteButton(Button):
         try:
             self.instance.close()
         except Exception as e:
-            print(f"Error deleting instance: {e}")
+            log.error(f"Error deleting instance: {e}")

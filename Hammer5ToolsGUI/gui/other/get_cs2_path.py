@@ -1,5 +1,8 @@
+import logging
 import os
 import re
+
+log = logging.getLogger(__name__)
 
 try:
     import winreg
@@ -24,7 +27,7 @@ def get_steam_install_path():
                 steam_path, _ = winreg.QueryValueEx(key, "InstallPath")
                 return steam_path
         except OSError as e:
-            print(f"Error reading Steam install path: {e}")
+            log.error(f"Error reading Steam install path: {e}")
             return None
 
 
@@ -41,7 +44,7 @@ def get_steam_library_folders(steam_path):
             matches = re.findall(r'"path"\s+"([^"]+)"', content)
             library_folders.extend(matches)
     except Exception as e:
-        print(f"Error reading libraryfolders.vdf: {e}")
+        log.error(f"Error reading libraryfolders.vdf: {e}")
 
     return library_folders
 

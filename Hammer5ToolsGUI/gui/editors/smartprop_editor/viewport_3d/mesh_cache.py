@@ -4,6 +4,7 @@ Handles compiled model → CPU mesh data → GPU upload, with caching at every l
 
 The CPU half — reading .vmdl_c/.vmat_c/.vtex_c — lives in :mod:`vmdl_reader`.
 """
+import logging
 import os
 from typing import Optional, Dict
 from dataclasses import dataclass, field
@@ -11,6 +12,8 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Slot
+
+log = logging.getLogger(__name__)
 
 
 # CPU-side mesh data (read from compiled assets, not yet on GPU)
@@ -162,7 +165,7 @@ class _ModelLoadWorker(QRunnable):
             from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
             mesh = load_model(self.model_resource_path, self.context_addon)
         except Exception as e:
-            print(f"[MeshCache] Model load failed for {self.model_resource_path}: {e}")
+            log.error(f"[MeshCache] Model load failed for {self.model_resource_path}: {e}")
             mesh = None
         self.signals.loaded.emit(self.model_resource_path, mesh)
 
@@ -252,7 +255,7 @@ class MeshCache(QObject):
                 gpu_mesh = self._upload_mesh(mesh_data)
                 self._gpu_cache[resource_path] = gpu_mesh
             except Exception as e:
-                print(f"[MeshCache] GPU upload failed for {resource_path}: {e}")
+                log.error(f"[MeshCache] GPU upload failed for {resource_path}: {e}")
                 self._failed.add(resource_path)
             finally:
                 del self._pending_upload[resource_path]
@@ -327,7 +330,7 @@ class MeshCache(QObject):
                 if gpu_mesh.textures:
                     GL.glDeleteTextures(len(gpu_mesh.textures), gpu_mesh.textures)
             except Exception as e:
-                print(f"[MeshCache] GPU unload failed for {path}: {e}")
+                log.error(f"[MeshCache] GPU unload failed for {path}: {e}")
             finally:
                 del self._pending_unload[path]
 
@@ -344,7 +347,7 @@ class MeshCache(QObject):
             GL.glDeleteVertexArrays(1, [gpu_mesh.vao])
             GL.glDeleteBuffers(2, [gpu_mesh.vbo, gpu_mesh.ebo])
         except Exception as e:
-            print(f"[MeshCache] Deformed GPU unload failed: {e}")
+            log.error(f"[MeshCache] Deformed GPU unload failed: {e}")
 
     def _upload_vertex_buffers(self, vertices: np.ndarray, normals: np.ndarray,
                                 uvs: Optional[np.ndarray], indices: np.ndarray):
@@ -483,7 +486,7 @@ class MeshCache(QObject):
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             return int(texture_id)
         except Exception as e:
-            print(f"[MeshCache] Texture upload failed: {e}")
+            log.error(f"[MeshCache] Texture upload failed: {e}")
             return 0
 
 

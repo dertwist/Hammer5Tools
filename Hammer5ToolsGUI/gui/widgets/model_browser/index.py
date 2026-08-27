@@ -20,6 +20,7 @@ user files are always up to date. Game directories and VPKs are scanned only on
 the first opening in the session (or loaded from persistent cache) and cached in
 memory for subsequent openings.
 """
+import logging
 import os
 import json
 import glob
@@ -28,6 +29,8 @@ from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict
 
 from PySide6.QtCore import QObject, Signal, QRunnable, Slot
+
+log = logging.getLogger(__name__)
 
 # Whether an entry belongs to the addon being edited or to the game underneath.
 SOURCE_ADDON = "Addon"
@@ -248,7 +251,7 @@ def _scan_vpks(game_root: str, source: str, mod: str, extensions: Optional[tuple
                     asset_type=raw_ext,
                 ))
     except Exception as exc:
-        print(f"[model_browser] Core VPK index unavailable, skipping VPK scan: {exc}")
+        log.error(f"[model_browser] Core VPK index unavailable, skipping VPK scan: {exc}")
         return []
     return entries
 
@@ -385,7 +388,7 @@ def save_cached_game_index(cs2_path: str, entries: List[ModelEntry]) -> None:
                 "entries": [asdict(e) for e in entries],
             }, handle)
     except Exception as exc:
-        print(f"[model_browser] could not write game index cache: {exc}")
+        log.error(f"[model_browser] could not write game index cache: {exc}")
 
 
 def get_game_entries(
@@ -542,7 +545,7 @@ class ScanWorker(QRunnable):
                 use_addon_cache=self.use_cache
             )
         except Exception as exc:
-            print(f"[model_browser] scan failed: {exc}")
+            log.error(f"[model_browser] scan failed: {exc}")
         self._emit(entries)
 
 

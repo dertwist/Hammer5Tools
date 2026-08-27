@@ -1,3 +1,4 @@
+import logging
 from PySide6.QtWidgets import QMessageBox
 from gui.other.ncm_setup import NCM_mode_setup
 from gui.other.assettypes import ensure_vsmart_configured
@@ -15,6 +16,8 @@ from gui.settings.common import (
 import shutil, psutil, os, subprocess, sys
 from gui.common import default_commands
 from gui.widgets import exception_handler
+
+log = logging.getLogger(__name__)
 
 
 @exception_handler
@@ -134,7 +137,7 @@ def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
             if ret > 32:
                 return True
         except Exception as e:
-            print(f"ShellExecute failed: {e}, falling back to subprocess.Popen")
+            log.error(f"ShellExecute failed: {e}, falling back to subprocess.Popen")
 
     # 4. Fallback: subprocess.Popen with full detachment flags and null standard handles
     flags_breakaway = (

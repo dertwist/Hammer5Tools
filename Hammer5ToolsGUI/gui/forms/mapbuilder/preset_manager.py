@@ -2,6 +2,7 @@
 Preset management system for build configurations.
 Handles saving, loading, and managing compilation presets.
 """
+import logging
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,8 @@ from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, asdict, field, fields
 from gui.common import fast_deepcopy
 from gui.settings.common import get_settings_value, set_settings_value
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -243,7 +246,7 @@ class PresetManager:
                 self.presets = [BuildPreset.from_dict(p) for p in data.get("presets", [])]
                 return
             except Exception as e:
-                print(f"Error loading presets from settings: {e}")
+                log.error(f"Error loading presets from settings: {e}")
         
         # Fallback: try to load from old file if it exists
         if self.presets_file and self.presets_file.exists():
@@ -255,7 +258,7 @@ class PresetManager:
                     self.save_presets()
                     return
             except Exception as e:
-                print(f"Error loading presets from file: {e}")
+                log.error(f"Error loading presets from file: {e}")
         
         self._create_default_presets()
 
@@ -334,7 +337,7 @@ class PresetManager:
             presets_json = json.dumps(data)
             set_settings_value("MapBuilder", "Presets", presets_json)
         except Exception as e:
-            print(f"Error saving presets: {e}")
+            log.error(f"Error saving presets: {e}")
 
     def add_preset(self, preset: BuildPreset) -> bool:
         """Add a new preset"""

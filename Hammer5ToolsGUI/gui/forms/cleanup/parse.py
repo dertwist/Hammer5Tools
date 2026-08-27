@@ -1,7 +1,10 @@
+import logging
 from gui.common import Kv3ToJson
 import vdf
 from collections import deque
 from core.bridge import CoreBridge
+
+log = logging.getLogger(__name__)
 
 
 def extract_vmap_references(vmap_path):
@@ -23,7 +26,7 @@ def get_mesh_material_references(file_path):
         # Decode using utf-8 with ignore to get a clean string from binary
         content = content_bytes.decode('utf-8', errors='ignore')
     except Exception as e:
-        print(f"Error reading mesh file '{file_path}': {e}")
+        log.error(f"Error reading mesh file '{file_path}': {e}")
         return []
 
     # Find .vmat or .vmt references using regex
@@ -71,10 +74,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
             with open(vtex_path, 'r', encoding='utf-8', errors='ignore') as file:
                 content = file.read()
         except FileNotFoundError:
-            print(f"Error: File '{vtex_path}' not found")
+            log.error(f"Error: File '{vtex_path}' not found")
             return []
         except Exception as e:
-            print(f"Error reading '{vtex_path}': {e}")
+            log.error(f"Error reading '{vtex_path}': {e}")
             return []
 
         references = []
@@ -100,10 +103,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                 kv3_data = file.read()
             file_data = Kv3ToJson(kv3_data)
         except FileNotFoundError:
-            print(f"Error: File '{vpcf_path}' not found")
+            log.error(f"Error: File '{vpcf_path}' not found")
             return []
         except Exception as e:
-            print(f"Error parsing '{vpcf_path}': {e}")
+            log.error(f"Error parsing '{vpcf_path}': {e}")
             return []
 
         references = []
@@ -140,10 +143,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
             with open(vsndevts_path, 'r') as file:
                 kv3_data = Kv3ToJson(file.read())
         except FileNotFoundError:
-            print(f"Error: File '{vsndevts_path}' not found")
+            log.error(f"Error: File '{vsndevts_path}' not found")
             return []
         except Exception as e:
-            print(f"Error parsing '{vsndevts_path}': {e}")
+            log.error(f"Error parsing '{vsndevts_path}': {e}")
             return []
 
         references = []
@@ -206,10 +209,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                 kv3_data = f.read()
             file = Kv3ToJson(kv3_data)
         except FileNotFoundError:
-            print(f"Error: File '{vsmart_path}' not found")
+            log.error(f"Error: File '{vsmart_path}' not found")
             return []
         except Exception as e:
-            print(f"Error parsing '{vsmart_path}': {e}")
+            log.error(f"Error parsing '{vsmart_path}': {e}")
             return []
 
         references = []
@@ -243,10 +246,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
             with open(vmat_path, 'r') as f:
                 file = vdf.load(f)
         except FileNotFoundError:
-            print(f"Error: File '{vmat_path}' not found")
+            log.error(f"Error: File '{vmat_path}' not found")
             return [], []
         except Exception as e:
-            print(f"Error parsing '{vmat_path}': {e}")
+            log.error(f"Error parsing '{vmat_path}': {e}")
             return [], []
 
         texture_references = []
@@ -291,10 +294,10 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                 kv3_data = f.read()
             file = Kv3ToJson(kv3_data)
         except FileNotFoundError:
-            print(f"Error: File '{vmdl_path}' not found")
+            log.error(f"Error: File '{vmdl_path}' not found")
             return []
         except Exception as e:
-            print(f"Error parsing '{vmdl_path}': {e}")
+            log.error(f"Error parsing '{vmdl_path}': {e}")
             return []
 
         references = []
@@ -493,7 +496,7 @@ def load_dirtlist(addon_dir):
                     if line and not line.startswith('#'):
                         patterns.append(line.replace('\\', '/').lower())
         except Exception as e:
-            print(f"Error reading .dirtlist: {e}")
+            log.error(f"Error reading .dirtlist: {e}")
     return patterns
 
 

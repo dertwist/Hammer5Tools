@@ -1,4 +1,7 @@
+import logging
 import os
+
+log = logging.getLogger(__name__)
 
 class DependencyResolver:
 
@@ -34,7 +37,7 @@ class DependencyResolver:
             for m in matches:
                 self._add_dep(m)
         except Exception as e:
-            print(f"DependencyResolver: Error parsing {path}: {e}")
+            log.error(f"DependencyResolver: Error parsing {path}: {e}")
 
     def _add_dep(self, rel_path: str):
         if not rel_path:

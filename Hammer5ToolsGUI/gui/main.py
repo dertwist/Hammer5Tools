@@ -1,9 +1,12 @@
+import logging
 import sys
 import os
 import argparse
 import faulthandler
 import time
 import ctypes
+
+log = logging.getLogger(__name__)
 
 
 if not getattr(sys, "frozen", False):
@@ -39,7 +42,7 @@ if sys.platform == 'win32':
                     if os.path.isdir(sub_dir):
                         os.add_dll_directory(sub_dir)
     except Exception as e:
-        print(f"Error configuring PySide6 DLL paths: {e}")
+        log.error(f"Error configuring PySide6 DLL paths: {e}")
 
 # VELOPACK / SQUIRREL HOOKS
 # This MUST run before any other imports (especially Qt) to prevent the GUI from opening
@@ -232,6 +235,9 @@ if __name__ == "__main__":
         if os.path.isdir(src_dir) and src_dir not in sys.path:
             sys.path.insert(0, src_dir)
 
+    from gui.logs import setup_logging
+    setup_logging()
+
     _install_crash_handler()
 
     # Windows Job Object initialization (ensures all child processes terminate on exit)
@@ -240,7 +246,7 @@ if __name__ == "__main__":
             from gui.job_object import install_job_object
             install_job_object()
         except Exception as e:
-            print(f"Error installing job object: {e}")
+            log.error(f"Error installing job object: {e}")
 
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)
