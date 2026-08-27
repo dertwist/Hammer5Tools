@@ -359,16 +359,16 @@ if __name__ == "__main__":
 
     def handle_initial_args():
         if args.create_vmdl:
-            widget.open_quick_create_dialog(os.path.abspath(args.create_vmdl), "vmdl")
+            widget.quick_actions.open_quick_create_dialog(os.path.abspath(args.create_vmdl), "vmdl")
         elif args.quick_vmdl or args.quick_vmdl_dir:
             path = args.quick_vmdl or args.quick_vmdl_dir
-            widget.handle_quick_vmdl(os.path.abspath(path))
+            widget.quick_actions.create_vmdl(os.path.abspath(path))
         elif args.quick_batch:
-            widget.handle_quick_batch(os.path.abspath(args.quick_batch))
+            widget.quick_actions.create_compile_batch(os.path.abspath(args.quick_batch))
         elif args.quick_process:
-            widget.handle_quick_process(os.path.abspath(args.quick_process))
+            widget.quick_actions.compile_folder(os.path.abspath(args.quick_process))
         elif args.quick_process_file:
-            widget.handle_quick_process_file(os.path.abspath(args.quick_process_file))
+            widget.quick_actions.compile_file(os.path.abspath(args.quick_process_file))
         elif args.file:
             file_path = os.path.abspath(args.file)
             ext = os.path.splitext(file_path)[1].lower()
