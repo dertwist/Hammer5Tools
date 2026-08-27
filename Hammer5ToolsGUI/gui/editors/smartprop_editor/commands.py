@@ -12,6 +12,12 @@ from gui.editors.smartprop_editor._common import get_clean_class_name_value, get
 log = logging.getLogger(__name__)
 
 
+def _notify_structure_changed(tree):
+    notify = getattr(tree, "notify_structure_changed", None)
+    if notify is not None:
+        notify()
+
+
 class GroupElementsCommand(QUndoCommand):
     def __init__(self, tree: QTreeWidget):
         super().__init__("Group Selected Items")
@@ -58,6 +64,7 @@ class GroupElementsCommand(QUndoCommand):
             self.tree.clearSelection()
             self.group_element.setSelected(True)
             self.tree.scrollToItem(self.group_element)
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][GroupSelected] redo: ERROR — {e}")
 
@@ -81,6 +88,7 @@ class GroupElementsCommand(QUndoCommand):
                 item.setSelected(True)
                 self.tree.scrollToItem(item)
             self._item_refs = [item for item, _, _ in self.moved_items_info]
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][GroupSelected] undo: ERROR — {e}")
 
@@ -107,6 +115,7 @@ class PasteItemsCommand(QUndoCommand):
                 self.tree.clearSelection()
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][Paste] redo: ERROR — {e}")
 
@@ -122,6 +131,7 @@ class PasteItemsCommand(QUndoCommand):
                 else:
                     print(f"[SPE][Paste] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
             self.added.clear()
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][Paste] undo: ERROR — {e}")
 
@@ -149,6 +159,7 @@ class BulkModelImportCommand(QUndoCommand):
                 self.tree.clearSelection()
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][BulkImport] redo: ERROR — {e}")
 
@@ -164,6 +175,7 @@ class BulkModelImportCommand(QUndoCommand):
                 else:
                     print(f"[SPE][BulkImport] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
             self.added.clear()
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][BulkImport] undo: ERROR — {e}")
 
@@ -188,6 +200,7 @@ class NewFromPresetCommand(QUndoCommand):
             # During the first redo (push), items are already added in load_preset
             for item in self.items:
                 self.added.append(item)
+            _notify_structure_changed(self.tree)
             return
 
         print(f"[SPE][NewFromPreset] redo: adding {len(self.items)} preset item(s) and restoring state")
@@ -206,6 +219,7 @@ class NewFromPresetCommand(QUndoCommand):
                 self.tree.clearSelection()
                 self.items[0].setSelected(True)
                 self.tree.scrollToItem(self.items[0])
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][NewFromPreset] redo: ERROR — {e}")
 
@@ -221,6 +235,7 @@ class NewFromPresetCommand(QUndoCommand):
 
             self.document._restore_variables(self.old_variables)
             self.document._restore_choices(self.old_choices)
+            _notify_structure_changed(self.tree)
         except Exception as e:
             log.error(f"[SPE][NewFromPreset] undo: ERROR — {e}")
 
@@ -399,6 +414,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 tree = self.document.ui.tree_hierarchy_widget
                 if hasattr(tree, "viewport"):
                     tree.viewport().update()
+                _notify_structure_changed(tree)
             return
         print(f"[SPE][PropertyEdit] redo: '{self.item.text(0)}' — {self.text()}")
         try:
@@ -411,6 +427,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 self.item.setData(0, Qt.UserRole, fast_deepcopy(self.new_data))
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
+            _notify_structure_changed(tree)
         except Exception as e:
             log.error(f"[SPE][PropertyEdit] redo: ERROR — {e}")
 
@@ -426,6 +443,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 self.item.setData(0, Qt.UserRole, fast_deepcopy(self.old_data))
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
+            _notify_structure_changed(tree)
         except Exception as e:
             log.error(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 
@@ -556,13 +574,21 @@ class HierarchyItemRenameCommand(QUndoCommand):
     def redo(self):
         if self.item is not None:
             self.item.setText(0, self.new_label)
-            # Update the underlying data if it exists
-            if hasattr(self.item, 'data') and isinstance(self.item.data, dict):
-                self.item.data['m_sLabel'] = self.new_label
+            data = self.item.data(0, Qt.UserRole)
+            if isinstance(data, dict):
+                data["m_sLabel"] = self.new_label
+                self.item.setData(0, Qt.UserRole, data)
+            node = getattr(self.item, "smartprop_node", None)
+            if node is not None:
+                node.data["m_sLabel"] = self.new_label
 
     def undo(self):
         if self.item is not None:
             self.item.setText(0, self.old_label)
-            # Update the underlying data if it exists
-            if hasattr(self.item, 'data') and isinstance(self.item.data, dict):
-                self.item.data['m_sLabel'] = self.old_label
+            data = self.item.data(0, Qt.UserRole)
+            if isinstance(data, dict):
+                data["m_sLabel"] = self.old_label
+                self.item.setData(0, Qt.UserRole, data)
+            node = getattr(self.item, "smartprop_node", None)
+            if node is not None:
+                node.data["m_sLabel"] = self.old_label

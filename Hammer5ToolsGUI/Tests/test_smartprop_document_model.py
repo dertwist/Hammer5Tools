@@ -4,12 +4,50 @@ import sys
 sys.path.insert(0, "Hammer5ToolsGUI")
 
 from gui.editors.smartprop_editor.document_model import (
+    SmartPropDocumentState,
+    SmartPropNode,
     Variable,
     decode_variable,
     is_category_marker,
     normalize_kv3_text,
     rename_references,
 )
+
+
+def test_document_state_owns_an_independent_document_mapping():
+    source = {"m_Children": [{"m_sLabel": "Root"}], "m_Variables": [], "m_Choices": []}
+
+    state = SmartPropDocumentState.from_mapping(source)
+    state.hierarchy[0].data["m_sLabel"] = "Renamed"
+    state.variables.append({"m_VariableName": "size"})
+
+    assert source["m_Children"][0]["m_sLabel"] == "Root"
+    assert source["m_Variables"] == []
+    assert state.to_mapping()["m_Variables"] == [{"m_VariableName": "size"}]
+
+
+def test_document_hierarchy_is_model_owned_and_searchable():
+    state = SmartPropDocumentState.from_mapping({
+        "m_Children": [{
+            "m_nElementID": 1,
+            "m_sLabel": "Parent",
+            "m_Children": [{"m_nElementID": 2, "m_sLabel": "Child"}],
+        }],
+    })
+
+    child = state.find(2)
+    assert isinstance(child, SmartPropNode)
+    child.data["m_sLabel"] = "Changed"
+    assert state.to_mapping()["m_Children"][0]["m_Children"][0]["m_sLabel"] == "Changed"
+
+
+def test_document_state_rejects_non_mapping_input():
+    try:
+        SmartPropDocumentState.from_mapping([])
+    except TypeError as error:
+        assert "mapping" in str(error)
+    else:
+        raise AssertionError("document state accepted a non-mapping")
 
 
 def test_normalize_kv3_text_strips_what_exporters_add():
@@ -132,9 +170,20 @@ def test_the_model_does_not_import_qt():
 _DOC = {"_class": "CSmartPropRoot", "m_Children": [], "m_Variables": []}
 
 
-def test_parse_and_format_round_trip():
+def test_parse_and_format_route_through_core(monkeypatch):
     from gui.editors.smartprop_editor import document_model
+    import core.bridge as bridge
 
+    class FakeCore:
+        def serialize_smartprop(self, document):
+            assert document == _DOC
+            return "core document"
+
+        def deserialize_smartprop(self, text):
+            assert text == "core document"
+            return dict(_DOC)
+
+    monkeypatch.setattr(bridge.CoreBridge, "instance", classmethod(lambda cls: FakeCore()))
     text = document_model.format_smartprop(_DOC)
     assert document_model.parse_smartprop(text)["_class"] == "CSmartPropRoot"
 

@@ -24,7 +24,12 @@ from gui.widgets.element_id import (
 )
 from gui.widgets import HierarchyItemModel, exception_handler
 from gui.editors.smartprop_editor.objects import variable_prefix, element_prefix
-from gui.editors.smartprop_editor.document_model import format_smartprop, parse_smartprop
+from gui.editors.smartprop_editor.document_model import (
+    SmartPropDocumentState,
+    SmartPropNode,
+    format_smartprop,
+    parse_smartprop,
+)
 
 log = logging.getLogger(__name__)
 
@@ -245,45 +250,47 @@ class VsmartOpen:
         """Open file data, restore references, and populate tree and choices."""
         data = parse_smartprop(self.load_file(self.filename))
         restore_reference_objects(data)
-        self.variables = data.get("m_Variables", None)
+        self.document_state = SmartPropDocumentState.from_mapping(data)
+        self.variables = self.document_state.variables
         self.tree.clear()
         self.choices_tree.clear()
         # Set next element ID if available.
-        self.next_element_id = data.get("editor_info", None)
-        self.content_version = data.get("m_nContentVersion", 0)
+        self.next_element_id = self.document_state.metadata.get("editor_info")
+        self.content_version = self.document_state.metadata.get("m_nContentVersion", 0)
         if self.next_element_id:
             if isinstance(self.next_element_id, dict):
                 self.next_element_id = self.next_element_id.get("m_nElementID", None)
                 if self.next_element_id:
                     self.element_id_generator.add_id(self.next_element_id)
-        self.raw_choices = data.get("m_Choices", None)
-        self.populate_tree(data)
+        self.raw_choices = self.document_state.choices
+        for node in self.document_state.hierarchy:
+            self.populate_node(node)
         if self.variables_scrollArea is None:
             self.populate_choices(self.raw_choices)
 
     def populate_tree(self, data, parent=None):
         """Populate the tree hierarchy with element data."""
-        if parent is None:
-            parent = self.tree.invisibleRootItem()
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if key == "m_Children" and isinstance(value, list):
-                    for item in value:
-                        item_class = item.get("_class")
-                        value_dict = item.copy()
-                        value_dict.pop("m_Children", None)
-                        migrate_legacy_comments(value_dict)
-                        if self.next_element_id is None:
-                            update_value_ElementID(value_dict)
-                            value_dict = update_child_ElementID_value(value_dict)
-                        child_item = HierarchyItemModel(
-                            _name=value_dict.get("m_sLabel", get_label_id_from_value(value_dict)),
-                            _data=value_dict,
-                            _class=get_clean_class_name(item_class),
-                            _id=get_ElementID_key(value_dict)
-                        )
-                        parent.addChild(child_item)
-                        self.populate_tree(item, child_item)
+        state = SmartPropDocumentState.from_mapping(data)
+        for node in state.hierarchy:
+            self.populate_node(node, parent)
+
+    def populate_node(self, node: SmartPropNode, parent=None):
+        """Render one model-owned hierarchy node and its descendants."""
+        parent = parent or self.tree.invisibleRootItem()
+        migrate_legacy_comments(node.data)
+        if self.next_element_id is None:
+            update_value_ElementID(node.data)
+            node.data = update_child_ElementID_value(node.data)
+        child_item = HierarchyItemModel(
+            _name=node.data.get("m_sLabel", get_label_id_from_value(node.data)),
+            _data=node.data,
+            _class=get_clean_class_name(node.data.get("_class")),
+            _id=get_ElementID_key(node.data),
+        )
+        child_item.smartprop_node = node
+        parent.addChild(child_item)
+        for child in node.children:
+            self.populate_node(child, child_item)
 
     def populate_choices(self, data):
         if data is None:
@@ -313,7 +320,8 @@ class VsmartOpen:
                 self.fix_names(child_item)
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None, content_version=None, write_file=True):
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None,
+                 content_version=None, write_file=True, document_state=None):
         self.filename = filename
         self.tree = tree
         self.variables_layout = variables_layout
@@ -321,6 +329,7 @@ class VsmartSave:
         self.ref_objects = {}  # To store non-processed reference objects
         self.var_data = self.save_variables()
         self.content_version = content_version
+        self.document_state = document_state
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.document_data = self.build_document()
         if write_file:
@@ -438,7 +447,12 @@ class VsmartSave:
             out_data.update({"m_Variables": self.var_data})
         if self.choices_data is not None:
             out_data.update({"m_Choices": self.choices_data})
-        converted_data = self.tree_to_vsmart(self.tree.invisibleRootItem(), {})
+        if self.document_state is None:
+            converted_data = self.tree_to_vsmart(self.tree.invisibleRootItem(), {})
+        else:
+            converted_data = {
+                "m_Children": [self._model_node_to_vsmart(node) for node in self.document_state.hierarchy]
+            }
         out_data.update(converted_data)
         # Store non-processed reference objects into m_ReferenceObjects.
         if self.ref_objects:
@@ -446,6 +460,25 @@ class VsmartSave:
             for ref_uuid, ref_obj_data in self.ref_objects.items():
                 out_data["m_ReferenceObjects"][ref_uuid] = ref_obj_data
         return out_data
+
+    def _model_node_to_vsmart(self, node):
+        """Prepare a model-owned node for serialization, preserving reference behavior."""
+        child_data = dict(node.data)
+        s_ref_id = child_data.get("m_sReferenceObjectID")
+        n_ref_id = child_data.get("m_nReferenceID")
+        if s_ref_id:
+            self.ref_objects[s_ref_id] = dict(child_data)
+            if isinstance(n_ref_id, int):
+                reference = self.document_state.find(n_ref_id)
+                if reference is not None:
+                    child_data = merge_reference_data(reference.data, child_data)
+                    child_data["m_sReferenceObjectID"] = s_ref_id
+                    child_data["m_nReferenceID"] = n_ref_id
+        if node.children:
+            child_data["m_Children"] = [
+                self._model_node_to_vsmart(child) for child in node.children
+            ]
+        return child_data
 
     def save_file(self):
         """Save the current document through the .NET SmartProp serializer."""

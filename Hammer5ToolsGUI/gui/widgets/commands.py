@@ -9,6 +9,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QUndoCommand
 
 
+def _notify_structure_changed(tree):
+    notify = getattr(tree, "notify_structure_changed", None)
+    if notify is not None:
+        notify()
+
+
 class AddItemCommand(QUndoCommand):
     _item_refs = set()  # Prevent deletion by keeping references
 
@@ -32,6 +38,7 @@ class AddItemCommand(QUndoCommand):
                 self.tree.addTopLevelItem(self.item)
             else:
                 self.tree.insertTopLevelItem(self.index, self.item)
+        _notify_structure_changed(self.tree)
 
     def undo(self):
         if self.parent_item:
@@ -40,6 +47,7 @@ class AddItemCommand(QUndoCommand):
             idx = self.tree.indexOfTopLevelItem(self.item)
             if idx != -1:
                 self.tree.takeTopLevelItem(idx)
+        _notify_structure_changed(self.tree)
 class PasteItemsCommand(QUndoCommand):
     def __init__(self, tree, parent, items):
         super().__init__("Paste Items")
@@ -53,11 +61,13 @@ class PasteItemsCommand(QUndoCommand):
             self.parent.addChild(item)
             self.parent.setExpanded(True)
             self.added.append(item)
+        _notify_structure_changed(self.tree)
 
     def undo(self):
         for item in self.added:
             self.parent.removeChild(item)
         self.added.clear()
+        _notify_structure_changed(self.tree)
 
 class RemoveItemCommand(QUndoCommand):
     _item_refs = set()  # Prevent deletion by keeping references
@@ -93,6 +103,7 @@ class RemoveItemCommand(QUndoCommand):
                 idx = self.tree.indexOfTopLevelItem(item)
                 if idx != -1:
                     self.tree.takeTopLevelItem(idx)
+        _notify_structure_changed(self.tree)
 
     def undo(self):
         # Restore items in original order
@@ -108,6 +119,7 @@ class RemoveItemCommand(QUndoCommand):
                     self.tree.addTopLevelItem(item)
                 else:
                     self.tree.insertTopLevelItem(idx, item)
+        _notify_structure_changed(self.tree)
 
 
 class MoveItemsCommand(QUndoCommand):
@@ -180,7 +192,7 @@ class MoveItemsCommand(QUndoCommand):
                     dst_parent.insertChild(dst_index, item)
                     dst_parent.setExpanded(True)
         self.tree.viewport().update()
-        self.tree.viewport().update()
+        _notify_structure_changed(self.tree)
 
     def redo(self):
         self._move(self.move_infos, src_to_dst=True)
@@ -278,12 +290,14 @@ class DuplicateItemsCommand(QUndoCommand):
             for parent, index, new_item in self.duplicates:
                 parent.insertChild(index, new_item)
                 parent.setExpanded(True)
+        _notify_structure_changed(self.tree)
 
     def undo(self):
         for parent, index, new_item in self.duplicates:
             idx = parent.indexOfChild(new_item)
             if idx != -1:
                 parent.takeChild(idx)
+        _notify_structure_changed(self.tree)
 
 class SelectItemsCommand(QUndoCommand):
     def __init__(self, tree, old_selected, new_selected):

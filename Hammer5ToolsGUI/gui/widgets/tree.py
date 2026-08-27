@@ -114,6 +114,7 @@ class HierarchyTreeWidget(QTreeWidget):
         # Optional hook for file drops coming from outside the tree (e.g. the explorer).
         # Signature: handler(paths: list[str], target_item: QTreeWidgetItem | None)
         self.external_drop_handler = None
+        self.structure_changed = None
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -129,6 +130,11 @@ class HierarchyTreeWidget(QTreeWidget):
             return
 
         _draw_hierarchy_branches(self, painter, rect, index)
+
+    def notify_structure_changed(self):
+        """Notify an optional owner after item order or parenting changes."""
+        if self.structure_changed is not None:
+            self.structure_changed()
 
     def _external_drop_paths(self, event):
         """Local file paths of an external drop, or None if this is a normal internal drag."""

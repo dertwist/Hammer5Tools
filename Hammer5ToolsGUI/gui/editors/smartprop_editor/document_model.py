@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass, field
 
 from gui.editors.smartprop_editor.objects import variable_prefix
@@ -35,6 +36,90 @@ _RANGE_KEYS = {
     "Float": ("m_flParamaterMinValue", "m_flParamaterMaxValue"),
     "Int": ("m_nParamaterMinValue", "m_nParamaterMaxValue"),
 }
+
+
+@dataclass
+class SmartPropNode:
+    """One hierarchy element whose children are model-owned."""
+
+    data: dict
+    children: list["SmartPropNode"] = field(default_factory=list)
+
+    @classmethod
+    def from_mapping(cls, value: Mapping) -> "SmartPropNode":
+        data = deepcopy(dict(value))
+        child_values = data.pop("m_Children", []) or []
+        return cls(data=data, children=[cls.from_mapping(child) for child in child_values])
+
+    @property
+    def element_id(self):
+        return self.data.get("m_nElementID")
+
+    def to_mapping(self) -> dict:
+        value = deepcopy(self.data)
+        if self.children or "m_Children" in self.data:
+            value["m_Children"] = [child.to_mapping() for child in self.children]
+        return value
+
+    def find(self, element_id) -> "SmartPropNode | None":
+        if self.element_id == element_id:
+            return self
+        for child in self.children:
+            found = child.find(element_id)
+            if found is not None:
+                return found
+        return None
+
+
+@dataclass
+class SmartPropDocumentState:
+    """Qt-free state for one SmartProp document.
+
+    Widgets render this mapping but must not become its authoritative owner.
+    The explicit sections provide the migration boundary for the hierarchy,
+    variables, and choices adapters.
+    """
+
+    metadata: dict = field(default_factory=dict)
+    hierarchy: list[SmartPropNode] = field(default_factory=list)
+    variables: list[dict] = field(default_factory=list)
+    choices: list[dict] = field(default_factory=list)
+
+    @classmethod
+    def from_mapping(cls, document: Mapping) -> "SmartPropDocumentState":
+        if not isinstance(document, Mapping):
+            raise TypeError("A SmartProp document must be a mapping")
+        root = deepcopy(dict(document))
+        children = root.pop("m_Children", []) or []
+        variables = root.pop("m_Variables", []) or []
+        choices = root.pop("m_Choices", []) or []
+        return cls(
+            metadata=root,
+            hierarchy=[SmartPropNode.from_mapping(child) for child in children],
+            variables=variables,
+            choices=choices,
+        )
+
+    @property
+    def children(self) -> list[dict]:
+        return [node.to_mapping() for node in self.hierarchy]
+
+    def find(self, element_id) -> SmartPropNode | None:
+        for node in self.hierarchy:
+            found = node.find(element_id)
+            if found is not None:
+                return found
+        return None
+
+    def to_mapping(self) -> dict:
+        """Return an independent mapping suitable for CoreBridge serialization."""
+        document = deepcopy(self.metadata)
+        document["m_Children"] = self.children
+        if self.variables:
+            document["m_Variables"] = deepcopy(self.variables)
+        if self.choices:
+            document["m_Choices"] = deepcopy(self.choices)
+        return document
 
 
 def normalize_kv3_text(text: str) -> str:

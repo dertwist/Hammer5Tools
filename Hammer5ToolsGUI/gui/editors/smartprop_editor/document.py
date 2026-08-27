@@ -84,6 +84,8 @@ from gui.widgets.tree import HierarchyTreeWidget
 from gui.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 from gui.editors.smartprop_editor.manual_editor import ManualEditor
 from gui.editors.smartprop_editor.document_model import (
+    SmartPropDocumentState,
+    SmartPropNode,
     decode_variable,
     normalize_kv3_text,
     parse_smartprop,
@@ -104,6 +106,7 @@ class SmartPropDocument(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.element_id_generator = ElementIDGenerator()
+        self.document_state = SmartPropDocumentState.from_mapping({"m_Children": []})
         self.opened_file = None
         self.update_title = update_title
         enable_dark_title_bar(self)
@@ -152,6 +155,7 @@ class SmartPropDocument(QMainWindow):
         # Hierarchy tree wdiget setup
         self.ui.tree_hierarchy_widget.deleteLater()
         self.ui.tree_hierarchy_widget = HierarchyTreeWidget(self.undo_stack)
+        self.ui.tree_hierarchy_widget.structure_changed = self._sync_document_hierarchy_from_view
         self.ui.frame_2.layout().addWidget(self.ui.tree_hierarchy_widget)
         
         self.ui.tree_hierarchy_widget.setColumnCount(4)
@@ -324,6 +328,24 @@ class SmartPropDocument(QMainWindow):
 
     def is_modified(self):
         return self._modified
+
+    def _sync_document_hierarchy_from_view(self):
+        """Synchronize Qt hierarchy order into the document-owned node tree."""
+        def read_children(parent_item):
+            nodes = []
+            for index in range(parent_item.childCount()):
+                item = parent_item.child(index)
+                data = fast_deepcopy(item.data(0, Qt.UserRole) or {})
+                data["m_sLabel"] = item.text(0)
+                data.pop("m_Children", None)
+                node = SmartPropNode(data=data, children=read_children(item))
+                item.smartprop_node = node
+                nodes.append(node)
+            return nodes
+
+        self.document_state.hierarchy = read_children(
+            self.ui.tree_hierarchy_widget.invisibleRootItem()
+        )
 
     def _on_undo_clean_changed(self, clean):
         if not self._restoring_state:
@@ -669,6 +691,8 @@ class SmartPropDocument(QMainWindow):
         self.popup_menu.show()
 
     def file_deserialization(self, __data: dict, to_parent: bool = False):
+        document_state = SmartPropDocumentState.from_mapping(__data)
+
         def populate_tree(data, parent=None):
             if parent is None:
                 parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -702,9 +726,9 @@ class SmartPropDocument(QMainWindow):
         else:
             parent_item = self.ui.tree_hierarchy_widget.currentItem()
 
-        populate_tree(__data, parent_item)
-        self._populate_variables(__data.get("m_Variables"))
-        self._populate_choices(__data.get("m_Choices", None))
+        populate_tree(document_state.to_mapping(), parent_item)
+        self._populate_variables(document_state.variables)
+        self._populate_choices(document_state.choices)
         self._connect_choices_widget_signals()
 
     def load_preset(self, name: str = None, path: str = None):
@@ -1014,6 +1038,7 @@ class SmartPropDocument(QMainWindow):
                 choices_tree=self.ui.choices_tree_widget,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
             )
+            self.document_state = vsmart_instance.document_state
             variables = vsmart_instance.variables
             cv = vsmart_instance.content_version
             try:
@@ -1073,6 +1098,7 @@ class SmartPropDocument(QMainWindow):
     def build_smartprop_document(self):
         """Return the current editor state as a JSON-compatible SmartProp document."""
         self._flush_choices_widget_if_pending()
+        self._sync_document_hierarchy_from_view()
         serializer = VsmartSave(
             filename="",
             tree=self.ui.tree_hierarchy_widget,
@@ -1080,8 +1106,10 @@ class SmartPropDocument(QMainWindow):
             variables_layout=self.variable_viewport.ui.variables_scrollArea,
             content_version=self.content_version_spinbox.value(),
             write_file=False,
+            document_state=self.document_state,
         )
-        return serializer.document_data
+        self.document_state = SmartPropDocumentState.from_mapping(serializer.document_data)
+        return self.document_state.to_mapping()
 
     def save_file(self, external=False):
         if external:
