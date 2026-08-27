@@ -47,7 +47,6 @@ class DataPointItem(QWidget):
             self.parent_widget.ui.value_06
         ]
 
-        # Create and map float widgets
         for value, column, layout in zip(self.values, self.COLUMNS, layouts):
             float_widget = self._create_float_widget(value, column)
             layout.addWidget(float_widget)
@@ -182,7 +181,6 @@ class DataPointItem(QWidget):
             frame.setParent(None)
             frame.deleteLater()
 
-        # Clear all widget collections
         for collection in self.widgets.values():
             if isinstance(collection, dict):
                 collection.clear()
@@ -224,7 +222,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.setup_graph()
         self.setup_connections()
 
-        # Initialize with provided values
         if value:
             self.value_update(value)
             for point_values in value:

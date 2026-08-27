@@ -202,7 +202,6 @@ class ElementIDGenerator:
                 value[index] = self.update_child_value(item, force=force)
         elif isinstance(value, dict):
             if '_class' in value:
-                # Update main dict first
                 value = self.update_value(value, force=force)
                 # Then recursively update each key/value
                 for key in value:

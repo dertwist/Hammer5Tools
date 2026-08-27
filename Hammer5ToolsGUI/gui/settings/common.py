@@ -7,7 +7,6 @@ from gui.common import user_data_dir, app_dir
 
 settings_file = user_data_dir / 'settings.ini'
 
-# Initialize settings
 settings = QSettings(str(settings_file), QSettings.IniFormat)
 
 def set_settings_value(section, key, value):

@@ -186,7 +186,6 @@ class SmartProp3DViewport(QWidget):
         self.render_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.render_area)
 
-        # Initialize defaults
         self._on_space_changed("World")
         self._on_snap_changed(Qt.Unchecked)
         self._on_grid_step_changed("8")
@@ -282,4 +281,3 @@ class SmartProp3DViewport(QWidget):
             self.render_area.keyPressEvent(event)
         else:
             super().keyPressEvent(event)
-

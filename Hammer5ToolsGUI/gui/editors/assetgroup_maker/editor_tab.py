@@ -267,7 +267,6 @@ class EditorTabWidget(QWidget):
 
         self.asset_table.set_items(items)
 
-        # Update status footer
         ready_count = sum(1 for i in items if i.status == "ready")
         warn_count = sum(1 for i in items if i.status == "warning")
         err_count = sum(1 for i in items if i.status == "error")

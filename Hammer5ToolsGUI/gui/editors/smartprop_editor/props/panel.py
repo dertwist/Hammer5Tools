@@ -234,7 +234,6 @@ class SmartPropPropertyPanel(QWidget):
 
         item.setData(0, Qt.UserRole, new_data)
 
-        # Update Section 1 headers/rows
         if self.components_list and self.components_list.tree_item is item:
             if ref.kind == "element":
                 self.components_list.elem_row.update_data(new_data)
@@ -242,7 +241,6 @@ class SmartPropPropertyPanel(QWidget):
                 self.components_list.modifiers_tree.viewport().update()
                 self.components_list.criteria_tree.viewport().update()
 
-        # Update main hierarchy tree
         if hasattr(self.document, "ui") and hasattr(self.document.ui, "tree_hierarchy_widget"):
             tree = self.document.ui.tree_hierarchy_widget
             if hasattr(tree, "viewport"):

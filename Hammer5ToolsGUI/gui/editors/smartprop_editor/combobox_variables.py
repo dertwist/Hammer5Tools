@@ -278,7 +278,6 @@ class ComboboxVariablesWidget(QWidget):
 
         def on_create():
             new_name_local = name_edit.text().strip()
-            # Validate variable name:
             # 1. All characters must be in ASCII range (0-255).
             # 2. Must contain at least one letter or digit.
             if not all(ord(c) < 256 for c in new_name_local) or not re.search(r'[A-Za-z0-9]', new_name_local):

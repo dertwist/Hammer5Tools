@@ -87,7 +87,6 @@ class CompletionUtils:
         if filter_types:
             variables = [var for var in variables if var['type'] in filter_types]
         
-        # Create completion suggestions
         completions = []
         
         variable_names = [var['name'] for var in variables]
@@ -103,14 +102,11 @@ class CompletionUtils:
             )
             completions.extend(type_completions)
         
-        # Add context-specific completions
         context_completions = CompletionUtils._get_context_completions(context)
         completions.extend(context_completions)
         
-        # Add expression completer items
         completions.extend(expression_completer)
         
-        # Remove duplicates and sort
         completions = sorted(list(set(completions)))
         
         return completions
@@ -210,7 +206,6 @@ class CompletionUtils:
         elif var_type in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 
                          'ScaleMode', 'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 
                          'RadiusPlacementMode', 'DistributionMode', 'PathPositions', 'Direction']:
-            # Get the possible values for this enum type
             enum_values = CompletionUtils.get_combobox_elements(var_type)
             for enum_value in enum_values:
                 completions.extend([

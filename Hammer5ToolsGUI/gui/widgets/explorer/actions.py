@@ -24,7 +24,6 @@ class QuickVmdlFile():
         basename = os.path.splitext(os.path.basename(filepath))[0]
         vmdl_content = fast_deepcopy(DEFAULT_VMDL)
         
-        # Populate the template with the mesh path
         for child in vmdl_content.get('rootNode', {}).get('children', []):
             if child.get('_class') == 'RenderMeshList':
                 for mesh_file in child.get('children', []):

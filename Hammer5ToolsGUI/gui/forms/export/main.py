@@ -255,7 +255,6 @@ class ExportAndImportAddonDialog(QDialog):
                 QMessageBox.critical(self, "Dependency Error",
                                      f"Failed to parse {os.path.basename(vmap_file)}.\nError: {e}")
 
-        # Update UI with results
         self._populate_vmap_table()  # Re-populate to show ref counts
         self._populate_table()
         self.table_view.setEnabled(True);

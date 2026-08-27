@@ -36,12 +36,10 @@ class FindAndReplaceDialog(QDialog):
         whole_words = self.ui.whole_words_checkBox.isChecked()
         text_content = self.ui.viewport_QplainText.toPlainText()
 
-        # Clear previous highlights
         cursor = self.ui.viewport_QplainText.textCursor()
         cursor.select(QTextCursor.Document)
         cursor.setCharFormat(QTextCharFormat())  # Reset character format
 
-        # Apply new highlights
         if text_to_find:
             self.text_highlighter(text_content, text_to_find, match_case, whole_words)
 
@@ -101,7 +99,6 @@ class FindAndReplaceDialog(QDialog):
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #     dialog = FindAndReplaceDialog()
-#     import qtvscodestyle as qtvsc
 #
 #     stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
 #     # app.setStyle('fusion')

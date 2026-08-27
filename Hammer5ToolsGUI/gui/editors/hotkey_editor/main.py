@@ -111,7 +111,6 @@ class HotkeyEditorMainWindow(QMainWindow):
         launch_addon()
     def get_path(self):
         editor = self.ui.editor_combobox.currentText()
-        # convert generic name to source format
         editor = editor.lower()
         self.editor = editor.replace(' ', '_')
 
@@ -149,7 +148,6 @@ class HotkeyEditorMainWindow(QMainWindow):
                         return root_item.child(i)
             return None
 
-        # Load from file
         for key, value in self.data.items():
             if key == 'm_Bindings':
                 for item in value:
@@ -167,14 +165,12 @@ class HotkeyEditorMainWindow(QMainWindow):
                         context_item.addChild(new_item)
                         self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
-        # Load additional actions
         for context, commands in hammer_commands.items():
             context_item = add_context_if_not_exist(context)
 
             # Collect existing commands once per context
             existing_commands = existing_items.get(context, set())
 
-            # Add new commands that are not in existing_commands
             for command in commands:
                 if command not in {cmd for cmd, _ in existing_commands}:
                     existing_items[context].add((command, ""))  # Assuming no specific input for additional actions

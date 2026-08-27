@@ -276,7 +276,6 @@ class BoxSlider(QWidget):
                  digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
         super().__init__()
 
-        # Initialize properties
         self.int_output = int_output
         self.min_value, self.max_value = slider_range
         self.value = value
@@ -287,7 +286,6 @@ class BoxSlider(QWidget):
         self.slider_scale = slider_scale
         self.sensitivity = sensitivity
 
-        # Handle infinite range
         if slider_range == [0, 0]:
             self.min_value = -math.inf
             self.max_value = math.inf
@@ -379,16 +377,13 @@ class BoxSlider(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw background
         painter.setPen(Qt.NoPen)
         painter.setBrush(theme.qcolor("#2e2e2e"))
         painter.drawRect(self.rect())
 
-        # Draw border
         painter.setPen(QPen(theme.qcolor("#464649")))
         painter.drawRect(self.slider_rect)
 
-        # Draw text
         painter.setPen(theme.qcolor("#e5e5e5"))
         value_text = f"{int(self.value) if self.int_output else self.value:.{self.digits}f}"
         painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
@@ -535,7 +530,6 @@ class BoolWidget(QWidget):
             layout.addItem(spacer)
         self.setLayout(layout)
 
-        # Set initial value
         if value is None:
             value = False
         self.set_value(value)
@@ -753,7 +747,6 @@ class HierarchyItemModel(QTreeWidgetItem):
         super().__init__(parent)
         self.show_id = show_id
 
-        # Set text for name, class, and id
         self.setText(0, str(_name))
         if icon is not None:
             self.setIcon(0, icon)
@@ -774,14 +767,12 @@ class HierarchyItemModel(QTreeWidgetItem):
             if _id is not None:
                 self.setText(3, str(_id))
 
-        # Store data in UserRole of column 0 for performance
         if _data is not None:
             self.setData(0, Qt.UserRole, _data)
 
         # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
 
-        # Set up custom colors and font for specific columns
         self.custom_colors = {
             2: theme.qcolor("#a5a5a5"),
             3: theme.qcolor("#a5a5a5"),
@@ -947,7 +938,6 @@ class WidgetsShowcaseWindow(QMainWindow):
         main_widget = QWidget()
         main_layout = QVBoxLayout(main_widget)
 
-        # Add FloatWidget to the layout
         self.float_test = FloatWidget(vertical=True)
         main_layout.addWidget(self.float_test)
 

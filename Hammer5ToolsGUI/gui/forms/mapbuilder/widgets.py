@@ -139,7 +139,6 @@ class EnumSettingWidget(SettingWidget):
 
         label = QLabel(self.display_name)
         self.combobox = QComboBox()
-        # Populate options (support (label, value) tuples)
         self._values = []
         for opt in self.options:
             if isinstance(opt, tuple) and len(opt) == 2:
@@ -262,7 +261,6 @@ class FolderSettingWidget(SettingWidget):
                 idx = parts.index('csgo_addons')
                 if idx + 1 < len(parts):
                     addon_name = parts[idx + 1]
-                    # Get relative path from addon root
                     try:
                         rel_path = p.relative_to(Path(*parts[:idx + 2]))
                         return f"[{addon_name}] {rel_path.as_posix()}"
@@ -444,12 +442,10 @@ class SettingsPanel(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create groups and widgets
         for group_name, field_names in self.FIELD_GROUPS.items():
             group = SettingsGroup(group_name)
             self.groups[group_name] = group
 
-            # Add setting widgets for each field
             for field_name in field_names:
                 widget = self._create_widget_for_field(field_name)
                 if widget:
@@ -467,13 +463,11 @@ class SettingsPanel(QWidget):
 
     def _create_widget_for_field(self, field_name: str) -> Optional[SettingWidget]:
         """Create appropriate widget for a field"""
-        # Get field info from BuildSettings dataclass
         for field in fields(BuildSettings):
             if field.name == field_name:
                 field_type = field.type
                 default_value = field.default
 
-                # Create widget based on type
                 if field_name == "save_map_path":
                     return BoolSettingWidget("Save map path to preset", field_type, default_value)
                 elif field_name == "lightmap_filtering":

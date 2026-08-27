@@ -335,7 +335,6 @@ class PropertySnapshotCommand(QUndoCommand):
         if len(content) == 1:
             key = next(iter(content))
             
-            # Check for vector components
             if '.m_Components[' in key:
                 base, comp = key.split('.m_Components[')
                 axis_idx = comp.split(']')[0]

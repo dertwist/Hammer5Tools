@@ -261,7 +261,6 @@ class WaveformWidget(QWidget):
             progress_ratio = max(0.0, min(1.0, self._position_ms / float(self._duration_ms)))
         playhead_x = int(progress_ratio * w)
 
-        # Draw waveform
         if self._waveform is not None and len(self._waveform) > 0:
             env = self._waveform
             num_samples = len(env)

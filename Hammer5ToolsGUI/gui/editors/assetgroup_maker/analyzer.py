@@ -182,7 +182,6 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str, context_folder:
     if not primary_mesh and all_mesh_matches:
         primary_mesh = all_mesh_matches[0]
 
-    # Populate slots
     if primary_mesh:
         result.slots['mesh'] = {
             'label': 'Render Mesh (LOD0)',
@@ -254,7 +253,6 @@ def _analyze_vmdl(result: ReferenceAnalysisResult, content: str, context_folder:
             result.material_remaps.append({'from': mat_filename, 'to': mat_path})
             break
 
-    # Populate material remap slots in result.slots
     for idx, remap in enumerate(result.material_remaps):
         slot_key = f'material_{idx}' if idx > 0 else 'material'
         from_mat = remap.get('from', '')

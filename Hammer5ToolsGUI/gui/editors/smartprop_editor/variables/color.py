@@ -30,7 +30,6 @@ class Var_class_color(QWidget):
         # Connect the color button to open the color picker dialog
         self.ui.color.clicked.connect(self.open_dialog)
 
-        # Update the button style to reflect the initial color
         self.update_button_style()
 
         self.on_changed()

@@ -601,9 +601,6 @@ QLabel[h5Component="smartpropExpressionLabel"] {
     background: transparent;
     font: 8pt "Segoe UI";
 }
-/* SmartProp Variable, Property, and Group Headers */
-/* SmartProp Variable, Property, and Group Headers */
-/* Header Frame (top row containing grip, name, class, buttons) */
 QFrame[h5Component="smartpropHeaderFrame"],
 QFrame[h5Component="smartpropPropertyFrame"],
 QFrame#frame {
@@ -615,7 +612,6 @@ QFrame#frame[selected="true"] {
     background-color: @hex_3b3f48;
 }
 
-/* Grip handle on the left */
 QFrame[h5Component="smartpropHeaderFrame"] > QLabel#label,
 QFrame[h5Component="smartpropPropertyFrame"] > QLabel#label,
 QLabel[h5Component="smartpropVariableHeader"],
@@ -652,7 +648,6 @@ QFrame#frame > QLabel#label[h5VarKind="categoryStart"] { background-color: @hex_
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryEnd"],
 QFrame#frame > QLabel#label[h5VarKind="categoryEnd"] { background-color: @background; image: none; }
 
-/* Expand / Collapse checkbox */
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child,
 QFrame#frame > QCheckBox#show_child {
@@ -688,7 +683,6 @@ QFrame#frame > QCheckBox#show_child:hover {
     background-color: @selection;
 }
 
-/* Visibility toggle checkbox */
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor,
 QFrame#frame > QCheckBox#visible_in_editor {
     font: 700 10pt "Segoe UI";
@@ -719,7 +713,6 @@ QFrame#frame > QCheckBox#visible_in_editor:hover {
     background-color: @selection;
 }
 
-/* Variable Name & Property Name inputs */
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name,
 QFrame#frame > QLineEdit#variable_name {
     font: 600 10pt "Segoe UI";
@@ -744,7 +737,6 @@ QFrame#frame > QLineEdit#variable_name::selection {
     color: white;
 }
 
-/* Variable Class & Property Class labels/inputs */
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class,
 QFrame[h5Component="smartpropPropertyFrame"] > QLineEdit#property_class,
 QFrame#frame > QLineEdit#variable_class,
@@ -775,7 +767,6 @@ QFrame#frame > QLineEdit#property_class::selection {
     color: white;
 }
 
-/* Change Class button */
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class,
 QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class,
 QFrame[h5Component="smartpropPropertyFrame"] > QPushButton#change_class,
@@ -812,7 +803,6 @@ QFrame#frame > QToolButton#change_class:focus {
     border-color: @rgba_5e5e5e_255;
 }
 
-/* ID Display */
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display_label,
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display,
 QFrame[h5Component="smartpropPropertyFrame"] > QLineEdit#id_display_label,
@@ -849,7 +839,6 @@ QFrame#frame > QLineEdit#id_display::selection {
     color: white;
 }
 
-/* Add / Paste buttons in Group Header */
 QFrame#frame > QPushButton#add_button,
 QFrame#frame > QPushButton#paste_button {
     font: 580 8pt "Segoe UI";
@@ -889,13 +878,11 @@ QFrame#frame > QPushButton#paste_button:pressed {
     background-color: @hex_363636;
 }
 
-/* Frame layout container divider under header */
 QFrame#frame_layout {
     border: 0px;
     border-top: 2px solid @rgba_5e5e5e_255;
 }
 
-/* Display Name & Expression sub-frames */
 QFrame#frame_3,
 QFrame#hide_expression_frame {
     font: 580 10pt "Segoe UI";

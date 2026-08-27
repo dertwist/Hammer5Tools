@@ -111,7 +111,6 @@ class InternalSoundFileExplorer(QTreeWidget):
         filter_text = filter_text.lower().strip()
 
         if not filter_text:
-            # Show all items and collapse all
             iterator = QTreeWidgetItemIterator(self)
             while iterator.value():
                 item = iterator.value()
@@ -134,7 +133,6 @@ class InternalSoundFileExplorer(QTreeWidget):
             item = iterator.value()
             if filter_text in item.text(0).lower():
                 found_items.append(item)
-                # Show this item and all its parents
                 current = item
                 while current is not None:
                     current.setHidden(False)

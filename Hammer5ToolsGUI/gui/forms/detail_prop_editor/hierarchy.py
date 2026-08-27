@@ -187,7 +187,6 @@ class DetailPropTree(QWidget):
             item.setText(1, f"density {data.get('m_flDensity', 1.0):g}")
         self._loading = False
 
-    # load
 
     def load(self, types: dict):
         self._loading = True

@@ -220,7 +220,6 @@ class BatchCreatorMainWindow(QMainWindow):
         # Restore saved dock layout or apply defaults
         self._restore_layout_state()
 
-        # Initialize view stack state
         self._update_view_stack()
 
     def _setup_shortcuts(self):

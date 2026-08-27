@@ -152,7 +152,6 @@ def is_metallic(metal_map_path: str):
     """
     try:
         img = Image.open(metal_map_path).convert("L")
-        # Check mean value
         stat = img.getextrema() # Not enough, let's use mean
         # For simplicity, let's just check if there's any significant white
         # Or just use the mean.

@@ -170,7 +170,6 @@ def parse_release_segments(
     if text_after.strip():
         segments.append(('text', text_after))
 
-    # Add loose release assets (non-installers)
     if assets and isinstance(assets, list):
         for asset in assets:
             if not isinstance(asset, dict):

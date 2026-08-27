@@ -22,19 +22,15 @@ class ExplorerItem(QWidget):
         """
         super().__init__(parent)
 
-        # Store the value and label text
         self.value = value
         self.value_class = label_text
 
-        # Initialize the widget's size, layout, and label
         self.set_widget_size()
         self.init_root_layout()
         self.init_label(label_text)
 
-        # Set the stylesheet for the widget
         self.setProperty("h5Component", "propertyFrame")
 
-        # Add an open button to the layout
         self.open_button = Button()
         self.root_layout.addWidget(self.open_button)
 

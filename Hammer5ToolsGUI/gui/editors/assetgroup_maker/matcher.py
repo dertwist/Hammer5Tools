@@ -82,14 +82,12 @@ def strip_known_affixes(base_name: str) -> str:
     cleaned = base_name
     lower = cleaned.lower()
 
-    # Check prefixes
     for prefix in KNOWN_PREFIXES:
         if lower.startswith(prefix):
             cleaned = cleaned[len(prefix):]
             lower = cleaned.lower()
             break
 
-    # Check suffixes
     for suffix in KNOWN_SUFFIXES:
         if lower.endswith(suffix):
             cleaned = cleaned[:-len(suffix)]

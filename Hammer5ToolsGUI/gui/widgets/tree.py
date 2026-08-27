@@ -173,7 +173,6 @@ class HierarchyTreeWidget(QTreeWidget):
             event.ignore()
             return
 
-        # Store old parent and index for each selected item
         old_info = {
             item: (item.parent(), item.parent().indexOfChild(item) if item.parent() else self.indexOfTopLevelItem(item))
             for item in selected_items
@@ -275,7 +274,6 @@ if __name__ == "__main__":
             self.tree.setHeaderLabels(["Name"])
             self.tree.setRootIsDecorated(False)  # Hide root
 
-            # Add children to invisible root
             child1 = QTreeWidgetItem(["Child 1"])
             child2 = QTreeWidgetItem(["Child 2"])
             self.tree.addTopLevelItem(child1)

@@ -72,7 +72,6 @@ class HelpImageDialog(Viewport):
         self.setWindowTitle(title)
         self.resize(960, 640)
 
-        # Disable CS2 loading screen overlay generation
         self.set_loadingshots_dir("C:/nonexistent_dummy_dir")
         self._is_preview_active = False
         self._image_path = image_path

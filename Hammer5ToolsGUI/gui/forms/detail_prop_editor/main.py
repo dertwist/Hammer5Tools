@@ -260,7 +260,6 @@ class DetailPropEditorWidget(QMainWindow):
         delete_action = menu.addAction("Delete")
         delete_action.triggered.connect(self.delete_selected)
 
-        # Enable/disable based on selection
         current_item = self.hierarchy.tree.currentItem()
         if current_item is None:
             add_model_action.setEnabled(False)

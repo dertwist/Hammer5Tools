@@ -129,11 +129,9 @@ class MoveItemsCommand(QUndoCommand):
 
     def _move(self, infos, src_to_dst=True):
         if src_to_dst:
-            # Remove from old, insert to new
             sorted_infos = sorted(infos, key=lambda x: (id(x['old_parent']) if x['old_parent'] else -1, x['old_index']),
                                   reverse=True)
         else:
-            # Remove from new, insert to old
             sorted_infos = sorted(infos, key=lambda x: (id(x['new_parent']) if x['new_parent'] else -1, x['new_index']),
                                   reverse=True)
             sorted_infos = sorted(infos, key=lambda x: (x['new_parent'] or self.tree, x['new_index']), reverse=True)
@@ -141,7 +139,6 @@ class MoveItemsCommand(QUndoCommand):
         for info in sorted_infos:
             item = info['item']
             if src_to_dst:
-                # Remove from old
                 src_parent = info['old_parent']
                 src_index = self._find_current_index(src_parent, item)
                 if src_index == -1:
@@ -151,7 +148,6 @@ class MoveItemsCommand(QUndoCommand):
                 else:
                     src_parent.takeChild(src_index)
             else:
-                # Remove from new
                 dst_parent = info['new_parent']
                 dst_index = self._find_current_index(dst_parent, item)
                 if dst_index == -1:
@@ -300,7 +296,6 @@ class SelectItemsCommand(QUndoCommand):
         # Clear any existing selection first
         self.tree.clearSelection()
         
-        # Set selection for new items
         for item in items:
             if isinstance(item, QTreeWidgetItem):
                 item.setSelected(True)

@@ -19,7 +19,6 @@ def get_note(data: Any) -> str:
     """Extract note text from an element/modifier data dictionary."""
     if not isinstance(data, dict):
         return ""
-    # Check primary key first
     val = data.get(NOTE_KEY)
     if val is not None and str(val).strip():
         return str(val)
@@ -47,7 +46,6 @@ def set_note(data: dict, text: str) -> None:
         for k in LEGACY_NOTE_KEYS:
             data.pop(k, None)
     else:
-        # Clear note and legacy keys
         data.pop(NOTE_KEY, None)
         for k in LEGACY_NOTE_KEYS:
             data.pop(k, None)

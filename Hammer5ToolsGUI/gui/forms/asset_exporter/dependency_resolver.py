@@ -47,7 +47,6 @@ class DependencyResolver:
         for prefix in ["resource:", "panorama:", "file:"]:
             if rel_path.lower().startswith(prefix):
                 rel_path = rel_path[len(prefix):]
-        # Handle compiled asset path mapping
         if rel_path.endswith('_c'):
             rel_path = rel_path[:-2]
 

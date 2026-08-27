@@ -29,7 +29,6 @@ def clear_legacy_glb_cache():
     for item in os.listdir(root):
         item_path = os.path.join(root, item)
         if os.path.isdir(item_path) and item != "thumbs":
-            # Check for legacy glb files in addon/csgo cache folders
             has_glb = False
             for dirpath, _, filenames in os.walk(item_path):
                 if any(fn.endswith(".glb") for fn in filenames):

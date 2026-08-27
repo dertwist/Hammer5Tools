@@ -102,7 +102,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         super().__init__(parent)
 
-        # Load ui file
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -151,7 +150,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         self.properties_groups_hide()
 
-    # Load value
     def load_value(self, value):
         if isinstance(value, str):
             return ast.literal_eval(value)
@@ -191,7 +189,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 # 'comment' is always offered — it can be added multiple times
                 if key_value == 'comment' or key_value not in existing_items:
                     soundevent_editor_properties_filtered.append({key:value})
-        # Use the filtered properties for the popup menu
         self.popup_menu = PopupMenu(soundevent_editor_properties_filtered, add_once=True, help_url="SoundEvent_Editor", window_name='soundevent_editor_properties_filtered')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_property(name, value))
         self.popup_menu.show()
@@ -272,11 +269,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Unset Filter
         self.ui.centralwidget.removeEventFilter(self)
 
-        # Remove context menu connection
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.customContextMenuRequested.disconnect(self.open_context_menu)
         
-        # Keep Play button accessible in hidden state
         try:
             self.play_button.setEnabled(True)
         except Exception:
@@ -286,10 +281,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.ui.properties_placeholder.hide()
         self.ui.properties_spacer.show()
 
-        # Set Filter
         self.ui.centralwidget.installEventFilter(self)
 
-        # Add context menu connection
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
 
@@ -323,7 +316,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             else:
                 i += 1
 
-        # keep play button and badge intact
     def populate_properties(self, _data):
         """Loading properties from given data"""
         if isinstance(_data, dict):
@@ -561,7 +553,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         except Exception:
             data = {}
 
-        # Populate UI from the item's data
         self.properties_clear()
         self.properties_groups_show()
         self.populate_properties(data)

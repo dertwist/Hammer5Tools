@@ -63,7 +63,6 @@ class SoundEventEditorPropertyFrame(QWidget):
         Adding a property to the frame widget.
         Import properties classes form another file
         """
-        # Convert value str to dict
         if isinstance(value, str):
             try:
                 value = ast.literal_eval(value)
@@ -263,7 +262,6 @@ class SoundEventEditorPropertyFrame(QWidget):
                       'update_track_syncpoint_index', 'stop_start_round', 'stop_tensec_count', 'stop_bomb_planted', 
                       'stop_got_hostage', 'stop_music_except_mvp', 'skip_if_muted', 'test_mvp_block', 
                       'check_for_classic_deathcam', 'stop_won_mvp', 'block_won_lost']:
-            # Convert string 'true'/'false' to boolean for the UI
             bool_value = value == 'true' if isinstance(value, str) else bool(value)
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=bool_value)
 

@@ -243,7 +243,6 @@ class VariableFrame(PropertyMethods, QWidget):
         # For hide expressions, only show Bool, Int, and Float variables
         filter_types = ['Bool', 'Int', 'Float']
 
-        # Use the utility to setup the completer with filtering
         CompletionUtils.setup_completer_for_widget(
             self.hide_expression_input,
             self.widget_list,
@@ -260,7 +259,6 @@ class VariableFrame(PropertyMethods, QWidget):
         # captures the correct "before" values.
         self.pre_change.emit()
 
-        # Remove the old var_int_instance widget from the layout.
         # It lives at index 2 in self.ui.layout (after frame_3 and
         # hide_expression_frame), so we locate it by reference instead of
         # hard-coding an index to be robust.
@@ -322,10 +320,8 @@ class VariableFrame(PropertyMethods, QWidget):
     def on_hide_expression_changed(self):
         """Handle changes to the hide expression input field."""
         self.hide_expression = self.hide_expression_input.toPlainText().strip()
-        # Convert empty string to None for consistency
         if not self.hide_expression:
             self.hide_expression = None
-        # Update completer with current variable names and types
         self._setup_hide_expression_completer()
         # on_changed emits content_changed, so no extra emit needed here
         self.on_changed()
@@ -428,12 +424,10 @@ class VariableFrame(PropertyMethods, QWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
-        # Initialize UI states
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.varialbe_display_name.setText(self.var_display_name if self.var_display_name else "")
         self.ui.variable_name.setText(self.name)
 
-        # Connect signals
         self.ui.visible_in_editor.clicked.connect(self.update_self)
         self.ui.varialbe_display_name.textChanged.connect(self.update_self)
         self.ui.variable_name.installEventFilter(self)
@@ -571,7 +565,6 @@ class CategoryFrame(VariableFrame):
         if hasattr(self, 'var_int_instance'):
             self.var_int_instance.hide()
 
-        # Update labels/placeholders
         if self.is_start:
             self.category_name = self._extract_display_name(self.var_display_name)
             self.ui.variable_name.setPlaceholderText("Category Name")

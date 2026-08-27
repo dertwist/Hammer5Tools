@@ -31,7 +31,6 @@ if sys.platform == 'win32':
         pyside_dir = os.path.dirname(PySide6.__file__)
         # Add to PATH so that plugin loader can find dependent Qt DLLs
         os.environ["PATH"] = pyside_dir + os.path.pathsep + os.environ.get("PATH", "")
-        # Add to DLL Directory search path for Python 3.8+
         if hasattr(os, 'add_dll_directory'):
             os.add_dll_directory(pyside_dir)
             plugins_dir = os.path.join(pyside_dir, "plugins")
@@ -349,7 +348,6 @@ if __name__ == "__main__":
     from gui.styles import manager as style_manager
     style_manager.apply(app, theme.get_theme(level))
 
-    # Create main window
     widget = Widget()
     from gui.other.taskbar_identity import apply_taskbar_identity
     apply_taskbar_identity(widget)

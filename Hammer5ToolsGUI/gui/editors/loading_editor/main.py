@@ -481,7 +481,6 @@ class Loading_editorMainWindow(QMainWindow):
     def on_timeline_image_selected(self, image_path: str):
         """Handle image selection from timeline view"""
         if os.path.exists(image_path):
-            # Show the image in the viewport
             self.image_viewer.showImage(image_path)
 
     def export_all_animations(self):
@@ -631,7 +630,6 @@ class Loading_editorMainWindow(QMainWindow):
 
     def take_loading_screen_shots_action(self):
         """Generate commands for loading screen screenshots, clear previous shots, and send to CS2 via netcon."""
-        # Clear previous loading screen shots first
         if os.path.exists(self.loadingscreen_path):
             for filename in os.listdir(self.loadingscreen_path):
                 file_path = os.path.join(self.loadingscreen_path, filename)

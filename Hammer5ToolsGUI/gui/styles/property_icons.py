@@ -135,12 +135,10 @@ class IconCache:
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw colored circle
         painter.setBrush(color)
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(0, 0, size, size)
 
-        # Draw label
         painter.setPen(Qt.black)
         font = QFont()
         font.setBold(True)

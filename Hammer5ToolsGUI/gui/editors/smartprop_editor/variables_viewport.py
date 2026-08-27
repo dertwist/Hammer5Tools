@@ -41,7 +41,6 @@ class SmartPropEditorVariableViewport(QWidget):
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
         self.ui.add_new_category_button.clicked.connect(self.add_new_category)
 
-        # Add variable classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
 
@@ -276,7 +275,6 @@ class SmartPropEditorVariableViewport(QWidget):
         var_visible = True
         
         self.add_category(start_name, var_visible, f"---------- {display_name} ----------")
-        # Add End
         end_name = f"hammer5tools_category_{unique_hash}_end"
         self.add_category(end_name, False, "                                             ")
 
@@ -530,7 +528,6 @@ class SmartPropEditorVariableViewport(QWidget):
             if is_reorder:
                 description = "Reorder Variables"
             elif len(new_state) == len(self._var_committed_state):
-                # Check for single-variable rename
                 diffs = []
                 for old_var, new_var in zip(self._var_committed_state, new_state):
                     if old_var['name'] != new_var['name']:

@@ -104,7 +104,6 @@ class PropertyVariableValue(QWidget):
             self.value_spacer_item.setLayout(value_spacer_layout)
             self.ui.layout_3.addWidget(self.value_spacer_item)
 
-            # Create separate spacer item for main spacer
             main_spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
             self.spacer = QWidget()
             spacer_layout = QHBoxLayout()
@@ -115,7 +114,6 @@ class PropertyVariableValue(QWidget):
             self.spacer.setContentsMargins(0, 0, 0, 0)
             self.ui.layout.addWidget(self.spacer)
 
-            # Connect signals
             self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
             self.ui.logic_switch_value.currentTextChanged.connect(self.on_changed)
 
@@ -129,7 +127,6 @@ class PropertyVariableValue(QWidget):
             layout = QHBoxLayout()
             layout.setContentsMargins(0, 0, 0, 0)
             layout.addWidget(self.variable)
-            # Create separate spacer item for variable layout
             variable_spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
             layout.addItem(variable_spacer_item)
             self.variable_frame = QWidget()
@@ -205,7 +202,6 @@ class PropertyVariableValue(QWidget):
                 self.text_line.hide()
                 self.expression_editor.hide()
                 self.value_spacer_item.show()
-                # Show appropriate widget based on current data type
                 current_type = self.ui.logic_switch.currentText()
                 if current_type == 'Bool':
                     self.float_widget.hide()

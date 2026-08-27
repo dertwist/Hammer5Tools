@@ -27,12 +27,10 @@ class PropertyReference(QWidget):
 
         self.ui.reference_show_button.setProperty("h5Component", "legacyButton")
 
-        # Set up the property class label
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
         self.ui.property_class.setText(output)
 
-        # Connect signals
         self.ui.reference_search.clicked.connect(self.reference_id_search)
         self.ui.reference_clear.clicked.connect(self.reference_id_clear)
         self.ui.reference_show_button.clicked.connect(self.show_reference_in_hierarchy)
@@ -68,7 +66,6 @@ class PropertyReference(QWidget):
                 for i in range(parent_item.childCount()):
                     item = parent_item.child(i)
                     if item:
-                        # Add the current item
                         items.append(item)
                         # Recursively add all children
                         if item.childCount() > 0:
@@ -139,7 +136,6 @@ class PropertyReference(QWidget):
             print("No valid items found for reference selection")
             return
 
-        # Create and show the popup menu
         try:
             self.hierarchy_menu = PopupMenu(properties=properties, window_name='hierarchy_item_menu')
             self.hierarchy_menu.add_property_signal.connect(self.on_hierarchy_item_selected)
@@ -237,7 +233,6 @@ class PropertyReference(QWidget):
         ref_id = self.reference_id_get()
         
         if ref_id is not None:
-            # Create the reference values
             reference_values = {
                 'm_nReferenceID': ref_id,
                 'm_sReferenceObjectID': self.reference_object_id_get()

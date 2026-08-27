@@ -43,7 +43,6 @@ class TemplateSlotMappingDialog(QDialog):
         self.skipped_slots: List[str] = list(template_data.get('skipped_slots', []))
         self.custom_tokens: Dict[str, str] = dict(template_data.get('custom_tokens', {}))
 
-        # Load material remaps from template_data or analysis
         self.material_remaps: List[Dict[str, str]] = []
         raw_remaps = template_data.get('material_remaps')
         if raw_remaps is not None:
@@ -221,7 +220,6 @@ class TemplateSlotMappingDialog(QDialog):
 
         row_layout.addLayout(token_row)
 
-        # Connect checkbox to enable/disable token edit
         cb.toggled.connect(tok_edit.setEnabled)
         tok_edit.setEnabled(cb.isChecked())
 
@@ -428,11 +426,9 @@ class TemplateSlotMappingDialog(QDialog):
                     ):
                         continue
 
-                    # Apply template ignore list / patterns
                     if ignore_patterns and any(matches_filter_entry(f, p) for p in ignore_patterns):
                         continue
 
-                    # Apply template filter mode / ignore extensions
                     if tpl_filter_mode == 'exclude' and ignore_extensions:
                         if any(matches_filter_entry(f, e) for e in ignore_extensions):
                             continue

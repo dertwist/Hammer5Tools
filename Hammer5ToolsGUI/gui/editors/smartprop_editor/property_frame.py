@@ -1118,7 +1118,6 @@ class PropertyFrame(QWidget):
         self._finish_init()
 
     def _setup_layout2dgrid_suppression(self):
-        # Apply visibility rules for Layout2DGrid element
         if getattr(self, 'prop_class', None) != 'Layout2DGrid':
             return
 
@@ -1139,7 +1138,6 @@ class PropertyFrame(QWidget):
         self._w_shift_w = find_widget('m_flAlternateShiftWidth')
         self._w_shift_l = find_widget('m_flAlternateShiftLength')
 
-        # Connect signals
         if self._w_arrangement and hasattr(self._w_arrangement, 'edited'):
             self._w_arrangement.edited.connect(self._update_layout2dgrid_visibility)
         if self._w_alt and hasattr(self._w_alt, 'edited'):

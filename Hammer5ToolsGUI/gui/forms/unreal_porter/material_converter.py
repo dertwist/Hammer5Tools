@@ -257,7 +257,6 @@ def _classify_textures(textures: dict, slot_overrides: dict = None, shader: str 
                 overrides_norm[norm_key(k)] = v
                 has_explicit_overrides = True
 
-    # Apply explicit overrides first
     for param_name, tex_path in textures.items():
         key_lower = param_name.lower()
         key_norm = norm_key(param_name)

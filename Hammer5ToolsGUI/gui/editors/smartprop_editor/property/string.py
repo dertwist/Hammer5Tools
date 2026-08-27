@@ -375,7 +375,6 @@ class PropertyString(QWidget, PooledPropertyMixin):
                     self.ui.logic_switch.setCurrentIndex(1)
                     self.text_line.setPlainText(value)
 
-            # Apply hide constraints (mirrors __init end).
             if expression_bool:
                 self.ui.logic_switch.hide()
                 self.ui.logic_switch.setCurrentIndex(3)

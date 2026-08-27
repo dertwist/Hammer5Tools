@@ -551,7 +551,6 @@ class Viewport(QMainWindow):
             if self.current_pixmap:
                 self.saveCameraPosition()
             
-            # Store the current zoom and scroll positions
             current_zoom = self.zoom_level
             current_h_scroll = self.scroll_area.horizontalScrollBar().value() if self.current_pixmap else None
             current_v_scroll = self.scroll_area.verticalScrollBar().value() if self.current_pixmap else None

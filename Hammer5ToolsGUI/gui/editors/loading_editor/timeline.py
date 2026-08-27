@@ -116,7 +116,6 @@ def render_animation(image_paths: List[str], output_dir: str, base_name: str,
         )
     else:
         output_path = os.path.join(output_dir, f"{base_name}_timeline.gif")
-        # Convert to palette mode for GIF (adaptive palette)
         palette_frames = [f.convert('P', palette=Image.ADAPTIVE) for f in frames]
         palette_frames[0].save(
             output_path,
@@ -351,7 +350,6 @@ class TimelineTreeWidget(QTreeWidget):
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.show()
 
-        # Create worker
         worker = TimelineExportWorker(camera_item.camera_name, image_paths, output_dir,
                                        fmt=self.export_format, quality=self.export_quality)
         worker.signals.progress.connect(progress_dialog.setValue)
@@ -422,18 +420,15 @@ class TimelineTreeWidget(QTreeWidget):
         except Exception as e:
             return
         
-        # Create tree structure
         for camera_name, images in camera_data.items():
             # Sort images by timestamp (oldest first)
             images.sort(key=lambda x: x[0])
             
-            # Create camera folder item
             camera_item = QTreeWidgetItem(self)
             camera_item.setText(0, f"{camera_name} ({len(images)} images)")
             camera_item.camera_name = camera_name
             camera_item.setExpanded(False)
             
-            # Set folder icon - use a simple folder icon
             try:
                 camera_item.setIcon(0, self.style().standardIcon(QStyle.SP_DirIcon))
             except AttributeError:
@@ -441,7 +436,6 @@ class TimelineTreeWidget(QTreeWidget):
                 folder_icon = QIcon()
                 camera_item.setIcon(0, folder_icon)
             
-            # Add image items
             for timestamp, image_path in images:
                 image_item = QTreeWidgetItem(camera_item)
                 image_item.setText(0, timestamp.strftime("%Y-%m-%d %H:%M:%S"))
@@ -453,7 +447,6 @@ class TimelineTreeWidget(QTreeWidget):
 
     def extract_camera_name(self, filename: str) -> str:
         """Extract camera name from filename, treating different numbered cameras as separate"""
-        # Remove extension
         base_name = os.path.splitext(filename)[0]
 
         # Extract camera name and number (e.g., "Site_0000" -> "Site", "Site_0001" -> "Site 1")

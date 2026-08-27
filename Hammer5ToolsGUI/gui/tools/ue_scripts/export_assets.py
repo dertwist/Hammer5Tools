@@ -31,7 +31,6 @@ _EXPORTABLE_CLASSES = ("StaticMesh", "Texture2D")
 # made from a UE template, and BasicShapes are common greyboxing props. Without
 # these roots the converter writes a vmdl pointing at a mesh nobody exported.
 # /Engine as a whole is thousands of assets, so only the roots that actually
-# get placed in levels are included.
 DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 
 

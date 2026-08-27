@@ -34,7 +34,6 @@ class QuickCreateDialog(QDialog):
             
         full_path = os.path.join(self.folder_path, filename)
         
-        # Create minimal template
         data = {}
         if self.file_type == 'vmdl':
             data = {"m_sMDLFilename": ""}

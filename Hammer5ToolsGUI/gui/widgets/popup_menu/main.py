@@ -166,7 +166,6 @@ class PopupMenu(QDialog):
         self.add_once = add_once
         self.ignore_items = self._convert_ignore_list(ignore_list)
 
-        # Remove title bar and set initial geometry
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setGeometry(200, 200, 400, 400)

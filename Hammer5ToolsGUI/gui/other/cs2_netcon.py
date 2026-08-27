@@ -91,7 +91,6 @@ class CS2Netcon:
                         if not chunk:
                             break
                         response += chunk
-                        # Check accumulated response for the cvar pattern
                         text = response.decode('utf-8', errors='replace')
                         match = pattern.search(text)
                         if match:
@@ -235,4 +234,3 @@ class CS2Netcon:
             return False
         except Exception as e:
             return False
-

@@ -419,7 +419,6 @@ class CleanupDialog(QDialog):
         self.cleanup_button.setDefault(True)
         button_layout.addWidget(self.cleanup_button)
 
-        # Connect buttons to their respective actions
         self.recalculate_button.clicked.connect(self.recalculate)
         self.verify_button.clicked.connect(self.run_verification)
         self.cleanup_button.clicked.connect(self.cleanup_addon)

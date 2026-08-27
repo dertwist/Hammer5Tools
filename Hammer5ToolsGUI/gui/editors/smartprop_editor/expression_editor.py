@@ -71,14 +71,12 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
         return format
 
     def highlightBlock(self, text):
-        # Apply general highlighting rules first
         for pattern, format in self.highlighting_rules:
             for match in pattern.finditer(text):
                 start = match.start()
                 length = match.end() - match.start()
                 self.setFormat(start, length, format)
 
-        # Apply variable-specific highlighting
         variable_pattern = re.compile(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b(?!\()")
         for match in variable_pattern.finditer(text):
             var_name = match.group()
@@ -158,7 +156,6 @@ class CodeEditor(CompletingPlainTextEdit):
         # Fill background with darker color matching project theme
         painter.fillRect(event.rect(), QColor(47, 47, 49))  # #2f2f31 - project secondary background
 
-        # Draw a subtle border on the right side
         painter.setPen(QColor(70, 70, 73))  # #464649 - project stroke color
         painter.drawLine(self.line_number_area.width() - 1, event.rect().top(),
                         self.line_number_area.width() - 1, event.rect().bottom())
@@ -168,10 +165,8 @@ class CodeEditor(CompletingPlainTextEdit):
         top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
         bottom = top + self.blockBoundingRect(block).height()
 
-        # Get current line for highlighting
         current_line = self.textCursor().blockNumber()
 
-        # Set up font for line numbers
         font = self.font()
         font.setPointSize(max(8, font.pointSize() - 1))  # Slightly smaller than editor font
         painter.setFont(font)
@@ -186,13 +181,10 @@ class CodeEditor(CompletingPlainTextEdit):
                     highlight_rect = QRect(0, int(top), self.line_number_area.width() - 1, height)
                     painter.fillRect(highlight_rect, QColor(80, 88, 100, 80))  # #515965 with transparency
 
-                    # Use brighter color for current line number
                     painter.setPen(QColor(229, 229, 229))  # #e5e5e5 - project primary text
                 else:
-                    # Use muted color for other line numbers
                     painter.setPen(QColor(165, 165, 165))  # #a5a5a5 - project neutral text
 
-                # Draw line number with right alignment and padding
                 painter.drawText(0, int(top), self.line_number_area.width() - 6, height,
                                Qt.AlignRight | Qt.AlignVCenter, number)
 
@@ -287,7 +279,6 @@ class ExpressionEditor(QToolButton):
         main_layout.setContentsMargins(8, 8, 8, 8)
         main_layout.setSpacing(8)
 
-        # Create splitter for main content
         splitter = QSplitter(Qt.Horizontal)
         splitter.setProperty("h5Component", "smartpropExprSplitter")
         main_layout.addWidget(splitter)
@@ -317,7 +308,6 @@ class ExpressionEditor(QToolButton):
                 var_type = variables_with_types.get(var_name, 'unknown')
                 variables_info[var_name] = var_type
 
-                # Create colored item based on type
                 item = QListWidgetItem(var_name)
                 tooltip = f"Variable: {var_name}"
                 if var_type != 'unknown':
@@ -347,7 +337,6 @@ class ExpressionEditor(QToolButton):
 
         functions_list = QListWidget()
 
-        # Add common functions and operators with ternary support
         common_functions = [
             # Conditional operators
             "condition ? value_if_true : value_if_false",
@@ -364,7 +353,6 @@ class ExpressionEditor(QToolButton):
             "true", "false"
         ]
 
-        # Add expression_completer functions from objects.py
         for expr in expression_completer:
             common_functions.append(expr)
 
@@ -423,7 +411,6 @@ class ExpressionEditor(QToolButton):
         )
         # Ensure expression_completer items are included
         completions.extend(expression_completer)
-        # Remove duplicates and sort
         completions = sorted(list(set(completions)))
         editor.completions.setStringList(completions)
 
@@ -482,7 +469,6 @@ class ExpressionEditor(QToolButton):
         def cancel():
             dialog.reject()
 
-        # Connect signals
         variables_list.itemDoubleClicked.connect(insert_text)
         functions_list.itemDoubleClicked.connect(insert_text)
         examples_list.itemDoubleClicked.connect(insert_text)

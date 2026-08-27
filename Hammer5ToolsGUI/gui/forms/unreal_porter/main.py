@@ -1163,7 +1163,6 @@ class UnrealPorterWidget(QDialog):
         self.master_mat_list.populate({})
         self._update_button_states()
 
-    # convert & stage pipeline
 
     def _find_missing_tmp_exports(self, scope_assets) -> list:
         tmp_dir = self.tmp_dir()

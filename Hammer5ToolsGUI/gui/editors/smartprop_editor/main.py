@@ -67,7 +67,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_open_global.triggered.connect(lambda: self.open_file(external=True))
         self.addAction(self.action_open_global)
 
-        # Initialize file explorer
         self.init_explorer()
         # Hide the Explorer dock title bar (no label, no float/close buttons)
         from PySide6.QtWidgets import QWidget as _QWidget
@@ -80,7 +79,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Build placeholder empty state view
         self._build_empty_state()
 
-        # Set initial UI state based on document availability
         self.update_placeholder_visibility()
 
         # Persist document layout on quit
@@ -225,7 +223,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if not filename:
                     return
             else:
-                # Get the currently selected file path from the explorer
                 if hasattr(self.mini_explorer, "get_current_path"):
                     filename = self.mini_explorer.get_current_path(absolute=True)
 
@@ -250,7 +247,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                         self.ui.DocumentTabWidget.setCurrentIndex(i)
                         return
 
-            # Create a new document and load file
             document = SmartPropDocument(self)
             document.opened_file = norm_filename
             if hasattr(document, "open_file"):

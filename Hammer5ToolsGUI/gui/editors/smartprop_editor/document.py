@@ -112,32 +112,20 @@ class SmartPropDocument(QMainWindow):
         self.undo_stack = QUndoStack(self)
         self.undo_stack.cleanChanged.connect(self._on_undo_clean_changed)
 
-        # Window-level undo/redo shortcuts are handled by main window menu actions
-        # (action_undo, action_redo, action_isolate) in SmartPropEditorMainWindow.
-
-        # Guard counter: while > 0, update_tree_item_value skips pushing to the undo stack.
-        # Incremented before rebuilding the properties panel during undo/redo; decremented
-        # after all deferred QTimer.singleShot(0) callbacks have had a chance to fire.
+        # Skip property undo entries while deferred panel rebuilds settle.
         self._property_undo_guard = 0
 
-        # Slider-drag tracking: while _slider_dragging > 0 the view is updated in
-        # real-time but no undo commands are pushed.  A single command is pushed in
-        # _on_slider_committed once the last active slider is released.
+        # Coalesce slider drags into one undo command.
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
         self._gizmo_pre_drag_data = None
-        # Set once per gizmo drag: guards the single panel rebuild that runs when
-        # a transform modifier is *created* mid-drag (see update_property_frame_values),
-        # so the async rebuild can't thrash on every subsequent mouse-move.
+        # Avoid repeated panel rebuilds when a gizmo drag creates a modifier.
         self._gizmo_live_rebuilt = False
 
-        # Guard flag: while True, add_variable skips marking the document as modified
-        # and emitting _edited (used during undo/redo restore).
+        # Undo/redo restores must not mark the document modified.
         self._restoring_state = False
 
-        # Flag set by PropertySnapshotCommand before it calls tree.setCurrentItem()
-        # to sync the tree selection.  on_tree_current_item_changed returns early
-        # when this is True so the panel is not double-rebuilt.
+        # Prevent selection synchronization from rebuilding the panel twice.
         self._undo_redo_rebuilding = False
 
         # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
@@ -244,10 +232,6 @@ class SmartPropDocument(QMainWindow):
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
 
-        # Every major panel (Property Editor, Manual Editor, 3D Viewport,
-        # Hierarchy, History, Variables, Choices) is a QDockWidget, so the user
-        # can freely rearrange, float, tab, or hide any of them.  The central
-        # widget is collapsed to zero size so the docks fill the whole window.
         _dock_features = (
             QDockWidget.DockWidgetFeature.DockWidgetFloatable
             | QDockWidget.DockWidgetFeature.DockWidgetMovable
@@ -267,11 +251,7 @@ class SmartPropDocument(QMainWindow):
         self._manual_dock.setFeatures(_dock_features)
         self._manual_dock.setWidget(self._manual_editor)
 
-        # 3D Viewport dock.  The OpenGL viewport (and its GL context / VRF
-        # decompilation) is expensive and can misbehave if created eagerly, so the
-        # dock starts with a cheap placeholder.  The real SmartProp3DViewport is
-        # built lazily the first time the dock becomes visible (see
-        # _on_viewport_dock_visibility_changed / _ensure_viewport_3d).
+        # Create the expensive OpenGL viewport only when its dock becomes visible.
         self._viewport_3d = None
         self._viewport_3d_loaded = False
         self._viewport_3d_failed = False
@@ -300,10 +280,7 @@ class SmartPropDocument(QMainWindow):
 
         self._apply_default_layout()
 
-        # The dock/viewport arrangement is saved (debounced) whenever a dock is
-        # moved, floated, or resized, so the layout survives crashes and abrupt
-        # termination (e.g. stopping the debugger) rather than only a clean
-        # close. A short timer coalesces bursts (drag-resize) into one save.
+        # Debounce layout saves so dock changes survive abrupt termination.
         self._layout_docks = (
             self.ui.HierarchyDock, self.ui.ChoicesDock, self.ui.VariablesDock,
             self._property_dock, self._manual_dock, self._viewport_dock,
@@ -322,11 +299,7 @@ class SmartPropDocument(QMainWindow):
         self._manual_dock.visibilityChanged.connect(self._on_manual_dock_visibility_changed)
         self._viewport_dock.visibilityChanged.connect(self._on_viewport_dock_visibility_changed)
 
-        # Keep the 3D viewport following the hierarchy in real-time: whenever
-        # elements are added, removed, reordered, or their data edited, the scene
-        # is rebuilt (models loaded/unloaded to match).  A short debounce coalesces
-        # bursts (e.g. paste, bulk import, drag-drop) into a single rebuild, and the
-        # sync no-ops unless the 3D viewport dock is actually visible.
+        # Debounce hierarchy changes into a viewport rebuild.
         self._viewport_3d_sync_timer = QTimer(self)
         self._viewport_3d_sync_timer.setSingleShot(True)
         self._viewport_3d_sync_timer.setInterval(50)
@@ -336,20 +309,14 @@ class SmartPropDocument(QMainWindow):
         tree_model.rowsRemoved.connect(self._schedule_viewport_3d_sync)
         tree_model.rowsMoved.connect(self._schedule_viewport_3d_sync)
         tree_model.dataChanged.connect(self._schedule_viewport_3d_sync)
-        # Variable edits (default value, variable/expression bindings, add/remove)
-        # live in the variables panel, not the hierarchy tree, so they don't emit
-        # the tree-model signals above.  They do emit the document's _edited signal,
-        # so hook it too: a bound field (e.g. a model path bound to a variable)
-        # re-reads the variable's default on the next debounced rebuild.
+        # Variable edits bypass the tree model, so they also trigger a rebuild.
         self._edited.connect(self._schedule_viewport_3d_sync)
 
         self._did_show_restore = False
         QTimer.singleShot(0, self._restore_user_prefs)
 
-        # Apply dock tab styling to the whole window.
         set_qdock_tab_style(self.findChildren)
 
-        # Initialize categorized menu bar
         self.init_menu_bar()
 
         # Pre-warm pooled property widgets after first paint.
@@ -437,9 +404,7 @@ class SmartPropDocument(QMainWindow):
             return
         if not self._viewport_dock.isVisible():
             return
-        # While the transform gizmo is being dragged the render area already
-        # mirrors the change locally every frame; a full rebuild mid-drag would
-        # be wasteful (and is applied once the drag settles anyway).
+        # The render area updates gizmo drags locally; defer the full rebuild.
         try:
             if self._viewport_3d.render_area.gizmo.is_dragging:
                 return
@@ -1038,10 +1003,7 @@ class SmartPropDocument(QMainWindow):
     # [Open File]
     @exception_handler
     def open_file(self, filename):
-        # Suppress property snapshot commands while the file is being loaded.
-        # The guard is released in the finally block so that @exception_handler
-        # catching a mid-load exception can never leave the guard permanently
-        # raised (which would permanently block all future property undo entries).
+        # Always release this undo guard in finally, even if loading fails.
         self._property_undo_guard += 1
         self._restoring_state = True
         try:
@@ -1102,9 +1064,7 @@ class SmartPropDocument(QMainWindow):
 
             self._modified = False
         finally:
-            # Always release the guard and clear the stack, even if an exception
-            # occurred mid-load.  Both are deferred so all singleShot(0)
-            # _finish_init callbacks that were queued during file load fire first.
+            # Defer cleanup until queued widget initialization finishes.
             self._restoring_state = False
             QTimer.singleShot(0, self._dec_property_undo_guard)
             QTimer.singleShot(0, self.undo_stack.clear)
@@ -2528,7 +2488,6 @@ class SmartPropDocument(QMainWindow):
             new_data = replace_fn(old_data)
             if new_data != old_data:
                 self.undo_stack.push(PropertySnapshotCommand(self, item, old_data, new_data))
-                # Apply the change
                 item.setData(0, Qt.UserRole, new_data)
                 # If this item is currently selected, refresh the properties panel
                 if self.ui.tree_hierarchy_widget.currentItem() is item:

@@ -128,7 +128,6 @@ class SaveSoundEvents:
             if comment:
                 event_comments[key] = comment
 
-        # Write to file
         output_text = serialize_vsndevts_with_comments(
             data,
             file_header_comments=file_header_comments,
@@ -527,7 +526,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         """Handle keyboard and shortcut events for various widgets."""
 
         if event.type() == QKeyEvent.KeyPress:
-            # Handle events for hierarchy_widget
             if source == self.ui.hierarchy_widget:
                 # Copy (Ctrl + C)
                 if event.matches(QKeySequence.Copy):
@@ -590,7 +588,6 @@ class SoundEventEditorMainWindow(QMainWindow):
             item = root.child(i)
             existing_names.add(item.text(0))
 
-        # Use the global utility with a dot separator
         return generate_unique_name(_name, existing_names, separator=".")
 
 
@@ -669,7 +666,6 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
-        # Convert the dictionary to a string representation
         item.setData(0, Qt.UserRole, _data)
 
     def filter_editor_properties(self, text: str):

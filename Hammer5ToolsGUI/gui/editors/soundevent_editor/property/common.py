@@ -295,7 +295,6 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
 
     def init_vertical_layout(self):
         """Init paste button. The paste button suppose to be used take position form transforms when you copy transforms to the clipboard from hammer editor"""
-        # Create a QFrame to hold the vertical layout
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
         self.frame.setProperty("h5Component", "soundeventPropertyFrame")
@@ -304,7 +303,6 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
 
 
-        # Initialize the vertical layout
         self.vertical_layout = QVBoxLayout(self.frame)
 
         self.root_layout.addWidget(self.frame)
@@ -379,7 +377,6 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.init_button()
 
 
-        # Populate items
         if isinstance(value, list):
             for item in reversed(value):
                 self.add_element(item)
@@ -403,7 +400,6 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
     def init_vertical_layout(self):
         """Init paste button. The paste button suppose to be used take position form transforms when you copy transforms to the clipboard from hammer editor"""
-        # Create a QFrame to hold the vertical layout
         self.frame = QFrame(self)
         self.frame.setObjectName("frame")
         self.frame.setProperty("h5Component", "soundeventPropertyFrame")
@@ -412,7 +408,6 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
 
 
-        # Initialize the vertical layout
         self.vertical_layout = QVBoxLayout(self.frame)
         self.vertical_layout.setSpacing(4)
 

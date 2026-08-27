@@ -113,13 +113,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._action = None  # 'orbit' | 'pan'
         self._selected_id = 0
 
-        # How the currently-selected element's scale is stored, decided when the
-        # gizmo's axis availability is computed: "vector" (per-axis m_vModelScale),
-        # "uniform" (single m_flUniformModelScale / Scale-op m_flScale), or None
-        # (no scale property — scale axes are grayed and not created on drag).
+        # Gizmo scale source: per-axis, uniform, or unavailable.
         self._scale_source = None
 
-        # View Settings
         self.shading_mode = "textured"  # "textured" | "solid" | "wireframe"
         self.translucency_enabled = True  # when False, BLEND materials draw opaque
         self.coordinate_space = "World"
@@ -130,30 +126,20 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.show_widgets = True
         self.isolated_element_id = None
         self.isolated_element_name = ""
-        # When on, the isolated element follows the selection instead of being
-        # pinned by the manual Ctrl+H toggle.
+        # Follow selection instead of the Ctrl+H isolation target.
         self.dynamic_isolation = False
         self.current_transform_text = None
 
-        # Scene Data (populated from document tree)
         self._model_infos = {}  # id -> info dict (primary entry per element id)
         self._model_instances = []  # list of all individual model instances to render
         self._path_infos = []  # list of PlaceOnPath curve and control point data
 
-        # SmartProp evaluation engine — resolves expression/variable bindings and
-        # emits the locator/rotator/pickone preview widgets.  Rebuilt each
-        # update_viewport() from the document's variable defaults.
+        # Evaluated preview widgets, rebuilt from document variable defaults.
         self._widget_infos = []  # list of resolved widget dicts to draw
 
-        # Preview-accuracy warnings surfaced in the HUD, rebuilt each
-        # update_viewport().
         self._warn_unsupported = set()     # unsupported element class short-names
 
-        # Nested smart-prop recursion guard. _nested_vsmart_stack holds the
-        # chain of .vsmart files currently being expanded so a self-referential
-        # prop (e.g. a cloner that references itself) can't recurse forever.
-        # _warned_cyclic_smartprops keeps the "cycle detected" log to one line
-        # per file instead of one per paint.
+        # Prevent recursive .vsmart expansion and repeated cycle logs.
         self._nested_vsmart_stack = []
         self._warned_cyclic_smartprops = set()
 
@@ -209,16 +195,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._dynamic_vao = 0
         self._dynamic_vbo = 0
 
-        # Selection outline appearance.  The selected element's silhouette is
-        # traced with a constant-width outline instead of a full-surface fill.
         self.outline_enabled = True
         self.outline_color = (0.15, 0.95, 1.0)  # cyan, matching the app's selection accent
         self.outline_thickness = 3.0            # logical pixels (scaled by device ratio)
 
-        # Offscreen single-sample mask FBO for the selection silhouette.  Kept
-        # separate from the picking FBO: this one owns a *texture* colour target
-        # (the outline pass samples it), whereas picking reads back from a
-        # renderbuffer.
+        # Outline mask uses a texture target; picking uses a renderbuffer.
         self._mask_fbo = 0
         self._mask_color_tex = 0
         self._mask_depth_rbo = 0
@@ -293,7 +274,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         self._init_editor_billboard_geometry()
 
-        # Initialize Grid Geometry
         size = 25000.0
         grid_vertices = np.array([
             [-size, 0.0, -size],
@@ -311,7 +291,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
 
-        # Initialize Unit Wireframe Box Geometry for fallbacks
         h = 0.5
         box_lines = np.array([
             [-h, -h, -h], [ h, -h, -h],
@@ -516,7 +495,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 painter.setBrush(accent_color)
                 painter.drawRect(box_x, box_y, 3, box_height)
                 
-                # Draw text lines
                 for i, line in enumerate(hud_lines):
                     if line.startswith("⚠"):
                         painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
@@ -637,11 +615,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def _render_scene_models(self, view, proj, cam_pos, picking=False, mask_id=None):
         from OpenGL import GL
 
-        # ``mask_id`` renders a selection silhouette: only the element whose id ==
-        # mask_id is drawn (flat white, via the picking shader), everything else is
-        # skipped so it stays the FBO's cleared black -- giving an x-ray silhouette
-        # that ignores any other mesh occluding it.  It shares the picking
-        # shader/geometry path, hence the combined ``use_pick`` flag below.
+        # The mask renders only the selected element for an x-ray outline.
         use_pick = picking or (mask_id is not None)
 
         # Resolve context addon from opened file
@@ -701,18 +675,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             scale = info.get("scale", [1.0, 1.0, 1.0])
             model_path = info.get("path", "")
 
-            # Build the Source-space model matrix, then convert to GL.
-            #
-            # These helpers store transforms row-vector style (translation in the
-            # last row), and matrices are handed to GL untransposed (GL_FALSE), so
-            # GL reads each as its transpose.  With the shader computing uModel * v,
-            # the effective order applied to a vertex is scale -> rotate -> translate
-            # (all in Source Z-up space) -> SOURCE2_TO_GL (Source -> GL Y-up).
-            #
-            # SOURCE2_TO_GL is already written pre-transposed for exactly this
-            # GL_FALSE row-vector chain, so it is used as-is here (NOT .T).  Adding
-            # a .T flips Source Z-up to GL -Y, sinking models below the grid and
-            # mirroring the scene.
+            # Matrices are pre-transposed for GL_FALSE; do not transpose SOURCE2_TO_GL.
             if "world_matrix" in info:
                 model_matrix = info["world_matrix"] @ SOURCE2_TO_GL
             else:
@@ -793,13 +756,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
                     GL.glUseProgram(self._model_program)
 
-        # Second pass: translucent submeshes.  Sorted far-to-near across objects,
-        # depth writes off, and each submesh drawn in two culled sub-passes — its
-        # far (back) faces, then its near (front) faces over them.  Without the
-        # back/front split, unsorted double-sided blending lets a mesh's own
-        # interior/back faces punch through the surface, which reads as scrambled,
-        # "distorted" geometry.  Flipping the normal on back faces (in the shader)
-        # keeps both sides shaded correctly.
+        # Blend translucent submeshes far-to-near, rendering back faces first.
         if not use_pick and transparent_items:
             transparent_items.sort(key=lambda t: t[0], reverse=True)
             GL.glUseProgram(self._model_program)
@@ -814,9 +771,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_CULL_FACE)
 
-        # Editor-object overlay pass. Hierarchy icons intentionally ignore scene
-        # depth so their location remains visible through opaque/translucent
-        # geometry. They do not write depth, keeping subsequent overlays clean.
+        # Hierarchy icons ignore scene depth without writing it.
         if marker_items:
             depth_test_was_enabled = bool(GL.glIsEnabled(GL.GL_DEPTH_TEST))
             depth_writes_were_enabled = bool(GL.glGetBooleanv(GL.GL_DEPTH_WRITEMASK))
@@ -1647,7 +1602,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             )
 
             if delta and self.document:
-                # Apply dragging transform immediately to tree item
                 item = self.document.ui.tree_hierarchy_widget.currentItem()
                 if item and self._selected_id in self._model_infos:
                     from gui.common import fast_deepcopy
@@ -1766,7 +1720,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self.gizmo.hover_axis = axis
                 self.update()
 
-        # Handle Camera
         if self._action == 'orbit':
             self.camera.orbit(dx, dy)
         elif self._action == 'pan':
@@ -2014,7 +1967,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if uniform:
             if source == "vector":
                 # Every component is literal (guaranteed by CENTER availability);
-                # write each so any non-uniform ratio is preserved.
                 for i in range(3):
                     self._set_vector_component(data, "m_vModelScale", i, scale_vec[i], scale_vec)
                 return ["m_vModelScale"]

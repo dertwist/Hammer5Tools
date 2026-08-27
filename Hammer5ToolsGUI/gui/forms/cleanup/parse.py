@@ -116,9 +116,7 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
             if isinstance(data, dict):
                 for key, value in data.items():
                     if isinstance(value, str):
-                        # Check for resource: prefix
                         if value.startswith('resource:'):
-                            # Remove the 'resource:' prefix and normalize
                             resource_path = value[9:].strip('"').replace('\\', '/').lower()
                             references.append(resource_path)
                     elif isinstance(value, (dict, list)):
@@ -257,7 +255,6 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
 
         def extract_references(node):
             """Recursively walk a nested dict / list structure collecting texture and material paths."""
-            # Handle dictionaries
             if isinstance(node, dict):
                 for key, val in node.items():
                     # If the value is a string, decide if it represents a texture or material reference
@@ -279,7 +276,6 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                     # Recurse into nested containers
                     if isinstance(val, (dict, list)):
                         extract_references(val)
-            # Handle lists
             elif isinstance(node, list):
                 for item in node:
                     extract_references(item)
@@ -352,7 +348,6 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
     directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops', 'particles']
     directories_to_ignore = ['materials\\default', 'weapons', 'RadGen', 'materials\\radgen']
     essentials_files = [f'soundevents/soundevents_addon.vsndevts']
-    # Get the main .vmap file path
     vmap_path = vmap
     vmap_relative_path = os.path.relpath(vmap_path, addon_dir).replace('\\', '/')
     print(f'vmap_relative_path {vmap_relative_path}')
@@ -449,7 +444,6 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
         # Generic extraction for all supported file types
         refs.extend(get_references(rel_path, addon_dir))
 
-        # Add essential always-present files
         refs.extend(essentials_files)
 
         for r in refs:

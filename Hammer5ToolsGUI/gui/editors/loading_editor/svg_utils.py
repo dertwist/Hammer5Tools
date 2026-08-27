@@ -13,7 +13,6 @@ OUT_H = 32
 # Structural elements must NEVER have a matrix transform added
 STRUCTURAL_TAGS = {"defs", "style", "title", "desc", "metadata", "script"}
 
-# Remove these to clean up the file
 INKSCAPE_ATTRS = (
     "sodipodi:docname", "inkscape:version", "inkscape:export-filename",
     "inkscape:export-xdpi", "inkscape:export-ydpi"

@@ -81,13 +81,11 @@ class Create_addon_Dialog(QDialog):
             return
 
 
-        # Convert hex to raw image bytes
         try:
             image_bytes = binascii.unhexlify(thumbnail_hex)
         except Exception as e:
             return
 
-        # Load image into QPixmap
         pixmap = QPixmap()
         success = pixmap.loadFromData(image_bytes)
         if success:

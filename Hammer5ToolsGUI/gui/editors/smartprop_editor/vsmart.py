@@ -81,7 +81,6 @@ def merge_reference_data(reference_data: dict, ref_object_data: dict) -> dict:
                             for elem_k, elem_v in elem.items():
                                 merged_elem[elem_k] = elem_v
                             merged_list.append(merged_elem)
-                            # Remove this element from the reference dictionary
                             del ref_elements_by_id[elem_id]
                         else:
                             # Element only exists in ref object, add it directly
@@ -90,7 +89,6 @@ def merge_reference_data(reference_data: dict, ref_object_data: dict) -> dict:
                         # Element doesn't have an ID, add it directly
                         merged_list.append(elem)
 
-                # Add any remaining elements from the reference
                 for elem in ref_elements_by_id.values():
                     merged_list.append(elem)
 
@@ -152,7 +150,6 @@ def serialization_hierarchy_items(item, data=None):
         if item.childCount() > 0:
             parent_data["m_Children"] = []
 
-        # Add this item to parent's children
         data["m_Children"].append(parent_data)
 
         # Process children
@@ -160,13 +157,11 @@ def serialization_hierarchy_items(item, data=None):
             for index in range(item.childCount()):
                 child = item.child(index)
 
-                # Create a temporary container for this child
                 child_container = {"m_Children": []}
 
                 # Recursively process the child and its descendants
                 serialization_hierarchy_items(child, child_container)
 
-                # Add the processed child data to parent's children
                 # (The child is now in child_container["m_Children"][0])
                 if child_container["m_Children"]:
                     parent_data["m_Children"].append(child_container["m_Children"][0])
@@ -251,7 +246,6 @@ class VsmartOpen:
         data = parse_smartprop(self.load_file(self.filename))
         restore_reference_objects(data)
         self.variables = data.get("m_Variables", None)
-        # Clear previous tree data.
         self.tree.clear()
         self.choices_tree.clear()
         # Set next element ID if available.
@@ -474,7 +468,6 @@ class VsmartSave:
             s_ref_id = child_data.get("m_sReferenceObjectID", None)
             n_ref_id = child_data.get("m_nReferenceID", None)
             if s_ref_id:
-                # Store the non-processed version.
                 self.ref_objects[s_ref_id] = dict(child_data)
                 # If a valid reference ID is present, find the referenced element and merge.
                 if isinstance(n_ref_id, int):

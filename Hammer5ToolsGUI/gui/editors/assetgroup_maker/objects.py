@@ -127,7 +127,6 @@ def convert_legacy_hbat_to_v3(legacy_data: Dict[str, Any]) -> Dict[str, Any]:
         v3_data['settings']['algorithm'] = int(process.get('algorithm', 0))
         v3_data['settings']['custom_files'] = list(process.get('custom_files', []))
 
-        # Convert single template reference into templates array
         replacements_raw = legacy_data.get('replacements', {})
         normalized_replacements = []
         if isinstance(replacements_raw, dict):

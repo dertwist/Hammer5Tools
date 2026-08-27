@@ -19,7 +19,6 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
         
-        # Disable mouse wheel for comboboxes
         self.ui.logic_switch.wheelEvent = lambda event: None
         self.ui.value.wheelEvent = lambda event: None
         
@@ -220,7 +219,6 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
             self._pool_items = list(items)
             self._pool_filter_types = list(filter_types)
 
-            # Update label text (mirrors __init__ logic).
             output = re.sub(
                 r'([a-z0-9])([A-Z])',
                 r'\1 \2',
@@ -249,7 +247,6 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
             # Reset base state.
             self.ui.logic_switch.setCurrentIndex(0)
 
-            # Apply new value.
             if isinstance(value, dict):
                 if 'm_Expression' in value:
                     self.ui.logic_switch.setCurrentIndex(3)

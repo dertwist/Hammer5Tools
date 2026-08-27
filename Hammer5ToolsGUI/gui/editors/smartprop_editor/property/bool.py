@@ -214,12 +214,10 @@ class PropertyBool(QWidget, PooledPropertyMixin):
             # Reset display container state.
             self.ui.logic_switch.setCurrentIndex(0)
 
-            # Update label text (mirrors __init__ logic).
             output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
             output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
             self.ui.property_class.setText(output)
 
-            # Apply new value (matches __init__ behavior).
             if isinstance(value, dict):
                 if 'm_Expression' in value:
                     self.ui.logic_switch.setCurrentIndex(3)

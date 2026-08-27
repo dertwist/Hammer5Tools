@@ -92,7 +92,6 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
         self.text_line.setPlainText('0')
 
 
-        # Initialize value
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)

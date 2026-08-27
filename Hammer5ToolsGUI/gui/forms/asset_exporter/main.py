@@ -42,7 +42,6 @@ class AssetExporterWidget(QWidget):
         self.ui.source_tree.setRootIndex(self.source_model.index(self.addon_content_path))
         self.ui.source_tree.setColumnWidth(0, 250)
 
-        # Connect signals
         self.ui.btn_resolve.clicked.connect(self.resolve_dependencies)
         self.ui.btn_browse.clicked.connect(self.browse_output_dir)
         self.ui.btn_export.clicked.connect(self.start_export)

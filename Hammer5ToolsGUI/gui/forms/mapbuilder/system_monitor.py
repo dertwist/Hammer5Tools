@@ -106,7 +106,6 @@ class GPUStatsWorker(QObject):
     def _get_intel_stats(self):
         """Try to get Intel ARC/Xe GPU stats using oneAPI Level-Zero Sysman"""
         try:
-            # Set the environment variable required for Sysman
             os.environ["ZES_ENABLE_SYSMAN"] = "1"
 
             # Try to load Level-Zero library
@@ -165,7 +164,6 @@ class GPUStatsWorker(QObject):
                     ("size", ctypes.c_uint64),
                 ]
 
-            # Set function argtypes & restypes
             ze.zesInit.argtypes = [ctypes.c_uint32]
             ze.zesInit.restype = ctypes.c_int
 
@@ -193,7 +191,6 @@ class GPUStatsWorker(QObject):
             ze.zesMemoryGetState.argtypes = [ctypes.c_void_p, ctypes.POINTER(ZesMemState)]
             ze.zesMemoryGetState.restype = ctypes.c_int
 
-            # Initialize Sysman
             if ze.zesInit(0) != 0:
                 # Also try zeInit(0) / zeInit(1) as backup just in case
                 if hasattr(ze, "zeInit"):
@@ -203,7 +200,6 @@ class GPUStatsWorker(QObject):
                 else:
                     return None
 
-            # Get drivers
             drivers_count = ctypes.c_uint32(0)
             if ze.zesDriverGet(ctypes.byref(drivers_count), None) != 0 or drivers_count.value == 0:
                 return None
@@ -284,7 +280,6 @@ class GPUStatsWorker(QObject):
                             self._intel_prev_timestamp = stats.timestamp
 
             if usage_pct is not None or used_gb is not None:
-                # Return tuple
                 return usage_pct if usage_pct is not None else 0.0, used_gb, total_gb
 
         except Exception as e:
@@ -452,7 +447,6 @@ class HistoryGraph(QWidget):
         v = _clamp_percent(v)
         self.values.append(v)
 
-        # Update label with current value
         self.label.setText(f"{self.title} – {v:.1f}%{suffix_text}")
 
         # Update graph data in place (styling is set once in __init__)
@@ -474,7 +468,6 @@ class SystemMonitor(QWidget):
 
         set_style_property(self, "h5Component", "systemMonitor")
 
-        # Create graphs with different colors
         self.cpu_graph = HistoryGraph("CPU Usage", color=CPU_COLOR)
         self.ram_graph = HistoryGraph("Memory Usage", color=MEMORY_COLOR)
         self.gpu_graph = HistoryGraph("GPU Usage", color=GPU_COLOR)
@@ -493,7 +486,6 @@ class SystemMonitor(QWidget):
         self.gpu_worker = GPUStatsWorker()
         self.gpu_worker.moveToThread(self.gpu_thread)
 
-        # Connect signals
         self.requestGPUStats.connect(self.gpu_worker.fetch_gpu_stats)
         self.gpu_worker.statsReady.connect(self.handle_gpu_stats)
         self.gpu_thread.finished.connect(self.gpu_worker.deleteLater)

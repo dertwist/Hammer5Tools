@@ -427,7 +427,6 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
             self.variables_scrollArea = variables_scrollArea
             self.element_id_generator = element_id_generator
 
-            # Update label text (mirrors __init__).
             intermediate = self._pattern_phase1.sub('', self.value_class)
             output = self._pattern_phase2.sub(r'\1 \2', intermediate)
             self.ui.property_class.setText(output)
@@ -488,7 +487,6 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
             self.text_line_y.setPlainText('')
             self.text_line_z.setPlainText('')
 
-            # Apply new value (mirrors __init__ initialization).
             def apply_component(in_value, line, combo_box, variable, float_widget):
                 if isinstance(in_value, dict):
                     if 'm_Expression' in in_value:
