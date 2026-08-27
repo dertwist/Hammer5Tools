@@ -1,6 +1,6 @@
 name: Setup Project
 description: >
-  Install Python, .NET, cache NuGet, and clone CUE4Parse.
+  Install Python, .NET, cache NuGet, compile UI, and clone CUE4Parse.
   Run actions/checkout before this.
 
 runs:
@@ -15,6 +15,10 @@ runs:
     - name: Install Python dependencies
       shell: pwsh
       run: pip install -r requirements.txt
+
+    - name: Compile UI and resources
+      shell: pwsh
+      run: python compile_ui.py
 
     - name: Set up .NET 10
       uses: actions/setup-dotnet@v5
