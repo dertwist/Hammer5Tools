@@ -109,3 +109,31 @@ def test_mapbuilder_chart_colours_change_with_the_theme():
         assert theme.resolve_hex(theme.BRIGHT_THEME, canonical) != canonical
 
 
+
+
+def test_qss_fragments_carry_no_literal_colours():
+    """Every colour in QSS must be a @token so it can vary per theme.
+
+    A literal `#rrggbb` or `rgb(...)` is frozen at the Standard palette and
+    silently ignores the brightness setting.
+    """
+    import re
+    from pathlib import Path
+
+    qss_root = Path(__file__).resolve().parents[1] / "gui" / "styles" / "qss"
+    literal = re.compile(r'#[0-9a-fA-F]{6}\b|\brgb\(\s*\d{1,3}\s*,')
+    offenders = []
+    for path in sorted(qss_root.rglob("*.qss")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if literal.search(line):
+                offenders.append(f"{path.name}:{number}: {line.strip()}")
+    assert not offenders, "literal colours in QSS:\n" + "\n".join(offenders)
+
+
+def test_bright_theme_darkens_foreground_feature_colours():
+    """Pale accents designed for a dark background must not survive into Bright."""
+    for canonical in ("#ffbdbe", "#b5ffef", "#ffd199", "#81c784", "#4ec9b0"):
+        bright = theme.resolve_hex(theme.BRIGHT_THEME, canonical)
+        assert bright != canonical, f"{canonical} has no Bright counterpart"
+        assert int(bright[1:3], 16) + int(bright[3:5], 16) + int(bright[5:7], 16) < \
+               int(canonical[1:3], 16) + int(canonical[3:5], 16) + int(canonical[5:7], 16)

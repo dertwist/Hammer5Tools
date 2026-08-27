@@ -42,17 +42,17 @@ class StatusBadgeDelegate(QStyledItemDelegate):
             badge_rect = QRect(badge_x, badge_y, badge_w, badge_h)
 
             if lower == "ready":
-                bg = QColor("#233827")
-                border = QColor("#2E7D32")
-                fg = QColor("#81C784")
+                bg = theme.qcolor("#233827")
+                border = theme.qcolor("#2e7d32")
+                fg = theme.qcolor("#81c784")
             elif lower == "warning":
-                bg = QColor("#3E341B")
-                border = QColor("#F57F17")
-                fg = QColor("#FFD54F")
+                bg = theme.qcolor("#3e341b")
+                border = theme.qcolor("#f57f17")
+                fg = theme.qcolor("#ffd54f")
             else:
-                bg = QColor("#3E2020")
-                border = QColor("#C62828")
-                fg = QColor("#E57373")
+                bg = theme.qcolor("#3e2020")
+                border = theme.qcolor("#c62828")
+                fg = theme.qcolor("#e57373")
 
             painter.setBrush(QBrush(bg))
             painter.setPen(QPen(border, 1))
@@ -70,7 +70,7 @@ class StatusBadgeDelegate(QStyledItemDelegate):
 
 
 from gui.editors.assetgroup_maker.matcher import AssetGroupItem, _evaluate_item_status
-from gui.editors.assetgroup_maker.widgets.slot_editor import SlotAssignmentDialog
+from gui.editors.assetgroup_maker.widgets.slot_editor import TemplateSlotMappingDialog
 
 
 class AssetTableWidget(QWidget):

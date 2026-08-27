@@ -781,7 +781,7 @@ class HierarchyItemModel(QTreeWidgetItem):
             3: theme.qcolor("#a5a5a5"),
         }
         self.background_colors = {
-            0: QColor("#f0f0f0"),  # Light grey background in column 0
+            0: theme.qcolor("#f0f0f0"),  # Light grey background in column 0
         }
         self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
 

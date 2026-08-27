@@ -79,6 +79,23 @@ for display.
   only for the Preferences dialog.
 - Report failures with `logging.getLogger(__name__)`. Do not use `print()` for
   diagnostics because shipped builds have no console.
+- Add a new editor by adding one `EditorSlot` to `MainWindow._editor_slots` and
+  one build method. Do not add editor names to any other list.
+
+### Background work
+
+Pick the mechanism by the shape of the job, and never touch a widget off the GUI
+thread — build data in the worker and emit it to a slot that builds the widgets.
+
+- Long-running, cancellable jobs that report progress: subclass `QThread` and
+  communicate with signals. Compiles, exports, VPK loads, and porting use this.
+- Short fan-out work over many items: subclass `QRunnable` and submit it to a
+  `QThreadPool`. Thumbnails, model loading, and scans use this.
+- Fire-and-forget work that should not depend on Qt: a daemon
+  `threading.Thread`. The updater and the resource compiler launch use this.
+
+Guard state shared between workers with a lock. `ElementIDGenerator` is the
+worked example.
 
 Use comments only for important, non-obvious constraints or reasoning.
 

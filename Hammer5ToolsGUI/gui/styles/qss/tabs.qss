@@ -77,7 +77,7 @@ QToolButton#DocumentNewTabButton {
 }
 
 QToolButton#DocumentNewTabButton:hover {
-    background-color: #363639;
+    background-color: @hex_363639;
     border: 1px solid @border;
 }
 

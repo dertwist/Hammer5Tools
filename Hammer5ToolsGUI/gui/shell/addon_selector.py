@@ -70,14 +70,14 @@ class AddonSelector:
                 self._combo.addItem(name)
 
             if not found_names:
-                from gui.forms.create_addon.main import Create_addon_Dialog
+                from gui.forms.create_addon.main import CreateAddonDialog
                 response = QMessageBox.question(
                     window, "No Addon Found",
                     "No addons found. Would you like to create one now?",
                     QMessageBox.Yes | QMessageBox.No,
                 )
                 if response == QMessageBox.Yes:
-                    Create_addon_Dialog(window).exec()
+                    CreateAddonDialog(window).exec()
                     self.refresh()
                     return
                 self._show_placeholder("")

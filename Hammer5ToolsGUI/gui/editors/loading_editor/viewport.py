@@ -303,11 +303,11 @@ def compose_loading_screen_image(
             p.drawPixmap(badge_rect.topLeft(), scaled_mode)
         else:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor("#e65100"))
+            p.setBrush(theme.qcolor("#e65100"))
             p.drawRoundedRect(badge_rect, int(4 * scale), int(4 * scale))
     else:
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor("#e65100"))
+        p.setBrush(theme.qcolor("#e65100"))
         p.drawRoundedRect(badge_rect, int(4 * scale), int(4 * scale))
 
     p.setFont(font_gm)
@@ -393,8 +393,8 @@ def compose_loading_screen_image(
     fill_w = int(content_w * 0.65)
     bar_fill_rect = QRect(content_x, bar_y, fill_w, bar_h)
     gradient = QLinearGradient(content_x, bar_y, content_x + content_w, bar_y)
-    gradient.setColorAt(0.0, QColor("#134f87"))
-    gradient.setColorAt(1.0, QColor("#1ab8e0"))
+    gradient.setColorAt(0.0, theme.qcolor("#134f87"))
+    gradient.setColorAt(1.0, theme.qcolor("#1ab8e0"))
     p.setBrush(QBrush(gradient))
     p.drawRect(bar_fill_rect)
 
@@ -1105,6 +1105,7 @@ class ImageExplorer(QWidget):
 
 from PySide6.QtWidgets import QStyledItemDelegate
 from PySide6.QtCore import QSize
+from gui.styles import theme
 
 class FolderIconSizeDelegate(QStyledItemDelegate):
     """

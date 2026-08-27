@@ -19,14 +19,11 @@ log = logging.getLogger(__name__)
 
 class KeyButton(QPushButton):
     key_changed = Signal(object)
-    DEFAULT_COLOR = "#b2b2b2"
-    ACTIVE_COLOR = "#b2b2b2"
     BUTTON_TEXT_DEFAULT = 'Press a key'
 
     def __init__(self, parent=None, name=None):
         super().__init__(parent)
         self.key = name if name else None
-        self.set_button_style(self.DEFAULT_COLOR)
         self.setMaximumWidth(256)
         self.setText(name if name else self.BUTTON_TEXT_DEFAULT)
         self.clicked.connect(self.show_dialog)
@@ -46,7 +43,6 @@ class KeyButton(QPushButton):
             else:
                 self.setText(val)
                 self.key = val
-                self.set_button_style(self.ACTIVE_COLOR)
             self.key_changed.emit(self.key)
         else:
             pass

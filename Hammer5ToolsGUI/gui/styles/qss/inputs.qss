@@ -75,7 +75,7 @@ QComboBox QListView::item:selected {
 QComboBox:disabled {
     background-color: @hex_2a2a2c;
     color: @hex_727272;
-    border-color: #3b3b3e;
+    border-color: @hex_3b3b3e;
 }
 
 

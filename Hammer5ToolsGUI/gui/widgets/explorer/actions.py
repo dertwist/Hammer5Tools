@@ -222,8 +222,6 @@ def fix_pbr_range(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
         return False
 
 
-FixPBRRange = fix_pbr_range
-
 
 
 class QuickVsmart:

@@ -887,5 +887,3 @@ class LoadingEditorMainWindow(QMainWindow):
         else:
             super().keyPressEvent(event)
 
-
-Loading_editorMainWindow = LoadingEditorMainWindow

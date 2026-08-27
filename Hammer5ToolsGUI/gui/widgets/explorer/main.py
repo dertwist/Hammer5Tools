@@ -23,7 +23,7 @@ from gui.settings.common import (
     addon_game_dir,
 )
 from gui.widgets.common import ErrorInfo
-from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
+from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, fix_pbr_range, QuickVsmart
 from gui.widgets.tree import BranchTreeView
 from gui.common import enable_dark_title_bar
 
@@ -1004,7 +1004,7 @@ class Explorer(QMainWindow):
             menu.addSection("Image Tools")
             fix_pbr_action = QAction("Fix PBR Range", self)
             fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp.png"))
-            fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
+            fix_pbr_action.triggered.connect(lambda: fix_pbr_range(file_path))
             menu.addAction(fix_pbr_action)
 
         # --- Audio Tools (convert between wav/mp3) ---

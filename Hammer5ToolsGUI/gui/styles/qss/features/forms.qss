@@ -31,7 +31,7 @@ QProgressBar[h5Component="cleanupProgressBar"] {
     background-color: @background;
 }
 QProgressBar[h5Component="cleanupProgressBar"]::chunk {
-    background-color: #1a528a;
+    background-color: @hex_1a528a;
 }
 /* Shared by Map Builder's two progress bars, unreal_porter/main.py and
    updater/check.py. */
@@ -132,22 +132,22 @@ QPushButton[h5Component="gitSyncButton"] {
     padding: 2px 4px;
 }
 QLabel[h5Component="gitConflictStatus"][h5State="conflict"] {
-    color: #E5A00D;
+    color: @hex_e5a00d;
 }
 QLabel[h5Component="gitConflictStatus"][h5State="resolved"] {
-    color: #7FB800;
+    color: @hex_7fb800;
 }
 
 QLabel[h5Component="unrealMaterialThumbnail"] {
-    border: 1px solid #3A3A3C;
+    border: 1px solid @hex_3a3a3c;
     border-radius: 3px;
-    background-color: #111111;
+    background-color: @hex_111111;
 }
-QLabel[h5State="available"] { color: #7AC07A; }
-QLabel[h5State="missing"] { color: #D08A4A; }
+QLabel[h5State="available"] { color: @hex_7ac07a; }
+QLabel[h5State="missing"] { color: @hex_d08a4a; }
 QLabel[h5Component="unrealTextureThumbnail"] {
-    border: 1px solid #383838;
-    background-color: #1A1A1C;
+    border: 1px solid @hex_383838;
+    background-color: @hex_1a1a1c;
     border-radius: 4px;
     color: @hex_999999;
     font-size: 9px;
@@ -258,10 +258,10 @@ QTextEdit[h5Component="errorInfoDetails"] {
     background-color: @background;
 }
 QTextEdit[h5Component="errorInfoDetails"][h5State="warning"] {
-    border-color: #E5C07B;
+    border-color: @hex_e5c07b;
 }
 QTextEdit[h5Component="errorInfoDetails"][h5State="error"] {
-    border-color: #974533;
+    border-color: @hex_974533;
 }
 
 /* forms/unreal_porter/slot_mapping.py: shader-remapper dialog headers

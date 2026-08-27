@@ -48,7 +48,7 @@ QGroupBox::indicator:unchecked {
 
 QGroupBox:disabled {
     color: @hex_727272;
-    border-color: #3b3b3e;
+    border-color: @hex_3b3b3e;
 }
 
 QToolTip {

@@ -317,7 +317,7 @@ if __name__ == "__main__":
         existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
-    from gui.app_core import Widget, start_instance_server
+    from gui.app_core import MainWindow, start_instance_server
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QTimer, Qt, QCoreApplication
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     from gui.styles import manager as style_manager
     style_manager.apply(app, theme.get_theme(level))
 
-    widget = Widget()
+    widget = MainWindow()
     from gui.other.taskbar_identity import apply_taskbar_identity
     apply_taskbar_identity(widget)
     widget.show()

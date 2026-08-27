@@ -32,6 +32,7 @@ from gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
 from gui.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from gui.widgets.explorer.main import Explorer
 from gui.settings.common import get_cs2_path, get_addon_name
+from gui.styles import theme
 
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
 
@@ -389,12 +390,12 @@ class AudioDocument(QWidget):
         pg.setConfigOptions(antialias=True)
         self._vb = _SelectViewBox(self._set_selection, self._seek_to)
         self.plot = pg.PlotWidget(viewBox=self._vb)
-        self.plot.setBackground("#2e2e2e")
+        self.plot.setBackground(theme.color("#2e2e2e"))
         self.plot.showGrid(x=True, y=False, alpha=0.15)
         self.plot.setYRange(-1.05, 1.05)
         self.plot.setMouseEnabled(x=True, y=False)
         self.plot.setLabel("bottom", "Time", units="s")
-        self.curve = self.plot.plot(pen=pg.mkPen("#4BA0F0", width=1))
+        self.curve = self.plot.plot(pen=pg.mkPen(theme.color("#4ba0f0"), width=1))
         self.curve.setDownsampling(auto=True)
         self.curve.setClipToView(True)
 
@@ -402,7 +403,7 @@ class AudioDocument(QWidget):
         self.region.setZValue(-10)
         self.plot.addItem(self.region)
 
-        self.playhead = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen("#FF5050", width=2))
+        self.playhead = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen(theme.color("#ff5050"), width=2))
         self.playhead.setZValue(20)
         self.plot.addItem(self.playhead)
 
@@ -633,9 +634,9 @@ class AudioDocument(QWidget):
     def _add_marker_at(self, seconds):
         line = pg.InfiniteLine(
             pos=seconds, angle=90, movable=True,
-            pen=pg.mkPen("#FFC850", width=1, style=Qt.DashLine),
+            pen=pg.mkPen(theme.color("#ffc850"), width=1, style=Qt.DashLine),
             label="{value:.2f}s",
-            labelOpts={"position": 0.92, "color": "#FFC850",
+            labelOpts={"position": 0.92, "color": theme.color("#ffc850"),
                        "movable": True, "fill": (29, 29, 31, 200)})
         line.setZValue(15)
         self.plot.addItem(line)

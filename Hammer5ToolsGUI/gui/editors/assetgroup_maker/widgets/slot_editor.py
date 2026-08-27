@@ -486,6 +486,3 @@ class TemplateSlotMappingDialog(QDialog):
 
         self.accept()
 
-
-# Backward compatibility alias
-SlotAssignmentDialog = TemplateSlotMappingDialog

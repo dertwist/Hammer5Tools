@@ -8,7 +8,7 @@ import pytest
 
 from PySide6.QtWidgets import QApplication, QTabWidget, QWidget, QVBoxLayout
 
-from gui.app_core import Widget
+from gui.app_core import MainWindow
 
 
 @pytest.fixture(scope="module")
@@ -17,12 +17,12 @@ def qapp():
 
 
 class _Host:
-    """A Widget stand-in holding only what the lazy-tab code touches."""
+    """A MainWindow stand-in holding only what the lazy-tab code touches."""
 
-    _ensure_tab = Widget._ensure_tab
-    current_tab = Widget.current_tab
-    open_file_in_smartprop = Widget.open_file_in_smartprop
-    open_file_in_soundevent = Widget.open_file_in_soundevent
+    _ensure_tab = MainWindow._ensure_tab
+    current_tab = MainWindow.current_tab
+    open_file_in_smartprop = MainWindow.open_file_in_smartprop
+    open_file_in_soundevent = MainWindow.open_file_in_soundevent
 
     def __init__(self):
         self.tabs = QTabWidget()

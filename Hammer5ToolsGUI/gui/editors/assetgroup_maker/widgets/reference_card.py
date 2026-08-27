@@ -738,6 +738,3 @@ class MultiTemplateManagerWidget(QWidget):
     def get_ignore_list(self) -> str:
         return self.ignore_files_edit.text().strip()
 
-
-# Backward-compatibility alias
-ReferenceCardWidget = TemplateCardWidget

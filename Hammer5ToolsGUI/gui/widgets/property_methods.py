@@ -103,5 +103,3 @@ class PropertyDragDropMixin:
 
         event.accept()
 
-
-PropertyMethods = PropertyDragDropMixin

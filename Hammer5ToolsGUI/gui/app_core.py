@@ -44,9 +44,9 @@ from gui.settings.common import (
     addon_content_dir,
 )
 from gui.settings.main import PreferencesDialog
-from gui.editors.loading_editor.main import Loading_editorMainWindow
+from gui.editors.loading_editor.main import LoadingEditorMainWindow
 from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
-from gui.forms.create_addon.main import Create_addon_Dialog
+from gui.forms.create_addon.main import CreateAddonDialog
 from gui.other.addon_functions import delete_addon, launch_addon
 from gui.other.file_association import check_association, setup_all_associations
 from gui.updater.check import check_updates
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self._addon_initialised = False
         self.mapbuilder_dialog = None
         self.launch_options = None
-        self.Create_addon_Dialog = None
+        self.create_addon_dialog = None
         self.Delete_addon_Dialog = None
 
         if get_cs2_path() is None:
@@ -365,7 +365,7 @@ class MainWindow(QMainWindow):
         self._hook_undo_console(getattr(self.SmartPropEditorMainWindow, 'undo_stack', None))
 
     def _build_loading(self):
-        self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
+        self.LoadingEditorMainWindow = LoadingEditorMainWindow(parent=self)
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
 
     def _build_detailprop(self):
@@ -568,7 +568,7 @@ class MainWindow(QMainWindow):
         AboutDialog(app_version, self).exec()
 
     def open_create_addon_dialog(self):
-        dialog = Create_addon_Dialog(self)
+        dialog = CreateAddonDialog(self)
         if dialog.exec() == QDialog.Accepted: self.addon_selector.refresh()
 
     def delete_addon(self):
@@ -651,6 +651,3 @@ def start_instance_server(widget):
     server.newConnection.connect(lambda: handle_new_connection(server, widget))
     return server
 
-
-
-Widget = MainWindow

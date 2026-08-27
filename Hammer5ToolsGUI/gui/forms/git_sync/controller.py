@@ -25,6 +25,7 @@ from gui.settings.common import get_addon_dir, get_settings_bool
 from gui.forms.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
 from gui.forms.git_sync.commit_msg import generate
 from gui.forms.git_sync.conflict_dialog import ConflictDialog
+from gui.styles import theme
 
 _SYNC_ICON = ":/icons/sync_24dp.svg"
 
@@ -199,8 +200,8 @@ class SyncButton(QPushButton):
         d = min(13, (min(self.width(), self.height()) - 2) // 2)
         # One fixed corner each: a badge that moves when its neighbour clears is
         # unreadable.
-        corners = ((self._local,  "#E5A00D", (self.width() - d - 1, 1)),
-                   (self._remote, "#D64545", (1, 1)))
+        corners = ((self._local,  theme.color("#e5a00d"), (self.width() - d - 1, 1)),
+                   (self._remote, theme.color("#d64545"), (1, 1)))
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         font = QFont(self.font())

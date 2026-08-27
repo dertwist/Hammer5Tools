@@ -33,8 +33,8 @@ QLabel[h5Component="assetgroupTemplateTitle"] {
     color: @text;
 }
 QLabel[h5Component="assetgroupTypeBadge"] {
-    background-color: #2D333F;
-    color: #A0C4FF;
+    background-color: @hex_2d333f;
+    color: @hex_a0c4ff;
     border: 1px solid @accent;
     border-radius: 0px;
     padding: 2px 6px;
@@ -48,8 +48,8 @@ QToolButton[h5Component="assetgroupDeleteToolButton"] {
     padding: 2px 6px;
 }
 QToolButton[h5Component="assetgroupDeleteToolButton"]:hover {
-    color: #EF5350;
-    background-color: #3E2020;
+    color: @hex_ef5350;
+    background-color: @hex_3e2020;
     border-radius: 2px;
 }
 
@@ -75,11 +75,11 @@ QToolButton[h5Component="assetgroupIgnoreToggleSmall"]:hover, QToolButton[h5Comp
 
 QFrame[h5Component="assetgroupIgnorePanelSmall"] {
     background-color: @hex_242424;
-    border: 1px solid #3E3E42;
+    border: 1px solid @hex_3e3e42;
     border-radius: 2px;
 }
 QFrame[h5Component="assetgroupIgnorePanelLarge"] {
-    background-color: #282828;
+    background-color: @hex_282828;
     border: 1px solid @border;
     border-radius: 2px;
 }
@@ -118,12 +118,12 @@ QScrollArea[h5Component="assetgroupTransparentScrollArea"] {
 
 /* slot_editor.py: TemplateSlotMappingDialog. */
 QDialog[h5Component="assetgroupSlotDialog"] {
-    background-color: @hex_1e1e1e;
+    background-color: @surface;
     color: @text;
 }
 QFrame[h5Component="assetgroupSlotRowFrame"] {
-    background-color: #252527;
-    border: 1px solid #3E3E42;
+    background-color: @hex_252527;
+    border: 1px solid @hex_3e3e42;
     border-radius: 2px;
 }
 QLabel[h5Component="assetgroupMaterialSectionDesc"] {
@@ -131,8 +131,8 @@ QLabel[h5Component="assetgroupMaterialSectionDesc"] {
     color: @hex_8a8a8a;
 }
 QFrame[h5Component="assetgroupMaterialRemapRowFrame"] {
-    background-color: #2F2F32;
-    border: 1px solid #3E3E42;
+    background-color: @hex_2f2f32;
+    border: 1px solid @hex_3e3e42;
     border-radius: 2px;
 }
 QLabel[h5Component="assetgroupRemapArrowLabel"] {
@@ -147,7 +147,7 @@ QToolButton[h5Component="assetgroupDeleteToolButtonTight"] {
     padding: 2px 4px;
 }
 QToolButton[h5Component="assetgroupDeleteToolButtonTight"]:hover {
-    color: #EF5350;
-    background-color: #3E2020;
+    color: @hex_ef5350;
+    background-color: @hex_3e2020;
     border-radius: 2px;
 }

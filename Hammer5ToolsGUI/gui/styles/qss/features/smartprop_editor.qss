@@ -129,7 +129,7 @@ QLabel[h5Component="smartpropSearchLabel"] {
     color: @text;
 }
 QLabel[h5Component="smartpropEditorErrorLabel"] {
-    color: #F44747;
+    color: @hex_f44747;
     border: 0px;
 }
 QLabel[h5Component="smartpropEditorStatsLabel"] {
@@ -193,13 +193,13 @@ QLabel[h5Component="smartpropGroupColorLabel"] {
 QLabel[h5Component="smartpropGroupColorLabel"][h5GroupType="modifier"],
 QLabel[h5Component="smartpropGroupColorLabel"][h5GroupType="modifiers"],
 QLabel[h5Component="smartpropGroupColorLabel"][h5GroupType="operators"] {
-    border-left-color: #8B5E3C;
+    border-left-color: @hex_8b5e3c;
 }
 QLabel[h5Component="smartpropGroupColorLabel"][h5GroupType="selection_criteria"] {
-    border-left-color: #2E6B9E;
+    border-left-color: @hex_2e6b9e;
 }
 QWidget[h5Component="smartpropDropIndicator"] {
-    background-color: #3498DB;
+    background-color: @hex_3498db;
 }
 
 /* Delete-icon toolbuttons in colormatch/material_group_choices/material_replacements.py. */
@@ -267,7 +267,7 @@ QDialog[h5Component="smartpropPathEditorDialog"] QTableWidget QLineEdit {
 }
 
 QLabel[h5Component="smartpropDefaultPathLabel"] {
-    color: rgb(255, 209, 153);
+    color: @hex_ffd199;
     font: 8pt "Segoe UI";
 }
 
@@ -334,7 +334,7 @@ QFrame[h5Component="smartpropHelpPanel"] {
 }
 QFrame[h5Component="smartpropHelpToolbar"] {
     background-color: @surface;
-    border-bottom: 1px solid #383838;
+    border-bottom: 1px solid @hex_383838;
 }
 QToolButton[h5Component="smartpropHelpToggleBtn"] {
     background-color: transparent;
@@ -347,10 +347,10 @@ QToolButton[h5Component="smartpropHelpToggleBtn"]:hover {
     border-color: @hex_666666;
 }
 QToolButton[h5Component="smartpropHelpToggleBtn"]:pressed {
-    background-color: #383838;
+    background-color: @hex_383838;
 }
 QLabel[h5Component="smartpropHelpModeTitle"] {
-    color: #8E8E8E;
+    color: @hex_8e8e8e;
     font-family: "Segoe UI";
     font-size: 10px;
     font-weight: bold;
@@ -536,16 +536,16 @@ QLabel[h5Component="smartpropCompactLabel"] {
 QLabel[h5Component="smartpropCompactLabel"][h5Indent="15"] {
     padding-left: 15px;
 }
-QLabel[h5ColorRole="bool"] { color: rgb(255, 189, 190); }
-QLabel[h5ColorRole="integer"] { color: rgb(108, 135, 255); }
-QLabel[h5ColorRole="float"] { color: rgb(181, 255, 239); }
-QLabel[h5ColorRole="expression"] { color: rgb(255, 123, 125); }
-QLabel[h5ColorRole="string"] { color: rgb(255, 209, 153); }
-QLabel[h5ColorRole="vector"] { color: rgb(163, 117, 255); }
-QLabel[h5ColorRole="reference"] { color: rgb(143, 176, 255); }
-QLabel[h5ColorRole="axisX"] { color: rgb(236, 164, 160); }
-QLabel[h5ColorRole="axisY"] { color: rgb(182, 239, 162); }
-QLabel[h5ColorRole="axisZ"] { color: rgb(164, 182, 239); }
+QLabel[h5ColorRole="bool"] { color: @hex_ffbdbe; }
+QLabel[h5ColorRole="integer"] { color: @hex_6c87ff; }
+QLabel[h5ColorRole="float"] { color: @hex_b5ffef; }
+QLabel[h5ColorRole="expression"] { color: @hex_ff7b7d; }
+QLabel[h5ColorRole="string"] { color: @hex_ffd199; }
+QLabel[h5ColorRole="vector"] { color: @hex_a375ff; }
+QLabel[h5ColorRole="reference"] { color: @hex_8fb0ff; }
+QLabel[h5ColorRole="axisX"] { color: @hex_eca4a0; }
+QLabel[h5ColorRole="axisY"] { color: @hex_b6efa2; }
+QLabel[h5ColorRole="axisZ"] { color: @hex_a4b6ef; }
 
 QLabel[h5Component="detailAngleTag"] {
     border: 0px;
@@ -566,20 +566,20 @@ QWidget[h5Component="detailPropertyHost"] {
 }
 
 QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="string"] {
-    color: rgb(255, 209, 153);
+    color: @hex_ffd199;
 }
 QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="float"] {
-    color: rgb(181, 255, 239);
+    color: @hex_b5ffef;
 }
 QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="bool"] {
-    color: rgb(255, 189, 190);
+    color: @hex_ffbdbe;
 }
 QCheckBox[h5Component="smartpropVariableBool"] {
     border: none;
     font: 580 9pt "Segoe UI";
 }
 QLabel[h5Component="smartpropPropertyWarning"] {
-    color: #F2C94C;
+    color: @hex_f2c94c;
     background-color: @hex_3b3a3a;
     border: 1px solid @hex_5e5e5e;
     padding: 4px;
@@ -628,19 +628,19 @@ QFrame#frame > QLabel#label {
     background-color: @hex_363636;
 }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="string"],
-QFrame#frame > QLabel#label[h5VarKind="string"] { background-color: #E67E22; }
+QFrame#frame > QLabel#label[h5VarKind="string"] { background-color: @hex_e67e22; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="bool"],
-QFrame#frame > QLabel#label[h5VarKind="bool"] { background-color: #C0392B; }
+QFrame#frame > QLabel#label[h5VarKind="bool"] { background-color: @hex_c0392b; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="float"],
-QFrame#frame > QLabel#label[h5VarKind="float"] { background-color: #2980B9; }
+QFrame#frame > QLabel#label[h5VarKind="float"] { background-color: @hex_2980b9; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="integer"],
-QFrame#frame > QLabel#label[h5VarKind="integer"] { background-color: #2471A3; }
+QFrame#frame > QLabel#label[h5VarKind="integer"] { background-color: @hex_2471a3; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="vector"],
-QFrame#frame > QLabel#label[h5VarKind="vector"] { background-color: #8E44AD; }
+QFrame#frame > QLabel#label[h5VarKind="vector"] { background-color: @hex_8e44ad; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="color"],
-QFrame#frame > QLabel#label[h5VarKind="color"] { background-color: #1B5E20; }
+QFrame#frame > QLabel#label[h5VarKind="color"] { background-color: @hex_1b5e20; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="enum"],
-QFrame#frame > QLabel#label[h5VarKind="enum"] { background-color: #1D8348; }
+QFrame#frame > QLabel#label[h5VarKind="enum"] { background-color: @hex_1d8348; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="default"],
 QFrame#frame > QLabel#label[h5VarKind="default"] { background-color: @hex_363636; }
 QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryStart"],
@@ -919,9 +919,9 @@ QPushButton[h5Component="smartpropColorSwatch"] {
    theme-gray (yellow sticky-note look, constant across themes)
    except the text-selection color, which matches @selection. */
 QPlainTextEdit[h5Component="smartpropNoteEdit"] {
-    background-color: #FFF8BE;
-    color: #1E1E1E;
-    border: 1px solid #E0D28A;
+    background-color: @hex_fff8be;
+    color: @hex_1e1e1e;
+    border: 1px solid @hex_e0d28a;
     border-radius: 2px;
     font-family: "Segoe UI";
     font-size: 11px;
@@ -934,7 +934,7 @@ QPlainTextEdit[h5Component="smartpropNoteEdit"] QScrollBar:vertical {
     background: transparent;
 }
 QPlainTextEdit[h5Component="smartpropNoteEdit"] QScrollBar::handle:vertical {
-    background: #B0A66E;
+    background: @hex_b0a66e;
     border-radius: 0px;
 }
 

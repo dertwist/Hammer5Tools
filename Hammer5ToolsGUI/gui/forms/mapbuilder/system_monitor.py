@@ -468,9 +468,9 @@ class SystemMonitor(QWidget):
 
         set_style_property(self, "h5Component", "systemMonitor")
 
-        self.cpu_graph = HistoryGraph("CPU Usage", color=CPU_COLOR)
-        self.ram_graph = HistoryGraph("Memory Usage", color=MEMORY_COLOR)
-        self.gpu_graph = HistoryGraph("GPU Usage", color=GPU_COLOR)
+        self.cpu_graph = HistoryGraph("CPU Usage", color=theme.color(CPU_COLOR))
+        self.ram_graph = HistoryGraph("Memory Usage", color=theme.color(MEMORY_COLOR))
+        self.gpu_graph = HistoryGraph("GPU Usage", color=theme.color(GPU_COLOR))
 
         layout = QHBoxLayout()
         layout.setContentsMargins(8, 8, 8, 8)

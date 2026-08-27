@@ -178,19 +178,19 @@ QFrame[h5Component="soundeventPropertyFrame"] {
     border: none;
 }
 
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="c7c7bb"] { color: #C7C7BB; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="73d1bf"] { color: #73D1BF; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="4ca0ad"] { color: #4CA0AD; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d9b34c"] { color: #D9B34C; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="6a9955"] { color: #6A9955; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d1494a"] { color: #D1494A; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="7dda58"] { color: #7DDA58; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f6c273"] { color: #F6C273; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f4a9f6"] { color: #F4A9F6; }
-QLabel[h5Component="editorPropertyLabel"][h5ColorRole="8684b8"] { color: #8684B8; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="c7c7bb"] { color: @hex_c7c7bb; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="73d1bf"] { color: @hex_73d1bf; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="4ca0ad"] { color: @hex_4ca0ad; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d9b34c"] { color: @hex_d9b34c; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="6a9955"] { color: @hex_6a9955; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="d1494a"] { color: @hex_d1494a; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="7dda58"] { color: @hex_7dda58; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f6c273"] { color: @hex_f6c273; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="f4a9f6"] { color: @hex_f4a9f6; }
+QLabel[h5Component="editorPropertyLabel"][h5ColorRole="8684b8"] { color: @hex_8684b8; }
 
-QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="e53935"] { color: #E53935; }
-QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="ffb300"] { color: #FFB300; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="e53935"] { color: @hex_e53935; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="ffb300"] { color: @hex_ffb300; }
 QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="5ab55e"] { color: @hex_5ab55e; }
-QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="29b6f6"] { color: #29B6F6; }
+QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="29b6f6"] { color: @hex_29b6f6; }
 QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="97979c"] { color: @hex_97979c; }

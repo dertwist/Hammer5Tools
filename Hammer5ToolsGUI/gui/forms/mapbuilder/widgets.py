@@ -20,6 +20,7 @@ from PySide6.QtCore import Qt, QSize, Signal
 from gui.settings.common import get_addon_dir, get_addon_name
 from gui.widgets.common import Button
 from gui.styles.common import set_style_property
+from gui.styles import theme
 
 
 class SettingWidget(QWidget):
@@ -223,7 +224,7 @@ class FolderSettingWidget(SettingWidget):
     def set_value(self, value: str):
         self.map_list.clear()
         default_vmap = self.find_default_vmap()
-        default_color = QColor("#65666D")
+        default_color = theme.qcolor("#65666d")
         
         if value:
             parts = [p for p in value.split(";") if p]

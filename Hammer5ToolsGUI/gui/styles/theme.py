@@ -126,6 +126,97 @@ _BRIGHT_COLORS = (
     ("#cfcfcf", "#303030"),
     ("#ff5a5a", "#c84040"), ("#ffd700", "#a87d00"),
     ("#32b8c6", "#167a88"),
+
+    # Feature colours carried over from the QSS fragments. Foregrounds are
+    # darkened until they clear 4.5:1 on the Bright background; surfaces and
+    # borders mirror their lightness. Hue and saturation are preserved.
+    ("#111111", "#eeeeee"),  # bg
+    ("#1a1a1c", "#e3e3e5"),  # bg
+    ("#1a528a", "#75ade5"),  # bg
+    ("#1b5e20", "#a1e4a6"),  # bg
+    ("#1d8348", "#7ce2a7"),  # bg
+    ("#242424", "#dbdbdb"),  # bg
+    ("#2471a3", "#5ca9db"),  # bg
+    ("#252527", "#d8d8da"),  # bg
+    ("#282828", "#d7d7d7"),  # bg
+    ("#2980b9", "#469dd6"),  # bg
+    ("#29b6f6", "#055a81"),  # fg
+    ("#2d333f", "#c0c6d2"),  # bg
+    ("#2e6b9e", "#619ed1"),  # border
+    ("#2f2f32", "#cdcdd0"),  # bg
+    ("#3498db", "#2488cb"),  # bg
+    ("#363639", "#c6c6c9"),  # bg
+    ("#383838", "#c7c7c7"),  # bg/border
+    ("#3a3a3c", "#c3c3c5"),  # border
+    ("#3b3b3e", "#c1c1c4"),  # border
+    ("#3e2020", "#dfc1c1"),  # bg
+    ("#3e3e42", "#bdbdc1"),  # border
+    ("#4ca0ad", "#2d5e66"),  # fg
+    ("#555555", "#aaaaaa"),  # border
+    ("#666666", "#999999"),  # border
+    ("#6a9955", "#415e34"),  # fg
+    ("#6c87ff", "#0634ff"),  # fg
+    ("#73d1bf", "#206255"),  # fg
+    ("#7ac07a", "#2d5f2d"),  # fg
+    ("#7dda58", "#2c6416"),  # fg
+    ("#7fb800", "#405c00"),  # fg
+    ("#8684b8", "#54528e"),  # fg
+    ("#8b5e3c", "#c39674"),  # border
+    ("#8e44ad", "#9c52bb"),  # bg
+    ("#8e8e8e", "#565656"),  # fg
+    ("#8fb0ff", "#0045eb"),  # fg
+    ("#974533", "#cc7a68"),  # border
+    ("#9d9d9d", "#565656"),  # fg
+    ("#a0c4ff", "#004cc9"),  # fg
+    ("#a375ff", "#5f0fff"),  # fg
+    ("#a4b6ef", "#244ccc"),  # fg
+    ("#b0a66e", "#91874f"),  # bg
+    ("#b5ffef", "#00634e"),  # fg
+    ("#b6efa2", "#266211"),  # fg
+    ("#c0392b", "#d44d3f"),  # bg
+    ("#c1c1c1", "#565656"),  # fg
+    ("#c7c7bb", "#595949"),  # fg
+    ("#d08a4a", "#7f4e21"),  # fg
+    ("#d1494a", "#a82a2b"),  # fg
+    ("#d9b34c", "#6b5417"),  # fg
+    ("#e53935", "#b21a17"),  # fg
+    ("#e5a00d", "#714f06"),  # fg
+    ("#e5c07b", "#845f1a"),  # border
+    ("#e67e22", "#dd7519"),  # bg
+    ("#eca4a0", "#a92922"),  # fg
+    ("#ef5350", "#b41410"),  # fg
+    ("#f2c94c", "#6a5208"),  # fg
+    ("#f44747", "#b60b0b"),  # fg
+    ("#f4a9f6", "#96109a"),  # fg
+    ("#f6c273", "#774b08"),  # fg
+    ("#ff7b7d", "#b80003"),  # fg
+    ("#ffb300", "#704f00"),  # fg
+    ("#ffbdbe", "#b30003"),  # fg
+    ("#ffd199", "#854900"),  # fg
+
+    # Painter, plot and delegate colours resolved via theme.color()/qcolor().
+    ("#134f87", "#78b4ec"),  # bg
+    ("#1ab8e0", "#1fbde5"),  # bg
+    ("#233827", "#c7dccb"),  # bg
+    ("#2e7d32", "#82d186"),  # border
+    ("#3e341b", "#e4dac1"),  # bg
+    ("#4ba0f0", "#0d589f"),  # fg
+    ("#4ec9b0", "#1d6153"),  # fg
+    ("#5aa0e0", "#1b5890"),  # fg
+    ("#5fb96a", "#2a5f30"),  # fg
+    ("#65666d", "#92939a"),  # border
+    ("#81c784", "#2c642f"),  # fg
+    ("#c62828", "#d73939"),  # border
+    ("#d64545", "#a52424"),  # fg
+    ("#e05656", "#a71f1f"),  # fg
+    ("#e0a030", "#704e11"),  # fg
+    ("#e57373", "#aa2020"),  # fg
+    ("#e65100", "#9f3800"),  # fg
+    ("#f0f0f0", "#c0c0c0"),  # bg - subtle band, stays a band on Bright
+    ("#f57f17", "#e8720a"),  # border
+    ("#ff5050", "#b60000"),  # fg
+    ("#ffc850", "#795300"),  # fg
+    ("#ffd54f", "#6e5300"),  # fg
 )
 
 

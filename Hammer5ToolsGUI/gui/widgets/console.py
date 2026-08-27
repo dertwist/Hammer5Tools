@@ -3,6 +3,7 @@
 from datetime import datetime
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QTextEdit
+from gui.styles import theme
 
 _LEVEL_COLORS = {
     "info":    "#bebebe",
@@ -23,8 +24,9 @@ class ConsoleWidget(QTextEdit):
         self.document().setMaximumBlockCount(5000)
 
     def _emit(self, message: str, level: str, timestamp: bool):
-        color = _LEVEL_COLORS.get(level, _LEVEL_COLORS["info"])
-        ts = f'<span style="color:#8a8a8a;">[{datetime.now():%H:%M:%S}]</span> ' if timestamp else ""
+        color = theme.color(_LEVEL_COLORS.get(level, _LEVEL_COLORS["info"]))
+        ts_color = theme.color("#8a8a8a")
+        ts = f'<span style="color:{ts_color};">[{datetime.now():%H:%M:%S}]</span> ' if timestamp else ""
         safe = (message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
         self.append(f'{ts}<span style="color:{color}">{safe}</span>')
         sb = self.verticalScrollBar()

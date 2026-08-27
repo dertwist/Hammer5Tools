@@ -26,6 +26,7 @@ from gui.widgets.model_browser.index import (
     GAME_MOUNTS, get_game_entries,
 )
 from gui.widgets.model_browser.thumbnails import ThumbnailService, THUMB_SIZE
+from gui.styles import theme
 
 try:
     from gui.other.cs2_netcon import CS2Netcon
@@ -35,10 +36,6 @@ except Exception:
 COLUMNS = ["Name", "Source", "Mod", "Size"]
 COL_NAME, COL_SOURCE, COL_MOD, COL_SIZE = range(4)
 
-_SOURCE_COLOR = {
-    SOURCE_ADDON: "#b3d096",
-    SOURCE_CORE: "#a2a8b1",
-}
 
 
 def get_saved_mod_selection(active_addon: Optional[str] = None) -> Optional[set]:
@@ -262,10 +259,17 @@ def _get_sm_icon(asset_type: str) -> QIcon:
     return _SM_QICON_CACHE[clean]
 
 
-_SOURCE_QCOLOR = {
-    SOURCE_ADDON: QColor("#b3d096"),
-    SOURCE_CORE: QColor("#a2a8b1"),
+#: Canonical source-badge colours, resolved through the active theme at paint
+#: time (a dict of QColor built at import would freeze the startup theme).
+_SOURCE_CANONICAL = {
+    SOURCE_ADDON: "#b3d096",
+    SOURCE_CORE: "#a2a8b1",
 }
+
+
+def _source_qcolor(source, default):
+    canonical = _SOURCE_CANONICAL.get(source)
+    return theme.qcolor(canonical) if canonical else default
 
 
 def _get_asset_icon(asset_type: str = "vmdl", grayscaled: bool = False) -> Optional[QPixmap]:
@@ -352,7 +356,7 @@ def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
     painter.drawEllipse(center_x - radius, center_y - radius, radius * 2, radius * 2)
 
     # Rotating accent arc
-    pen = QPen(QColor("#b3d096"), 2.5)
+    pen = QPen(theme.qcolor("#b3d096"), 2.5)
     painter.setPen(pen)
     start_angle = int(-angle * 16)
     span_angle = int(100 * 16)
@@ -756,7 +760,7 @@ class ModelBrowserWidget(QWidget):
             ])
             self._item_paths[row] = entry.path
             row.setIcon(0, _get_sm_icon(entry.asset_type))
-            row.setForeground(1, _SOURCE_QCOLOR.get(entry.source, default_color))
+            row.setForeground(1, _source_qcolor(entry.source, default_color))
             tree_rows.append(row)
             if entry.path == self._selected_path:
                 selected_list_item = row
