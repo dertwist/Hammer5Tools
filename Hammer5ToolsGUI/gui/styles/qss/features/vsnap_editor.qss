@@ -1,0 +1,31 @@
+
+QWidget[h5Component="vsnapControls"] {
+    background: @surface;
+}
+
+QLabel[h5Component="vsnapStatus"] {
+    color: @text_muted;
+    padding: @spacing_unit;
+}
+
+QWidget[h5Component="vsnapEditor"] QTableView {
+    background-color: @surface;
+    alternate-background-color: @surface_raised;
+    selection-background-color: @selection;
+    selection-color: @selection_text;
+    gridline-color: @border;
+}
+
+QWidget[h5Component="vsnapEditor"] QHeaderView::section {
+    background-color: @background;
+    color: @text_muted;
+    padding: 5px;
+    border: none;
+    border-right: 1px solid @border;
+    border-bottom: 1px solid @border;
+}
+
+QWidget[h5Component="vsnapEditor"] QTableCornerButton::section {
+    background-color: @background;
+    border: none;
+}
