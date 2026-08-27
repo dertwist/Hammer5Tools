@@ -23,6 +23,13 @@ from PySide6.QtWidgets import (
 from gui.widgets import HierarchyItemModel, on_three_hierarchyitem_clicked
 
 from .schema import default_model, default_type
+from .hierarchy_model import (
+    is_model,
+    model_label,
+    model_summary,
+    normalize_dropped,
+    unique_name,
+)
 
 KIND_TYPE = "Detail Type"
 KIND_MODEL = "Model"
@@ -84,17 +91,6 @@ def payload(item) -> dict:
     if item is None:
         return {}
     return item.data(0, Qt.UserRole) or {}
-
-
-def model_label(model: dict) -> str:
-    import os
-    name = (model.get("m_ModelName") or "").strip()
-    return os.path.basename(name) if name else "<no model>"
-
-
-def model_summary(model: dict) -> str:
-    name = (model.get("m_ModelName") or "").strip()
-    return name or "no model assigned"
 
 
 class DetailPropTree(QWidget):
@@ -235,14 +231,8 @@ class DetailPropTree(QWidget):
         return item if item.parent() is None else item.parent()
 
     def unique_type_name(self, base: str) -> str:
-        existing = {self.tree.topLevelItem(i).text(0)
-                    for i in range(self.tree.topLevelItemCount())}
-        if base not in existing:
-            return base
-        suffix = 2
-        while f"{base}_{suffix}" in existing:
-            suffix += 1
-        return f"{base}_{suffix}"
+        return unique_name(base, (self.tree.topLevelItem(i).text(0)
+                                  for i in range(self.tree.topLevelItemCount())))
 
     def add_type(self, name: str):
         old_types = self.to_types()
@@ -482,32 +472,17 @@ class DetailPropTree(QWidget):
         """Read the post-drop tree into a well-formed {name: type} dict."""
         def models_under(item):
             """All model payloads at or below item, in visual order."""
-            found = []
             data = payload(item)
-            if "m_ModelName" in data:
-                found.append(data)
+            found = [data] if is_model(data) else []
             for j in range(item.childCount()):
                 found.extend(models_under(item.child(j)))
             return found
 
-        types = {}
+        rows = []
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            data = payload(item)
-            models = models_under(item)
-            if "m_ModelName" in data:
-                # A model dropped at top level becomes a type of its own.
-                detail_type = default_type()
-                detail_type["m_Models"] = models
-            else:
-                detail_type = dict(data)
-                detail_type["m_Models"] = models or [default_model()]
-            base = item.text(0) or "detail_type"
-            name, suffix = base, 2
-            while name in types:
-                name, suffix = f"{base}_{suffix}", suffix + 1
-            types[name] = detail_type
-        return types
+            rows.append((item.text(0), payload(item), models_under(item)))
+        return normalize_dropped(rows)
 
     # search
 
