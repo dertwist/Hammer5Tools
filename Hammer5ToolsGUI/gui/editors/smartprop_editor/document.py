@@ -60,7 +60,8 @@ from gui.editors.smartprop_editor.commands import (
     PropertySnapshotCommand, VariablesSnapshotCommand, ChoicesSnapshotCommand,
 )
 from gui.forms.replace_dialog.main import FindAndReplaceDialog
-from gui.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
+from logging import error
+from gui.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, exception_handler
 from gui.widgets.element_id import ElementIDGenerator
 from gui.editors.smartprop_editor._common import (
     get_clean_class_name_value,

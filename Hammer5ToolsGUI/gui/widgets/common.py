@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFr
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
-from gui.styles.common import *
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QTextEdit, QDoubleSpinBox, QFrame, QSpacerItem, \
     QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, \
@@ -14,7 +13,6 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QTextEdit, QDoubleS
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
-from gui.styles.common import *
 from PySide6.QtWidgets import QMessageBox, QFileDialog, QScrollArea
 from PySide6.QtGui import QIcon
 import os, webbrowser

@@ -5,7 +5,6 @@ from gui.widgets.completer.main import CompletingPlainTextEdit
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.objects import expression_completer
 from gui.editors.smartprop_editor._common import is_category_widget, is_category_variable_name
-from gui.styles.common import *
 import re
 
 

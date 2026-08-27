@@ -7,7 +7,7 @@ from PySide6.QtCore import QTimer
 from gui.settings.main import settings
 from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from gui.widgets.popup_menu.main import PopupMenu
-from gui.editors.soundevent_editor.objects import *
+from gui.editors.soundevent_editor.objects import soundevent_editor_properties
 from gui.widgets import ErrorInfo
 from PySide6.QtWidgets import QMainWindow, QMenu, QApplication, QTreeWidget
 from PySide6.QtGui import QKeySequence, QKeyEvent, QUndoStack, QUndoCommand, QShortcut

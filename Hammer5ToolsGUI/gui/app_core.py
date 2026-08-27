@@ -1,19 +1,27 @@
+import ctypes
 import os
 import random
 import sys
 import time
+import webbrowser
 from PySide6.QtWidgets import (
     QSystemTrayIcon,
     QMenu,
     QDockWidget,
-    QDialog
+    QDialog,
+    QMainWindow,
+    QMessageBox,
+    QWidget,
+    QApplication,
 )
-from PySide6.QtGui import QAction, QPainter, QColor
+from PySide6.QtGui import QAction, QPainter, QColor, QIcon
 from PySide6.QtCore import (
     QPropertyAnimation,
     QPoint,
     QFileSystemWatcher,
     QEvent,
+    QTimer,
+    Qt,
 )
 from PySide6.QtNetwork import QLocalServer
 
@@ -47,11 +55,11 @@ from gui.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from gui.forms.unreal_porter.main import UnrealPorterWidget
 from gui.forms.source_porter.main import SourcePorterWidget
 from gui.forms.launch_options.main import LaunchOptionsDialog
-from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile
+from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, enable_dark_title_bar
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.quick_create.main import QuickCreateDialog
-from gui.widgets import *
+from gui.widgets import UnsavedFilesDialog, exception_handler
 
 # Global paths
 steam_path = get_steam_path()

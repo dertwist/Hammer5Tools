@@ -1,7 +1,3 @@
-try:
-    from .common import *
-except:
-    from common import *
 from PySide6.QtWidgets import (
     QWidget,
     QLineEdit,
@@ -10,9 +6,14 @@ from PySide6.QtWidgets import (
     QSlider,
     QSpacerItem,
     QSizePolicy,
+    QCheckBox,
+    QComboBox,
+    QTreeWidget,
+    QTreeWidgetItem,
 )
-from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
-from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer
+from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent, QFont
+from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer, QSize
+import ast
 import math
 from gui.styles import theme
 

@@ -9,12 +9,12 @@ from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent, QIcon, QPixmap
 from PySide6.QtCore import Qt
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.widgets import HierarchyItemModel, ErrorInfo
-from gui.editors.soundevent_editor.commands import *
+from gui.editors.soundevent_editor.commands import RenameItemCommand, DuplicateSoundEventsCommand
 from gui.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCommand
 from gui.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from gui.editors.soundevent_editor.property_browser import PropertyBrowserWidget
-from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton
-from gui.common import *
+from PySide6.QtWidgets import QInputDialog, QHBoxLayout, QPushButton, QLineEdit
+from gui.common import kv3, editor_info, generate_unique_name, set_qdock_tab_style, Kv3ToJson, JsonToKv3
 from gui.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from gui.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
 from gui.editors.soundevent_editor.soundevent_player import play_soundevent

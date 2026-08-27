@@ -17,7 +17,6 @@ from gui.settings.main import get_settings_value, set_settings_value, get_cs2_pa
 from gui.widgets.common import ErrorInfo
 from gui.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from gui.widgets.tree import BranchTreeView
-from gui.styles.common import *
 from gui.common import enable_dark_title_bar
 
 class ZebraMenu(QMenu):
