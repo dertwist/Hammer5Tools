@@ -17,8 +17,21 @@ from PySide6.QtWidgets import (
 from gui.common import enable_dark_title_bar
 from gui.settings.common import get_settings_bool, set_settings_bool
 from gui.widgets.tree import HierarchyTreeWidget
+from gui.forms.unreal_porter.asset_tree_model import (
+    CHECKED,
+    PARTIAL,
+    UNCHECKED,
+    AssetTreeModel,
+)
 
 KEY_ROLE = Qt.UserRole + 1
+NODE_ROLE = Qt.UserRole + 2
+
+_CHECK_STATES = {
+    CHECKED: Qt.Checked,
+    UNCHECKED: Qt.Unchecked,
+    PARTIAL: Qt.PartiallyChecked,
+}
 
 # Asset categories, in the order they are shown. The keys are the FILE_TYPES the
 # converter uses; "Scenes" is called Maps everywhere a user sees it, because that
@@ -277,12 +290,13 @@ class AssetSelectionDialog(QDialog):
         self.setProperty("h5Component", "unrealAssetSelectionDialog")
 
         self._asset_keys = sorted(asset_keys)
-        self._leaves = []
+        self._model = AssetTreeModel(self._asset_keys, preselected or set())
+        self._items = {}
         self._updating = False
         self.selected_keys = set()
 
         self._build_ui()
-        self._populate(preselected or set())
+        self._populate()
         self._apply_filter()
 
     def _build_ui(self):
@@ -296,10 +310,10 @@ class AssetSelectionDialog(QDialog):
         self.filter_edit.textChanged.connect(self._apply_filter)
         top.addWidget(self.filter_edit, 1)
         check_all = QPushButton("Check all")
-        check_all.clicked.connect(lambda: self._set_all(Qt.Checked))
+        check_all.clicked.connect(lambda: self._set_all(True))
         top.addWidget(check_all)
         uncheck_all = QPushButton("Uncheck all")
-        uncheck_all.clicked.connect(lambda: self._set_all(Qt.Unchecked))
+        uncheck_all.clicked.connect(lambda: self._set_all(False))
         top.addWidget(uncheck_all)
         layout.addLayout(top)
 
@@ -348,129 +362,89 @@ class AssetSelectionDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-    def _populate(self, preselected):
+    def _populate(self):
+        """Build the view from the model. Item and node are paired by NODE_ROLE."""
         self._updating = True
-        folders = {}  # path prefix -> QTreeWidgetItem
-        for key in self._asset_keys:
-            parts = key.replace("\\", "/").split("/")
-            parent = None
-            for depth, part in enumerate(parts[:-1]):
-                prefix = "/".join(parts[:depth + 1])
-                item = folders.get(prefix)
-                if item is None:
-                    item = QTreeWidgetItem([part])
-                    # Deliberately not ItemIsAutoTristate: Qt recomputes an
-                    # auto-tristate parent from its children the moment you set
-                    # it, so a folder click reads back as Unchecked before it can
-                    # propagate down. Both directions are handled below instead.
-                    item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                    item.setCheckState(0, Qt.Unchecked)
-                    if parent is None:
-                        self.tree.addTopLevelItem(item)
-                    else:
-                        parent.addChild(item)
-                    folders[prefix] = item
-                parent = item
+        self.tree.clear()
 
-            leaf = QTreeWidgetItem([parts[-1]])
-            leaf.setFlags(leaf.flags() | Qt.ItemIsUserCheckable)
-            leaf.setData(0, KEY_ROLE, key)
-            leaf.setCheckState(0, Qt.Checked if key in preselected else Qt.Unchecked)
-            (parent or self.tree.invisibleRootItem()).addChild(leaf)
-            self._leaves.append(leaf)
+        def add(node, parent_item):
+            item = QTreeWidgetItem([node.name])
+            # Deliberately not ItemIsAutoTristate: Qt recomputes an
+            # auto-tristate parent from its children the moment you set it, so
+            # a folder click reads back as Unchecked before it can propagate
+            # down. The model owns both directions instead.
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setData(0, NODE_ROLE, node)
+            if node.is_leaf:
+                item.setData(0, KEY_ROLE, node.key)
+            self._items[id(node)] = item
+            if parent_item is None:
+                self.tree.addTopLevelItem(item)
+            else:
+                parent_item.addChild(item)
+            for child in node.children:
+                add(child, item)
 
+        for root in self._model.roots:
+            add(root, None)
+
+        self._updating = False
+        self._sync_view()
+
+    def _sync_view(self):
+        """Push the model's check and visibility state onto the items."""
+        self._updating = True
+        for node, item in self._pairs():
+            item.setCheckState(0, _CHECK_STATES[self._model.state_of(node)])
+            item.setHidden(not node.visible)
         self._updating = False
         self._update_count()
 
-    # checkbox plumbing
+    def _pairs(self):
+        for node, item in self._items.items():
+            yield item.data(0, NODE_ROLE), item
 
     def _on_item_changed(self, item, column):
         if self._updating or column != 0:
             return
-        self._updating = True
-        state = item.checkState(0)
-        if item.childCount() and state != Qt.PartiallyChecked:
-            self._set_subtree(item, state)
-        self._refresh_ancestors(item)
-        self._updating = False
-        self._update_count()
+        node = item.data(0, NODE_ROLE)
+        if node is None:
+            return
+        self._model.set_checked(node, item.checkState(0) == Qt.Checked)
+        self._sync_view()
 
-    def _set_subtree(self, item, state):
-        """A folder's tick reaches everything under it — except rows the filter
-        is hiding, which the user cannot see and did not mean to include."""
-        for i in range(item.childCount()):
-            child = item.child(i)
-            if child.isHidden():
-                continue
-            child.setCheckState(0, state)
-            self._set_subtree(child, state)
-
-    def _refresh_ancestors(self, item):
-        """A folder shows checked / partial / unchecked from its visible children."""
-        parent = item.parent()
-        while parent is not None:
-            visible = [parent.child(i) for i in range(parent.childCount())
-                       if not parent.child(i).isHidden()]
-            states = {c.checkState(0) for c in visible}
-            if not states or states == {Qt.Unchecked}:
-                parent.setCheckState(0, Qt.Unchecked)
-            elif states == {Qt.Checked}:
-                parent.setCheckState(0, Qt.Checked)
-            else:
-                parent.setCheckState(0, Qt.PartiallyChecked)
-            parent = parent.parent()
-
-    def _set_all(self, state):
-        self._updating = True
-        for leaf in self._leaves:
-            if not leaf.isHidden():
-                leaf.setCheckState(0, state)
-        for leaf in self._leaves:
-            if not leaf.isHidden():
-                self._refresh_ancestors(leaf)
-        self._updating = False
-        self._update_count()
+    def _set_all(self, checked):
+        self._model.set_all(checked)
+        self._sync_view()
 
     def checked_keys(self) -> set:
-        return {leaf.data(0, KEY_ROLE) for leaf in self._leaves if leaf.checkState(0) == Qt.Checked}
+        return self._model.checked_keys()
 
     def _update_count(self):
-        self.count_label.setText(f"{len(self.checked_keys())} of {len(self._leaves)} asset(s) selected")
+        self.count_label.setText(
+            f"{len(self.checked_keys())} of {len(self._model.leaves)} asset(s) selected"
+        )
 
     # filtering
 
     def _on_type_toggled(self, category, checked):
         set_settings_bool("UnrealConverter", f"type_enabled_{category}", checked)
         self._apply_filter(self.filter_edit.text())
-        self._update_count()
 
     def _enabled_types(self) -> set:
         return {c for c, check in self.type_checks.items() if check.isChecked()}
 
     def _apply_filter(self, text=""):
-        needle = text.strip().lower()
         allowed = self._enabled_types()
-        for leaf in self._leaves:
-            key = leaf.data(0, KEY_ROLE)
-            hidden = bool(needle) and needle not in leaf.text(0).lower()
-            category = classify(key)
-            # Unclassified assets stay visible: hiding what we could not identify
-            # would silently drop it from the port with no way to notice.
-            if category is not None and category not in allowed:
-                hidden = True
-            leaf.setHidden(hidden)
-        for i in range(self.tree.topLevelItemCount()):
-            self._prune(self.tree.topLevelItem(i))
 
-    def _prune(self, item) -> bool:
-        """Hide folders with nothing visible under them. Returns visibility."""
-        if item.data(0, KEY_ROLE) is not None:
-            return not item.isHidden()
-        visible = False
-        for i in range(item.childCount()):
-            visible = self._prune(item.child(i)) or visible
-        item.setHidden(not visible)
-        return visible
+        def is_allowed(key):
+            category = classify(key)
+            # Unclassified assets stay visible: hiding what we could not
+            # identify would silently drop it from the port unnoticed.
+            return category is None or category in allowed
+
+        self._model.apply_filter(text, is_allowed)
+        self._sync_view()
 
     def _on_accept(self):
         self.selected_keys = self.checked_keys()
