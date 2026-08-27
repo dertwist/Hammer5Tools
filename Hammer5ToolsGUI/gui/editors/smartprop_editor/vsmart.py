@@ -23,6 +23,7 @@ from gui.widgets.element_id import (
 )
 from gui.widgets import HierarchyItemModel, exception_handler
 from gui.editors.smartprop_editor.objects import variable_prefix, element_prefix
+from gui.editors.smartprop_editor.document_model import normalize_kv3_text
 
 log = logging.getLogger(__name__)
 
@@ -244,17 +245,10 @@ class VsmartOpen:
             out = file.read()
         return out
 
-    def fix_format(self, file_content):
-        """Fix formatting issues from various exports."""
-        pattern = re.compile(r"= resource_name:")
-        modified_content = re.sub(pattern, "= ", file_content)
-        modified_content = modified_content.replace("null,", "")
-        return modified_content
-
     def open_file(self):
         """Open file data, restore references, and populate tree and choices."""
         data = self.load_file(self.filename)
-        data = self.fix_format(data)
+        data = normalize_kv3_text(data)
         try:
             from core.bridge import CoreBridge
             data = CoreBridge.instance().deserialize_smartprop(data)

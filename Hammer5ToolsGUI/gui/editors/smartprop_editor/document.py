@@ -81,6 +81,11 @@ from gui.common import (
 from gui.widgets.tree import HierarchyTreeWidget
 from gui.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 from gui.editors.smartprop_editor.manual_editor import ManualEditor
+from gui.editors.smartprop_editor.document_model import (
+    decode_variable,
+    normalize_kv3_text,
+    rename_references,
+)
 
 log = logging.getLogger(__name__)
 
@@ -745,7 +750,7 @@ class SmartPropDocument(QMainWindow):
     def load_preset(self, name: str = None, path: str = None):
         with open(path, "r") as file:
             __data = file.read()
-        __data = Kv3ToJson(self.fix_format(__data))
+        __data = Kv3ToJson(normalize_kv3_text(__data))
 
         old_variables = self._snapshot_variables()
         old_choices = self._snapshot_choices()
@@ -842,76 +847,29 @@ class SmartPropDocument(QMainWindow):
                         )
 
     def _populate_variables(self, data):
-        if isinstance(data, list):
-            for item in data:
-                var_class = (item.get("_class", "")).replace(variable_prefix, "")
-                var_name = item.get("m_VariableName", None)
-                
-                cat_name = item.get("m_Hammer5ToolsCategoryName")
-                import re
-                is_category = False
-                is_start = False
-                if var_name:
-                    if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_name):
-                        is_category = True
-                        is_start = var_name.endswith('_start')
-                
-                if is_category and cat_name is not None:
-                    if is_start:
-                        var_display_name = f"---------- {cat_name} ----------"
-                    else:
-                        var_display_name = "                                             "
-                else:
-                    var_display_name = item.get("m_DisplayName", None)
-                    if var_display_name is None:
-                        var_display_name = item.get("m_sCommentary", None)
-                    if var_display_name is None:
-                        var_display_name = item.get("m_ParameterName", None)
-                        
-                var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
-                var_value = {
-                    "default": item.get("m_DefaultValue", None),
-                    "model": item.get("m_sModelName", None),
-                    "m_nElementID": item.get("m_nElementID", None),
-                    'm_HideExpression': item.get("m_HideExpression", None),
-                    'm_ReadOnlyExpression': item.get("m_ReadOnlyExpression", None)
-                }
-                if var_class == "Float":
-                    var_value.update({
-                        "min": item.get("m_flParamaterMinValue", None),
-                        "max": item.get("m_flParamaterMaxValue", None)
-                    })
-                elif var_class == "Int":
-                    var_value.update({
-                        "min": item.get("m_nParamaterMinValue", None),
-                        "max": item.get("m_nParamaterMaxValue", None)
-                    })
-                else:
-                    var_value.update({"min": None, "max": None})
+        if not isinstance(data, list):
+            return
+        for item in data:
+            variable = decode_variable(item)
 
-                existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
-                variable_exists = False
-                for index, variable in existing_variables.items():
-                    name_ = variable[0]
-                    if name_ == var_name:
-                        variable_exists = True
-                        break
+            existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
+            if any(existing[0] == variable.name for existing in existing_variables.values()):
+                continue
 
-                if not variable_exists:
-                    if is_category:
-                        self.add_category(
-                            name=var_name,
-                            var_visible_in_editor=var_visible_in_editor,
-                            var_display_name=var_display_name
-                        )
-                    else:
-                        self.add_variable(
-                            name=var_name,
-                            var_value=var_value,
-                            var_visible_in_editor=var_visible_in_editor,
-                            var_class=var_class,
-                            var_display_name=var_display_name
-                        )
+            if variable.is_category:
+                self.add_category(
+                    name=variable.name,
+                    var_visible_in_editor=variable.visible_in_editor,
+                    var_display_name=variable.display_name
+                )
+            else:
+                self.add_variable(
+                    name=variable.name,
+                    var_value=variable.value,
+                    var_visible_in_editor=variable.visible_in_editor,
+                    var_class=variable.var_class,
+                    var_display_name=variable.display_name
+                )
 
     def add_an_element(self):
         hide_experimental = get_settings_bool('SmartPropEditor', 'hide_experimental', True)
@@ -1161,81 +1119,26 @@ class SmartPropDocument(QMainWindow):
 
             # Rebuild variables
             if isinstance(variables, list):
-                import re
                 for item in variables:
-                    var_class = (item["_class"]).replace(variable_prefix, "")
-                    var_name = item.get("m_VariableName", None)
-                    var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
+                    variable = decode_variable(item)
+                    if variable.element_id is not None:
+                        self.element_id_generator.add_id(variable.element_id)
+                    elif not variable.is_category:
+                        self.element_id_generator.update_value(variable.value)
 
-                    # Detect category markers
-                    is_category = False
-                    is_start = False
-                    if var_name:
-                        if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_name):
-                            is_category = True
-                            is_start = var_name.endswith('_start')
-
-                    if is_category:
-                        cat_name = item.get("m_Hammer5ToolsCategoryName")
-                        if cat_name is not None:
-                            if is_start:
-                                var_display_name = f"---------- {cat_name} ----------"
-                            else:
-                                var_display_name = "                                             "
-                        else:
-                            var_display_name = item.get("m_DisplayName", None)
-                            if var_display_name is None:
-                                var_display_name = item.get("m_sCommentary", None)
-                            if var_display_name is None:
-                                var_display_name = item.get("m_ParameterName", None)
-
-                        # Still register element ID
-                        element_id = item.get("m_nElementID", None)
-                        if element_id is not None:
-                            self.element_id_generator.add_id(element_id)
-
+                    if variable.is_category:
                         self.add_category(
-                            name=var_name,
-                            var_visible_in_editor=var_visible_in_editor,
-                            var_display_name=var_display_name
+                            name=variable.name,
+                            var_visible_in_editor=variable.visible_in_editor,
+                            var_display_name=variable.display_name
                         )
                     else:
-                        var_display_name = item.get("m_DisplayName", None)
-                        if var_display_name is None:
-                            var_display_name = item.get("m_sCommentary", None)
-                        if var_display_name is None:
-                            var_display_name = item.get("m_ParameterName", None)
-
-                        var_value = {
-                            "default": item.get("m_DefaultValue", None),
-                            "model": item.get("m_sModelName", None),
-                            "m_nElementID": item.get("m_nElementID", None),
-                            'm_HideExpression': item.get("m_HideExpression", None),
-                            'm_ReadOnlyExpression': item.get("m_ReadOnlyExpression", None)
-                        }
-                        element_id = var_value['m_nElementID']
-                        if element_id is not None:
-                            self.element_id_generator.add_id(element_id)
-                        else:
-                            var_value = self.element_id_generator.update_value(var_value)
-                        if var_class == "Float":
-                            var_value.update({
-                                "min": item.get("m_flParamaterMinValue", None),
-                                "max": item.get("m_flParamaterMaxValue", None)
-                            })
-                        elif var_class == "Int":
-                            var_value.update({
-                                "min": item.get("m_nParamaterMinValue", None),
-                                "max": item.get("m_nParamaterMaxValue", None)
-                            })
-                        else:
-                            var_value.update({"min": None, "max": None})
                         self.add_variable(
-                            name=var_name,
-                            var_value=var_value,
-                            var_visible_in_editor=var_visible_in_editor,
-                            var_class=var_class,
-                            var_display_name=var_display_name
+                            name=variable.name,
+                            var_value=variable.value,
+                            var_visible_in_editor=variable.visible_in_editor,
+                            var_class=variable.var_class,
+                            var_display_name=variable.display_name
                         )
 
             # Populate choices after variables layout has been built
@@ -2103,7 +2006,7 @@ class SmartPropDocument(QMainWindow):
             return
 
         try:
-            obj = Kv3ToJson(self.fix_format(data_input))
+            obj = Kv3ToJson(normalize_kv3_text(data_input))
             items = []
             parent = tree.currentItem() or tree.invisibleRootItem()
             if paste_to_parent:
@@ -2696,26 +2599,11 @@ class SmartPropDocument(QMainWindow):
         self._save_user_prefs()
 
     # [Other]
-    def fix_format(self, file_content):
-        pattern = re.compile(r"= resource_name:")
-        modified_content = re.sub(pattern, "= ", file_content)
-        modified_content = modified_content.replace("null,", "")
-        return modified_content
-
     # [Global Rename]
     def rename_variable_references(self, old_name, new_name):
         """Find and replace all references to old_name with new_name throughout the document."""
-        import re
-        pattern = re.compile(rf'\b{re.escape(old_name)}\b')
-
         def replace_in_val(val):
-            if isinstance(val, str):
-                return pattern.sub(new_name, val)
-            if isinstance(val, list):
-                return [replace_in_val(v) for v in val]
-            if isinstance(val, dict):
-                return {k: replace_in_val(v) for k, v in val.items()}
-            return val
+            return rename_references(val, old_name, new_name)
 
         self._rename_in_hierarchy_recursive(self.ui.tree_hierarchy_widget.invisibleRootItem(), replace_in_val)
 

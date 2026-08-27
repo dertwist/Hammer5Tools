@@ -25,6 +25,7 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, Signal, QRect, QSize, QStringListModel
 
 from gui.common import JsonToKv3, fast_deepcopy
+from gui.editors.smartprop_editor.document_model import normalize_kv3_text
 
 
 # ── KV3 Syntax Highlighter ────────────────────────────────────────────────────
@@ -741,7 +742,7 @@ class ManualEditor(QWidget):
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         from gui.common import fast_deepcopy
 
-        text = self._fix_format(text)
+        text = normalize_kv3_text(text)
         obj = Kv3ToJson(text)
         children = obj.get("m_Children", [])
         if not children:
@@ -802,7 +803,7 @@ class ManualEditor(QWidget):
 
     def _apply_variables(self, text):
         from gui.common import Kv3ToJson
-        text = self._fix_format(text)
+        text = normalize_kv3_text(text)
         obj = Kv3ToJson(text)
         variables = obj.get("m_Variables", [])
 
@@ -848,7 +849,7 @@ class ManualEditor(QWidget):
 
     def _apply_choices(self, text):
         from gui.common import Kv3ToJson
-        text = self._fix_format(text)
+        text = normalize_kv3_text(text)
         obj = Kv3ToJson(text)
         choices_list = obj.get("m_Choices", [])
 
@@ -898,13 +899,6 @@ class ManualEditor(QWidget):
         self._document.undo_stack.push(cmd)
 
     # ── Internal ──────────────────────────────────────────────────────────
-
-    @staticmethod
-    def _fix_format(text):
-        """Normalise KV3 text before parsing (mirrors VsmartOpen.fix_format)."""
-        text = re.sub(r"= resource_name:", "= ", text)
-        text = text.replace("null,", "")
-        return text
 
     def _on_focus_changed(self, text):
         self._current_focus = text
