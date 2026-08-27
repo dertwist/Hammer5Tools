@@ -6,7 +6,7 @@
    qss/features/property_frame.qss. Values are unchanged from the old
    constants; hex_RRGGBB-style tokens (prefixed with the usual @ sigil) are
    used instead of raw literals so shades that don't have a named Theme
-   field still respond to the brightness setting (see theme.resolve_hex()). */
+   field still respond to the theme setting (see theme.resolve_hex()). */
 
 QPushButton[h5Component="legacyButton"] {
     font: 580 9pt "Segoe UI";

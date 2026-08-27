@@ -2,7 +2,7 @@
 
 Hammer 5 Tools uses one compiled, application-wide QSS theme. Keep ordinary
 widget appearance in this system so every editor and dialog responds uniformly
-to the interface-brightness setting.
+to the selected theme.
 
 ## 1. UI/UX principles
 
@@ -55,7 +55,7 @@ legacy or feature-specific shades use `@hex_RRGGBB`; alpha variants use
 `@rgba_RRGGBB_AAA`, where `AAA` is Qt alpha from 0 to 255. Their Dark and Bright
 counterparts are explicit palette data in each `Theme`, not HSL calculations.
 
-### Interface brightness
+### Themes
 
 | Level | Name | Behavior |
 |---:|---|---|
@@ -63,7 +63,7 @@ counterparts are explicit palette data in each `Theme`, not HSL calculations.
 | 2 | Standard | Canonical design values |
 | 3 | Bright | Explicit light palette with dark text |
 
-The selected level is stored as `APP/brightness_level`. A switch selects one
+The selected level is stored as `APP/theme_level`. A switch selects one
 immutable `Theme` and reapplies the single compiled application stylesheet.
 There is no Qt monkeypatch and no retained per-widget Designer stylesheet.
 
@@ -98,7 +98,7 @@ When changing a dynamic property after a widget is visible, use
 The styling system lives in `Hammer5ToolsGUI/gui/styles/`:
 
 - `theme.py` owns the `Theme` dataclass, three explicit instances, metrics,
-  brightness selection, and non-QSS color helpers.
+  theme selection, and non-QSS color helpers.
 - `qss_compiler.py` deterministically combines `qss/*.qss` and
   `qss/features/*.qss`, substitutes tokens, and rejects unknown tokens.
 - `manager.py` is the only application stylesheet owner. Its `apply()` and

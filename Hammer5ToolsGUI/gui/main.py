@@ -330,18 +330,18 @@ if __name__ == "__main__":
         from PySide6.QtCore import QCoreApplication
         QCoreApplication.addLibraryPath(plugins_dir)
         
-    # Select brightness before widgets are constructed so custom-painted
+    # Select the theme before widgets are constructed so custom-painted
     # controls and the global stylesheet read the same active Theme.
     from gui.styles import theme
     from gui.settings.common import get_settings_value
     try:
-        brightness = int(get_settings_value('APP', 'brightness_level', 2))
+        level = int(get_settings_value('APP', 'theme_level', 2))
     except (TypeError, ValueError):
-        brightness = 2
-    theme.set_brightness_level(brightness)
+        level = 2
+    theme.set_level(level)
 
     from gui.styles import manager as style_manager
-    style_manager.apply(app, theme.get_theme(brightness))
+    style_manager.apply(app, theme.get_theme(level))
 
     # Create main window
     widget = Widget()

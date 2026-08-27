@@ -71,7 +71,7 @@ QLabel[h5Component="cleanupTransparentLabel"] {
    (mostly identical to the app defaults already in qss/*.qss) so the
    distinctive per-button color variants (btn_port/btn_find_missing/btn_stop)
    keep working, without leaving the dialog to fall out of sync with a live
-   brightness switch. */
+   theme switch. */
 QLabel[h5Component="sourcePorterInstructionLabel"] {
     color: @text_muted;
     font: 580 9pt "Segoe UI";

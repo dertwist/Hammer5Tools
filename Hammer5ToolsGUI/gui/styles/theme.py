@@ -168,7 +168,7 @@ _NON_TOKEN_FIELDS = {"viewport_clear", "palette", "level"}
 TOKEN_NAMES = frozenset(f.name for f in fields(Theme) if f.name not in _NON_TOKEN_FIELDS)
 
 
-def set_brightness_level(level):
+def set_level(level):
     """Select the active explicit theme (invalid values select Standard)."""
     global _ACTIVE_THEME
     try:
@@ -178,7 +178,7 @@ def set_brightness_level(level):
     _ACTIVE_THEME = THEMES.get(selected, STANDARD_THEME)
 
 
-def brightness_level():
+def level():
     return _ACTIVE_THEME.level
 
 

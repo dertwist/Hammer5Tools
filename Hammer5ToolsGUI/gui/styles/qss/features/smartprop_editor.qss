@@ -373,7 +373,7 @@ QTextBrowser[h5Component="smartpropHelpBrowser"] QScrollBar:vertical {
    vector3d). These widgets are pooled and configured once, never restyled
    in reconfigure() (see compact.py's module docstring) -- so unlike a
    one-shot dialog, an already-open SmartProp editor depends on the *global*
-   stylesheet recompiling on a brightness switch, not on being rebuilt.
+   stylesheet recompiling on a theme switch, not on being rebuilt.
    Moving these off per-widget setStyleSheet() calls also drops N redundant
    identical-string Qt CSS parses per editor rebuild (compact_frame() and
    apply_single_row()/apply_row_no_switch() used to call setStyleSheet()
@@ -929,7 +929,7 @@ QPushButton[h5Component="smartpropColorSwatch"] {
 }
 
 /* props/note.py: sticky-note-styled comment editor. Deliberately not
-   theme-gray (yellow sticky-note look, constant across brightness levels)
+   theme-gray (yellow sticky-note look, constant across themes)
    except the text-selection color, which matches @selection. */
 QPlainTextEdit[h5Component="smartpropNoteEdit"] {
     background-color: #FFF8BE;

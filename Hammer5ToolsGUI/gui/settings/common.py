@@ -49,10 +49,19 @@ def default_settings():
         set_settings_bool('APP', 'minimize_to_tray', False)
         set_settings_bool('APP', 'show_about_on_startup', True)
         set_settings_bool('APP', 'show_project_structure_warning', True)
-        set_settings_value('APP', 'brightness_level', 2)
+        set_settings_value('APP', 'theme_level', 2)
         settings.sync()
 
 default_settings()
+
+# APP/brightness_level was renamed to APP/theme_level; carry the existing
+# selection over so the rename does not reset anyone to Standard.
+_legacy_level = settings.value('APP/brightness_level')
+if _legacy_level is not None:
+    if settings.value('APP/theme_level') is None:
+        set_settings_value('APP', 'theme_level', _legacy_level)
+    settings.remove('APP/brightness_level')
+    settings.sync()
 
 def get_cs2_path():
     """Retrieves the CS2 installation path."""
@@ -101,4 +110,4 @@ def get_addon_dir():
     if not addon_name:
         return None
 
-    return str(Path(cs2_path) / 'content' / 'csgo_addons' / addon_name)
+    return str(Path(cs2_path) / 'content' / 'csgo_addons' / addon_name)

@@ -120,21 +120,21 @@ class PreferencesDialog(QDialog):
         # Appearance Subcategory
         label_appearance_header = QLabel("Appearance", general_tab_content)
         layout.addWidget(label_appearance_header)
-        frame_brightness = QFrame(general_tab_content)
-        layout_brightness = QHBoxLayout(frame_brightness)
-        label_brightness = QLabel("Brightness:", frame_brightness)
-        label_brightness.setMinimumWidth(130)
-        layout_brightness.addWidget(label_brightness)
-        self.appearance_combo_brightness = QComboBox(frame_brightness)
-        self.appearance_combo_brightness.setProperty("h5Component", "legacyCombobox")
-        self.appearance_combo_brightness.addItem("1 · Dark", 1)
-        self.appearance_combo_brightness.addItem("2 · Standard", 2)
-        self.appearance_combo_brightness.addItem("3 · Bright", 3)
-        self.appearance_combo_brightness.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.appearance_combo_brightness.setMinimumWidth(200)
-        layout_brightness.addWidget(self.appearance_combo_brightness)
-        layout_brightness.addStretch()
-        layout.addWidget(frame_brightness)
+        frame_theme = QFrame(general_tab_content)
+        layout_theme = QHBoxLayout(frame_theme)
+        label_theme = QLabel("Theme:", frame_theme)
+        label_theme.setMinimumWidth(130)
+        layout_theme.addWidget(label_theme)
+        self.appearance_combo_theme = QComboBox(frame_theme)
+        self.appearance_combo_theme.setProperty("h5Component", "legacyCombobox")
+        self.appearance_combo_theme.addItem("1 · Dark", 1)
+        self.appearance_combo_theme.addItem("2 · Standard", 2)
+        self.appearance_combo_theme.addItem("3 · Bright", 3)
+        self.appearance_combo_theme.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.appearance_combo_theme.setMinimumWidth(200)
+        layout_theme.addWidget(self.appearance_combo_theme)
+        layout_theme.addStretch()
+        layout.addWidget(frame_theme)
         # Add divider after Appearance Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
         # Other Subcategory
@@ -367,14 +367,14 @@ class PreferencesDialog(QDialog):
         self.main_layout.addWidget(self.action_buttons_panel)
 
     def populate_preferences(self):
-        # Interface brightness (General tab)
+        # Theme (General tab)
         try:
-            brightness_val = int(get_settings_value('APP', 'brightness_level', 2))
+            theme_level = int(get_settings_value('APP', 'theme_level', 2))
         except (TypeError, ValueError):
-            brightness_val = 2
-        brightness_idx = self.appearance_combo_brightness.findData(brightness_val)
-        self.appearance_combo_brightness.setCurrentIndex(
-            brightness_idx if brightness_idx != -1 else self.appearance_combo_brightness.findData(2))
+            theme_level = 2
+        theme_idx = self.appearance_combo_theme.findData(theme_level)
+        self.appearance_combo_theme.setCurrentIndex(
+            theme_idx if theme_idx != -1 else self.appearance_combo_theme.findData(2))
         self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
         # Populate CS2 path
         manual_cs2_path = get_manual_cs2_path()
@@ -448,16 +448,24 @@ class PreferencesDialog(QDialog):
         default_file = {'process': process}
         set_settings_value('AssetGroupMaker', 'default_file', str(default_file))
 
-    def apply_brightness_level(self):
-        level = int(self.appearance_combo_brightness.currentData())
-        set_settings_value('APP', 'brightness_level', level)
+    def apply_theme_level(self):
+        level = int(self.appearance_combo_theme.currentData())
         from gui.styles import theme
         from gui.styles import manager as style_manager
-        theme.set_brightness_level(level)
+        # reapply() repolishes every live widget in the application, which costs
+        # seconds on a loaded session. Re-selecting the level already in effect
+        # must not pay that.
+        if level == theme.level():
+            return
+        set_settings_value('APP', 'theme_level', level)
+        theme.set_level(level)
         style_manager.reapply(theme.get_theme(level))
 
     def connect_signals(self):
-        self.appearance_combo_brightness.currentIndexChanged.connect(self.apply_brightness_level)
+        # activated, not currentIndexChanged: the latter also fires while the user
+        # arrows through the list and on populate_preferences()'s setCurrentIndex(),
+        # each one a full application repolish.
+        self.appearance_combo_theme.activated.connect(self.apply_theme_level)
         self.preferences_lineedit_archive_path.textChanged.connect(
             lambda: set_settings_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
         )

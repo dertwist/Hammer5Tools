@@ -16,11 +16,11 @@ def test_bright_theme_uses_off_white_surfaces_and_dark_text():
 
 
 def test_bright_theme_has_matching_viewport_clear_color():
-    theme.set_brightness_level(theme.LEVEL_BRIGHT)
+    theme.set_level(theme.LEVEL_BRIGHT)
     try:
         assert theme.gl_clear_color() == (0.82, 0.82, 0.82)
     finally:
-        theme.set_brightness_level(theme.LEVEL_STANDARD)
+        theme.set_level(theme.LEVEL_STANDARD)
 
 
 def test_all_explicit_themes_compile_without_unresolved_tokens():
