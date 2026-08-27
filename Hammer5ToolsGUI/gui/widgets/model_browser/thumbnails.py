@@ -150,10 +150,9 @@ def _clear_color():
 THUMB_SIZE = 128
 
 #: The thumbnail shader samples albedo only, so the loader is told to skip the
-#: normal/MR/AO/emissive maps entirely and cap the base one. Dropping four of
-#: five maps is where the CPU saving comes from; this cap mainly bounds memory
-#: for models that ship 4K albedos.
-THUMB_TEXTURE_DIM = 512
+#: normal/MR/AO/emissive maps entirely and cap the base one. For a 128px thumbnail,
+#: 128px textures provide exact 1:1 density with 16x faster decompression and memory bandwidth.
+THUMB_TEXTURE_DIM = 128
 
 #: Mirrors SmartProp3DRenderArea._ALPHA_MODE_CODE (render_area.py) — kept as its
 #: own copy since this module renders with an intentionally separate shader.
@@ -182,6 +181,47 @@ CREATE TABLE IF NOT EXISTS thumbnails (
 )
 """
 
+_local_conn = None
+_local_conn_path = None
+
+
+def _get_db_conn():
+    global _local_conn, _local_conn_path
+    from gui.widgets.model_browser.cache import thumbnail_db_path
+    path = thumbnail_db_path()
+    if _local_conn is not None:
+        if _local_conn_path == path and os.path.exists(path):
+            return _local_conn
+        try:
+            _local_conn.close()
+        except Exception:
+            pass
+        _local_conn = None
+        _local_conn_path = None
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    conn = sqlite3.connect(path, timeout=5.0)
+    conn.execute(_DB_SCHEMA)
+    try:
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+    except Exception:
+        pass
+    _local_conn = conn
+    _local_conn_path = path
+    return conn
+
+
+def _close_db_conn():
+    global _local_conn, _local_conn_path
+    if _local_conn is not None:
+        try:
+            _local_conn.close()
+        except Exception:
+            pass
+        _local_conn = None
+        _local_conn_path = None
+
 
 def _thumbnail_key(resource_path: str, size: int) -> str:
     digest = hashlib.sha1(resource_path.lower().encode("utf-8")).hexdigest()[:16]
@@ -190,14 +230,13 @@ def _thumbnail_key(resource_path: str, size: int) -> str:
 
 def _cached_thumbnail_bytes(entry, size: int) -> Optional[bytes]:
     """Return cached PNG bytes that are still newer than the source, else None."""
-    from gui.widgets.model_browser.cache import thumbnail_db_path
     key = _thumbnail_key(entry.path, size)
     try:
-        with closing(sqlite3.connect(thumbnail_db_path(), timeout=5.0)) as conn:
-            row = conn.execute(
-                "SELECT written_at, data FROM thumbnails WHERE key = ?", (key,)
-            ).fetchone()
-    except sqlite3.Error:
+        conn = _get_db_conn()
+        row = conn.execute(
+            "SELECT written_at, data FROM thumbnails WHERE key = ?", (key,)
+        ).fetchone()
+    except (sqlite3.Error, OSError):
         return None
     if row is None:
         return None
@@ -215,18 +254,14 @@ def _cached_thumbnail_bytes(entry, size: int) -> Optional[bytes]:
 
 
 def _store_thumbnail_bytes(resource_path: str, size: int, data: bytes):
-    from gui.widgets.model_browser.cache import thumbnail_db_path
-    path = thumbnail_db_path()
     try:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with closing(sqlite3.connect(path, timeout=5.0)) as conn:
-            conn.execute(_DB_SCHEMA)
-            conn.execute(
-                "INSERT OR REPLACE INTO thumbnails (key, written_at, data) VALUES (?, ?, ?)",
-                (_thumbnail_key(resource_path, size), time.time(), data),
-            )
-            conn.commit()
-    except sqlite3.Error:
+        conn = _get_db_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO thumbnails (key, written_at, data) VALUES (?, ?, ?)",
+            (_thumbnail_key(resource_path, size), time.time(), data),
+        )
+        conn.commit()
+    except (sqlite3.Error, OSError):
         pass
 
 
@@ -261,9 +296,9 @@ class ThumbnailService(QObject):
     ready = Signal(str, QPixmap)     # resource path, thumbnail
     failed = Signal(str)             # resource path
 
-    #: Renders drained per timer tick. One keeps the dialog fully interactive
-    #: while a large index bakes; the queue itself is what provides throughput.
-    RENDERS_PER_TICK = 1
+    #: Renders drained per timer tick. Higher throughput drains visible thumbnails
+    #: smoothly without stalling GUI frame rate.
+    RENDERS_PER_TICK = 4
     MAX_MEMORY_CACHE = 256
 
     def __init__(self, size: int = THUMB_SIZE, parent=None):
@@ -354,6 +389,7 @@ class ThumbnailService(QObject):
         from gui.widgets.model_browser.cache import clear_cache
         self._memory.clear()
         self._failed.clear()
+        _close_db_conn()
         clear_cache()
 
     # internals
@@ -598,11 +634,10 @@ def _upload_texture(image: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 
 
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, gl_wrap_u)
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, gl_wrap_v)
-    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0,
                     GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, np.ascontiguousarray(image))
-    GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
     return texture
 
 

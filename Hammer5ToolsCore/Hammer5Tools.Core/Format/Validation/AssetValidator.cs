@@ -1,5 +1,5 @@
-using Hammer5Tools.Core.IO.Vpk;
 using Hammer5Tools.Core.IO.Domain;
+using Hammer5Tools.Core.IO.Vpk;
 
 namespace Hammer5Tools.Core.Format.Validation;
 

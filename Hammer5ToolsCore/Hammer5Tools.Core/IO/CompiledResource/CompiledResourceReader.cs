@@ -1,9 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-
+using Hammer5Tools.Core.IO.Vpk;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
-using Hammer5Tools.Core.IO.Vpk;
 
 namespace Hammer5Tools.Core.IO.CompiledResource;
 

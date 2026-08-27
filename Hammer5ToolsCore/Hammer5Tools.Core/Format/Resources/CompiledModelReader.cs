@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
@@ -27,6 +28,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         new Vector2(0.5f), 0);
     private readonly Lock loaderLock = new();
     private readonly Dictionary<LoaderKey, GameFileLoader> loaders = [];
+    private readonly ConcurrentDictionary<string, CompiledMaterial> sharedMaterialCache = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, CompiledTexture> sharedTextureCache = new(StringComparer.Ordinal);
     private bool disposed;
 
     internal int LoaderCount
@@ -50,10 +53,15 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
+            GameFileLoader loader;
+            Resource? resource;
             lock (loaderLock)
             {
-                var loader = GetLoader(addon, relativePath);
-                using var resource = loader.LoadFileCompiled(relativePath);
+                loader = GetLoader(addon, relativePath);
+                resource = loader.LoadFileCompiled(relativePath);
+            }
+            using (resource)
+            {
                 if (resource?.DataBlock is not Model model)
                     return CoreResult.Failure<CompiledModel>("compiled_model_missing", $"Could not read '{relativePath}'.");
 
@@ -91,10 +99,15 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         try
         {
             var (addon, relativePath) = Resolve(resourcePath, contextAddon);
+            GameFileLoader loader;
+            Resource? resource;
             lock (loaderLock)
             {
-                var loader = GetLoader(addon, relativePath);
-                using var resource = loader.LoadFileCompiled(relativePath);
+                loader = GetLoader(addon, relativePath);
+                resource = loader.LoadFileCompiled(relativePath);
+            }
+            using (resource)
+            {
                 if (resource?.DataBlock is not Model model)
                     return CoreResult.Failure<IReadOnlyList<string>>(
                         "compiled_model_missing", $"Could not read '{relativePath}'.");
@@ -141,11 +154,13 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
             foreach (var loader in loaders.Values)
                 loader.Dispose();
             loaders.Clear();
+            sharedMaterialCache.Clear();
+            sharedTextureCache.Clear();
             disposed = true;
         }
     }
 
-    private static void AppendMesh(
+    private void AppendMesh(
         GameFileLoader loader,
         Mesh mesh,
         Dictionary<string, string> skinMap,
@@ -227,38 +242,52 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
             }
     }
 
-    private static CompiledMaterial ReadMaterial(
+    private CompiledMaterial ReadMaterial(
         GameFileLoader loader, string materialPath, int maximumTextureDimension, bool baseColorOnly)
     {
+        var cacheKey = $"{materialPath}:{maximumTextureDimension}:{(baseColorOnly ? 1 : 0)}";
+        if (sharedMaterialCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
         try
         {
-            using var resource = loader.LoadFileCompiled(materialPath);
-            if (resource?.DataBlock is not Material material)
-                return DefaultMaterial with { Name = materialPath };
+            Resource? resource;
+            lock (loaderLock)
+            {
+                resource = loader.LoadFileCompiled(materialPath);
+            }
+            using (resource)
+            {
+                if (resource?.DataBlock is not Material material)
+                    return DefaultMaterial with { Name = materialPath };
 
-            var textures = material.TextureParams.ToDictionary(entry => entry.Key, entry => entry.Value);
-            var baseName = BaseTextures.FirstOrDefault(textures.ContainsKey);
-            var baseColor = ReadTexture(loader, TexturePath(textures, BaseTextures), maximumTextureDimension);
-            var normal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, NormalTextures), maximumTextureDimension);
-            var metal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, MetalTextures), maximumTextureDimension);
-            var roughness = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, RoughnessTextures), maximumTextureDimension);
-            var metallicRoughness = baseColorOnly ? null : CombineMetallicRoughness(normal, metal, roughness,
-                FloatParameter(material, "g_flMetalness", 0), FloatParameter(material, "g_flRoughness", 1));
-            var alphaTest = IntParameter(material, "F_ALPHA_TEST") != 0;
-            var translucent = IntParameter(material, "F_TRANSLUCENT") != 0;
-            var suffix = baseName is not null && "123".Contains(baseName[^1], StringComparison.Ordinal) ? baseName[^1].ToString() : "";
-            return new CompiledMaterial(
-                materialPath, baseColor, normal, metallicRoughness,
-                baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, AmbientOcclusionTextures), maximumTextureDimension),
-                baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, EmissiveTextures), maximumTextureDimension),
-                VectorParameter(material, "g_vColorTint", Vector4.One), metallicRoughness is null ? FloatParameter(material, "g_flMetalness", 0) : 1,
-                1, Vector3.Zero, translucent ? "BLEND" : alphaTest ? "MASK" : "OPAQUE",
-                FloatParameter(material, "g_flAlphaTestReference", 0.5f), IntParameter(material, "F_RENDER_BACKFACES") != 0,
-                IntParameter(material, "g_nTextureAddressModeU"), IntParameter(material, "g_nTextureAddressModeV"), 0,
-                Vector2Parameter(material, $"g_vTexCoordScale{suffix}", Vector2Parameter(material, "g_vTexCoordScale", Vector2.One)),
-                Vector2Parameter(material, $"g_vTexCoordOffset{suffix}", Vector2Parameter(material, "g_vTexCoordOffset", Vector2.Zero)),
-                Vector2Parameter(material, $"g_vTexCoordCenter{suffix}", Vector2Parameter(material, "g_vTexCoordCenter", new Vector2(0.5f))),
-                FloatParameter(material, $"g_flTexCoordRotation{suffix}", FloatParameter(material, "g_flTexCoordRotation", 0)));
+                var textures = material.TextureParams.ToDictionary(entry => entry.Key, entry => entry.Value);
+                var baseName = BaseTextures.FirstOrDefault(textures.ContainsKey);
+                var baseColor = ReadTexture(loader, TexturePath(textures, BaseTextures), maximumTextureDimension);
+                var normal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, NormalTextures), maximumTextureDimension);
+                var metal = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, MetalTextures), maximumTextureDimension);
+                var roughness = baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, RoughnessTextures), maximumTextureDimension);
+                var metallicRoughness = baseColorOnly ? null : CombineMetallicRoughness(normal, metal, roughness,
+                    FloatParameter(material, "g_flMetalness", 0), FloatParameter(material, "g_flRoughness", 1));
+                var alphaTest = IntParameter(material, "F_ALPHA_TEST") != 0;
+                var translucent = IntParameter(material, "F_TRANSLUCENT") != 0;
+                var suffix = baseName is not null && "123".Contains(baseName[^1], StringComparison.Ordinal) ? baseName[^1].ToString() : "";
+                var compiled = new CompiledMaterial(
+                    materialPath, baseColor, normal, metallicRoughness,
+                    baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, AmbientOcclusionTextures), maximumTextureDimension),
+                    baseColorOnly ? null : ReadTexture(loader, TexturePath(textures, EmissiveTextures), maximumTextureDimension),
+                    VectorParameter(material, "g_vColorTint", Vector4.One), metallicRoughness is null ? FloatParameter(material, "g_flMetalness", 0) : 1,
+                    1, Vector3.Zero, translucent ? "BLEND" : alphaTest ? "MASK" : "OPAQUE",
+                    FloatParameter(material, "g_flAlphaTestReference", 0.5f), IntParameter(material, "F_RENDER_BACKFACES") != 0,
+                    IntParameter(material, "g_nTextureAddressModeU"), IntParameter(material, "g_nTextureAddressModeV"), 0,
+                    Vector2Parameter(material, $"g_vTexCoordScale{suffix}", Vector2Parameter(material, "g_vTexCoordScale", Vector2.One)),
+                    Vector2Parameter(material, $"g_vTexCoordOffset{suffix}", Vector2Parameter(material, "g_vTexCoordOffset", Vector2.Zero)),
+                    Vector2Parameter(material, $"g_vTexCoordCenter{suffix}", Vector2Parameter(material, "g_vTexCoordCenter", new Vector2(0.5f))),
+                    FloatParameter(material, $"g_flTexCoordRotation{suffix}", FloatParameter(material, "g_flTexCoordRotation", 0)));
+
+                sharedMaterialCache.TryAdd(cacheKey, compiled);
+                return compiled;
+            }
         }
         catch
         {
@@ -266,33 +295,48 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         }
     }
 
-    private static CompiledTexture? ReadTexture(GameFileLoader loader, string? texturePath, int maximumDimension)
+    private CompiledTexture? ReadTexture(GameFileLoader loader, string? texturePath, int maximumDimension)
     {
         if (string.IsNullOrWhiteSpace(texturePath))
             return null;
-        using var resource = loader.LoadFileCompiled(texturePath);
-        if (resource?.DataBlock is not Texture texture)
+        var cacheKey = $"{texturePath}:{maximumDimension}";
+        if (sharedTextureCache.TryGetValue(cacheKey, out var cached))
+            return cached;
+
+        Resource? resource;
+        lock (loaderLock)
+        {
+            resource = loader.LoadFileCompiled(texturePath);
+        }
+        if (resource is null)
             return null;
-        uint mip = 0;
-        var width = (int)texture.ActualWidth;
-        var height = (int)texture.ActualHeight;
-        while (mip + 1 < texture.NumMipLevels && maximumDimension > 0 && Math.Max(width, height) > maximumDimension)
+        using (resource)
         {
-            mip++;
-            width = Math.Max(1, width / 2);
-            height = Math.Max(1, height / 2);
+            if (resource.DataBlock is not Texture texture)
+                return null;
+            uint mip = 0;
+            var width = (int)texture.ActualWidth;
+            var height = (int)texture.ActualHeight;
+            while (mip + 1 < texture.NumMipLevels && maximumDimension > 0 && Math.Max(width, height) > maximumDimension)
+            {
+                mip++;
+                width = Math.Max(1, width / 2);
+                height = Math.Max(1, height / 2);
+            }
+            using var bitmap = texture.GenerateBitmap(0, Texture.CubemapFace.PositiveX, mip, texture.RetrieveCodecFromResourceEditInfo());
+            var rgba = new byte[bitmap.Width * bitmap.Height * 4];
+            var source = bitmap.Bytes;
+            for (var index = 0; index < rgba.Length; index += 4)
+            {
+                rgba[index] = source[index + 2];
+                rgba[index + 1] = source[index + 1];
+                rgba[index + 2] = source[index];
+                rgba[index + 3] = source[index + 3];
+            }
+            var result = new CompiledTexture(bitmap.Width, bitmap.Height, System.Runtime.InteropServices.ImmutableCollectionsMarshal.AsImmutableArray(rgba));
+            sharedTextureCache.TryAdd(cacheKey, result);
+            return result;
         }
-        using var bitmap = texture.GenerateBitmap(0, Texture.CubemapFace.PositiveX, mip, texture.RetrieveCodecFromResourceEditInfo());
-        var rgba = new byte[bitmap.Width * bitmap.Height * 4];
-        var source = bitmap.Bytes;
-        for (var index = 0; index < rgba.Length; index += 4)
-        {
-            rgba[index] = source[index + 2];
-            rgba[index + 1] = source[index + 1];
-            rgba[index + 2] = source[index];
-            rgba[index + 3] = source[index + 3];
-        }
-        return new CompiledTexture(bitmap.Width, bitmap.Height, [.. rgba]);
     }
 
     private static CompiledTexture? CombineMetallicRoughness(
@@ -352,7 +396,7 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         return new Vector2(value.X, value.Y);
     }
 
-    private static IEnumerable<Mesh> ReadMeshes(GameFileLoader loader, Model model)
+    private IEnumerable<Mesh> ReadMeshes(GameFileLoader loader, Model model)
     {
         foreach (var entry in model.GetEmbeddedMeshesAndLoD())
             if ((entry.Item4 & 1) != 0)
@@ -361,9 +405,16 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         {
             if (entry.Item3 != 0 && (entry.Item3 & 1) == 0)
                 continue;
-            using var resource = loader.LoadFileCompiled(entry.Item2);
-            if (resource?.DataBlock is Mesh mesh)
-                yield return mesh;
+            Resource? resource;
+            lock (loaderLock)
+            {
+                resource = loader.LoadFileCompiled(entry.Item2);
+            }
+            using (resource)
+            {
+                if (resource?.DataBlock is Mesh mesh)
+                    yield return mesh;
+            }
         }
     }
 

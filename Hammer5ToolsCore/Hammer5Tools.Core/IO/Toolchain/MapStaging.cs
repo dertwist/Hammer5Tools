@@ -1,5 +1,5 @@
-using Hammer5Tools.Core.IO.Domain;
 using Hammer5Tools.Core.Format.Toolchain;
+using Hammer5Tools.Core.IO.Domain;
 
 namespace Hammer5Tools.Core.IO.Toolchain;
 

@@ -109,6 +109,12 @@ def clear_cache() -> Tuple[int, int, List[str]]:
     except Exception:
         pass
 
+    try:
+        from gui.widgets.model_browser.thumbnails import _close_db_conn
+        _close_db_conn()
+    except Exception:
+        pass
+
     total_bytes, file_count = cache_size()
     errors: List[str] = []
 

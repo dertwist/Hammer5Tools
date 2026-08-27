@@ -137,10 +137,10 @@ class CompiledSubMeshData:
 
 @dataclass(frozen=True)
 class CompiledModelData:
-    vertices: tuple[float, ...]
-    normals: tuple[float, ...]
-    uvs: tuple[float, ...]
-    indices: tuple[int, ...]
+    vertices: Sequence[float]
+    normals: Sequence[float]
+    uvs: Sequence[float]
+    indices: Sequence[int]
     bounds_minimum: tuple[float, ...]
     bounds_maximum: tuple[float, ...]
     submeshes: tuple[CompiledSubMeshData, ...]
@@ -436,8 +436,20 @@ class CoreBridge:
         if model is None:
             return None
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        if "verticesBytes" in model:
+            import numpy as np
+            vertices = np.frombuffer(base64.b64decode(model["verticesBytes"]), dtype=np.float32)
+            normals = np.frombuffer(base64.b64decode(model["normalsBytes"]), dtype=np.float32)
+            uvs = np.frombuffer(base64.b64decode(model["uvsBytes"]), dtype=np.float32)
+            indices = np.frombuffer(base64.b64decode(model["indicesBytes"]), dtype=np.uint32)
+        else:
+            vertices = tuple(model.get("vertices", ()))
+            normals = tuple(model.get("normals", ()))
+            uvs = tuple(model.get("uvs", ()))
+            indices = tuple(model.get("indices", ()))
+
         return CompiledModelData(
-            tuple(model["vertices"]), tuple(model["normals"]), tuple(model["uvs"]), tuple(model["indices"]),
+            vertices, normals, uvs, indices,
             tuple(model["boundsMinimum"]), tuple(model["boundsMaximum"]),
             tuple(CompiledSubMeshData(item["indexOffset"], item["indexCount"], self._compiled_material(item["material"]))
                   for item in model["submeshes"]), diagnostics)

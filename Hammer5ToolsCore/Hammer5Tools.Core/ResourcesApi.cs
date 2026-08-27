@@ -127,17 +127,18 @@ internal static unsafe class ResourcesApi
         NativeInterop.Invoke(output, outputLength, () =>
         {
             var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
+            CompiledModelReader reader;
             lock (ModelReaderLock)
             {
-                var reader = GetModelReader(root);
-                var result = reader.Read(
-                    root.GetProperty("resourcePath").GetString()!,
-                    GetOptionalString(root, "contextAddon"),
-                    GetInt32(root, "maximumTextureDimension", 1024),
-                    GetBoolean(root, "baseColorOnly", false),
-                    GetInt32(root, "skin", 0));
-                return WriteCompiledModelResult(result);
+                reader = GetModelReader(root);
             }
+            var result = reader.Read(
+                root.GetProperty("resourcePath").GetString()!,
+                GetOptionalString(root, "contextAddon"),
+                GetInt32(root, "maximumTextureDimension", 1024),
+                GetBoolean(root, "baseColorOnly", false),
+                GetInt32(root, "skin", 0));
+            return WriteCompiledModelResult(result);
         });
 
     /// <summary>Request: {gameDirectory, activeAddon, resourcePath, contextAddon?}.</summary>
@@ -146,23 +147,24 @@ internal static unsafe class ResourcesApi
         NativeInterop.Invoke(output, outputLength, () =>
         {
             var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
+            CompiledModelReader reader;
             lock (ModelReaderLock)
             {
-                var reader = GetModelReader(root);
-                var result = reader.ReadMaterialGroups(
-                    root.GetProperty("resourcePath").GetString()!,
-                    GetOptionalString(root, "contextAddon"));
-
-                var buffer = new ArrayBufferWriter<byte>();
-                using var writer = new Utf8JsonWriter(buffer);
-                writer.WriteStartArray();
-                if (result.IsSuccess)
-                    foreach (var group in result.Value!)
-                        writer.WriteStringValue(group);
-                writer.WriteEndArray();
-                writer.Flush();
-                return buffer.WrittenSpan.ToArray();
+                reader = GetModelReader(root);
             }
+            var result = reader.ReadMaterialGroups(
+                root.GetProperty("resourcePath").GetString()!,
+                GetOptionalString(root, "contextAddon"));
+
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            writer.WriteStartArray();
+            if (result.IsSuccess)
+                foreach (var group in result.Value!)
+                    writer.WriteStringValue(group);
+            writer.WriteEndArray();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
         });
 
     /// <summary>Request: {vpkPath, resourcePath, soundEvents?}. Mounts a scratch VpkIndex for one read.</summary>
@@ -243,13 +245,10 @@ internal static unsafe class ResourcesApi
     private static void WriteCompiledModel(Utf8JsonWriter writer, CompiledModel model)
     {
         writer.WriteStartObject();
-        WriteFloatArray(writer, "vertices", model.Vertices.AsSpan());
-        WriteFloatArray(writer, "normals", model.Normals.AsSpan());
-        WriteFloatArray(writer, "uvs", model.Uvs.AsSpan());
-        writer.WriteStartArray("indices");
-        foreach (var index in model.Indices)
-            writer.WriteNumberValue(index);
-        writer.WriteEndArray();
+        writer.WriteBase64String("verticesBytes", MemoryMarshal.AsBytes(model.Vertices.AsSpan()));
+        writer.WriteBase64String("normalsBytes", MemoryMarshal.AsBytes(model.Normals.AsSpan()));
+        writer.WriteBase64String("uvsBytes", MemoryMarshal.AsBytes(model.Uvs.AsSpan()));
+        writer.WriteBase64String("indicesBytes", MemoryMarshal.AsBytes(model.Indices.AsSpan()));
         writer.WritePropertyName("boundsMinimum");
         WriteVector3(writer, model.BoundsMinimum);
         writer.WritePropertyName("boundsMaximum");
@@ -311,14 +310,6 @@ internal static unsafe class ResourcesApi
         writer.WriteNumber("height", texture.Height);
         writer.WriteBase64String("rgba", texture.Rgba.AsSpan());
         writer.WriteEndObject();
-    }
-
-    private static void WriteFloatArray(Utf8JsonWriter writer, string name, ReadOnlySpan<float> values)
-    {
-        writer.WriteStartArray(name);
-        foreach (var value in values)
-            writer.WriteNumberValue(value);
-        writer.WriteEndArray();
     }
 
     private static void WriteVector2(Utf8JsonWriter writer, System.Numerics.Vector2 vector)

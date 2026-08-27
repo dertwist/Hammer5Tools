@@ -1,6 +1,6 @@
+using Hammer5Tools.Core.Format.Validation;
 using Hammer5Tools.Core.IO.Domain;
 using Hammer5Tools.Core.IO.Toolchain;
-using Hammer5Tools.Core.Format.Validation;
 
 namespace Hammer5Tools.Core.Format.Toolchain;
 
