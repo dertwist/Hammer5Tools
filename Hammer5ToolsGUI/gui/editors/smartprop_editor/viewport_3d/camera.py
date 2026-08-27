@@ -210,6 +210,17 @@ class Camera:
         return perspective(self.fov, self._aspect, self.near, self.far)
 
     @property
+    def forward_vector(self):
+        """Camera forward direction in world space."""
+        yaw_r = math.radians(self.yaw)
+        pitch_r = math.radians(self.pitch)
+        return np.array([
+            -math.cos(pitch_r) * math.sin(yaw_r),
+            -math.sin(pitch_r),
+            -math.cos(pitch_r) * math.cos(yaw_r),
+        ], dtype=np.float32)
+
+    @property
     def right_vector(self):
         """Camera right direction in world space."""
         yaw_r = math.radians(self.yaw)
@@ -225,6 +236,24 @@ class Camera:
             math.cos(pitch_r),
             -math.sin(pitch_r) * math.cos(yaw_r),
         ], dtype=np.float32)
+
+    def look(self, dx, dy, sensitivity=0.15):
+        """FPS / Game camera look (first-person rotation from current eye position)."""
+        current_pos = self.position.copy()
+        self.yaw -= dx * sensitivity
+        self.pitch += dy * sensitivity
+        self.pitch = max(-89.9, min(89.9, self.pitch))
+        # Keep eye position fixed, rotating target around eye
+        self.target = current_pos + self.forward_vector * self.distance
+
+    def move_fly(self, forward_amount, right_amount, up_amount):
+        """Move camera in fly mode along local axes."""
+        fwd = self.forward_vector
+        right = self.right_vector
+        up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+        delta = fwd * float(forward_amount) + right * float(right_amount) + up * float(up_amount)
+        self.target += delta
 
     def orbit(self, dx, dy):
         """Orbit around the target. dx/dy are screen-space pixel deltas."""

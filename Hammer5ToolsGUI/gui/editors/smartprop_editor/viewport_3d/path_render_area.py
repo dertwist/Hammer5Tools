@@ -14,11 +14,13 @@ Points are stored/edited in Source 2 coordinates (Z-up, inches) exactly like the
 rest of the viewport; SOURCE2_TO_GL converts them to GL space at draw time.
 """
 import math
+import time
 import numpy as np
 
-from PySide6.QtCore import Qt, Signal, QPointF
+from PySide6.QtCore import Qt, Signal, QPointF, QTimer
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
+from PySide6.QtWidgets import QApplication
 
 from gui.editors.smartprop_editor.viewport_3d.camera import (
     Camera, SOURCE2_TO_GL, translation_matrix, scale_matrix,
@@ -134,6 +136,15 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self.camera = Camera()
         self.gizmo = Gizmo()
         self.gizmo.set_mode(GizmoMode.TRANSLATE)
+
+        # Fly Camera State (Engine Game Camera on RMB hold)
+        self.fly_speed = 500.0
+        self._is_flying = False
+        self._pressed_keys = set()
+        self._fly_timer = QTimer(self)
+        self._fly_timer.setInterval(16)
+        self._fly_timer.timeout.connect(self._update_fly_movement)
+        self._fly_last_time = None
 
         # Grid and Snapping Settings
         self.grid_step = 64.0
@@ -567,7 +578,16 @@ class PathEditor3DRenderArea(QOpenGLWidget):
                 self.update()
                 return
 
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.RightButton and not self.gizmo.is_dragging:
+            self._is_flying = True
+            self._fly_last_time = time.perf_counter()
+            self._pressed_keys.clear()
+            if not self._fly_timer.isActive():
+                self._fly_timer.start()
+            self.setCursor(Qt.BlankCursor)
+            self.update()
+            return
+        elif event.button() == Qt.LeftButton:
             # Color-pick a control point on the next paint.
             self._perform_pick_flag = True
             self._pick_pos = event.position()
@@ -579,8 +599,6 @@ class PathEditor3DRenderArea(QOpenGLWidget):
                 self._action = 'pan'
             else:
                 self._action = 'orbit'
-        elif event.button() == Qt.RightButton:
-            self._action = 'pan'
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.position()
@@ -588,6 +606,12 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         dy = pos.y() - self._last_mouse_pos.y()
 
         self._sync_gizmo_settings(event)
+
+        if self._is_flying:
+            self.camera.look(dx, dy)
+            self._last_mouse_pos = pos
+            self.update()
+            return
 
         # Gizmo drag -> move the selected control point.
         if self.gizmo.is_dragging:
@@ -633,14 +657,34 @@ class PathEditor3DRenderArea(QOpenGLWidget):
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.gizmo.is_dragging:
             self.gizmo.end_drag()
+        if event.button() == Qt.RightButton and self._is_flying:
+            self._is_flying = False
+            self._pressed_keys.clear()
+            if self._fly_timer.isActive():
+                self._fly_timer.stop()
+            self.unsetCursor()
+            self.update()
+            return
         self._action = None
         self.update()
 
     def wheelEvent(self, event):
+        if self._is_flying:
+            delta = event.angleDelta().y()
+            factor = 1.15 if delta > 0 else 1.0 / 1.15
+            self.fly_speed = max(10.0, min(20000.0, self.fly_speed * factor))
+            self.update()
+            return
         self.camera.zoom(event.angleDelta().y())
         self.update()
 
     def keyPressEvent(self, event):
+        if self._is_flying:
+            if not event.isAutoRepeat():
+                self._pressed_keys.add(event.key())
+            event.accept()
+            return
+
         if event.key() == Qt.Key_F:
             self.frame_objects()
         elif event.key() == Qt.Key_W:
@@ -648,3 +692,66 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             self.update()
         else:
             super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if self._is_flying:
+            if not event.isAutoRepeat():
+                self._pressed_keys.discard(event.key())
+            event.accept()
+            return
+        super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event):
+        if self._is_flying:
+            self._is_flying = False
+            self._pressed_keys.clear()
+            if self._fly_timer.isActive():
+                self._fly_timer.stop()
+            self.unsetCursor()
+            self.update()
+        super().focusOutEvent(event)
+
+    def _update_fly_movement(self):
+        if not self._is_flying:
+            self._fly_timer.stop()
+            return
+
+        now = time.perf_counter()
+        dt = max(0.001, min(0.1, now - (self._fly_last_time or now)))
+        self._fly_last_time = now
+
+        forward = 0.0
+        right = 0.0
+        up = 0.0
+
+        if Qt.Key_W in self._pressed_keys:
+            forward += 1.0
+        if Qt.Key_S in self._pressed_keys:
+            forward -= 1.0
+        if Qt.Key_D in self._pressed_keys:
+            right += 1.0
+        if Qt.Key_A in self._pressed_keys:
+            right -= 1.0
+        if Qt.Key_E in self._pressed_keys or Qt.Key_Space in self._pressed_keys:
+            up += 1.0
+        if Qt.Key_Q in self._pressed_keys or Qt.Key_C in self._pressed_keys:
+            up -= 1.0
+
+        if forward != 0.0 or right != 0.0 or up != 0.0:
+            length = math.sqrt(forward * forward + right * right + up * up)
+            if length > 1.0:
+                forward /= length
+                right /= length
+                up /= length
+
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers & Qt.ShiftModifier:
+                speed_multiplier = 3.0
+            elif modifiers & (Qt.ControlModifier | Qt.AltModifier):
+                speed_multiplier = 0.25
+            else:
+                speed_multiplier = 1.0
+
+            dist = self.fly_speed * speed_multiplier * dt
+            self.camera.move_fly(forward * dist, right * dist, up * dist)
+            self.update()

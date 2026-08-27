@@ -4,9 +4,10 @@ Handles grid rendering, 3D model rendering with textures, click-to-select color 
 and W/E/R transform gizmo interactions.
 """
 import math
+import time
 import numpy as np
 
-from PySide6.QtCore import Qt, Signal, QPointF
+from PySide6.QtCore import Qt, Signal, QPointF, QTimer
 from PySide6.QtGui import QColor, QImage, QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
@@ -104,6 +105,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.gizmo = Gizmo()
         self.mesh_cache = MeshCache(self)
         self.mesh_cache.model_ready.connect(self.update)
+
+        # Fly Camera State (Engine Game Camera on RMB hold)
+        self.fly_speed = 500.0
+        self._is_flying = False
+        self._pressed_keys = set()
+        self._fly_timer = QTimer(self)
+        self._fly_timer.setInterval(16)
+        self._fly_timer.timeout.connect(self._update_fly_movement)
+        self._fly_last_time = None
 
         # Prevent GL callback failures from unwinding into Qt's paint loop.
         self._gl_disabled = False
@@ -1570,7 +1580,17 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 return
 
         # Blender-style navigation: MMB orbits, Shift+MMB pans, LMB selects
-        if event.button() == Qt.LeftButton:
+        # Right click: Engine Game Camera (Fly Mode)
+        if event.button() == Qt.RightButton and not self.gizmo.is_dragging:
+            self._is_flying = True
+            self._fly_last_time = time.perf_counter()
+            self._pressed_keys.clear()
+            if not self._fly_timer.isActive():
+                self._fly_timer.start()
+            self.setCursor(Qt.BlankCursor)
+            self.update()
+            return
+        elif event.button() == Qt.LeftButton:
             # Trigger color-picking on next paintGL
             self._perform_pick_flag = True
             self._pick_pos = event.position()
@@ -1589,6 +1609,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._sync_gizmo_settings(event)
         dx = pos.x() - self._last_mouse_pos.x()
         dy = pos.y() - self._last_mouse_pos.y()
+
+        if self._is_flying:
+            self.camera.look(dx, dy)
+            self._last_mouse_pos = pos
+            self.update()
+            return
 
         if self.gizmo.is_dragging:
             w, h = self.width(), self.height()
@@ -1737,17 +1763,39 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if self.document and hasattr(self.document, "_gizmo_commit_drag"):
                 self.document._gizmo_commit_drag()
             self.update_viewport()
+        if event.button() == Qt.RightButton and self._is_flying:
+            self._is_flying = False
+            self._pressed_keys.clear()
+            if self._fly_timer.isActive():
+                self._fly_timer.stop()
+            self.unsetCursor()
+            self.current_transform_text = None
+            self.update()
+            return
         self._action = None
         self.current_transform_text = None
         self.update()
 
     @gl_guard("event")
     def wheelEvent(self, event):
+        if self._is_flying:
+            delta = event.angleDelta().y()
+            factor = 1.15 if delta > 0 else 1.0 / 1.15
+            self.fly_speed = max(10.0, min(20000.0, self.fly_speed * factor))
+            self.current_transform_text = f"Camera Speed: {self.fly_speed:.0f}"
+            self.update()
+            return
         self.camera.zoom(event.angleDelta().y())
         self.update()
 
     @gl_guard("event")
     def keyPressEvent(self, event):
+        if self._is_flying:
+            if not event.isAutoRepeat():
+                self._pressed_keys.add(event.key())
+            event.accept()
+            return
+
         if event.key() == Qt.Key_Q:
             self.gizmo.set_mode(GizmoMode.NONE)
             self.gizmoModeChanged.emit(GizmoMode.NONE)
@@ -1769,6 +1817,71 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.frame_selection()
         else:
             super().keyPressEvent(event)
+
+    @gl_guard("event")
+    def keyReleaseEvent(self, event):
+        if self._is_flying:
+            if not event.isAutoRepeat():
+                self._pressed_keys.discard(event.key())
+            event.accept()
+            return
+        super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event):
+        if self._is_flying:
+            self._is_flying = False
+            self._pressed_keys.clear()
+            if self._fly_timer.isActive():
+                self._fly_timer.stop()
+            self.unsetCursor()
+            self.current_transform_text = None
+            self.update()
+        super().focusOutEvent(event)
+
+    def _update_fly_movement(self):
+        if not self._is_flying:
+            self._fly_timer.stop()
+            return
+
+        now = time.perf_counter()
+        dt = max(0.001, min(0.1, now - (self._fly_last_time or now)))
+        self._fly_last_time = now
+
+        forward = 0.0
+        right = 0.0
+        up = 0.0
+
+        if Qt.Key_W in self._pressed_keys:
+            forward += 1.0
+        if Qt.Key_S in self._pressed_keys:
+            forward -= 1.0
+        if Qt.Key_D in self._pressed_keys:
+            right += 1.0
+        if Qt.Key_A in self._pressed_keys:
+            right -= 1.0
+        if Qt.Key_E in self._pressed_keys or Qt.Key_Space in self._pressed_keys:
+            up += 1.0
+        if Qt.Key_Q in self._pressed_keys or Qt.Key_C in self._pressed_keys:
+            up -= 1.0
+
+        if forward != 0.0 or right != 0.0 or up != 0.0:
+            length = math.sqrt(forward * forward + right * right + up * up)
+            if length > 1.0:
+                forward /= length
+                right /= length
+                up /= length
+
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers & Qt.ShiftModifier:
+                speed_multiplier = 3.0
+            elif modifiers & (Qt.ControlModifier | Qt.AltModifier):
+                speed_multiplier = 0.25
+            else:
+                speed_multiplier = 1.0
+
+            dist = self.fly_speed * speed_multiplier * dt
+            self.camera.move_fly(forward * dist, right * dist, up * dist)
+            self.update()
 
     # Gizmo axis availability
     # Element classes that carry a model (and therefore a model scale).
