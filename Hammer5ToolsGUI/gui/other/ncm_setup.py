@@ -1,7 +1,7 @@
 import os
 import re, shutil
 
-def NCM_mode_setup(cs2_path):
+def setup_ncm_mode(cs2_path):
     assettypes_internal = cs2_path + r"\game\bin\assettypes_internal.txt"
     if os.path.exists(assettypes_internal):
         pass
@@ -13,3 +13,6 @@ def NCM_mode_setup(cs2_path):
         pass
     else:
         shutil.copyfile((cs2_path + r"\game\bin\sdkenginetools.txt"), enginetools)
+
+
+NCM_mode_setup = setup_ncm_mode

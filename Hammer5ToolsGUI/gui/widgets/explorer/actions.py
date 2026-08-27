@@ -161,7 +161,7 @@ class QuickProcess:
             pass
 
 
-def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
+def fix_pbr_range(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
     """
     Clamp the image RGB channels to [low, high] in normalized 0..1 space.
     Alpha (if present) is preserved. Overwrites file in-place.
@@ -220,6 +220,10 @@ def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
         return True
     except Exception as e:
         return False
+
+
+FixPBRRange = fix_pbr_range
+
 
 
 class QuickVsmart:

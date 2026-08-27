@@ -9,7 +9,13 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      channel: dev
+
+  release:
+    needs: ci
     runs-on: windows-latest
 
     steps:
@@ -17,98 +23,27 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          fetch-tags: false
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hammer5tools-bundle
+          path: Hammer5Tools/
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-          cache: pip
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-
-      # PyInstaller only warns about modules it cannot find, so an import of a
-      # package missing from requirements.txt ships and crashes on launch.
-      - name: Verify imports resolve
-        run: python verify_imports.py
-
-      - name: Run Python tests
-        run: python -m pytest -q
-        env:
-          QT_QPA_PLATFORM: offscreen
-
-      # Star imports hide these from every reader; a NameError only shows up when
-      # the branch runs. Unused-import warnings are not gated on yet.
-      - name: Check for undefined names
-        shell: pwsh
-        run: |
-          pip install pyflakes
-          # The quote matters: it excludes the "unable to detect undefined
-          # names" warnings that every remaining star import emits.
-          $undefined = python -m pyflakes Hammer5ToolsGUI/gui | Select-String "undefined name '"
-          if ($undefined) { $undefined; throw 'pyflakes reported undefined names' }
-
-      - name: Set up .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
 
       - name: Install Velopack CLI
         run: |
           dotnet tool install -g vpk
           echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
 
-      - name: Clone CUE4Parse
-        run: |
-          # Pinned: CUE4Parse master restructured CUE4Parse_Conversion.Landscape
-          # into Exporters/Dto. Bump only together with Format/Unreal/UnrealBridgeProgram.cs.
-          # Hammer5Tools.Core (Format/Unreal/) picks this up via the CUE4ParsePathEnv
-          # fallback in its .csproj — the actual publish happens once, inside
-          # `python makefile.py --build-all` below, for the single merged project.
-          git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
-          echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
-          echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV
-
-      # TUnit runs as its own executable; the legacy xUnit suite still needs
-      # `dotnet test` until it moves to Microsoft Testing Platform.
-      - name: Run Core tests
-        run: |
-          dotnet run --project Hammer5ToolsCore/Hammer5Tools.Core.Tests -c Release
-          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release
-
-      - name: Build All
-
-        run: python makefile.py --build-all --dev
-
-      - name: Validate Velopack hooks
-        shell: pwsh
-        run: |
-          Push-Location Hammer5Tools
-          if (Test-Path .\Hammer5Tools.exe) {
-            & .\Hammer5Tools.exe --velopack-install
-            & .\Hammer5Tools.exe --squirrel-install
-          } elseif (Test-Path .\app\Hammer5Tools.exe) {
-            & .\app\Hammer5Tools.exe --velopack-install
-            & .\app\Hammer5Tools.exe --squirrel-install
-          } else {
-            Write-Host 'Hammer5Tools.exe not found; unable to test hooks. Directory content:'
-            Get-ChildItem -Recurse
-            exit 1
-          }
-          Pop-Location
-
-      - name: Validate three-root bundle
-        shell: pwsh
-        run: |
-          $required = @(
-            'Hammer5Tools\Hammer5Tools.exe',
-            'Hammer5Tools\app\Hammer5ToolsGUI.exe',
-            'Hammer5Tools\app\runtime'
-          )
-          foreach ($path in $required) {
-            if (-not (Test-Path $path)) { throw "Missing packaged runtime path: $path" }
-          }
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Read app version
         id: version
@@ -116,15 +51,11 @@ jobs:
           $ver = python -c "import json; print(json.load(open('version.json'))['version'])"
           $ver = "$ver-dev.${{ github.run_number }}"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
-          # Line 2 is the build channel; get_build_channel() reads it to decide the
-          # default for "Receive dev versions" on a fresh install.
           "$ver`ndev" | Out-File -FilePath Hammer5Tools\version.txt -Encoding utf8
-
 
       - name: Get Release Notes
         shell: pwsh
         run: |
-          # Get the last 5 commit messages for the dev build notes
           $notes = (git log -n 5 --pretty=format:"* %s (%h)") -join "`n"
           "### Recent Changes (Dev Build):`n`n$notes" | Out-File -FilePath release_notes.md -Encoding utf8
 

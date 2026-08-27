@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QPushButton
 from PySide6.QtCore import Signal
 
 
-class Var_class_model(QWidget):
+class ModelVariable(QWidget):
     """Variable widget for CSmartPropVariable_Model — a .vmdl asset path."""
     edited = Signal(str, str, str, str)
 
@@ -37,3 +37,6 @@ class Var_class_model(QWidget):
     def on_changed(self):
         self.default = self.ui.value.text()
         self.edited.emit(self.default, self.min, self.max, str(self.model))
+
+
+Var_class_model = ModelVariable

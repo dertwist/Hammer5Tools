@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QCursor, QKeyEvent, QScreen
 from PySide6.QtCore import QEvent, Qt, Signal
 from shiboken6 import Shiboken
-from gui.widgets.popup_menu.ui_main import Ui_PoPupMenu
+from gui.widgets.popup_menu.ui_main import Ui_PopupMenu
 from gui.widgets.common import Button
 from gui.settings.common import set_settings_value, get_settings_value
 from gui.widgets.popup_menu.common import LABEL_COMPONENT, LABEL_BOOKMARK_BOTTOM_COMPONENT
@@ -160,7 +160,7 @@ class PopupMenu(QDialog):
         self.help_url = help_url
         self.window_name = window_name
 
-        self.ui = Ui_PoPupMenu()
+        self.ui = Ui_PopupMenu()
         self.ui.setupUi(self)
 
         self.add_once = add_once

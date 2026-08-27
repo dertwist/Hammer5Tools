@@ -286,13 +286,17 @@ class FileFilterProxyModel(QSortFilterProxyModel):
         self.search_text = ""
         self.file_type = "All"
 
-    def setSearchText(self, text):
+    def set_search_text(self, text):
         self.search_text = text.lower()
         self.invalidateFilter()
 
-    def setFileType(self, file_type):
+    setSearchText = set_search_text
+
+    def set_file_type(self, file_type):
         self.file_type = file_type
         self.invalidateFilter()
+
+    setFileType = set_file_type
 
     def filterAcceptsRow(self, source_row, source_parent):
         model = self.sourceModel()
@@ -453,8 +457,8 @@ class CleanupDialog(QDialog):
         self.table_view.setModel(self.proxy_model)
 
         # Signals
-        self.search_box.textChanged.connect(self.proxy_model.setSearchText)
-        self.filter_combo.currentTextChanged.connect(self.proxy_model.setFileType)
+        self.search_box.textChanged.connect(self.proxy_model.set_search_text)
+        self.filter_combo.currentTextChanged.connect(self.proxy_model.set_file_type)
         self.model.itemChanged.connect(self.update_statistics)
         self.proxy_model.layoutChanged.connect(self.update_statistics)
         self.scan_meshes_checkbox.stateChanged.connect(self.recalculate)

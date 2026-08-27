@@ -77,9 +77,11 @@ class HelpImageDialog(Viewport):
         self._image_path = image_path
         self._title_override = title
 
-    def updateWindowTitle(self, image_path):
+    def update_window_title(self, image_path):
         title = self._title_override or (f"Image viewer — {os.path.basename(image_path)}" if image_path else "Image viewer")
         self.setWindowTitle(title)
+
+    updateWindowTitle = update_window_title
 
     def show_image(self, image_path: str, title: str | None = None):
         self._image_path = image_path
@@ -87,6 +89,8 @@ class HelpImageDialog(Viewport):
             self._title_override = title
             self.setWindowTitle(title)
         self._apply_image()
+
+    showImage = show_image
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -98,36 +102,42 @@ class HelpImageDialog(Viewport):
             return
 
         self._is_preview_active = False
-        self.showImage(self._image_path)
+        super().show_image(self._image_path)
         self._is_preview_active = False
 
         # Fit image to window so it's clearly visible and centered
-        self.fitToWindow()
+        self.fit_to_window()
 
-    def fitToWindow(self):
-        super().fitToWindow()
+    def fit_to_window(self):
+        super().fit_to_window()
         if self.zoom_level < self.MIN_ZOOM:
             self.zoom_level = self.MIN_ZOOM
-            self.updateImageDisplay()
+            self.update_image_display()
         elif self.zoom_level > self.MAX_ZOOM:
             self.zoom_level = self.MAX_ZOOM
-            self.updateImageDisplay()
+            self.update_image_display()
 
-    def zoomIn(self, mouse_pos=None):
+    fitToWindow = fit_to_window
+
+    def zoom_in(self, mouse_pos=None):
         if self.current_pixmap:
             new_zoom = self.zoom_level * 1.2
             if new_zoom > self.MAX_ZOOM:
                 new_zoom = self.MAX_ZOOM
             self.zoom_level = new_zoom
-            self.updateImageDisplay(mouse_pos)
+            self.update_image_display(mouse_pos)
 
-    def zoomOut(self, mouse_pos=None):
+    zoomIn = zoom_in
+
+    def zoom_out(self, mouse_pos=None):
         if self.current_pixmap:
             new_zoom = self.zoom_level / 1.2
             if new_zoom < self.MIN_ZOOM:
                 new_zoom = self.MIN_ZOOM
             self.zoom_level = new_zoom
-            self.updateImageDisplay(mouse_pos)
+            self.update_image_display(mouse_pos)
+
+    zoomOut = zoom_out
 
 
 class _ClickableLabel(QWidget):

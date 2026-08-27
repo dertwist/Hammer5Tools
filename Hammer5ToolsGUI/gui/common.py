@@ -377,14 +377,16 @@ def convert_snake_case(name: str = None):
         pretty_label = ' '.join(word.capitalize() for word in words)
         return pretty_label
 
-def Kv3ToJson(input):
+def kv3_to_json(input):
     if '<!-- kv3 encoding:' in input:
         pass
     else:
         input = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
     output = kv3.textreader.KV3TextReader().parse(input).value
     return output
-def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=None):
+
+
+def json_to_kv3(input, disable_line_value_length_limit_keys: list = None, format=None):
     if format == 'vmdl':
         format_option = kv3.FORMAT_VMDL
     else:
@@ -398,7 +400,12 @@ def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=N
         )
         return kv3.textwriter.encode(kv3_file, options=options)
     else:
-        raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary or list')
+        raise ValueError('[json_to_kv3] Invalid input type: Input should be a dictionary or list')
+
+
+Kv3ToJson = kv3_to_json
+JsonToKv3 = json_to_kv3
+
 
 import copy
 

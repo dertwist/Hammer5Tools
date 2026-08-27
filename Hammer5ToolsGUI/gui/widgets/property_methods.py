@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData, QTimer, QPoint
 from PySide6.QtGui import QCursor, QDrag, QAction, QPixmap
 
-class PropertyMethods:
+class PropertyDragDropMixin:
     @staticmethod
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -102,3 +102,6 @@ class PropertyMethods:
                                 self.edited.emit()
 
         event.accept()
+
+
+PropertyMethods = PropertyDragDropMixin

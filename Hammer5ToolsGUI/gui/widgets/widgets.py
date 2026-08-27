@@ -152,7 +152,7 @@ class FloatWidget(QWidget):
         # pre_press fires from mousePressEvent BEFORE valueChanged — guarantees
         # the undo snapshot is captured before the first value change.
         self.Slider.pre_press.connect(self._on_slider_pressed)
-        self.Slider.valueChanged.connect(self.on_Slider_updated)
+        self.Slider.valueChanged.connect(self.on_slider_updated)
         self.Slider.sliderReleased.connect(self._on_slider_released)
 
         # Layout setup
@@ -232,15 +232,16 @@ class FloatWidget(QWidget):
         self.Slider.blockSignals(False)
         self.value = value
 
-    # Legacy alias kept for any external callers.
-    def on_SpinBox_updated(self):
+    def on_spinbox_updated(self):
         """Sync value from spinbox and emit edited. Called from editingFinished and
         as a compatibility shim for callers that relied on the old all-in-one method."""
         self._sync_value_from_spinbox()
         self.edited.emit(self.value)
 
+    on_SpinBox_updated = on_spinbox_updated
+
     # Handler when the slider is updated
-    def on_Slider_updated(self):
+    def on_slider_updated(self):
         value = self.Slider.value() / 100
         if self.int_output:
             value = round(value)
@@ -251,6 +252,8 @@ class FloatWidget(QWidget):
         self.SpinBox.blockSignals(False)
         self.value = value
         self.edited.emit(value)
+
+    on_Slider_updated = on_slider_updated
 
     # Programmatically set the value without emitting edited
     def set_value(self, value):

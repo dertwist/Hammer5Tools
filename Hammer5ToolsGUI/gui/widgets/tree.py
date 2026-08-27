@@ -213,16 +213,20 @@ class HierarchyTreeWidget(QTreeWidget):
             self.undo_stack.push(MoveItemsCommand(self, move_infos))
 
         event.accept()
-    def DeleteSelectedItems(self):
+
+    def delete_selected_items(self):
         selected_items = self.selectedItems()
         if not selected_items:
             return
         cmd = RemoveItemCommand(self, selected_items)
         self.undo_stack.push(cmd)
-    def AddItem(self, item):
+
+    DeleteSelectedItems = delete_selected_items
+
+    def add_item(self, item):
         if not isinstance(item, QTreeWidgetItem):
             raise TypeError("Item must be a QTreeWidgetItem instance.")
-        
+
         if self.list_mode:
             parent = self.invisibleRootItem()
         else:
@@ -239,20 +243,27 @@ class HierarchyTreeWidget(QTreeWidget):
             self.setCurrentItem(item)
             self.currentItem().setExpanded(True)
             self.setFocus()
-    def DuplicateSelectedItems(self, ElementIDGenerator=None):
+
+    AddItem = add_item
+
+    def duplicate_selected_items(self, element_id_generator=None):
         selected_items = self.selectedItems()
         if not selected_items:
             return
-        cmd = DuplicateItemsCommand(self, selected_items, ElementIDGenerator)
+        cmd = DuplicateItemsCommand(self, selected_items, element_id_generator)
         self.undo_stack.push(cmd)
 
-    def setSelectedItemsWithUndo(self, items):
+    DuplicateSelectedItems = duplicate_selected_items
+
+    def set_selected_items_with_undo(self, items):
         """Set selected items with undo support"""
         old_selected = self.selectedItems()
         # Only create command if selection actually changes
         if set(old_selected) != set(items):
             cmd = SelectItemsCommand(self, old_selected, items)
             self.undo_stack.push(cmd)
+
+    setSelectedItemsWithUndo = set_selected_items_with_undo
     def mousePressEvent(self, event: QMouseEvent):
         item = self.itemAt(event.pos())
         if item is None and event.button() == Qt.LeftButton:

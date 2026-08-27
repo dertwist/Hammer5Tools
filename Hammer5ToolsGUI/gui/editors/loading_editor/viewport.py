@@ -428,9 +428,9 @@ class Viewport(QMainWindow):
         self._composed_pixmap_cache = None
         self._is_preview_active = False
 
-        self.setupUI()
+        self.setup_ui()
 
-    def setupUI(self):
+    def setup_ui(self):
         self.container = QWidget(self)
         self.setCentralWidget(self.container)
 
@@ -520,7 +520,7 @@ class Viewport(QMainWindow):
         self.placeholder_label.clear()
         self.scroll_area.show()
 
-    def loadImagesFromDirectory(self, directory):
+    def load_images_from_directory(self, directory):
         """
         Load all valid images from the specified directory into a list
         and display the first image if available.
@@ -534,13 +534,15 @@ class Viewport(QMainWindow):
             ]
             if self.image_files:
                 self.current_image_index = 0
-                self.showImage(self.image_files[self.current_image_index])
+                self.show_image(self.image_files[self.current_image_index])
             else:
                 self.set_placeholder_text()
         except Exception as e:
             self.set_placeholder_text()
 
-    def showImage(self, image_path):
+    loadImagesFromDirectory = load_images_from_directory
+
+    def show_image(self, image_path):
         """
         Load a QPixmap from the given path and display it in the label.
         Maintains the current camera position when switching images.
@@ -549,30 +551,30 @@ class Viewport(QMainWindow):
             self._composed_pixmap_cache = None
             # Save current camera position before switching
             if self.current_pixmap:
-                self.saveCameraPosition()
-            
+                self.save_camera_position()
+
             current_zoom = self.zoom_level
             current_h_scroll = self.scroll_area.horizontalScrollBar().value() if self.current_pixmap else None
             current_v_scroll = self.scroll_area.verticalScrollBar().value() if self.current_pixmap else None
-            
+
             self.current_pixmap = QPixmap(image_path)
             if not self.current_pixmap.isNull():
                 self.clear_placeholder_text()
                 self.current_image_path = image_path
-                self.updateWindowTitle(image_path)
-                
+                self.update_window_title(image_path)
+
                 # If we had a previous image, maintain the camera position
                 if current_h_scroll is not None:
                     # Restore the zoom level
                     self.zoom_level = current_zoom
-                    self.updateImageDisplay(save_position=False)
+                    self.update_image_display(save_position=False)
                     self.scroll_area.horizontalScrollBar().setValue(current_h_scroll)
                     self.scroll_area.verticalScrollBar().setValue(current_v_scroll)
                 else:
                     # First image, check if we have a saved position
                     if self.saved_zoom_level is not None:
                         self.zoom_level = self.saved_zoom_level
-                        self.updateImageDisplay(save_position=False)
+                        self.update_image_display(save_position=False)
                         if self.saved_h_scroll is not None:
                             self.scroll_area.horizontalScrollBar().setValue(self.saved_h_scroll)
                         if self.saved_v_scroll is not None:
@@ -580,20 +582,24 @@ class Viewport(QMainWindow):
                     else:
                         # No saved position, fit to window
                         self.zoom_level = 1.0
-                        self.fitToWindow()
+                        self.fit_to_window()
                 self._update_preview_availability(image_path)
             else:
                 self.set_placeholder_text()
         except Exception as e:
             self.set_placeholder_text()
 
-    def updateWindowTitle(self, image_path):
+    showImage = show_image
+
+    def update_window_title(self, image_path):
         """
         Update the main window title bar with the base name of the displayed image.
         """
         self.setWindowTitle(f"Image viewer - {os.path.basename(image_path)}")
 
-    def zoomIn(self, mouse_pos=None):
+    updateWindowTitle = update_window_title
+
+    def zoom_in(self, mouse_pos=None):
         """
         Zoom in by 20%. Optionally keep the zoom focus around a specific mouse position.
         Limited to 1000% zoom.
@@ -603,9 +609,11 @@ class Viewport(QMainWindow):
             if new_zoom > 10.0:
                 new_zoom = 10.0
             self.zoom_level = new_zoom
-            self.updateImageDisplay(mouse_pos)
+            self.update_image_display(mouse_pos)
 
-    def zoomOut(self, mouse_pos=None):
+    zoomIn = zoom_in
+
+    def zoom_out(self, mouse_pos=None):
         """
         Zoom out by 20%. Optionally keep the zoom focus around a specific mouse position.
         Limited between 3% and 500%.
@@ -614,9 +622,11 @@ class Viewport(QMainWindow):
             self.zoom_level /= 1.2
             if self.zoom_level < 0.03:  # Minimum 3% zoom
                 self.zoom_level = 0.03
-            self.updateImageDisplay(mouse_pos)
+            self.update_image_display(mouse_pos)
 
-    def fitToWindow(self):
+    zoomOut = zoom_out
+
+    def fit_to_window(self):
         """
         Fit the current image to the window for a convenient view.
         """
@@ -629,11 +639,13 @@ class Viewport(QMainWindow):
                 self.zoom_level = self.zoom_level - 0.025 if self.zoom_level > 0.025 else self.zoom_level
                 if self.zoom_level < 0.03:
                     self.zoom_level = 0.03
-                self.updateImageDisplay()
+                self.update_image_display()
             except Exception as e:
                 pass
 
-    def updateImageDisplay(self, mouse_pos=None, save_position=True):
+    fitToWindow = fit_to_window
+
+    def update_image_display(self, mouse_pos=None, save_position=True):
         """
         Scale the displayed pixmap according to the current zoom_level.
         If preview is toggled on, composes the CS2 loading widgets directly onto the pixmap.
@@ -745,9 +757,9 @@ class Viewport(QMainWindow):
         if event.button() == Qt.RightButton:
             self.panning = False
             QApplication.restoreOverrideCursor()
-            self.saveCameraPosition()
-    
-    def saveCameraPosition(self):
+            self.save_camera_position()
+
+    def save_camera_position(self):
         """
         Save the current camera position (shared across all images).
         """
@@ -755,23 +767,29 @@ class Viewport(QMainWindow):
             self.saved_zoom_level = self.zoom_level
             self.saved_h_scroll = self.scroll_area.horizontalScrollBar().value()
             self.saved_v_scroll = self.scroll_area.verticalScrollBar().value()
-    
-    def restoreCameraPosition(self):
+
+    saveCameraPosition = save_camera_position
+
+    def restore_camera_position(self):
         """
         Restore the saved camera position (shared across all images).
         """
         if self.current_pixmap and self.saved_zoom_level is not None:
             # Restore zoom level without saving position again
             self.zoom_level = self.saved_zoom_level
-            self.updateImageDisplay(save_position=False)
-            
+            self.update_image_display(save_position=False)
+
             # Restore scroll positions after processing events
             QApplication.processEvents()
-            
+
             if self.saved_h_scroll is not None:
                 self.scroll_area.horizontalScrollBar().setValue(self.saved_h_scroll)
             if self.saved_v_scroll is not None:
                 self.scroll_area.verticalScrollBar().setValue(self.saved_v_scroll)
+
+    restoreCameraPosition = restore_camera_position
+    setupUI = setup_ui
+    updateImageDisplay = update_image_display
                 
 
 VALID_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
@@ -1030,9 +1048,9 @@ class ImageExplorer(QWidget):
         # QFileSystemModel auto-refreshes on directory change; just surface the
         # first dropped image in the viewport.
         if copied_files:
-            self.image_viewer.showImage(copied_files[0])
+            self.image_viewer.show_image(copied_files[0])
 
-    def openContextMenu(self, tree: "ImageTreeView", position):
+    def open_context_menu(self, tree: "ImageTreeView", position):
         model = tree.file_model
         index = tree.indexAt(position)
         if not index.isValid():
@@ -1044,7 +1062,7 @@ class ImageExplorer(QWidget):
             open_folder_action.triggered.connect(lambda: os.startfile(model.filePath(index)))
             menu.addAction(open_folder_action)
             remove_action = QAction("Remove Folder", self)
-            remove_action.triggered.connect(lambda: self.removeSelectedFolder(tree, index))
+            remove_action.triggered.connect(lambda: self.remove_selected_folder(tree, index))
             menu.addAction(remove_action)
         else:
             open_folder_action = QAction("Open Folder", self)
@@ -1052,12 +1070,14 @@ class ImageExplorer(QWidget):
             open_folder_action.triggered.connect(lambda: os.startfile(os.path.dirname(file_path)))
             menu.addAction(open_folder_action)
             remove_action = QAction("Remove Image", self)
-            remove_action.triggered.connect(lambda: self.removeSelectedImage(tree, index))
+            remove_action.triggered.connect(lambda: self.remove_selected_image(tree, index))
             menu.addAction(remove_action)
 
         menu.exec(tree.viewport().mapToGlobal(position))
 
-    def removeSelectedImage(self, tree: "ImageTreeView", index):
+    openContextMenu = open_context_menu
+
+    def remove_selected_image(self, tree: "ImageTreeView", index):
         model = tree.file_model
         file_path = model.filePath(index)
         if not model.isDir(index):
@@ -1068,7 +1088,9 @@ class ImageExplorer(QWidget):
             except Exception as e:
                 pass
 
-    def removeSelectedFolder(self, tree: "ImageTreeView", index):
+    removeSelectedImage = remove_selected_image
+
+    def remove_selected_folder(self, tree: "ImageTreeView", index):
         model = tree.file_model
         folder_path = model.filePath(index)
         if model.isDir(index):
@@ -1078,6 +1100,8 @@ class ImageExplorer(QWidget):
                 self.image_viewer.set_placeholder_text()
             except Exception as e:
                 pass
+
+    removeSelectedFolder = remove_selected_folder
 
 from PySide6.QtWidgets import QStyledItemDelegate
 from PySide6.QtCore import QSize

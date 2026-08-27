@@ -222,7 +222,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         # popping a dialog unprompted on every startup.
         if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
             self.load_soundevents(self.filepath_vsndevts)
-        self.PropertiesWindowInit()
+        self.init_properties_window()
         self._build_empty_state()
         self.update_placeholder_visibility()
 
@@ -402,10 +402,12 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     # Properties Window
 
-    def PropertiesWindowInit(self):
+    def init_properties_window(self):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
-        self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
+        self.PropertiesWindow.edited.connect(self.update_properties_window)
+
+    PropertiesWindowInit = init_properties_window
 
     def _build_empty_state(self):
         """Placeholder shown in the central frame when the addon has no
@@ -477,7 +479,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.undo_stack.clear()
         self.update_placeholder_visibility()
 
-    def PropertiesWindowUpdate(self):
+    def update_properties_window(self):
         item = self.ui.hierarchy_widget.currentItem()
         if item is None:
             return
@@ -486,6 +488,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.update_properties_label()
         if hasattr(self, 'property_browser_widget'):
             self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
+
+    PropertiesWindowUpdate = update_properties_window
+
 
     def update_properties_label(self):
         """Refresh the Properties header label with the active event name and property count."""

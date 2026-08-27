@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 
 
-class Var_class_legacy(QWidget):
+class LegacyVariable(QWidget):
     edited = Signal(str, str, str, str)
     def __init__(self, default, min, max, model):
         super().__init__()
@@ -21,7 +21,9 @@ class Var_class_legacy(QWidget):
         self.ui.value.setText(str(self.default))
         self.ui.value.textChanged.connect(self.on_changed)
 
-
     def on_changed(self):
         self.default = self.ui.value.text()
         self.edited.emit(self.default, self.min, self.max, str(self.model))
+
+
+Var_class_legacy = LegacyVariable

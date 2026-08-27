@@ -12,7 +12,7 @@ from PySide6.QtGui import QPixmap
 import binascii
 
 # noinspection PyTypeChecker
-class Create_addon_Dialog(QDialog):
+class CreateAddonDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Create_addon_Dialog()
@@ -163,3 +163,6 @@ class Create_addon_Dialog(QDialog):
                 if pattern.search(filename):
                     new_filename = pattern.sub(new_addon_name, filename)
                     os.rename(os.path.join(root, filename), os.path.join(root, new_filename))
+
+
+Create_addon_Dialog = CreateAddonDialog

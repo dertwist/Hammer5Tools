@@ -194,7 +194,7 @@ class SmartPropDocument(QMainWindow):
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
         self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_MenuChoices)
+        self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_menu_choices)
         self.ui.choices_tree_widget.itemDoubleClicked.connect(self._on_choices_item_about_to_edit)
         self.ui.choices_tree_widget.itemChanged.connect(self._on_choices_item_changed)
 
@@ -1194,10 +1194,10 @@ class SmartPropDocument(QMainWindow):
         return False
 
     # [Choices Context Menu]
-    def open_MenuChoices(self, position):
+    def open_menu_choices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
-        
+
         # Pin callbacks to 'self' to avoid PySide6 Garbage Collector silently dropping lambdas
         self._active_choices_menu_callbacks = []
         
@@ -1258,6 +1258,8 @@ class SmartPropDocument(QMainWindow):
         )
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
+
+    open_MenuChoices = open_menu_choices
 
     # [Variables Actions]
     def add_variable(

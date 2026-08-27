@@ -154,60 +154,60 @@ class VariableFrame(PropertyMethods, QWidget):
 
     def _initialize_var_instance(self, var_class):
         if var_class == 'Int':
-            from gui.editors.smartprop_editor.variables.int import Var_class_Int
-            self.var_int_instance = Var_class_Int(
+            from gui.editors.smartprop_editor.variables.int import IntVariable
+            self.var_int_instance = IntVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=None
             )
         elif var_class == 'Float':
-            from gui.editors.smartprop_editor.variables.float import Var_class_float
-            self.var_int_instance = Var_class_float(
+            from gui.editors.smartprop_editor.variables.float import FloatVariable
+            self.var_int_instance = FloatVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=None
             )
         elif var_class == 'MaterialGroup':
-            from gui.editors.smartprop_editor.variables.material_group import Var_class_material_group
-            self.var_int_instance = Var_class_material_group(
+            from gui.editors.smartprop_editor.variables.material_group import MaterialGroupVariable
+            self.var_int_instance = MaterialGroupVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
         elif var_class == 'Model':
-            from gui.editors.smartprop_editor.variables.model import Var_class_model
-            self.var_int_instance = Var_class_model(
+            from gui.editors.smartprop_editor.variables.model import ModelVariable
+            self.var_int_instance = ModelVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
         elif var_class == 'Material':
-            from gui.editors.smartprop_editor.variables.material import Var_class_material
-            self.var_int_instance = Var_class_material(
+            from gui.editors.smartprop_editor.variables.material import MaterialVariable
+            self.var_int_instance = MaterialVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
         elif var_class == 'Bool':
-            from gui.editors.smartprop_editor.variables.bool import Var_class_bool
-            self.var_int_instance = Var_class_bool(
+            from gui.editors.smartprop_editor.variables.bool import BoolVariable
+            self.var_int_instance = BoolVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
         elif var_class == 'Color':
-            from gui.editors.smartprop_editor.variables.color import Var_class_color
-            self.var_int_instance = Var_class_color(
+            from gui.editors.smartprop_editor.variables.color import ColorVariable
+            self.var_int_instance = ColorVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
         elif var_class in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 'ScaleMode',
                            'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 'RadiusPlacementMode',
                            'DistributionMode', 'PathPositions', 'Direction']:
-            from gui.editors.smartprop_editor.variables.combobox import Var_class_combobox
+            from gui.editors.smartprop_editor.variables.combobox import ComboboxVariable
             elements = self._get_combobox_elements(var_class)
-            self.var_int_instance = Var_class_combobox(
+            self.var_int_instance = ComboboxVariable(
                 default=self.var_default, elements=elements
             )
         elif var_class == 'Vector2D':
-            from gui.editors.smartprop_editor.variables.vector2d import Var_class_vector2d
-            self.var_int_instance = Var_class_vector2d(default=self.var_default)
+            from gui.editors.smartprop_editor.variables.vector2d import Vector2DVariable
+            self.var_int_instance = Vector2DVariable(default=self.var_default)
         elif var_class == 'Vector3D':
-            from gui.editors.smartprop_editor.variables.vector3d import Var_class_vector3d
-            self.var_int_instance = Var_class_vector3d(default=self.var_default)
+            from gui.editors.smartprop_editor.variables.vector3d import Vector3DVariable
+            self.var_int_instance = Vector3DVariable(default=self.var_default)
         elif var_class == 'Vector4D':
-            from gui.editors.smartprop_editor.variables.vector4d import Var_class_vector4d
-            self.var_int_instance = Var_class_vector4d(default=self.var_default)
+            from gui.editors.smartprop_editor.variables.vector4d import Vector4DVariable
+            self.var_int_instance = Vector4DVariable(default=self.var_default)
         else:
-            from gui.editors.smartprop_editor.variables.legacy import Var_class_legacy
-            self.var_int_instance = Var_class_legacy(
+            from gui.editors.smartprop_editor.variables.legacy import LegacyVariable
+            self.var_int_instance = LegacyVariable(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
 

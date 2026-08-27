@@ -108,7 +108,7 @@ class AlternatingMenu(QMenu):
             row += 1
 
 
-class Widget(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         from gui.ui_main import Ui_MainWindow
@@ -648,3 +648,6 @@ def start_instance_server(widget):
         raise RuntimeError(f"Could not start the instance IPC server: {server.errorString()}")
     server.newConnection.connect(lambda: handle_new_connection(server, widget))
     return server
+
+
+Widget = MainWindow

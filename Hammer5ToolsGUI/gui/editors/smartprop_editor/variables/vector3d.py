@@ -3,7 +3,7 @@ from gui.editors.smartprop_editor.variables.ui_vector3d import Ui_Widget
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 
-class Var_class_vector3d(QWidget):
+class Vector3DVariable(QWidget):
     edited = Signal(list, str, str, str)
     def __init__(self, default):
         super().__init__()
@@ -32,13 +32,14 @@ class Var_class_vector3d(QWidget):
             except:
                 pass
 
-
         # Connect signal for spin boxes
         self.ui.vector_x.valueChanged.connect(self.on_changed)
         self.ui.vector_y.valueChanged.connect(self.on_changed)
         self.ui.vector_z.valueChanged.connect(self.on_changed)
 
-
     def on_changed(self):
         self.default = [self.ui.vector_x.value(), self.ui.vector_y.value(), self.ui.vector_z.value()]
         self.edited.emit(list(self.default), self.min, self.max, str(self.model))
+
+
+Var_class_vector3d = Vector3DVariable

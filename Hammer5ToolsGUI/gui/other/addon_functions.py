@@ -1,6 +1,6 @@
 import logging
 from PySide6.QtWidgets import QMessageBox
-from gui.other.ncm_setup import NCM_mode_setup
+from gui.other.ncm_setup import setup_ncm_mode
 from gui.other.assettypes import ensure_vsmart_configured
 from gui.settings.common import (
     addon_content_dir,
@@ -221,7 +221,7 @@ def __launch_addon():
     ncm_mode = get_settings_bool("LAUNCH", "ncm_mode", default=False)
 
     if ncm_mode:
-        NCM_mode_setup(cs2_path)
+        setup_ncm_mode(cs2_path)
         commands = f'{commands} -nocustomermachine'
 
     launch_cs2_process(cs2_exe_path, commands)

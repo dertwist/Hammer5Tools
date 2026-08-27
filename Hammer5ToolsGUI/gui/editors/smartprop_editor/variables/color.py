@@ -5,7 +5,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
 
 
-class Var_class_color(QWidget):
+class ColorVariable(QWidget):
     edited = Signal(list, str, str, str)
 
     def __init__(self, default, min, max, model):
@@ -63,3 +63,6 @@ class Var_class_color(QWidget):
         else:
             # User canceled the color selection; do not change the color
             pass
+
+
+Var_class_color = ColorVariable

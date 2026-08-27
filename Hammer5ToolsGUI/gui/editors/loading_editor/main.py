@@ -374,7 +374,7 @@ class UnifiedProcessingDialog(QDialog):
         set_style_property(self.cancel_button, "h5State", "idle")
 
 
-class Loading_editorMainWindow(QMainWindow):
+class LoadingEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Loading_editorMainWindow()
@@ -695,3 +695,6 @@ class Loading_editorMainWindow(QMainWindow):
                 self.image_viewer.restoreCameraPosition()
         else:
             super().keyPressEvent(event)
+
+
+Loading_editorMainWindow = LoadingEditorMainWindow

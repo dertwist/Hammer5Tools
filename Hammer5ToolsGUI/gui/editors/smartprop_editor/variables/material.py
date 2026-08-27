@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 
 
-class Var_class_material(QWidget):
+class MaterialVariable(QWidget):
     """Variable widget for CSmartPropVariable_Material - material asset path."""
     edited = Signal(str, str, str, str)
 
@@ -27,3 +27,6 @@ class Var_class_material(QWidget):
     def on_changed(self):
         self.default = self.ui.value.text()
         self.edited.emit(self.default, self.min, self.max, str(self.model))
+
+
+Var_class_material = MaterialVariable
