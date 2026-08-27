@@ -133,10 +133,10 @@ class ValueEditor(QWidget):
         }
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.setupUI()
+        self.setup_ui()
         self.setLayout(self.layout)
 
-    def setupUI(self):
+    def setup_ui(self):
         raise NotImplementedError
 
     def _commit(self, value):
@@ -153,7 +153,7 @@ class ValueEditor(QWidget):
 
 
 class StringEditor(ValueEditor):
-    def setupUI(self):
+    def setup_ui(self):
         self.editline = self._line_edit(self.data['m_Value'])
         self.editline.textChanged.connect(self.set_value)
 
@@ -162,7 +162,7 @@ class StringEditor(ValueEditor):
 
 
 class BoolEditor(ValueEditor):
-    def setupUI(self):
+    def setup_ui(self):
         self.checkbox = QCheckBox()
         self.layout.addWidget(self.checkbox)
         self.checkbox.setChecked(self.data['m_Value'])
@@ -183,7 +183,7 @@ _SLIDER = {
 
 
 class NumberEditor(ValueEditor):
-    def setupUI(self):
+    def setup_ui(self):
         self.scale, base, self.growth = _SLIDER[self.kind]
         value = self.data['m_Value']
 
@@ -245,7 +245,7 @@ _COMPONENTS = {
 class VectorEditor(ValueEditor):
     """One line edit per component, for vectors and for colours."""
 
-    def setupUI(self):
+    def setup_ui(self):
         self.edits = []
         for name, value in zip(_COMPONENTS[self.kind], self.data['m_Value']):
             edit = self._line_edit(value)

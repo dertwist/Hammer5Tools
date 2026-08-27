@@ -95,7 +95,7 @@ def value_kind(var_class) -> str:
     return _KIND_BY_CLASS.get(str(var_class or '').lower().strip(), KIND_STRING)
 
 
-def parse_seq(val, default, count):
+def parse_seq(val, default, count: int) -> list:
     """Coerce `val` to a list of exactly `count` numbers, padding from `default`."""
     if val is None:
         return list(default)
@@ -133,21 +133,21 @@ def coerce(kind, raw):
     return [to_float(x) for x in parsed]
 
 
-def to_int(text, default=0):
+def to_int(text, default: int = 0) -> int:
     try:
         return int(float(text))
     except (ValueError, TypeError):
         return default
 
 
-def to_float(text, default=0.0):
+def to_float(text, default: float = 0.0) -> float:
     try:
         return float(text)
     except (ValueError, TypeError):
         return default
 
 
-def clamp_channel(text):
+def clamp_channel(text) -> int:
     """A colour channel, clamped to 0-255. Unreadable input reads as full."""
     try:
         return max(0, min(255, int(float(text))))
@@ -163,7 +163,7 @@ def _first(mapping, *keys, default=""):
     return default
 
 
-def parse_choices(data) -> list:
+def parse_choices(data) -> list[dict]:
     """Read a KV3 `m_Choices` list into the editor's state shape."""
     state = []
     for choice in data or []:
@@ -195,7 +195,7 @@ def parse_choices(data) -> list:
     return state
 
 
-def format_choices(state) -> list:
+def format_choices(state) -> list[dict]:
     """Write the editor's state shape back out as KV3 `m_Choices` dicts.
 
     Element IDs are the caller's job -- they come from a stateful generator and
