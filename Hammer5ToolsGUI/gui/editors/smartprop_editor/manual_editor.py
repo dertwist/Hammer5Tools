@@ -25,10 +25,9 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, Signal, QRect, QSize, QStringListModel
 
 from gui.common import JsonToKv3, fast_deepcopy
-from gui.editors.smartprop_editor.document_model import normalize_kv3_text
+from gui.editors.smartprop_editor.document_model import parse_smartprop
 
 
-# ── KV3 Syntax Highlighter ────────────────────────────────────────────────────
 
 class Kv3SyntaxHighlighter(QSyntaxHighlighter):
     """Full KV3 syntax highlighter with bracket/brace colouring."""
@@ -742,8 +741,7 @@ class ManualEditor(QWidget):
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         from gui.common import fast_deepcopy
 
-        text = normalize_kv3_text(text)
-        obj = Kv3ToJson(text)
+        obj = parse_smartprop(text)
         children = obj.get("m_Children", [])
         if not children:
             raise ValueError("No element data found in text")
@@ -802,9 +800,7 @@ class ManualEditor(QWidget):
         self._document.undo_stack.push(cmd)
 
     def _apply_variables(self, text):
-        from gui.common import Kv3ToJson
-        text = normalize_kv3_text(text)
-        obj = Kv3ToJson(text)
+        obj = parse_smartprop(text)
         variables = obj.get("m_Variables", [])
 
         state = []
@@ -848,9 +844,7 @@ class ManualEditor(QWidget):
         self._document.undo_stack.push(cmd)
 
     def _apply_choices(self, text):
-        from gui.common import Kv3ToJson
-        text = normalize_kv3_text(text)
-        obj = Kv3ToJson(text)
+        obj = parse_smartprop(text)
         choices_list = obj.get("m_Choices", [])
 
         state = []

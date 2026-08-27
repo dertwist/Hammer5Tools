@@ -11,10 +11,22 @@ belong here.
 
 from __future__ import annotations
 
+import logging
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
+import keyvalues3 as kv3
+from keyvalues3.textwriter import KV3EncoderOptions
+
 from gui.editors.smartprop_editor.objects import variable_prefix
+
+log = logging.getLogger(__name__)
+
+_KV3_HEADER = (
+    "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} "
+    "format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->"
+)
 
 # Hammer5Tools writes category separators as ordinary variables with a marker
 # name. Both spellings are in the wild: files written before nested categories
@@ -120,3 +132,45 @@ def decode_variable(entry: dict) -> Variable:
         value=value,
         is_category=is_category,
     )
+
+
+# ── Reading and writing the document ────────────────────────────────────
+#
+# The Core owns the SmartProp format; it is what the game and the compiler
+# agree with. The keyvalues3 fallbacks below exist only so a machine whose
+# optional .NET runtime will not initialise can still open and save files,
+# and they are the reason every caller must come through here rather than
+# reaching for keyvalues3 directly.
+
+
+def parse_smartprop(text: str) -> dict:
+    """Read SmartProp KV3 text into a document."""
+    text = normalize_kv3_text(text)
+    try:
+        from core.bridge import CoreBridge
+        return CoreBridge.instance().deserialize_smartprop(text)
+    except Exception as error:
+        log.info(f"Core unavailable, parsing SmartProp with keyvalues3: {error}")
+        if "<!-- kv3 encoding:" not in text:
+            text = _KV3_HEADER + "\n{" + text + "\n}"
+        return kv3.textreader.KV3TextReader().parse(text).value
+
+
+def format_smartprop(document: Mapping, one_line_properties: bool = False) -> str:
+    """Write a document back out as SmartProp KV3 text."""
+    try:
+        from core.bridge import CoreBridge
+        return CoreBridge.instance().serialize_smartprop(document)
+    except Exception as error:
+        log.info(f"Core unavailable, writing SmartProp with keyvalues3: {error}")
+        from gui.editors.smartprop_editor._common import disable_line_value_length_limit_keys
+        options = KV3EncoderOptions(
+            serialize_enums_as_ints=False,
+            no_header=False,
+            disable_line_value_length_limit_keys=(
+                disable_line_value_length_limit_keys if one_line_properties else None
+            ),
+        )
+        return kv3.textwriter.encode(
+            kv3.KV3File(value=dict(document), format=kv3.FORMAT_GENERIC), options=options
+        )

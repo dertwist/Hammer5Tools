@@ -1,4 +1,5 @@
 from gui.common import JsonToKv3, Kv3ToJson, fast_deepcopy
+from gui.editors.smartprop_editor.document_model import format_smartprop
 import os, json
 from gui.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
 from gui.settings.common import get_addon_dir
@@ -521,4 +522,4 @@ class QuickVsmart:
             vsmart_content['editor_info']['m_nElementID'] = next_id()
 
         with open(vsmart_path, 'w') as f:
-            f.write(JsonToKv3(vsmart_content))
+            f.write(format_smartprop(vsmart_content))

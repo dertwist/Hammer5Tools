@@ -23,7 +23,7 @@ from gui.widgets.element_id import (
 )
 from gui.widgets import HierarchyItemModel, exception_handler
 from gui.editors.smartprop_editor.objects import variable_prefix, element_prefix
-from gui.editors.smartprop_editor.document_model import normalize_kv3_text
+from gui.editors.smartprop_editor.document_model import format_smartprop, parse_smartprop
 
 log = logging.getLogger(__name__)
 
@@ -247,13 +247,7 @@ class VsmartOpen:
 
     def open_file(self):
         """Open file data, restore references, and populate tree and choices."""
-        data = self.load_file(self.filename)
-        data = normalize_kv3_text(data)
-        try:
-            from core.bridge import CoreBridge
-            data = CoreBridge.instance().deserialize_smartprop(data)
-        except Exception:
-            data = Kv3ToJson(data)
+        data = parse_smartprop(self.load_file(self.filename))
         restore_reference_objects(data)
         self.variables = data.get("m_Variables", None)
         # Clear previous tree data.
@@ -503,17 +497,8 @@ class VsmartSave:
 
     def save_file(self):
         """Save the current document through the .NET SmartProp serializer."""
-        out_data = self.document_data
-        try:
-            from core.bridge import CoreBridge
-            k3_data = CoreBridge.instance().serialize_smartprop(out_data)
-        except Exception:
-            # Keep saving available on systems where the optional .NET runtime
-            # cannot be initialized; packaging normally provides the Core.
-            if get_settings_bool("SmartPropEditor", "export_properties_in_one_line", True):
-                k3_data = JsonToKv3(out_data, disable_line_value_length_limit_keys=disable_line_value_length_limit_keys)
-            else:
-                k3_data = JsonToKv3(out_data)
+        one_line = get_settings_bool("SmartPropEditor", "export_properties_in_one_line", True)
+        k3_data = format_smartprop(self.document_data, one_line_properties=one_line)
         with open(self.filename, "w") as file:
             file.write(k3_data)
 

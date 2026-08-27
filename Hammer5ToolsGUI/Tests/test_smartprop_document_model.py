@@ -125,3 +125,52 @@ def test_the_model_does_not_import_qt():
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "False", "document_model pulled Qt in"
+
+
+# ── Reading and writing ──────────────────────────────────────────────────
+
+_DOC = {"_class": "CSmartPropRoot", "m_Children": [], "m_Variables": []}
+
+
+def test_parse_and_format_round_trip():
+    from gui.editors.smartprop_editor import document_model
+
+    text = document_model.format_smartprop(_DOC)
+    assert document_model.parse_smartprop(text)["_class"] == "CSmartPropRoot"
+
+
+def test_parse_falls_back_when_the_core_is_unavailable(monkeypatch):
+    """The optional .NET Core may fail to initialise; files must still open."""
+    from gui.editors.smartprop_editor import document_model
+
+    import core.bridge as bridge
+    monkeypatch.setattr(bridge.CoreBridge, "instance",
+                        classmethod(lambda cls: (_ for _ in ()).throw(RuntimeError("no core"))))
+
+    text = ('<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} '
+            'format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n'
+            '{\n\t_class = "CSmartPropRoot"\n\tm_Children = [ ]\n}\n')
+    assert document_model.parse_smartprop(text)["_class"] == "CSmartPropRoot"
+    assert "CSmartPropRoot" in document_model.format_smartprop(_DOC)
+
+
+def test_parse_accepts_a_headerless_fragment(monkeypatch):
+    from gui.editors.smartprop_editor import document_model
+
+    import core.bridge as bridge
+    monkeypatch.setattr(bridge.CoreBridge, "instance",
+                        classmethod(lambda cls: (_ for _ in ()).throw(RuntimeError("no core"))))
+
+    assert document_model.parse_smartprop('\n\tm_Children = [ ]\n')["m_Children"] == []
+
+
+def test_parse_normalises_before_reading(monkeypatch):
+    """resource_name: prefixes reach the parser only through normalisation."""
+    from gui.editors.smartprop_editor import document_model
+
+    import core.bridge as bridge
+    monkeypatch.setattr(bridge.CoreBridge, "instance",
+                        classmethod(lambda cls: (_ for _ in ()).throw(RuntimeError("no core"))))
+
+    parsed = document_model.parse_smartprop('\n\tm_sModelName = resource_name:"models/x.vmdl"\n')
+    assert parsed["m_sModelName"] == "models/x.vmdl"

@@ -1492,8 +1492,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         import os
         import re
 
-        from gui.common import Kv3ToJson
-        from gui.settings.common import get_addon_name, get_cs2_path
+        from gui.editors.smartprop_editor.document_model import parse_smartprop
+        from gui.settings.common import addon_content_dir, get_addon_name, get_cs2_path
 
         cs2_path = get_cs2_path()
         default_addon = get_addon_name()
@@ -1515,23 +1515,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 addon = addon_match.group(1)
                 normalized_path = addon_match.group(2)
 
-            full_path = os.path.join(
-                cs2_path,
-                "content",
-                "csgo_addons",
-                addon,
-                normalized_path,
-            )
+            full_path = os.path.join(addon_content_dir(addon), normalized_path)
             visit_key = os.path.normcase(os.path.normpath(full_path))
             if visit_key in visited or not os.path.isfile(full_path):
                 return
             visited.add(visit_key)
 
             with open(full_path, "r", encoding="utf-8") as nested_file:
-                content = nested_file.read()
-            content = re.sub(re.compile(r"= resource_name:"), "= ", content)
-            content = content.replace("null,", "")
-            nested_document = Kv3ToJson(content)
+                nested_document = parse_smartprop(nested_file.read())
             documents[resource_path] = nested_document
             scan(nested_document, addon)
 

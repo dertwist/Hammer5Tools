@@ -84,6 +84,7 @@ from gui.editors.smartprop_editor.manual_editor import ManualEditor
 from gui.editors.smartprop_editor.document_model import (
     decode_variable,
     normalize_kv3_text,
+    parse_smartprop,
     rename_references,
 )
 
@@ -749,8 +750,7 @@ class SmartPropDocument(QMainWindow):
 
     def load_preset(self, name: str = None, path: str = None):
         with open(path, "r") as file:
-            __data = file.read()
-        __data = Kv3ToJson(normalize_kv3_text(__data))
+            __data = parse_smartprop(file.read())
 
         old_variables = self._snapshot_variables()
         old_choices = self._snapshot_choices()
@@ -1998,6 +1998,8 @@ class SmartPropDocument(QMainWindow):
         if data_input is None:
             data_input = QApplication.clipboard().text()
 
+            # Clipboard text is an element fragment, not a whole document, so
+            # it stays on the KV3 reader that tolerates one.
         # Check if clipboard contains modifier or selection criteria components
         clip_group, comp_dicts = parse_component_clipboard(data_input)
         if comp_dicts and clip_group:
