@@ -1,6 +1,6 @@
 namespace Hammer5Tools.Core.Format.Snapshots;
 
-/// <summary>Creates and modifies particle snapshot point streams.</summary>
+/// <summary>VSnap experiments: creates and modifies particle snapshot point streams.</summary>
 public static class SnapshotGenerator
 {
     private static readonly float[] DefaultRadius = [4f];

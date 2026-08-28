@@ -8,7 +8,7 @@ using Hammer5Tools.Core.Format.Snapshots;
 
 namespace Hammer5Tools.Core;
 
-/// <summary>NativeAOT ABI for Source 2 particle snapshot editing.</summary>
+/// <summary>VSnap experiments: NativeAOT ABI for Source 2 particle snapshot editing.</summary>
 internal static unsafe class SnapshotApi
 {
     [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_read_json", CallConvs = [typeof(CallConvCdecl)])]

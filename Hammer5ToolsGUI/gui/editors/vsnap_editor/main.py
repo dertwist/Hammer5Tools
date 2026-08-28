@@ -1,3 +1,8 @@
+"""VSnap experiments: integrated VSnap generation and preview editor.
+
+Experimental project, disabled in dev and stable releases.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -83,7 +88,7 @@ class PointTableModel(QAbstractTableModel):
 
 
 class VSnapEditorMainWindow(QWidget):
-    """Integrated VSnap generation and preview editor."""
+    """VSnap experiments: integrated VSnap generation and preview editor."""
 
     def __init__(self, parent=None):
         super().__init__(parent)

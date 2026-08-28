@@ -5,7 +5,7 @@ using Hammer5Tools.Core.Format.SmartProps;
 
 namespace Hammer5Tools.Core.Format.Snapshots;
 
-/// <summary>Reads and writes Source 2 particle snapshots in KeyValues3 text form.</summary>
+/// <summary>VSnap experiments: reads and writes Source 2 particle snapshots in KeyValues3 text form.</summary>
 public static class SnapshotDocumentSerializer
 {
     /// <summary>Parses and validates a particle snapshot.</summary>
