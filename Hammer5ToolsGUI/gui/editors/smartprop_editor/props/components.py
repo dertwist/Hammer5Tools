@@ -45,15 +45,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from gui.common import fast_deepcopy
+from gui.common import fast_deepcopy, JsonToKv3
 from gui.editors.smartprop_editor._common import (
     get_clean_class_name,
-    CLIPBOARD_PREFIX,
-    CLIPBOARD_BATCH_PREFIX,
+    classify_smartprop_class,
+    classify_smartprop_dict,
     parse_component_clipboard,
 )
 from gui.editors.smartprop_editor.commands import PropertySnapshotCommand
 from gui.widgets.widgets import make_composite_icon
+from gui.widgets import ErrorInfo
 from gui.editors.smartprop_editor.objects import (
     filters_list,
     operators_list,
@@ -786,7 +787,24 @@ class ComponentList(QWidget):
             return
 
         expected_group = "modifier" if group_type == "modifier" else "selection_criteria"
-        if parsed_group != expected_group:
+        # Validate through class comparison
+        for item in item_dicts:
+            cls = item.get("_class", "")
+            item_kind = classify_smartprop_class(cls) if cls else parsed_group
+            if item_kind and item_kind != expected_group:
+                friendly_src = item_kind.replace('_', ' ')
+                friendly_dst = expected_group.replace('_', ' ')
+                ErrorInfo(
+                    text=f"Cannot paste a '{friendly_src}' into '{friendly_dst}' group."
+                ).exec()
+                return
+
+        if parsed_group and parsed_group != expected_group:
+            friendly_src = parsed_group.replace('_', ' ')
+            friendly_dst = expected_group.replace('_', ' ')
+            ErrorInfo(
+                text=f"Cannot paste a '{friendly_src}' into '{friendly_dst}' group."
+            ).exec()
             return
 
         self._add_component_dicts(group_type, item_dicts, insert_after_idx=insert_after_idx)
@@ -835,13 +853,8 @@ class ComponentList(QWidget):
         if not target_dicts:
             return
 
-        if len(target_dicts) == 1:
-            target = target_dicts[0]
-            class_name = target.get("_class", "")
-            clip_str = f"{CLIPBOARD_PREFIX};;{class_name};;{repr(target)};;{group_type}"
-        else:
-            clip_str = f"{CLIPBOARD_BATCH_PREFIX};;batch;;{repr(target_dicts)};;{group_type}"
-
+        container_key = "m_Modifiers" if group_type == "modifier" else ("m_SelectionCriteria" if group_type in ("selection_criteria", "criterion") else "m_Children")
+        clip_str = JsonToKv3({container_key: target_dicts})
         QApplication.clipboard().setText(clip_str)
 
     def _duplicate_components(self, refs: list[ComponentRef]):

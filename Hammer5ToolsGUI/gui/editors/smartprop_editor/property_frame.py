@@ -1278,9 +1278,18 @@ class PropertyFrame(QWidget):
             self.copy_action()
 
     def copy_action(self):
+        from gui.common import JsonToKv3
         clipboard = QApplication.clipboard()
         group_type = getattr(self, '_group_type', '') or ''
-        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{self.name};;{self.value};;{group_type}")
+        val = dict(self.value) if isinstance(self.value, dict) else {}
+        if "_class" not in val and hasattr(self, "name_prefix") and hasattr(self, "name"):
+            val["_class"] = f"{self.name_prefix}_{self.name}"
+        container_key = "m_Modifiers" if group_type == "modifier" else ("m_SelectionCriteria" if group_type in ("selection_criteria", "criterion") else None)
+        if container_key:
+            clip_str = JsonToKv3({container_key: [val]})
+        else:
+            clip_str = JsonToKv3(val)
+        clipboard.setText(clip_str)
 
     def set_group_type(self, group_type):
         self._group_type = group_type

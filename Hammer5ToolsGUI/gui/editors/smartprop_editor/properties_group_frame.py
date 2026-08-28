@@ -71,16 +71,18 @@ class PropertiesGroupFrame(QWidget):
             clipboard = QApplication.clipboard()
             clipboard_text = clipboard.text()
             clip_group, pasted_dicts = parse_component_clipboard(clipboard_text)
-            if clip_group and pasted_dicts:
+            if pasted_dicts:
                 target_norm = "modifier" if self.group_type in ("modifier", "modifiers", "operators") else "selection_criteria"
-                clip_norm = "modifier" if clip_group in ("modifier", "modifiers", "operators") else "selection_criteria"
+                clip_norm = "modifier" if clip_group in ("modifier", "modifiers", "operators") else ("selection_criteria" if clip_group in ("selection_criteria", "criterion", "criteria") else clip_group)
                 if target_norm != clip_norm:
-                    friendly_src = clip_group.replace('_', ' ')
+                    friendly_src = (clip_group or "unknown").replace('_', ' ')
                     friendly_dst = self.group_type.replace('_', ' ')
                     ErrorInfo(
                         text=f"Cannot paste a '{friendly_src}' into '{friendly_dst}' group."
                     ).exec()
                     return
+            else:
+                return
         self.paste_signal.emit()
 
     def show_child(self):

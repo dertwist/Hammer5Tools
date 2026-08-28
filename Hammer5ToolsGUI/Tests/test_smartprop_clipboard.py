@@ -1,15 +1,138 @@
 import pytest
 import subprocess
 import sys
+from gui.common import JsonToKv3
 from gui.editors.smartprop_editor._common import (
     CLIPBOARD_PREFIX,
     CLIPBOARD_BATCH_PREFIX,
+    classify_smartprop_class,
+    classify_smartprop_dict,
     parse_component_clipboard,
 )
 from gui.editors.smartprop_editor.props.model import ComponentRef
 
 
-def test_user_batch_modifier_clipboard():
+def test_classify_smartprop_class():
+    assert classify_smartprop_class("CSmartPropOperation_Translate") == "modifier"
+    assert classify_smartprop_class("CSmartPropOperation_Rotate") == "modifier"
+    assert classify_smartprop_class("CSmartPropSelectionCriteria_LinearLength") == "selection_criteria"
+    assert classify_smartprop_class("CSmartPropFilter_VariableValue") == "selection_criteria"
+    assert classify_smartprop_class("CSmartPropElement_Group") == "element"
+    assert classify_smartprop_class("CSmartPropElement_Model") == "element"
+    assert classify_smartprop_class("CSmartPropVariable_Float") == "variable"
+    assert classify_smartprop_class("CSmartPropChoice") == "choice"
+    assert classify_smartprop_class("UnknownClass") is None
+    assert classify_smartprop_class("") is None
+    assert classify_smartprop_class(None) is None
+
+
+def test_classify_smartprop_dict():
+    assert classify_smartprop_dict({"_class": "CSmartPropOperation_Translate"}) == "modifier"
+    assert classify_smartprop_dict({"_class": "CSmartPropSelectionCriteria_EndCap"}) == "selection_criteria"
+    assert classify_smartprop_dict({"_class": "CSmartPropFilter_Probability"}) == "selection_criteria"
+    assert classify_smartprop_dict({"_class": "CSmartPropElement_SmartProp"}) == "element"
+    assert classify_smartprop_dict({"_class": "CSmartPropVariable_Int"}) == "variable"
+    assert classify_smartprop_dict({}) is None
+    assert classify_smartprop_dict(None) is None
+
+
+def test_kv3_single_modifier_clipboard():
+    mod_dict = {
+        "_class": "CSmartPropOperation_Translate",
+        "m_CoordinateSpace": "ELEMENT",
+        "m_bEnabled": True,
+        "m_nElementID": 10,
+    }
+    clip_text = JsonToKv3({"m_Modifiers": [mod_dict]})
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "modifier"
+    assert len(dicts) == 1
+    assert dicts[0]["_class"] == "CSmartPropOperation_Translate"
+    assert dicts[0]["m_nElementID"] == 10
+
+
+def test_kv3_batch_modifier_clipboard():
+    mod1 = {
+        "_class": "CSmartPropOperation_Translate",
+        "m_CoordinateSpace": "ELEMENT",
+        "m_bEnabled": True,
+        "m_nElementID": 54,
+    }
+    mod2 = {
+        "_class": "CSmartPropOperation_CreateRotator",
+        "m_CoordinateSpace": "ELEMENT",
+        "m_bApplyToCurrentTransform": True,
+        "m_bEnabled": True,
+        "m_nElementID": 55,
+    }
+    clip_text = JsonToKv3({"m_Modifiers": [mod1, mod2]})
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "modifier"
+    assert len(dicts) == 2
+    assert dicts[0]["_class"] == "CSmartPropOperation_Translate"
+    assert dicts[1]["_class"] == "CSmartPropOperation_CreateRotator"
+
+
+def test_kv3_single_selection_criteria_clipboard():
+    crit = {
+        "_class": "CSmartPropSelectionCriteria_ChoiceWeight",
+        "m_bEnabled": True,
+        "m_nElementID": 30,
+    }
+    clip_text = JsonToKv3({"m_SelectionCriteria": [crit]})
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "selection_criteria"
+    assert len(dicts) == 1
+    assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_ChoiceWeight"
+
+
+def test_kv3_batch_selection_criteria_clipboard():
+    crit1 = {
+        "_class": "CSmartPropSelectionCriteria_LinearLength",
+        "m_bEnabled": True,
+        "m_nElementID": 20,
+    }
+    crit2 = {
+        "_class": "CSmartPropFilter_VariableValue",
+        "m_VariableName": "TestVar",
+        "m_bEnabled": True,
+        "m_nElementID": 21,
+    }
+    clip_text = JsonToKv3({"m_SelectionCriteria": [crit1, crit2]})
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "selection_criteria"
+    assert len(dicts) == 2
+    assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_LinearLength"
+    assert dicts[1]["_class"] == "CSmartPropFilter_VariableValue"
+
+
+def test_kv3_bare_component_object_clipboard():
+    mod_dict = {
+        "_class": "CSmartPropOperation_Rotate",
+        "m_bEnabled": True,
+        "m_nElementID": 101,
+    }
+    clip_text = JsonToKv3(mod_dict)
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "modifier"
+    assert len(dicts) == 1
+    assert dicts[0]["_class"] == "CSmartPropOperation_Rotate"
+
+
+def test_kv3_hierarchy_element_clipboard():
+    elem_dict = {
+        "_class": "CSmartPropElement_Group",
+        "m_bEnabled": True,
+        "m_nElementID": 42,
+    }
+    clip_text = JsonToKv3({"m_Children": [elem_dict]})
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "element"
+    assert len(dicts) == 1
+    assert dicts[0]["_class"] == "CSmartPropElement_Group"
+
+
+def test_user_batch_modifier_legacy_clipboard():
     clip_text = (
         "hammer5tools:smartprop_editor_property_batch;;batch;;"
         "[{'_class': 'CSmartPropOperation_Translate', 'm_CoordinateSpace': 'ELEMENT', "
@@ -30,7 +153,7 @@ def test_user_batch_modifier_clipboard():
     assert dicts[1]["m_nElementID"] == 55
 
 
-def test_single_modifier_clipboard():
+def test_single_modifier_legacy_clipboard():
     mod_dict = {
         "_class": "CSmartPropOperation_Translate",
         "m_CoordinateSpace": "ELEMENT",
@@ -46,7 +169,7 @@ def test_single_modifier_clipboard():
     assert dicts[0]["m_nElementID"] == 10
 
 
-def test_batch_selection_criteria_clipboard():
+def test_batch_selection_criteria_legacy_clipboard():
     crit1 = {
         "_class": "CSmartPropSelectionCriteria_Linear",
         "m_bEnabled": True,
@@ -67,41 +190,11 @@ def test_batch_selection_criteria_clipboard():
     assert dicts[1]["_class"] == "CSmartPropFilter_VariableValue"
 
 
-def test_single_selection_criteria_with_criterion_group():
-    crit = {
-        "_class": "CSmartPropSelectionCriteria_ChoiceWeight",
-        "m_bEnabled": True,
-        "m_nElementID": 30,
-    }
-    clip_text = f"{CLIPBOARD_PREFIX};;CSmartPropSelectionCriteria_ChoiceWeight;;{repr(crit)};;criterion"
-
-    group_type, dicts = parse_component_clipboard(clip_text)
-    assert group_type == "selection_criteria"
-    assert len(dicts) == 1
-    assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_ChoiceWeight"
-
-
-def test_clipboard_with_embedded_semicolons():
-    mod_dict = {
-        "_class": "CSmartPropOperation_SetVariable",
-        "m_Expression": "func(1;; 2;; 3)",
-        "m_Comment": "Testing ;; delimiter in comment",
-        "m_bEnabled": True,
-    }
-    clip_text = f"{CLIPBOARD_PREFIX};;CSmartPropOperation_SetVariable;;{repr(mod_dict)};;modifier"
-
-    group_type, dicts = parse_component_clipboard(clip_text)
-    assert group_type == "modifier"
-    assert len(dicts) == 1
-    assert dicts[0]["m_Expression"] == "func(1;; 2;; 3)"
-    assert dicts[0]["m_Comment"] == "Testing ;; delimiter in comment"
-
-
 def test_invalid_clipboard_texts():
     assert parse_component_clipboard("") == (None, [])
     assert parse_component_clipboard(None) == (None, [])
     assert parse_component_clipboard("random non-clipboard string") == (None, [])
-    assert parse_component_clipboard("<!-- kv3 encoding:text:version... -->") == (None, [])
+    assert parse_component_clipboard("<!-- kv3 encoding:text:version... -->\n{\nunknown_key = 123\n}") == (None, [])
     assert parse_component_clipboard("hammer5tools:smartprop_editor_property;;broken") == (None, [])
 
 
@@ -141,11 +234,12 @@ def test_batch_append_and_id_assignment():
         ],
     }
 
-    clip_text = (
-        "hammer5tools:smartprop_editor_property_batch;;batch;;"
-        "[{'_class': 'CSmartPropOperation_Translate', 'm_nElementID': 999}, "
-        "{'_class': 'CSmartPropOperation_CreateRotator', 'm_nElementID': 999}];;modifier"
-    )
+    clip_text = JsonToKv3({
+        "m_Modifiers": [
+            {"_class": "CSmartPropOperation_Translate", "m_nElementID": 999},
+            {"_class": "CSmartPropOperation_CreateRotator", "m_nElementID": 999}
+        ]
+    })
 
     group_type, dicts = parse_component_clipboard(clip_text)
     assert group_type == "modifier"

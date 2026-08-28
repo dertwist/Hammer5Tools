@@ -958,7 +958,8 @@ class SmartPropDocument(QMainWindow):
         clipboard_text = QApplication.clipboard().text()
         clip_group, dicts = parse_component_clipboard(clipboard_text)
         if not dicts or clip_group != "modifier":
-            print("Clipboard data format is not valid for modifier.")
+            friendly_src = (clip_group or "clipboard content").replace('_', ' ')
+            ErrorInfo(text=f"Cannot paste {friendly_src} as a modifier.").exec()
             return
         self._append_components("m_Modifiers", dicts, force_new_id=True)
 
@@ -1018,7 +1019,8 @@ class SmartPropDocument(QMainWindow):
         clipboard_text = QApplication.clipboard().text()
         clip_group, dicts = parse_component_clipboard(clipboard_text)
         if not dicts or clip_group != "selection_criteria":
-            print("Clipboard data format is not valid for selection criteria.")
+            friendly_src = (clip_group or "clipboard content").replace('_', ' ')
+            ErrorInfo(text=f"Cannot paste {friendly_src} as selection criteria.").exec()
             return
         self._append_components("m_SelectionCriteria", dicts, force_new_id=True)
 
@@ -1914,9 +1916,12 @@ class SmartPropDocument(QMainWindow):
 
         # Check if clipboard contains modifier or selection criteria components
         clip_group, comp_dicts = parse_component_clipboard(data_input)
-        if comp_dicts and clip_group:
+        if comp_dicts and clip_group in ("modifier", "selection_criteria"):
             container_key = "m_Modifiers" if clip_group == "modifier" else "m_SelectionCriteria"
             self._append_components(container_key, comp_dicts, force_new_id=True)
+            return
+        if comp_dicts and clip_group == "variable":
+            ErrorInfo(text="Cannot paste variable into element hierarchy.").exec()
             return
 
         try:

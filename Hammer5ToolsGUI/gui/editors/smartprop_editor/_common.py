@@ -92,54 +92,122 @@ CLIPBOARD_PREFIX = "hammer5tools:smartprop_editor_property"
 CLIPBOARD_BATCH_PREFIX = "hammer5tools:smartprop_editor_property_batch"
 
 
+def classify_smartprop_class(class_name: str) -> str | None:
+    """Return component kind ('modifier', 'selection_criteria', 'element', 'variable', 'choice') from a _class name."""
+    if not isinstance(class_name, str):
+        return None
+    if class_name.startswith("CSmartPropOperation_"):
+        return "modifier"
+    if class_name.startswith(("CSmartPropSelectionCriteria_", "CSmartPropFilter_")):
+        return "selection_criteria"
+    if class_name.startswith("CSmartPropElement_"):
+        return "element"
+    if class_name.startswith("CSmartPropVariable_"):
+        return "variable"
+    if class_name.startswith("CSmartPropChoice"):
+        return "choice"
+    return None
+
+
+def classify_smartprop_dict(data: dict) -> str | None:
+    """Return component kind from a dict containing a _class key."""
+    if isinstance(data, dict):
+        cls_name = data.get("_class")
+        if cls_name:
+            return classify_smartprop_class(cls_name)
+    return None
+
+
 def parse_component_clipboard(clip_text: str) -> tuple[str | None, list[dict]]:
-    """Parse clipboard text containing single or batch SmartProp component data.
+    """Parse clipboard text containing single or batch SmartProp component or element data.
+
+    Accepts generic KV3 text as well as legacy semicolon-delimited strings for backward compatibility.
 
     Returns:
-        (group_type, list_of_dicts) where group_type is 'modifier' or 'selection_criteria',
-        or (None, []) if the clipboard format is invalid.
+        (group_type, list_of_dicts) where group_type is 'modifier', 'selection_criteria',
+        'element', or 'variable', or (None, []) if the clipboard format is invalid.
     """
     if not clip_text or not isinstance(clip_text, str):
         return None, []
 
-    is_batch = clip_text.startswith(CLIPBOARD_BATCH_PREFIX + ";;")
-    is_single = clip_text.startswith(CLIPBOARD_PREFIX + ";;")
-
-    if not (is_batch or is_single):
+    clip_text = clip_text.strip()
+    if not clip_text:
         return None, []
 
-    prefix = CLIPBOARD_BATCH_PREFIX if is_batch else CLIPBOARD_PREFIX
-    body = clip_text[len(prefix) + 2:]
+    # 1. Check legacy prefix for backward compatibility
+    is_legacy_batch = clip_text.startswith(CLIPBOARD_BATCH_PREFIX + ";;")
+    is_legacy_single = clip_text.startswith(CLIPBOARD_PREFIX + ";;")
+    if is_legacy_batch or is_legacy_single:
+        prefix = CLIPBOARD_BATCH_PREFIX if is_legacy_batch else CLIPBOARD_PREFIX
+        body = clip_text[len(prefix) + 2:]
+        try:
+            header, rest = body.split(";;", 1)
+            payload_str, raw_group = rest.rsplit(";;", 1)
+        except ValueError:
+            return None, []
 
-    try:
-        header, rest = body.split(";;", 1)
-        payload_str, raw_group = rest.rsplit(";;", 1)
-    except ValueError:
+        raw_group = raw_group.strip()
+        if raw_group in ("modifier", "modifiers", "operators"):
+            group_type = "modifier"
+        elif raw_group in ("selection_criteria", "criterion", "criteria"):
+            group_type = "selection_criteria"
+        else:
+            group_type = raw_group
+
+        try:
+            import ast
+            evaluated = ast.literal_eval(payload_str)
+        except Exception:
+            return None, []
+
+        if is_legacy_batch:
+            if isinstance(evaluated, list):
+                dicts = [d for d in evaluated if isinstance(d, dict)]
+                if dicts:
+                    return group_type, dicts
+        else:
+            if isinstance(evaluated, dict):
+                return group_type, [evaluated]
         return None, []
 
-    raw_group = raw_group.strip()
-    if raw_group in ("modifier", "modifiers", "operators"):
-        group_type = "modifier"
-    elif raw_group in ("selection_criteria", "criterion", "criteria"):
-        group_type = "selection_criteria"
-    else:
-        group_type = raw_group
-
+    # 2. Try parsing as KV3
     try:
-        import ast
-        evaluated = ast.literal_eval(payload_str)
+        from gui.common import Kv3ToJson
+        from gui.editors.smartprop_editor.document_model import normalize_kv3_text
+        parsed = Kv3ToJson(normalize_kv3_text(clip_text))
     except Exception:
         return None, []
 
-    if is_batch:
-        if isinstance(evaluated, list):
-            dicts = [d for d in evaluated if isinstance(d, dict)]
-            if dicts:
-                return group_type, dicts
-    else:
-        if isinstance(evaluated, dict):
-            return group_type, [evaluated]
+    if isinstance(parsed, dict):
+        # Case A: Container dictionary
+        for container_key, group_type in (
+            ("m_Modifiers", "modifier"),
+            ("m_SelectionCriteria", "selection_criteria"),
+            ("m_Children", "element"),
+            ("m_Variables", "variable"),
+            ("m_Choices", "choice"),
+        ):
+            if container_key in parsed and isinstance(parsed[container_key], list):
+                dicts = [d for d in parsed[container_key] if isinstance(d, dict)]
+                if dicts:
+                    first_kind = classify_smartprop_dict(dicts[0])
+                    return (first_kind or group_type), dicts
+
+        # Case B: Single component/element object
+        if "_class" in parsed:
+            kind = classify_smartprop_class(parsed["_class"])
+            if kind:
+                return kind, [parsed]
+            return None, [parsed]
+
+    elif isinstance(parsed, list):
+        # Case C: List of component objects
+        dicts = [d for d in parsed if isinstance(d, dict)]
+        if dicts:
+            first_kind = classify_smartprop_dict(dicts[0])
+            return first_kind, dicts
 
     return None, []
+
 
 
