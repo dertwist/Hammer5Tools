@@ -22,8 +22,34 @@ _TIMING = os.environ.get("H5T_STYLE_TIMING") == "1"
 _PROXY_STYLE = None
 
 
+#: Ceiling for a popup widened to fit its items, so one pathological entry
+#: cannot open a popup across the whole screen.
+_MAX_POPUP_WIDTH = 600
+
+
+def _fit_popup_to_items(combo: QComboBox) -> None:
+    """Widen a combobox popup so its items are not elided.
+
+    Without SH_ComboBox_Popup, Qt sizes the drop-down list to the *combobox*.
+    That is unreadable for the narrow ones -- the 70px value-mode switch showed
+    "D...t" / "V...e" / "V...d" -- and clips long enum names elsewhere
+    ("LESS_...EQUAL"). The view's own minimum width is what Qt honours here.
+    """
+    view = combo.view()
+    if view is None:
+        return
+    content = view.sizeHintForColumn(0)
+    if content <= 0:
+        return
+    # Frame plus room for the scrollbar the popup grows when the list is long.
+    padding = 2 * view.frameWidth() + view.style().pixelMetric(
+        QStyle.PM_ScrollBarExtent, None, view
+    )
+    view.setMinimumWidth(min(content + padding, _MAX_POPUP_WIDTH))
+
+
 class _ComboBoxStyle(QProxyStyle):
-    """Fix the two things Fusion does to QComboBox popups.
+    """Fix the three things Fusion does to QComboBox popups.
 
     ``polish``: the built-in popup delegate paints rows itself and ignores the
     stylesheet's ``QComboBox QAbstractItemView::item`` rules, so alternating
@@ -48,6 +74,13 @@ class _ComboBoxStyle(QProxyStyle):
                 target.setItemDelegate(QStyledItemDelegate(target))
             if target.maxVisibleItems() == 10:  # Qt's default, i.e. unset
                 target.setMaxVisibleItems(20)
+            # Re-measure on every repopulation, not just here: the variable
+            # pickers refill themselves from showPopup(), so a width measured
+            # at polish time would be stale by the time the list is shown.
+            model = target.model()
+            model.rowsInserted.connect(lambda *_: _fit_popup_to_items(target))
+            model.modelReset.connect(lambda *_: _fit_popup_to_items(target))
+            _fit_popup_to_items(target)
         super().polish(target)
 
     def styleHint(self, hint, option=None, widget=None, returnData=None):
