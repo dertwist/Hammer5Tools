@@ -70,9 +70,24 @@ jobs:
             Write-Host "Using default release notes."
           }
 
+      - name: Velopack Download Previous Release
+        continue-on-error: true
+        run: |
+          & "$HOME\.dotnet\tools\vpk.exe" download github --repoUrl https://github.com/dertwist/Hammer5Tools --token ${{ secrets.GITHUB_TOKEN }} --channel stable
+
       - name: Velopack Pack
         run: |
           & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon Hammer5ToolsGUI/gui/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md --framework net10.0-x64-desktop
+
+      - name: Verify Delta Package
+        shell: pwsh
+        run: |
+          $delta = Get-ChildItem Releases -Filter *-delta.nupkg -ErrorAction SilentlyContinue
+          if (-not $delta) {
+            Write-Warning "No delta package was produced - every user will download the full package."
+          } else {
+            $delta | ForEach-Object { "{0} ({1:N1} MiB)" -f $_.Name, ($_.Length / 1MB) }
+          }
 
       - name: Velopack Upload
         run: |
