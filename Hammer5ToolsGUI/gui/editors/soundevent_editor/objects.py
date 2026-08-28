@@ -138,6 +138,23 @@ soundevent_editor_properties = [
     {'Syncpoints 01': {'syncpoints_01': [0.0, 1.996, 3.989, 5.993, 7.992, 9.985, 12.002, 14.007, 15.982, 17.993, 19.98, 21.991, 23.99, 25.995, 27.999, 29.993, 32.003, 33.996, 36.001, 37.988, 39.999, 42.01, 43.991, 45.99, 47.989, 49.994, 51.999, 53.992]}},
     {'Syncpoints 02': {'syncpoints_02': [0.0, 2.002, 4.012, 6.035, 8.07, 10.085, 12.104, 14.122, 16.138, 18.152, 20.166, 22.188, 24.196, 26.214, 28.226, 30.235, 32.256, 34.27, 36.288, 38.306]}},
     {'Syncpoints 03': {'syncpoints_03': [3.075, 4.951, 4.798, 6.838, 8.72, 10.608, 12.485, 14.38, 16.269, 18.153, 20.036, 21.921, 23.81, 25.697, 27.576, 29.467, 31.349, 33.219, 35.115, 37.0, 38.882, 40.764, 42.652, 44.539, 46.421, 48.306, 50.191, 52.076, 53.978, 55.851]}},
+
+
+    # Current CS2 fields that the browser did not expose before
+    {'Uiposition': {'uiposition': [0.0, 0.0, 0.0]}},
+    {'Use Distance Pitch Mapping Curve': {'use_distance_pitch_mapping_curve': True}},
+    {'Distance Pitch Mapping Curve': {'distance_pitch_mapping_curve': [[0.0, 1.0, 0.0, 0.0, 2.0, 3.0], [1000.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}},
+    {'Occlusion Path Curve': {'occlusion_path_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [1.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}},
+    {'Doppler Factor': {'doppler_factor': 1.0}},
+    {'Doppler Factor Receding': {'doppler_factor_receding': 1.0}},
+    {'Impact Speed Input': {'impact_speed_input': 0.0}},
+    {'Velocity Magnitude': {'velocity_magnitude': 0.0}},
+    {'Voice Fade Out Time': {'voice_fade_out_time': 0.0}},
+    {'Voice Looped Culling Update Time': {'voice_looped_culling_update_time': 0.25}},
+    {'Randomize Start Time': {'randomize_start_time': False}},
+    {'Restart Startpoint 03': {'restart_startpoint_03': 2.05}},
+    {'Source Soundscape': {'source_soundscape': 0}},
+    {'Retrigger Keepalive Override': {'retrigger_keepalive_override': 0.0}},
 ]
 dsp_preset_objects = [
     'reverb_2_crawlSpace',
@@ -164,6 +181,6 @@ dsp_preset_objects = [
     'reverb_23_smallBathroom',
     'reverb_24_largeBathroom'
 ]
-type_objects = ['csgo_mega']
+type_objects = ['csgo_mega', 'csgo_music']
 mixgroup_objects = ['ArmsRace', 'Weapons', 'UI', 'voip', 'World', 'Music', 'BuyMusic', 'DuckingMusic', 'SelectedMusic', 'All', 'Footsteps', 'Foley', 'Physics', 'BulletImpacts', 'Explosions', 'ExplosionsDistant', 'Ambient', 'WeaponsDistant', 'Exceptions', 'Amb_Common', 'Aztec', 'Assault', 'Baggage', 'Bank', 'Boathouse', 'Canals', 'Cbble', 'Chateau', 'Compound', 'Coop', 'Dust', 'Dust2', 'Havana', 'House', 'Inferno', 'Italy', 'Lunacy', 'Militia', 'Mill', 'Mirage', 'Monastery', 'Nuke', 'Office', 'Overpass', 'Piranesi', 'Port', 'Prodigy', 'Shacks', 'Shoots', 'Train', 'Training', 'Vertigo', 'PlayerDamage', 'KillCard', 'PlayerVictim', 'Anubis', 'VO']
 soundevent_blank = {}

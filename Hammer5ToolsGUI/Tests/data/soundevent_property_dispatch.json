@@ -1,0 +1,809 @@
+{
+ "base": {
+  "cls": "SoundEventEditorPropertyBaseLegacy",
+  "value": "{'base': 'amb.base'}"
+ },
+ "block_distance": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'block_distance': 0.0}"
+ },
+ "block_duration": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'block_duration': 0.0}"
+ },
+ "block_match_entity": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'block_match_entity': False}"
+ },
+ "block_matching_events": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'block_matching_events': False}"
+ },
+ "block_other": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'block_other': True}"
+ },
+ "block_other_distance": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'block_other_distance': 30.0}"
+ },
+ "block_other_duration": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'block_other_duration': 0.3}"
+ },
+ "block_other_name": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'block_other_name': 'DeathHeadShotArmor'}"
+ },
+ "block_won_lost": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'block_won_lost': True}"
+ },
+ "broadcast_distance_override": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'broadcast_distance_override': 98.0}"
+ },
+ "check_for_classic_deathcam": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'check_for_classic_deathcam': True}"
+ },
+ "comment": {
+  "cls": "SoundEventEditorPropertyComment",
+  "value": "{'comment': ''}"
+ },
+ "delay": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'delay': 1.0}"
+ },
+ "display_broadcast": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'display_broadcast': True}"
+ },
+ "distance_effect_mix": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'distance_effect_mix': 0.0}"
+ },
+ "distance_multiplier": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'distance_multiplier': 1.5}"
+ },
+ "distance_unfiltered_stereo_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Distance",
+   "Unfiltered Stereo"
+  ],
+  "value": "{'distance_unfiltered_stereo_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [300.0, 0.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "distance_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Distance",
+   "Volume"
+  ],
+  "value": "{'distance_volume_mapping_curve': [[97.14286, 1.0, -0.001763, -0.001763, 2.0, 3.0], [2000.0, 0.0, -0.000526, -0.000526, 1.0, 1.0]]}"
+ },
+ "dsp_blend": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'dsp_blend': 0.0}"
+ },
+ "dsp_bypass": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'dsp_bypass': 0.0}"
+ },
+ "dsp_preset": {
+  "cls": "SoundEventEditorPropertyCombobox",
+  "options": 23,
+  "value": "{'dsp_preset': 'reverb_9_mediumChamber'}"
+ },
+ "ducking_bypass": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'ducking_bypass': 1.0}"
+ },
+ "enable_child_events": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'enable_child_events': True}"
+ },
+ "enable_retrigger": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'enable_retrigger': True}"
+ },
+ "endpoint_01": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'endpoint_01': 53.992}"
+ },
+ "endpoint_02": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'endpoint_02': 38.308}"
+ },
+ "endpoint_03": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'endpoint_03': 55.851}"
+ },
+ "fadetime_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Fade Time",
+   "Volume"
+  ],
+  "value": "{'fadetime_volume_mapping_curve': [[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0], [0.691429, 0.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "impact_speed_input_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Impact Speed",
+   "Volume"
+  ],
+  "value": "{'impact_speed_input_volume_mapping_curve': [[6.857143, 0.0, 0.0, 0.0, 2.0, 3.0], [92.571426, 0.426471, 0.002544, 0.002544, 3.0, 1.0], [400.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "instance_limit": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   100
+  ],
+  "value": "{'instance_limit': 0.0}"
+ },
+ "is_ui_sound": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'is_ui_sound': False}"
+ },
+ "join_non_mvp_group": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'join_non_mvp_group': True}"
+ },
+ "loop_track": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'loop_track': True}"
+ },
+ "metadata": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'metadata': 'mediumfs 1000'}"
+ },
+ "mixgroup": {
+  "cls": "SoundEventEditorPropertyCombobox",
+  "options": 57,
+  "value": "{'mixgroup': 'Amb_Common'}"
+ },
+ "mixlayer_name": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'mixlayer_name': 'VideoClipMixLayer'}"
+ },
+ "occlusion": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'occlusion': True}"
+ },
+ "occlusion_frequency_scale": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'occlusion_frequency_scale': 1.0}"
+ },
+ "occlusion_intensity": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'occlusion_intensity': 0.0}"
+ },
+ "occlusion_interval": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'occlusion_interval': 0.25}"
+ },
+ "override_dsp_preset": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'override_dsp_preset': True}"
+ },
+ "pitch": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'pitch': 1.0}"
+ },
+ "pitch_random_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'pitch_random_max': -0.5}"
+ },
+ "pitch_random_min": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'pitch_random_min': -0.5}"
+ },
+ "position": {
+  "axes": 3,
+  "cls": "SoundEventEditorPropertyVector3",
+  "slider_range": [
+   -1000,
+   1000
+  ],
+  "value": "{'position': [0.0, 0.0, 0.0]}"
+ },
+ "position_offset": {
+  "axes": 3,
+  "cls": "SoundEventEditorPropertyVector3",
+  "slider_range": [
+   -1000,
+   1000
+  ],
+  "value": "{'position_offset': [0.0, 0.0, 0.0]}"
+ },
+ "position_offset_relative": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'position_offset_relative': False}"
+ },
+ "position_relative_to_player": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'position_relative_to_player': False}"
+ },
+ "preload_vsnds": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'preload_vsnds': True}"
+ },
+ "priority": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'priority': 2.0}"
+ },
+ "priority_override": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'priority_override': True}"
+ },
+ "randomize_position_hemisphere": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'randomize_position_hemisphere': False}"
+ },
+ "randomize_position_max_radius": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   -200,
+   200
+  ],
+  "value": "{'randomize_position_max_radius': 3000.0}"
+ },
+ "randomize_position_min_radius": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   -200,
+   200
+  ],
+  "value": "{'randomize_position_min_radius': 2000.0}"
+ },
+ "restart_startpoint_01": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'restart_startpoint_01': 2.05}"
+ },
+ "restart_startpoint_02": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'restart_startpoint_02': 2.05}"
+ },
+ "restrict_source_reverb": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'restrict_source_reverb': True}"
+ },
+ "retrigger_count": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   -10,
+   100
+  ],
+  "value": "{'retrigger_count': -1.0}"
+ },
+ "retrigger_interval_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'retrigger_interval_max': 30.0}"
+ },
+ "retrigger_interval_min": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'retrigger_interval_min': 10.0}"
+ },
+ "retrigger_radius": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   200
+  ],
+  "value": "{'retrigger_radius': 10000.0}"
+ },
+ "reverb_source_wet": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'reverb_source_wet': 0.0}"
+ },
+ "reverb_wet": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'reverb_wet': 1.0}"
+ },
+ "self_destruct_time": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   100
+  ],
+  "value": "{'self_destruct_time': 20.0}"
+ },
+ "set_child_position": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'set_child_position': True}"
+ },
+ "set_mixlayer_amount_enable": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'set_mixlayer_amount_enable': True}"
+ },
+ "set_mixlayer_layer": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'set_mixlayer_layer': 'PlayerAttackerFeedbackLayer'}"
+ },
+ "should_queue_track": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'should_queue_track': True}"
+ },
+ "skip_if_muted": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'skip_if_muted': True}"
+ },
+ "soundevent_01": {
+  "cls": "SoundEventEditorPropertySoundEvent",
+  "value": "{'soundevent_01': ''}"
+ },
+ "source_soundscape": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'source_soundscape': ''}"
+ },
+ "startpoint_01": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'startpoint_01': 0.0}"
+ },
+ "startpoint_02": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'startpoint_02': 0.0}"
+ },
+ "startpoint_03": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1000
+  ],
+  "value": "{'startpoint_03': 1.174}"
+ },
+ "stop_all_non_music": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_all_non_music': True}"
+ },
+ "stop_at_time": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   100
+  ],
+  "value": "{'stop_at_time': 10.0}"
+ },
+ "stop_bomb_planted": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_bomb_planted': True}"
+ },
+ "stop_got_hostage": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_got_hostage': True}"
+ },
+ "stop_loading": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_loading': True}"
+ },
+ "stop_match_end": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_match_end': True}"
+ },
+ "stop_music": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_music': True}"
+ },
+ "stop_music_except_mvp": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_music_except_mvp': True}"
+ },
+ "stop_selection_music": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_selection_music': True}"
+ },
+ "stop_start_round": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_start_round': True}"
+ },
+ "stop_tensec_count": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_tensec_count': True}"
+ },
+ "stop_won_mvp": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'stop_won_mvp': True}"
+ },
+ "sync_action_to_startround": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'sync_action_to_startround': 1.0}"
+ },
+ "syncpoints_01": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'syncpoints_01': [0.0, 1.996, 3.989, 5.993, 7.992, 9.985, 12.002, 14.007, 15.982, 17.993, 19.98, 21.991, 23.99, 25.995, 27.999, 29.993, 32.003, 33.996, 36.001, 37.988, 39.999, 42.01, 43.991, 45.99, 47.989, 49.994, 51.999, 53.992]}"
+ },
+ "syncpoints_02": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'syncpoints_02': [0.0, 2.002, 4.012, 6.035, 8.07, 10.085, 12.104, 14.122, 16.138, 18.152, 20.166, 22.188, 24.196, 26.214, 28.226, 30.235, 32.256, 34.27, 36.288, 38.306]}"
+ },
+ "syncpoints_03": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'syncpoints_03': [3.075, 4.951, 4.798, 6.838, 8.72, 10.608, 12.485, 14.38, 16.269, 18.153, 20.036, 21.921, 23.81, 25.697, 27.576, 29.467, 31.349, 33.219, 35.115, 37.0, 38.882, 40.764, 42.652, 44.539, 46.421, 48.306, 50.191, 52.076, 53.978, 55.851]}"
+ },
+ "test_mvp_block": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'test_mvp_block': True}"
+ },
+ "time_mixlayer_amount_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Time",
+   "Mixlayer Amount"
+  ],
+  "value": "{'time_mixlayer_amount_curve': [[0.0, 1.0, -0.045188, -0.045188, 2.0, 3.0], [0.137795, 1.0, -3.242553, -3.242553, 3.0, 1.0], [0.308399, 0.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "time_unfiltered_stereo_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Time",
+   "Unfiltered Stereo"
+  ],
+  "value": "{'time_unfiltered_stereo_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [0.542857, 0.0, 0.0, 0.0, 2.0, 3.0], [1.928571, 1.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "time_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Time",
+   "Volume"
+  ],
+  "value": "{'time_volume_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [1.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "type": {
+  "cls": "SoundEventEditorPropertyCombobox",
+  "options": 2,
+  "value": "{'type': 'csgo_mega'}"
+ },
+ "update_track_syncpoint_index": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'update_track_syncpoint_index': True}"
+ },
+ "use_baked_occlusion": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_baked_occlusion': True}"
+ },
+ "use_distance_unfiltered_stereo_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_distance_unfiltered_stereo_mapping_curve': True}"
+ },
+ "use_distance_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_distance_volume_mapping_curve': True}"
+ },
+ "use_doppler": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_doppler': True}"
+ },
+ "use_entity_position_if_local_player": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_entity_position_if_local_player': True}"
+ },
+ "use_fadetime_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_fadetime_volume_mapping_curve': False}"
+ },
+ "use_impact_speed_input_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_impact_speed_input_volume_mapping_curve': True}"
+ },
+ "use_time_unfiltered_stereo_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_time_unfiltered_stereo_mapping_curve': True}"
+ },
+ "use_time_volume_mapping_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_time_volume_mapping_curve': True}"
+ },
+ "use_uiposition": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_uiposition': True}"
+ },
+ "use_velocity_eq": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_velocity_eq': True}"
+ },
+ "use_velocity_volume_curve": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_velocity_volume_curve': True}"
+ },
+ "use_volume_convar": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_volume_convar': True}"
+ },
+ "use_world_position": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'use_world_position': False}"
+ },
+ "value": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'value': 1.0}"
+ },
+ "velocity_volume_curve": {
+  "cls": "SoundEventEditorPropertyCurve",
+  "labels": [
+   "Velocity",
+   "Volume"
+  ],
+  "value": "{'velocity_volume_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [2300.0, 0.0, 0.0, 0.0, 2.0, 3.0], [2600.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}"
+ },
+ "velocity_volume_seek_speed": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   2000
+  ],
+  "value": "{'velocity_volume_seek_speed': 700.0}"
+ },
+ "voice_culling_threshold": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   1
+  ],
+  "value": "{'voice_culling_threshold': 0.01}"
+ },
+ "volume": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume': 1.0}"
+ },
+ "volume_convar": {
+  "cls": "SoundEventEditorPropertyLegacy",
+  "value": "{'volume_convar': 'snd_surf_volume_slide'}"
+ },
+ "volume_fade_initial_input_map_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume_fade_initial_input_map_max': 0.5}"
+ },
+ "volume_fade_initial_input_map_min": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume_fade_initial_input_map_min': 1.0}"
+ },
+ "volume_fade_initial_input_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   100
+  ],
+  "value": "{'volume_fade_initial_input_max': 12.0}"
+ },
+ "volume_fade_initial_input_min": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   100
+  ],
+  "value": "{'volume_fade_initial_input_min': 4.0}"
+ },
+ "volume_fade_out_input_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume_fade_out_input_max': 1.0}"
+ },
+ "volume_random_max": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume_random_max': 0.5}"
+ },
+ "volume_random_min": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": false,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'volume_random_min': -0.5}"
+ },
+ "vsnd_duration": {
+  "cls": "SoundEventEditorPropertyFloat",
+  "only_positive": true,
+  "slider_range": [
+   0,
+   10
+  ],
+  "value": "{'vsnd_duration': 10.0}"
+ },
+ "vsnd_files": {
+  "cls": "SoundEventEditorPropertyFiles",
+  "value": "{'vsnd_files': ['sounds/music/survival_review_victory.vsnd']}"
+ },
+ "vsnd_files_track_01": {
+  "cls": "SoundEventEditorPropertyFiles",
+  "value": "{'vsnd_files_track_01': ''}"
+ },
+ "vsnd_pause_with_game": {
+  "cls": "SoundEventEditorPropertyBool",
+  "value": "{'vsnd_pause_with_game': False}"
+ }
+}

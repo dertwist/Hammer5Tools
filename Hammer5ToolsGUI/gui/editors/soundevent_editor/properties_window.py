@@ -1,4 +1,6 @@
 import ast
+import logging
+
 from gui.common import fast_deepcopy
 
 from gui.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
@@ -12,6 +14,66 @@ from gui.widgets import ErrorInfo
 from PySide6.QtWidgets import QMainWindow, QMenu, QApplication, QTreeWidget
 from PySide6.QtGui import QKeySequence, QKeyEvent, QUndoStack, QUndoCommand, QShortcut
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout
+from gui.editors.soundevent_editor.property_schema import (
+    COLLAPSED_BY_DEFAULT,
+    GROUP_ORDER,
+    GROUP_TITLES,
+    PAIRED,
+    TOGGLE_DEPENDENTS,
+    get_spec,
+    sort_key,
+)
+
+log = logging.getLogger(__name__)
+
+
+class PropertyGroupHeader(QFrame):
+    """Collapsible bar above the properties of one schema group.
+
+    Membership is read off the layout rather than tracked: everything after the
+    header whose ``display_order`` names the same group belongs to it, so
+    adding or deleting a property needs no bookkeeping here. Collapsing only
+    hides widgets, so hidden properties still serialize.
+    """
+
+    def __init__(self, group: str, layout, expanded: bool = True, parent=None):
+        super().__init__(parent)
+        self.group = group
+        self.group_index = GROUP_ORDER[group]
+        self.display_order = (self.group_index, -1)
+        self._layout = layout
+
+        self.setProperty("h5Component", "soundeventGroupHeader")
+        self.setFrameShape(QFrame.NoFrame)
+        self.setMinimumHeight(24)
+        self.setMaximumHeight(24)
+
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+
+        self.show_child = QCheckBox(self)
+        self.show_child.setObjectName("show_child")
+        self.show_child.setFocusPolicy(Qt.NoFocus)
+        self.show_child.setText(GROUP_TITLES[group])
+        self.show_child.setChecked(expanded)
+        self.show_child.clicked.connect(self.apply)
+        row.addWidget(self.show_child)
+
+    def apply(self):
+        """Show or hide every property that follows this header in its group."""
+        visible = self.show_child.isChecked()
+        start = self._layout.indexOf(self)
+        if start < 0:
+            return
+        for index in range(start + 1, self._layout.count()):
+            item = self._layout.itemAt(index)
+            widget = item.widget() if item is not None else None
+            order = getattr(widget, "display_order", None)
+            if order is None or order[0] != self.group_index:
+                break
+            widget.setVisible(visible)
 
 class PropertyStateCommand(QUndoCommand):
     """
@@ -131,6 +193,12 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         # Init variables
         self.tree = tree
+
+        # Display order is grouped, but the file keeps its original key order:
+        # re-saving an untouched event must not reshuffle the .vsndevts.
+        self._source_order: list[str] = []
+        self._frames_by_key: dict = {}
+        self._group_headers: dict = {}
 
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -305,8 +373,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         self.apply_readonly_mode()
     
+    def _set_all_groups_expanded(self, expanded: bool):
+        for header in self._group_headers.values():
+            header.show_child.setChecked(expanded)
+            header.apply()
+
     def collapse_all_properties(self):
-        """Collapse all property frames"""
+        """Collapse all property frames and their group bars"""
+        self._set_all_groups_expanded(False)
         for index in range(self.ui.properties_layout.count()):
             widget = self.ui.properties_layout.itemAt(index).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
@@ -315,7 +389,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     widget.show_child_action()
     
     def expand_all_properties(self):
-        """Expand all property frames"""
+        """Expand all property frames and their group bars"""
+        self._set_all_groups_expanded(True)
         for index in range(self.ui.properties_layout.count()):
             widget = self.ui.properties_layout.itemAt(index).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
@@ -327,42 +402,116 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         i = 0
         while i < self.ui.properties_layout.count():
             widget = self.ui.properties_layout.itemAt(i).widget()
-            if isinstance(widget, SoundEventEditorPropertyFrame):
+            if isinstance(widget, (SoundEventEditorPropertyFrame, PropertyGroupHeader)):
                 self.ui.properties_layout.takeAt(i)
                 widget.deleteLater()
             else:
                 i += 1
+        self._frames_by_key.clear()
+        self._group_headers.clear()
+        self._source_order = []
 
     def populate_properties(self, _data):
-        """Loading properties from given data"""
-        if isinstance(_data, dict):
-            # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
+        """Loading properties from given data, grouped into schema order."""
+        if not isinstance(_data, dict):
+            log.error("Wrong input data format: %s (%s)", _data, type(_data))
+            return
 
-            for item, value in _data.items():
-                if item == 'm_sLabel':
-                    pass
-                else:
-                    self.create_property(item, value)
+        keys = [key for key in _data if key != 'm_sLabel']
+        self._source_order = list(keys)
 
-            # Ensure readonly mode applied after population
-            self.apply_readonly_mode()
+        for entry in self._display_entries(keys):
+            self.create_property_entry({key: _data[key] for key in entry})
 
-            # Sync self.value so callers can read it immediately after populate_properties()
-            self.update_value()
-        else:
-            print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
+        # Ensure readonly mode applied after population
+        self.apply_readonly_mode()
+
+        # Sync self.value so callers can read it immediately after populate_properties()
+        self.update_value()
+
+    def _display_entries(self, keys) -> list:
+        """Keys in display order, with min/max pairs merged into one entry."""
+        present = set(keys)
+        merged = {}
+        absorbed = set()
+        for low, high, _title in PAIRED:
+            if low in present and high in present:
+                merged[low] = (low, high)
+                absorbed.add(high)
+        standalone = [key for key in keys if key not in absorbed]
+        standalone.sort(key=sort_key)
+        return [merged.get(key, (key,)) for key in standalone]
 
 
     # Property
     def create_property(self, key, value):
         """Create frame widget instance"""
-        widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout, tree=self.tree)
+        self.create_property_entry({key: value})
+
+    def create_property_entry(self, data: dict):
+        """Create one frame for a property, or for a merged min/max pair."""
+        widget_instance = SoundEventEditorPropertyFrame(_data=data, widget_list=self.ui.properties_layout, tree=self.tree)
         widget_instance.edited.connect(self.on_update)
         widget_instance.deleted.connect(self._on_property_deleted)
         widget_instance.slider_pressed.connect(self._capture_pre_commit_snapshot)
         widget_instance.committed.connect(self.on_commit)
-        index = self.ui.properties_layout.count() - 1
+
+        keys = list(data)
+        first = keys[0]
+        widget_instance.display_order = sort_key(first)
+        if len(keys) > 1:
+            title = next((t for low, _high, t in PAIRED if low == first), None)
+            if title:
+                widget_instance.ui.property_class.setText(title)
+
+        header = self._ensure_group_header(get_spec(first).group)
+        index = self._insert_index_for(widget_instance.display_order)
         self.ui.properties_layout.insertWidget(index, widget_instance)
+        for key in keys:
+            self._frames_by_key[key] = widget_instance
+        if header is not None and not header.show_child.isChecked():
+            widget_instance.setVisible(False)
+        return widget_instance
+
+    def _insert_index_for(self, order: tuple) -> int:
+        """Layout index that keeps the grouped display order."""
+        layout = self.ui.properties_layout
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            widget = item.widget() if item is not None else None
+            other = getattr(widget, 'display_order', None)
+            if other is not None and other > order:
+                return index
+        return layout.count() - 1
+
+    def _ensure_group_header(self, group: str):
+        """Header bar for a group, created in display order on first use."""
+        header = self._group_headers.get(group)
+        if header is not None:
+            return header
+        header = PropertyGroupHeader(
+            group,
+            self.ui.properties_layout,
+            expanded=group not in COLLAPSED_BY_DEFAULT,
+            parent=self.ui.scrollAreaWidgetContents,
+        )
+        self.ui.properties_layout.insertWidget(self._insert_index_for(header.display_order), header)
+        self._group_headers[group] = header
+        return header
+
+    def _apply_toggle_dependencies(self):
+        """Disable properties whose governing toggle is off."""
+        if self.readonly_mode:
+            return
+        for toggle, dependents in TOGGLE_DEPENDENTS.items():
+            frame = self._frames_by_key.get(toggle)
+            if frame is None:
+                continue
+            value = frame.value.get(toggle) if isinstance(frame.value, dict) else None
+            for key in dependents:
+                dependent = self._frames_by_key.get(key)
+                if dependent is not None and dependent is not frame:
+                    dependent.setEnabled(bool(value))
 
     def _on_property_deleted(self, prop_name: str):
         """Called just before a property frame destroys itself — sets the undo label."""
@@ -376,15 +525,21 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         else:
             return {}
     def get_properties_value(self):
-        """Getting all values from frame widget which in layout"""
-        _data: dict = {}
+        """All frame values, in the key order the event was loaded with.
+
+        Display order is grouped, but reordering the UI must not reorder the
+        saved file, so keys already on the event keep their original position
+        and only new ones are appended.
+        """
+        collected: dict = {}
         for index in range(self.ui.properties_layout.count()):
-            if index is not None:
-                try:
-                    _data.update(self.get_property_value(index))
-                except:
-                    pass
-        return _data
+            try:
+                collected.update(self.get_property_value(index))
+            except Exception:
+                pass
+        ordered = {key: collected.pop(key) for key in self._source_order if key in collected}
+        ordered.update(collected)
+        return ordered
 
     def _restore_state(self, state: dict):
         """Rebuild the properties UI from a full state snapshot."""
@@ -455,6 +610,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 self.undo_stack.push(PropertyStateCommand(self, element_key, before, after, desc))
         else:
             self.update_value()
+        self._apply_toggle_dependencies()
         self.edited.emit()
 
     def _capture_pre_commit_snapshot(self):
@@ -536,6 +692,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 self.play_button.setEnabled(True)
             except Exception:
                 pass
+            self._apply_toggle_dependencies()
         except Exception:
             pass
 

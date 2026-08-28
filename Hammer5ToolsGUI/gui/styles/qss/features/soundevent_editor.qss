@@ -183,6 +183,7 @@ QFrame#frame[h5Component="soundeventPropertyFrame"] {
 
 /* property/frame.py: SoundEventEditorPropertyFrame header bar. */
 QFrame[h5Component="soundeventPropertyHeader"],
+QFrame[h5Component="soundeventGroupHeader"],
 QFrame#header {
     background-color: @hex_363636;
 }
@@ -207,6 +208,7 @@ QFrame#header QLabel#label_2 {
 }
 
 QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child,
+QFrame[h5Component="soundeventGroupHeader"] QCheckBox#show_child,
 QFrame#header QCheckBox#show_child {
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
@@ -224,18 +226,21 @@ QFrame#header QCheckBox#show_child {
     background-color: @hex_363636;
 }
 QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child::indicator:checked,
+QFrame[h5Component="soundeventGroupHeader"] QCheckBox#show_child::indicator:checked,
 QFrame#header QCheckBox#show_child::indicator:checked {
     image: url(://icons/arrow_drop_down.png);
     height: 14px;
     width: 14px;
 }
 QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child::indicator:unchecked,
+QFrame[h5Component="soundeventGroupHeader"] QCheckBox#show_child::indicator:unchecked,
 QFrame#header QCheckBox#show_child::indicator:unchecked {
     image: url(://icons/arrow_drop_right.png);
     height: 14px;
     width: 14px;
 }
 QFrame[h5Component="soundeventPropertyHeader"] QCheckBox#show_child:hover,
+QFrame[h5Component="soundeventGroupHeader"] QCheckBox#show_child:hover,
 QFrame#header QCheckBox#show_child:hover {
     background-color: @selection;
     color: @selection_text;
@@ -358,3 +363,8 @@ QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="ffb300"] { color: @hex_
 QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="5ab55e"] { color: @hex_5ab55e; }
 QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="29b6f6"] { color: @hex_29b6f6; }
 QLabel[h5Component="soundeventDbInfoBadge"][h5ColorRole="97979c"] { color: @hex_97979c; }
+
+/* properties_window.py: PropertyGroupHeader, the collapsible group bar. */
+QFrame[h5Component="soundeventGroupHeader"] QCheckBox#show_child {
+    padding-right: 8px;
+}

@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal
 from gui.widgets.popup_menu.main import PopupMenu
 from gui.settings.common import get_addon_dir
 from gui.common import convert_snake_case
+from gui.editors.soundevent_editor.property_tooltips import get_tooltip
 try:
     from gui.editors.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 except:
@@ -44,6 +45,7 @@ class SoundEventEditorPropertyBase(QWidget):
             label_text = "Label"
         label_instance = QLabel()
         label_instance.setText(convert_snake_case(label_text))
+        label_instance.setToolTip(get_tooltip(label_text))
         label_instance.setProperty("h5Component", "editorPropertyLabel")
         label_instance.setProperty("h5ColorRole", self.init_label_color().lstrip("#").lower())
         self.root_layout.addWidget(label_instance)
