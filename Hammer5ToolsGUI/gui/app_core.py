@@ -48,7 +48,6 @@ from gui.editors.loading_editor.main import LoadingEditorMainWindow
 from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from gui.forms.create_addon.main import CreateAddonDialog
 from gui.other.addon_functions import delete_addon, launch_addon
-from gui.other.file_association import check_association, setup_all_associations
 from gui.updater.check import check_updates
 from gui.forms.export.main import ExportAndImportAddonDialog
 from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
@@ -169,7 +168,7 @@ class MainWindow(QMainWindow):
         if get_settings_bool('APP', 'show_about_on_startup', True):
             QTimer.singleShot(500, self.open_about)
         
-        QTimer.singleShot(2000, self.quick_actions.prompt_for_file_associations)
+        QTimer.singleShot(2000, self.quick_actions.setup_file_associations)
 
         self.addon_watcher = QFileSystemWatcher(self)
         addons_dir = cs2_addons_dir("content")

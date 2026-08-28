@@ -1,6 +1,5 @@
 import logging
 import sys
-from PySide6.QtWidgets import QMessageBox
 from core.runtime_paths import resolve_runtime_paths
 
 log = logging.getLogger(__name__)
@@ -64,7 +63,7 @@ def check_association(extension):
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\Classes\\{extension}", 0, winreg.KEY_READ) as key:
             prog_id, _ = winreg.QueryValueEx(key, "")
-            is_us = prog_id in ["Hammer5Tools.SmartProp", "Hammer5Tools.SoundEvent", "Hammer5Tools.VSnap", "Hammer5Tools.Batch"]
+            is_us = prog_id in ["Hammer5Tools.SmartProp", "Hammer5Tools.SoundEvent", "Hammer5Tools.Batch"]
             return prog_id, is_us
     except FileNotFoundError:
         return None, False
@@ -96,7 +95,7 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
             winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{open_cmd}" "%1"')
             
         # Add "Edit with Hammer5Tools" for source asset formats handled by an editor.
-        if extension in [".vsmart", ".vsndevts", ".vsnap"]:
+        if extension in [".vsmart", ".vsndevts"]:
             edit_key_path = f"{prog_key_path}\\shell\\editwith"
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, edit_key_path) as key:
                 winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "Edit With Hammer5Tools")
@@ -109,52 +108,25 @@ def register_extension(extension, prog_id, description, icon_path, open_cmd):
         log.error(f"Failed to register extension {extension}: {e}")
         return False
 
-def setup_all_associations(force=False, parent_window=None):
-    """
-    Sets up all associations (.vsmart, .vsndevts, .vsnap, .hbat).
-    If force is False, it will prompt the user if an extension is already taken.
-    """
-    fileedit = get_fileedit_path()
-    smartprop_icon = get_smartprop_icon_path()
-    vsnd_icon = get_vsnd_icon_path()
-    
-    associations = [
-        (".vsmart", "Hammer5Tools.SmartProp", "SmartProp File", smartprop_icon),
-        (".vsndevts", "Hammer5Tools.SoundEvent", "SoundEvent File", vsnd_icon),
-        (".vsnap", "Hammer5Tools.VSnap", "Particle Snapshot File", smartprop_icon),
-        (".hbat", "Hammer5Tools.Batch", "Hammer Batch File", smartprop_icon)
-    ]
-    
-    for ext, prog_id, desc, icon in associations:
-        current_prog, is_us = check_association(ext)
-        
-        should_register = False
-        if is_us or current_prog is None or force:
-            should_register = True
-        else:
-            # It's taken by something else
-            if parent_window:
-                reply = QMessageBox.question(
-                    parent_window,
-                    "File Association Conflict",
-                    f"The extension {ext} is already associated with '{current_prog}'.\n\n"
-                    f"Do you want to change it to Hammer5Tools?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    should_register = True
-            else:
-                # No UI context, maybe we skip or force? 
-                # If it's a first launch check, we might want to skip or just prompt later.
-                pass
-        
-        if should_register:
-            register_extension(ext, prog_id, desc, icon, fileedit)
-            
-    # Notify Shell
+ASSOCIATIONS = {
+    ".vsmart": ("Hammer5Tools.SmartProp", "SmartProp File", get_smartprop_icon_path),
+    ".vsndevts": ("Hammer5Tools.SoundEvent", "SoundEvent File", get_vsnd_icon_path),
+    ".hbat": ("Hammer5Tools.Batch", "Hammer Batch File", get_smartprop_icon_path),
+}
+
+
+def _notify_shell():
     try:
         import ctypes
-        ctypes.windll.shell32.SHChangeNotify(0x08000000, 0, None, None) # SHCNE_ASSOCCHANGED
+        ctypes.windll.shell32.SHChangeNotify(0x08000000, 0, None, None)  # SHCNE_ASSOCCHANGED
     except Exception:
         pass
+
+
+def setup_associations(extensions=None):
+    """Registers the given extensions (all of them by default), no prompting."""
+    fileedit = get_fileedit_path()
+    for ext in (extensions or ASSOCIATIONS):
+        prog_id, desc, icon = ASSOCIATIONS[ext]
+        register_extension(ext, prog_id, desc, icon(), fileedit)
+    _notify_shell()

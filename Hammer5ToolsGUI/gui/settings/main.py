@@ -19,7 +19,7 @@ from gui.settings.common import (
 )
 from gui.common import apply_title_bar_theme, refresh_title_bars, Presets_Path, app_dir, get_channel, get_build_channel
 from gui.widgets.common import Button
-from gui.other.file_association import setup_all_associations
+from gui.other.file_association import setup_associations
 
 
 class ActionButtonsPanel(QFrame):
@@ -150,9 +150,12 @@ class PreferencesDialog(QDialog):
             "Both are rebuilt on the next browse."
         )
         row_app.addWidget(self.cleanup_model_browser_button)
-        self.btn_force_association = Button(text=" Force Associate File Extensions (.vsmart, .vsndevts, .hbat)")
-        self.btn_force_association.set_icon_sync()
-        row_app.addWidget(self.btn_force_association)
+        self.association_buttons = {}
+        for ext, label in ((".vsmart", "SmartProp"), (".vsndevts", "SoundEvents"), (".hbat", "Hammer Batch")):
+            button = Button(text=f" Associate {ext} ({label})")
+            button.set_icon_sync()
+            row_app.addWidget(button)
+            self.association_buttons[ext] = button
         row_app.addStretch()
         layout_other.addLayout(row_app)
 
@@ -482,7 +485,8 @@ class PreferencesDialog(QDialog):
         self.spe_viewport_msaa.currentIndexChanged.connect(
             lambda: set_settings_value('SmartPropEditor', 'viewport_msaa', int(self.spe_viewport_msaa.currentData()))
         )
-        self.btn_force_association.clicked.connect(self.force_file_associations)
+        for ext, button in self.association_buttons.items():
+            button.clicked.connect(lambda _=False, ext=ext: self.force_file_association(ext))
 
     def browse_archive(self):
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Archive Path", os.getcwd())
@@ -566,9 +570,9 @@ class PreferencesDialog(QDialog):
         from gui.other.console import open_console
         open_console()
 
-    def force_file_associations(self):
-        setup_all_associations(force=True, parent_window=self)
-        QMessageBox.information(self, "File Associations", "File associations have been successfully updated.")
+    def force_file_association(self, extension):
+        setup_associations([extension])
+        QMessageBox.information(self, "File Associations", f"{extension} is now associated with Hammer5Tools.")
 
 
 

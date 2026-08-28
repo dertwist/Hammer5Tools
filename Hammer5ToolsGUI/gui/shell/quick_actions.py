@@ -8,10 +8,10 @@ is why it does not belong to any one tab.
 import logging
 import os
 
-from PySide6.QtWidgets import QMessageBox, QSizePolicy, QSpacerItem
+from PySide6.QtWidgets import QMessageBox
 
 from gui.common import JsonToKv3, compile as run_compile
-from gui.other.file_association import check_association, setup_all_associations
+from gui.other.file_association import setup_associations
 from gui.settings.common import cs2_bin_dir, get_addon_dir, get_addon_name, get_settings_bool
 from gui.forms.quick_create.main import QuickCreateDialog
 
@@ -19,41 +19,15 @@ log = logging.getLogger(__name__)
 
 
 class QuickActions:
-    """File-association prompt plus the quick vmdl/batch/compile verbs."""
+    """File associations plus the quick vmdl/batch/compile verbs."""
 
     def __init__(self, window):
         self._window = window
 
-    def prompt_for_file_associations(self):
-        if not get_settings_bool("APP", "check_associations", True):
-            return
-        _, is_us = check_association(".vsmart")
-        if is_us:
-            return
-
-        window = self._window
-        msg_box = QMessageBox(window)
-        msg_box.setIcon(QMessageBox.Question)
-        msg_box.setWindowTitle("File Association Setup")
-        msg_box.setText("Associate .vsmart files with Hammer5Tools?")
-        msg_box.setInformativeText(
-            "This lets you double-click SmartProp (.vsmart) files to open them directly."
-        )
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg_box.setDefaultButton(QMessageBox.Yes)
-
-        # QMessageBox shrink-wraps to its text, which wraps the message into a
-        # cramped narrow column. Force a comfortable minimum width by stretching
-        # a spacer across the bottom row of its grid layout.
-        grid = msg_box.layout()
-        if grid is not None:
-            grid.addItem(
-                QSpacerItem(440, 0, QSizePolicy.Minimum, QSizePolicy.Expanding),
-                grid.rowCount(), 0, 1, grid.columnCount(),
-            )
-
-        if msg_box.exec() == QMessageBox.Yes:
-            setup_all_associations(force=False, parent_window=window)
+    def setup_file_associations(self):
+        """Silently claim our extensions on startup."""
+        if get_settings_bool("APP", "check_associations", True):
+            setup_associations()
 
     def confirm_addon_for(self, addon_hint) -> bool:
         """A file may belong to an addon other than the active one. Returns
