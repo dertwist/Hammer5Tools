@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 from PySide6.QtWidgets import (QWidget, QHBoxLayout, QFrame)
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Qt, QEvent
+from gui.styles import theme
 from gui.widgets import BoxSlider
 from gui.editors.soundevent_editor.property.curve.algorithm import (CurvePoint, setup_all_curve_values, sample_curve)
 from gui.widgets.common import DeleteButton, Button
@@ -197,10 +198,7 @@ class SoundEventEditorPropertyCurve(QWidget):
     MIN_POINTS_REQUIRED = 2
     CURVE_STEPS = 256
     GRID_ALPHA = 0.3
-    CURVE_COLOR = '#898989'
     CURVE_WIDTH = 1.5
-    BACKGROUND_COLOR = '#2e2e2e'
-    AXIS_COLOR = '#353535'
     AXIS_WIDTH = 2
 
     def __init__(self, parent=None, label_text: str = None, value: dict = None, labels=None):
@@ -247,18 +245,39 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.graph_widget = pg.PlotWidget()
         self.graph_widget.setContextMenuPolicy(Qt.NoContextMenu)
         self.graph_widget.setAntialiasing(True)
-        self.graph_widget.setBackground(self.BACKGROUND_COLOR)
         self.ui.verticalLayout_4.addWidget(self.graph_widget)
 
         self.plot_item = self.graph_widget.getPlotItem()
         self.plot_item.setMenuEnabled(False)
         self.plot_item.setMouseEnabled(x=False, y=False)
         self.plot_item.showGrid(x=True, y=True, alpha=self.GRID_ALPHA)
+        self._apply_plot_theme()
 
+    def _apply_plot_theme(self):
+        """Repaint the plot from the active theme.
+
+        pyqtgraph pens and brushes are plain objects the stylesheet never
+        reaches, so they have to be re-made on every theme change.
+        """
+        colors = theme.get_theme()
+        self.graph_widget.setBackground(colors.background)
         for axis in ["bottom", "left"]:
             self.plot_item.getAxis(axis).setPen(
-                pg.mkPen(color=self.AXIS_COLOR, width=self.AXIS_WIDTH)
+                pg.mkPen(color=colors.border, width=self.AXIS_WIDTH)
             )
+            self.plot_item.getAxis(axis).setTextPen(pg.mkPen(color=colors.text_muted))
+        self.plot_graph()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        # A live theme switch repolishes every widget, which lands here.
+        if event.type() == QEvent.StyleChange:
+            self._apply_plot_theme()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Widgets built before the switch catch up the first time they show.
+        self._apply_plot_theme()
 
     def setup_connections(self):
         """Setup widget connections"""
@@ -307,7 +326,7 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.plot_item.plot(
             distances,
             volumes,
-            pen=pg.mkPen(self.CURVE_COLOR, width=self.CURVE_WIDTH)
+            pen=pg.mkPen(theme.get_theme().text_muted, width=self.CURVE_WIDTH)
         )
 
     def add_datapoint(self, values: list = None):
