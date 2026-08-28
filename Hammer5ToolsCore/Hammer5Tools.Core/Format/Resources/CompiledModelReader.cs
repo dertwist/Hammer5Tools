@@ -355,15 +355,21 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                 var isWaterShader = shaderName.Contains("water", StringComparison.OrdinalIgnoreCase);
                 var isTranslucentShader = isGlassShader || isWaterShader || shaderName.Contains("translucent", StringComparison.OrdinalIgnoreCase) || shaderName.Contains("refract", StringComparison.OrdinalIgnoreCase) || shaderName.Contains("particle", StringComparison.OrdinalIgnoreCase);
 
+                // F_BLEND_MODE is an enum, not a bool: 1 = Translucent, 2 = Alpha Test
+                // (csgo_static_overlay).  Treating any non-zero value as translucent
+                // blended alpha-tested decals instead of cutting them out.
+                var blendMode = IntParameter(material, "F_BLEND_MODE");
+
                 var alphaTest = IntParameter(material, "F_ALPHA_TEST") != 0
                     || IntParameter(material, "F_OPACITY_MASK") != 0
-                    || IntParameter(material, "F_CUTOUT") != 0;
+                    || IntParameter(material, "F_CUTOUT") != 0
+                    || blendMode == 2;
 
                 var translucent = isTranslucentShader
                     || IntParameter(material, "F_TRANSLUCENT") != 0
                     || IntParameter(material, "F_TRANSLUCENCY") != 0
                     || IntParameter(material, "F_TRANSLUCENT_DECAL") != 0
-                    || IntParameter(material, "F_BLEND_MODE") != 0
+                    || blendMode == 1
                     || IntParameter(material, "F_OVERLAY") != 0
                     || IntParameter(material, "F_ADDITIVE_BLEND") != 0;
 
@@ -387,8 +393,14 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                     VectorParameter(material, "g_vColorTint1",
                     VectorParameter(material, "g_vColorTint0", Vector4.One)))));
 
-                if (isGlassShader && colorTint.W >= 1.0f)
-                    colorTint = new Vector4(colorTint.X, colorTint.Y, colorTint.Z, 0.35f);
+                // g_vColorTint's alpha is a tint slot, not surface opacity -- csgo_environment
+                // and friends write 0 there to mean "no tint", which is most shipped
+                // materials.  Taking it as opacity made every alpha-tested material discard
+                // wholesale and every translucent one vanish.  Scalar opacity lives in
+                // g_flOpacityScale; glass keeps a see-through default when it authors none.
+                var opacity = FloatParameter(material, "g_flOpacityScale",
+                    FloatParameter(material, "g_flOpacity", isGlassShader ? 0.35f : 1.0f));
+                colorTint = new Vector4(colorTint.X, colorTint.Y, colorTint.Z, Math.Clamp(opacity, 0.0f, 1.0f));
 
                 if (translucency is not null)
                 {

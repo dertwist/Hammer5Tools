@@ -110,6 +110,32 @@ public sealed class CompiledModelReaderTests
         await Assert.That(wireMesh).IsNotNull();
         await Assert.That(wireMesh!.Material.AlphaMode).IsEqualTo("MASK");
         await Assert.That(wireMesh.Material.DoubleSided).IsTrue();
+
+        // These materials write g_vColorTint "[1 1 1 0]" -- a tint slot, not opacity.
+        // Reading that 0 as opacity made the whole surface fail the alpha test and
+        // discard, so the fence rendered with no netting at all.
+        await Assert.That(netMesh.Material.BaseColorFactor.W).IsEqualTo(1.0f);
+        await Assert.That(wireMesh.Material.BaseColorFactor.W).IsEqualTo(1.0f);
+    }
+
+    [Test]
+    public async Task ReadsBlendModeEnumAsAlphaTestOrTranslucent()
+    {
+        var gameDirectory = @"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\game";
+        if (!Directory.Exists(gameDirectory))
+            return;
+
+        // csgo_static_overlay's F_BLEND_MODE is an enum, not a bool: 2 means Alpha Test.
+        using var helm = new CompiledModelReader(gameDirectory, "de_helm");
+        var alphaTested = helm.ReadStandaloneMaterial("materials/helm/decal_text_01/decal_text_01.vmat");
+        await Assert.That(alphaTested.IsSuccess).IsTrue();
+        await Assert.That(alphaTested.Value!.AlphaMode).IsEqualTo("MASK");
+
+        using var firewatch = new CompiledModelReader(gameDirectory, "de_firewatch");
+        var translucent = firewatch.ReadStandaloneMaterial("materials/dev/gray_grid_decal.vmat");
+        await Assert.That(translucent.IsSuccess).IsTrue();
+        await Assert.That(translucent.Value!.AlphaMode).IsEqualTo("BLEND");
+        await Assert.That(translucent.Value.BaseColorFactor.W).IsEqualTo(1.0f);
     }
 
     [Test]
