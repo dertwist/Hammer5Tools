@@ -47,6 +47,9 @@ class MaterialData:
     alpha_mode: str = "OPAQUE"     # "OPAQUE" | "MASK" | "BLEND"
     alpha_cutoff: float = 0.5
     double_sided: bool = False
+    # Coverage-preserving mip chain for base_color_img, built on the load thread for
+    # MASK materials only (see build_alpha_coverage_mipmaps).  None => let GL build them.
+    base_color_mips: Optional[list] = None
     wrap_u: int = 0
     wrap_v: int = 0
     uv_set: int = 0
@@ -133,6 +136,51 @@ class GPUMesh:
 # Preview textures are capped to this size.  Downscaling on the (background)
 # load thread bounds both VRAM and the per-texture CPU cost.
 MAX_TEXTURE_DIM = 1024
+
+
+def _halve(image: np.ndarray) -> np.ndarray:
+    """Box-filter one RGBA float32 level down to the next, matching GL's mip sizes."""
+    height, width = image.shape[0], image.shape[1]
+    if height > 1:
+        image = image[:height // 2 * 2].reshape(height // 2, 2, width, 4).mean(axis=1)
+    if width > 1:
+        image = image[:, :width // 2 * 2].reshape(image.shape[0], width // 2, 2, 4).mean(axis=2)
+    return image
+
+
+def build_alpha_coverage_mipmaps(image: np.ndarray, cutoff: float) -> list:
+    """Build a mip chain for an alpha-tested texture that keeps its alpha coverage.
+
+    ``glGenerateMipmap`` box-filters alpha exactly like colour, which is wrong for a
+    binary alpha test: averaging drags a sparse cutout toward its mean alpha, and once
+    that mean falls under the cutoff every texel fails the test and the surface vanishes.
+    The effect is worst on the shapes that need it most -- chain-link netting covers
+    ~18% of its texels and razor wire ~2%, and both test to 0% coverage by mip 5.
+
+    So rescale each level's alpha to hold level 0's coverage.  The scale that does it is
+    ``cutoff / q``, where ``q`` is the (1 - coverage) quantile of the level's alpha: the
+    value that leaves exactly the original fraction of texels above the cutoff.  Levels
+    are rounded rather than truncated, because a texel landing on 127.99 quantises to
+    127 and would fail a 127.5 cutoff, silently undoing the correction.
+
+    Returns the whole chain (level 0 first) as contiguous uint8 RGBA arrays.
+    """
+    cut = float(cutoff) * 255.0
+    target = float((image[:, :, 3] >= cut).mean())
+    levels = [np.ascontiguousarray(image)]
+    current = image.astype(np.float32)
+    # Fully opaque or fully clipped: no coverage to hold on to, plain box filtering.
+    preserve = 0.0 < target < 1.0
+    while current.shape[0] > 1 or current.shape[1] > 1:
+        current = _halve(current)
+        level = current
+        if preserve:
+            quantile = float(np.quantile(current[:, :, 3], 1.0 - target))
+            if quantile > 1e-3:
+                level = current.copy()
+                level[:, :, 3] = np.minimum(current[:, :, 3] * (cut / quantile), 255.0)
+        levels.append(np.ascontiguousarray(np.rint(level).astype(np.uint8)))
+    return levels
 
 
 # Async load worker
@@ -237,6 +285,7 @@ class MeshCache(QObject):
         self._material_textures: Dict[str, list] = {}
         self._material_loading: set = set()
         self._material_failed: set = set()
+        self._anisotropy: Optional[float] = None
         self._thread_pool = QThreadPool()
         # Cap concurrency: reads run fully in parallel (each worker owns its VRF
         # file loader), so a few worker threads speed up multi-model scenes
@@ -529,7 +578,8 @@ class MeshCache(QObject):
         """
         gpu_mat = GPUMaterial(
             name=mat.name,
-            base_tex=self._upload_texture(mat.base_color_img, mat.wrap_u, mat.wrap_v),
+            base_tex=self._upload_texture(mat.base_color_img, mat.wrap_u, mat.wrap_v,
+                                          mips=mat.base_color_mips),
             normal_tex=self._upload_texture(mat.normal_img, mat.wrap_u, mat.wrap_v),
             mr_tex=self._upload_texture(mat.mr_img, mat.wrap_u, mat.wrap_v),
             ao_tex=self._upload_texture(mat.ao_img, mat.wrap_u, mat.wrap_v),
@@ -552,11 +602,32 @@ class MeshCache(QObject):
                                     gpu_mat.ao_tex, gpu_mat.emissive_tex) if tex]
         return gpu_mat, textures
 
-    def _upload_texture(self, img_data: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 0) -> int:
+    def _max_anisotropy(self) -> float:
+        """The driver's anisotropic-filter limit (1.0 when unsupported), queried once.
+
+        Without anisotropy a surface seen edge-on picks its mip from the *major* axis of
+        a very elongated texel footprint, jumping several levels deeper than the surface
+        actually needs.  On alpha-tested cutouts that is what makes netting dissolve at
+        grazing angles even though it looks fine head-on.
+        """
+        if self._anisotropy is None:
+            from OpenGL import GL
+            try:
+                from OpenGL.GL.EXT.texture_filter_anisotropic import GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                self._anisotropy = min(16.0, float(GL.glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT)))
+            except Exception:
+                self._anisotropy = 1.0
+        return self._anisotropy
+
+    def _upload_texture(self, img_data: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 0,
+                        mips: Optional[list] = None) -> int:
         """Upload a pre-decoded RGBA uint8 array as a 2D texture; 0 if absent.
 
         All the expensive pixel work (decode, downscale, flip) already happened on
         the load worker thread, so here we only touch GL — glTexImage2D + mipmaps.
+        ``mips`` is a pre-built chain (level 0 first) from
+        :func:`build_alpha_coverage_mipmaps`; when given it is uploaded level by level
+        instead of letting GL box-filter its own, which would wreck alpha coverage.
         """
         if img_data is None or getattr(img_data, "size", 0) == 0:
             return 0
@@ -570,6 +641,11 @@ class MeshCache(QObject):
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
 
+            anisotropy = self._max_anisotropy()
+            if anisotropy > 1.0:
+                from OpenGL.GL.EXT.texture_filter_anisotropic import GL_TEXTURE_MAX_ANISOTROPY_EXT
+                GL.glTexParameterf(GL.GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy)
+
             wrap_modes = {
                 0: GL.GL_REPEAT,
                 1: GL.GL_MIRRORED_REPEAT,
@@ -581,7 +657,14 @@ class MeshCache(QObject):
 
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, gl_wrap_u)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, gl_wrap_v)
-            GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
+            if mips:
+                for level, image in enumerate(mips[1:], start=1):
+                    GL.glTexImage2D(GL.GL_TEXTURE_2D, level, GL.GL_RGBA,
+                                    image.shape[1], image.shape[0], 0,
+                                    GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, image)
+                GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LEVEL, len(mips) - 1)
+            else:
+                GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             return int(texture_id)
         except Exception as e:

@@ -7,7 +7,8 @@ from typing import List, Optional
 import numpy as np
 
 from core.bridge.core import CoreBridge
-from gui.editors.smartprop_editor.viewport_3d.mesh_cache import MaterialData, MeshData, SubMeshData, MAX_TEXTURE_DIM
+from gui.editors.smartprop_editor.viewport_3d.mesh_cache import (
+    MaterialData, MeshData, SubMeshData, MAX_TEXTURE_DIM, build_alpha_coverage_mipmaps)
 
 
 def _game_directory() -> str:
@@ -29,12 +30,18 @@ def _texture(value):
 
 def _material(value) -> MaterialData:
     textures = tuple(_texture(item) for item in value.textures)
+    # Alpha-tested cutouts need a coverage-preserving mip chain or they dissolve with
+    # distance; build it here, on the load thread, so the GL upload stays a plain copy.
+    mips = None
+    if value.alpha_mode == "MASK" and textures[0] is not None:
+        mips = build_alpha_coverage_mipmaps(textures[0], value.alpha_cutoff)
     return MaterialData(
         name=value.name, base_color_img=textures[0], normal_img=textures[1], mr_img=textures[2],
         ao_img=textures[3], emissive_img=textures[4], base_color_factor=value.base_color_factor,
         metallic_factor=value.metallic_factor, roughness_factor=value.roughness_factor,
         emissive_factor=value.emissive_factor, alpha_mode=value.alpha_mode, alpha_cutoff=value.alpha_cutoff,
-        double_sided=value.double_sided, wrap_u=value.wrap_u, wrap_v=value.wrap_v, uv_set=value.uv_set,
+        double_sided=value.double_sided, base_color_mips=mips,
+        wrap_u=value.wrap_u, wrap_v=value.wrap_v, uv_set=value.uv_set,
         uv_scale=value.uv_scale, uv_offset=value.uv_offset, uv_center=value.uv_center,
         uv_rotation=value.uv_rotation)
 
