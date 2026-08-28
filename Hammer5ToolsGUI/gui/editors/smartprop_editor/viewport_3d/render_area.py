@@ -7,8 +7,8 @@ import math
 import time
 import numpy as np
 
-from PySide6.QtCore import Qt, Signal, QPointF, QTimer
-from PySide6.QtGui import QColor, QImage, QMouseEvent
+from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QTimer
+from PySide6.QtGui import QColor, QCursor, QImage, QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 
@@ -43,6 +43,69 @@ def compile_shader(shader_type, source):
         GL.glDeleteShader(shader)
         raise RuntimeError(f"Shader compilation failed: {log}")
     return shader
+
+
+# How close (px) the hidden pointer may get to a viewport edge before it is
+# recentered.  Recentering costs one discarded frame of input, so do it rarely.
+FLY_EDGE_MARGIN = 64
+
+# Largest single-event motion treated as real input, as a fraction of the viewport's
+# longest side.  A recenter jumps the pointer by (half the viewport - FLY_EDGE_MARGIN),
+# so this sits below that and above anything a hand can produce in one frame.
+FLY_MAX_DELTA = 0.35
+
+
+def fly_lock_cursor(widget):
+    """Hide the cursor and remember where it was when fly mode started."""
+    widget._fly_anchor_global = QCursor.pos()
+    widget.setCursor(Qt.BlankCursor)
+
+
+def fly_unlock_cursor(widget):
+    """Put the cursor back where fly mode started and show it again."""
+    anchor = getattr(widget, "_fly_anchor_global", None)
+    if anchor is not None:
+        QCursor.setPos(anchor)
+        widget._fly_anchor_global = None
+    widget.unsetCursor()
+
+
+def fly_look_delta(widget, event):
+    """Look delta for a fly-mode move, keeping the hidden pointer in the viewport.
+
+    The delta is the plain event-to-event motion -- warping the OS cursor on every
+    move makes the look stutter, because each warp races the next real move.  So
+    the pointer is only recentered once it comes within ``FLY_EDGE_MARGIN`` of an
+    edge, which is often enough that it never escapes the widget (and never lands
+    a click elsewhere on release) but rare enough to stay smooth.
+
+    Moves already queued when a recenter happens still carry their pre-warp
+    coordinates, so each one reads as a jump back across the viewport -- left
+    alone they spin the camera continuously.  A move further than
+    ``FLY_MAX_DELTA`` of the viewport is therefore dropped without advancing the
+    reference point: no real flick covers that in one event, and dropping it
+    leaves the reference at the center so tracking resumes as soon as the queue
+    drains.
+    """
+    pos = event.position()
+    last = widget._last_mouse_pos
+    dx, dy = pos.x() - last.x(), pos.y() - last.y()
+
+    w, h = widget.width(), widget.height()
+    limit = FLY_MAX_DELTA * max(w, h)
+    if abs(dx) > limit or abs(dy) > limit:
+        return 0.0, 0.0
+
+    margin = FLY_EDGE_MARGIN
+    if pos.x() < margin or pos.y() < margin or pos.x() > w - margin or pos.y() > h - margin:
+        center = QPoint(w // 2, h // 2)
+        QCursor.setPos(widget.mapToGlobal(center))
+        # Measure the next move from where the pointer now is, so the warp itself
+        # contributes no look input.
+        widget._last_mouse_pos = QPointF(center)
+    else:
+        widget._last_mouse_pos = pos
+    return dx, dy
 
 
 def link_program(vertex_source, fragment_source):
@@ -1638,7 +1701,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if not self._fly_timer.isActive():
                 self._fly_timer.start()
-            self.setCursor(Qt.BlankCursor)
+            fly_lock_cursor(self)
             self.update()
             return
         elif event.button() == Qt.LeftButton:
@@ -1662,8 +1725,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         dy = pos.y() - self._last_mouse_pos.y()
 
         if self._is_flying:
-            self.camera.look(dx, dy)
-            self._last_mouse_pos = pos
+            self.camera.look(*fly_look_delta(self, event))
             self.update()
             return
 
@@ -1827,7 +1889,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if self._fly_timer.isActive():
                 self._fly_timer.stop()
-            self.unsetCursor()
+            fly_unlock_cursor(self)
             self.current_transform_text = None
             self.update()
             return
@@ -1892,7 +1954,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if self._fly_timer.isActive():
                 self._fly_timer.stop()
-            self.unsetCursor()
+            fly_unlock_cursor(self)
             self.current_transform_text = None
             self.update()
         super().focusOutEvent(event)

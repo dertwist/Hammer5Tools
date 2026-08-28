@@ -26,7 +26,9 @@ from gui.editors.smartprop_editor.viewport_3d.camera import (
     Camera, SOURCE2_TO_GL, translation_matrix, scale_matrix,
 )
 from gui.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
-from gui.editors.smartprop_editor.viewport_3d.render_area import link_program, safe_normal_matrix
+from gui.editors.smartprop_editor.viewport_3d.render_area import (
+    link_program, safe_normal_matrix, fly_lock_cursor, fly_unlock_cursor, fly_look_delta,
+)
 from gui.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
     PICKING_VERTEX_SHADER, PICKING_FRAGMENT_SHADER,
@@ -584,7 +586,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if not self._fly_timer.isActive():
                 self._fly_timer.start()
-            self.setCursor(Qt.BlankCursor)
+            fly_lock_cursor(self)
             self.update()
             return
         elif event.button() == Qt.LeftButton:
@@ -608,8 +610,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self._sync_gizmo_settings(event)
 
         if self._is_flying:
-            self.camera.look(dx, dy)
-            self._last_mouse_pos = pos
+            self.camera.look(*fly_look_delta(self, event))
             self.update()
             return
 
@@ -662,7 +663,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if self._fly_timer.isActive():
                 self._fly_timer.stop()
-            self.unsetCursor()
+            fly_unlock_cursor(self)
             self.update()
             return
         self._action = None
@@ -707,7 +708,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             self._pressed_keys.clear()
             if self._fly_timer.isActive():
                 self._fly_timer.stop()
-            self.unsetCursor()
+            fly_unlock_cursor(self)
             self.update()
         super().focusOutEvent(event)
 

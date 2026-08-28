@@ -76,3 +76,99 @@ def test_camera_move_fly_strafe_and_vertical():
 
     expected_pos = initial_pos + right * 20.0 + np.array([0.0, 30.0, 0.0], dtype=np.float32)
     assert np.allclose(cam.position, expected_pos, atol=1e-4)
+
+
+
+class _FakePoint:
+    def __init__(self, x, y):
+        self._x, self._y = x, y
+
+    def x(self):
+        return self._x
+
+    def y(self):
+        return self._y
+
+
+class _FakeEvent:
+    def __init__(self, x, y):
+        self._pos = _FakePoint(x, y)
+
+    def position(self):
+        return self._pos
+
+
+class _FakeWidget:
+    """Just the bits of the viewport widget fly_look_delta touches."""
+
+    def __init__(self):
+        self._last_mouse_pos = _FakePoint(400.0, 300.0)
+
+    def width(self):
+        return 800
+
+    def height(self):
+        return 600
+
+    def mapToGlobal(self, point):
+        return point
+
+
+def test_fly_look_delta_is_raw_motion_away_from_the_edges(monkeypatch):
+    """Mid-viewport moves must pass through untouched -- warping there stutters."""
+    from gui.editors.smartprop_editor.viewport_3d import render_area
+
+    warped = []
+    monkeypatch.setattr(render_area.QCursor, "setPos", staticmethod(warped.append))
+
+    widget = _FakeWidget()
+    assert render_area.fly_look_delta(widget, _FakeEvent(430.0, 280.0)) == (30.0, -20.0)
+    assert render_area.fly_look_delta(widget, _FakeEvent(425.0, 280.0)) == (-5.0, 0.0)
+    assert warped == []
+
+
+def test_fly_look_delta_recenters_at_the_edge(monkeypatch):
+    """Near an edge the hidden pointer is recentered, and the warp adds no look input.
+
+    Without this the pointer keeps travelling, leaves the viewport and clicks
+    whatever is under it when the user releases RMB.
+    """
+    from gui.editors.smartprop_editor.viewport_3d import render_area
+
+    warped = []
+    monkeypatch.setattr(render_area.QCursor, "setPos", staticmethod(warped.append))
+
+    widget = _FakeWidget()
+    widget._last_mouse_pos = _FakePoint(700.0, 300.0)
+    assert render_area.fly_look_delta(widget, _FakeEvent(750.0, 300.0)) == (50.0, 0.0)
+    assert [(p.x(), p.y()) for p in warped] == [(400, 300)]
+
+    # Next move is measured from the center the pointer was warped to.
+    assert render_area.fly_look_delta(widget, _FakeEvent(410.0, 300.0)) == (10.0, 0.0)
+
+
+def test_fly_look_delta_drops_moves_queued_before_a_recenter(monkeypatch):
+    """Pre-warp events must not register, or the camera spins on its own.
+
+    They arrive after the warp still carrying edge coordinates, so each reads as a
+    jump back across the viewport -- always in the same direction, which is what
+    made looking left or right spin continuously.
+    """
+    from gui.editors.smartprop_editor.viewport_3d import render_area
+
+    warped = []
+    monkeypatch.setattr(render_area.QCursor, "setPos", staticmethod(warped.append))
+
+    widget = _FakeWidget()
+    widget._last_mouse_pos = _FakePoint(700.0, 300.0)
+    render_area.fly_look_delta(widget, _FakeEvent(750.0, 300.0))  # triggers recenter
+    warped.clear()
+
+    # Stale event from before the warp: dropped, and it must not become the new
+    # reference point either, or the next real move would jump back the other way.
+    assert render_area.fly_look_delta(widget, _FakeEvent(755.0, 300.0)) == (0.0, 0.0)
+    assert warped == []
+    assert (widget._last_mouse_pos.x(), widget._last_mouse_pos.y()) == (400, 300)
+
+    # Real motion resumes once the queue drains.
+    assert render_area.fly_look_delta(widget, _FakeEvent(390.0, 305.0)) == (-10.0, 5.0)
