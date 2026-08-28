@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 from gui.editors.smartprop_editor.choices import build_choices_tree, read_choices_tree
 from gui.editors.smartprop_editor.choices_model import format_choices, parse_choices
 from gui.common import editor_info, JsonToKv3, Kv3ToJson
-from gui.settings.common import get_settings_bool
 from gui.editors.smartprop_editor._common import (
     disable_line_value_length_limit_keys,
     get_clean_class_name,
@@ -383,8 +382,7 @@ class VsmartSave:
 
     def save_file(self):
         """Save the current document through the .NET SmartProp serializer."""
-        one_line = get_settings_bool("SmartPropEditor", "export_properties_in_one_line", True)
-        k3_data = format_smartprop(self.document_data, one_line_properties=one_line)
+        k3_data = format_smartprop(self.document_data)
         with open(self.filename, "w") as file:
             file.write(k3_data)
 

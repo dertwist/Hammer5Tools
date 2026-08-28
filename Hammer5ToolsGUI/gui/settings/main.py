@@ -1,11 +1,9 @@
-import subprocess
 import sys
-import ast
 import os
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
-    QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
+    QWidget, QLabel, QLineEdit, QCheckBox,
     QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox, QMessageBox
 )
 from gui.settings.common import (
@@ -17,7 +15,7 @@ from gui.settings.common import (
     set_settings_bool,
     set_settings_value,
 )
-from gui.common import apply_title_bar_theme, refresh_title_bars, Presets_Path, app_dir, get_channel, get_build_channel
+from gui.common import apply_title_bar_theme, refresh_title_bars, get_channel, get_build_channel
 from gui.widgets.common import Button
 from gui.other.file_association import setup_associations
 
@@ -33,6 +31,11 @@ class ActionButtonsPanel(QFrame):
         self.open_userdata_folder_button = Button(text=" Open UserData")
         self.open_userdata_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_userdata_folder_button)
+
+        self.btn_open_console = Button(text=" Open Console")
+        self.btn_open_console.set_icon(":/icons/terminal_16dp.svg")
+        self.btn_open_console.setToolTip("Open a console window for log output.")
+        h_layout_bottom.addWidget(self.btn_open_console)
 
         h_layout_bottom.addStretch()
         self.version_label = QLabel("", self)
@@ -135,54 +138,53 @@ class PreferencesDialog(QDialog):
         layout_theme.addStretch()
         layout.addWidget(frame_theme)
         layout.addWidget(self.create_divider(general_tab_content))
-        label_other_header = QLabel("Other", general_tab_content)
-        layout.addWidget(label_other_header)
-        self.frame_other = QFrame(general_tab_content)
-        layout_other = QVBoxLayout(self.frame_other)
-        row_app = QHBoxLayout()
-        self.checkBox_close_to_tray = QCheckBox("Minimize on Close", self.frame_other)
+        label_app_header = QLabel("Application", general_tab_content)
+        layout.addWidget(label_app_header)
+        self.frame_app = QFrame(general_tab_content)
+        layout_app = QHBoxLayout(self.frame_app)
+        self.checkBox_close_to_tray = QCheckBox("Minimize on Close", self.frame_app)
         self.checkBox_close_to_tray.setProperty("h5Component", "legacyCheckbox")
-        row_app.addWidget(self.checkBox_close_to_tray)
+        layout_app.addWidget(self.checkBox_close_to_tray)
         self.cleanup_model_browser_button = Button(text=" Cleanup model browser cache")
         self.cleanup_model_browser_button.set_icon_delete()
         self.cleanup_model_browser_button.setToolTip(
             "Delete the model browser's asset index and generated thumbnails. "
             "Both are rebuilt on the next browse."
         )
-        row_app.addWidget(self.cleanup_model_browser_button)
-        row_app.addStretch()
-        layout_other.addLayout(row_app)
+        layout_app.addWidget(self.cleanup_model_browser_button)
+        layout_app.addStretch()
+        layout.addWidget(self.frame_app)
+        layout.addWidget(self.create_divider(general_tab_content))
 
-        row_assoc = QHBoxLayout()
+        label_associations_header = QLabel("File Associations", general_tab_content)
+        layout.addWidget(label_associations_header)
+        self.frame_associations = QFrame(general_tab_content)
+        layout_associations = QHBoxLayout(self.frame_associations)
         self.association_buttons = {}
         for ext, label in ((".vsmart", "SmartProp"), (".vsndevts", "SoundEvents"), (".hbat", "Hammer Batch")):
             button = Button(text=f" Associate {ext} ({label})")
             button.set_icon_sync()
-            row_assoc.addWidget(button)
+            layout_associations.addWidget(button)
             self.association_buttons[ext] = button
-        row_assoc.addStretch()
-        layout_other.addLayout(row_assoc)
+        layout_associations.addStretch()
+        layout.addWidget(self.frame_associations)
+        layout.addWidget(self.create_divider(general_tab_content))
 
-        row_git = QHBoxLayout()
+        label_git_header = QLabel("Git Sync", general_tab_content)
+        layout.addWidget(label_git_header)
+        self.frame_git = QFrame(general_tab_content)
+        layout_git = QHBoxLayout(self.frame_git)
         self.checkBox_git_generate_commit_messages = QCheckBox(
-            "Git sync: Generate commit messages", self.frame_other)
+            "Generate commit messages", self.frame_git)
         self.checkBox_git_generate_commit_messages.setProperty("h5Component", "legacyCheckbox")
         self.checkBox_git_generate_commit_messages.setToolTip(
             "Write the commit message automatically from the changed files. "
             "Turn off to be asked for a message each time you press Git Sync."
         )
-        row_git.addWidget(self.checkBox_git_generate_commit_messages)
-        row_git.addStretch()
-        layout_other.addLayout(row_git)
+        layout_git.addWidget(self.checkBox_git_generate_commit_messages)
+        layout_git.addStretch()
+        layout.addWidget(self.frame_git)
 
-        row_console = QHBoxLayout()
-        self.btn_open_console = Button(text=" Open Console")
-        self.btn_open_console.setToolTip("Open a console window for log output.")
-        row_console.addWidget(self.btn_open_console)
-        row_console.addStretch()
-        layout_other.addLayout(row_console)
-
-        layout.addWidget(self.frame_other)
         layout.addStretch()
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
         self.tabWidget.addTab(general_scroll, "General")
@@ -207,16 +209,6 @@ class PreferencesDialog(QDialog):
         )
         layout_interface.addWidget(self.spe_hide_experimental)
         layout.addWidget(frame_interface)
-        layout.addWidget(self.create_divider(smartprop_content))
-        label_format_header = QLabel("Format", smartprop_content)
-        layout.addWidget(label_format_header)
-        frame_format = QFrame(smartprop_content)
-        layout_format = QVBoxLayout(frame_format)
-        self.spe_export_properties = QCheckBox("Export properties in one line", frame_format)
-        self.spe_export_properties.setProperty("h5Component", "legacyCheckbox")
-        self.spe_export_properties.setChecked(True)
-        layout_format.addWidget(self.spe_export_properties)
-        layout.addWidget(frame_format)
 
         layout.addWidget(self.create_divider(smartprop_content))
         label_vmap_import = QLabel("VMAP Importing", smartprop_content)
@@ -284,48 +276,7 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
         layout_monitor.addWidget(self.assetgroupmaker_lineedit_monitor)
         layout.addWidget(frame_monitor)
-        layout.addWidget(self.create_divider(assetgroupmaker_content))
-        label_default_file = QLabel("Default File", assetgroupmaker_content)
-        layout.addWidget(label_default_file)
-        frame_default_file = QFrame(assetgroupmaker_content)
-        layout_default_file = QVBoxLayout(frame_default_file)
-        row_ext = QHBoxLayout()
-        label_ext = QLabel("Extension:", frame_default_file)
-        label_ext.setMinimumWidth(130)
-        row_ext.addWidget(label_ext)
-        self.assetgroupmaker_edit_extension = QLineEdit(frame_default_file)
-        row_ext.addWidget(self.assetgroupmaker_edit_extension)
-        layout_default_file.addLayout(row_ext)
-        row_ignore = QHBoxLayout()
-        label_ignore = QLabel("Ignore List:", frame_default_file)
-        label_ignore.setMinimumWidth(130)
-        row_ignore.addWidget(label_ignore)
-        self.assetgroupmaker_edit_ignore_list = QLineEdit(frame_default_file)
-        row_ignore.addWidget(self.assetgroupmaker_edit_ignore_list)
-        layout_default_file.addLayout(row_ignore)
-        row_algo = QHBoxLayout()
-        label_algo = QLabel("Algorithm:", frame_default_file)
-        label_algo.setMinimumWidth(130)
-        row_algo.addWidget(label_algo)
-        self.assetgroupmaker_combo_algorithm = QComboBox(frame_default_file)
-        self.assetgroupmaker_combo_algorithm.setProperty("h5Component", "legacyCombobox")
-        self.assetgroupmaker_combo_algorithm.addItem("Process without interpretation", 0)
-        self.assetgroupmaker_combo_algorithm.addItem("Remove underscore from the end", 1)
-        self.assetgroupmaker_combo_algorithm.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.assetgroupmaker_combo_algorithm.setMinimumWidth(200)
-        row_algo.addWidget(self.assetgroupmaker_combo_algorithm)
-        row_algo.addStretch()
-        layout_default_file.addLayout(row_algo)
-        row_ignore_ext = QHBoxLayout()
-        label_ignore_ext = QLabel("Ignore Extensions:", frame_default_file)
-        label_ignore_ext.setMinimumWidth(130)
-        row_ignore_ext.addWidget(label_ignore_ext)
-        self.assetgroupmaker_edit_ignore_ext = QLineEdit(frame_default_file)
-        row_ignore_ext.addWidget(self.assetgroupmaker_edit_ignore_ext)
-        layout_default_file.addLayout(row_ignore_ext)
-        layout.addWidget(frame_default_file)
-        layout.addWidget(self.create_divider(assetgroupmaker_content))
-        layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addStretch()
         assetgroupmaker_scroll = self.wrap_in_scroll_area(assetgroupmaker_content)
         self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
 
@@ -348,6 +299,7 @@ class PreferencesDialog(QDialog):
 
     def create_bottom_panel(self):
         self.action_buttons_panel = ActionButtonsPanel(self)
+        self.btn_open_console = self.action_buttons_panel.btn_open_console
         self.main_layout.addWidget(self.action_buttons_panel)
 
     def populate_preferences(self):
@@ -376,21 +328,9 @@ class PreferencesDialog(QDialog):
         if get_build_channel() == 'dev':
             version_text += " (dev)"
         self.action_buttons_panel.version_label.setText(version_text)
-        self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.spe_hide_experimental.setChecked(get_settings_bool('SmartPropEditor', 'hide_experimental', True))
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
-        try:
-            default_file = ast.literal_eval(get_settings_value('AssetGroupMaker', 'default_file') or "{}")
-            process = default_file.get('process', {})
-        except Exception:
-            process = {}
-        self.assetgroupmaker_edit_extension.setText(process.get('extension', 'vmdl'))
-        self.assetgroupmaker_edit_ignore_list.setText(process.get('ignore_list', ''))
-        algo = process.get('algorithm', 0)
-        index = 0 if algo == 0 else 1
-        self.assetgroupmaker_combo_algorithm.setCurrentIndex(index)
-        self.assetgroupmaker_edit_ignore_ext.setText(process.get('ignore_extensions', 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'))
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
 
         self.spe_round_vmap_values.setChecked(get_settings_bool('SmartPropEditor', 'round_vmap_values', False))
@@ -409,16 +349,6 @@ class PreferencesDialog(QDialog):
             msaa_val = 4
         msaa_idx = self.spe_viewport_msaa.findData(msaa_val)
         self.spe_viewport_msaa.setCurrentIndex(msaa_idx if msaa_idx != -1 else self.spe_viewport_msaa.findData(4))
-
-    def update_default_file_setting(self):
-        process = {
-            'extension': self.assetgroupmaker_edit_extension.text(),
-            'ignore_list': self.assetgroupmaker_edit_ignore_list.text(),
-            'algorithm': self.assetgroupmaker_combo_algorithm.currentData(),
-            'ignore_extensions': self.assetgroupmaker_edit_ignore_ext.text()
-        }
-        default_file = {'process': process}
-        set_settings_value('AssetGroupMaker', 'default_file', str(default_file))
 
     def apply_theme_level(self):
         level = int(self.appearance_combo_theme.currentData())
@@ -455,23 +385,16 @@ class PreferencesDialog(QDialog):
         self.checkBox_git_generate_commit_messages.toggled.connect(
             lambda checked: set_settings_bool('GitSync', 'generate_commit_messages', checked)
         )
-        self.btn_open_console.clicked.connect(self._open_console)
+        self.action_buttons_panel.btn_open_console.clicked.connect(self._open_console)
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
         self.spe_hide_experimental.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'hide_experimental', self.spe_hide_experimental.isChecked())
         )
-        self.spe_export_properties.toggled.connect(
-            lambda: set_settings_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())
-        )
         self.assetgroupmaker_lineedit_monitor.textChanged.connect(
             lambda: set_settings_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
-        self.assetgroupmaker_edit_extension.textChanged.connect(self.update_default_file_setting)
-        self.assetgroupmaker_edit_ignore_list.textChanged.connect(self.update_default_file_setting)
-        self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
-        self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
         self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
         self.cleanup_model_browser_button.clicked.connect(self.cleanup_model_browser_cache)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
