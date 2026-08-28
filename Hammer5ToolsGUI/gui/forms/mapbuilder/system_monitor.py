@@ -8,6 +8,7 @@ from collections import deque
 import psutil
 import GPUtil
 import pyqtgraph as pg
+pg.setConfigOptions(antialias=True)
 
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame

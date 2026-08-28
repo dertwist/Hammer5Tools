@@ -38,29 +38,31 @@ QListWidget[h5Component="mapbuilderMapList"]::item:hover {
 QWidget[h5Component="mapbuilderBoolSetting"] {
     border: none;
     padding: 0px;
+    background: transparent;
 }
 QCheckBox[h5Component="mapbuilderBoolSettingBox"] {
     font: 580 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: @rgba_5e5e5e_255;
-    height: 22px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 4px;
-    padding-right: 4px;
     color: @text;
-    background-color: @background;
+    border: none;
+    background-color: transparent;
+    spacing: 6px;
+    padding: 2px 0px;
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"]:hover {
+    color: @text;
+    background-color: transparent;
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"]::indicator {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
 }
 QCheckBox[h5Component="mapbuilderBoolSettingBox"]::indicator:unchecked {
     image: url(:/icons/check_box_outline_blank_16dp.svg);
 }
 QCheckBox[h5Component="mapbuilderBoolSettingBox"]::indicator:checked {
     image: url(:/icons/select_check_box_16dp.svg);
-}
-QCheckBox[h5Component="mapbuilderBoolSettingBox"]:hover {
-    background-color: @selection;
-    color: @selection_text;
 }
 
 QFrame[h5Component="mapbuilderGroupHeader"] {
