@@ -49,3 +49,13 @@ def test_addon_root_rejects_unknown_cs2_layout(monkeypatch):
         assert "tools" in str(error)
     else:
         raise AssertionError("unknown roots must not create arbitrary paths")
+
+
+def test_mapbuilder_folder_setting_widget_without_addon_dir(monkeypatch):
+    from PySide6.QtWidgets import QApplication
+    import gui.forms.mapbuilder.widgets as mb_widgets
+    _ = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(mb_widgets, "get_addon_dir", lambda: None)
+    monkeypatch.setattr(mb_widgets, "get_addon_name", lambda: "my_addon")
+    widget = mb_widgets.FolderSettingWidget("mappath", str, "")
+    assert widget.find_default_vmap().replace("\\", "/") == "maps/my_addon.vmap"

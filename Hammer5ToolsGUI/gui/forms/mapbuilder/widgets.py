@@ -276,12 +276,18 @@ class FolderSettingWidget(SettingWidget):
             return absolute_path
 
     def find_default_vmap(self):
-        return os.path.join(get_addon_dir(), 'maps', f'{get_addon_name()}.vmap')
+        addon_dir = get_addon_dir()
+        addon_name = get_addon_name()
+        if addon_dir:
+            return os.path.join(addon_dir, 'maps', f'{addon_name}.vmap')
+        return os.path.join('maps', f'{addon_name}.vmap')
 
     def browse_maps(self):
         from pathlib import Path
         addon_dir = get_addon_dir()
-        root_addons_dir = str(Path(addon_dir).parent) if 'csgo_addons' in str(addon_dir) else addon_dir
+        root_addons_dir = ""
+        if addon_dir:
+            root_addons_dir = str(Path(addon_dir).parent) if 'csgo_addons' in str(addon_dir) else addon_dir
 
         files, _ = QFileDialog.getOpenFileNames(
             self,
