@@ -457,7 +457,7 @@ class BoxSlider(QWidget):
             value = max(self.min_value, min(value, self.max_value))
 
         if self.only_positive:
-            value = max(0, value)
+            value = max(0.0, value)
 
         if self.int_output:
             value = round(value)
