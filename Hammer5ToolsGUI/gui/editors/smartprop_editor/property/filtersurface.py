@@ -1,6 +1,7 @@
 import re
 
 from gui.editors.smartprop_editor.objects import surfaces_list
+from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor.property.ui_filtersurface import Ui_Widget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from PySide6.QtWidgets import QWidget, QColorDialog, QTreeWidgetItem, QMenu
@@ -46,6 +47,11 @@ class PropertySurface(QWidget):
         self.ui.add_surface.clicked.connect(self.surface_popup)
 
         self.on_changed()
+
+        # Compact Source2-style header row; the surface tree below it may grow.
+        compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                label_color="#FFD199", clamp_height=False)
+
     def add_surface(self, name, value):
         item = QTreeWidgetItem()
         item.setText(0, name)

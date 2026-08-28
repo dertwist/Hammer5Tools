@@ -3,7 +3,8 @@ import re
 from gui.editors.smartprop_editor.property.ui_material_replacements import Ui_Widget
 from gui.editors.smartprop_editor.property.string import PropertyString
 from gui.editors.smartprop_editor.property.float import PropertyFloat
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QSizePolicy, QSpacerItem
+from gui.editors.smartprop_editor.property import compact
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QToolButton
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 
@@ -16,9 +17,10 @@ class MaterialGroupChoiceRow(QWidget):
         self.variables_scrollArea = variables_scrollArea
         self.element_id_generator = element_id_generator
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 4, 0, 4)
-        layout.setSpacing(8)
+        # Stacked, matching MaterialReplacementRow.
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         self.name_widget = PropertyString(
             element_id_generator=element_id_generator,
@@ -31,6 +33,7 @@ class MaterialGroupChoiceRow(QWidget):
             parent=self,
         )
         self.name_widget.ui.property_class.setText("Group Name")
+        compact.indent_label(self.name_widget.ui.property_class)
         self.name_widget.edited.connect(self._on_changed)
 
         self.weight_widget = PropertyFloat(
@@ -42,17 +45,26 @@ class MaterialGroupChoiceRow(QWidget):
             parent=self,
         )
         self.weight_widget.ui.property_class.setText("Weight")
+        compact.indent_label(self.weight_widget.ui.property_class)
         self.weight_widget.edited.connect(self._on_changed)
-
-        layout.addWidget(self.name_widget)
-        layout.addWidget(self.weight_widget)
 
         delete_btn = QToolButton()
         delete_btn.setProperty("h5Component", "smartpropDeleteIconButton")
         delete_btn.setIcon(QIcon(":/icons/delete_24dp.svg"))
-        layout.addWidget(delete_btn)
 
-        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        # Both fields are capped to one content column so delete sits directly
+        # after the first field rather than at the far right of the panel.
+        for field in (self.name_widget, self.weight_widget):
+            field.setMaximumWidth(compact.SUB_ROW_W)
+
+        first_line = QHBoxLayout()
+        first_line.setContentsMargins(0, 0, 0, 0)
+        first_line.setSpacing(0)
+        first_line.addWidget(self.name_widget)
+        first_line.addWidget(delete_btn)
+        first_line.addStretch(1)
+        layout.addLayout(first_line)
+        layout.addWidget(self.weight_widget)
 
         def _do_delete():
             self.edited.emit()
@@ -111,6 +123,10 @@ class PropertyMaterialGroupChoices(QWidget):
         self.ui.add_replacement_widget.clicked.connect(lambda: self._add_row("", 1.0))
 
         self._change_value()
+
+        # Compact Source2-style header row; the choice list below it may grow.
+        compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                label_color="#FFD199", clamp_height=False)
 
     def _add_row(self, name="", weight=1.0):
         row = MaterialGroupChoiceRow(

@@ -2,6 +2,7 @@ from gui.editors.smartprop_editor.variables.ui_vector3d import Ui_Widget
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+from gui.editors.smartprop_editor.property import compact
 
 class Vector3DVariable(QWidget):
     edited = Signal(list, str, str, str)
@@ -9,12 +10,13 @@ class Vector3DVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
-        self.setProperty("h5Component", "smartpropVariableBody")
+        compact.style_variable_body(self, ("axisX", "axisY", "axisZ"))
         self.setAcceptDrops(True)
-        # Remove the digit limits baked into the generated UI: allow high
-        # precision and a very wide magnitude range on each component.
+        # Keep the very wide magnitude range the generated UI does not allow,
+        # but show 2 decimals like Vector2D/Vector4D -- 15 rendered as
+        # "1,000000000000000" and made the column unreadable.
         for _sb in (self.ui.vector_x, self.ui.vector_y, self.ui.vector_z):
-            _sb.setDecimals(15)
+            _sb.setDecimals(2)
             _sb.setRange(-1e18, 1e18)
         self.model = None
         self.min = None

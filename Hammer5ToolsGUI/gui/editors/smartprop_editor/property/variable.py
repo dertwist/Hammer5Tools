@@ -23,8 +23,10 @@ class PropertyVariableOutput(QWidget):
         self.spacer = Spacer()
         self.ui.layout.addWidget(self.spacer)
 
-        compact.style_label(self.ui.property_class, color="#FFD199")
-
+        # Compact Source2-style row. ui_float's shape, minus the value-mode
+        # switch (deleted below).
+        compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                label_color="#FFD199")
 
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
@@ -41,15 +43,13 @@ class PropertyVariableOutput(QWidget):
             element_id_generator=element_id_generator
         )
         # self.variable.setFixedWidth(256)
-        self.variable.setMaximumHeight(24)
-        self.variable.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.variable_frame = QWidget()
-        self.variable_frame.setMinimumHeight(32)
         self.variable_frame.setLayout(layout)
+        compact.compact_variable_frame(self.variable_frame, self.variable)
         self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
 

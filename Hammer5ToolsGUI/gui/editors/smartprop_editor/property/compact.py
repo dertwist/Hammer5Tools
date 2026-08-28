@@ -18,7 +18,7 @@ Dark palette kept: #2e2e2e bg, #e5e5e5 text, #515965 hover, accent #b3d096.
 import os
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QSizePolicy, QLayout
+from PySide6.QtWidgets import QCheckBox, QLabel, QPushButton, QSizePolicy, QLayout
 
 from gui.common import gui_assets_dir
 from gui.styles.common import set_style_property
@@ -48,9 +48,16 @@ def cs2_icon(name):
 # geometry
 ROW_H = 29          # compact row height (minimum) — 1.3x the base 22
 ROW_MAX = 57        # rows may grow to this (expression mode: button + text_line)
+#: Qt's QWIDGETSIZE_MAX, i.e. "no maximum" (PySide does not export it).
+_UNBOUNDED_HEIGHT = 16777215
 FIELD_H = 23        # inner field height (comboboxes, text field, expr button)
 LABEL_W = 150       # fixed label column width -> the two-column grid
 LOGIC_W = 70        # width of the thin inline value-mode switch
+# Content width of a sub-editor embedded in a list row (material replacements,
+# material group choices). Capped so the row's trailing button lands right
+# after the field at a stable x instead of at the far right of a panel the
+# user would have to scroll to reach.
+SUB_ROW_W = LABEL_W + LOGIC_W + 260
 
 # Vector component tag colours (kept close to the existing H5T hues).
 VEC_XYZ = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # X / Y / Z  (red / green / blue)
@@ -141,6 +148,85 @@ def style_label(label, color=None, width=LABEL_W, indent=0):
         label.setFixedWidth(width)
 
 
+#: Left padding that marks a label as belonging to the row above it, as
+#: Vector3D's X/Y/Z components do. Paired with the [h5Indent] rule in
+#: qss/features/smartprop_editor.qss.
+SUB_ROW_INDENT = 15
+
+
+def indent_label(label):
+    """Indent a sub-row's label under its parent row.
+
+    Indent-only, unlike style_label(color=..., indent=...): the editors that
+    own these labels (PropertyString, PropertyFloat) already picked their own
+    type colour, and passing a colour here would mean restating it.
+    """
+    set_style_property(label, "h5Indent", str(SUB_ROW_INDENT))
+
+
+def style_variable_body(widget, role=None):
+    """Mark a variables/* editor and colour-code its field labels by type.
+
+    ``role`` is an h5ColorRole (see _LABEL_COLOR_ROLES) applied to every label
+    and checkbox in the editor, or a sequence applied to them in order -- which
+    is how the vector editors get per-axis colours, matching PropertyVector3D's
+    X/Y/Z tags. Editors whose value already shows its type (the colour swatch,
+    the enum dropdown) pass nothing and keep the default text colour.
+    """
+    widget.setProperty("h5Component", "smartpropVariableBody")
+    if role is None:
+        return
+    fields = widget.findChildren(QLabel) + widget.findChildren(QCheckBox)
+    roles = [role] * len(fields) if isinstance(role, str) else list(role)
+    for field, field_role in zip(fields, roles):
+        set_style_property(field, "h5ColorRole", field_role)
+
+
+#: The asset-picker button, as the model-name property field draws it.
+BROWSE_ICON = ":/valve_common/icons/tools/common/browse.png"
+BROWSE_BTN_SIZE = 22
+
+#: browser_type -> (gui.widgets.model_browser picker, button tooltip).
+ASSET_PICKERS = {
+    "model": ("pick_model", "Browse models"),
+    "material": ("pick_material", "Browse materials"),
+    "smartprop": ("pick_smartprop", "Browse smartprops"),
+}
+
+
+def browse_button(browser_type=None):
+    """An asset-picker button matching the model-name field's icon and size."""
+    button = QPushButton()
+    button.setIcon(QIcon(BROWSE_ICON))
+    button.setFixedSize(BROWSE_BTN_SIZE, BROWSE_BTN_SIZE)
+    button.setToolTip(ASSET_PICKERS.get(browser_type, (None, "Browse"))[1])
+    return button
+
+
+def attach_browse_button(layout, field, button):
+    """Put an asset picker just before its field, as the property rows do.
+
+    The variable editors' value fields expand, so a button appended to their
+    row landed against the far right of the panel -- a long scroll away from
+    the field it belongs to. Placing it ahead of the field puts every picker
+    at the same x whatever the path length, and matches PropertyString, which
+    inserts its button before the text line. The field is still capped to the
+    shared content column (SUB_ROW_W, as the list rows' delete buttons use).
+    """
+    field.setMaximumWidth(SUB_ROW_W)
+    layout.insertWidget(layout.indexOf(field), button)
+    layout.addStretch(1)
+
+
+def pick_asset_path(browser_type, parent, current_path=""):
+    """Open the browser for ``browser_type``; the chosen path, or None."""
+    entry = ASSET_PICKERS.get(browser_type)
+    if entry is None:
+        return None
+    import gui.widgets.model_browser as browser
+    return getattr(browser, entry[0])(parent, current_path=current_path)
+
+
 def style_slider(float_widget):
     """Trim the spinbox and let the inline drag-slider extend to fill the row.
 
@@ -216,16 +302,33 @@ def assign_zebra(layout, selected=None):
         style.polish(frame)
 
 
+def style_icon_button(btn):
+    """Flat FIELD_H icon button, for the small buttons that sit inside a row."""
+    btn.setProperty("h5Component", "smartpropCompactIconButton")
+    try:
+        btn.set_size(width=FIELD_H, height=FIELD_H)
+    except AttributeError:  # a plain QToolButton, not widgets.common.Button
+        btn.setFixedSize(FIELD_H, FIELD_H)
+        btn.setIconSize(QSize(16, 16))
+
+
 def compact_variable_frame(variable_frame, variable=None):
-    """Shrink a variable-picker container so Variable mode matches the row."""
+    """Shrink a variable-picker container so Variable mode matches the row.
+
+    The picker is a ComboboxVariablesWidget, whose parts style themselves as
+    legacy widgets (22px tall with a 2px border and 2px padding). That needs
+    about 30px, so inside a FIELD_H row it clipped its own text -- restyle the
+    parts compactly rather than only capping the height.
+    """
     variable_frame.setMinimumHeight(ROW_H)
     variable_frame.setMaximumHeight(ROW_H)
     if variable is not None:
         variable.setMaximumHeight(FIELD_H)
-        try:
-            variable.search_button.set_size(width=FIELD_H, height=FIELD_H)
-        except Exception:
-            pass
+        style_value_combobox(variable.combobox)
+        for name in ("search_button", "add_new_variable_button"):
+            button = getattr(variable, name, None)
+            if button is not None:
+                style_icon_button(button)
 
 
 def is_angle_vector(value_class):
@@ -255,6 +358,32 @@ def apply_single_row(prop, label_color=None):
     style_logic_switch(prop.ui.logic_switch)
     # Vertically centre the type combobox within the row.
     prop.ui.layout.setAlignment(prop.ui.logic_switch, Qt.AlignVCenter)
+
+
+def apply_plain_row(prop, frame, label, label_color=None, clamp_height=True):
+    """Compact template for an editor whose .ui does not match the shape
+    apply_single_row() expects: a differently named frame/label (comparison,
+    legacy), or a nested list below the header row (colormatch, filtersurface,
+    material_replacements, set_variable).
+
+    Pass ``clamp_height=False`` for the editors that grow past one row --
+    ROW_MAX would clip their list. The header ``frame`` is still clamped, so
+    only the part that is a row behaves like one.
+    """
+    prop.setMinimumHeight(0)
+    if clamp_height:
+        prop.setMaximumHeight(ROW_MAX)
+    else:
+        # Lift any cap the .ui put on the root widget -- comparison.ui pins it
+        # at 32px, which clipped every row after the first.
+        prop.setMaximumHeight(_UNBOUNDED_HEIGHT)
+    prop.setObjectName(ROW_OBJECT_NAME)
+    prop.setProperty("h5Component", "smartpropCompactRow")
+
+    compact_frame(frame)
+    prop._compact_frames = [frame]
+
+    style_label(label, color=label_color)
 
 
 def apply_row_no_switch(prop, label_color=None):

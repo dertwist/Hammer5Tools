@@ -2,6 +2,7 @@ from gui.editors.smartprop_editor.variables.ui_bool import Ui_Widget
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+from gui.editors.smartprop_editor.property import compact
 
 
 class BoolVariable(QWidget):
@@ -10,7 +11,7 @@ class BoolVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
-        self.setProperty("h5Component", "smartpropVariableBody")
+        compact.style_variable_body(self, "bool")
         self.setAcceptDrops(True)
         self.min = None
         self.max = None

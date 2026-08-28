@@ -1,9 +1,10 @@
 import logging
 from gui.editors.smartprop_editor.property.ui_set_variable import Ui_Widget
 from gui.widgets.completer_widget import CompletingPlainTextEdit
-from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget, QLabel
 from PySide6.QtCore import Signal
 from gui.editors.smartprop_editor.combobox_variables import ComboboxVariablesWidget
+from gui.editors.smartprop_editor.property import compact
 from gui.widgets import FloatWidget, BoolWidget
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.expression_editor import ExpressionEditor
@@ -69,15 +70,9 @@ class PropertyVariableValue(QWidget):
             self.float_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.float_widget)
 
-            self.ui.property_class_4.setProperty("h5Component", "smartpropVariableTypeColor")
-            self.ui.property_class.setProperty("h5Component", "smartpropVariableTypeColor")
-            self.ui.logic_switch_value.setProperty("h5Component", "smartpropVariableTypeColor")
-            self.ui.property_class_4.setProperty("h5ColorRole", "string")
-            self.ui.property_class.setProperty("h5ColorRole", "string")
-
             self.bool_widget = BoolWidget(spacer_enable=False)
             self.bool_widget.edited.connect(self.on_changed)
-            self.bool_widget.checkbox.setProperty("h5Component", "smartpropVariableBool")
+            compact.style_checkbox(self.bool_widget.checkbox)
             self.ui.layout_3.addWidget(self.bool_widget)
 
             # EditLine setup
@@ -132,13 +127,31 @@ class PropertyVariableValue(QWidget):
             self.variable_frame = QWidget()
             self.variable_frame.setLayout(layout)
             self.variable.setFixedWidth(256)
-            self.variable.setMaximumHeight(24)
-            self.variable.search_button.set_size(width=24, height=24)
-            self.variable_frame.setMinimumHeight(32)
+            compact.compact_variable_frame(self.variable_frame, self.variable)
             self.variable.combobox.changed.connect(self.on_changed)
             self.ui.layout_2.addWidget(self.variable_frame)
 
             self.initialize_values(value)
+
+            # Compact Source2-style rows. Three stacked frames (target / value
+            # type / value), so the row is not clamped to a single ROW_MAX.
+            compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                    label_color="#FFD199", clamp_height=False)
+            compact.compact_frame(self.ui.frame_2)
+            compact.compact_frame(self.ui.frame_3)
+            self._compact_frames = [self.ui.frame, self.ui.frame_2, self.ui.frame_3]
+            # style_label sets h5ColorRole from the colour, which is what the
+            # per-type recolouring in on_changed() switches later.
+            compact.style_label(self.ui.property_class_4, color="#FFD199")
+            compact.style_logic_switch(self.ui.logic_switch)
+            compact.style_logic_switch(self.ui.logic_switch_value)
+
+            # The .ui gives rows 1 and 2 a label in the fixed left column but
+            # starts row 3 with the value-mode switch, so the value editor sat
+            # 150px left of every other field. Give it the missing label.
+            self.value_label = QLabel("Value")
+            compact.style_label(self.value_label, color="#FFD199")
+            self.ui.layout_3.insertWidget(0, self.value_label)
 
             # Initial state update - do not emit signal during initialization
             self.on_changed(emit=False)

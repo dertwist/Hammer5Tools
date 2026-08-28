@@ -95,16 +95,9 @@ class PropertyString(QWidget, PooledPropertyMixin):
         self._browser_type = browser_type
         self._model_browser = (browser_type == 'model')
         self._smartprop_browser = (browser_type == 'smartprop')
+        self._material_browser = (browser_type == 'material')
 
-        self.browse_button = QPushButton()
-        self.browse_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
-        self.browse_button.setFixedSize(22, 22)
-        if self._browser_type == 'smartprop':
-            self.browse_button.setToolTip('Browse smartprops')
-        elif self._browser_type == 'model':
-            self.browse_button.setToolTip('Browse models')
-        else:
-            self.browse_button.setToolTip('Browse')
+        self.browse_button = compact.browse_button(self._browser_type)
         self.browse_button.clicked.connect(self._open_browser)
         self.browse_button.setVisible(bool(self._browser_type))
         self.ui.layout.insertWidget(4, self.browse_button)
@@ -187,12 +180,9 @@ class PropertyString(QWidget, PooledPropertyMixin):
             self.browse_button.setVisible(bool(self._browser_type) and index == 1)
 
     def _open_browser(self):
-        if self._browser_type == 'smartprop':
-            from gui.widgets.model_browser import pick_smartprop
-            path = pick_smartprop(self, current_path=self.text_line.toPlainText().strip())
-        else:
-            from gui.widgets.model_browser import pick_model
-            path = pick_model(self, current_path=self.text_line.toPlainText().strip())
+        path = compact.pick_asset_path(
+            self._browser_type, self, self.text_line.toPlainText().strip()
+        )
         if path:
             self.text_line.setPlainText(path)
 
@@ -388,12 +378,9 @@ class PropertyString(QWidget, PooledPropertyMixin):
                 self.ui.logic_switch.show()
 
             if getattr(self, 'browse_button', None) is not None:
-                if self._browser_type == 'smartprop':
-                    self.browse_button.setToolTip('Browse smartprops')
-                elif self._browser_type == 'model':
-                    self.browse_button.setToolTip('Browse models')
-                else:
-                    self.browse_button.setToolTip('Browse')
+                self.browse_button.setToolTip(
+                    compact.ASSET_PICKERS.get(self._browser_type, (None, 'Browse'))[1]
+                )
 
             # signals were blocked; ensure add-button visibility is correct.
             self.variable.update_add_button_visibility(self.variable.combobox.currentText())

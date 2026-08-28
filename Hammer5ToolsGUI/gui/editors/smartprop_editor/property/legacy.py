@@ -1,6 +1,7 @@
 import ast
 
 from gui.editors.smartprop_editor.property.ui_legacy import Ui_Widget
+from gui.editors.smartprop_editor.property import compact
 from gui.widgets.completer_widget import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
@@ -29,6 +30,8 @@ class PropertyLegacy(QWidget):
         self.text_line.textChanged.connect(self.on_changed)
 
         self.change_value()
+
+        compact.apply_plain_row(self, self.ui.frame, self.ui.value_label)
 
     def on_changed(self):
         # Setup type-aware completer without filters

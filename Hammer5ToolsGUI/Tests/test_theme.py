@@ -87,11 +87,14 @@ def test_standard_theme_matches_canonical_palette():
 
 def test_smartprop_headers_present_in_compiled_qss():
     qss = compile_stylesheet(theme.STANDARD_THEME)
-    assert "QFrame#frame > QLabel#label" in qss
-    assert "QFrame#frame > QCheckBox#show_child" in qss
-    assert "QFrame#frame > QLineEdit#variable_name" in qss
-    assert "QFrame#frame > QPushButton#add_button" in qss
-    assert "QFrame#frame_layout" in qss
+    # Anchored on the header components, not on the bare object names: an
+    # unscoped QFrame#frame in the one global sheet reaches every .ui that
+    # names a frame "frame" and outranks the [h5Component] rules on
+    # specificity. See test_smartprop_property_zoo.
+    assert 'QFrame[h5Component="smartpropHeaderFrame"] > QLabel#label' in qss
+    assert 'QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child' in qss
+    assert 'QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name' in qss
+    assert 'QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button' in qss
     assert 'h5Component="smartpropPropertyFrame"' in qss
     assert 'h5Component="smartpropGroupHeaderFrame"' in qss
     assert 'h5Component="smartpropVariableBody"' in qss

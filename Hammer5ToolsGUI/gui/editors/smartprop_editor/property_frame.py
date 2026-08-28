@@ -243,7 +243,7 @@ class PropertyFrame(QWidget):
             'm_ChoiceSelection':       (PropertyFloat,   {'int_bool': True}),
             'm_Color':                 (PropertyColor,                {}),
             'm_ColorPosition':         (PropertyFloat,   {'slider_range': [0, 1]}),
-            'm_Material':              (PropertyString,  {'expression_bool': False, 'placeholder': 'Material name (.vmat)', 'filter_types': ['String']}),
+            'm_Material':              (PropertyString,  {'expression_bool': False, 'placeholder': 'Material name (.vmat)', 'filter_types': ['String', 'Material'], 'browser_type': 'material'}),
             'm_flBendPoint':           (PropertyFloat,   {'slider_range': [0, 1]}),
             'm_flWidth':               (PropertyFloat,   {'slider_range': [0, 4096]}),
             'm_flLength':              (PropertyFloat,   {'slider_range': [0, 4096]}),

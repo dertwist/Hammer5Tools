@@ -1,6 +1,7 @@
 import re
 
 from gui.editors.smartprop_editor.property.ui_colormatch import Ui_Widget
+from gui.editors.smartprop_editor.property import compact
 from PySide6.QtWidgets import QWidget, QColorDialog, QToolButton
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
@@ -42,6 +43,10 @@ class PropertyColorMatch(QWidget):
 
         self.on_changed()
 
+        # Compact Source2-style header row; the colour list below it may grow.
+        compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                label_color="#A375FF", clamp_height=False)
+
     def add_color_widget(self, key, value):
         ColorInstance = PropertyColor(
             key,
@@ -56,7 +61,11 @@ class PropertyColorMatch(QWidget):
         delete_icon = QIcon(delete_icon_path)
         delete_button.setIcon(delete_icon)
         delete_button.clicked.connect(lambda: self.delete_action(ColorInstance))
-        ColorInstance.ui.layout.addWidget(delete_button)
+        # Right after the swatch, not appended: the row ends in an expanding
+        # spacer, so appending put delete against the far right of the panel.
+        ColorInstance.ui.layout.insertWidget(
+            ColorInstance.ui.layout.indexOf(ColorInstance.ui.value) + 1, delete_button
+        )
         ColorInstance.edited.connect(self.on_changed)
         self.ui.layout_color.addWidget(ColorInstance)
         self.on_changed()

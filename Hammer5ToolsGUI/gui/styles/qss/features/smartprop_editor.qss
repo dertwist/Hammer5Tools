@@ -454,6 +454,37 @@ QCheckBox[h5Component="smartpropCompactCheckbox"]::indicator:checked {
 QCheckBox[h5Component="smartpropCompactCheckbox"]:hover {
     background: transparent;
 }
+QWidget[h5Component="smartpropCompactRow"] QLineEdit#reference_id {
+    font: 8pt "Segoe UI";
+    border: 0px;
+    border-bottom: 1px solid @hex_4a4a4a;
+    border-radius: 0px;
+    padding: 0px 4px;
+    min-height: 23px;
+    max-height: 23px;
+    color: @text;
+    background-color: @background;
+}
+/* compact.style_icon_button: the small icon buttons that sit inside a row --
+   the reference row's clear/search, and the variable picker's search/add.
+   They are widgets.common.Button (legacyButton) or plain QToolButtons
+   otherwise, both of which are 22px + 2px border + 2px padding and do not
+   fit a FIELD_H row. */
+QWidget[h5Component="smartpropCompactRow"] QToolButton[h5Component="smartpropCompactIconButton"],
+QWidget[h5Component="smartpropCompactRow"] QPushButton[h5Component="smartpropCompactIconButton"] {
+    border: 0px;
+    border-radius: 0px;
+    padding: 0px;
+    min-height: 23px;
+    max-height: 23px;
+    color: @text;
+    background-color: transparent;
+}
+QWidget[h5Component="smartpropCompactRow"] QToolButton[h5Component="smartpropCompactIconButton"]:hover,
+QWidget[h5Component="smartpropCompactRow"] QPushButton[h5Component="smartpropCompactIconButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
 QPlainTextEdit[h5Component="smartpropCompactTextLine"] {
     background: transparent;
     border: 0px;
@@ -497,16 +528,16 @@ QLabel[h5Component="smartpropCompactLabel"] {
 QLabel[h5Component="smartpropCompactLabel"][h5Indent="15"] {
     padding-left: 15px;
 }
-QLabel[h5ColorRole="bool"] { color: @hex_ffbdbe; }
-QLabel[h5ColorRole="integer"] { color: @hex_6c87ff; }
-QLabel[h5ColorRole="float"] { color: @hex_b5ffef; }
-QLabel[h5ColorRole="expression"] { color: @hex_ff7b7d; }
-QLabel[h5ColorRole="string"] { color: @hex_ffd199; }
-QLabel[h5ColorRole="vector"] { color: @hex_a375ff; }
-QLabel[h5ColorRole="reference"] { color: @hex_8fb0ff; }
-QLabel[h5ColorRole="axisX"] { color: @hex_eca4a0; }
-QLabel[h5ColorRole="axisY"] { color: @hex_b6efa2; }
-QLabel[h5ColorRole="axisZ"] { color: @hex_a4b6ef; }
+QLabel[h5ColorRole="bool"], QCheckBox[h5ColorRole="bool"] { color: @hex_ffbdbe; }
+QLabel[h5ColorRole="integer"], QCheckBox[h5ColorRole="integer"] { color: @hex_6c87ff; }
+QLabel[h5ColorRole="float"], QCheckBox[h5ColorRole="float"] { color: @hex_b5ffef; }
+QLabel[h5ColorRole="expression"], QCheckBox[h5ColorRole="expression"] { color: @hex_ff7b7d; }
+QLabel[h5ColorRole="string"], QCheckBox[h5ColorRole="string"] { color: @hex_ffd199; }
+QLabel[h5ColorRole="vector"], QCheckBox[h5ColorRole="vector"] { color: @hex_a375ff; }
+QLabel[h5ColorRole="reference"], QCheckBox[h5ColorRole="reference"] { color: @hex_8fb0ff; }
+QLabel[h5ColorRole="axisX"], QCheckBox[h5ColorRole="axisX"] { color: @hex_eca4a0; }
+QLabel[h5ColorRole="axisY"], QCheckBox[h5ColorRole="axisY"] { color: @hex_b6efa2; }
+QLabel[h5ColorRole="axisZ"], QCheckBox[h5ColorRole="axisZ"] { color: @hex_a4b6ef; }
 
 QLabel[h5Component="detailAngleTag"] {
     border: 0px;
@@ -526,19 +557,6 @@ QWidget[h5Component="detailPropertyHost"] {
     background-color: @background;
 }
 
-QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="string"] {
-    color: @hex_ffd199;
-}
-QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="float"] {
-    color: @hex_b5ffef;
-}
-QLabel[h5Component="smartpropVariableTypeColor"][h5ColorRole="bool"] {
-    color: @hex_ffbdbe;
-}
-QCheckBox[h5Component="smartpropVariableBool"] {
-    border: none;
-    font: 580 9pt "Segoe UI";
-}
 QLabel[h5Component="smartpropPropertyWarning"] {
     color: @hex_f2c94c;
     background-color: @hex_3b3a3a;
@@ -564,22 +582,19 @@ QLabel[h5Component="smartpropExpressionLabel"] {
 }
 QFrame[h5Component="smartpropHeaderFrame"],
 QFrame[h5Component="smartpropPropertyFrame"],
-QFrame[h5Component="smartpropGroupHeaderFrame"],
-QFrame#frame {
+QFrame[h5Component="smartpropGroupHeaderFrame"] {
     background-color: @hex_363636;
 }
 QFrame[h5Component="smartpropHeaderFrame"][selected="true"],
 QFrame[h5Component="smartpropPropertyFrame"][selected="true"],
-QFrame[h5Component="smartpropGroupHeaderFrame"][selected="true"],
-QFrame#frame[selected="true"] {
+QFrame[h5Component="smartpropGroupHeaderFrame"][selected="true"] {
     background-color: @hex_3b3f48;
 }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QLabel#label,
 QFrame[h5Component="smartpropPropertyFrame"] > QLabel#label,
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QLabel#label,
-QLabel[h5Component="smartpropVariableHeader"],
-QFrame#frame > QLabel#label {
+QLabel[h5Component="smartpropVariableHeader"] {
     image: url(:/icons/more_vert.png);
     padding-left: 3px;
     padding-right: 3px;
@@ -591,31 +606,20 @@ QFrame#frame > QLabel#label {
     border-radius: 0px;
     background-color: @hex_363636;
 }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="string"],
-QFrame#frame > QLabel#label[h5VarKind="string"] { background-color: @hex_e67e22; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="bool"],
-QFrame#frame > QLabel#label[h5VarKind="bool"] { background-color: @hex_c0392b; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="float"],
-QFrame#frame > QLabel#label[h5VarKind="float"] { background-color: @hex_2980b9; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="integer"],
-QFrame#frame > QLabel#label[h5VarKind="integer"] { background-color: @hex_2471a3; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="vector"],
-QFrame#frame > QLabel#label[h5VarKind="vector"] { background-color: @hex_8e44ad; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="color"],
-QFrame#frame > QLabel#label[h5VarKind="color"] { background-color: @hex_1b5e20; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="enum"],
-QFrame#frame > QLabel#label[h5VarKind="enum"] { background-color: @hex_1d8348; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="default"],
-QFrame#frame > QLabel#label[h5VarKind="default"] { background-color: @hex_363636; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryStart"],
-QFrame#frame > QLabel#label[h5VarKind="categoryStart"] { background-color: @hex_3d4d5e; }
-QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryEnd"],
-QFrame#frame > QLabel#label[h5VarKind="categoryEnd"] { background-color: @background; image: none; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="string"] { background-color: @hex_e67e22; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="bool"] { background-color: @hex_c0392b; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="float"] { background-color: @hex_2980b9; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="integer"] { background-color: @hex_2471a3; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="vector"] { background-color: @hex_8e44ad; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="color"] { background-color: @hex_1b5e20; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="enum"] { background-color: @hex_1d8348; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="default"] { background-color: @hex_363636; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryStart"] { background-color: @hex_3d4d5e; }
+QLabel[h5Component="smartpropVariableHeader"][h5VarKind="categoryEnd"] { background-color: @background; image: none; }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child,
-QFrame#frame > QCheckBox#show_child {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child {
     font: 700 10pt "Segoe UI";
     border-top: 0px;
     border-left: 0px;
@@ -629,30 +633,26 @@ QFrame#frame > QCheckBox#show_child {
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child::indicator:checked,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child::indicator:checked,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child::indicator:checked,
-QFrame#frame > QCheckBox#show_child::indicator:checked {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child::indicator:checked {
     image: url(://icons/arrow_drop_down.png);
     height: 14px;
     width: 14px;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child::indicator:unchecked,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child::indicator:unchecked,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child::indicator:unchecked,
-QFrame#frame > QCheckBox#show_child::indicator:unchecked {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child::indicator:unchecked {
     image: url(://icons/arrow_drop_right.png);
     height: 14px;
     width: 14px;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child:hover,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child:hover,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child:hover,
-QFrame#frame > QCheckBox#show_child:hover {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child:hover {
     color: white;
     background-color: @selection;
 }
 
-QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor,
-QFrame#frame > QCheckBox#visible_in_editor {
+QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor {
     font: 700 10pt "Segoe UI";
     border-top: 0px;
     border-left: 0px;
@@ -663,26 +663,22 @@ QFrame#frame > QCheckBox#visible_in_editor {
     color: @text;
     background-color: @hex_363636;
 }
-QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor::indicator:unchecked,
-QFrame#frame > QCheckBox#visible_in_editor::indicator:unchecked {
+QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor::indicator:unchecked {
     image: url(:/icons/visibility_off_24dp.png);
     width: 14px;
     height: 14px;
 }
-QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor::indicator:checked,
-QFrame#frame > QCheckBox#visible_in_editor::indicator:checked {
+QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor::indicator:checked {
     image: url(:/icons/visibility_24dp.png);
     width: 14px;
     height: 14px;
 }
-QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor:hover,
-QFrame#frame > QCheckBox#visible_in_editor:hover {
+QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor:hover {
     color: white;
     background-color: @selection;
 }
 
-QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name,
-QFrame#frame > QLineEdit#variable_name {
+QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name {
     font: 600 10pt "Segoe UI";
     border: 2px solid @hex_d0d0d0;
     border-top: 0px;
@@ -695,22 +691,17 @@ QFrame#frame > QLineEdit#variable_name {
     color: @text;
     background-color: @hex_363636;
 }
-QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name:focus,
-QFrame#frame > QLineEdit#variable_name:focus {
+QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name:focus {
     border-color: @rgba_5e5e5e_255;
 }
-QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name::selection,
-QFrame#frame > QLineEdit#variable_name::selection {
+QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name::selection {
     background-color: @selection;
     color: white;
 }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class,
-QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class,
-QFrame#frame > QLineEdit#variable_class,
-QFrame#frame > QLineEdit#property_class,
-QFrame#frame QLineEdit#property_class {
+QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class {
     font: 8pt "Segoe UI";
     border: 2px solid @hex_d0d0d0;
     border-top: 0px;
@@ -725,24 +716,17 @@ QFrame#frame QLineEdit#property_class {
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class:focus,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class:focus,
-QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class:focus,
-QFrame#frame > QLineEdit#variable_class:focus,
-QFrame#frame > QLineEdit#property_class:focus,
-QFrame#frame QLineEdit#property_class:focus {
+QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class:focus {
     border-color: @rgba_5e5e5e_255;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class::selection,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class::selection,
-QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class::selection,
-QFrame#frame > QLineEdit#variable_class::selection,
-QFrame#frame > QLineEdit#property_class::selection,
-QFrame#frame QLineEdit#property_class::selection {
+QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class::selection {
     background-color: @selection;
     color: white;
 }
 
-QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf,
-QFrame#frame QToolButton#gf {
+QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf {
     border: 2px solid black;
     border-color: @rgba_5e5e5e_255;
     border-left: none;
@@ -756,14 +740,12 @@ QFrame#frame QToolButton#gf {
     height: 16px;
     width: 16px;
 }
-QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf:hover,
-QFrame#frame QToolButton#gf:hover {
+QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf:hover {
     background-color: @selection;
     color: white;
 }
 
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4,
-QFrame#frame QLineEdit#property_class_4 {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4 {
     font: 8pt "Segoe UI";
     border-top: 0px;
     border-left: 0px;
@@ -774,12 +756,10 @@ QFrame#frame QLineEdit#property_class_4 {
     color: @text;
     background-color: @hex_363636;
 }
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4:focus,
-QFrame#frame QLineEdit#property_class_4:focus {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4:focus {
     border-color: @rgba_5e5e5e_255;
 }
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4::selection,
-QFrame#frame QLineEdit#property_class_4::selection {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4::selection {
     background-color: @selection;
     color: white;
 }
@@ -787,9 +767,7 @@ QFrame#frame QLineEdit#property_class_4::selection {
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class,
 QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class,
 QFrame[h5Component="smartpropPropertyFrame"] > QPushButton#change_class,
-QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class,
-QFrame#frame > QPushButton#change_class,
-QFrame#frame > QToolButton#change_class {
+QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class {
     font: 8pt "Segoe UI";
     border: 2px solid @hex_d0d0d0;
     border-top: 0px;
@@ -805,29 +783,21 @@ QFrame#frame > QToolButton#change_class {
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class:hover,
 QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class:hover,
 QFrame[h5Component="smartpropPropertyFrame"] > QPushButton#change_class:hover,
-QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class:hover,
-QFrame#frame > QPushButton#change_class:hover,
-QFrame#frame > QToolButton#change_class:hover {
+QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class:hover {
     background-color: @selection;
     color: white;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class:focus,
 QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class:focus,
 QFrame[h5Component="smartpropPropertyFrame"] > QPushButton#change_class:focus,
-QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class:focus,
-QFrame#frame > QPushButton#change_class:focus,
-QFrame#frame > QToolButton#change_class:focus {
+QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class:focus {
     border-color: @rgba_5e5e5e_255;
 }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display_label,
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display_2,
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display,
-QFrame#frame QLineEdit#element_id_display_2,
-QFrame#frame QLineEdit#element_id_display,
-QFrame#frame > QLineEdit#id_display_label,
-QFrame#frame > QLineEdit#id_display {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display {
     font: 8pt "Segoe UI";
     border: 2px solid @hex_d0d0d0;
     border-top: 0px;
@@ -843,29 +813,19 @@ QFrame#frame > QLineEdit#id_display {
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display_label:focus,
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display:focus,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display_2:focus,
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display:focus,
-QFrame#frame QLineEdit#element_id_display_2:focus,
-QFrame#frame QLineEdit#element_id_display:focus,
-QFrame#frame > QLineEdit#id_display_label:focus,
-QFrame#frame > QLineEdit#id_display:focus {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display:focus {
     border-color: @rgba_5e5e5e_255;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display_label::selection,
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display::selection,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display_2::selection,
-QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display::selection,
-QFrame#frame QLineEdit#element_id_display_2::selection,
-QFrame#frame QLineEdit#element_id_display::selection,
-QFrame#frame > QLineEdit#id_display_label::selection,
-QFrame#frame > QLineEdit#id_display::selection {
+QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display::selection {
     background-color: @selection;
     color: white;
 }
 
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button,
-QFrame#frame > QPushButton#add_button,
-QFrame#frame > QPushButton#paste_button {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button {
     font: 580 8pt "Segoe UI";
     border: 2px solid black;
     border-color: @rgba_5e5e5e_255;
@@ -883,24 +843,18 @@ QFrame#frame > QPushButton#paste_button {
     background-color: @hex_363636;
 }
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button:hover,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:hover,
-QFrame#frame > QPushButton#add_button:hover,
-QFrame#frame > QPushButton#paste_button:hover {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:hover {
     background-color: @selection;
     color: white;
 }
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button:pressed,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:pressed,
-QFrame#frame > QPushButton#add_button:pressed,
-QFrame#frame > QPushButton#paste_button:pressed {
+QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:pressed {
     background-color: @hex_363636;
     color: @text;
 }
 
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#delete_button,
-QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button,
-QFrame#frame QPushButton#delete_button,
-QFrame#frame QPushButton#copy_button {
+QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button {
     font: 580 8pt "Segoe UI";
     border: 2px solid black;
     border-color: @rgba_5e5e5e_255;
@@ -918,30 +872,23 @@ QFrame#frame QPushButton#copy_button {
     background-color: @hex_363636;
 }
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#delete_button:hover,
-QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:hover,
-QFrame#frame QPushButton#delete_button:hover,
-QFrame#frame QPushButton#copy_button:hover {
+QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:hover {
     background-color: @selection;
     color: white;
 }
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#delete_button:pressed,
-QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:pressed,
-QFrame#frame QPushButton#delete_button:pressed,
-QFrame#frame QPushButton#copy_button:pressed {
+QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:pressed {
     background-color: @hex_363636;
     color: @text;
 }
 
-QFrame[h5Component="smartpropFrameLayout"],
-QFrame#frame_layout {
+QFrame[h5Component="smartpropFrameLayout"] {
     border: 0px;
     border-top: 2px solid @rgba_5e5e5e_255;
 }
 
 QFrame[h5Component="smartpropDisplayNameFrame"],
-QFrame[h5Component="smartpropExpressionFrame"],
-QFrame#frame_3,
-QFrame#hide_expression_frame {
+QFrame[h5Component="smartpropExpressionFrame"] {
     font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 0px;
@@ -953,15 +900,12 @@ QFrame#hide_expression_frame {
     background-color: @background;
 }
 QLabel[h5Component="smartpropDisplayNameLabel"],
-QLabel[h5Component="smartpropExpressionLabel"],
-QFrame#frame_3 QLabel#label_2,
-QFrame#hide_expression_frame QLabel#label_3 {
+QLabel[h5Component="smartpropExpressionLabel"] {
     border: 0px;
     background-color: transparent;
     font: 8pt "Segoe UI";
 }
-QLineEdit[h5Component="smartpropDisplayNameInput"],
-QFrame#frame_3 QLineEdit#varialbe_display_name {
+QLineEdit[h5Component="smartpropDisplayNameInput"] {
     border: 0px solid @hex_d0d0d0;
     border-color: @rgba_5e5e5e_255;
     border-radius: 2px;
@@ -973,8 +917,12 @@ QFrame#frame_3 QLineEdit#varialbe_display_name {
 /* variables: Float, Int, Bool, Combobox, Vector, Color, Material, Model, etc. body editors */
 QWidget[h5Component="smartpropVariableBody"] {
     font: 580 10pt "Segoe UI";
-    color: @text;
     background-color: @background;
+    /* Was the .QWidget Designer sheet's padding, dropped when compile_ui.py
+       started stripping those; without it the editors sit flush to the panel. */
+    padding: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
 }
 QWidget[h5Component="smartpropVariableBody"] QFrame {
     font: 580 10pt "Segoe UI";
@@ -985,14 +933,18 @@ QWidget[h5Component="smartpropVariableBody"] QFrame {
     border-right: 0px;
     border-bottom: 2px solid @rgba_424242_255;
     border-radius: 0px;
-    color: @text;
     background-color: @background;
+    /* No colour on the containers either: Qt propagates a styled ancestor's
+       colour down to children, and that beat the [h5ColorRole] rule on the
+       labels inside these frames. The frames draw no text of their own. */
 }
 QWidget[h5Component="smartpropVariableBody"] QLabel {
     border: 0px;
     background-color: transparent;
     font: 8pt "Segoe UI";
-    color: @text;
+    /* No colour here: it would outrank the [h5ColorRole] rules below, which is
+       how the variable editors ended up with uniformly white field labels
+       while the property rows were colour-coded by type. */
 }
 QWidget[h5Component="smartpropVariableBody"] QSpinBox,
 QWidget[h5Component="smartpropVariableBody"] QDoubleSpinBox {
@@ -1043,7 +995,6 @@ QWidget[h5Component="smartpropVariableBody"] QCheckBox {
     border-radius: 0px;
     border: 0px;
     height: 14px;
-    color: @text;
     background-color: @background;
 }
 QWidget[h5Component="smartpropVariableBody"] QCheckBox::indicator:unchecked {

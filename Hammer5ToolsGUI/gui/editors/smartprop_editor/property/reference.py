@@ -49,6 +49,8 @@ class PropertyReference(QWidget):
 
         # Compact Source2-style row (no value-mode switch).
         compact.apply_row_no_switch(self, label_color="#8FB0FF")
+        compact.style_icon_button(self.ui.reference_clear)
+        compact.style_icon_button(self.ui.reference_search)
 
     def reference_id_search(self):
         """

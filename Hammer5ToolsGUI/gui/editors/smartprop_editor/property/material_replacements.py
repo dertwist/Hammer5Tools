@@ -1,8 +1,9 @@
 import re
 
 from gui.editors.smartprop_editor.property.ui_material_replacements import Ui_Widget
+from gui.editors.smartprop_editor.property import compact
 from gui.editors.smartprop_editor.property.string import PropertyString
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton, QSizePolicy, QSpacerItem
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QToolButton
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 
@@ -18,9 +19,12 @@ class MaterialReplacementRow(QWidget):
         self.variables_scrollArea = variables_scrollArea
         self.element_id_generator = element_id_generator
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 4, 0, 4)
-        layout.setSpacing(8)
+        # Stacked, not side by side: two compact rows squeezed into one line
+        # left each field about a third of the panel, so both clipped their
+        # value and neither label lined up with the rest of the editor.
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         filter_types = ['Material', 'String']
         placeholder = "Material path or variable"
@@ -33,9 +37,11 @@ class MaterialReplacementRow(QWidget):
             expression_bool=False,
             placeholder=placeholder,
             filter_types=filter_types,
+            browser_type='material',
             parent=self,
         )
         self.original_widget.ui.property_class.setText("Origin")
+        compact.indent_label(self.original_widget.ui.property_class)
         self.original_widget.edited.connect(self._on_changed)
 
         self.replacement_widget = PropertyString(
@@ -46,21 +52,32 @@ class MaterialReplacementRow(QWidget):
             expression_bool=False,
             placeholder=placeholder,
             filter_types=filter_types,
+            browser_type='material',
             parent=self,
         )
         self.replacement_widget.ui.property_class.setText("Target")
+        compact.indent_label(self.replacement_widget.ui.property_class)
         self.replacement_widget.edited.connect(self._on_changed)
-
-        layout.addWidget(self.original_widget)
-        layout.addWidget(QLabel("→"))
-        layout.addWidget(self.replacement_widget)
 
         delete_btn = QToolButton()
         delete_btn.setProperty("h5Component", "smartpropDeleteIconButton")
         delete_btn.setIcon(QIcon(":/icons/delete_24dp.svg"))
-        layout.addWidget(delete_btn)
 
-        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        # Delete sits at the right of the first line, so it reads as belonging
+        # to the pair rather than to either field.
+        # Both fields are capped to one content column so delete sits directly
+        # after the first field rather than at the far right of the panel.
+        for field in (self.original_widget, self.replacement_widget):
+            field.setMaximumWidth(compact.SUB_ROW_W)
+
+        first_line = QHBoxLayout()
+        first_line.setContentsMargins(0, 0, 0, 0)
+        first_line.setSpacing(0)
+        first_line.addWidget(self.original_widget)
+        first_line.addWidget(delete_btn)
+        first_line.addStretch(1)
+        layout.addLayout(first_line)
+        layout.addWidget(self.replacement_widget)
 
         def _do_delete():
             self.edited.emit()
@@ -115,6 +132,10 @@ class PropertyMaterialReplacements(QWidget):
         self.ui.add_replacement_widget.clicked.connect(lambda: self._add_row("", ""))
 
         self._change_value()
+
+        # Compact Source2-style header row; the replacement list may grow.
+        compact.apply_plain_row(self, self.ui.frame, self.ui.property_class,
+                                label_color="#FFD199", clamp_height=False)
 
     def _add_row(self, original="", replacement=""):
         row = MaterialReplacementRow(

@@ -2,6 +2,7 @@ from gui.editors.smartprop_editor.variables.ui_float import Ui_Widget
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+from gui.editors.smartprop_editor.property import compact
 
 class FloatVariable(QWidget):
     edited = Signal(float, float, float, str)
@@ -9,7 +10,7 @@ class FloatVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
-        self.setProperty("h5Component", "smartpropVariableBody")
+        compact.style_variable_body(self, "float")
         self.setAcceptDrops(True)
         # Cap displayed precision at 2 decimal places while keeping a very wide
         # magnitude range on all spin boxes.

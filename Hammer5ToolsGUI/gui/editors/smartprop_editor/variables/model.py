@@ -1,7 +1,8 @@
 from gui.editors.smartprop_editor.variables.ui_legacy import Ui_Widget
 
-from PySide6.QtWidgets import QWidget, QPushButton
+from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+from gui.editors.smartprop_editor.property import compact
 
 
 class ModelVariable(QWidget):
@@ -12,7 +13,7 @@ class ModelVariable(QWidget):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
-        self.setProperty("h5Component", "smartpropVariableBody")
+        compact.style_variable_body(self, "string")
         self.setAcceptDrops(True)
         self.min = None
         self.max = None
@@ -23,15 +24,12 @@ class ModelVariable(QWidget):
         self.ui.value.setPlaceholderText("Model path (e.g. models/props/crate01.vmdl)")
         self.ui.value.textChanged.connect(self.on_changed)
 
-        self.browse_button = QPushButton('…')
-        self.browse_button.setFixedSize(22, 22)
-        self.browse_button.setToolTip('Browse models')
+        self.browse_button = compact.browse_button('model')
         self.browse_button.clicked.connect(self._open_model_browser)
-        self.ui.horizontalLayout_2.addWidget(self.browse_button)
+        compact.attach_browse_button(self.ui.horizontalLayout_2, self.ui.value, self.browse_button)
 
     def _open_model_browser(self):
-        from gui.widgets.model_browser import pick_model
-        path = pick_model(self, current_path=self.ui.value.text().strip())
+        path = compact.pick_asset_path('model', self, self.ui.value.text().strip())
         if path:
             self.ui.value.setText(path)
 
