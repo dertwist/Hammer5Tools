@@ -343,6 +343,7 @@ class PropertyFrame(QWidget):
         mark_paint_through(self.ui.frame_layout)
         self.ui.frame_layout.setProperty("h5Component", "smartpropFrameLayout")
         self.ui.frame.setProperty("h5Component", "smartpropPropertyFrame")
+        self.ui.label.setProperty("h5Component", "smartpropDragHandle")
         # Mirrors insertWidget(0, ...) order ΓÇö avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
         self._is_selected = False
@@ -1284,8 +1285,8 @@ class PropertyFrame(QWidget):
     def set_group_type(self, group_type):
         self._group_type = group_type
         if hasattr(self.ui, 'label'):
-            set_style_property(self.ui.label, "h5Component", "smartpropGroupColorLabel")
-            set_style_property(self.ui.label, "h5GroupType", group_type)
+            set_style_property(self.ui.label, "h5Component", "smartpropGroupColorLabel" if group_type else "smartpropDragHandle")
+            set_style_property(self.ui.label, "h5GroupType", group_type or "")
 
     def set_selected(self, selected):
         self._is_selected = selected

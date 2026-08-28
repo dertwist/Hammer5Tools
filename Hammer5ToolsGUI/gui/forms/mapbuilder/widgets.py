@@ -88,6 +88,7 @@ class IntSettingWidget(SettingWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         label = QLabel(self.display_name)
+        set_style_property(label, "h5Component", "mapbuilderSettingLabel")
         self.spinbox = QSpinBox()
         self.spinbox.setMinimum(-1)
         self.spinbox.setMaximum(9999)
@@ -113,6 +114,7 @@ class StringSettingWidget(SettingWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         label = QLabel(self.display_name)
+        set_style_property(label, "h5Component", "mapbuilderSettingLabel")
         self.lineedit = QLineEdit()
         self.lineedit.setText(str(self.default_value))
         self.lineedit.textChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
@@ -139,6 +141,7 @@ class EnumSettingWidget(SettingWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         label = QLabel(self.display_name)
+        set_style_property(label, "h5Component", "mapbuilderSettingLabel")
         self.combobox = QComboBox()
         self._values = []
         for opt in self.options:
@@ -184,6 +187,7 @@ class FolderSettingWidget(SettingWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.label = QLabel(self.display_name)
+        set_style_property(self.label, "h5Component", "mapbuilderSettingLabel")
         from PySide6.QtWidgets import QListWidget, QAbstractItemView
         self.map_list = QListWidget()
         self.map_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -354,6 +358,7 @@ class SettingsGroup(QWidget):
 
 
         self.content_frame = QFrame()
+        set_style_property(self.content_frame, "h5Component", "mapbuilderGroupContent")
         self.content_layout = QVBoxLayout(self.content_frame)
         self.content_layout.setContentsMargins(12, 8, 12, 8)
         self.content_layout.setSpacing(6)

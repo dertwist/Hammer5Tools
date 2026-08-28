@@ -591,9 +591,7 @@ QFrame[h5Component="smartpropGroupHeaderFrame"][selected="true"] {
     background-color: @hex_3b3f48;
 }
 
-QFrame[h5Component="smartpropHeaderFrame"] > QLabel#label,
-QFrame[h5Component="smartpropPropertyFrame"] > QLabel#label,
-QFrame[h5Component="smartpropGroupHeaderFrame"] > QLabel#label,
+QLabel[h5Component="smartpropDragHandle"],
 QLabel[h5Component="smartpropVariableHeader"] {
     image: url(:/icons/more_vert.png);
     padding-left: 3px;

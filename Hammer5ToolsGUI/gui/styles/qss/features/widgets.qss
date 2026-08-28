@@ -161,6 +161,14 @@ QTreeView[h5Component="hierarchyBranchTree"]::branch,
 QTreeWidget[h5Component="hierarchyTree"]::branch {
     background: transparent;
 }
+QTreeView[h5Component="hierarchyBranchTree"]::branch:selected,
+QTreeWidget[h5Component="hierarchyTree"]::branch:selected {
+    background-color: @selection;
+}
+QTreeView[h5Component="hierarchyBranchTree"]::branch:hover,
+QTreeWidget[h5Component="hierarchyTree"]::branch:hover {
+    background-color: @hex_38383a;
+}
 QWidget#launchOverlay {
     background: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 0,

@@ -783,9 +783,6 @@ class HierarchyItemModel(QTreeWidgetItem):
             2: theme.qcolor("#a5a5a5"),
             3: theme.qcolor("#a5a5a5"),
         }
-        self.background_colors = {
-            0: theme.qcolor("#f0f0f0"),  # Light grey background in column 0
-        }
         self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
 
     def update_icon(self):
@@ -878,8 +875,6 @@ class HierarchyItemModel(QTreeWidgetItem):
         if role == Qt.ToolTipRole and column == 0 and self.violates_child_lock():
             return "Models and Smartprop elements cannot have any child elements."
 
-        if role == Qt.BackgroundRole and column in self.background_colors:
-            return self.background_colors[column]
         if role == Qt.FontRole and column == 0:
             return self.custom_font
 

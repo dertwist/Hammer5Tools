@@ -95,6 +95,7 @@ QTreeView {
     font: 580 10pt "Segoe UI";
     background-color: @surface;
     alternate-background-color: @hex_363636;
+    show-decoration-selected: 1;
 }
 
 QTreeView::item {
@@ -116,6 +117,14 @@ QTreeView::item:selected {
 QTreeView::item:hover {
     background-color: @hex_38383a;
     color: @text;
+}
+
+QTreeView::branch:selected {
+    background-color: @selection;
+}
+
+QTreeView::branch:hover {
+    background-color: @hex_38383a;
 }
 
 QTreeView::branch:has-siblings {

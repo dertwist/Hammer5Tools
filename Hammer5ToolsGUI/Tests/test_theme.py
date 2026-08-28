@@ -91,7 +91,8 @@ def test_smartprop_headers_present_in_compiled_qss():
     # unscoped QFrame#frame in the one global sheet reaches every .ui that
     # names a frame "frame" and outranks the [h5Component] rules on
     # specificity. See test_smartprop_property_zoo.
-    assert 'QFrame[h5Component="smartpropHeaderFrame"] > QLabel#label' in qss
+    assert 'h5Component="smartpropDragHandle"' in qss
+    assert 'h5Component="smartpropVariableHeader"' in qss
     assert 'QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child' in qss
     assert 'QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name' in qss
     assert 'QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button' in qss
@@ -103,6 +104,89 @@ def test_smartprop_headers_present_in_compiled_qss():
     assert "h5VarKind=\"string\"" in qss
     assert "h5VarKind=\"bool\"" in qss
     assert "h5VarKind=\"float\"" in qss
+
+
+def test_smartprop_variable_header_colors_paint():
+    """Variable frame header handles must paint their type-specific color.
+
+    ID selectors matching ancestors or bare object names must not outrank the
+    [h5VarKind] attribute rules on specificity.
+    """
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtGui import QPixmap
+    from gui.styles import manager
+    from gui.editors.smartprop_editor.variable_frame import VariableFrame
+    from gui.widgets.element_id import ElementIDGenerator
+
+    app = QApplication.instance() or QApplication([])
+    manager.apply(app, theme.STANDARD_THEME)
+
+    cases = [
+        ("String", "#e67e22"),
+        ("Bool", "#c0392b"),
+        ("Float", "#2980b9"),
+        ("Int", "#2471a3"),
+        ("Vector3D", "#8e44ad"),
+        ("Color", "#1b5e20"),
+    ]
+    for var_class, expected_hex in cases:
+        vf = VariableFrame(f"test_{var_class}", var_class, {}, True, "", None, ElementIDGenerator())
+        vf.resize(600, 24)
+        vf.show()
+        app.processEvents()
+        pix = QPixmap(vf.ui.label.size())
+        vf.ui.label.render(pix)
+        img = pix.toImage()
+        actual = img.pixelColor(2, 2).name().lower()
+        expected = theme.resolve_hex(theme.STANDARD_THEME, expected_hex).lower()
+        assert actual == expected, f"VariableFrame {var_class} header painted {actual}, expected {expected}"
+
+
+def test_tree_view_branch_rules_present_in_compiled_qss():
+    qss = compile_stylesheet(theme.STANDARD_THEME)
+    assert "show-decoration-selected: 1;" in qss
+    assert "QTreeView::branch:selected" in qss
+    assert 'QTreeWidget[h5Component="hierarchyTree"]::branch:selected' in qss
+
+
+def test_hierarchy_tree_selection_colors_paint():
+    """Hierarchy tree selected items must paint seamless selection highlight across the row."""
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QItemSelectionModel
+    from PySide6.QtGui import QPixmap
+    from gui.styles import manager
+    from gui.widgets.tree import HierarchyTreeWidget
+    from gui.widgets.widgets import HierarchyItemModel
+
+    app = QApplication.instance() or QApplication([])
+
+    for level in [theme.LEVEL_STANDARD, theme.LEVEL_BRIGHT]:
+        active_theme = theme.get_theme(level)
+        manager.apply(app, active_theme)
+
+        # 1. Test list mode (e.g. soundevent editor)
+        tree = HierarchyTreeWidget(None, list_mode=True)
+        tree.setHeaderLabels(["Event"])
+        item = HierarchyItemModel(_name="amb.looping.stereo.base", _class="Event")
+        tree.addTopLevelItem(item)
+        tree.resize(300, 100)
+        tree.show()
+
+        index = tree.indexFromItem(item)
+        tree.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        app.processEvents()
+
+        r = tree.visualItemRect(item)
+        pix = QPixmap(tree.viewport().size())
+        tree.viewport().render(pix)
+        img = pix.toImage()
+
+        y = r.center().y()
+        bg_left = img.pixelColor(2, y).name().lower()
+        bg_right = img.pixelColor(200, y).name().lower()
+        expected = active_theme.selection.lower()
+        assert bg_left == expected, f"Left edge painted {bg_left}, expected {expected} for theme {level}"
+        assert bg_right == expected, f"Right edge painted {bg_right}, expected {expected} for theme {level}"
 
 
 def test_soundevent_property_headers_present_in_compiled_qss():
@@ -134,10 +218,38 @@ def test_mapbuilder_is_styled_through_the_shared_theme():
         "mapbuilderGroupHeader",
         "mapbuilderMapList",
         "mapbuilderPreset",
+        "mapbuilderBoolSettingBox",
+        "mapbuilderSettingLabel",
         "systemMonitor",
     ):
         assert f'h5Component="{component}"' in qss
     assert "#32B8C6" not in qss, "the teal DesignColors accent is back"
+
+
+def test_mapbuilder_group_label_background_is_transparent():
+    """Group titles in Map Builder must not paint an opaque rectangle over headers."""
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtGui import QPixmap
+    from gui.styles import manager
+    from gui.forms.mapbuilder.widgets import SettingsPanel
+
+    app = QApplication.instance() or QApplication([])
+    for level in (theme.LEVEL_STANDARD, theme.LEVEL_BRIGHT):
+        manager.apply(app, theme.get_theme(level))
+        panel = SettingsPanel()
+        panel.resize(400, 600)
+        panel.show()
+        app.processEvents()
+
+        group = panel.groups["Common"]
+        parent_frame = group.group_label.parentWidget()
+        pix = QPixmap(parent_frame.size())
+        parent_frame.render(pix)
+        img = pix.toImage()
+        r = group.group_label.geometry()
+        col_header = img.pixelColor(2, 2).name().lower()
+        col_label_bg = img.pixelColor(r.x() + 2, r.y() + 2).name().lower()
+        assert col_header == col_label_bg, f"Label background mismatch for theme {level}: {col_label_bg} vs {col_header}"
 
 
 def test_progress_bar_is_styled_in_compiled_qss():

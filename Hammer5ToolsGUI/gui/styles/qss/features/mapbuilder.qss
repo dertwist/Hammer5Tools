@@ -40,19 +40,51 @@ QWidget[h5Component="mapbuilderBoolSetting"] {
     padding: 0px;
 }
 QCheckBox[h5Component="mapbuilderBoolSettingBox"] {
-    background-color: transparent;
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: @rgba_5e5e5e_255;
+    height: 22px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: @text;
+    background-color: @background;
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"]::indicator:unchecked {
+    image: url(:/icons/check_box_outline_blank_16dp.svg);
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"]::indicator:checked {
+    image: url(:/icons/select_check_box_16dp.svg);
+}
+QCheckBox[h5Component="mapbuilderBoolSettingBox"]:hover {
+    background-color: @selection;
+    color: @selection_text;
 }
 
 QFrame[h5Component="mapbuilderGroupHeader"] {
     background-color: @surface_raised;
+    border: none;
 }
 QLabel[h5Component="mapbuilderGroupTitle"] {
     font-weight: 500;
     font-size: 16px;
+    background: transparent;
+    background-color: transparent;
+}
+QLabel[h5Component="mapbuilderSettingLabel"],
+QFrame[h5Component="mapbuilderGroupHeader"] QLabel,
+QFrame[h5Component="mapbuilderGroupContent"] QLabel,
+QWidget[h5Component="mapbuilderBoolSetting"] QLabel {
+    background: transparent;
+    background-color: transparent;
 }
 QToolButton[h5Component="mapbuilderGroupCollapse"] {
     padding: 0px;
     margin: 0px;
+    background: transparent;
+    background-color: transparent;
 }
 
 QPushButton[h5Component="mapbuilderPreset"] {

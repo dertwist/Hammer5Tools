@@ -25,6 +25,7 @@ class PropertiesGroupFrame(QWidget):
         self.ui.setupUi(self)
         self.ui.frame.setProperty("h5Component", "smartpropGroupHeaderFrame")
         self.ui.frame_layout.setProperty("h5Component", "smartpropFrameLayout")
+        self.ui.label.setProperty("h5Component", "smartpropDragHandle")
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.name = name

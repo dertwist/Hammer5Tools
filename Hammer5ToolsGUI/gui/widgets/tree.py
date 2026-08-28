@@ -120,9 +120,12 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setAlternatingRowColors(True)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setDragDropMode(QAbstractItemView.InternalMove)
-        self.setDragDropMode(QTreeWidget.InternalMove)
         self.list_mode = list_mode
-        self.setIndentation(18)
+        if self.list_mode:
+            self.setRootIsDecorated(False)
+            self.setIndentation(0)
+        else:
+            self.setIndentation(18)
         self.setProperty("h5Component", "hierarchyTree")
 
     def drawBranches(self, painter: QPainter, rect: QRect, index):

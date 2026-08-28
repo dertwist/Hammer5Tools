@@ -150,14 +150,18 @@ class PreferencesDialog(QDialog):
             "Both are rebuilt on the next browse."
         )
         row_app.addWidget(self.cleanup_model_browser_button)
+        row_app.addStretch()
+        layout_other.addLayout(row_app)
+
+        row_assoc = QHBoxLayout()
         self.association_buttons = {}
         for ext, label in ((".vsmart", "SmartProp"), (".vsndevts", "SoundEvents"), (".hbat", "Hammer Batch")):
             button = Button(text=f" Associate {ext} ({label})")
             button.set_icon_sync()
-            row_app.addWidget(button)
+            row_assoc.addWidget(button)
             self.association_buttons[ext] = button
-        row_app.addStretch()
-        layout_other.addLayout(row_app)
+        row_assoc.addStretch()
+        layout_other.addLayout(row_assoc)
 
         row_git = QHBoxLayout()
         self.checkBox_git_generate_commit_messages = QCheckBox(
