@@ -177,6 +177,9 @@ public static class SmartPropEvaluator
         models = SmartPropFitOnLineEvaluator.ApplyFitOnLine(json, nestedDocumentsJson, models, options);
         models = SmartPropPlaceInSphereEvaluator.ApplyPlaceInSphere(json, nestedDocumentsJson, models, options);
         models = SmartPropPlaceMultipleEvaluator.ApplyPlaceMultiple(json, nestedDocumentsJson, models, options);
+        // Last: the material pass reads placements back by element id, and the multiplicity
+        // passes above are what create the cloned ids it has to resolve.
+        models = SmartPropMaterialEvaluator.ApplyMaterialOperations(json, models, options);
         return models;
     }
 

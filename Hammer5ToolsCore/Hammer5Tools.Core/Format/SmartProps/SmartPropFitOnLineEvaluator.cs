@@ -35,7 +35,6 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 internal static class SmartPropFitOnLineEvaluator
 {
     private const string ProbeModel = "__hammer5tools_fitonline_probe__.vmdl";
-    private const long IdStride = 1_000_000;
     // Bounds generated model count for a single FitOnLine widget.
     private const int MaxPieces = 256;
 
@@ -104,7 +103,7 @@ internal static class SmartPropFitOnLineEvaluator
                         * Matrix4x4.CreateFromQuaternion(localRotation)
                         * Matrix4x4.CreateTranslation(localTranslation + pieceOffset);
 
-                    var newId = pieceIndex == 0 ? baseModel.ElementId : baseModel.ElementId + (pieceIndex * IdStride);
+                    var newId = pieceIndex == 0 ? baseModel.ElementId : baseModel.ElementId + (pieceIndex * SmartPropWidgetEvaluator.ElementIdStride);
                     corrected.Add(baseModel with { ElementId = (int)newId, Transform = newLocal * elementFrame });
                 }
             }

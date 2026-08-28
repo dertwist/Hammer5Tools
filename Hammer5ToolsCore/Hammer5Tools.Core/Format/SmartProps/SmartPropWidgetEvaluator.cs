@@ -301,7 +301,7 @@ internal static class SmartPropWidgetEvaluator
         return node is null ? defaultValue : new(ResolveScalar(node, context, defaultValue.X));
     }
 
-    private static Vector3 ResolveColor(JsonNode? node, SmartPropContext context, Vector3 defaultValue)
+    internal static Vector3 ResolveColor(JsonNode? node, SmartPropContext context, Vector3 defaultValue)
     {
         var color = ResolveVector(node, context, defaultValue);
         if (color.X > 1f || color.Y > 1f || color.Z > 1f)
@@ -392,6 +392,13 @@ internal static class SmartPropWidgetEvaluator
             return "rotator";
         return null;
     }
+
+    /// <summary>
+    /// The element-id spacing every multiplicity pass uses when it clones a placement: copy
+    /// <c>k</c> of an element is numbered <c>id + k * ElementIdStride</c>. Shared so a later pass
+    /// can map a cloned placement back to the element it was authored on.
+    /// </summary>
+    internal const long ElementIdStride = 1_000_000;
 
     /// <summary>One element matching a target class, with the model-class descendants under it.</summary>
     internal readonly record struct DescendantElementInfo(

@@ -80,6 +80,7 @@ class MeshData:
 @dataclass
 class GPUMaterial:
     """GPU-side material: texture handles + scalar factors + alpha state."""
+    name: str = ""                 # source .vmat path, for SmartProp material operations
     base_tex: int = 0
     normal_tex: int = 0
     mr_tex: int = 0
@@ -170,6 +171,33 @@ class _ModelLoadWorker(QRunnable):
         self.signals.loaded.emit(self.model_resource_path, mesh)
 
 
+class _MaterialLoadSignals(QObject):
+    # (material_resource_path, MaterialData or None)
+    loaded = Signal(str, object)
+
+
+class _MaterialLoadWorker(QRunnable):
+    """Background worker for a standalone .vmat named by a MaterialOverride operation."""
+
+    def __init__(self, material_resource_path: str, context_addon: str = None):
+        super().__init__()
+        self.material_resource_path = material_resource_path
+        self.context_addon = context_addon
+        self.signals = _MaterialLoadSignals()
+        self.setAutoDelete(True)
+
+    @Slot()
+    def run(self):
+        material = None
+        try:
+            from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_material
+            material = load_material(self.material_resource_path, self.context_addon)
+        except Exception as e:
+            log.error(f"[MeshCache] Material load failed for {self.material_resource_path}: {e}")
+            material = None
+        self.signals.loaded.emit(self.material_resource_path, material)
+
+
 # Mesh Cache
 
 class MeshCache(QObject):
@@ -200,6 +228,15 @@ class MeshCache(QObject):
         # silently drawing a stale shape.
         self._deformed_gpu_cache: Dict[tuple, tuple] = {}   # key -> (signature, GPUMesh)
         self._pending_deformed_unload: list = []            # GPUMesh queued for GL free
+        # Standalone materials named by MaterialOverride operations. Kept apart from the
+        # per-model materials above because no mesh owns them: several models may substitute
+        # the same .vmat, and none of them should free it.
+        self._material_cpu: Dict[str, MaterialData] = {}
+        self._material_gpu: Dict[str, GPUMaterial] = {}
+        self._material_pending: Dict[str, MaterialData] = {}
+        self._material_textures: Dict[str, list] = {}
+        self._material_loading: set = set()
+        self._material_failed: set = set()
         self._thread_pool = QThreadPool()
         # Cap concurrency: reads run fully in parallel (each worker owns its VRF
         # file loader), so a few worker threads speed up multi-model scenes
@@ -227,6 +264,32 @@ class MeshCache(QObject):
         worker = _ModelLoadWorker(resource_path, context_addon)
         worker.signals.loaded.connect(self._on_model_loaded)
         self._thread_pool.start(worker)
+
+    def request_material(self, resource_path: str, context_addon: str = None):
+        """Request a standalone material (MaterialOverride target). Non-blocking."""
+        if not resource_path:
+            return
+        if (resource_path in self._material_gpu or resource_path in self._material_pending
+                or resource_path in self._material_loading or resource_path in self._material_failed):
+            return
+
+        self._material_loading.add(resource_path)
+        worker = _MaterialLoadWorker(resource_path, context_addon)
+        worker.signals.loaded.connect(self._on_material_loaded)
+        self._thread_pool.start(worker)
+
+    def get_gpu_material(self, resource_path: str) -> Optional[GPUMaterial]:
+        """The uploaded GPUMaterial for a standalone material, or None until it is ready."""
+        return self._material_gpu.get(resource_path)
+
+    def _on_material_loaded(self, resource_path: str, material_data):
+        self._material_loading.discard(resource_path)
+        if material_data is None:
+            self._material_failed.add(resource_path)
+            return
+        self._material_cpu[resource_path] = material_data
+        self._material_pending[resource_path] = material_data
+        self.model_ready.emit(resource_path)
 
     def put_mesh(self, resource_path: str, mesh_data: MeshData):
         """Insert a mesh built outside the compiled-model loader (VMAP brush geometry).
@@ -271,6 +334,17 @@ class MeshCache(QObject):
             finally:
                 del self._pending_upload[resource_path]
 
+        for resource_path, material_data in list(self._material_pending.items()):
+            try:
+                gpu_material, textures = self._upload_material(material_data)
+                self._material_gpu[resource_path] = gpu_material
+                self._material_textures[resource_path] = textures
+            except Exception as e:
+                log.error(f"[MeshCache] Material GPU upload failed for {resource_path}: {e}")
+                self._material_failed.add(resource_path)
+            finally:
+                del self._material_pending[resource_path]
+
     def invalidate_gpu_cache(self):
         """Called when the OpenGL context is recreated/reinitialized.
 
@@ -285,6 +359,11 @@ class MeshCache(QObject):
         # Re-queue all models currently in CPU cache for GPU upload in the new context
         for path, mesh_data in self._cpu_cache.items():
             self._pending_upload[path] = mesh_data
+
+        self._material_gpu.clear()
+        self._material_textures.clear()
+        for path, material_data in self._material_cpu.items():
+            self._material_pending[path] = material_data
 
     def prune(self, referenced_paths):
         """
@@ -418,30 +497,8 @@ class MeshCache(QObject):
             key = id(mat)
             gpu_mat = gpu_material_cache.get(key)
             if gpu_mat is None:
-                gpu_mat = GPUMaterial(
-                    base_tex=self._upload_texture(mat.base_color_img, mat.wrap_u, mat.wrap_v),
-                    normal_tex=self._upload_texture(mat.normal_img, mat.wrap_u, mat.wrap_v),
-                    mr_tex=self._upload_texture(mat.mr_img, mat.wrap_u, mat.wrap_v),
-                    ao_tex=self._upload_texture(mat.ao_img, mat.wrap_u, mat.wrap_v),
-                    emissive_tex=self._upload_texture(mat.emissive_img, mat.wrap_u, mat.wrap_v),
-                    base_color_factor=mat.base_color_factor,
-                    metallic_factor=mat.metallic_factor,
-                    roughness_factor=mat.roughness_factor,
-                    emissive_factor=mat.emissive_factor,
-                    alpha_mode=mat.alpha_mode,
-                    alpha_cutoff=mat.alpha_cutoff,
-                    double_sided=mat.double_sided,
-                    wrap_u=mat.wrap_u,
-                    wrap_v=mat.wrap_v,
-                    uv_scale=mat.uv_scale,
-                    uv_offset=mat.uv_offset,
-                    uv_center=mat.uv_center,
-                    uv_rotation=mat.uv_rotation,
-                )
-                for tex in (gpu_mat.base_tex, gpu_mat.normal_tex, gpu_mat.mr_tex,
-                            gpu_mat.ao_tex, gpu_mat.emissive_tex):
-                    if tex:
-                        owned_textures.append(tex)
+                gpu_mat, textures = self._upload_material(mat)
+                owned_textures.extend(textures)
                 gpu_material_cache[key] = gpu_mat
             gpu_submeshes.append(GPUSubMesh(index_offset=sm.index_offset,
                                             index_count=sm.index_count,
@@ -463,6 +520,37 @@ class MeshCache(QObject):
             bbox_min=mesh_data.bbox_min.copy(),
             bbox_max=mesh_data.bbox_max.copy(),
         )
+
+    def _upload_material(self, mat: MaterialData) -> tuple:
+        """Upload one MaterialData's textures and return (GPUMaterial, owned texture ids).
+
+        Must be called in a GL context. The caller owns the returned texture ids and is
+        responsible for deleting them.
+        """
+        gpu_mat = GPUMaterial(
+            name=mat.name,
+            base_tex=self._upload_texture(mat.base_color_img, mat.wrap_u, mat.wrap_v),
+            normal_tex=self._upload_texture(mat.normal_img, mat.wrap_u, mat.wrap_v),
+            mr_tex=self._upload_texture(mat.mr_img, mat.wrap_u, mat.wrap_v),
+            ao_tex=self._upload_texture(mat.ao_img, mat.wrap_u, mat.wrap_v),
+            emissive_tex=self._upload_texture(mat.emissive_img, mat.wrap_u, mat.wrap_v),
+            base_color_factor=mat.base_color_factor,
+            metallic_factor=mat.metallic_factor,
+            roughness_factor=mat.roughness_factor,
+            emissive_factor=mat.emissive_factor,
+            alpha_mode=mat.alpha_mode,
+            alpha_cutoff=mat.alpha_cutoff,
+            double_sided=mat.double_sided,
+            wrap_u=mat.wrap_u,
+            wrap_v=mat.wrap_v,
+            uv_scale=mat.uv_scale,
+            uv_offset=mat.uv_offset,
+            uv_center=mat.uv_center,
+            uv_rotation=mat.uv_rotation,
+        )
+        textures = [tex for tex in (gpu_mat.base_tex, gpu_mat.normal_tex, gpu_mat.mr_tex,
+                                    gpu_mat.ao_tex, gpu_mat.emissive_tex) if tex]
+        return gpu_mat, textures
 
     def _upload_texture(self, img_data: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 0) -> int:
         """Upload a pre-decoded RGBA uint8 array as a 2D texture; 0 if absent.
@@ -574,6 +662,20 @@ class MeshCache(QObject):
             self._free_deformed_mesh(gpu_mesh)
         for gpu_mesh in self._pending_deformed_unload:
             self._free_deformed_mesh(gpu_mesh)
+
+        for textures in self._material_textures.values():
+            try:
+                if textures:
+                    GL.glDeleteTextures(len(textures), textures)
+            except Exception:
+                pass
+
+        self._material_gpu.clear()
+        self._material_cpu.clear()
+        self._material_pending.clear()
+        self._material_textures.clear()
+        self._material_loading.clear()
+        self._material_failed.clear()
 
         self._gpu_cache.clear()
         self._cpu_cache.clear()

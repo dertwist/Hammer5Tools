@@ -140,6 +140,29 @@ internal static unsafe class NativeApi
             {
                 writer.WriteNull("tintColor");
             }
+            writer.WriteStartArray("materialTints");
+            foreach (var materialTint in model.MaterialTints ?? [])
+            {
+                writer.WriteStartObject();
+                writer.WriteString("material", materialTint.Material);
+                writer.WriteStartArray("color");
+                writer.WriteNumberValue(materialTint.Color.X);
+                writer.WriteNumberValue(materialTint.Color.Y);
+                writer.WriteNumberValue(materialTint.Color.Z);
+                writer.WriteNumberValue(materialTint.Color.W);
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WriteStartArray("materialOverrides");
+            foreach (var replacement in model.MaterialOverrides ?? [])
+            {
+                writer.WriteStartObject();
+                writer.WriteString("originalMaterial", replacement.OriginalMaterial);
+                writer.WriteString("replacementMaterial", replacement.ReplacementMaterial);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
             if (model.Deformer is { } deformer)
             {
                 writer.WriteStartObject("deformer");

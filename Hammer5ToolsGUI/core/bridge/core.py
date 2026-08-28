@@ -41,6 +41,26 @@ class SmartPropDeformer:
 
 
 @dataclass(frozen=True)
+class SmartPropMaterialTint:
+    """A tint for one named material on a model, from CSmartPropOperation_MaterialTint.
+
+    ``material`` is already normalized by Core (lowercase, forward slashes, no ``_c``), so it
+    compares directly against a submesh material path normalized the same way.
+    """
+
+    material: str
+    color: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class SmartPropMaterialReplacement:
+    """One material swapped for another, from CSmartPropOperation_MaterialOverride."""
+
+    original_material: str
+    replacement_material: str
+
+
+@dataclass(frozen=True)
 class SmartPropModel:
     """Python-native model produced by Core SmartProp evaluation."""
 
@@ -50,6 +70,8 @@ class SmartPropModel:
     material_group: str | None
     tint_color: tuple[float, float, float, float] | None
     deformer: SmartPropDeformer | None = None
+    material_tints: tuple[SmartPropMaterialTint, ...] = ()
+    material_overrides: tuple[SmartPropMaterialReplacement, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -677,6 +699,14 @@ class CoreBridge:
             model.get("materialGroup"),
             None if tint is None else tuple(float(value) for value in tint),
             CoreBridge._convert_native_smartprop_deformer(model.get("deformer")),
+            tuple(
+                SmartPropMaterialTint(str(item["material"]), tuple(float(value) for value in item["color"]))
+                for item in model.get("materialTints") or ()
+            ),
+            tuple(
+                SmartPropMaterialReplacement(str(item["originalMaterial"]), str(item["replacementMaterial"]))
+                for item in model.get("materialOverrides") or ()
+            ),
         )
 
     @staticmethod

@@ -23,7 +23,6 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 internal static class SmartPropPlaceInSphereEvaluator
 {
     private const string ProbeModel = "__hammer5tools_sphere_probe__.vmdl";
-    private const long IdStride = 1_000_000;
 
     public static IReadOnlyList<EvaluatedSmartPropModel> ApplyPlaceInSphere(
         string json,
@@ -70,7 +69,7 @@ internal static class SmartPropPlaceInSphereEvaluator
                 foreach (var baseModel in baseModels)
                 {
                     var newTransform = baseModel.Transform * invFrame * offsetMatrix * elementFrame;
-                    var newId = instance == 0 ? baseModel.ElementId : baseModel.ElementId + (instance * IdStride);
+                    var newId = instance == 0 ? baseModel.ElementId : baseModel.ElementId + (instance * SmartPropWidgetEvaluator.ElementIdStride);
                     corrected.Add(baseModel with { ElementId = (int)newId, Transform = newTransform });
                 }
             }

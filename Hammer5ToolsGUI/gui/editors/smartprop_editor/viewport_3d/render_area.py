@@ -737,20 +737,24 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     norm_mat = safe_normal_matrix(model_matrix)
                     textured = (self.shading_mode == "textured")
 
+                    base_tint, material_tints, overrides = self._instance_materials(info)
+
                     for sm in gpu_mesh.submeshes:
-                        if textured and sm.material.is_transparent and self.translucency_enabled:
+                        material = self._resolve_submesh_material(sm.material, overrides, context_addon)
+                        tint = self._submesh_tint(base_tint, material_tints, material)
+                        if textured and material.is_transparent and self.translucency_enabled:
                             # Defer translucent submeshes to the sorted second pass.
                             dist = float(np.linalg.norm(cam_pos - model_matrix[3, :3]))
                             transparent_items.append(
-                                (dist, gpu_mesh, sm, model_matrix, norm_mat, is_selected)
+                                (dist, gpu_mesh, sm, model_matrix, norm_mat, is_selected, material, tint)
                             )
                         else:
                             # Translucency off (or non-textured shading): draw BLEND
                             # materials as solid so they don't render see-through.
-                            force_opaque = sm.material.is_transparent and not self.translucency_enabled
+                            force_opaque = material.is_transparent and not self.translucency_enabled
                             self._draw_material_submesh(
                                 gpu_mesh, sm, model_matrix, norm_mat, is_selected, textured,
-                                force_opaque=force_opaque,
+                                force_opaque=force_opaque, material=material, tint=tint,
                             )
                 else:
                     # Queue model decompile / load if not already started
@@ -775,11 +779,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glEnable(GL.GL_CULL_FACE)
             GL.glFrontFace(GL.GL_CCW)
             GL.glDepthMask(GL.GL_FALSE)
-            for _dist, gm, sm, mm, nm, sel in transparent_items:
+            for _dist, gm, sm, mm, nm, sel, mat, tint in transparent_items:
                 GL.glCullFace(GL.GL_FRONT)   # keep back faces (far side) first
-                self._draw_material_submesh(gm, sm, mm, nm, sel, True)
+                self._draw_material_submesh(gm, sm, mm, nm, sel, True, material=mat, tint=tint)
                 GL.glCullFace(GL.GL_BACK)    # then front faces (near side) over them
-                self._draw_material_submesh(gm, sm, mm, nm, sel, True)
+                self._draw_material_submesh(gm, sm, mm, nm, sel, True, material=mat, tint=tint)
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_CULL_FACE)
 
@@ -838,24 +842,87 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     # Material binding / submesh drawing
     _ALPHA_MODE_CODE = {"OPAQUE": 0, "MASK": 1, "BLEND": 2}
 
-    def _bind_material(self, program, material, textured, force_opaque=False):
+    @staticmethod
+    def _normalize_material_name(path: str) -> str:
+        """Match Core's SmartPropMaterialEvaluator.NormalizeMaterialName.
+
+        Core normalizes the names it reports for MaterialTint/MaterialOverride; the model's own
+        submesh material paths come straight from the compiled model and have to be put in the
+        same form before they can be compared.
+        """
+        normalized = (path or "").replace("\\", "/").strip().lstrip("/")
+        if normalized.lower().endswith("_c"):
+            normalized = normalized[:-2]
+        return normalized.lower()
+
+    def _instance_materials(self, info):
+        """(base tint, {material: tint}, {material: replacement path}) for one placement."""
+        tint = info.get("tint_color")
+        base_tint = tuple(float(value) for value in tint) if tint else None
+        material_tints = {
+            item.material: tuple(float(value) for value in item.color)
+            for item in info.get("material_tints") or ()
+        }
+        overrides = {
+            item.original_material: item.replacement_material
+            for item in info.get("material_overrides") or ()
+        }
+        return base_tint, material_tints, overrides
+
+    def _resolve_submesh_material(self, material, overrides, context_addon):
+        """Substitute a MaterialOverride target for a submesh's own material.
+
+        The replacement is loaded asynchronously like a model is, so the original keeps drawing
+        until it arrives rather than the surface disappearing for a frame.
+        """
+        if not overrides:
+            return material
+
+        replacement = overrides.get(self._normalize_material_name(material.name))
+        if not replacement:
+            return material
+
+        loaded = self.mesh_cache.get_gpu_material(replacement)
+        if loaded is None:
+            self.mesh_cache.request_material(replacement, context_addon)
+            return material
+        return loaded
+
+    def _submesh_tint(self, base_tint, material_tints, material):
+        """Fold the per-material tint for this submesh into the placement's overall tint."""
+        if not material_tints:
+            return base_tint
+
+        tint = material_tints.get(self._normalize_material_name(material.name))
+        if tint is None:
+            return base_tint
+        if base_tint is None:
+            return tint
+        return tuple(a * b for a, b in zip(base_tint, tint))
+
+    def _bind_material(self, program, material, textured, force_opaque=False, tint=None):
         """Upload one GPUMaterial's uniforms and bind its textures (units 0-4).
 
         In non-textured (solid / wireframe) shading the maps are ignored and the
         surface renders as a neutral, opaque grey so geometry stays readable.
         ``force_opaque`` renders a BLEND material as OPAQUE (used when the viewport
-        translucency toggle is off).
+        translucency toggle is off).  ``tint`` is the SmartProp colour tint for this
+        placement (SetTintColor, plus any MaterialTint matching this material); it
+        multiplies the albedo, which is what CS2's own tint modes do, and is applied
+        in solid shading too so the colour is visible without textures.
         """
         from OpenGL import GL
 
         def loc(name):
             return GL.glGetUniformLocation(program, name)
 
+        tr, tg, tb, ta = tint if tint else (1.0, 1.0, 1.0, 1.0)
+
         # Flat fallback colour used when no base texture is bound.
-        GL.glUniform3f(loc("uBaseColor"), 0.7, 0.7, 0.7)
+        GL.glUniform3f(loc("uBaseColor"), 0.7 * tr, 0.7 * tg, 0.7 * tb)
 
         if not textured:
-            GL.glUniform4f(loc("uBaseColorFactor"), 1.0, 1.0, 1.0, 1.0)
+            GL.glUniform4f(loc("uBaseColorFactor"), tr, tg, tb, ta)
             GL.glUniform1f(loc("uRoughness"), 0.6)
             GL.glUniform1f(loc("uMetallic"), 0.0)
             GL.glUniform3f(loc("uEmissiveFactor"), 0.0, 0.0, 0.0)
@@ -870,7 +937,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return
 
         bcf = material.base_color_factor
-        GL.glUniform4f(loc("uBaseColorFactor"), bcf[0], bcf[1], bcf[2], bcf[3])
+        GL.glUniform4f(loc("uBaseColorFactor"), bcf[0] * tr, bcf[1] * tg, bcf[2] * tb, bcf[3] * ta)
         GL.glUniform1f(loc("uRoughness"), float(material.roughness_factor))
         GL.glUniform1f(loc("uMetallic"), float(material.metallic_factor))
         ef = material.emissive_factor
@@ -910,8 +977,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         bind_tex(4, material.emissive_tex, "uEmissiveTex", "uHasEmissive")
         GL.glActiveTexture(GL.GL_TEXTURE0)
 
-    def _draw_material_submesh(self, gpu_mesh, submesh, model_matrix, norm_mat, is_selected, textured, force_opaque=False):
-        """Draw one material submesh with the model shader."""
+    def _draw_material_submesh(self, gpu_mesh, submesh, model_matrix, norm_mat, is_selected, textured,
+                               force_opaque=False, material=None, tint=None):
+        """Draw one material submesh with the model shader.
+
+        ``material`` overrides the submesh's own GPUMaterial (a MaterialOverride substitution);
+        the submesh still supplies the index range to draw.
+        """
         from OpenGL import GL
         prog = self._model_program
 
@@ -920,7 +992,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Selection feedback is a post-process outline (see _render_selection_outline),
         # not a per-fragment fill, so ``is_selected`` no longer feeds the model shader.
 
-        self._bind_material(prog, submesh.material, textured, force_opaque=force_opaque)
+        self._bind_material(prog, material or submesh.material, textured,
+                            force_opaque=force_opaque, tint=tint)
 
         GL.glBindVertexArray(gpu_mesh.vao)
         # index_offset is an element count; glDrawElements wants a byte offset
@@ -1372,6 +1445,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 "is_editor_marker": False,
                 "material_group": model.material_group,
                 "tint_color": model.tint_color,
+                "material_tints": model.material_tints,
+                "material_overrides": model.material_overrides,
                 "deformer": model.deformer,
             })
 

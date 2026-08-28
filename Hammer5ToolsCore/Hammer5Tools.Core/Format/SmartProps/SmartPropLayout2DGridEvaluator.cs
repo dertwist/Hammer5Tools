@@ -22,7 +22,6 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 internal static class SmartPropLayout2DGridEvaluator
 {
     private const string ProbeModel = "__hammer5tools_grid_probe__.vmdl";
-    private const long IdStride = 1_000_000;
 
     public static IReadOnlyList<EvaluatedSmartPropModel> ApplyGrids(
         string json,
@@ -78,7 +77,7 @@ internal static class SmartPropLayout2DGridEvaluator
                     foreach (var baseModel in baseModels)
                     {
                         var newTransform = baseModel.Transform * invFrame * offsetMatrix * elementFrame;
-                        var newId = cellIndex == 0 ? baseModel.ElementId : baseModel.ElementId + (cellIndex * IdStride);
+                        var newId = cellIndex == 0 ? baseModel.ElementId : baseModel.ElementId + (cellIndex * SmartPropWidgetEvaluator.ElementIdStride);
                         corrected.Add(baseModel with { ElementId = (int)newId, Transform = newTransform });
                     }
                 }

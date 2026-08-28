@@ -24,7 +24,6 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 /// </remarks>
 internal static class SmartPropPlaceMultipleEvaluator
 {
-    private const long IdStride = 1_000_000;
 
     public static IReadOnlyList<EvaluatedSmartPropModel> ApplyPlaceMultiple(
         string json,
@@ -64,7 +63,7 @@ internal static class SmartPropPlaceMultipleEvaluator
                 if (SmartPropWidgetEvaluator.FindObject(clone, element.Path) is not { } cloneElement)
                     continue;
 
-                var delta = instance * IdStride;
+                var delta = instance * SmartPropWidgetEvaluator.ElementIdStride;
                 BumpElementIds(cloneElement, delta);
 
                 var evaluated = SmartPropEvaluation.Evaluate(

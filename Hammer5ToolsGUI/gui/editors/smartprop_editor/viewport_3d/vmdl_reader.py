@@ -78,6 +78,20 @@ def load_material_base_color(resource_path: str, context_addon: str = None,
     return None if material is None else _texture(material.textures[0])
 
 
+def load_material(resource_path: str, context_addon: str = None,
+                  max_texture_dim: int = None) -> Optional[MaterialData]:
+    """Decode a standalone .vmat into a full MaterialData, or None.
+
+    Used for CSmartPropOperation_MaterialOverride, which names a replacement material with no
+    model to hang it on — unlike load_material_base_color, every PBR map is decoded so the
+    substituted surface shades the same way the one it replaced did.
+    """
+    material = CoreBridge.instance().read_compiled_material(
+        _game_directory(), _active_addon(), resource_path, context_addon=context_addon,
+        maximum_texture_dimension=max_texture_dim or MAX_TEXTURE_DIM, base_color_only=False)
+    return None if material is None else _material(material)
+
+
 @functools.lru_cache(maxsize=512)
 def get_model_material_groups(resource_path: str, context_addon: str = None) -> List[str]:
     if not isinstance(resource_path, str) or not resource_path.strip():
