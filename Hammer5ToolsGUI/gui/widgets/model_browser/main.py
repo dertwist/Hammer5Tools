@@ -1077,6 +1077,21 @@ def pick_smartprop(parent=None, current_path: str = "", addon: str = None) -> Op
     return None
 
 
+def pick_material(parent=None, current_path: str = "", addon: str = None) -> Optional[str]:
+    """Open the material browser and return the chosen resource path, or None if cancelled."""
+    dialog = _get_cached_dialog(
+        parent=parent,
+        current_path=current_path,
+        addon=addon,
+        addon_only=False,
+        asset_types=[".vmat"],
+        title="Select Material"
+    )
+    if dialog.exec() == QDialog.Accepted:
+        return dialog.selected_path() or None
+    return None
+
+
 def pick_asset(
     parent=None,
     current_path: str = "",
