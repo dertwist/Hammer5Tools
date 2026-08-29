@@ -692,6 +692,19 @@ class CoreBridge:
         material = result["value"]
         return None if material is None else self._compiled_material(material)
 
+    def read_compiled_texture(self, game_directory: str, active_addon: str, resource_path: str,
+                              *, context_addon: str | None = None,
+                              maximum_texture_dimension: int = 1024) -> CompiledTextureData | None:
+        """Reads a standalone compiled texture — a .vtex with no material to hang it on."""
+        result = self._smartprop_native().read_compiled_texture({
+            "gameDirectory": game_directory,
+            "activeAddon": active_addon,
+            "resourcePath": resource_path,
+            "contextAddon": context_addon,
+            "maximumTextureDimension": maximum_texture_dimension,
+        })
+        return self._compiled_texture(result["value"])
+
     def read_compiled_model_material_groups(self, game_directory: str, active_addon: str,
                                             resource_path: str, context_addon: str | None = None) -> tuple[str, ...]:
         groups = self._smartprop_native().read_compiled_model_material_groups({

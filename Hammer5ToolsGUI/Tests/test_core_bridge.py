@@ -402,3 +402,36 @@ def test_compiled_model_texture_payload_is_decoded_once_per_material():
     base_colors = [submesh.material.textures[0] for submesh in model.submeshes]
     assert base_colors[0] is base_colors[1]
     assert base_colors[0] is not base_colors[2]
+
+
+class FakeCompiledTextureNative:
+    ABI_VERSION = 1
+
+    def __init__(self, payload):
+        self.payload = payload
+        self.requests = []
+
+    def read_compiled_texture(self, request):
+        self.requests.append(request)
+        return self.payload
+
+
+def test_compiled_texture_is_decoded_for_a_standalone_vtex():
+    native = FakeCompiledTextureNative(
+        {"value": {"width": 1, "height": 1, "rgba": "AAECAw=="}, "diagnostics": []})
+    bridge = CoreBridge(FakeInterop(), native_client=native)
+
+    texture = bridge.read_compiled_texture(
+        "game", "addon", "materials/example.vtex", context_addon="other")
+
+    assert (texture.width, texture.height) == (1, 1)
+    assert texture.rgba == bytes([0, 1, 2, 3])
+    assert native.requests[0]["resourcePath"] == "materials/example.vtex"
+    assert native.requests[0]["contextAddon"] == "other"
+
+
+def test_missing_compiled_texture_reads_as_none():
+    native = FakeCompiledTextureNative({"value": None, "diagnostics": []})
+    bridge = CoreBridge(FakeInterop(), native_client=native)
+
+    assert bridge.read_compiled_texture("game", "addon", "materials/missing.vtex") is None

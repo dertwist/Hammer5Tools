@@ -184,6 +184,28 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         }
     }
 
+    /// <summary>Reads one texture on its own, for previews that have no material to hang it on.</summary>
+    public CoreResult<CompiledTexture> ReadStandaloneTexture(
+        string resourcePath, string? contextAddon = null, int maximumTextureDimension = 1024)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourcePath);
+        try
+        {
+            var (addon, relativePath) = Resolve(resourcePath, contextAddon, ".vtex");
+            using var lease = RentLoader(addon, relativePath);
+            var texture = ReadTexture(lease.Loader, relativePath, maximumTextureDimension);
+            return texture is null
+                ? CoreResult.Failure<CompiledTexture>(
+                    "compiled_texture_read_failed", $"'{resourcePath}' holds no decodable texture data.")
+                : CoreResult.Success(texture);
+        }
+        catch (Exception exception)
+        {
+            return CoreResult.Failure<CompiledTexture>(
+                "compiled_texture_read_failed", $"Could not read '{resourcePath}': {exception.Message}");
+        }
+    }
+
     /// <summary>
     /// Takes exclusive use of a loader for the caller's whole read. VRF's
     /// <see cref="GameFileLoader"/> keeps mutable current-file state, so one loader serves

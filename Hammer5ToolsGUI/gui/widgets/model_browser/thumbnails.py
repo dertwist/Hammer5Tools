@@ -271,9 +271,10 @@ def _store_thumbnail_bytes(resource_path: str, size: int, data: bytes):
 
 
 #: Asset types that get a rendered (or decoded) thumbnail; everything else keeps
-#: its type icon. A .vmat resolves to its base-color map, a .vsmart is evaluated
-#: and its placed models baked into one preview mesh.
-THUMBNAIL_ASSET_TYPES = frozenset({"vmdl", "vmat", "vsmart"})
+#: its type icon. A .vmat resolves to its base-color map, a .vtex decodes straight
+#: to its own pixels, a .vsmart is evaluated and its placed models baked into one
+#: preview mesh.
+THUMBNAIL_ASSET_TYPES = frozenset({"vmdl", "vmat", "vsmart", "vtex"})
 
 #: Instances baked into one SmartProp preview. A prop may place thousands, and a
 #: 128px tile stops gaining anything long before that.
@@ -384,6 +385,10 @@ class _MeshLoadWorker(QRunnable):
             if asset_type == "vmat":
                 from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_material_base_color
                 result = load_material_base_color(
+                    self.entry.path, context_addon=self.entry.mod, max_texture_dim=THUMB_TEXTURE_DIM)
+            elif asset_type == "vtex":
+                from gui.editors.smartprop_editor.viewport_3d.vmdl_reader import load_texture
+                result = load_texture(
                     self.entry.path, context_addon=self.entry.mod, max_texture_dim=THUMB_TEXTURE_DIM)
             elif asset_type == "vsmart":
                 result = _load_smartprop_mesh(self.entry)
@@ -533,7 +538,7 @@ class ThumbnailService(QObject):
         self._in_flight.discard(resource_path)
         if resource_path not in self._visible_paths:
             return
-        # A material arrives as a decoded RGBA image: there is nothing to render,
+        # A material or texture arrives as a decoded RGBA image: there is nothing to render,
         # so it skips the GL queue entirely and is published straight away.
         if isinstance(result, np.ndarray):
             self._publish_image(resource_path, _image_from_rgba(result, self.size))

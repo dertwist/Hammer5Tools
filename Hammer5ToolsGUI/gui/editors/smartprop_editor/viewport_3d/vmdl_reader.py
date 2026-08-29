@@ -85,6 +85,14 @@ def load_material_base_color(resource_path: str, context_addon: str = None,
     return None if material is None else _texture(material.textures[0])
 
 
+def load_texture(resource_path: str, context_addon: str = None,
+                 max_texture_dim: int = None) -> Optional[np.ndarray]:
+    """Decode a standalone .vtex as an RGBA array, or None."""
+    return _texture(CoreBridge.instance().read_compiled_texture(
+        _game_directory(), _active_addon(), resource_path, context_addon=context_addon,
+        maximum_texture_dimension=max_texture_dim or MAX_TEXTURE_DIM))
+
+
 def load_material(resource_path: str, context_addon: str = None,
                   max_texture_dim: int = None) -> Optional[MaterialData]:
     """Decode a standalone .vmat into a full MaterialData, or None.

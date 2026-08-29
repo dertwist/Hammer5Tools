@@ -226,6 +226,12 @@ class SmartPropNativeClient:
             self._library.h5t_compiled_material_read_json, *self._buffer_arguments(self._json_bytes(request)),
         ))
 
+    def read_compiled_texture(self, request: dict) -> dict:
+        """Reads one compiled texture. Returns {"value": {...} | None, "diagnostics": [...]}."""
+        return json.loads(self._invoke(
+            self._library.h5t_compiled_texture_read_json, *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
     def read_compiled_model_material_groups(self, request: dict) -> list[str]:
         """Reads the material group names of a compiled model."""
         return json.loads(self._invoke(
@@ -466,6 +472,7 @@ class SmartPropNativeClient:
             "h5t_compiled_model_read_json",
             "h5t_compiled_model_material_groups_json",
             "h5t_compiled_material_read_json",
+            "h5t_compiled_texture_read_json",
             "h5t_compiled_resource_read_json",
             "h5t_vmap_read_json",
             "h5t_vmap_read_scene_json",
