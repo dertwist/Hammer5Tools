@@ -160,6 +160,172 @@ GITATTRIBUTES = '''# Image Files
 *.pur filter=lfs diff=lfs merge=lfs -text
 *.radgen filter=lfs diff=lfs merge=lfs -text
 *.tor filter=lfs diff=lfs merge=lfs -text
+*.iso filter=lfs diff=lfs merge=lfs -text
+*.glb filter=lfs diff=lfs merge=lfs -text
+# Audio Files
+*.aif filter=lfs diff=lfs merge=lfs -text
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.m4a filter=lfs diff=lfs merge=lfs -text
+*.mid filter=lfs diff=lfs merge=lfs -text
+*.midi filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.wma filter=lfs diff=lfs merge=lfs -text
+# Image Files - All Formats
+*.bmp filter=lfs diff=lfs merge=lfs -text
+*.dds filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.hdr filter=lfs diff=lfs merge=lfs -text
+*.heic filter=lfs diff=lfs merge=lfs -text
+*.ico filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.psb filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.raw filter=lfs diff=lfs merge=lfs -text
+*.svg filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+# Video Files
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.flv filter=lfs diff=lfs merge=lfs -text
+*.m4v filter=lfs diff=lfs merge=lfs -text
+*.mkv filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mpeg filter=lfs diff=lfs merge=lfs -text
+*.mpg filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.wmv filter=lfs diff=lfs merge=lfs -text
+# 3D Model Formats
+*.3ds filter=lfs diff=lfs merge=lfs -text
+*.abc filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.blend1 filter=lfs diff=lfs merge=lfs -text
+*.blend2 filter=lfs diff=lfs merge=lfs -text
+*.blend3 filter=lfs diff=lfs merge=lfs -text
+*.blend4 filter=lfs diff=lfs merge=lfs -text
+*.c4d filter=lfs diff=lfs merge=lfs -text
+*.dae filter=lfs diff=lfs merge=lfs -text
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.glb filter=lfs diff=lfs merge=lfs -text
+*.gltf filter=lfs diff=lfs merge=lfs -text
+*.lwo filter=lfs diff=lfs merge=lfs -text
+*.lxo filter=lfs diff=lfs merge=lfs -text
+*.ma filter=lfs diff=lfs merge=lfs -text
+*.max filter=lfs diff=lfs merge=lfs -text
+*.mb filter=lfs diff=lfs merge=lfs -text
+*.obj filter=lfs diff=lfs merge=lfs -text
+*.ply filter=lfs diff=lfs merge=lfs -text
+*.stl filter=lfs diff=lfs merge=lfs -text
+*.usdc filter=lfs diff=lfs merge=lfs -text
+*.usdz filter=lfs diff=lfs merge=lfs -text
+*.x3d filter=lfs diff=lfs merge=lfs -text
+# Substance Designer/Painter
+*.sbs filter=lfs diff=lfs merge=lfs -text
+*.sbsar filter=lfs diff=lfs merge=lfs -text
+*.sbsarchive filter=lfs diff=lfs merge=lfs -text
+*.spp filter=lfs diff=lfs merge=lfs -text
+# Adobe Creative Suite
+*.aep filter=lfs diff=lfs merge=lfs -text
+*.ai filter=lfs diff=lfs merge=lfs -text
+*.indd filter=lfs diff=lfs merge=lfs -text
+*.psb filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+# PureRef
+*.pur filter=lfs diff=lfs merge=lfs -text
+# Unreal Engine
+*.uasset filter=lfs diff=lfs merge=lfs -text
+*.umap filter=lfs diff=lfs merge=lfs -text
+*.upk filter=lfs diff=lfs merge=lfs -text
+*.uplugin filter=lfs diff=lfs merge=lfs -text
+*.uproject filter=lfs diff=lfs merge=lfs -text
+# Unity
+*.anim filter=lfs diff=lfs merge=lfs -text
+*.asset filter=lfs diff=lfs merge=lfs -text
+*.controller filter=lfs diff=lfs merge=lfs -text
+*.cubemap filter=lfs diff=lfs merge=lfs -text
+*.mat filter=lfs diff=lfs merge=lfs -text
+*.physicmaterial filter=lfs diff=lfs merge=lfs -text
+*.prefab filter=lfs diff=lfs merge=lfs -text
+*.unity filter=lfs diff=lfs merge=lfs -text
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+# Source Engine (Valve Classic)
+*.ani filter=lfs diff=lfs merge=lfs -text
+*.bsp filter=lfs diff=lfs merge=lfs -text
+*.dx80 filter=lfs diff=lfs merge=lfs -text
+*.dx90 filter=lfs diff=lfs merge=lfs -text
+*.mdl filter=lfs diff=lfs merge=lfs -text
+*.pcf filter=lfs diff=lfs merge=lfs -text
+*.phy filter=lfs diff=lfs merge=lfs -text
+*.sw filter=lfs diff=lfs merge=lfs -text
+*.vcd filter=lfs diff=lfs merge=lfs -text
+*.vcs filter=lfs diff=lfs merge=lfs -text
+*.vfe filter=lfs diff=lfs merge=lfs -text
+*.vmt filter=lfs diff=lfs merge=lfs -text
+*.vphys filter=lfs diff=lfs merge=lfs -text
+*.vtf filter=lfs diff=lfs merge=lfs -text
+*.vtx filter=lfs diff=lfs merge=lfs -text
+*.vvd filter=lfs diff=lfs merge=lfs -text
+# Source 2 Engine
+*.dmx filter=lfs diff=lfs merge=lfs -text
+*.radgen filter=lfs diff=lfs merge=lfs -text
+*.vjs filter=lfs diff=lfs merge=lfs -text
+*.vmap filter=lfs diff=lfs merge=lfs -text
+*.vpk filter=lfs diff=lfs merge=lfs -text
+*.vsnd filter=lfs diff=lfs merge=lfs -text
+*.vxml filter=lfs diff=lfs merge=lfs -text
+# Archives & Packages
+*.7z filter=lfs diff=lfs merge=lfs -text
+*.bz2 filter=lfs diff=lfs merge=lfs -text
+*.gz filter=lfs diff=lfs merge=lfs -text
+*.iso filter=lfs diff=lfs merge=lfs -text
+*.pak filter=lfs diff=lfs merge=lfs -text
+*.rar filter=lfs diff=lfs merge=lfs -text
+*.tar filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+# Executables & Libraries
+*.a filter=lfs diff=lfs merge=lfs -text
+*.apk filter=lfs diff=lfs merge=lfs -text
+*.app filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.dll filter=lfs diff=lfs merge=lfs -text
+*.dmg filter=lfs diff=lfs merge=lfs -text
+*.dylib filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.ipa filter=lfs diff=lfs merge=lfs -text
+*.jar filter=lfs diff=lfs merge=lfs -text
+*.lib filter=lfs diff=lfs merge=lfs -text
+*.msi filter=lfs diff=lfs merge=lfs -text
+*.pdb filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+# Documents
+*.doc filter=lfs diff=lfs merge=lfs -text
+*.docx filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.ppt filter=lfs diff=lfs merge=lfs -text
+*.pptx filter=lfs diff=lfs merge=lfs -text
+*.xls filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
+# Fonts
+*.eot filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs merge=lfs -text
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.woff filter=lfs diff=lfs merge=lfs -text
+*.woff2 filter=lfs diff=lfs merge=lfs -text
+# Miscellaneous Binary Files
+*.bak filter=lfs diff=lfs merge=lfs -text
+*.cache filter=lfs diff=lfs merge=lfs -text
+*.ptx filter=lfs diff=lfs merge=lfs -text
+*.tmp filter=lfs diff=lfs merge=lfs -text
+*.tor filter=lfs diff=lfs merge=lfs -text
+*.db filter=lfs diff=lfs merge=lfs -text
 '''
 
 
