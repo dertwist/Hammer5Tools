@@ -198,11 +198,13 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # re-saving an untouched event must not reshuffle the .vsndevts.
         self._source_order: list[str] = []
         self._frames_by_key: dict = {}
+        self._frames_by_entry: dict = {}
         self._group_headers: dict = {}
 
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
+        self._context_menu_connected = True
 
         self.ui.centralwidget.setFocusPolicy(Qt.StrongFocus)
 
@@ -355,8 +357,11 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.ui.centralwidget.removeEventFilter(self)
 
         self.setContextMenuPolicy(Qt.NoContextMenu)
-        self.customContextMenuRequested.disconnect(self.open_context_menu)
-        
+        if self._context_menu_connected:
+            self.customContextMenuRequested.disconnect(self.open_context_menu)
+            self._context_menu_connected = False
+
+
         try:
             self.play_button.setEnabled(True)
         except Exception:
@@ -369,7 +374,11 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.ui.centralwidget.installEventFilter(self)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.open_context_menu)
+        # Every event switch calls this; connecting again would stack duplicate
+        # handlers and pop the context menu once per switch made.
+        if not self._context_menu_connected:
+            self.customContextMenuRequested.connect(self.open_context_menu)
+            self._context_menu_connected = True
 
         self.apply_readonly_mode()
     
@@ -408,11 +417,19 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             else:
                 i += 1
         self._frames_by_key.clear()
+        self._frames_by_entry.clear()
         self._group_headers.clear()
         self._source_order = []
 
     def populate_properties(self, _data):
-        """Loading properties from given data, grouped into schema order."""
+        """Loading properties from given data, grouped into schema order.
+
+        Both event switching and undo/redo land here, and both normally differ
+        from what is already on screen by a value or two. Frames whose property
+        is unchanged are therefore refreshed in place and only the difference is
+        built or destroyed — a rebuild costs a .ui load per property, which is
+        what made undo and switching stutter.
+        """
         if not isinstance(_data, dict):
             log.error("Wrong input data format: %s (%s)", _data, type(_data))
             return
@@ -420,14 +437,57 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         keys = [key for key in _data if key != 'm_sLabel']
         self._source_order = list(keys)
 
-        for entry in self._display_entries(keys):
-            self.create_property_entry({key: _data[key] for key in entry})
+        container = self.ui.properties_layout.parentWidget()
+        if container is not None:
+            container.setUpdatesEnabled(False)
+        try:
+            reusable = self._frames_by_entry
+            self._frames_by_entry = {}
+            self._frames_by_key = {}
+            for entry in self._display_entries(keys):
+                data = {key: _data[key] for key in entry}
+                frame = reusable.pop(entry, None)
+                if frame is not None:
+                    if frame.set_values(data):
+                        self._register_frame(entry, frame)
+                        continue
+                    self._discard_frame(frame)
+                self.create_property_entry(data)
+            for frame in reusable.values():
+                self._discard_frame(frame)
+            self._prune_group_headers()
+        finally:
+            if container is not None:
+                container.setUpdatesEnabled(True)
 
         # Ensure readonly mode applied after population
         self.apply_readonly_mode()
 
         # Sync self.value so callers can read it immediately after populate_properties()
         self.update_value()
+
+    def _register_frame(self, entry: tuple, frame) -> None:
+        self._frames_by_entry[entry] = frame
+        for key in entry:
+            self._frames_by_key[key] = frame
+
+    def _discard_frame(self, frame) -> None:
+        """Drop a frame that no longer has a property to show."""
+        try:
+            self.ui.properties_layout.removeWidget(frame)
+            frame.setParent(None)
+            frame.deleteLater()
+        except RuntimeError:
+            pass  # already destroyed (e.g. by its own delete button)
+
+    def _prune_group_headers(self) -> None:
+        """Remove the bars of groups that no longer hold any property."""
+        groups = {get_spec(key).group for key in self._frames_by_key}
+        for group in [g for g in self._group_headers if g not in groups]:
+            header = self._group_headers.pop(group)
+            self.ui.properties_layout.removeWidget(header)
+            header.setParent(None)
+            header.deleteLater()
 
     def _display_entries(self, keys) -> list:
         """Keys in display order, with min/max pairs merged into one entry."""
@@ -452,7 +512,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Create one frame for a property, or for a merged min/max pair."""
         widget_instance = SoundEventEditorPropertyFrame(_data=data, widget_list=self.ui.properties_layout, tree=self.tree)
         widget_instance.edited.connect(self.on_update)
-        widget_instance.deleted.connect(self._on_property_deleted)
+        widget_instance.deleted.connect(
+            lambda name, frame=widget_instance: self._on_property_deleted(name, frame)
+        )
         widget_instance.slider_pressed.connect(self._capture_pre_commit_snapshot)
         widget_instance.committed.connect(self.on_commit)
 
@@ -467,8 +529,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         header = self._ensure_group_header(get_spec(first).group)
         index = self._insert_index_for(widget_instance.display_order)
         self.ui.properties_layout.insertWidget(index, widget_instance)
-        for key in keys:
-            self._frames_by_key[key] = widget_instance
+        self._register_frame(tuple(keys), widget_instance)
         if header is not None and not header.show_child.isChecked():
             widget_instance.setVisible(False)
         return widget_instance
@@ -513,9 +574,16 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 if dependent is not None and dependent is not frame:
                     dependent.setEnabled(bool(value))
 
-    def _on_property_deleted(self, prop_name: str):
-        """Called just before a property frame destroys itself — sets the undo label."""
+    def _on_property_deleted(self, prop_name: str, frame=None):
+        """Called just before a property frame destroys itself — sets the undo
+        label and forgets the frame, which is about to become a dead reference."""
         self._next_undo_desc = f"Delete property '{prop_name}'"
+        for entry, existing in list(self._frames_by_entry.items()):
+            if existing is frame:
+                del self._frames_by_entry[entry]
+                for key in entry:
+                    self._frames_by_key.pop(key, None)
+        self._prune_group_headers()
 
     def get_property_value(self, index):
         """Getting dict value from widget instance frame"""
@@ -545,7 +613,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Rebuild the properties UI from a full state snapshot."""
         self._undo_enabled = False       # don't push a new command while restoring
         self._populating = True
-        self.properties_clear()
         self.properties_groups_show()
         self.populate_properties(state)
 
@@ -727,7 +794,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         except Exception:
             data = {}
 
-        self.properties_clear()
         self.properties_groups_show()
         self.populate_properties(data)
 

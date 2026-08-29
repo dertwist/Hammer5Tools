@@ -113,7 +113,8 @@ QLabel[h5Component="soundeventBrowserHeaderLabel"] {
     color: @hex_d0d0d0;
     padding-left: 2px;
 }
-QListWidget[h5Component="soundeventBrowserList"] {
+QListWidget[h5Component="soundeventBrowserList"],
+QTreeWidget[h5Component="soundeventBrowserList"] {
     background-color: @background;
     alternate-background-color: @hex_363636;
     border: 1px solid @hex_434343;
@@ -121,13 +122,16 @@ QListWidget[h5Component="soundeventBrowserList"] {
     color: @hex_e2e2e2;
     font: 580 10pt "Segoe UI";
 }
-QListWidget[h5Component="soundeventBrowserList"]::item {
+QListWidget[h5Component="soundeventBrowserList"]::item,
+QTreeWidget[h5Component="soundeventBrowserList"]::item {
     padding: 2px 6px;
 }
-QListWidget[h5Component="soundeventBrowserList"]::item:hover {
+QListWidget[h5Component="soundeventBrowserList"]::item:hover,
+QTreeWidget[h5Component="soundeventBrowserList"]::item:hover {
     background-color: @hex_3e434b;
 }
-QListWidget[h5Component="soundeventBrowserList"]::item:selected {
+QListWidget[h5Component="soundeventBrowserList"]::item:selected,
+QTreeWidget[h5Component="soundeventBrowserList"]::item:selected {
     background-color: @hex_4d596b;
     color: @selection_text;
 }

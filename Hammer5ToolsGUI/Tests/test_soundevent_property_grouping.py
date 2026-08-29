@@ -151,3 +151,11 @@ def test_clear_resets_group_state():
     assert headers(window) == []
     assert window._frames_by_key == {}
     assert window.get_properties_value() == {}
+
+
+def test_group_children_have_left_offset():
+    window = build()
+    for frame in frames(window):
+        margins = frame.ui.verticalLayout.contentsMargins()
+        assert margins.left() > 0
+

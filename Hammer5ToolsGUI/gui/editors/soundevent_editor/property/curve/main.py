@@ -150,6 +150,11 @@ class DataPointItem(QWidget):
         """Get current values from all widgets"""
         return [widget.value for widget in self.widgets['float_widgets']]
 
+    def set_values(self, values):
+        """Push new values into the existing sliders, no rebuild."""
+        for widget, value in zip(self.widgets['float_widgets'], values or []):
+            widget.set_value(value)
+
     def duplicate_item(self):
         """Create a duplicate of this datapoint"""
         if self.parent_widget:
@@ -599,6 +604,28 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.plot_graph()
         if not getattr(self, '_suppress_signals', False):
             self.edited.emit()
+
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values).
+
+        The plot and its permanent graphics items are the expensive part of this
+        widget, so undo/redo and event switching reuse them and only the
+        datapoint rows are added, dropped or re-fed.
+        """
+        values = value if isinstance(value, list) else []
+        self._suppress_signals = True
+        try:
+            for item in self.datapoint_items[len(values):]:
+                item.delete_item()
+            existing = len(self.datapoint_items)
+            for item, point_values in zip(self.datapoint_items, values):
+                item.set_values(point_values)
+            for point_values in values[existing:]:
+                self.add_datapoint(point_values)
+        finally:
+            self._suppress_signals = False
+        self.value_update([item.get_values() for item in self.datapoint_items])
+        self.plot_graph()
 
     # --- New API for context/undo handling ---
     def set_context_element(self, name: str):

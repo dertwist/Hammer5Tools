@@ -2,11 +2,12 @@ import os
 from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QSplitter, QPushButton, QStyle
+    QListWidgetItem, QTreeWidget, QTreeWidgetItem, QSplitter, QPushButton, QStyle
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from gui.editors.soundevent_editor.objects import soundevent_editor_properties
+from gui.editors.soundevent_editor.property_schema import GROUPS, get_spec
 from gui.common import (
     get_all_presets, SoundEventEditor_Preset_Path, SoundEventEditor_Internal_Preset_Path,
     Kv3ToJson
@@ -55,12 +56,15 @@ class PropertyBrowserWidget(QWidget):
         self.prop_filter_edit.textChanged.connect(self.filter_properties)
         prop_layout.addWidget(self.prop_filter_edit)
 
-        # Properties List
-        self.prop_list_widget = QListWidget(properties_container)
-        self.prop_list_widget.setAlternatingRowColors(True)
-        self.prop_list_widget.setProperty("h5Component", "soundeventBrowserList")
-        self.prop_list_widget.itemDoubleClicked.connect(self._on_property_double_clicked)
-        prop_layout.addWidget(self.prop_list_widget)
+        # Properties Tree
+        self.prop_tree_widget = QTreeWidget(properties_container)
+        self.prop_tree_widget.setHeaderHidden(True)
+        self.prop_tree_widget.setAlternatingRowColors(True)
+        self.prop_tree_widget.setProperty("h5Component", "soundeventBrowserList")
+        self.prop_tree_widget.setIndentation(14)
+        self.prop_tree_widget.itemDoubleClicked.connect(self._on_property_double_clicked)
+        prop_layout.addWidget(self.prop_tree_widget)
+        self.prop_list_widget = self.prop_tree_widget
 
         splitter.addWidget(properties_container)
 
@@ -124,24 +128,63 @@ class PropertyBrowserWidget(QWidget):
         splitter.setSizes([450, 180])
 
     def load_properties(self):
-        """Populate property list from soundevent_editor_properties."""
-        self.prop_list_widget.clear()
+        """Populate property tree grouped by schema categories."""
+        self.prop_tree_widget.clear()
+
+        grouped: dict[str, list[tuple[str, dict]]] = {group_id: [] for group_id, _ in GROUPS}
+        grouped["custom"] = []
+
         for dict_value in soundevent_editor_properties:
             for display_name, val_dict in dict_value.items():
-                item = QListWidgetItem(display_name)
-                item.setData(Qt.UserRole, (display_name, val_dict))
-                self.prop_list_widget.addItem(item)
+                prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
+                spec = get_spec(prop_key)
+                group_id = spec.group if spec.group in grouped else "custom"
+                grouped[group_id].append((display_name, val_dict))
+
+        for group_id, group_title in GROUPS:
+            props = grouped.get(group_id, [])
+            if not props:
+                continue
+            cat_item = QTreeWidgetItem(self.prop_tree_widget)
+            cat_item.setText(0, group_title)
+            cat_item.setData(0, Qt.UserRole, None)
+            cat_item.setFlags(Qt.ItemIsEnabled)
+            font = cat_item.font(0)
+            font.setBold(True)
+            cat_item.setFont(0, font)
+
+            for display_name, val_dict in props:
+                item = QTreeWidgetItem(cat_item)
+                item.setText(0, display_name)
+                item.setData(0, Qt.UserRole, (display_name, val_dict))
+                item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                item.setToolTip(0, f"Double-click to add {display_name}")
+
+        self.prop_tree_widget.expandAll()
 
     def filter_properties(self, text: str):
         search = text.strip().lower()
-        for i in range(self.prop_list_widget.count()):
-            item = self.prop_list_widget.item(i)
-            item.setHidden(bool(search and search not in item.text().lower()))
+        root = self.prop_tree_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            cat_item = root.child(i)
+            cat_matches = bool(search and search in cat_item.text(0).lower())
+            visible_children = 0
 
-    def _on_property_double_clicked(self, item: QListWidgetItem):
+            for j in range(cat_item.childCount()):
+                child_item = cat_item.child(j)
+                child_matches = bool(not search or search in child_item.text(0).lower())
+                child_item.setHidden(not (cat_matches or child_matches))
+                if not child_item.isHidden():
+                    visible_children += 1
+
+            cat_item.setHidden(bool(search and visible_children == 0 and not cat_matches))
+            if search and (visible_children > 0 or cat_matches):
+                cat_item.setExpanded(True)
+
+    def _on_property_double_clicked(self, item: QTreeWidgetItem, column: int = 0):
         if not (item.flags() & Qt.ItemIsEnabled):
             return
-        data = item.data(Qt.UserRole)
+        data = item.data(0, Qt.UserRole)
         if data:
             display_name, val_dict = data
             self.add_property_requested.emit(display_name, val_dict)
@@ -164,28 +207,31 @@ class PropertyBrowserWidget(QWidget):
 
         existing_keys_lower = {str(k).lower() for k in existing_keys}
 
-        for i in range(self.prop_list_widget.count()):
-            item = self.prop_list_widget.item(i)
-            data = item.data(Qt.UserRole)
-            if not data:
-                continue
-            display_name, val_dict = data
+        root = self.prop_tree_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            cat_item = root.child(i)
+            for j in range(cat_item.childCount()):
+                item = cat_item.child(j)
+                data = item.data(0, Qt.UserRole)
+                if not data:
+                    continue
+                display_name, val_dict = data
 
-            prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
-            prop_key_lower = prop_key.lower()
+                prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
+                prop_key_lower = prop_key.lower()
 
-            # All properties except 'comment' can only be added once
-            is_single_add = (prop_key_lower != "comment")
-            already_exists = prop_key_lower in existing_keys_lower
+                # All properties except 'comment' can only be added once
+                is_single_add = (prop_key_lower != "comment")
+                already_exists = prop_key_lower in existing_keys_lower
 
-            if is_single_add and already_exists:
-                item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
-                item.setForeground(Qt.darkGray)
-                item.setToolTip(f"'{display_name}' already exists in active sound event")
-            else:
-                item.setFlags(item.flags() | Qt.ItemIsEnabled)
-                item.setForeground(Qt.NoBrush)
-                item.setToolTip(f"Double-click to add {display_name}")
+                if is_single_add and already_exists:
+                    item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
+                    item.setForeground(0, Qt.darkGray)
+                    item.setToolTip(0, f"'{display_name}' already exists in active sound event")
+                else:
+                    item.setFlags(item.flags() | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+                    item.setForeground(0, Qt.NoBrush)
+                    item.setToolTip(0, f"Double-click to add {display_name}")
 
     def load_templates(self):
         """Populate templates list from user and software template directories."""

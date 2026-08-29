@@ -106,6 +106,10 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         _value = self.float_widget_instance.value
         self.value = {self.value_class: _value}
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values)."""
+        self.float_widget_instance.set_value(value if isinstance(value, (float, int)) else 0.0)
+        self.value_update()
     def init_label_color(self):
         return "#73d1bf"
 
@@ -151,6 +155,10 @@ class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
     def value_update(self, value):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         self.value = {self.value_class: value}
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values)."""
+        self.legacy_widget_instance.set_value(value)
+        self.value_update(value)
     def init_label_color(self):
         return "#d9b34c"
 class _CommentTextEdit(QPlainTextEdit):
@@ -218,6 +226,15 @@ class SoundEventEditorPropertyComment(SoundEventEditorPropertyBase):
         text = self.text_field.toPlainText().replace('"', "''")
         self.value = {self.value_class: text}
 
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values)."""
+        self.text_field.blockSignals(True)
+        try:
+            self.text_field.setPlainText("" if value is None else str(value))
+        finally:
+            self.text_field.blockSignals(False)
+        self.value_update()
+
     def init_label_color(self):
         return "#6A9955"
 
@@ -249,6 +266,11 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
     def value_update(self, value):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         self.value = {self.value_class: value}
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values)."""
+        value = bool(value)
+        self.bool_widget_instance.set_value(value)
+        self.value_update(value)
     def init_label_color(self):
         return "#d1494a"
 
@@ -351,6 +373,19 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
             _value.append(__single_axis)
         self.value = {self.value_class: _value}
 
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values).
+
+        The axis widgets are built once from the loaded value, so a different
+        axis count cannot be shown without rebuilding — say so and let the
+        caller rebuild the frame.
+        """
+        if not isinstance(value, (list, tuple)) or len(value) != len(self.float_widget_instances):
+            raise ValueError(f"{self.value_class}: expected {len(self.float_widget_instances)} axes")
+        for widget_instance, axis in zip(self.float_widget_instances, value):
+            widget_instance.set_value(axis if isinstance(axis, (float, int)) else 0)
+        self.value_update()
+
     def init_label_color(self):
         return "#7DDA58"
     def set_widget_size(self):
@@ -441,6 +476,38 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
             _value = ""
         self.value = {self.value_class: _value}
 
+    def _elements(self):
+        """The ListElement rows currently in the layout, in display order."""
+        layout = self.vertical_layout
+        return [
+            widget for index in range(layout.count())
+            if isinstance(widget := layout.itemAt(index).widget(), ListElement)
+        ]
+
+    def set_value(self, value):
+        """Refresh in place (see SoundEventEditorPropertyFrame.set_values).
+
+        Rows are added or dropped to match the new length, then every row is
+        assigned by display order — subclasses insert new rows at either end,
+        so the values are written after the row count settles, not while it
+        is still changing.
+        """
+        if isinstance(value, list):
+            values = value
+        elif value in (None, ""):
+            values = []
+        else:
+            values = [value]
+        elements = self._elements()
+        for element in elements[len(values):]:
+            element.setParent(None)
+            element.deleteLater()
+        for _ in range(len(values) - len(elements)):
+            self.add_element()
+        for element, item in zip(self._elements(), values):
+            element.set_value(item)
+        self.value_update()
+
     def init_label_color(self):
         return "#F6C273"
     def set_widget_size(self):
@@ -523,7 +590,10 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
 
         self.tree: QTreeWidget = tree
         self.value_class = label_text
-        self.objects = objects
+        # Own the list: set_value appends values the schema does not list, and
+        # the schema hands out the same list object to every combobox built
+        # from that property, so sharing it grows the options forever.
+        self.objects = list(objects) if objects else []
         # Init combobox
         self.combobox = ComboboxDynamicItems()
         self.combobox.items = self.objects
@@ -561,6 +631,7 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
                 self.combobox.items.append(value)
                 self.combobox.addItem(value)
             self.combobox.setCurrentText(str(value))
+        self.value_update(self.combobox.currentText())
 
     def on_property_update(self):
         """Send signal that user changed the property"""
@@ -663,6 +734,7 @@ class SoundEventEditorPropertyEditLine(SoundEventEditorPropertyBase):
         pass
     def set_value(self, value: str):
         self.combobox.setText(str(value))
+        self.value_update(self.combobox.text())
 
     def on_property_update(self):
         """Send signal that user changed the property"""

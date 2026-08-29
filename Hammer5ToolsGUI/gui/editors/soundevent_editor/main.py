@@ -486,7 +486,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.update_hierarchy_item(item, _data)
         self.update_properties_label()
         if hasattr(self, 'property_browser_widget'):
-            self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
+            # .value was just rebuilt from the frames — walking them again here
+            # would double the per-keystroke cost for the same dict.
+            self.property_browser_widget.update_property_states(_data)
 
     PropertiesWindowUpdate = update_properties_window
 
@@ -712,7 +714,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             if hasattr(self, 'editor_prop_filter_edit') and self.editor_prop_filter_edit.text():
                 self.filter_editor_properties(self.editor_prop_filter_edit.text())
             if hasattr(self, 'property_browser_widget'):
-                props = self.PropertiesWindow.get_properties_value() if current_item else {}
+                props = self.PropertiesWindow.value if current_item else {}
                 self.property_browser_widget.update_property_states(props)
         except Exception as e:
             QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")

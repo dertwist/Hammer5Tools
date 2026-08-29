@@ -1,7 +1,7 @@
 import ast
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QApplication, QTreeWidget
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QSignalBlocker, Signal
 
 from gui.editors.soundevent_editor.property.common import (
     SoundEventEditorPropertyBaseLegacy,
@@ -60,6 +60,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             # Init UI file
             self.ui = Ui_Form()
             self.ui.setupUi(self)
+            self.ui.verticalLayout.setContentsMargins(14, 0, 0, 0)
             self.ui.header.setProperty("h5Component", "soundeventPropertyHeader")
             self.setAcceptDrops(True)
 
@@ -90,26 +91,32 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     # Properties
 
+    @staticmethod
+    def _coerce(name: str, value):
+        """Raw file value -> what the property widget for ``name`` expects."""
+        if isinstance(value, str):
+            try:
+                value = ast.literal_eval(value)
+            except Exception:
+                pass
+        if get_spec(name).kind == 'string_bool':
+            # Shipped music events store these as the strings 'true'/'false',
+            # but BoolWidget needs a real bool.
+            value = value == 'true' if isinstance(value, str) else bool(value)
+        return value
+
     def add_property(self, name: str, value:str):
         """
         Adding a property to the frame widget.
         Import properties classes form another file
         """
-        if isinstance(value, str):
-            try:
-                value = ast.literal_eval(value)
-            except Exception as error:
-                pass
+        value = self._coerce(name, value)
 
         spec = get_spec(name)
         widget_class, needs_tree = _WIDGETS[spec.kind]
         options = dict(spec.options)
         if needs_tree:
             options['tree'] = self.tree
-        if spec.kind == 'string_bool':
-            # Shipped music events store these as the strings 'true'/'false',
-            # but BoolWidget needs a real bool.
-            value = value == 'true' if isinstance(value, str) else bool(value)
         self.property_instance = widget_class(label_text=name, value=value, **options)
         self.property_instance.edited.connect(self.on_property_updated)
         # Bubble up slider press/release signals (only FloatWidget-backed properties emit them)
@@ -139,6 +146,35 @@ class SoundEventEditorPropertyFrame(QWidget):
                 value_dict = widget_instance.value
                 _data.update(value_dict)
             return _data
+
+    def set_values(self, data: dict) -> bool:
+        """Show ``data`` in the widgets this frame already has.
+
+        Returns False when the frame cannot represent the data (a different
+        property, a different widget count, or a widget that has no in-place
+        update) — the caller then throws the frame away and builds a new one.
+        Reuse is what makes undo/redo and event switching cheap: refreshing a
+        frame is a handful of setText calls, building one loads a .ui form and
+        a whole widget tree.
+        """
+        layout = self.ui.content.layout()
+        try:
+            widgets = [layout.itemAt(index).widget() for index in range(layout.count())]
+            if len(widgets) != len(data):
+                return False
+            for widget, (name, value) in zip(widgets, data.items()):
+                if getattr(widget, 'value_class', None) != name or not hasattr(widget, 'set_value'):
+                    return False
+                # Block the property's own signals: the inner widgets still run
+                # their handlers (so the property's value stays in sync) but no
+                # `edited` reaches the properties window and pushes an undo entry.
+                blocker = QSignalBlocker(widget)
+                widget.set_value(self._coerce(name, value))
+                del blocker
+        except Exception:
+            return False
+        self.value = self.serialize_properties()
+        return True
 
     def get_property(self, index):
         """Getting single property from the frame widget"""
