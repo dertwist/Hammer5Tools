@@ -86,7 +86,7 @@ def test_min_max_pair_shares_one_frame():
     pair = window._frames_by_key["retrigger_interval_min"]
     assert pair is window._frames_by_key["retrigger_interval_max"]
     assert set(pair.value) == {"retrigger_interval_min", "retrigger_interval_max"}
-    assert pair.ui.property_class.text() == "Retrigger Interval"
+    assert pair.display_name == "Retrigger Interval"
 
 
 def test_toggle_disables_its_dependents():
@@ -156,6 +156,6 @@ def test_clear_resets_group_state():
 def test_group_children_have_left_offset():
     window = build()
     for frame in frames(window):
-        margins = frame.ui.verticalLayout.contentsMargins()
+        margins = frame.layout().contentsMargins()
         assert margins.left() > 0
 

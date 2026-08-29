@@ -1,7 +1,7 @@
 import ast
 import logging
 
-from gui.common import fast_deepcopy
+from gui.common import Kv3ToJson, fast_deepcopy
 
 from gui.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QPushButton
@@ -26,6 +26,25 @@ from gui.editors.soundevent_editor.property_schema import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def registry_defaults() -> dict:
+    """Property key -> the value the property browser adds it with.
+
+    That value is the property's default, so it is also what "Reset to Default"
+    puts back. Built once: the registry is static.
+    """
+    global _REGISTRY_DEFAULTS
+    if _REGISTRY_DEFAULTS is None:
+        _REGISTRY_DEFAULTS = {}
+        for entry in soundevent_editor_properties:
+            for payload in entry.values():
+                key, value = next(iter(payload.items()))
+                _REGISTRY_DEFAULTS[key] = value
+    return _REGISTRY_DEFAULTS
+
+
+_REGISTRY_DEFAULTS = None
 
 
 class PropertyGroupHeader(QFrame):
@@ -200,7 +219,17 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._frames_by_key: dict = {}
         self._frames_by_entry: dict = {}
         self._group_headers: dict = {}
+        #: The row copy/delete hotkeys and the context menu act on.
+        self._selected_frame = None
+        #: Event values as last loaded or saved, so an edited property can show
+        #: a modified rail. Keyed by event name, filled by set_saved_baseline().
+        self._saved_values: dict = {}
 
+        # Selecting follows focus: a hotkey must act on the row the user is in,
+        # including when focus sits inside one of that row's editors.
+        application = QApplication.instance()
+        if application is not None:
+            application.focusChanged.connect(self._on_focus_changed)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
@@ -308,27 +337,53 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             pass
         self.on_update()
 
-    def paste_property(self):
-        """Creates new property from clipboard using new_property function"""
-        clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
+    @staticmethod
+    def parse_clipboard(text: str):
+        """Clipboard text -> a property dict, or None.
 
-        try:
-            data = ast.literal_eval(clipboard_text)
-            key = next(iter(data))
-            val = data[key]
-            existing_items = set(self.get_properties_value().keys())
+        KV3 first, which is what copying writes and what the .vsndevts itself
+        holds, then a Python dict repr — the form older builds copied, and one
+        that still turns up in notes and bug reports.
+        """
+        text = (text or "").strip()
+        if not text:
+            return None
+        for parse in (Kv3ToJson, ast.literal_eval):
+            try:
+                value = parse(text)
+            except Exception:
+                continue
+            if isinstance(value, dict) and value:
+                return value
+        return None
+
+    def paste_property(self):
+        """Create properties from whatever the clipboard holds."""
+        data = self.parse_clipboard(QApplication.clipboard().text())
+        if data is None:
+            ErrorInfo("Error parsing clipboard content").exec()
+            return
+
+        existing = set(self.get_properties_value())
+        pasted = []
+        for key, value in data.items():
             # Comments can coexist — a pasted comment gets a fresh unique key
             if isinstance(key, str) and (key == 'comment' or key.startswith('comment_')):
                 key = self._unique_comment_key()
-            if key not in existing_items:
-                self._next_undo_desc = f"Paste property '{key}'"
-                self.create_property(key, val)
-            else:
-                ErrorInfo(
-                    text='It seems a property with this name already exists in the sound event. Please remove the existing property to create a new one.').exec()
-        except (ValueError, SyntaxError) as e:
-            ErrorInfo("Error parsing clipboard content").exec()
+            elif key in existing:
+                continue
+            self.create_property(key, value)
+            existing.add(key)
+            pasted.append(key)
+
+        if not pasted:
+            ErrorInfo(
+                text='It seems a property with this name already exists in the sound event. Please remove the existing property to create a new one.').exec()
+            return
+        self._next_undo_desc = (
+            f"Paste property '{pasted[0]}'" if len(pasted) == 1
+            else f"Paste {len(pasted)} properties"
+        )
         self.on_update()
     # Filter
 
@@ -344,8 +399,145 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
                     self.paste_property()
                     return True
+                # The selected row handles these itself while it has focus;
+                # this covers the panel being focused with a row still selected.
+                if event.key() == Qt.Key_C and event.modifiers() == Qt.ControlModifier:
+                    self.copy_selected_property()
+                    return True
+                if event.key() == Qt.Key_Delete and not event.modifiers():
+                    self.delete_selected_property()
+                    return True
 
         return super().eventFilter(source, event)
+
+    # Selection
+
+    def select_frame(self, frame):
+        """Make ``frame`` the row that copy/delete and the context menu act on."""
+        if frame is self._selected_frame:
+            return
+        for target, selected in ((self._selected_frame, False), (frame, True)):
+            if target is None:
+                continue
+            try:
+                target.set_selected(selected)
+            except RuntimeError:
+                pass  # already destroyed
+        self._selected_frame = frame
+
+    def _owns(self, widget) -> bool:
+        """True for a property row of this window.
+
+        Identified by the layout it was built for rather than by looking it up
+        in _frames_by_entry: this runs on every focus change in the whole
+        application, including while rows are being destroyed, and touching a
+        frame whose C++ half is already gone would take the process with it.
+        """
+        return (
+            isinstance(widget, SoundEventEditorPropertyFrame)
+            and getattr(widget, 'widget_list', None) is self.ui.properties_layout
+        )
+
+    def _row_containing(self, widget):
+        """The property row ``widget`` sits in, if any."""
+        while widget is not None:
+            if self._owns(widget):
+                return widget
+            widget = widget.parentWidget()
+        return None
+
+    def _on_focus_changed(self, _old, new):
+        """Move the selection to whichever row now contains the focus.
+
+        Deferred by a tick: this fires while the widget tree is in flux — undo
+        destroying rows moves the focus — and restyling a row for the selection
+        in the middle of that is how you crash inside Qt's style machinery.
+        """
+        try:
+            frame = self._row_containing(new)
+        except RuntimeError:
+            return  # a widget was destroyed mid-walk
+        if frame is not None:
+            QTimer.singleShot(0, lambda: self.select_frame(frame))
+
+    def _ordered_frames(self) -> list:
+        """Visible property rows, in the order they are shown."""
+        layout = self.ui.properties_layout
+        frames = []
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            widget = item.widget() if item is not None else None
+            if isinstance(widget, SoundEventEditorPropertyFrame) and not widget.isHidden():
+                frames.append(widget)
+        return frames
+
+    def _navigate_selection(self, step: int):
+        """Move focus to the previous/next row, so the panel is keyboard-only usable."""
+        frames = self._ordered_frames()
+        if not frames:
+            return
+        try:
+            index = frames.index(self.sender() or self._selected_frame)
+        except (ValueError, RuntimeError):
+            index = 0
+        frames[max(0, min(len(frames) - 1, index + step))].setFocus(Qt.TabFocusReason)
+
+    def _live_selection(self):
+        """The selected row, or None if it has since been destroyed."""
+        frame = self._selected_frame
+        if frame is None:
+            return None
+        try:
+            frame.isVisible()       # cheap probe for a live C++ object
+        except RuntimeError:
+            self._selected_frame = None
+            return None
+        return frame
+
+    def copy_selected_property(self):
+        """Ctrl+C / context menu: the selected property onto the clipboard."""
+        frame = self._live_selection()
+        if frame is not None:
+            frame.copy_action()
+
+    def delete_selected_property(self):
+        """Delete / context menu: drop the selected property from the event."""
+        frame = self._live_selection()
+        if frame is not None and not self.readonly_mode:
+            frame.delete_action()
+
+    def _defaults_for(self, frame) -> dict:
+        """The registry's values for a row's properties, empty if it has none.
+
+        Extra comments ('comment_2', ...) reset to the one comment default;
+        anything the registry never offered has no default to go back to.
+        """
+        if frame is None or not isinstance(frame.value, dict) or not frame.value:
+            return {}
+        defaults = registry_defaults()
+        resolved = {}
+        for key in frame.value:
+            source = 'comment' if isinstance(key, str) and key.startswith('comment_') else key
+            if source not in defaults:
+                return {}
+            resolved[key] = defaults[source]
+        return resolved
+
+    def reset_selected_property(self):
+        """Put the selected property back to the value the browser adds it with.
+
+        Routed through on_update() like any other edit, so it lands on the undo
+        stack as one entry and the modified marks refresh with it.
+        """
+        frame = self._live_selection()
+        if frame is None or self.readonly_mode:
+            return
+        defaults = self._defaults_for(frame)
+        if not defaults:
+            return
+        self._next_undo_desc = f"Reset '{frame.display_name}'"
+        if frame.set_values(defaults):
+            self.on_update()
     # Properties widget
 
     def properties_groups_hide(self):
@@ -388,24 +580,13 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             header.apply()
 
     def collapse_all_properties(self):
-        """Collapse all property frames and their group bars"""
+        """Collapse every group bar. Rows no longer collapse individually."""
         self._set_all_groups_expanded(False)
-        for index in range(self.ui.properties_layout.count()):
-            widget = self.ui.properties_layout.itemAt(index).widget()
-            if isinstance(widget, SoundEventEditorPropertyFrame):
-                if hasattr(widget, 'ui') and hasattr(widget.ui, 'show_child'):
-                    widget.ui.show_child.setChecked(False)
-                    widget.show_child_action()
-    
+
     def expand_all_properties(self):
-        """Expand all property frames and their group bars"""
+        """Expand every group bar."""
         self._set_all_groups_expanded(True)
-        for index in range(self.ui.properties_layout.count()):
-            widget = self.ui.properties_layout.itemAt(index).widget()
-            if isinstance(widget, SoundEventEditorPropertyFrame):
-                if hasattr(widget, 'ui') and hasattr(widget.ui, 'show_child'):
-                    widget.ui.show_child.setChecked(True)
-                    widget.show_child_action()
+
     def properties_clear(self):
         self._undo_enabled = False   # prevent clear from pushing a command
         i = 0
@@ -420,6 +601,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._frames_by_entry.clear()
         self._group_headers.clear()
         self._source_order = []
+        self._selected_frame = None
 
     def populate_properties(self, _data):
         """Loading properties from given data, grouped into schema order.
@@ -463,8 +645,46 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Ensure readonly mode applied after population
         self.apply_readonly_mode()
 
+        # Curve rows show the active event in their plot title; reused frames
+        # carry the previous event's name until they are told otherwise.
+        element_name = self._current_element_name()
+        if element_name is not None:
+            for frame in self._frames_by_entry.values():
+                frame.set_context_element(element_name)
+
         # Sync self.value so callers can read it immediately after populate_properties()
         self.update_value()
+        self.refresh_modified_states()
+
+    def _current_element_name(self):
+        item = self.tree.currentItem() if self.tree is not None else None
+        return item.text(0) if item is not None else None
+
+    def set_saved_baseline(self, events: dict = None) -> None:
+        """Record the values now on disk, so edits can be marked as modified.
+
+        Called when the file is loaded and again when it is saved; a property
+        whose value differs from this snapshot shows a modified rail.
+        """
+        self._saved_values = fast_deepcopy(events) if events else {}
+        self.refresh_modified_states()
+
+    def refresh_modified_states(self) -> None:
+        """Mark the rows whose value differs from the last saved file.
+
+        An event with no snapshot at all — one created since the last save, or
+        a panel nothing has handed a baseline to — marks nothing: there is
+        nothing to compare against, and marking every row would say nothing.
+        """
+        baseline = self._saved_values.get(self._current_element_name())
+        for entry, frame in list(self._frames_by_entry.items()):
+            try:
+                value = frame.value if isinstance(frame.value, dict) else {}
+                frame.set_modified(baseline is not None and any(
+                    key not in baseline or baseline[key] != value.get(key) for key in entry
+                ))
+            except RuntimeError:
+                pass  # row destroyed while this edit was being applied
 
     def _register_frame(self, entry: tuple, frame) -> None:
         self._frames_by_entry[entry] = frame
@@ -473,9 +693,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
     def _discard_frame(self, frame) -> None:
         """Drop a frame that no longer has a property to show."""
+        if frame is self._selected_frame:
+            self._selected_frame = None
         try:
+            # Taken out of the layout and left parented to the panel until Qt
+            # destroys it. Reparenting to None first would make a row hosting a
+            # curve plot a top-level window for one event-loop turn.
             self.ui.properties_layout.removeWidget(frame)
-            frame.setParent(None)
+            frame.hide()
             frame.deleteLater()
         except RuntimeError:
             pass  # already destroyed (e.g. by its own delete button)
@@ -486,7 +711,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         for group in [g for g in self._group_headers if g not in groups]:
             header = self._group_headers.pop(group)
             self.ui.properties_layout.removeWidget(header)
-            header.setParent(None)
+            header.hide()
             header.deleteLater()
 
     def _display_entries(self, keys) -> list:
@@ -517,6 +742,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         )
         widget_instance.slider_pressed.connect(self._capture_pre_commit_snapshot)
         widget_instance.committed.connect(self.on_commit)
+        widget_instance.activated.connect(
+            lambda frame=widget_instance: self.select_frame(frame)
+        )
+        widget_instance.navigate.connect(self._navigate_selection)
 
         keys = list(data)
         first = keys[0]
@@ -524,7 +753,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         if len(keys) > 1:
             title = next((t for low, _high, t in PAIRED if low == first), None)
             if title:
-                widget_instance.ui.property_class.setText(title)
+                widget_instance.display_name = title
 
         header = self._ensure_group_header(get_spec(first).group)
         index = self._insert_index_for(widget_instance.display_order)
@@ -578,6 +807,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Called just before a property frame destroys itself — sets the undo
         label and forgets the frame, which is about to become a dead reference."""
         self._next_undo_desc = f"Delete property '{prop_name}'"
+        if frame is self._selected_frame:
+            # Leaving it selected would point the copy/delete hotkeys at a row
+            # whose C++ object is about to be destroyed.
+            self._selected_frame = None
         for entry, existing in list(self._frames_by_entry.items()):
             if existing is frame:
                 del self._frames_by_entry[entry]
@@ -615,22 +848,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._populating = True
         self.properties_groups_show()
         self.populate_properties(state)
-
-        # Update per-frame context labels for the current tree item
-        try:
-            current_item = self.tree.currentItem()
-            if current_item is not None:
-                element_name = current_item.text(0)
-                for idx in range(self.ui.properties_layout.count()):
-                    widget = self.ui.properties_layout.itemAt(idx).widget()
-                    if hasattr(widget, 'set_context_element'):
-                        try:
-                            widget.set_context_element(element_name)
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-
         self.update_value()
         self._populating = False
         self._undo_enabled = True
@@ -678,6 +895,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         else:
             self.update_value()
         self._apply_toggle_dependencies()
+        self.refresh_modified_states()
         self.edited.emit()
 
     def _capture_pre_commit_snapshot(self):
@@ -703,9 +921,31 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def update_value(self):
         self.value = self.get_properties_value()
     # Context menu
+    def _frame_at(self, position):
+        """The property row under ``position`` (in this window's coordinates)."""
+        return self._row_containing(self.childAt(position))
+
     def open_context_menu(self, position):
         """Layout context menu"""
         menu = QMenu()
+
+        # Copy and delete live here now that the row has no buttons of its own.
+        frame = self._frame_at(position)
+        if frame is not None:
+            self.select_frame(frame)
+            copy_property = menu.addAction(f"Copy '{frame.display_name}'")
+            copy_property.setShortcut(QKeySequence.Copy)
+            copy_property.triggered.connect(self.copy_selected_property)
+
+            reset_property = menu.addAction("Reset to Default")
+            reset_property.setEnabled(bool(self._defaults_for(frame)) and not self.readonly_mode)
+            reset_property.triggered.connect(self.reset_selected_property)
+
+            delete_property = menu.addAction(f"Delete '{frame.display_name}'")
+            delete_property.setShortcut(QKeySequence(Qt.Key_Delete))
+            delete_property.setEnabled(not self.readonly_mode)
+            delete_property.triggered.connect(self.delete_selected_property)
+            menu.addSeparator()
 
         undo_action = menu.addAction("Undo")
         undo_action.setShortcut(QKeySequence("Ctrl+Z"))
@@ -733,7 +973,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         expand_all = menu.addAction("Expand All")
         expand_all.triggered.connect(self.expand_all_properties)
         
-        menu.exec(self.ui.scrollArea.viewport().mapToGlobal(position))
+        # customContextMenuRequested reports in this window's coordinates, so
+        # mapping through the scroll area's viewport offset the menu.
+        menu.exec(self.mapToGlobal(position))
 
     def set_readonly_mode(self, enabled: bool):
         """Public API to toggle read-only mode without affecting Play button."""
@@ -796,16 +1038,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         self.properties_groups_show()
         self.populate_properties(data)
-
-        # Update per-frame context labels if frames expose set_context_element
-        element_name = item.text(0)
-        for idx in range(self.ui.properties_layout.count()):
-            widget = self.ui.properties_layout.itemAt(idx).widget()
-            try:
-                if hasattr(widget, 'set_context_element'):
-                    widget.set_context_element(element_name)
-            except Exception:
-                pass
 
         # Re-enable undo pushes and notify listeners
         self._populating = False       # ← clear BEFORE re-enabling undo

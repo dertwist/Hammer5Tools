@@ -189,9 +189,16 @@ def test_hierarchy_tree_selection_colors_paint():
         assert bg_right == expected, f"Right edge painted {bg_right}, expected {expected} for theme {level}"
 
 
-def test_soundevent_property_headers_present_in_compiled_qss():
+def test_soundevent_property_rows_present_in_compiled_qss():
+    """The compact row's chrome: the state rail and the selected row."""
     qss = compile_stylesheet(theme.STANDARD_THEME)
-    assert 'h5Component="soundeventPropertyHeader"' in qss
+    assert 'h5Component="soundeventPropertyRow"' in qss
+    assert 'QWidget[h5Component="soundeventPropertyRow"][selected="true"]' in qss
+    assert 'QFrame[h5Component="soundeventPropertyRail"][h5State="modified"]' in qss
+
+
+def test_assetgroup_property_headers_present_in_compiled_qss():
+    qss = compile_stylesheet(theme.STANDARD_THEME)
     assert "QFrame#header QLabel#label_2" in qss
     assert "QFrame#header QCheckBox#show_child" in qss
     assert "QFrame#header QToolButton#gf" in qss

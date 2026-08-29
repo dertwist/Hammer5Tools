@@ -220,6 +220,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         if self.filepath_vsndevts and os.path.exists(self.filepath_vsndevts):
             self.load_soundevents(self.filepath_vsndevts)
         self.init_properties_window()
+        # The startup load above ran before the panel existed, so its baseline
+        # (what "modified" is measured against) has to be handed over here.
+        self._refresh_saved_baseline()
         self._build_empty_state()
         self.update_placeholder_visibility()
 
@@ -357,6 +360,7 @@ class SoundEventEditorMainWindow(QMainWindow):
                 pass
             LoadSoundEvents(tree=self.ui.hierarchy_widget, path=target_path)
             self.filepath_vsndevts = target_path
+            self._refresh_saved_baseline()
             if callable(self.update_title):
                 self.update_title('saved', self.filepath_vsndevts)
         else:
@@ -379,11 +383,19 @@ class SoundEventEditorMainWindow(QMainWindow):
     @exception_handler
     def save_soundevents(self):
         SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
+        self._refresh_saved_baseline()
         if hasattr(self, 'undo_stack') and self.undo_stack:
             self.undo_stack.setClean()
         print(f'Saved file: {self.filepath_vsndevts}')
         if callable(self.update_title):
             self.update_title('saved', self.filepath_vsndevts)
+
+    def _refresh_saved_baseline(self):
+        """Tell the properties panel what is on disk, so it can mark edited rows."""
+        if not hasattr(self, 'PropertiesWindow'):
+            return
+        document = getattr(self.ui.hierarchy_widget, 'soundevent_document', None)
+        self.PropertiesWindow.set_saved_baseline(getattr(document, 'events', None))
 
     def has_unsaved_changes(self) -> bool:
         """Returns True if soundevents file has unsaved edits in undo stack."""
@@ -472,6 +484,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             except Exception:
                 pass
             LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+            self._refresh_saved_baseline()
             if callable(self.update_title):
                 self.update_title('saved', self.filepath_vsndevts)
         if hasattr(self, 'undo_stack') and self.undo_stack:
@@ -694,10 +707,9 @@ class SoundEventEditorMainWindow(QMainWindow):
             from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
             if isinstance(widget, SoundEventEditorPropertyFrame):
                 prop_name = str(getattr(widget, 'name', '') or '').lower()
-                display_label = ""
-                if hasattr(widget, 'ui') and hasattr(widget.ui, 'property_class'):
-                    display_label = widget.ui.property_class.text().lower()
-                
+                display_label = str(getattr(widget, 'display_name', '') or '').lower()
+
+
                 match = (search in prop_name) or (search in display_label)
                 widget.setHidden(bool(search and not match))
 
