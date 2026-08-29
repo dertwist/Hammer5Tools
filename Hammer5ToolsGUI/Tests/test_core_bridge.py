@@ -41,6 +41,44 @@ def test_core_probe_translates_load_failures_to_diagnostics():
     assert "missing runtime" in status.diagnostic
 
 
+def test_navmesh_radar_result_is_converted_without_core_types():
+    captured = {}
+
+    class FakeNative:
+        def generate_navmesh_radar(self, request):
+            captured.update(request)
+            return {
+                "value": {
+                    "generatedVmapPath": "maps/example_navmesh_radar.vmap",
+                    "mode": "navmesh_offset",
+                    "sourceCount": 12,
+                    "faceCount": 12,
+                    "meshCount": 1,
+                    "offset": 16.0,
+                    "referenceAdded": True,
+                    "backupPath": "maps/example.vmap.20260829.bak",
+                },
+                "diagnostics": [],
+            }
+
+    result = CoreBridge(FakeInterop(), native_client=FakeNative()).generate_navmesh_radar(
+        "example.vpk",
+        "example.vmap",
+        "navmesh_offset",
+        offset=16.0,
+        add_prefab_reference=False,
+        collapse_faces=False,
+    )
+
+    assert result.generated_vmap_path == "maps/example_navmesh_radar.vmap"
+    assert result.face_count == 12
+    assert result.reference_added
+    assert captured["mode"] == "navmesh_offset"
+    assert captured["materialPath"] == "materials/radgen/radgen_path.vmat"
+    assert captured["addPrefabReference"] is False
+    assert captured["collapseFaces"] is False
+
+
 def test_smartprop_models_are_converted_without_core_types():
     matrix = SimpleNamespace(**{
         f"M{row}{column}": float((row - 1) * 4 + column)

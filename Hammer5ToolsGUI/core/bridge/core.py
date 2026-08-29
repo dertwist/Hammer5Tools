@@ -124,6 +124,21 @@ class UnrealMapWriteResult:
 
 
 @dataclass(frozen=True)
+class NavMeshRadarResult:
+    """Python-native result of generating editable radar faces."""
+
+    generated_vmap_path: str | None
+    mode: str | None
+    source_count: int
+    face_count: int
+    mesh_count: int
+    offset: float
+    reference_added: bool
+    backup_path: str | None
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class CompiledTextureData:
     width: int
     height: int
@@ -463,6 +478,43 @@ class CoreBridge:
         result = self._smartprop_native().rewrite_vmap_references(path, dict(renames))
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         return VmapRewriteResult(bool(result["value"]), diagnostics)
+
+    def generate_navmesh_radar(
+        self,
+        vpk_path: str,
+        main_vmap_path: str,
+        mode: str,
+        *,
+        offset: float = 16.0,
+        material_path: str = "materials/radgen/radgen_path.vmat",
+        add_prefab_reference: bool = True,
+        collapse_faces: bool = True,
+    ) -> NavMeshRadarResult:
+        """Generates radar faces into a replaceable prefab sub-map."""
+        result = self._smartprop_native().generate_navmesh_radar({
+            "vpkPath": vpk_path,
+            "mainVmapPath": main_vmap_path,
+            "mode": mode,
+            "offset": offset,
+            "materialPath": material_path,
+            "addPrefabReference": add_prefab_reference,
+            "collapseFaces": collapse_faces,
+        })
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        value = result["value"]
+        if value is None:
+            return NavMeshRadarResult(None, None, 0, 0, 0, 0.0, False, None, diagnostics)
+        return NavMeshRadarResult(
+            value["generatedVmapPath"],
+            value["mode"],
+            value["sourceCount"],
+            value["faceCount"],
+            value["meshCount"],
+            value["offset"],
+            value["referenceAdded"],
+            value["backupPath"],
+            diagnostics,
+        )
 
     def write_unreal_map(self, path: str, request: Mapping) -> UnrealMapWriteResult:
         """Writes typed primitive Unreal placements through SourcePorter Core."""

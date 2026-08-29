@@ -59,6 +59,7 @@ from gui.forms.launch_options.main import LaunchOptionsDialog
 from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, apply_title_bar_theme
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
+from gui.forms.navmesh_radar import NavMeshRadarDialog
 from gui.forms.quick_create.main import QuickCreateDialog
 from gui.widgets import UnsavedFilesDialog, exception_handler
 from gui.shell.addon_selector import AddonSelector, PLACEHOLDERS as ADDON_PLACEHOLDERS
@@ -469,6 +470,7 @@ class MainWindow(QMainWindow):
         menu = AlternatingMenu(self)
         menu.addAction("SourcePorter", self._open_source_porter)
         menu.addAction("UnrealPorter", self._open_unreal_porter)
+        menu.addAction("NavMesh Radar", self._open_navmesh_radar)
         menu.addAction("Cleanup Content", lambda: CleanupDialog(self).show())
         menu.addAction("Cleanup _vrad3 cache", lambda: cleanup_vrad3_cache(self))
         self.ui.utilities_button.setMenu(menu)
@@ -480,6 +482,10 @@ class MainWindow(QMainWindow):
     def _open_unreal_porter(self):
         self.unreal_porter_dialog = UnrealPorterWidget(parent=self)
         self.unreal_porter_dialog.show()
+
+    def _open_navmesh_radar(self):
+        self.navmesh_radar_dialog = NavMeshRadarDialog(parent=self)
+        self.navmesh_radar_dialog.show()
 
     def closeEvent(self, event):
         # Capture geometry (including maximized/fullscreen state) while the
