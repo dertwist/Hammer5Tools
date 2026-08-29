@@ -112,6 +112,22 @@ class CS2Netcon:
             return None
 
     @staticmethod
+    def is_available(timeout: float = 0.3) -> bool:
+        """Whether a CS2 instance is listening on the netconsole port.
+
+        Only CS2 launched with -netconport (which Hammer5Tools does) accepts a
+        connection here, so this doubles as "was CS2 started through the tool".
+        Kept short-timeout because it runs on the GUI thread before a click is
+        acted on.
+        """
+        host, port = CS2Netcon._get_target()
+        try:
+            with closing(socket.create_connection((host, port), timeout=timeout)):
+                return True
+        except OSError:
+            return False
+
+    @staticmethod
     def send(command: str) -> bool:
         """Send a single console command to CS2.
 

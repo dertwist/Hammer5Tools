@@ -460,6 +460,9 @@ class TemplateCardWidget(QWidget):
         if not ref_text:
             return
         if CS2Netcon:
+            from gui.widgets import require_cs2
+            if not require_cs2("open an asset"):
+                return
             clean_path = ref_text.replace('\\', '/').strip('/')
             CS2Netcon.send(f"open_asset {clean_path}")
 

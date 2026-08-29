@@ -1164,15 +1164,10 @@ class Explorer(QMainWindow):
             QMessageBox.warning(self, "No Reference Asset", f"No reference asset found in '{os.path.basename(filepath)}'.")
             return
 
-        command = f"open_asset {asset_path}"
-        if CS2Netcon is None or not CS2Netcon.send(command):
-            QMessageBox.warning(
-                self,
-                "CS2 Not Reachable",
-                "Could not send command to CS2.\n"
-                "Make sure CS2 is running with -netconport 2121."
-            )
-        else:
+        from gui.widgets import require_cs2
+        if CS2Netcon is None or not require_cs2("open an asset"):
+            return
+        if CS2Netcon.send(f"open_asset {asset_path}"):
             curr = self.parent()
             while curr is not None:
                 if hasattr(curr, 'update_title') and callable(curr.update_title):

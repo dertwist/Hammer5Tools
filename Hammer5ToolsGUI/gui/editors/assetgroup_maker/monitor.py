@@ -224,15 +224,10 @@ class FileItemWidget(QWidget):
             QMessageBox.warning(self, "No Reference Asset", f"No reference asset found in '{os.path.basename(self.file_path)}'.")
             return
 
-        command = f"open_asset {asset_path}"
-        if CS2Netcon is None or not CS2Netcon.send(command):
-            QMessageBox.warning(
-                self,
-                "CS2 Not Reachable",
-                "Could not send command to CS2.\n"
-                "Make sure CS2 is running with -netconport 2121."
-            )
-        else:
+        from gui.widgets import require_cs2
+        if CS2Netcon is None or not require_cs2("open an asset"):
+            return
+        if CS2Netcon.send(f"open_asset {asset_path}"):
             self.open_reference_requested.emit(asset_path)
             curr = self.parentWidget() if hasattr(self, 'parentWidget') else self.parent()
             while curr is not None:

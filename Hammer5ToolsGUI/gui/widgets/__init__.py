@@ -1,4 +1,4 @@
-from .common import Button, DeleteButton, ErrorInfo, UnsavedFilesDialog, exception_handler
+from .common import Button, DeleteButton, ErrorInfo, UnsavedFilesDialog, exception_handler, require_cs2
 from .widgets import (
     BoolWidget,
     BoxSlider,
@@ -22,6 +22,7 @@ __all__ = [
     "DocumentTabBar",
     "DocumentTabWidget",
     "ErrorInfo",
+    "require_cs2",
     "FloatWidget",
     "HierarchyItemModel",
     "LegacyWidget",

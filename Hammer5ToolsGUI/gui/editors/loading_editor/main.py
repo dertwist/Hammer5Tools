@@ -825,12 +825,10 @@ class LoadingEditorMainWindow(QMainWindow):
         if not commands:
             return
 
+        from gui.widgets import require_cs2
+        if not require_cs2("take screenshots"):
+            return
         if not CS2Netcon.send_many(commands):
-            QMessageBox.warning(
-                self,
-                "CS2 Not Reachable",
-                "Could not send commands to CS2.\nMake sure CS2 is running with -netconport 2121."
-            )
             return
 
         if not session_date or not self.content_history_path:
@@ -873,12 +871,10 @@ class LoadingEditorMainWindow(QMainWindow):
         path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
         commands, _ = generate_commands(path, history=False)
         if commands:
-            if not CS2Netcon.send_many(commands):
-                QMessageBox.warning(
-                    self,
-                    "CS2 Not Reachable",
-                    "Could not send commands to CS2.\nMake sure CS2 is running with -netconport 2121."
-                )
+            from gui.widgets import require_cs2
+            if not require_cs2("take screenshots"):
+                return
+            CS2Netcon.send_many(commands)
 
     def loading_editor_cs2_description(self, description_text: str):
         game_dir = addon_game_dir()

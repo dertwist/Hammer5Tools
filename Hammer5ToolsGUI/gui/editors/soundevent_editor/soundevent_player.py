@@ -6,7 +6,7 @@ CS2 sound events using the already running CS2 instance started with
 
 Constraints:
 - Fire-and-forget: no completion/finish detection.
-- Fail silently if CS2 is not running or connection fails (returns False).
+- Tell the user and return False when CS2 is not reachable.
 - Do not spawn a CS2 process. Only talk to an existing one.
 """
 from __future__ import annotations
@@ -17,6 +17,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 from gui.other.cs2_netcon import CS2Netcon
+from gui.widgets import require_cs2
 
 
 def _send_netcon_command(cmd: str) -> bool:
@@ -35,6 +36,8 @@ def play_soundevent(event_name: str) -> bool:
         True if both commands were sent successfully, False otherwise.
     """
     if not event_name or not isinstance(event_name, str):
+        return False
+    if not require_cs2("play a soundevent"):
         return False
     ok1 = CS2Netcon.send("snd_sos_stop_all_soundevents")
     ok2 = CS2Netcon.send(f"snd_sos_start_soundevent {event_name}")
@@ -88,9 +91,11 @@ class SoundEventPlayerWidget(QWidget):
             name = None
         if not name:
             return
-        # Send command via netcon (fire-and-forget)
+        # play_soundevent() checks that CS2 is reachable and reports if not.
         play_soundevent(str(name))
 
     def _on_stop_clicked(self):
         """Handle stop button click: stop all sound events."""
+        if not require_cs2("stop sound events"):
+            return
         _send_netcon_command("snd_sos_stop_all_soundevents")

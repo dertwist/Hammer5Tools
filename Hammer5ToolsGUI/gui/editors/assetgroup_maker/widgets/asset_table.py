@@ -373,6 +373,9 @@ class AssetTableWidget(QWidget):
 
     def _open_asset_in_cs2(self, item: AssetGroupItem):
         if CS2Netcon and item.target_output:
+            from gui.widgets import require_cs2
+            if not require_cs2("open an asset"):
+                return
             path = item.target_output.replace('\\', '/').strip('/')
             if item.relative_folder:
                 path = f"{item.relative_folder.strip('/')}/{path}"

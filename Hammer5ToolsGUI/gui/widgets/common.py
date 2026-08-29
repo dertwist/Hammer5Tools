@@ -29,6 +29,35 @@ except ImportError:
     winsound = None
 
 
+def require_cs2(action: str = "send this command", parent=None) -> bool:
+    """Whether CS2 can receive a netconsole command, telling the user if not.
+
+    Only CS2 started with -netconport accepts a connection, which is how
+    Hammer5Tools launches it. Every user-facing action that talks to CS2 goes
+    through here so the check and the wording stay the same everywhere.
+
+    Args:
+        action: Filled into "To <action>, CS2 must be launched...".
+        parent: Dialog parent; defaults to the active window.
+
+    Returns:
+        True when CS2 is reachable, False after showing the notice.
+    """
+    # Imported here: gui.other pulls in settings, which imports this package.
+    from gui.other.cs2_netcon import CS2Netcon
+
+    if CS2Netcon.is_available():
+        return True
+    # A one-line notice, so a plain information box rather than ErrorInfo,
+    # whose details pane and Report button belong to actual failures.
+    QMessageBox.information(
+        parent if parent is not None else QApplication.activeWindow(),
+        "CS2 is not running",
+        f"To {action}, CS2 must be launched through Hammer5Tools.",
+    )
+    return False
+
+
 class ErrorInfo(QDialog):
     def __init__(self, text="Error", details="", is_warning=False, dont_show_setting=None, title=None):
         super().__init__()
