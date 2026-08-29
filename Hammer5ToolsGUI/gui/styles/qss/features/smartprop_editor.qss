@@ -497,7 +497,12 @@ QTextBrowser[h5Component="smartpropHelpBrowser"] QScrollBar::handle:vertical {
     background: #555;
     border-radius: 0px;
 }
-QFrame[h5Component="smartpropHelpImageFrame"] {
+QFrame[h5Component="smartpropHelpImageFrame"],
+QStackedWidget[h5Component="smartpropHelpStacked"],
+QWidget[h5Component="smartpropHelpContent"],
+QWidget[h5Component="smartpropHelpImageContainer"],
+QWidget[h5Component="smartpropHelpImageLabel"],
+QWidget[h5Component="smartpropNoteWidget"] {
     background-color: transparent;
     border: none;
 }

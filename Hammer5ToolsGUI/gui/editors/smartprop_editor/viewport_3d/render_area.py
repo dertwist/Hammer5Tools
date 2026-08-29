@@ -401,6 +401,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Initialize preview-widget geometry (locators / rotators / pickone).
         self._init_widget_geometry()
 
+    def moveEvent(self, event):
+        # Qt repaints a QOpenGLWidget when it is resized but not when it is only
+        # moved, so the composited frame can keep showing whatever sat at the
+        # widget's old position -- typically a strip of the toolbar above it --
+        # after a splitter/dock drag shifts the viewport. Force the redraw.
+        super().moveEvent(event)
+        self.update()
+
     @gl_guard("event")
     def resizeGL(self, w, h):
         if w <= 0 or h <= 0:

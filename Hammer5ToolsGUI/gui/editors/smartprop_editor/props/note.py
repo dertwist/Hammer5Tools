@@ -27,6 +27,7 @@ class NoteEditorWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setProperty("h5Component", "smartpropNoteWidget")
         self._current_ref: ComponentRef | None = None
         self._is_updating = False
 

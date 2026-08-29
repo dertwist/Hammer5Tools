@@ -238,10 +238,12 @@ class HelpPanel(QFrame):
         self.stacked = QStackedWidget(self)
         self.stacked.setMinimumHeight(0)
         self.stacked.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.stacked.setProperty("h5Component", "smartpropHelpStacked")
 
         # View 0: Help content
         self.help_widget = QWidget(self.stacked)
         self.help_widget.setMinimumHeight(0)
+        self.help_widget.setProperty("h5Component", "smartpropHelpContent")
         help_layout = QHBoxLayout(self.help_widget)
         help_layout.setContentsMargins(0, 0, 0, 0)
         help_layout.setSpacing(0)
@@ -265,11 +267,13 @@ class HelpPanel(QFrame):
 
         self.image_label = _ClickableLabel(self.image_frame)
         self.image_label.setToolTip("Click to view full image in viewer")
+        self.image_label.setProperty("h5Component", "smartpropHelpImageLabel")
         self.image_label.clicked.connect(self._on_image_clicked)
         img_layout.addWidget(self.image_label)
 
         self.image_container = QWidget(self.help_widget)
         self.image_container.setMinimumSize(0, 0)
+        self.image_container.setProperty("h5Component", "smartpropHelpImageContainer")
         container_layout = QVBoxLayout(self.image_container)
         container_layout.setContentsMargins(4, 4, 8, 4)
         container_layout.setSpacing(0)
