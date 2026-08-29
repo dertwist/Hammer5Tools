@@ -3,6 +3,8 @@
     <file alias="icons/steam_logo_2.png">assets/icons/app/steam_logo_2.png</file>
     <file alias="icons/steam_logo.png">assets/icons/app/steam_logo.png</file>
     <file alias="icons/hammer_icon.png">assets/icons/app/hammer_icon.png</file>
+    <file alias="icons/blender_logo.png">assets/icons/app/blender_logo.png</file>
+    <file alias="icons/gumroad_logo.png">assets/icons/app/gumroad_logo.png</file>
     <file>appicon.ico</file>
   </qresource>
   <qresource prefix="/">

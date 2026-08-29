@@ -344,6 +344,43 @@ QPushButton[h5Component="aboutGuideButton"]:pressed {
     background-color: @accent_pressed;
     color: @selection_text;
 }
+QFrame[h5Component="aboutSupportCard"] {
+    background-color: @surface_input;
+    border: 1px solid @border;
+    border-radius: 0px;
+}
+QLabel[h5Component="aboutSupportIcon"] {
+    background: transparent;
+    border: none;
+    padding: 0px;
+}
+QLabel[h5Component="aboutSupportHeader"] {
+    color: @text;
+    border: none;
+    background: transparent;
+}
+QLabel[h5Component="aboutSupportDesc"] {
+    color: @text_muted;
+    border: none;
+    background: transparent;
+}
+QPushButton[h5Component="aboutSupportButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 1px solid @border;
+    border-radius: 0px;
+    padding: 6px 14px;
+    color: @text;
+    background-color: @surface_raised;
+}
+QPushButton[h5Component="aboutSupportButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+    border-color: @accent;
+}
+QPushButton[h5Component="aboutSupportButton"]:pressed {
+    background-color: @accent_pressed;
+    color: @selection_text;
+}
 QLabel[h5Component="aboutSpecialThanks"] {
     color: @text_muted;
     border: none;

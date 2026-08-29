@@ -1,34 +1,30 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'main.ui'
+## Form generated for About dialog
 ################################################################################
 
 import os
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFrame, QHBoxLayout,
-    QLabel, QPushButton, QSizePolicy, QVBoxLayout,
-    QWidget, QScrollArea)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QSize, Qt)
+from PySide6.QtGui import (QFont, QIcon, QPixmap, QCursor)
+from PySide6.QtWidgets import (QDialog, QFrame, QHBoxLayout,
+    QLabel, QPushButton, QSizePolicy, QVBoxLayout)
 from gui import resources_rc
+
 
 class Ui_documentation_dialog(object):
     def setupUi(self, documentation_dialog):
         if not documentation_dialog.objectName():
             documentation_dialog.setObjectName(u"documentation_dialog")
-        documentation_dialog.resize(680, 580)
+        documentation_dialog.resize(680, 710)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(documentation_dialog.sizePolicy().hasHeightForWidth())
         documentation_dialog.setSizePolicy(sizePolicy)
-        documentation_dialog.setMinimumSize(QSize(680, 580))
-        documentation_dialog.setMaximumSize(QSize(680, 580))
+        documentation_dialog.setMinimumSize(QSize(680, 710))
+        documentation_dialog.setMaximumSize(QSize(680, 710))
+        documentation_dialog.setFixedSize(QSize(680, 710))
         documentation_dialog.setProperty("h5Component", "aboutDialog")
         documentation_dialog.setSizeGripEnabled(False)
         documentation_dialog.setModal(False)
@@ -96,7 +92,7 @@ class Ui_documentation_dialog(object):
         self.yt_preview_label.setFixedSize(QSize(264, 148))
         self.yt_preview_label.setScaledContents(True)
         self.yt_preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         # Load local preview image if available
         preview_path = os.path.join(os.path.dirname(__file__), "yt_preview.jpg")
         if os.path.exists(preview_path):
@@ -107,7 +103,7 @@ class Ui_documentation_dialog(object):
         # Video Info & Button Side Layout
         self.video_info_layout = QVBoxLayout()
         self.video_info_layout.setSpacing(4)
-        
+
         self.video_title = QLabel(self.video_card)
         self.video_title.setObjectName(u"video_title")
         self.video_title.setProperty("h5Component", "aboutVideoTitle")
@@ -195,6 +191,63 @@ class Ui_documentation_dialog(object):
         self.guides_layout.addLayout(self.guides_btn_layout)
         self.content_layout.addWidget(self.guides_card)
 
+        # Support Section
+        self.support_card = QFrame(self.content_frame)
+        self.support_card.setObjectName(u"support_card")
+        self.support_card.setProperty("h5Component", "aboutSupportCard")
+        self.support_layout = QHBoxLayout(self.support_card)
+        self.support_layout.setSpacing(12)
+        self.support_layout.setContentsMargins(10, 8, 10, 8)
+
+        self.support_icon_label = QLabel(self.support_card)
+        self.support_icon_label.setObjectName(u"support_icon_label")
+        self.support_icon_label.setProperty("h5Component", "aboutSupportIcon")
+        self.support_icon_label.setFixedSize(QSize(28, 28))
+        self.support_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.support_icon_label.setPixmap(
+            QPixmap(u":/icons/icons/blender_logo.png").scaled(
+                28, 28, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+            )
+        )
+        self.support_layout.addWidget(self.support_icon_label)
+
+        self.support_text_layout = QVBoxLayout()
+        self.support_text_layout.setSpacing(2)
+
+        self.support_header = QLabel(self.support_card)
+        self.support_header.setObjectName(u"support_header")
+        self.support_header.setProperty("h5Component", "aboutSupportHeader")
+        font_shead = QFont()
+        font_shead.setFamilies([u"Segoe UI"])
+        font_shead.setPointSize(9.5)
+        font_shead.setBold(True)
+        self.support_header.setFont(font_shead)
+        self.support_text_layout.addWidget(self.support_header)
+
+        self.support_desc = QLabel(self.support_card)
+        self.support_desc.setObjectName(u"support_desc")
+        self.support_desc.setProperty("h5Component", "aboutSupportDesc")
+        font_sdesc = QFont()
+        font_sdesc.setFamilies([u"Segoe UI"])
+        font_sdesc.setPointSize(8.5)
+        self.support_desc.setFont(font_sdesc)
+        self.support_desc.setWordWrap(True)
+        self.support_text_layout.addWidget(self.support_desc)
+
+        self.support_layout.addLayout(self.support_text_layout, 1)
+
+        self.support_button = QPushButton(self.support_card)
+        self.support_button.setObjectName(u"support_button")
+        self.support_button.setProperty("h5Component", "aboutSupportButton")
+        self.support_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        icon_gumroad = QIcon()
+        icon_gumroad.addFile(u":/icons/icons/gumroad_logo.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.support_button.setIcon(icon_gumroad)
+        self.support_button.setIconSize(QSize(18, 18))
+        self.support_layout.addWidget(self.support_button)
+
+        self.content_layout.addWidget(self.support_card)
+
         # Special Thanks Inline Mention
         self.special_thanks_label = QLabel(self.content_frame)
         self.special_thanks_label.setObjectName(u"special_thanks_label")
@@ -255,15 +308,19 @@ class Ui_documentation_dialog(object):
         documentation_dialog.setWindowTitle(QCoreApplication.translate("documentation_dialog", u"About", None))
         self.label.setText("")
         self.version.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.0.0", None))
-        
+
         self.video_title.setText(QCoreApplication.translate("documentation_dialog", u"CUSTOM LOADINGSCREEN - CS2 Mapping Tutorial", None))
-        self.video_desc.setText(QCoreApplication.translate("documentation_dialog", u"In this video i'll show you how you can create a fully customized loadingscreen for your CounterStrike 2 map! Learn how to change the background, description and map icon of your custom CS2 map!\n\nTip: Setup the cameras in the early stages of your map so you can capture the history and progress of your map from start to finish!", None))
+        self.video_desc.setText(QCoreApplication.translate("documentation_dialog", u"In this video i'll show you how you can create a fully customized loadingscreen for your CounterStrike 2 map! Learn how to change the background, description and map icon of your custom CS2 map!", None))
         self.watch_video_button.setText(QCoreApplication.translate("documentation_dialog", u"Watch Tutorial on YouTube", None))
 
-        self.guides_header.setText(QCoreApplication.translate("documentation_dialog", u"📚 Documentation & Guides", None))
+        self.guides_header.setText(QCoreApplication.translate("documentation_dialog", u"\U0001f4da Documentation & Guides", None))
         self.open_documentation_button.setText(QCoreApplication.translate("documentation_dialog", u"Documentation", None))
         self.open_radio_sound_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Radio Soundevent Guide", None))
         self.open_smart_props_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Smart Props Guide", None))
+
+        self.support_header.setText(QCoreApplication.translate("documentation_dialog", u"Support the Project", None))
+        self.support_desc.setText(QCoreApplication.translate("documentation_dialog", u"Mallet is a Blender addon that brings cool Hammer features to Blender, such as Hotspot UV, viewport camera, and more.\nBuying this addon will support Hammer5Tools development.", None))
+        self.support_button.setText(QCoreApplication.translate("documentation_dialog", u"Mallet on Gumroad", None))
 
         self.special_thanks_label.setText(QCoreApplication.translate("documentation_dialog", u'Special thanks: <a href="https://github.com/LaplaceTor" style="color: #61AFEF; text-decoration: none;">LaplaceTor</a>, <a href="https://github.com/Andrew900460" style="color: #61AFEF; text-decoration: none;">Andrew900460</a>', None))
 

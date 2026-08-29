@@ -86,6 +86,9 @@ def test_about_dialog_theming():
             assert dlg.ui.frame_3.frameShape() == QFrame.Shape.NoFrame
             assert dlg.ui.label.pixmap() is not None
             assert not dlg.ui.label.pixmap().isNull()
+            assert dlg.ui.support_card.property("h5Component") == "aboutSupportCard"
+            assert dlg.ui.support_icon_label.pixmap() is not None
+            assert not dlg.ui.support_icon_label.pixmap().isNull()
             assert active_theme.accent in dlg.ui.special_thanks_label.text()
             dlg.close()
         finally:

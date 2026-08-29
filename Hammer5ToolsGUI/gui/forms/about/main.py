@@ -28,9 +28,19 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_documentation_dialog()
         self.ui.setupUi(self)
+        self.setFixedSize(680, 710)
         self.ui.version.setText(f"Version: {version}")
         self._refresh_theme_elements()
         apply_title_bar_theme(self)
+
+        self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
+        self.ui.open_documentation_button.clicked.connect(self.open_documentation)
+        self.ui.open_radio_sound_guide_button.clicked.connect(self.open_radio_sound_guide)
+        self.ui.open_smart_props_guide_button.clicked.connect(self.open_smart_props_guide)
+        self.ui.watch_video_button.clicked.connect(self.open_video_tutorial)
+        self.ui.support_button.clicked.connect(self.open_support_page)
+        self.ui.close_button.clicked.connect(self.accept)
+        self.ui.dont_show_button.clicked.connect(self.disable_show_on_startup_and_close)
 
     def _refresh_theme_elements(self):
         active_theme = theme.get_theme()
@@ -46,14 +56,8 @@ class AboutDialog(QDialog):
             self._refresh_theme_elements()
             apply_title_bar_theme(self)
 
-        self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
-        self.ui.open_documentation_button.clicked.connect(self.open_documentation)
-        self.ui.open_radio_sound_guide_button.clicked.connect(self.open_radio_sound_guide)
-        self.ui.open_smart_props_guide_button.clicked.connect(self.open_smart_props_guide)
-        self.ui.watch_video_button.clicked.connect(self.open_video_tutorial)
-        self.ui.close_button.clicked.connect(self.accept)
-
-        self.ui.dont_show_button.clicked.connect(self.disable_show_on_startup_and_close)
+    def open_support_page(self):
+        QDesktopServices.openUrl(QUrl("https://dertwist.gumroad.com/l/mallet"))
 
     def open_request_a_new_feature(self):
         QDesktopServices.openUrl(QUrl(discord_feedback_channel))
