@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 def extract_vmap_references(vmap_path):
     """Return VMAP asset references through the shared Core reader."""
-    return list(CoreBridge.instance().read_valve_map(vmap_path).asset_references)
+    return list(CoreBridge.instance().read_valve_map_asset_references(vmap_path))
 import unittest
 from gui.settings.common import get_addon_name, get_addon_dir
 import os
@@ -23,34 +23,19 @@ def get_mesh_material_references(file_path):
     try:
         with open(file_path, 'rb') as f:
             content_bytes = f.read()
-        # Decode using utf-8 with ignore to get a clean string from binary
-        content = content_bytes.decode('utf-8', errors='ignore')
     except Exception as e:
         log.error(f"Error reading mesh file '{file_path}': {e}")
         return []
 
-    # Find .vmat or .vmt references using regex
-    pattern_vmat = r'[a-zA-Z0-9_\-\\/.]+\.vmat'
-    matches_vmat = re.findall(pattern_vmat, content, re.IGNORECASE)
-    
-    pattern_vmt = r'[a-zA-Z0-9_\-\\/.]+\.vmt'
-    matches_vmt = re.findall(pattern_vmt, content, re.IGNORECASE)
-    
-    references = []
-    for match in matches_vmat + matches_vmt:
-        cleaned = match.strip().replace('\\', '/').lower().lstrip('/')
-        if cleaned:
-            references.append(cleaned)
-            
-    # De-duplicate while preserving order
-    unique_refs = []
-    seen = set()
-    for ref in references:
-        if ref not in seen:
-            seen.add(ref)
-            unique_refs.append(ref)
-            
-    return unique_refs
+    # Find .vmat/.vmt references directly on the raw bytes
+    pattern = rb'[\w\-\\/.]+\.vma?t'
+    matches = re.findall(pattern, content_bytes, re.IGNORECASE)
+
+    references = (
+        match.decode('ascii', errors='ignore').strip().replace('\\', '/').lower().lstrip('/')
+        for match in matches
+    )
+    return list(dict.fromkeys(ref for ref in references if ref))
 
 
 def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
@@ -238,8 +223,23 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
         extract_references(file)
         return references
 
-    def get_material_references(vmat_path):
-        """Extract texture and material references from a .vmat file."""
+    material_cache: dict[str, tuple[list, list]] = {}
+
+    def get_material_references(vmat_path, visited=None):
+        """Extract texture and material references from a .vmat file.
+
+        Memoized by normalized path, and guards against mutually-referencing
+        vmats recursing forever.
+        """
+        norm_path = os.path.normpath(vmat_path).lower()
+        if norm_path in material_cache:
+            return material_cache[norm_path]
+        if visited is None:
+            visited = set()
+        if norm_path in visited:
+            return [], []
+        visited.add(norm_path)
+
         try:
             with open(vmat_path, 'r') as f:
                 file = vdf.load(f)
@@ -264,13 +264,12 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                         if is_path_like and ('Texture' in key or 'Material' in key or 'SkyTexture' in key):
                             if 'Texture' in key:
                                 # Direct texture reference
-                                print(val)
                                 texture_references.append(val.lower())
                             else:  # 'Material' in key
                                 # First add the material itself
                                 material_references.append(val.lower())
                                 # Then dive into that material file to find nested references
-                                child_tex, child_mat = get_material_references(os.path.join(addon_dir, val))
+                                child_tex, child_mat = get_material_references(os.path.join(addon_dir, val), visited)
                                 texture_references.extend(child_tex)
                                 material_references.extend(child_mat)
                     # Recurse into nested containers
@@ -281,7 +280,9 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
                     extract_references(item)
 
         extract_references(file)
-        return texture_references, material_references
+        result = (texture_references, material_references)
+        material_cache[norm_path] = result
+        return result
 
     def get_model_references(vmdl_path):
         """Extract references from a .vmdl or .vmdl_prefab file."""

@@ -299,7 +299,7 @@ class FileFilterProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         model = self.sourceModel()
-        index = model.index(source_row, 0, source_parent)
+        index = model.index(source_row, 1, source_parent)
         file_path = model.data(index, Qt.DisplayRole)
         if self.search_text and self.search_text not in file_path.lower():
             return False
@@ -387,19 +387,12 @@ class CleanupDialog(QDialog):
         self.table_view.setSelectionBehavior(QTableView.SelectRows)
         self.table_view.setSelectionMode(QTableView.ExtendedSelection)  # Multi-selection enabled
         self.table_view.horizontalHeader().setMinimumSectionSize(50)
-        self.table_view.horizontalHeader().setStretchLastSection(True)
-        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table_view.setProperty("h5Component", "legacyTable")
         main_layout.addWidget(self.table_view)
 
         # Context menu for checkbox toggling
         self.table_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_view.customContextMenuRequested.connect(self.show_context_menu)
-
-        stats_layout = QHBoxLayout()
-        self.stats_label = QLabel()
-        stats_layout.addWidget(self.stats_label)
-        main_layout.addLayout(stats_layout)
 
         footer_layout = QHBoxLayout()
 
@@ -440,20 +433,16 @@ class CleanupDialog(QDialog):
             self.filter_combo.addItem(ext)
 
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["File Path", "Size"])
-        for file, size in self.junk_files:
-            item_path = QStandardItem(file)
-            item_path.setCheckable(True)
-            item_path.setCheckState(Qt.Checked)
-            item_path.setData(file, Qt.UserRole)
-            item_size = QStandardItem(format_size(size))
-            item_size.setData(size, Qt.UserRole)
-            self.model.appendRow([item_path, item_size])
+        self._populate_model(self.junk_files)
 
         self.proxy_model = FileFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.proxy_model.setSortRole(Qt.UserRole)
         self.table_view.setModel(self.proxy_model)
+        self.table_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
+        self.table_view.horizontalHeader().resizeSection(0, 90)
+        self.table_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table_view.sortByColumn(0, Qt.DescendingOrder)
 
         # Signals
         self.search_box.textChanged.connect(self.proxy_model.set_search_text)
@@ -470,6 +459,19 @@ class CleanupDialog(QDialog):
 
         self.update_statistics()
 
+    def _populate_model(self, junk_files):
+        """Fill self.model with (Size, File Path) rows; the checkbox lives on the Size item."""
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(["Size", "File Path"])
+        for file, size in junk_files:
+            item_size = QStandardItem(format_size(size))
+            item_size.setCheckable(True)
+            item_size.setCheckState(Qt.Checked)
+            item_size.setData(size, Qt.UserRole)
+            item_path = QStandardItem(file)
+            item_path.setData(file, Qt.UserRole)
+            self.model.appendRow([item_size, item_path])
+
     def update_statistics(self):
         total_junk = self.model.rowCount()
         visible_junk = self.proxy_model.rowCount()
@@ -478,7 +480,7 @@ class CleanupDialog(QDialog):
             if self.model.item(row, 0).checkState() == Qt.Checked
         )
         selected_size = sum(
-            self.model.item(row, 1).data(Qt.UserRole)
+            self.model.item(row, 0).data(Qt.UserRole)
             for row in range(total_junk)
             if self.model.item(row, 0).checkState() == Qt.Checked
         )
@@ -491,16 +493,7 @@ class CleanupDialog(QDialog):
         scan_meshes = self.scan_meshes_checkbox.isChecked()
         self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path, scan_meshes=scan_meshes)
 
-        self.model.clear()
-        self.model.setHorizontalHeaderLabels(["File Path", "Size"])
-        for file, size in self.junk_files:
-            item_path = QStandardItem(file)
-            item_path.setCheckable(True)
-            item_path.setCheckState(Qt.Checked)
-            item_path.setData(file, Qt.UserRole)
-            item_size = QStandardItem(format_size(size))
-            item_size.setData(size, Qt.UserRole)
-            self.model.appendRow([item_path, item_size])
+        self._populate_model(self.junk_files)
 
         self.filter_combo.blockSignals(True)
         self.filter_combo.clear()
@@ -516,9 +509,8 @@ class CleanupDialog(QDialog):
     def cleanup_addon(self):
         files_to_delete = []
         for row in range(self.model.rowCount()):
-            item = self.model.item(row, 0)
-            if item.checkState() == Qt.Checked:
-                file_path = item.data(Qt.UserRole)
+            if self.model.item(row, 0).checkState() == Qt.Checked:
+                file_path = self.model.item(row, 1).data(Qt.UserRole)
                 files_to_delete.append(file_path)
 
         if not files_to_delete:
@@ -571,7 +563,7 @@ class CleanupDialog(QDialog):
         # Open the folder containing the first selected file
         proxy_index = indexes[0]
         source_index = self.proxy_model.mapToSource(proxy_index)
-        item = self.model.item(source_index.row(), 0)
+        item = self.model.item(source_index.row(), 1)
         if item is not None:
             file_path = item.data(Qt.UserRole)
             addon_dir = os.path.join(get_addon_dir())
@@ -591,11 +583,16 @@ class CleanupDialog(QDialog):
                     QMessageBox.warning(self, "Error", f"Could not open folder: {e}")
 
     def set_selected_rows_checked(self, indexes, state):
-        for proxy_index in indexes:
-            source_index = self.proxy_model.mapToSource(proxy_index)
-            item = self.model.item(source_index.row(), 0)
-            if item is not None:
-                item.setCheckState(state)
+        self.model.blockSignals(True)
+        try:
+            for proxy_index in indexes:
+                source_index = self.proxy_model.mapToSource(proxy_index)
+                item = self.model.item(source_index.row(), 0)
+                if item is not None:
+                    item.setCheckState(state)
+        finally:
+            self.model.blockSignals(False)
+        self.update_statistics()
     def open_dirtlist(self):
         """Open the .dirtlist file in the default text editor. Create it if it doesn't exist."""
         dirtlist_path = os.path.join(self.addon_dir, '.dirtlist')

@@ -53,6 +53,34 @@ internal static unsafe class VmapApi
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Reads only the asset-reference list from an uncompiled VMAP, skipping the node/entity
+    /// projection and thumbnail decoding that <see cref="ReadValveMapJson"/> does.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_read_asset_references_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadValveMapAssetReferencesJson(byte* path, int pathLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            var document = VmapDocument.LoadInMemory(NativeInterop.ReadUtf8(path, pathLength));
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            writer.WriteStartArray();
+            if (document.Model.PrefixAttributes.TryGetValue("map_asset_references", out var value)
+                && value is not string
+                && value is System.Collections.IEnumerable references)
+            {
+                foreach (var reference in references)
+                {
+                    if (reference is not null)
+                        writer.WriteStringValue(reference.ToString());
+                }
+            }
+            writer.WriteEndArray();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        });
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>Request: {path, renames: {old: new, ...}}.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_rewrite_references_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int RewriteVmapReferencesJson(byte* request, int requestLength, byte** output, int* outputLength) =>

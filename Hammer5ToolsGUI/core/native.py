@@ -268,6 +268,12 @@ class SmartPropNativeClient:
             self._library.h5t_vmap_read_json, *self._buffer_arguments(path.encode("utf-8")),
         ))
 
+    def read_valve_map_asset_references(self, path: str) -> list[str]:
+        """Reads only the asset-reference list from an uncompiled VMAP."""
+        return json.loads(self._invoke(
+            self._library.h5t_vmap_read_asset_references_json, *self._buffer_arguments(path.encode("utf-8")),
+        ))
+
     def read_valve_map_scene(self, path: str) -> dict:
         """Reads an uncompiled VMAP into flattened, drawable scene geometry."""
         return decode_vmap_scene(self._invoke_binary(
@@ -501,6 +507,7 @@ class SmartPropNativeClient:
             "h5t_compiled_texture_read_json",
             "h5t_compiled_resource_read_json",
             "h5t_vmap_read_json",
+            "h5t_vmap_read_asset_references_json",
             "h5t_vmap_read_scene_json",
             "h5t_vmap_read_scene_binary",
             "h5t_vmap_rewrite_references_json",

@@ -400,6 +400,10 @@ class CoreBridge:
             document["thumbnailFormat"],
         )
 
+    def read_valve_map_asset_references(self, path: str) -> tuple[str, ...]:
+        """Reads only the asset-reference list from a VMAP, skipping the full document projection."""
+        return tuple(self._smartprop_native().read_valve_map_asset_references(path))
+
     def read_valve_map_scene(self, path: str) -> ValveMapSceneDocument:
         """Reads a VMAP into world-space meshes and placements for a viewport."""
         import numpy as np
