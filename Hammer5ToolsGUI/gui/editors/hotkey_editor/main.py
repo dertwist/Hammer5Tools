@@ -12,8 +12,8 @@ from gui.widgets.explorer.main import Explorer
 import os
 import datetime
 import keyvalues3 as kv3
-from gui.common import editor_info, app_dir, Hotkeys_Path, user_data_dir
-from gui.editors.hotkey_editor.document_model import HotkeyDocument
+from gui.common import app_dir, Hotkeys_Path, user_data_dir
+from gui.editors.hotkey_editor.document_model import HotkeyDocument, serialize
 
 log = logging.getLogger(__name__)
 
@@ -203,24 +203,24 @@ class HotkeyEditorMainWindow(QMainWindow):
 
     def save_preset(self):
         if self.opened_file != '':
-            output = editor_info
-            if self.editor == 'hammer':
-                output.update(hammer_macros)
-            output.update(self.document.to_mapping())
-            # There is a huge problem with python interpretation, avoid \\ in string. GizmoDebugHook have \\ as input.
-            # So in output it would be only one \ test
-            kv3.write(output, self.opened_file)
+            self.write_preset(self.opened_file, self.document.to_mapping())
             print('Preset saved')
+
+    def write_preset(self, path, value):
+        output = {}
+        if self.editor == 'hammer':
+            output.update(hammer_macros)
+        output.update(value)
+        output.pop('editor_info', None)
+        with open(path, 'w', encoding='utf-8', newline='\n') as file:
+            file.write(serialize(output))
+
     def serializing(self):
         return self.document.to_mapping()["m_Bindings"]
     def new_preset(self):
         name = f'{self.editor}_new_keybindings_{datetime.datetime.now().strftime("%m_%d_%Y")}'
         path = os.path.join(self.hotkeys_path, f'{name}.keybindings')
-        output = editor_info
-        if self.editor == 'hammer':
-            output.update(hammer_macros)
-        output.update(hammer_default)
-        kv3.write(output, path)
+        self.write_preset(path, hammer_default)
 
     def filter_input(self, filter_text, parent_item):
         # Reset the root visibility and start the filtering process
