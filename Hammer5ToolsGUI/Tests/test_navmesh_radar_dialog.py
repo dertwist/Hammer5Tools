@@ -45,17 +45,17 @@ def test_navmesh_radar_dialog_widgets(qapp, monkeypatch):
     # Confirm status/ready label is removed
     assert not hasattr(dialog, "status_label")
 
-    # Confirm combo modes with Baked bomb damage as default
+    # Confirm combo modes with NavMesh as default
     items = [dialog.mode_combo.itemText(i) for i in range(dialog.mode_combo.count())]
-    assert items == ["Baked bomb damage", "NavMesh"]
-    assert dialog.mode_combo.currentText() == "Baked bomb damage"
+    assert items == ["NavMesh", "Baked bomb damage"]
+    assert dialog.mode_combo.currentText() == "NavMesh"
 
     # Confirm description and warning labels are removed
     assert not hasattr(dialog, "warning_label")
 
     # Confirm remove offset and collapse faces checkboxes exist
     assert hasattr(dialog, "remove_offset_checkbox")
-    assert not dialog.remove_offset_checkbox.isChecked()
+    assert dialog.remove_offset_checkbox.isChecked()
 
     assert hasattr(dialog, "collapse_faces_checkbox")
     assert dialog.collapse_faces_checkbox.isChecked()
@@ -63,7 +63,13 @@ def test_navmesh_radar_dialog_widgets(qapp, monkeypatch):
     assert not dialog.collapse_ngons_checkbox.isChecked()
     assert dialog.collapse_ngons_checkbox.isEnabled()
 
-    # In Baked bomb damage mode (index 0 / default), collapse options are visible, remove offset is hidden
+    # In NavMesh mode (index 0 / default), remove offset is visible and collapse options are hidden
+    assert dialog.remove_offset_checkbox.isVisibleTo(dialog) or not dialog.remove_offset_checkbox.isHidden()
+    assert dialog.collapse_faces_checkbox.isHidden()
+    assert dialog.collapse_ngons_checkbox.isHidden()
+
+    # Switch to Baked bomb damage mode (index 1), collapse options are visible, remove offset is hidden
+    dialog.mode_combo.setCurrentIndex(1)
     assert not dialog.collapse_faces_checkbox.isHidden()
     assert not dialog.collapse_ngons_checkbox.isHidden()
     assert dialog.remove_offset_checkbox.isHidden()
@@ -71,12 +77,6 @@ def test_navmesh_radar_dialog_widgets(qapp, monkeypatch):
     dialog.collapse_faces_checkbox.setChecked(False)
     assert not dialog.collapse_ngons_checkbox.isEnabled()
     dialog.collapse_faces_checkbox.setChecked(True)
-
-    # Switch to NavMesh mode (index 1), remove offset is visible, collapse options are hidden
-    dialog.mode_combo.setCurrentIndex(1)
-    assert dialog.remove_offset_checkbox.isVisibleTo(dialog) or not dialog.remove_offset_checkbox.isHidden()
-    assert dialog.collapse_faces_checkbox.isHidden()
-    assert dialog.collapse_ngons_checkbox.isHidden()
 
     # Confirm add prefab entity checkbox exists and has expanding size policy
     assert hasattr(dialog, "add_prefab_checkbox")

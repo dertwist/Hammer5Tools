@@ -70,67 +70,71 @@ public sealed class NavMeshRadarTopologyScratchTests
             await Assert.That(result.IsSuccess).IsTrue();
 
             var generated = VmapDocument.LoadInMemory(result.Value!.GeneratedVmapPath);
-            var mesh = (Element)generated.WorldChildren.Single()["meshData"]!;
-            var vertexEdges = (IntArray)mesh["vertexEdgeIndices"]!;
-            var edgeVertices = (IntArray)mesh["edgeVertexIndices"]!;
-            var opposites = (IntArray)mesh["edgeOppositeIndices"]!;
-            var nextEdges = (IntArray)mesh["edgeNextIndices"]!;
-            var edgeFaces = (IntArray)mesh["edgeFaceIndices"]!;
-            var faceEdges = (IntArray)mesh["faceEdgeIndices"]!;
-            var badOpposites = 0;
-            var badNextVertices = 0;
-            var selfBoundaryNext = 0;
-            var badVertexEdges = 0;
-            var nonAdjacentOpposites = 0;
-
-            for (var edge = 0; edge < edgeVertices.Count; edge++)
+            // The generator chunks its output at 4096 faces per mesh; check every chunk.
+            foreach (var child in generated.WorldChildren)
             {
-                var opposite = opposites[edge];
-                if (opposite < 0 || opposite >= edgeVertices.Count || opposites[opposite] != edge)
-                {
-                    badOpposites++;
-                    continue;
-                }
-                if (opposite != (edge ^ 1))
-                    nonAdjacentOpposites++;
-                var next = nextEdges[edge];
-                if (next < 0 || next >= edgeVertices.Count
-                    || edgeVertices[opposites[next]] != edgeVertices[edge])
-                {
-                    badNextVertices++;
-                }
-                if (edgeFaces[edge] == -1 && next == edge)
-                    selfBoundaryNext++;
-            }
+                var mesh = (Element)child["meshData"]!;
+                var vertexEdges = (IntArray)mesh["vertexEdgeIndices"]!;
+                var edgeVertices = (IntArray)mesh["edgeVertexIndices"]!;
+                var opposites = (IntArray)mesh["edgeOppositeIndices"]!;
+                var nextEdges = (IntArray)mesh["edgeNextIndices"]!;
+                var edgeFaces = (IntArray)mesh["edgeFaceIndices"]!;
+                var faceEdges = (IntArray)mesh["faceEdgeIndices"]!;
+                var badOpposites = 0;
+                var badNextVertices = 0;
+                var selfBoundaryNext = 0;
+                var badVertexEdges = 0;
+                var nonAdjacentOpposites = 0;
 
-            for (var vertex = 0; vertex < vertexEdges.Count; vertex++)
-            {
-                var edge = vertexEdges[vertex];
-                if (edge < 0 || edge >= edgeVertices.Count || edgeVertices[opposites[edge]] != vertex)
-                    badVertexEdges++;
-            }
+                for (var edge = 0; edge < edgeVertices.Count; edge++)
+                {
+                    var opposite = opposites[edge];
+                    if (opposite < 0 || opposite >= edgeVertices.Count || opposites[opposite] != edge)
+                    {
+                        badOpposites++;
+                        continue;
+                    }
+                    if (opposite != (edge ^ 1))
+                        nonAdjacentOpposites++;
+                    var next = nextEdges[edge];
+                    if (next < 0 || next >= edgeVertices.Count
+                        || edgeVertices[opposites[next]] != edgeVertices[edge])
+                    {
+                        badNextVertices++;
+                    }
+                    if (edgeFaces[edge] == -1 && next == edge)
+                        selfBoundaryNext++;
+                }
 
-            var badFaceRings = Enumerable.Range(0, faceEdges.Count)
-                .Count(face => !RingCloses(faceEdges[face], face, nextEdges, edgeFaces));
-            var badBoundaryRings = Enumerable.Range(0, edgeFaces.Count)
-                .Where(edge => edgeFaces[edge] == -1)
-                .Count(edge => !RingCloses(edge, -1, nextEdges, edgeFaces));
-            var badVertexFans = Enumerable.Range(0, vertexEdges.Count)
-                .Count(vertex => !VertexFanCloses(
-                    vertex,
-                    vertexEdges[vertex],
-                    edgeVertices,
-                    opposites,
-                    nextEdges));
-            var report = $"vertices={vertexEdges.Count}, edges={edgeVertices.Count}, faces={faceEdges.Count}, "
-                + $"badOpposites={badOpposites}, badNextVertices={badNextVertices}, "
-                + $"selfBoundaryNext={selfBoundaryNext}, badVertexEdges={badVertexEdges}, "
-                + $"badFaceRings={badFaceRings}, badBoundaryRings={badBoundaryRings}, badVertexFans={badVertexFans}, "
-                + $"nonAdjacentOpposites={nonAdjacentOpposites}";
-            await Assert.That(report).IsEqualTo(
-                $"vertices={vertexEdges.Count}, edges={edgeVertices.Count}, faces={faceEdges.Count}, "
-                + "badOpposites=0, badNextVertices=0, selfBoundaryNext=0, badVertexEdges=0, "
-                + "badFaceRings=0, badBoundaryRings=0, badVertexFans=0, nonAdjacentOpposites=0");
+                for (var vertex = 0; vertex < vertexEdges.Count; vertex++)
+                {
+                    var edge = vertexEdges[vertex];
+                    if (edge < 0 || edge >= edgeVertices.Count || edgeVertices[opposites[edge]] != vertex)
+                        badVertexEdges++;
+                }
+
+                var badFaceRings = Enumerable.Range(0, faceEdges.Count)
+                    .Count(face => !RingCloses(faceEdges[face], face, nextEdges, edgeFaces));
+                var badBoundaryRings = Enumerable.Range(0, edgeFaces.Count)
+                    .Where(edge => edgeFaces[edge] == -1)
+                    .Count(edge => !RingCloses(edge, -1, nextEdges, edgeFaces));
+                var badVertexFans = Enumerable.Range(0, vertexEdges.Count)
+                    .Count(vertex => !VertexFanCloses(
+                        vertex,
+                        vertexEdges[vertex],
+                        edgeVertices,
+                        opposites,
+                        nextEdges));
+                var report = $"vertices={vertexEdges.Count}, edges={edgeVertices.Count}, faces={faceEdges.Count}, "
+                    + $"badOpposites={badOpposites}, badNextVertices={badNextVertices}, "
+                    + $"selfBoundaryNext={selfBoundaryNext}, badVertexEdges={badVertexEdges}, "
+                    + $"badFaceRings={badFaceRings}, badBoundaryRings={badBoundaryRings}, badVertexFans={badVertexFans}, "
+                    + $"nonAdjacentOpposites={nonAdjacentOpposites}";
+                await Assert.That(report).IsEqualTo(
+                    $"vertices={vertexEdges.Count}, edges={edgeVertices.Count}, faces={faceEdges.Count}, "
+                    + "badOpposites=0, badNextVertices=0, selfBoundaryNext=0, badVertexEdges=0, "
+                    + "badFaceRings=0, badBoundaryRings=0, badVertexFans=0, nonAdjacentOpposites=0");
+            }
         }
         finally
         {

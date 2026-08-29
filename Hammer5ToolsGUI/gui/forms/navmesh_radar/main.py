@@ -97,8 +97,8 @@ class NavMeshRadarDialog(QDialog):
         form = QFormLayout()
         self.mode_combo = QComboBox()
         self.mode_combo.setProperty("h5Component", "legacyCombobox")
-        self.mode_combo.addItem("Baked bomb damage", "baked_bomb_damage")
         self.mode_combo.addItem("NavMesh", "navmesh_offset")
+        self.mode_combo.addItem("Baked bomb damage", "baked_bomb_damage")
         self.mode_combo.currentIndexChanged.connect(self._update_mode_options)
         form.addRow("Source:", self.mode_combo)
 
@@ -138,7 +138,7 @@ class NavMeshRadarDialog(QDialog):
 
         self.remove_offset_checkbox = QCheckBox("Remove offset")
         self.remove_offset_checkbox.setProperty("h5Component", "legacyCheckbox")
-        self.remove_offset_checkbox.setChecked(False)
+        self.remove_offset_checkbox.setChecked(True)
         self.remove_offset_checkbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         options_layout.addWidget(self.remove_offset_checkbox, 1)
 

@@ -59,6 +59,7 @@ public static class NavMeshRadarGenerator
     private const float SplitCellSize = 128f;
     private const float SplitTolerance = 1f;
     private const float TriangleMinimumArea = 0.25f;
+    private const float PlanarTolerance = 0.1f;
 
     /// <summary>One NAV area as a ring of corners plus, per edge, whether the agent stopped there.</summary>
     internal sealed class NavFace(List<Vector3> corners, List<bool> exposedEdges)
@@ -177,7 +178,10 @@ public static class NavMeshRadarGenerator
                     mapName,
                     request.CollapseFaces,
                     request.CollapseFacesIntoNgons),
-                NavMeshRadarMode.NavMeshOffset => ReadOffsetNavGeometry(request.VpkPath, mapName, request.Offset),
+                NavMeshRadarMode.NavMeshOffset => ReadOffsetNavGeometry(
+                    request.VpkPath,
+                    mapName,
+                    request.Offset),
                 _ => throw new InvalidDataException($"Unsupported radar mode '{request.Mode}'."),
             };
 
@@ -351,6 +355,10 @@ public static class NavMeshRadarGenerator
         return result;
     }
 
+    // ponytail: dead since the Clipper collar replaced it — this and OffsetPolygon,
+    // OffsetWeldedPolygons, OffsetFaces, DampShifts, SelfIntersects and EdgesCross below now have
+    // no caller outside their own tests. Kept only until the collar output has been confirmed in
+    // Hammer and radgen on a real map; delete the lot then, tests included.
     /// <summary>
     /// Offsets each NAV area independently so a problematic neighbour cannot damp its expansion.
     /// The expanded areas may overlap, which preserves the combined footprint while ensuring every
@@ -812,13 +820,66 @@ public static class NavMeshRadarGenerator
             .ToList();
         var welded = WeldPolygons([.. areas.Select(area => (IReadOnlyList<Vector3>)area.Corners)]);
         var faces = BuildNavFaces(areas, welded);
+        SplitSharedEdges(faces);
         var normalized = faces
             .Select(face => (IReadOnlyList<Vector3>)face.Corners)
             .ToList();
-        var rings = offset > 0f
-            ? OffsetPolygonsIndependently(normalized, offset)
-            : normalized;
-        return new RadarGeometry(areas.Count, Triangulate(rings));
+
+        // Removing the generator's offset only ever has to move the outline. The compiled areas
+        // already tile their surface: on de_firewatch they cover it 1.05 times over, against 2.02
+        // once each one is offset on its own, so nothing inside the outline is touched.
+        List<IReadOnlyList<Vector3>> surface =
+            [.. normalized, .. NavMeshRadarUnion.Collar(normalized, offset)];
+
+        return new RadarGeometry(areas.Count, TriangulateNonPlanar(surface));
+    }
+
+    /// <summary>
+    /// Keeps a ring whole where it is flat enough to render as one face and fans the rest into
+    /// triangles. Most NAV quads have four independent corner heights and have to be split, but the
+    /// ones that do not read far better in Hammer, and in radgen, as a single quad.
+    /// </summary>
+    internal static List<IReadOnlyList<Vector3>> TriangulateNonPlanar(
+        IReadOnlyList<IReadOnlyList<Vector3>> rings)
+    {
+        ArgumentNullException.ThrowIfNull(rings);
+
+        var result = new List<IReadOnlyList<Vector3>>(rings.Count);
+        foreach (var ring in rings)
+        {
+            if (ring.Count >= 3 && IsPlanar(ring) && MathF.Abs(SignedArea(ring)) >= TriangleMinimumArea)
+                result.Add(ring);
+            else
+                result.AddRange(Triangulate([ring]));
+        }
+        return result;
+    }
+
+    /// <summary>Whether every corner sits within <see cref="PlanarTolerance"/> of the ring's own plane.</summary>
+    private static bool IsPlanar(IReadOnlyList<Vector3> ring)
+    {
+        var normal = Vector3.Zero;
+        var centroid = Vector3.Zero;
+        for (int index = 0, previous = ring.Count - 1; index < ring.Count; previous = index++)
+        {
+            var current = ring[index];
+            var last = ring[previous];
+            normal.X += (last.Y - current.Y) * (last.Z + current.Z);
+            normal.Y += (last.Z - current.Z) * (last.X + current.X);
+            normal.Z += (last.X - current.X) * (last.Y + current.Y);
+            centroid += current;
+        }
+        if (normal.LengthSquared() < 1e-8f)
+            return false;
+
+        normal = Vector3.Normalize(normal);
+        centroid /= ring.Count;
+        foreach (var corner in ring)
+        {
+            if (MathF.Abs(Vector3.Dot(corner - centroid, normal)) > PlanarTolerance)
+                return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -1032,7 +1093,7 @@ public static class NavMeshRadarGenerator
         return BitConverter.ToUInt64(bytes);
     }
 
-    private static Vector2 OutwardNormal(Vector3 start, Vector3 end, float signedArea)
+    internal static Vector2 OutwardNormal(Vector3 start, Vector3 end, float signedArea)
     {
         var edge = new Vector2(end.X - start.X, end.Y - start.Y);
         if (edge.LengthSquared() < 0.000001f)
@@ -1403,7 +1464,7 @@ public static class NavMeshRadarGenerator
         return signedArea;
     }
 
-    private static Vector2 MiterShift(IReadOnlyList<Vector2> normals, float offset)
+    internal static Vector2 MiterShift(IReadOnlyList<Vector2> normals, float offset)
     {
         if (offset == 0f || normals.Count == 0)
             return Vector2.Zero;
