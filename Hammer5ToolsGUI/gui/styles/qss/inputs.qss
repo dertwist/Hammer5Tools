@@ -20,11 +20,11 @@ QComboBox {
 }
 QComboBox:hover {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 QComboBox:pressed {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QComboBox::drop-down {
@@ -58,6 +58,7 @@ QComboBox QAbstractItemView {
 
 QComboBox QAbstractItemView::item {
     font: 600 10pt "Segoe UI";
+    background-color: @surface_raised;
     border: 1px solid transparent;
     border-radius: 1px;
     border-top: 0px;

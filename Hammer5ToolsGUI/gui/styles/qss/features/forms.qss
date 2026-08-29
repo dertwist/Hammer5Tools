@@ -258,3 +258,133 @@ QLabel[h5Component="unrealShaderSectionHeader"] {
     font-weight: bold;
     border-radius: 2px;
 }
+
+/* forms/about/main.py: About / documentation dialog. */
+QDialog[h5Component="aboutDialog"] {
+    background-color: @surface;
+    color: @text;
+}
+QFrame[h5Component="aboutHeaderFrame"] {
+    background: transparent;
+    border: none;
+}
+QLabel[h5Component="aboutLogoLabel"] {
+    background: transparent;
+    border: none;
+}
+QLabel[h5Component="aboutVersionLabel"] {
+    color: @text_muted;
+    background: transparent;
+    border: none;
+}
+QFrame[h5Component="aboutContentFrame"] {
+    background-color: @surface_raised;
+    border: 1px solid @border;
+    border-radius: 0px;
+}
+QFrame[h5Component="aboutVideoCard"] {
+    background-color: @surface_input;
+    border: 1px solid @border;
+    border-radius: 0px;
+}
+QLabel[h5Component="aboutYtPreview"] {
+    border: 1px solid @border;
+    border-radius: 0px;
+    background-color: @hex_000000;
+}
+QLabel[h5Component="aboutVideoTitle"] {
+    color: @accent;
+    border: none;
+    background: transparent;
+}
+QLabel[h5Component="aboutVideoDesc"] {
+    color: @text_muted;
+    border: none;
+    background: transparent;
+}
+QPushButton[h5Component="aboutWatchVideoButton"] {
+    font: 600 9.5pt "Segoe UI";
+    border: 1px solid @hex_e05252;
+    border-radius: 0px;
+    padding: 6px 14px;
+    color: @hex_ffffff;
+    background-color: @hex_c0392b;
+}
+QPushButton[h5Component="aboutWatchVideoButton"]:hover {
+    background-color: @hex_e74c3c;
+    border-color: @hex_ff6b6b;
+}
+QPushButton[h5Component="aboutWatchVideoButton"]:pressed {
+    background-color: @hex_962d22;
+}
+QFrame[h5Component="aboutGuidesCard"] {
+    background-color: @surface_input;
+    border: 1px solid @border;
+    border-radius: 0px;
+}
+QLabel[h5Component="aboutGuidesHeader"] {
+    color: @warning;
+    border: none;
+    background: transparent;
+}
+QPushButton[h5Component="aboutGuideButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 1px solid @border;
+    border-radius: 0px;
+    padding: 6px 12px;
+    color: @text;
+    background-color: @surface_raised;
+}
+QPushButton[h5Component="aboutGuideButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+    border-color: @accent;
+}
+QPushButton[h5Component="aboutGuideButton"]:pressed {
+    background-color: @accent_pressed;
+    color: @selection_text;
+}
+QLabel[h5Component="aboutSpecialThanks"] {
+    color: @text_muted;
+    border: none;
+    background: transparent;
+    padding: 2px;
+}
+QFrame[h5Component="aboutBottomBar"] {
+    background: transparent;
+    border: none;
+}
+QPushButton[h5Component="aboutDontShowButton"] {
+    font: 500 8.5pt "Segoe UI";
+    border: 1px solid @border;
+    border-radius: 0px;
+    padding: 4px 8px;
+    color: @text_muted;
+    background-color: @surface;
+}
+QPushButton[h5Component="aboutDontShowButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+    border-color: @border_strong;
+}
+QPushButton[h5Component="aboutDontShowButton"]:checked {
+    background-color: @error;
+    color: @selection_text;
+}
+QPushButton[h5Component="aboutActionButton"] {
+    font: 580 9pt "Segoe UI";
+    border: 1px solid @border;
+    border-radius: 0px;
+    padding: 4px 14px;
+    color: @text;
+    background-color: @surface;
+}
+QPushButton[h5Component="aboutActionButton"]:hover {
+    background-color: @selection;
+    color: @selection_text;
+}
+QPushButton[h5Component="aboutActionButton"]:pressed {
+    background-color: @accent_pressed;
+    color: @selection_text;
+}
+

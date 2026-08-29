@@ -51,6 +51,47 @@ def test_combobox_alternate_background_present_in_compiled_qss():
     assert "qproperty-alternatingRowColors: true;" in qss
 
 
+def test_combobox_item_has_explicit_base_background_in_all_themes():
+    for selected in theme.THEMES.values():
+        qss = compile_stylesheet(selected)
+        assert f"background-color: {selected.surface_raised}" in qss
+
+
+def test_combobox_polish_installs_styled_item_delegate():
+    from PySide6.QtWidgets import QApplication, QComboBox, QStyledItemDelegate
+    from gui.styles import manager
+
+    app = QApplication.instance() or QApplication([])
+    manager.apply(app, theme.BRIGHT_THEME)
+    combo = QComboBox()
+    combo.ensurePolished()
+    assert type(combo.itemDelegate()) is QStyledItemDelegate
+    assert combo.itemDelegate().metaObject().className() == "QStyledItemDelegate"
+
+
+def test_about_dialog_theming():
+    from PySide6.QtWidgets import QApplication, QFrame
+    from gui.forms.about.main import AboutDialog
+    from gui.styles import manager
+
+    app = QApplication.instance() or QApplication([])
+    for target_level in (theme.LEVEL_STANDARD, theme.LEVEL_BRIGHT, theme.LEVEL_VINTAGE):
+        theme.set_level(target_level)
+        try:
+            active_theme = theme.get_theme()
+            manager.apply(app, active_theme)
+            dlg = AboutDialog("6.0.0")
+            assert dlg.property("h5Component") == "aboutDialog"
+            assert dlg.ui.frame.frameShape() == QFrame.Shape.NoFrame
+            assert dlg.ui.frame_3.frameShape() == QFrame.Shape.NoFrame
+            assert dlg.ui.label.pixmap() is not None
+            assert not dlg.ui.label.pixmap().isNull()
+            assert active_theme.accent in dlg.ui.special_thanks_label.text()
+            dlg.close()
+        finally:
+            theme.set_level(theme.LEVEL_STANDARD)
+
+
 def test_legacy_dark_level_falls_back_to_standard():
     theme.set_level(1)
     try:

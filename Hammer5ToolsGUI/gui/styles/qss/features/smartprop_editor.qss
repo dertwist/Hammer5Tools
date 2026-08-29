@@ -651,7 +651,7 @@ QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child::indicato
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#show_child:hover,
 QFrame[h5Component="smartpropPropertyFrame"] > QCheckBox#show_child:hover,
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QCheckBox#show_child:hover {
-    color: white;
+    color: @selection_text;
     background-color: @selection;
 }
 
@@ -677,7 +677,7 @@ QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor::indica
     height: 14px;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QCheckBox#visible_in_editor:hover {
-    color: white;
+    color: @selection_text;
     background-color: @selection;
 }
 
@@ -699,7 +699,7 @@ QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name:focus {
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_name::selection {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class,
@@ -726,7 +726,7 @@ QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#variable_class::selection
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class::selection,
 QFrame[h5Component="smartpropGroupHeaderFrame"] QLineEdit#property_class::selection {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf {
@@ -745,7 +745,7 @@ QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf {
 }
 QFrame[h5Component="smartpropPropertyFrame"] QToolButton#gf:hover {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4 {
@@ -764,7 +764,7 @@ QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4:focus {
 }
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#property_class_4::selection {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class,
@@ -788,7 +788,7 @@ QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class:hover,
 QFrame[h5Component="smartpropPropertyFrame"] > QPushButton#change_class:hover,
 QFrame[h5Component="smartpropPropertyFrame"] > QToolButton#change_class:hover {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 QFrame[h5Component="smartpropHeaderFrame"] > QPushButton#change_class:focus,
 QFrame[h5Component="smartpropHeaderFrame"] > QToolButton#change_class:focus,
@@ -824,7 +824,7 @@ QFrame[h5Component="smartpropHeaderFrame"] > QLineEdit#id_display::selection,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display_2::selection,
 QFrame[h5Component="smartpropPropertyFrame"] QLineEdit#element_id_display::selection {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button,
@@ -848,7 +848,7 @@ QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button {
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button:hover,
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:hover {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#add_button:pressed,
 QFrame[h5Component="smartpropGroupHeaderFrame"] > QPushButton#paste_button:pressed {
@@ -877,7 +877,7 @@ QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button {
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#delete_button:hover,
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:hover {
     background-color: @selection;
-    color: white;
+    color: @selection_text;
 }
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#delete_button:pressed,
 QFrame[h5Component="smartpropPropertyFrame"] QPushButton#copy_button:pressed {

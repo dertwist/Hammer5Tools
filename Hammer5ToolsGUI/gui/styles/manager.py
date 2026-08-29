@@ -70,7 +70,11 @@ class _ComboBoxStyle(QProxyStyle):
 
     def polish(self, target):
         if isinstance(target, QComboBox):
-            if type(target.itemDelegate()) is QAbstractItemDelegate:
+            delegate = target.itemDelegate()
+            if delegate is not None and (
+                type(delegate) is QAbstractItemDelegate
+                or delegate.metaObject().className() == "QComboBoxDelegate"
+            ):
                 target.setItemDelegate(QStyledItemDelegate(target))
             if target.maxVisibleItems() == 10:  # Qt's default, i.e. unset
                 target.setMaxVisibleItems(20)

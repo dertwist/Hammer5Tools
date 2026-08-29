@@ -1,9 +1,27 @@
+from gui import resources_rc
 from gui.forms.about.ui_main import Ui_documentation_dialog
 from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QUrl, QEvent, Qt
+from PySide6.QtGui import QDesktopServices, QImage, QColor, QPixmap
 from gui.common import apply_title_bar_theme, discord_feedback_channel
 from gui.settings.common import get_settings_bool, set_settings_bool
+from gui.styles import theme
+
+
+def _get_themed_header_pixmap(text_color_hex: str) -> QPixmap:
+    img = QImage(":/images/help/header.png")
+    if not img.isNull():
+        color = QColor(text_color_hex)
+        for y in range(img.height()):
+            for x in range(330, img.width()):
+                c = img.pixelColor(x, y)
+                if c.alpha() > 0:
+                    img.setPixelColor(x, y, QColor(color.red(), color.green(), color.blue(), c.alpha()))
+        pm = QPixmap.fromImage(img)
+    else:
+        pm = QPixmap(":/images/help/header.png")
+    return pm.scaled(520, 130, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
 
 class AboutDialog(QDialog):
     def __init__(self, version, parent=None):
@@ -11,7 +29,22 @@ class AboutDialog(QDialog):
         self.ui = Ui_documentation_dialog()
         self.ui.setupUi(self)
         self.ui.version.setText(f"Version: {version}")
+        self._refresh_theme_elements()
         apply_title_bar_theme(self)
+
+    def _refresh_theme_elements(self):
+        active_theme = theme.get_theme()
+        self.ui.label.setPixmap(_get_themed_header_pixmap(active_theme.text))
+        self.ui.special_thanks_label.setText(
+            f'Special thanks: <a href="https://github.com/LaplaceTor" style="color: {active_theme.accent}; text-decoration: none;">LaplaceTor</a>, '
+            f'<a href="https://github.com/Andrew900460" style="color: {active_theme.accent}; text-decoration: none;">Andrew900460</a>'
+        )
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.StyleChange):
+            self._refresh_theme_elements()
+            apply_title_bar_theme(self)
 
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)

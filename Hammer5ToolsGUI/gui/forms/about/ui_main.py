@@ -29,7 +29,7 @@ class Ui_documentation_dialog(object):
         documentation_dialog.setSizePolicy(sizePolicy)
         documentation_dialog.setMinimumSize(QSize(680, 580))
         documentation_dialog.setMaximumSize(QSize(680, 580))
-        documentation_dialog.setStyleSheet(u"background-color: #2e2e2e; color: #e5e5e5;")
+        documentation_dialog.setProperty("h5Component", "aboutDialog")
         documentation_dialog.setSizeGripEnabled(False)
         documentation_dialog.setModal(False)
 
@@ -38,13 +38,14 @@ class Ui_documentation_dialog(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(16, 12, 16, 12)
 
-        # Header Frame (Hammer 5 Tools Header Logo with sharp borders)
+        # Header Frame (Hammer 5 Tools Header Logo)
         self.frame = QFrame(documentation_dialog)
         self.frame.setObjectName(u"frame")
+        self.frame.setProperty("h5Component", "aboutHeaderFrame")
         self.frame.setMinimumSize(QSize(0, 160))
         self.frame.setMaximumSize(QSize(16777215, 160))
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame.setFrameShadow(QFrame.Shadow.Plain)
         self.verticalLayout_3 = QVBoxLayout(self.frame)
         self.verticalLayout_3.setSpacing(6)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
@@ -53,46 +54,46 @@ class Ui_documentation_dialog(object):
         # Original Logo Label
         self.label = QLabel(self.frame)
         self.label.setObjectName(u"label")
-        self.label.setStyleSheet(u"image: url(:/images/help/header.png);")
+        self.label.setProperty("h5Component", "aboutLogoLabel")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.verticalLayout_3.addWidget(self.label)
 
         # Version Label
         self.version = QLabel(self.frame)
         self.version.setObjectName(u"version")
+        self.version.setProperty("h5Component", "aboutVersionLabel")
         self.version.setMaximumSize(QSize(16777215, 20))
         font = QFont()
         font.setFamilies([u"Segoe UI Black", u"Segoe UI"])
         font.setPointSize(12)
         font.setBold(True)
         self.version.setFont(font)
-        self.version.setStyleSheet(u"color: #a5a5a5;")
         self.version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.verticalLayout_3.addWidget(self.version)
 
         self.verticalLayout.addWidget(self.frame)
 
-        # Main Content Frame (Tutorials & YouTube Video Widget with sharp borders)
+        # Main Content Frame
         self.content_frame = QFrame(documentation_dialog)
         self.content_frame.setObjectName(u"content_frame")
-        self.content_frame.setStyleSheet(u"background-color: #363636; border: 1px solid #434343; border-radius: 0px;")
+        self.content_frame.setProperty("h5Component", "aboutContentFrame")
         self.content_layout = QVBoxLayout(self.content_frame)
         self.content_layout.setSpacing(10)
         self.content_layout.setContentsMargins(12, 12, 12, 12)
 
-        # Video Card with YouTube Preview (sharp borders)
+        # Video Card with YouTube Preview
         self.video_card = QFrame(self.content_frame)
         self.video_card.setObjectName(u"video_card")
-        self.video_card.setStyleSheet(u"background-color: #30343b; border: 1px solid #434a57; border-radius: 0px;")
+        self.video_card.setProperty("h5Component", "aboutVideoCard")
         self.video_layout = QHBoxLayout(self.video_card)
         self.video_layout.setSpacing(12)
         self.video_layout.setContentsMargins(10, 10, 10, 10)
 
-        # YouTube Thumbnail Preview Label (sharp borders)
+        # YouTube Thumbnail Preview Label
         self.yt_preview_label = QLabel(self.video_card)
         self.yt_preview_label.setObjectName(u"yt_preview_label")
+        self.yt_preview_label.setProperty("h5Component", "aboutYtPreview")
         self.yt_preview_label.setFixedSize(QSize(264, 148))
-        self.yt_preview_label.setStyleSheet(u"border: 1px solid #4d535f; border-radius: 0px; background-color: #000000;")
         self.yt_preview_label.setScaledContents(True)
         self.yt_preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -109,46 +110,30 @@ class Ui_documentation_dialog(object):
         
         self.video_title = QLabel(self.video_card)
         self.video_title.setObjectName(u"video_title")
+        self.video_title.setProperty("h5Component", "aboutVideoTitle")
         font_vtitle = QFont()
         font_vtitle.setFamilies([u"Segoe UI"])
         font_vtitle.setPointSize(10.5)
         font_vtitle.setBold(True)
         self.video_title.setFont(font_vtitle)
-        self.video_title.setStyleSheet(u"color: #61AFEF; border: none;")
         self.video_info_layout.addWidget(self.video_title)
 
         self.video_desc = QLabel(self.video_card)
         self.video_desc.setObjectName(u"video_desc")
+        self.video_desc.setProperty("h5Component", "aboutVideoDesc")
         font_vdesc = QFont()
         font_vdesc.setFamilies([u"Segoe UI"])
         font_vdesc.setPointSize(8.5)
         self.video_desc.setFont(font_vdesc)
         self.video_desc.setWordWrap(True)
-        self.video_desc.setStyleSheet(u"color: #b2b8c4; border: none;")
         self.video_info_layout.addWidget(self.video_desc)
 
         self.video_info_layout.addStretch()
 
         self.watch_video_button = QPushButton(self.video_card)
         self.watch_video_button.setObjectName(u"watch_video_button")
+        self.watch_video_button.setProperty("h5Component", "aboutWatchVideoButton")
         self.watch_video_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.watch_video_button.setStyleSheet(u"""
-            QPushButton {
-                font: 600 9.5pt "Segoe UI";
-                border: 1px solid #E05252;
-                border-radius: 0px;
-                padding: 6px 14px;
-                color: #FFFFFF;
-                background-color: #C0392B;
-            }
-            QPushButton:hover {
-                background-color: #E74C3C;
-                border-color: #FF6B6B;
-            }
-            QPushButton:pressed {
-                background-color: #962D22;
-            }
-        """)
         icon_play = QIcon()
         icon_play.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.watch_video_button.setIcon(icon_play)
@@ -158,69 +143,51 @@ class Ui_documentation_dialog(object):
         self.video_layout.addLayout(self.video_info_layout)
         self.content_layout.addWidget(self.video_card)
 
-        # Guides Section (sharp borders)
+        # Guides Section
         self.guides_card = QFrame(self.content_frame)
         self.guides_card.setObjectName(u"guides_card")
-        self.guides_card.setStyleSheet(u"background-color: #303030; border: 1px solid #434343; border-radius: 0px;")
+        self.guides_card.setProperty("h5Component", "aboutGuidesCard")
         self.guides_layout = QVBoxLayout(self.guides_card)
         self.guides_layout.setSpacing(8)
         self.guides_layout.setContentsMargins(10, 10, 10, 10)
 
         self.guides_header = QLabel(self.guides_card)
         self.guides_header.setObjectName(u"guides_header")
+        self.guides_header.setProperty("h5Component", "aboutGuidesHeader")
         font_ghead = QFont()
         font_ghead.setFamilies([u"Segoe UI"])
         font_ghead.setPointSize(10.5)
         font_ghead.setBold(True)
         self.guides_header.setFont(font_ghead)
-        self.guides_header.setStyleSheet(u"color: #E5C07B; border: none;")
         self.guides_layout.addWidget(self.guides_header)
 
         # Buttons layout for documentation guides
         self.guides_btn_layout = QHBoxLayout()
         self.guides_btn_layout.setSpacing(8)
 
-        self.btn_style = u"""
-            QPushButton {
-                font: 580 9pt "Segoe UI";
-                border: 1px solid #5c636f;
-                border-radius: 0px;
-                padding: 6px 12px;
-                color: #e5e5e5;
-                background-color: #393d44;
-            }
-            QPushButton:hover {
-                background-color: #4d535f;
-                color: #FFFFFF;
-                border-color: #61AFEF;
-            }
-            QPushButton:pressed {
-                background-color: #30343b;
-            }
-        """
+        icon_doc = QIcon()
+        icon_doc.addFile(u":/icons/developer_guide_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
 
         self.open_documentation_button = QPushButton(self.guides_card)
         self.open_documentation_button.setObjectName(u"open_documentation_button")
+        self.open_documentation_button.setProperty("h5Component", "aboutGuideButton")
         self.open_documentation_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.open_documentation_button.setStyleSheet(self.btn_style)
-        icon_doc = QIcon()
-        icon_doc.addFile(u":/icons/developer_guide_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_documentation_button.setIcon(icon_doc)
         self.open_documentation_button.setIconSize(QSize(18, 18))
         self.guides_btn_layout.addWidget(self.open_documentation_button)
 
         self.open_radio_sound_guide_button = QPushButton(self.guides_card)
         self.open_radio_sound_guide_button.setObjectName(u"open_radio_sound_guide_button")
+        self.open_radio_sound_guide_button.setProperty("h5Component", "aboutGuideButton")
         self.open_radio_sound_guide_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.open_radio_sound_guide_button.setStyleSheet(self.btn_style)
         self.open_radio_sound_guide_button.setIcon(icon_doc)
         self.open_radio_sound_guide_button.setIconSize(QSize(18, 18))
         self.guides_btn_layout.addWidget(self.open_radio_sound_guide_button)
 
         self.open_smart_props_guide_button = QPushButton(self.guides_card)
         self.open_smart_props_guide_button.setObjectName(u"open_smart_props_guide_button")
+        self.open_smart_props_guide_button.setProperty("h5Component", "aboutGuideButton")
         self.open_smart_props_guide_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.open_smart_props_guide_button.setStyleSheet(self.btn_style)
         self.open_smart_props_guide_button.setIcon(icon_doc)
         self.open_smart_props_guide_button.setIconSize(QSize(18, 18))
         self.guides_btn_layout.addWidget(self.open_smart_props_guide_button)
@@ -231,13 +198,13 @@ class Ui_documentation_dialog(object):
         # Special Thanks Inline Mention
         self.special_thanks_label = QLabel(self.content_frame)
         self.special_thanks_label.setObjectName(u"special_thanks_label")
+        self.special_thanks_label.setProperty("h5Component", "aboutSpecialThanks")
         font_thanks = QFont()
         font_thanks.setFamilies([u"Segoe UI"])
         font_thanks.setPointSize(9)
         self.special_thanks_label.setFont(font_thanks)
         self.special_thanks_label.setTextFormat(Qt.TextFormat.RichText)
         self.special_thanks_label.setOpenExternalLinks(True)
-        self.special_thanks_label.setStyleSheet(u"color: #a5a5a5; border: none; padding: 2px;")
         self.special_thanks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.content_layout.addWidget(self.special_thanks_label)
 
@@ -246,61 +213,27 @@ class Ui_documentation_dialog(object):
         # Bottom Frame
         self.frame_3 = QFrame(documentation_dialog)
         self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setProperty("h5Component", "aboutBottomBar")
         self.frame_3.setMaximumSize(QSize(16777215, 44))
-        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_3.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_3.setFrameShadow(QFrame.Shadow.Plain)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_3.setSpacing(8)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 4, 0, 0)
 
-        # Small button to toggle don't show on startup (sharp borders)
+        # Small button to toggle don't show on startup
         self.dont_show_button = QPushButton(self.frame_3)
         self.dont_show_button.setObjectName(u"dont_show_button")
+        self.dont_show_button.setProperty("h5Component", "aboutDontShowButton")
         self.dont_show_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.dont_show_button.setStyleSheet(u"""
-            QPushButton {
-                font: 500 8.5pt "Segoe UI";
-                border: 1px solid #535353;
-                border-radius: 0px;
-                padding: 4px 8px;
-                color: #b6b6b6;
-                background-color: #363636;
-            }
-            QPushButton:hover {
-                background-color: #434343;
-                color: #FFFFFF;
-                border-color: #727272;
-            }
-            QPushButton:checked {
-                background-color: #3A2323;
-                border-color: #A54242;
-                color: #FF9999;
-            }
-        """)
         self.horizontalLayout_3.addWidget(self.dont_show_button)
         self.horizontalLayout_3.addStretch()
 
         self.request_a_new_feature_button = QPushButton(self.frame_3)
         self.request_a_new_feature_button.setObjectName(u"request_a_new_feature_button")
+        self.request_a_new_feature_button.setProperty("h5Component", "aboutActionButton")
         self.request_a_new_feature_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.request_a_new_feature_button.setStyleSheet(u"""
-            QPushButton {
-                font: 580 9pt "Segoe UI";
-                border: 1px solid #5e5e5e;
-                border-radius: 0px;
-                padding: 4px 12px;
-                color: #e5e5e5;
-                background-color: #363636;
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                color: white;
-            }
-            QPushButton:pressed {
-                background-color: #2e2e2e;
-            }
-        """)
         icon1 = QIcon()
         icon1.addFile(u":/icons/emoji_objects_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.request_a_new_feature_button.setIcon(icon1)
@@ -309,24 +242,8 @@ class Ui_documentation_dialog(object):
 
         self.close_button = QPushButton(self.frame_3)
         self.close_button.setObjectName(u"close_button")
+        self.close_button.setProperty("h5Component", "aboutActionButton")
         self.close_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.close_button.setStyleSheet(u"""
-            QPushButton {
-                font: 580 9pt "Segoe UI";
-                border: 1px solid #5e5e5e;
-                border-radius: 0px;
-                padding: 4px 14px;
-                color: #e5e5e5;
-                background-color: #363636;
-            }
-            QPushButton:hover {
-                background-color: #515965;
-                color: white;
-            }
-            QPushButton:pressed {
-                background-color: #2e2e2e;
-            }
-        """)
         self.horizontalLayout_3.addWidget(self.close_button)
 
         self.verticalLayout.addWidget(self.frame_3)
