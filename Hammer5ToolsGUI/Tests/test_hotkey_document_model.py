@@ -57,12 +57,23 @@ def test_serialize_matches_valve_layout():
     }) == SAMPLE
 
 
-def test_serialized_document_round_trips_through_kv3(tmp_path):
+def test_every_editor_default_round_trips_through_kv3(tmp_path):
     import keyvalues3 as kv3
     from gui.editors.hotkey_editor.document_model import serialize
-    from gui.editors.hotkey_editor.objects import hammer_default, hammer_macros
+    from gui.editors.hotkey_editor.objects import EDITOR_DEFAULTS, EDITOR_MACROS, EDITOR_STEMS
 
-    value = {**hammer_macros, **hammer_default}
-    path = tmp_path / "round_trip.keybindings"
-    path.write_text(serialize(value), encoding="utf-8", newline="\n")
-    assert kv3.read(str(path)).value == value
+    for stem in EDITOR_STEMS.values():
+        value = {**EDITOR_MACROS.get(stem, {}), **EDITOR_DEFAULTS[stem]}
+        path = tmp_path / f"{stem}.keybindings"
+        path.write_text(serialize(value), encoding="utf-8", newline="\n")
+        assert kv3.read(str(path)).value == value, stem
+
+
+def test_every_default_binding_is_offered_by_its_catalog():
+    from gui.editors.hotkey_editor.objects import EDITOR_CATALOGS, EDITOR_DEFAULTS, EDITOR_STEMS
+
+    for stem in EDITOR_STEMS.values():
+        catalog = EDITOR_CATALOGS[stem]
+        for binding in EDITOR_DEFAULTS[stem]["m_Bindings"]:
+            context, command = binding["m_Context"], binding["m_Command"]
+            assert command in catalog.get(context, []), f"{stem}: {context}/{command}"

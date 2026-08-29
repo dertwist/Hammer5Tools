@@ -233,11 +233,6 @@ QComboBox QAbstractItemView::item:selected {
     outline: none; /* Remove outline */
 }</string>
              </property>
-             <item>
-              <property name="text">
-               <string>Hammer</string>
-              </property>
-             </item>
             </widget>
            </item>
            <item>

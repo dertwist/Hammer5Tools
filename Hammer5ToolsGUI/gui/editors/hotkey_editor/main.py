@@ -5,7 +5,8 @@ from gui.editors.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushButton, QMessageBox
 from PySide6.QtCore import Signal
 from gui.editors.hotkey_editor.dialog import KeyDialog
-from gui.editors.hotkey_editor.objects import hammer_commands, hammer_default, hammer_macros
+from gui.editors.hotkey_editor.objects import (
+    EDITOR_CATALOGS, EDITOR_DEFAULTS, EDITOR_MACROS, EDITOR_STEMS)
 from gui.settings.common import get_addon_name, get_cs2_path
 from gui.other.addon_functions import launch_addon, kill_addon
 from gui.widgets.explorer.main import Explorer
@@ -67,7 +68,8 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.ui.horizontalLayout_4.addWidget(self.FilterInputInstanceButton)
 
 
-        self.get_path()
+        self.ui.editor_combobox.clear()
+        self.ui.editor_combobox.addItems(EDITOR_STEMS)
         self.editor_switch()
         self.ui.editor_combobox.currentTextChanged.connect(self.editor_switch)
 
@@ -111,15 +113,19 @@ class HotkeyEditorMainWindow(QMainWindow):
         launch_addon()
     def get_path(self):
         editor = self.ui.editor_combobox.currentText()
-        editor = editor.lower()
-        self.editor = editor.replace(' ', '_')
+        self.editor = EDITOR_STEMS.get(editor, editor.lower().replace(' ', '_'))
 
-        self.hotkeys_path = os.path.join(Hotkeys_Path, editor)
+        self.hotkeys_path = os.path.join(Hotkeys_Path, self.editor)
     def editor_switch(self):
+        self.get_path()
         try:
             self.ui.explorer_layout.itemAt(0).widget().deleteLater()
         except:
             pass
+        # Presets belong to the editor they were written for, so start clean.
+        self.ui.keybindings_tree.clear()
+        self.document = HotkeyDocument()
+        self.opened_file = ''
         if os.path.exists(self.hotkeys_path):
             pass
         else:
@@ -166,7 +172,7 @@ class HotkeyEditorMainWindow(QMainWindow):
                 context_item.addChild(new_item)
                 self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
-        for context, commands in hammer_commands.items():
+        for context, commands in EDITOR_CATALOGS.get(self.editor, {}).items():
             context_item = add_context_if_not_exist(context)
 
             # Collect existing commands once per context
@@ -207,9 +213,7 @@ class HotkeyEditorMainWindow(QMainWindow):
             print('Preset saved')
 
     def write_preset(self, path, value):
-        output = {}
-        if self.editor == 'hammer':
-            output.update(hammer_macros)
+        output = dict(EDITOR_MACROS.get(self.editor, {}))
         output.update(value)
         output.pop('editor_info', None)
         with open(path, 'w', encoding='utf-8', newline='\n') as file:
@@ -220,7 +224,7 @@ class HotkeyEditorMainWindow(QMainWindow):
     def new_preset(self):
         name = f'{self.editor}_new_keybindings_{datetime.datetime.now().strftime("%m_%d_%Y")}'
         path = os.path.join(self.hotkeys_path, f'{name}.keybindings')
-        self.write_preset(path, hammer_default)
+        self.write_preset(path, EDITOR_DEFAULTS.get(self.editor, {'m_Bindings': []}))
 
     def filter_input(self, filter_text, parent_item):
         # Reset the root visibility and start the filtering process
