@@ -73,6 +73,29 @@ public sealed class VmapDocument
     /// <summary>Replaces the world's child nodes with an empty array (skybox template).</summary>
     public void ClearWorldChildren() => World["children"] = new ElementArray();
 
+    /// <summary>
+    /// Drops the root state that points back at the world's nodes: selection sets, the
+    /// visibility manager's node list and its per-node flags, baked per-node vertex
+    /// lighting, and referenced mesh snapshots. A prefab built from a copy of another map
+    /// keeps all of it pointing at nodes that <see cref="ClearWorldChildren"/> removed, and
+    /// Hammer crashes when it opens a map holding those dangling references.
+    /// </summary>
+    public void ClearEditorState()
+    {
+        var root = Root;
+        if (root.ContainsKey("rootSelectionSet") && root["rootSelectionSet"] is Element selectionSet)
+            selectionSet["children"] = new ElementArray();
+        if (root.ContainsKey("visbility") && root["visbility"] is Element visibility)
+        {
+            visibility["nodes"] = new ElementArray();
+            visibility["hiddenFlags"] = new IntArray();
+        }
+        if (root.ContainsKey("nodeInstanceData"))
+            root["nodeInstanceData"] = new ElementArray();
+        if (root.ContainsKey("m_ReferencedMeshSnapshots"))
+            root["m_ReferencedMeshSnapshots"] = new ElementArray();
+    }
+
     // Datamodel.Datamodel's static constructor registers its built-in codecs via
     // Activator.CreateInstance(Type), and Binary.Decode looks up the KeyValues2 source
     // generator's per-project ElementFactory the same way — both via a reflection scan

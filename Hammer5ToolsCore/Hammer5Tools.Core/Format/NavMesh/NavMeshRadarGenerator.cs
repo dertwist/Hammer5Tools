@@ -48,6 +48,7 @@ public static class NavMeshRadarGenerator
     private const float BakedHalfSize = 12f;
     private const float SurfaceLift = 1f;
     private const float WeldTolerance = 1f;
+    private const int DampingPasses = 32;
 
     private sealed record RadarGeometry(
         int SourceCount,
@@ -307,26 +308,66 @@ public static class NavMeshRadarGenerator
             }
         }
 
-        var shiftedVertices = new Dictionary<VertexKey, Vector3>();
+        var shifts = new Dictionary<VertexKey, Vector2>();
         foreach (var polygon in polygons)
         {
             foreach (var point in polygon)
             {
                 var key = VertexKey.From(point);
-                if (shiftedVertices.ContainsKey(key))
+                if (shifts.ContainsKey(key))
                     continue;
-                var shift = boundaryNormals.TryGetValue(key, out var normals)
+                shifts[key] = boundaryNormals.TryGetValue(key, out var normals)
                     ? MiterShift(normals, offset)
                     : Vector2.Zero;
-                shiftedVertices[key] = new Vector3(point.X + shift.X, point.Y + shift.Y, point.Z);
             }
         }
+
+        DampShifts(polygons, shifts);
 
         return
         [
             .. polygons.Select(polygon =>
-                (IReadOnlyList<Vector3>)[.. polygon.Select(point => shiftedVertices[VertexKey.From(point)])]),
+                (IReadOnlyList<Vector3>)[.. polygon.Select(point => Shift(point, shifts))]),
         ];
+    }
+
+    private static Vector3 Shift(Vector3 point, Dictionary<VertexKey, Vector2> shifts)
+    {
+        var shift = shifts[VertexKey.From(point)];
+        return new Vector3(point.X + shift.X, point.Y + shift.Y, point.Z);
+    }
+
+    /// <summary>
+    /// Halves the shifts around any face the offset would turn inside out. Over half of the
+    /// NAV edges are shared with no second area, so the smallest areas have every vertex
+    /// pushed outward at once; a face narrower than the offset then flips through itself and
+    /// vacates its own footprint, which is what leaves holes in the radar.
+    /// </summary>
+    private static void DampShifts(
+        IReadOnlyList<IReadOnlyList<Vector3>> polygons,
+        Dictionary<VertexKey, Vector2> shifts)
+    {
+        for (var pass = 0; pass < DampingPasses; pass++)
+        {
+            var damped = false;
+            foreach (var polygon in polygons)
+            {
+                // NormalizePolygon has already wound every face counter-clockwise, so an
+                // outward offset may only ever grow the area.
+                var original = SignedArea(polygon);
+                if (original <= 0f)
+                    continue;
+                if (SignedArea([.. polygon.Select(point => Shift(point, shifts))]) >= original)
+                    continue;
+
+                foreach (var point in polygon)
+                    shifts[VertexKey.From(point)] *= 0.5f;
+                damped = true;
+            }
+
+            if (!damped)
+                return;
+        }
     }
 
     private static void AddBoundaryNormal(
@@ -459,6 +500,7 @@ public static class NavMeshRadarGenerator
     {
         var generated = VmapDocument.LoadInMemory(mainVmapPath);
         generated.ClearWorldChildren();
+        generated.ClearEditorState();
         generated.Root["isprefab"] = true;
         generated.Model.PrefixAttributes["map_asset_references"] = new StringArray { materialPath };
 
@@ -592,8 +634,8 @@ public static class NavMeshRadarGenerator
         prefab["tintColor"] = new Color(255, 255, 255, 255);
         prefab["visexclude"] = false;
         prefab["targetMapPath"] = targetMapPath;
-        prefab["targetName"] = "navmesh_radar";
-        prefab["fixupEntityNames"] = false;
+        prefab["targetName"] = "";
+        prefab["fixupEntityNames"] = true;
         prefab["useTargetNameAsPrefix"] = false;
         prefab["loadIfNested"] = true;
         prefab["prefabRuntimeEntity"] = false;

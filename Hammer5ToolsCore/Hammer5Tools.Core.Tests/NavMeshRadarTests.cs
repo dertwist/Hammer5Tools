@@ -290,4 +290,43 @@ public sealed class NavMeshRadarTests
         await Assert.That(quads[1][0]).IsEqualTo(new Vector3(12, -12, 11));
         await Assert.That(quads[1][2]).IsEqualTo(new Vector3(36, 12, 11));
     }
+
+    [Test]
+    public async Task OffsetNeverTurnsAnAreaSmallerThanTheOffsetInsideOut()
+    {
+        // An isolated 8-unit triangle: every edge is an exposed boundary, so a 16-unit
+        // offset would flip it through itself and vacate its own footprint.
+        IReadOnlyList<IReadOnlyList<Vector3>> areas =
+        [
+            new Vector3[] { new(0, 0, 0), new(8, 0, 0), new(4, 7, 0) },
+        ];
+
+        var expanded = NavMeshRadarGenerator.OffsetWeldedPolygons(areas, 16f);
+
+        await Assert.That(SignedArea(expanded[0])).IsGreaterThanOrEqualTo(SignedArea(areas[0]));
+    }
+
+    [Test]
+    public async Task OffsetStillGrowsAreasComfortablyLargerThanTheOffset()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> areas =
+        [
+            new Vector3[] { new(0, 0, 0), new(400, 0, 0), new(400, 400, 0), new(0, 400, 0) },
+        ];
+
+        var expanded = NavMeshRadarGenerator.OffsetWeldedPolygons(areas, 16f);
+
+        await Assert.That(SignedArea(expanded[0])).IsEqualTo(432f * 432f).Within(0.1f);
+    }
+
+    private static float SignedArea(IReadOnlyList<Vector3> polygon)
+    {
+        var area = 0f;
+        for (var index = 0; index < polygon.Count; index++)
+        {
+            var next = polygon[(index + 1) % polygon.Count];
+            area += (polygon[index].X * next.Y) - (next.X * polygon[index].Y);
+        }
+        return area / 2f;
+    }
 }
