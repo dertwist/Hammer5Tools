@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-import json
 from typing import Optional
 
 
@@ -407,15 +406,22 @@ class CoreBridge:
 
         scene = self._smartprop_native().read_valve_map_scene(path)
 
-        def floats(value: str):
+        def floats(value: str | memoryview):
+            if isinstance(value, memoryview):
+                return np.frombuffer(value, dtype="<f4")
             return np.frombuffer(base64.b64decode(value), dtype=np.float32)
+
+        def indices(value: str | memoryview):
+            if isinstance(value, memoryview):
+                return np.frombuffer(value, dtype="<u4")
+            return np.frombuffer(base64.b64decode(value), dtype=np.uint32)
 
         return ValveMapSceneDocument(
             scene["path"],
             tuple(ValveMapSceneMesh(
                 mesh["name"], floats(mesh["positionsBytes"]), floats(mesh["normalsBytes"]),
                 floats(mesh["uvsBytes"]),
-                np.frombuffer(base64.b64decode(mesh["indicesBytes"]), dtype=np.uint32),
+                indices(mesh["indicesBytes"]),
                 tuple(ValveMapSceneSubMesh(item["indexOffset"], item["indexCount"], item["material"])
                       for item in mesh["submeshes"]),
             ) for mesh in scene["meshes"]),

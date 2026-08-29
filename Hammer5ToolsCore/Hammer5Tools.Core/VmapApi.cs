@@ -12,6 +12,22 @@ namespace Hammer5Tools.Core;
 /// <summary>NativeAOT ABI for the VMAP read/rewrite/write contract.</summary>
 internal static unsafe class VmapApi
 {
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Reads an uncompiled VMAP into a compact binary scene projection.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_read_scene_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadValveMapSceneBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => ReadValveMapSceneBinaryPayload(request, requestLength));
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Rewrites VMAP asset references from a compact binary request.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_rewrite_references_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int RewriteVmapReferencesBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => RewriteVmapReferencesBinaryPayload(request, requestLength));
+
     // Datamodel.Datamodel's static constructor registers its built-in codecs via
     // Activator.CreateInstance(Type), and Binary.Decode looks up the KeyValues2 source
     // generator's per-project ElementFactory the same way — both via a reflection scan
@@ -313,5 +329,55 @@ internal static unsafe class VmapApi
             writer.WriteEndObject();
         }
         writer.WriteEndArray();
+    }
+
+    private static byte[] ReadValveMapSceneBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.VmapSceneRequest);
+        var path = reader.ReadString();
+        reader.EnsureFinished();
+        var scene = new ValveMapSceneReader().Read(path);
+        return NativeBinary.Create(NativeBinaryMessage.VmapSceneResult,
+            writer => ValveMapSceneBinarySerializer.Write(writer, scene));
+    }
+
+    private static byte[] RewriteVmapReferencesBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.VmapRewriteRequest);
+        var path = reader.ReadString();
+        var count = reader.ReadInt32();
+        if (count is < 0 or > 1_000_000)
+        {
+            throw new InvalidDataException("The binary VMAP rename count is invalid.");
+        }
+
+        var renames = new Dictionary<string, string>(count, StringComparer.Ordinal);
+        for (var index = 0; index < count; index++)
+        {
+            renames[reader.ReadString()] = reader.ReadString();
+        }
+        reader.EnsureFinished();
+
+        var result = VmapReferenceRewriter.Rewrite(path, renames);
+        return NativeBinary.Create(NativeBinaryMessage.VmapRewriteResult, writer =>
+        {
+            writer.WriteBoolean(result.IsSuccess);
+            if (result.IsSuccess)
+            {
+                writer.WriteBoolean(result.Value);
+            }
+            WriteDiagnostics(writer, result.Diagnostics);
+        });
+    }
+
+    private static void WriteDiagnostics(NativeBinaryWriter writer, IReadOnlyList<CoreDiagnostic> diagnostics)
+    {
+        writer.WriteInt32(diagnostics.Count);
+        foreach (var diagnostic in diagnostics)
+        {
+            writer.WriteString(diagnostic.Severity.ToString());
+            writer.WriteString(diagnostic.Code);
+            writer.WriteString(diagnostic.Message);
+        }
     }
 }

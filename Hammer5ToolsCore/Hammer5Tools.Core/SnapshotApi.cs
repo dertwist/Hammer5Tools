@@ -11,6 +11,18 @@ namespace Hammer5Tools.Core;
 /// <summary>VSnap experiments: NativeAOT ABI for Source 2 particle snapshot editing.</summary>
 internal static unsafe class SnapshotApi
 {
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_read_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => ReadBinaryPayload(request, requestLength));
+
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_serialize_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int SerializeBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => SerializeBinaryPayload(request, requestLength));
+
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_generate_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int GenerateBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => GenerateBinaryPayload(request, requestLength));
+
     [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_read_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int ReadJson(byte* text, int textLength, byte** output, int* outputLength) =>
         NativeInterop.Invoke(output, outputLength, () => WriteJson(
@@ -139,5 +151,63 @@ internal static unsafe class SnapshotApi
         writer.WriteEndObject();
         writer.Flush();
         return buffer.WrittenSpan.ToArray();
+    }
+
+    private static byte[] ReadBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.SnapshotTextRequest);
+        var text = reader.ReadString();
+        reader.EnsureFinished();
+        var document = SnapshotDocumentSerializer.DeserializeText(text);
+        return NativeBinary.Create(NativeBinaryMessage.SnapshotDocument,
+            writer => SnapshotBinarySerializer.Write(writer, document));
+    }
+
+    private static byte[] SerializeBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.SnapshotDocument);
+        var document = SnapshotBinarySerializer.Read(ref reader);
+        reader.EnsureFinished();
+        var text = SnapshotDocumentSerializer.Serialize(document);
+        return NativeBinary.Create(NativeBinaryMessage.TextResult, writer => writer.WriteString(text));
+    }
+
+    private static byte[] GenerateBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.SnapshotGenerateRequest);
+        var kind = reader.ReadByte();
+        SnapshotDocument document;
+        switch (kind)
+        {
+            case 0:
+                document = SnapshotGenerator.GeneratePrimitive(
+                    reader.ReadString(), reader.ReadInt32(), reader.ReadSingle());
+                break;
+            case 1:
+                document = SnapshotGenerator.FromPositions(ReadPositions(ref reader));
+                break;
+            default:
+                throw new InvalidDataException($"Unknown binary snapshot generation kind '{kind}'.");
+        }
+        reader.EnsureFinished();
+        return NativeBinary.Create(NativeBinaryMessage.SnapshotDocument,
+            writer => SnapshotBinarySerializer.Write(writer, document));
+    }
+
+    private static float[][] ReadPositions(ref NativeBinaryReader reader)
+    {
+        var count = reader.ReadInt32();
+        if (count is < 0 or > 1_000_000)
+        {
+            throw new InvalidDataException("The binary snapshot position count is invalid.");
+        }
+
+        reader.Align(sizeof(float));
+        var positions = new float[count][];
+        for (var index = 0; index < count; index++)
+        {
+            positions[index] = [reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()];
+        }
+        return positions;
     }
 }

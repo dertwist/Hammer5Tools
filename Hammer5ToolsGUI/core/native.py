@@ -8,6 +8,21 @@ import os
 from collections.abc import Callable
 from pathlib import Path
 
+from core.native_binary import (
+    NativeBinaryError,
+    decode_error,
+    decode_navmesh_radar,
+    decode_snapshot_document,
+    decode_text_result,
+    decode_vmap_rewrite,
+    decode_vmap_scene,
+    encode_navmesh_radar_request,
+    encode_snapshot_document,
+    encode_snapshot_generate_request,
+    encode_snapshot_text_request,
+    encode_vmap_rewrite_request,
+    encode_vmap_scene_request,
+)
 from core.runtime_paths import resolve_runtime_paths
 
 # Matches the C ABI's `void (*)(const uint8_t* line, int32_t line_length)` log
@@ -48,7 +63,7 @@ class NativeCancellation:
 class SmartPropNativeClient:
     """Marshals primitive SmartProp requests across the stable C ABI."""
 
-    ABI_VERSION = 1
+    ABI_VERSION = 2
     LIBRARY_NAME = "Hammer5Tools.Core.dll"
 
     def __init__(self, library_path: str | os.PathLike[str] | None = None) -> None:
@@ -83,12 +98,14 @@ class SmartPropNativeClient:
         except OSError as error:
             raise NativeCoreError(f"Failed to load {path}: {error}") from error
 
-        self._configure_functions()
+        self._library.h5t_core_abi_version.argtypes = []
+        self._library.h5t_core_abi_version.restype = ctypes.c_int
         version = int(self._library.h5t_core_abi_version())
         if version != self.ABI_VERSION:
             raise NativeCoreError(
                 f"Unsupported Hammer5Tools Core ABI {version}; expected {self.ABI_VERSION}"
             )
+        self._configure_functions()
 
     def evaluate(
         self,
@@ -253,25 +270,27 @@ class SmartPropNativeClient:
 
     def read_valve_map_scene(self, path: str) -> dict:
         """Reads an uncompiled VMAP into flattened, drawable scene geometry."""
-        return json.loads(self._invoke(
-            self._library.h5t_vmap_read_scene_json, *self._buffer_arguments(path.encode("utf-8")),
+        return decode_vmap_scene(self._invoke_binary(
+            self._library.h5t_vmap_read_scene_binary,
+            *self._buffer_arguments(encode_vmap_scene_request(path)),
         ))
 
     def read_vsnap(self, text: str) -> dict:
-        return json.loads(self._invoke(
-            self._library.h5t_vsnap_read_json, *self._buffer_arguments(text.encode("utf-8")),
+        return decode_snapshot_document(self._invoke_binary(
+            self._library.h5t_vsnap_read_binary,
+            *self._buffer_arguments(encode_snapshot_text_request(text)),
         ))
 
     def serialize_vsnap(self, document: dict) -> str:
-        return self._invoke(
-            self._library.h5t_vsnap_serialize_json,
-            *self._buffer_arguments(self._json_bytes(document)),
-        )
+        return decode_text_result(self._invoke_binary(
+            self._library.h5t_vsnap_serialize_binary,
+            *self._buffer_arguments(encode_snapshot_document(document)),
+        ))
 
     def generate_vsnap(self, request: dict) -> dict:
-        return json.loads(self._invoke(
-            self._library.h5t_vsnap_generate_json,
-            *self._buffer_arguments(self._json_bytes(request)),
+        return decode_snapshot_document(self._invoke_binary(
+            self._library.h5t_vsnap_generate_binary,
+            *self._buffer_arguments(encode_snapshot_generate_request(request)),
         ))
 
     def light_vsnap(self, request: dict) -> dict:
@@ -288,16 +307,16 @@ class SmartPropNativeClient:
 
     def rewrite_vmap_references(self, path: str, renames: dict) -> dict:
         """Rewrites content-relative asset paths in a VMAP. Returns {"value": bool | None, "diagnostics": [...]}."""
-        request = {"path": path, "renames": renames}
-        return json.loads(self._invoke(
-            self._library.h5t_vmap_rewrite_references_json, *self._buffer_arguments(self._json_bytes(request)),
+        return decode_vmap_rewrite(self._invoke_binary(
+            self._library.h5t_vmap_rewrite_references_binary,
+            *self._buffer_arguments(encode_vmap_rewrite_request(path, renames)),
         ))
 
     def generate_navmesh_radar(self, request: dict) -> dict:
         """Generates radar geometry from compiled NAV data."""
-        return json.loads(self._invoke(
-            self._library.h5t_navmesh_radar_generate_json,
-            *self._buffer_arguments(self._json_bytes(request)),
+        return decode_navmesh_radar(self._invoke_binary(
+            self._library.h5t_navmesh_radar_generate_binary,
+            *self._buffer_arguments(encode_navmesh_radar_request(request)),
         ))
 
     def navmesh_radar_status(self, request: dict) -> dict:
@@ -483,12 +502,18 @@ class SmartPropNativeClient:
             "h5t_compiled_resource_read_json",
             "h5t_vmap_read_json",
             "h5t_vmap_read_scene_json",
+            "h5t_vmap_read_scene_binary",
             "h5t_vmap_rewrite_references_json",
+            "h5t_vmap_rewrite_references_binary",
             "h5t_navmesh_radar_generate_json",
+            "h5t_navmesh_radar_generate_binary",
             "h5t_navmesh_radar_status_json",
             "h5t_vsnap_read_json",
+            "h5t_vsnap_read_binary",
             "h5t_vsnap_serialize_json",
+            "h5t_vsnap_serialize_binary",
             "h5t_vsnap_generate_json",
+            "h5t_vsnap_generate_binary",
             "h5t_vsnap_light_json",
             "h5t_vsnap_lightning_json",
             "h5t_unreal_info",
@@ -546,6 +571,16 @@ class SmartPropNativeClient:
         if status != 0:
             self._raise_native_error(status, payload)
         return payload.decode("utf-8") if payload else ""
+
+    def _invoke_binary(self, function, *arguments) -> bytes:
+        status, payload = self._invoke_raw(function, *arguments)
+        if status == 0:
+            return payload
+        try:
+            message = decode_error(payload)
+        except NativeBinaryError:
+            self._raise_native_error(status, payload)
+        raise NativeCoreError(message or f"Native Core call failed with status {status}")
 
     def _invoke_raw(self, function, *arguments) -> tuple[int, bytes]:
         """Calls a buffer-returning native function without decoding or raising."""

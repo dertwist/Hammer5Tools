@@ -3,9 +3,9 @@ namespace Hammer5Tools.Core.Tests;
 public sealed class CoreApiTests
 {
     [Test]
-    public async Task ReportsInitialContractVersion()
+    public async Task ReportsCurrentContractVersion()
     {
-        await Assert.That(CoreApi.Version).IsEqualTo(new Version(1, 0));
+        await Assert.That(CoreApi.Version).IsEqualTo(new Version(2, 0));
     }
 
     [Test]
@@ -14,7 +14,7 @@ public sealed class CoreApiTests
         var result = CoreApi.Probe();
 
         await Assert.That(result.IsSuccess).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(new Version(1, 0));
+        await Assert.That(result.Value).IsEqualTo(new Version(2, 0));
         await Assert.That(result.Diagnostics).IsEmpty();
     }
 }

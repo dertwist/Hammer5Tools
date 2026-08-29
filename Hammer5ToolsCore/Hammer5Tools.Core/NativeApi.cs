@@ -11,7 +11,7 @@ namespace Hammer5Tools.Core;
 
 internal static unsafe class NativeApi
 {
-    private const int AbiVersion = 1;
+    private const int AbiVersion = 2;
 
     [UnmanagedCallersOnly(EntryPoint = "h5t_core_abi_version", CallConvs = [typeof(CallConvCdecl)])]
     public static int GetAbiVersion() => AbiVersion;

@@ -45,6 +45,12 @@ project and publish it as one NativeAOT library. Put environment access in
 `IO/`, format interpretation and conversion in `Format/`, public contracts in
 `CoreApi.cs`, and unmanaged ABI methods in the root `*Api.cs` files.
 
+The Python-to-Core NativeAOT ABI uses versioned binary payloads for VMAP scene,
+VMAP reference rewrite, NavMesh Radar, and VSnap operations. Keep binary
+readers/writers in `Hammer5Tools.Core/` or the relevant `Format/` area, use
+explicit little-endian fields and bounds checks, and bump the ABI version when
+changing an existing binary message.
+
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
 

@@ -17,7 +17,7 @@ class FakeInterop:
 
 
 class FakeNativeClient:
-    ABI_VERSION = 1
+    ABI_VERSION = 2
 
 
 class FailingNativeClient:
@@ -30,7 +30,7 @@ def test_core_probe_translates_success_to_python_status():
     status = CoreBridge(FakeInterop(), native_client=FakeNativeClient()).probe()
 
     assert status.available
-    assert status.version == "native-abi-1"
+    assert status.version == "native-abi-2"
     assert status.diagnostic is None
 
 

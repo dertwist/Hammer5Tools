@@ -8,7 +8,7 @@ public static class CoreApi
     /// <summary>
     /// Gets the version understood by GUI bridge clients.
     /// </summary>
-    public static Version Version { get; } = new(1, 0);
+    public static Version Version { get; } = new(2, 0);
 
     /// <summary>
     /// Verifies that the public Core contract can be invoked by a client.

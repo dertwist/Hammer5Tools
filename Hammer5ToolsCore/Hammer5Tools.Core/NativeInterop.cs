@@ -97,6 +97,26 @@ internal static unsafe class NativeInterop
         }
     }
 
+    /// <summary>Runs a compact-binary operation, translating failures into a binary error envelope.</summary>
+    public static int InvokeBinary(byte** output, int* outputLength, Func<byte[]> operation)
+    {
+        if (output is null || outputLength is null)
+            return -1;
+
+        *output = null;
+        *outputLength = 0;
+        try
+        {
+            WriteOutput(operation(), output, outputLength);
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            WriteOutput(NativeBinary.CreateError(DescribeException(exception)), output, outputLength);
+            return -2;
+        }
+    }
+
     /// <summary>Unwraps wrapper exceptions (type initializers, target invocations) to the root cause message.</summary>
     public static string DescribeException(Exception exception)
     {

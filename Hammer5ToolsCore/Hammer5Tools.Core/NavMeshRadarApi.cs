@@ -14,6 +14,14 @@ internal static unsafe class NavMeshRadarApi
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Generates a radar sub-map from a compact binary request.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_navmesh_radar_generate_binary", CallConvs = [typeof(CallConvCdecl)])]
+    public static int GenerateBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () => GenerateBinaryPayload(request, requestLength));
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>Reports the radar sub-map path and whether the main map already references it.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_navmesh_radar_status_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int StatusJson(byte* request, int requestLength, byte** output, int* outputLength) =>
@@ -144,5 +152,61 @@ internal static unsafe class NavMeshRadarApi
             writer.WriteEndObject();
         }
         writer.WriteEndArray();
+    }
+
+    private static byte[] GenerateBinaryPayload(byte* request, int requestLength)
+    {
+        var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.NavMeshRadarRequest);
+        var vpkPath = reader.ReadString();
+        var mainVmapPath = reader.ReadString();
+        var mode = reader.ReadByte() switch
+        {
+            0 => NavMeshRadarMode.BakedBombDamage,
+            1 => NavMeshRadarMode.NavMeshOffset,
+            var value => throw new InvalidDataException($"Unknown binary NavMesh Radar mode '{value}'."),
+        };
+        var offset = reader.ReadSingle();
+        var materialPath = reader.ReadString();
+        var addPrefabReference = reader.ReadBoolean();
+        var collapseFaces = reader.ReadBoolean();
+        var collapseFacesIntoNgons = reader.ReadBoolean();
+        reader.EnsureFinished();
+
+        var result = NavMeshRadarGenerator.Generate(new NavMeshRadarRequest(
+            vpkPath,
+            mainVmapPath,
+            mode,
+            offset,
+            materialPath,
+            addPrefabReference,
+            collapseFaces,
+            collapseFacesIntoNgons));
+        return NativeBinary.Create(NativeBinaryMessage.NavMeshRadarResult, writer =>
+        {
+            writer.WriteBoolean(result.IsSuccess);
+            if (result.IsSuccess && result.Value is { } value)
+            {
+                writer.WriteString(value.GeneratedVmapPath);
+                writer.WriteByte(value.Mode == NavMeshRadarMode.BakedBombDamage ? (byte)0 : (byte)1);
+                writer.WriteInt32(value.SourceCount);
+                writer.WriteInt32(value.FaceCount);
+                writer.WriteInt32(value.MeshCount);
+                writer.WriteSingle(value.Offset);
+                writer.WriteBoolean(value.ReferenceAdded);
+                writer.WriteNullableString(value.BackupPath);
+            }
+            WriteDiagnostics(writer, result.Diagnostics);
+        });
+    }
+
+    private static void WriteDiagnostics(NativeBinaryWriter writer, IReadOnlyList<CoreDiagnostic> diagnostics)
+    {
+        writer.WriteInt32(diagnostics.Count);
+        foreach (var diagnostic in diagnostics)
+        {
+            writer.WriteString(diagnostic.Severity.ToString());
+            writer.WriteString(diagnostic.Code);
+            writer.WriteString(diagnostic.Message);
+        }
     }
 }
