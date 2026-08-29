@@ -389,7 +389,7 @@
         <item>
          <widget class="QPushButton" name="save_file_button">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save soundevents_addon.vsndevts Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save soundevents_addon.vsndevts (Ctrl+S)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="styleSheet">
            <string notr="true">
@@ -438,7 +438,7 @@
         <item>
          <widget class="QPushButton" name="load_button">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reload soundevents_addon.vsndevts Ctrl + R&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reload soundevents_addon.vsndevts (Ctrl+Shift+S)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="styleSheet">
            <string notr="true">
@@ -565,7 +565,7 @@
      <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
    </property>
    <property name="text">
-    <string>Format serttings</string>
+    <string>Format settings</string>
    </property>
   </action>
  </widget>

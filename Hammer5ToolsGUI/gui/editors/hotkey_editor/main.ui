@@ -243,7 +243,7 @@ QComboBox QAbstractItemView::item:selected {
              <item>
               <widget class="QPushButton" name="set_current_button">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + O&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply selected preset as current keybindings (Ctrl+O)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">
@@ -298,7 +298,7 @@ QComboBox QAbstractItemView::item:selected {
              <item>
               <widget class="QPushButton" name="new_button">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create a new keybinding preset (Ctrl+N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">
@@ -353,7 +353,7 @@ QComboBox QAbstractItemView::item:selected {
              <item>
               <widget class="QPushButton" name="open_button">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open an existing keybinding preset from disk&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">
@@ -481,9 +481,9 @@ QComboBox QAbstractItemView::item:selected {
                  <height>0</height>
                 </size>
                </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save keybinding preset to file (Ctrl+S)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                <property name="styleSheet">
                 <string notr="true">
     /* QPushButton default and hover styles */
@@ -542,9 +542,9 @@ QComboBox QAbstractItemView::item:selected {
                  <height>0</height>
                 </size>
                </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl+ Shif+S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save keybindings and restart CS2 tools (Ctrl+Shift+S)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                <property name="styleSheet">
                 <string notr="true">
     /* QPushButton default and hover styles */

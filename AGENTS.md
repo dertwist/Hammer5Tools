@@ -48,6 +48,9 @@ project and publish it as one NativeAOT library. Put environment access in
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
 
+NavMesh Radar requests keep rectangle merging (`collapseFaces`) separate from
+same-height connected-region N-gon dissolving (`collapseFacesIntoNgons`).
+
 ## C# Rules
 
 - Use current .NET, nullable references, file-scoped namespaces, four spaces,
