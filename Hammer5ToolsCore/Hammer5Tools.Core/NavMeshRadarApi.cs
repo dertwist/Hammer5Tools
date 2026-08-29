@@ -14,6 +14,39 @@ internal static unsafe class NavMeshRadarApi
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    /// <summary>Reports the radar sub-map path and whether the main map already references it.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_navmesh_radar_status_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int StatusJson(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            using var document = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength));
+            var result = NavMeshRadarGenerator.Inspect(
+                document.RootElement.GetProperty("mainVmapPath").GetString() ?? "");
+
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            writer.WriteStartObject();
+            if (result.IsSuccess && result.Value is { } value)
+            {
+                writer.WriteStartObject("value");
+                writer.WriteString("generatedVmapPath", value.GeneratedVmapPath);
+                writer.WriteBoolean("prefabPresent", value.PrefabPresent);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("value");
+            }
+
+            WriteDiagnostics(writer, result.Diagnostics);
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        });
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>Generates a radar sub-map from a JSON request.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_navmesh_radar_generate_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int GenerateJson(byte* request, int requestLength, byte** output, int* outputLength) =>
@@ -47,6 +80,13 @@ internal static unsafe class NavMeshRadarApi
                 collapseFaces = collapseElement.GetBoolean();
             }
 
+            var collapseFacesIntoNgons = false;
+            if (root.TryGetProperty("collapseFacesIntoNgons", out var collapseNgonsElement)
+                && collapseNgonsElement.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                collapseFacesIntoNgons = collapseNgonsElement.GetBoolean();
+            }
+
             var radarRequest = new NavMeshRadarRequest(
                 root.GetProperty("vpkPath").GetString() ?? "",
                 root.GetProperty("mainVmapPath").GetString() ?? "",
@@ -56,7 +96,8 @@ internal static unsafe class NavMeshRadarApi
                     ? material.GetString() ?? ""
                     : "materials/radgen/radgen_path.vmat",
                 addPrefabReference,
-                collapseFaces);
+                collapseFaces,
+                collapseFacesIntoNgons);
             var result = NavMeshRadarGenerator.Generate(radarRequest);
 
             var buffer = new ArrayBufferWriter<byte>();
@@ -85,18 +126,23 @@ internal static unsafe class NavMeshRadarApi
                 writer.WriteNull("value");
             }
 
-            writer.WriteStartArray("diagnostics");
-            foreach (var diagnostic in result.Diagnostics)
-            {
-                writer.WriteStartObject();
-                writer.WriteString("severity", diagnostic.Severity.ToString());
-                writer.WriteString("code", diagnostic.Code);
-                writer.WriteString("message", diagnostic.Message);
-                writer.WriteEndObject();
-            }
-            writer.WriteEndArray();
+            WriteDiagnostics(writer, result.Diagnostics);
             writer.WriteEndObject();
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
         });
+
+    private static void WriteDiagnostics(Utf8JsonWriter writer, IReadOnlyList<CoreDiagnostic> diagnostics)
+    {
+        writer.WriteStartArray("diagnostics");
+        foreach (var diagnostic in diagnostics)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("severity", diagnostic.Severity.ToString());
+            writer.WriteString("code", diagnostic.Code);
+            writer.WriteString("message", diagnostic.Message);
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+    }
 }

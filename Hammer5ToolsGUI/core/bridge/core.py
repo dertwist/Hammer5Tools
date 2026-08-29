@@ -139,6 +139,15 @@ class NavMeshRadarResult:
 
 
 @dataclass(frozen=True)
+class NavMeshRadarStatus:
+    """Where the radar sub-map goes, and whether the main map already references it."""
+
+    generated_vmap_path: str | None
+    prefab_present: bool
+    diagnostics: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class CompiledTextureData:
     width: int
     height: int
@@ -479,6 +488,15 @@ class CoreBridge:
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         return VmapRewriteResult(bool(result["value"]), diagnostics)
 
+    def navmesh_radar_status(self, main_vmap_path: str) -> NavMeshRadarStatus:
+        """Reports the radar sub-map path and whether the main map already references it."""
+        result = self._smartprop_native().navmesh_radar_status({"mainVmapPath": main_vmap_path})
+        diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
+        value = result["value"]
+        if value is None:
+            return NavMeshRadarStatus(None, False, diagnostics)
+        return NavMeshRadarStatus(value["generatedVmapPath"], bool(value["prefabPresent"]), diagnostics)
+
     def generate_navmesh_radar(
         self,
         vpk_path: str,
@@ -489,6 +507,7 @@ class CoreBridge:
         material_path: str = "materials/radgen/radgen_path.vmat",
         add_prefab_reference: bool = True,
         collapse_faces: bool = True,
+        collapse_faces_into_ngons: bool = False,
     ) -> NavMeshRadarResult:
         """Generates radar faces into a replaceable prefab sub-map."""
         result = self._smartprop_native().generate_navmesh_radar({
@@ -499,6 +518,7 @@ class CoreBridge:
             "materialPath": material_path,
             "addPrefabReference": add_prefab_reference,
             "collapseFaces": collapse_faces,
+            "collapseFacesIntoNgons": collapse_faces_into_ngons,
         })
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         value = result["value"]

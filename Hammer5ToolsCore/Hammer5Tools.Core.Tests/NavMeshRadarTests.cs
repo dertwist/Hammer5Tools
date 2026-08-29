@@ -143,6 +143,27 @@ public sealed class NavMeshRadarTests
     }
 
     [Test]
+    public async Task IndependentOffsetExpandsEveryGeometryElement()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> areas =
+        [
+            new Vector3[] { new(0, 0, 4), new(10, 0, 4), new(10, 10, 4), new(0, 10, 4) },
+            new Vector3[] { new(10, 0, 4), new(20, 0, 4), new(20, 10, 4), new(10, 10, 4) },
+        ];
+
+        var expanded = NavMeshRadarGenerator.OffsetPolygonsIndependently(areas, 2f);
+
+        await Assert.That(expanded.Count).IsEqualTo(areas.Count);
+        for (var index = 0; index < areas.Count; index++)
+        {
+            await Assert.That(expanded[index].Zip(areas[index]).All(pair => pair.First != pair.Second)).IsTrue();
+            await Assert.That(SignedArea(expanded[index])).IsGreaterThan(SignedArea(areas[index]));
+        }
+        await Assert.That(expanded[0].Max(point => point.X)).IsEqualTo(12f).Within(0.001f);
+        await Assert.That(expanded[1].Min(point => point.X)).IsEqualTo(8f).Within(0.001f);
+    }
+
+    [Test]
     public async Task BakedSamplesOnOneLayerBecomeOneNonOverlappingRectangle()
     {
         Vector3[] samples =
@@ -174,6 +195,111 @@ public sealed class NavMeshRadarTests
 
         await Assert.That(faces.Count).IsEqualTo(2);
         await Assert.That(faces.Select(face => face[0].Z)).IsEquivalentTo([16f, 26f]);
+    }
+
+    [Test]
+    public async Task BakedSamplesOnAPlaneCollapseAcrossHeightRows()
+    {
+        Vector3[] samples =
+        [
+            new(0, 0, 0),
+            new(24, 0, 0),
+            new(48, 0, 0),
+            new(0, 24, 6),
+            new(24, 24, 6),
+            new(48, 24, 6),
+            new(0, 48, 12),
+            new(24, 48, 12),
+            new(48, 48, 12),
+        ];
+
+        var faces = NavMeshRadarGenerator.MergeBakedSamples(samples);
+
+        await Assert.That(faces).HasSingleItem();
+        await Assert.That(faces[0][0]).IsEqualTo(new Vector3(-12, -12, -2));
+        await Assert.That(faces[0][1]).IsEqualTo(new Vector3(60, -12, -2));
+        await Assert.That(faces[0][2]).IsEqualTo(new Vector3(60, 60, 16));
+        await Assert.That(faces[0][3]).IsEqualTo(new Vector3(-12, 60, 16));
+    }
+
+    [Test]
+    public async Task BakedSamplesDoNotCollapseAcrossASteepHeightBreak()
+    {
+        Vector3[] samples =
+        [
+            new(0, 0, 0),
+            new(24, 0, 0),
+            new(0, 24, 40),
+            new(24, 24, 40),
+        ];
+
+        var faces = NavMeshRadarGenerator.MergeBakedSamples(samples);
+
+        await Assert.That(faces.Count).IsEqualTo(2);
+        await Assert.That(faces.Select(face => face[0].Z)).IsEquivalentTo([1f, 41f]);
+    }
+
+    [Test]
+    public async Task CoplanarConnectedFacesCollapseIntoOneNgon()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> faces =
+        [
+            Rectangle(0, 0, 20, 10, 4),
+            Rectangle(0, 10, 10, 20, 4),
+        ];
+
+        var collapsed = NavMeshRadarGenerator.CollapseBakedFacesIntoNgons(faces);
+
+        await Assert.That(collapsed).HasSingleItem();
+        await Assert.That(collapsed[0].Count).IsEqualTo(6);
+        await Assert.That(SignedArea(collapsed[0])).IsEqualTo(300f).Within(0.001f);
+        await Assert.That(collapsed[0].All(point => point.Z == 4f)).IsTrue();
+    }
+
+    [Test]
+    public async Task NgonCollapseKeepsDisconnectedFacesSeparate()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> faces =
+        [
+            Rectangle(0, 0, 10, 10, 4),
+            Rectangle(20, 0, 30, 10, 4),
+        ];
+
+        var collapsed = NavMeshRadarGenerator.CollapseBakedFacesIntoNgons(faces);
+
+        await Assert.That(collapsed.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task NgonCollapseKeepsAdjacentHeightLayersSeparate()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> faces =
+        [
+            Rectangle(0, 0, 10, 10, 4),
+            Rectangle(10, 0, 20, 10, 8),
+        ];
+
+        var collapsed = NavMeshRadarGenerator.CollapseBakedFacesIntoNgons(faces);
+
+        await Assert.That(collapsed.Count).IsEqualTo(2);
+        await Assert.That(collapsed.Select(face => face[0].Z)).IsEquivalentTo([4f, 8f]);
+    }
+
+    [Test]
+    public async Task NgonCollapseDoesNotFillHoles()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> frame =
+        [
+            Rectangle(0, 0, 30, 10, 4),
+            Rectangle(0, 20, 30, 30, 4),
+            Rectangle(0, 10, 10, 20, 4),
+            Rectangle(20, 10, 30, 20, 4),
+        ];
+
+        var collapsed = NavMeshRadarGenerator.CollapseBakedFacesIntoNgons(frame);
+
+        await Assert.That(collapsed.Count).IsEqualTo(4);
+        await Assert.That(collapsed.Sum(face => MathF.Abs(SignedArea(face)))).IsEqualTo(800f).Within(0.001f);
     }
 
     [Test]
@@ -237,6 +363,42 @@ public sealed class NavMeshRadarTests
         var normals = (Vector3Array)normalStream["data"]!;
 
         await Assert.That(normals[0].Z).IsEqualTo(1f).Within(0.001f);
+    }
+
+    [Test]
+    public async Task PolygonMeshKeepsASliverCorneredFaceFacingUpward()
+    {
+        var document = new DM("vmap", 40);
+        // Counter-clockwise, so walkable — but corners 0, 1 and 2 are nearly collinear, and fanning
+        // the normal from corner 0 across just those three points aims it downward. Weighting the
+        // whole ring is what keeps this face from being flipped away out of sight.
+        IReadOnlyList<IReadOnlyList<Vector3>> sliverFace =
+        [
+            new Vector3[]
+            {
+                new(0, 0, 1),
+                new(100, 1, 1),
+                new(200, 0, 1),
+                new(100, 100, 1),
+            },
+        ];
+
+        var node = VmapPolygonMeshBuilder.Build(
+            document,
+            sliverFace,
+            "materials/radgen/radgen_path.vmat",
+            10,
+            "radar");
+        var mesh = (Element)node["meshData"]!;
+        var streams = (ElementArray)((Element)mesh["faceVertexData"]!)["streams"]!;
+        var normalStream = streams.Single(stream => stream["standardAttributeName"] as string == "normal");
+        var normals = (Vector3Array)normalStream["data"]!;
+        var positionStream = ((ElementArray)((Element)mesh["vertexData"]!)["streams"]!).Single();
+        var positions = (Vector3Array)positionStream["data"]!;
+
+        await Assert.That(normals[0].Z).IsEqualTo(1f).Within(0.001f);
+        await Assert.That(positions[0]).IsEqualTo(new Vector3(0, 0, 1));
+        await Assert.That(positions[1]).IsEqualTo(new Vector3(100, 1, 1));
     }
 
     [Test]
@@ -318,6 +480,72 @@ public sealed class NavMeshRadarTests
 
         await Assert.That(SignedArea(expanded[0])).IsEqualTo(432f * 432f).Within(0.1f);
     }
+
+    [Test]
+    public async Task SplitInsertsANeighboursCornerIntoTheEdgeItLandsOn()
+    {
+        // Two small areas abut the lower edge of a wide one, meeting it at (10, 0) — a corner that
+        // exists on their rings but not on the wide area's. Left unsplit, the two sides offset
+        // independently and tear open.
+        var wide = Face([new(0, 0, 0), new(20, 0, 0), new(20, 10, 0), new(0, 10, 0)]);
+        var left = Face([new(0, -10, 0), new(10, -10, 0), new(10, 0, 0), new(0, 0, 0)]);
+        var right = Face([new(10, -10, 0), new(20, -10, 0), new(20, 0, 0), new(10, 0, 0)]);
+
+        NavMeshRadarGenerator.SplitSharedEdges([wide, left, right]);
+
+        await Assert.That(wide.Corners.Count).IsEqualTo(5);
+        await Assert.That(wide.Corners[1]).IsEqualTo(new Vector3(10, 0, 0));
+        await Assert.That(wide.ExposedEdges.Count).IsEqualTo(5);
+        await Assert.That(left.Corners.Count).IsEqualTo(4);
+    }
+
+    [Test]
+    public async Task TriangulateFansEachRingAndKeepsItsFootprint()
+    {
+        IReadOnlyList<IReadOnlyList<Vector3>> rings =
+        [
+            new Vector3[] { new(0, 0, 4), new(100, 0, 4), new(100, 100, 4), new(0, 100, 4) },
+        ];
+
+        var triangles = NavMeshRadarGenerator.Triangulate(rings);
+
+        await Assert.That(triangles.Count).IsEqualTo(2);
+        await Assert.That(triangles.All(triangle => triangle.Count == 3)).IsTrue();
+        await Assert.That(triangles.Sum(SignedArea)).IsEqualTo(100f * 100f).Within(0.001f);
+        await Assert.That(triangles.All(triangle => SignedArea(triangle) > 0f)).IsTrue();
+    }
+
+    [Test]
+    public async Task TriangulateDropsTheSliversASplitEdgeLeavesBehind()
+    {
+        // (50, 0) is a corner the T-junction split inserted, so it lies on the first edge and fans
+        // into a zero-area triangle that must not reach the vmap.
+        IReadOnlyList<IReadOnlyList<Vector3>> rings =
+        [
+            new Vector3[] { new(0, 0, 0), new(50, 0, 0), new(100, 0, 0), new(100, 100, 0), new(0, 100, 0) },
+        ];
+
+        var triangles = NavMeshRadarGenerator.Triangulate(rings);
+
+        await Assert.That(triangles.Count).IsEqualTo(2);
+        await Assert.That(triangles.Sum(SignedArea)).IsEqualTo(100f * 100f).Within(0.001f);
+    }
+
+    private static NavMeshRadarGenerator.NavFace Face(List<Vector3> corners) =>
+        new(corners, [.. Enumerable.Repeat(true, corners.Count)]);
+
+    private static IReadOnlyList<Vector3> Rectangle(
+        float minimumX,
+        float minimumY,
+        float maximumX,
+        float maximumY,
+        float z) =>
+    [
+        new(minimumX, minimumY, z),
+        new(maximumX, minimumY, z),
+        new(maximumX, maximumY, z),
+        new(minimumX, maximumY, z),
+    ];
 
     private static float SignedArea(IReadOnlyList<Vector3> polygon)
     {

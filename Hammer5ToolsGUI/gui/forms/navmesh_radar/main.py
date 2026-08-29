@@ -44,6 +44,7 @@ class NavMeshRadarWorker(QThread):
         offset: float = 16.0,
         add_prefab_reference: bool = True,
         collapse_faces: bool = True,
+        collapse_faces_into_ngons: bool = False,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -53,6 +54,7 @@ class NavMeshRadarWorker(QThread):
         self._offset = offset
         self._add_prefab_reference = add_prefab_reference
         self._collapse_faces = collapse_faces
+        self._collapse_faces_into_ngons = collapse_faces_into_ngons
 
     def run(self) -> None:
         try:
@@ -63,6 +65,7 @@ class NavMeshRadarWorker(QThread):
                 offset=self._offset,
                 add_prefab_reference=self._add_prefab_reference,
                 collapse_faces=self._collapse_faces,
+                collapse_faces_into_ngons=self._collapse_faces_into_ngons,
             )
             if result.generated_vmap_path is None:
                 message = "\n".join(result.diagnostics) or "Core did not return a generated map."
@@ -87,14 +90,15 @@ class NavMeshRadarDialog(QDialog):
         self._worker: NavMeshRadarWorker | None = None
         self._vpk_path: Path | None = None
         self._main_vmap_path: Path | None = None
+        self._prefab_present = False
 
         layout = QVBoxLayout(self)
 
         form = QFormLayout()
         self.mode_combo = QComboBox()
         self.mode_combo.setProperty("h5Component", "legacyCombobox")
-        self.mode_combo.addItem("NavMesh", "navmesh_offset")
         self.mode_combo.addItem("Baked bomb damage", "baked_bomb_damage")
+        self.mode_combo.addItem("NavMesh", "navmesh_offset")
         self.mode_combo.currentIndexChanged.connect(self._update_mode_options)
         form.addRow("Source:", self.mode_combo)
 
@@ -120,7 +124,17 @@ class NavMeshRadarDialog(QDialog):
         self.collapse_faces_checkbox.setProperty("h5Component", "legacyCheckbox")
         self.collapse_faces_checkbox.setChecked(True)
         self.collapse_faces_checkbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.collapse_faces_checkbox.toggled.connect(self._update_collapse_options)
         options_layout.addWidget(self.collapse_faces_checkbox, 1)
+
+        self.collapse_ngons_checkbox = QCheckBox("Collapse faces into N-gons")
+        self.collapse_ngons_checkbox.setProperty("h5Component", "legacyCheckbox")
+        self.collapse_ngons_checkbox.setChecked(False)
+        self.collapse_ngons_checkbox.setToolTip(
+            "Dissolve internal edges between nearby collapsed faces on the same height layer."
+        )
+        self.collapse_ngons_checkbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        options_layout.addWidget(self.collapse_ngons_checkbox, 1)
 
         self.remove_offset_checkbox = QCheckBox("Remove offset")
         self.remove_offset_checkbox.setProperty("h5Component", "legacyCheckbox")
@@ -155,6 +169,13 @@ class NavMeshRadarDialog(QDialog):
         is_navmesh = self.mode_combo.currentData() == "navmesh_offset"
         self.remove_offset_checkbox.setVisible(is_navmesh)
         self.collapse_faces_checkbox.setVisible(not is_navmesh)
+        self.collapse_ngons_checkbox.setVisible(not is_navmesh)
+        self._update_collapse_options(self.collapse_faces_checkbox.isChecked())
+
+    def _update_collapse_options(self, collapse_faces: bool) -> None:
+        self.collapse_ngons_checkbox.setEnabled(collapse_faces)
+        if not collapse_faces:
+            self.collapse_ngons_checkbox.setChecked(False)
 
     def _refresh_paths(self) -> None:
         addon = get_addon_name()
@@ -167,11 +188,18 @@ class NavMeshRadarDialog(QDialog):
             content_root / "maps" / f"{addon}.vmap" if content_root is not None else None
         )
         self._vpk_path = game_root / "maps" / f"{addon}.vpk" if game_root is not None else None
-        generated_path = (
-            self._main_vmap_path.with_name(f"{addon}_navmesh_radar.vmap")
-            if self._main_vmap_path is not None
-            else None
-        )
+        generated_path = None
+        prefab_present = False
+        if self._main_vmap_path is not None:
+            try:
+                status = CoreBridge.instance().navmesh_radar_status(str(self._main_vmap_path))
+            except Exception:
+                log.exception("Could not read the main map's radar prefab status")
+            else:
+                if status.generated_vmap_path is not None:
+                    generated_path = Path(status.generated_vmap_path)
+                prefab_present = status.prefab_present
+        self._prefab_present = prefab_present
 
         if self._vpk_path is not None:
             try:
@@ -199,9 +227,26 @@ class NavMeshRadarDialog(QDialog):
                 output_display = generated_path.as_posix()
             self.output_field.setText(output_display)
             self.output_field.setToolTip(str(generated_path))
-        else:
+        elif self._main_vmap_path is None:
             self.output_field.setText("CS2 path is not configured")
             self.output_field.setToolTip("")
+        else:
+            self.output_field.setText("Main map not found")
+            self.output_field.setToolTip(str(self._main_vmap_path))
+
+        self._apply_prefab_state()
+
+    def _apply_prefab_state(self) -> None:
+        """A map that already references the sub-map needs no second prefab."""
+        if self._prefab_present:
+            self.add_prefab_checkbox.setChecked(False)
+            self.add_prefab_checkbox.setEnabled(False)
+            self.add_prefab_checkbox.setToolTip(
+                "The main map already references the generated radar."
+            )
+            return
+        self.add_prefab_checkbox.setEnabled(True)
+        self.add_prefab_checkbox.setToolTip("")
 
     def _start_generation(self) -> None:
         self._refresh_paths()
@@ -220,11 +265,13 @@ class NavMeshRadarDialog(QDialog):
         self.mode_combo.setEnabled(False)
         self.remove_offset_checkbox.setEnabled(False)
         self.collapse_faces_checkbox.setEnabled(False)
+        self.collapse_ngons_checkbox.setEnabled(False)
         self.add_prefab_checkbox.setEnabled(False)
         self.progress_bar.setRange(0, 0)
 
         offset = 16.0 if self.remove_offset_checkbox.isChecked() else 0.0
         collapse_faces = self.collapse_faces_checkbox.isChecked()
+        collapse_faces_into_ngons = self.collapse_ngons_checkbox.isChecked()
 
         self._worker = NavMeshRadarWorker(
             self._vpk_path,
@@ -233,6 +280,7 @@ class NavMeshRadarDialog(QDialog):
             offset=offset,
             add_prefab_reference=self.add_prefab_checkbox.isChecked(),
             collapse_faces=collapse_faces,
+            collapse_faces_into_ngons=collapse_faces_into_ngons,
             parent=self,
         )
         self._worker.succeeded.connect(self._generation_succeeded)
@@ -262,7 +310,8 @@ class NavMeshRadarDialog(QDialog):
         self.mode_combo.setEnabled(True)
         self.remove_offset_checkbox.setEnabled(True)
         self.collapse_faces_checkbox.setEnabled(True)
-        self.add_prefab_checkbox.setEnabled(True)
+        self._update_mode_options()
+        self._refresh_paths()
         if self._worker is not None:
             self._worker.deleteLater()
             self._worker = None
@@ -273,4 +322,3 @@ class NavMeshRadarDialog(QDialog):
             event.ignore()
             return
         super().closeEvent(event)
-

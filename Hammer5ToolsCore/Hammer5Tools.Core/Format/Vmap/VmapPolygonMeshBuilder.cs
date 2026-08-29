@@ -248,16 +248,25 @@ internal static class VmapPolygonMeshBuilder
         topology.Tangents.Add(Vector4.Zero);
     }
 
+    /// <summary>
+    /// The area-weighted (Newell) normal of the whole ring. NAV faces are routinely non-planar — a
+    /// quad on a slope has four different heights — so fanning from one corner can land on a sliver
+    /// triangle whose normal points the wrong way. That flips the face, and a flipped face is
+    /// invisible from above.
+    /// </summary>
     private static Vector3 FaceNormal(IReadOnlyList<Vector3> face)
     {
-        for (var index = 1; index < face.Count - 1; index++)
+        var normal = Vector3.Zero;
+        for (var index = 0; index < face.Count; index++)
         {
-            var cross = Vector3.Cross(face[index] - face[0], face[index + 1] - face[0]);
-            if (cross.LengthSquared() > 0.000001f)
-                return Vector3.Normalize(cross);
+            var current = face[index];
+            var next = face[(index + 1) % face.Count];
+            normal.X += (current.Y - next.Y) * (current.Z + next.Z);
+            normal.Y += (current.Z - next.Z) * (current.X + next.X);
+            normal.Z += (current.X - next.X) * (current.Y + next.Y);
         }
 
-        return Vector3.UnitZ;
+        return normal.LengthSquared() > 0.000001f ? Vector3.Normalize(normal) : Vector3.UnitZ;
     }
 
     private static Vector4 Tangent(Vector3 normal)

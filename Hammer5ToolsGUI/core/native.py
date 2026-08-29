@@ -300,6 +300,13 @@ class SmartPropNativeClient:
             *self._buffer_arguments(self._json_bytes(request)),
         ))
 
+    def navmesh_radar_status(self, request: dict) -> dict:
+        """Reports the radar sub-map path and whether the main map already references it."""
+        return json.loads(self._invoke(
+            self._library.h5t_navmesh_radar_status_json,
+            *self._buffer_arguments(self._json_bytes(request)),
+        ))
+
     def write_unreal_map(self, request: dict, output_path: str) -> dict:
         """Writes typed Unreal placements to a VMAP. Returns {"value": {...} | None, "diagnostics": [...]}."""
         return json.loads(self._invoke(
@@ -478,6 +485,7 @@ class SmartPropNativeClient:
             "h5t_vmap_read_scene_json",
             "h5t_vmap_rewrite_references_json",
             "h5t_navmesh_radar_generate_json",
+            "h5t_navmesh_radar_status_json",
             "h5t_vsnap_read_json",
             "h5t_vsnap_serialize_json",
             "h5t_vsnap_generate_json",

@@ -68,6 +68,7 @@ def test_navmesh_radar_result_is_converted_without_core_types():
         offset=16.0,
         add_prefab_reference=False,
         collapse_faces=False,
+        collapse_faces_into_ngons=True,
     )
 
     assert result.generated_vmap_path == "maps/example_navmesh_radar.vmap"
@@ -77,6 +78,7 @@ def test_navmesh_radar_result_is_converted_without_core_types():
     assert captured["materialPath"] == "materials/radgen/radgen_path.vmat"
     assert captured["addPrefabReference"] is False
     assert captured["collapseFaces"] is False
+    assert captured["collapseFacesIntoNgons"] is True
 
 
 def test_smartprop_models_are_converted_without_core_types():
