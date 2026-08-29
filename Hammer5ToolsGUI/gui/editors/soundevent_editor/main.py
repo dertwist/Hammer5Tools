@@ -163,10 +163,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         from gui.editors.soundevent_editor.soundevent_player import SoundEventPlayerWidget
         self.soundevent_player_widget = SoundEventPlayerWidget(self)
         self.soundevent_player_widget.set_event_resolver(lambda: self.ui.hierarchy_widget.currentItem().text(0) if self.ui.hierarchy_widget.currentItem() else None)
-        try:
-            self.ui.verticalLayout_3.addWidget(self.soundevent_player_widget)
-        except Exception:
-            pass
+        # Docked under the property editor; see init_properties_window().
 
         # Init Property Browser Dock
         self.property_browser_widget = PropertyBrowserWidget(self)
@@ -406,6 +403,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.update_properties_window)
+        # Transport sits under the properties it applies to.
+        self.PropertiesWindow.ui.verticalLayout_3.addWidget(self.soundevent_player_widget)
 
     PropertiesWindowInit = init_properties_window
 
