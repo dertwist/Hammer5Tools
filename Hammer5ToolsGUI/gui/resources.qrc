@@ -5,6 +5,7 @@
     <file alias="icons/hammer_icon.png">assets/icons/app/hammer_icon.png</file>
     <file alias="icons/blender_logo.png">assets/icons/app/blender_logo.png</file>
     <file alias="icons/gumroad_logo.png">assets/icons/app/gumroad_logo.png</file>
+    <file alias="icons/git.png">assets/icons/app/git.png</file>
     <file>appicon.ico</file>
   </qresource>
   <qresource prefix="/">

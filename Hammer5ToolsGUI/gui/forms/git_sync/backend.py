@@ -30,6 +30,33 @@ NO_LOCKS = "--no-optional-locks"
 STATUS_V2_ARGS = [NO_LOCKS, "status", "--porcelain=v2", "--branch", "-uall"]
 
 
+# Porcelain XY code -> the word the changes picker shows. The interesting half
+# of XY is whichever side is not a space; `??` has no code at all.
+_CHANGE_WORDS = {"A": "New", "D": "Deleted", "R": "Renamed", "C": "Copied",
+                 "M": "Modified", "T": "Modified", "U": "Conflict"}
+
+
+def parse_entries(porcelain):
+    """[(change word, path)] from `git status --porcelain` output, in git's order."""
+    out = []
+    for line in porcelain.splitlines():
+        if len(line) < 4:
+            continue
+        xy, path = line[:2], line[3:].strip()
+        if " -> " in path:          # rename: the new name is the one on disk
+            path = path.split(" -> ", 1)[1]
+        path = path.strip().strip('"')
+        if not path:
+            continue
+        if xy == "??":
+            word = "New"
+        else:
+            code = xy[0] if xy[0] != " " else xy[1]
+            word = _CHANGE_WORDS.get(code, "Modified")
+        out.append((word, path))
+    return out
+
+
 def parse_status_v2(out):
     """(local_changes, ahead, behind) from STATUS_V2_ARGS output.
 
@@ -91,27 +118,62 @@ class GitRepo:
         code, out, _ = self._run(NO_LOCKS, "remote")
         return code == 0 and "origin" in out.split()
 
-    def changed_files(self, porcelain=None):
-        """(path, size_bytes) for added/modified/untracked files present on disk.
+    def has_commits(self):
+        """False on a freshly initialised repo, where HEAD points at nothing yet."""
+        return self._run("rev-parse", "--verify", "HEAD")[0] == 0
 
-        Deletions are skipped (they add no upload weight). Pass an existing
-        status_porcelain() result to reuse it instead of paying for a second
-        `git status`."""
-        out = []
+    def current_branch(self):
+        return self._run(NO_LOCKS, "branch", "--show-current")[1].strip()
+
+    def upstream_branch(self):
+        """The branch tracked on origin, or "" when no origin upstream is set."""
+        code, out, _ = self._run(
+            NO_LOCKS, "rev-parse", "--abbrev-ref", "--symbolic-full-name",
+            "@{upstream}")
+        ref = out.strip() if code == 0 else ""
+        return ref[len("origin/"):] if ref.startswith("origin/") else ""
+
+    def remote_branch_exists(self, branch):
+        """True when the last fetch produced an origin/<branch> ref."""
+        if not branch:
+            return False
+        return self._run(
+            NO_LOCKS, "show-ref", "--verify", "--quiet",
+            "refs/remotes/origin/" + branch)[0] == 0
+
+    def entries(self, porcelain=None):
+        """[(change word, path, size_bytes)] for every local change.
+
+        A deleted file has no size. Pass an existing status_porcelain() result to
+        reuse it instead of paying for a second `git status`.
+        """
         if porcelain is None:
             porcelain = self.status_porcelain()
-        for line in porcelain.splitlines():
-            if len(line) < 4:
-                continue
-            if "D" in line[:2]:
-                continue
-            path = line[3:].strip().strip('"')
-            if " -> " in path:
-                path = path.split(" -> ", 1)[1]
-            full = os.path.join(self.dir, path)
-            if os.path.isfile(full):
-                out.append((path, os.path.getsize(full)))
+        out = []
+        for word, path in parse_entries(porcelain):
+            full = os.path.join(self.dir, path) if self.dir else path
+            size = os.path.getsize(full) if os.path.isfile(full) else 0
+            out.append((word, path, size))
         return out
+
+    def changed_files(self, porcelain=None):
+        """(path, size_bytes) for changed files still present on disk.
+
+        Deletions are skipped — they add no upload weight, which is all the size
+        guards care about."""
+        return [(path, size) for word, path, size in self.entries(porcelain)
+                if word != "Deleted" and size]
+
+    def stash_top_message(self):
+        """Subject of the newest stash entry, or "" if the stash is empty.
+
+        `git stash push` with nothing to save still exits 0, so this is how the
+        sync flow tells "I stashed something" from "there was nothing to stash".
+        Popping on the strength of the exit code alone would restore whatever
+        unrelated stash the user happened to have sitting there.
+        """
+        code, out, _ = self._run(NO_LOCKS, "stash", "list", "-1", "--format=%gs")
+        return out.strip() if code == 0 else ""
 
     def lfs_tracked(self, paths):
         """Subset of paths Git LFS filters, in one check-attr call for the lot."""
@@ -172,6 +234,16 @@ class GitRepo:
 
 
 def _demo():
+    assert parse_entries("") == []
+    assert parse_entries("?? maps/new.vmap") == [("New", "maps/new.vmap")]
+    assert parse_entries(" M maps/a.vmap") == [("Modified", "maps/a.vmap")]
+    assert parse_entries("M  maps/a.vmap") == [("Modified", "maps/a.vmap")]
+    assert parse_entries(" D models/gone.vmdl") == [("Deleted", "models/gone.vmdl")]
+    assert parse_entries("R  old.vmat -> materials/new.vmat") == [
+        ("Renamed", "materials/new.vmat")]
+    assert parse_entries("UU maps/a.vmap") == [("Conflict", "maps/a.vmap")]
+    assert parse_entries('?? "with space.vmat"') == [("New", "with space.vmat")]
+
     assert parse_status_v2("") == (0, 0, 0)
     assert parse_status_v2(
         "# branch.oid abc\n# branch.head main\n") == (0, 0, 0)  # no upstream

@@ -113,6 +113,18 @@ QLabel[h5Component="gitConflictStatus"][h5State="conflict"] {
 QLabel[h5Component="gitConflictStatus"][h5State="resolved"] {
     color: @hex_7fb800;
 }
+QFrame[h5Component="gitConflictRow"] {
+    background: @surface_raised;
+    border: @border_width solid @border;
+    border-radius: @radius;
+}
+QLabel[h5Component="gitLeftoverNote"] {
+    color: @warning;
+}
+QLabel[h5Component="gitHint"],
+QLabel[h5Component="gitSetupPath"] {
+    color: @text_muted;
+}
 
 QLabel[h5Component="unrealMaterialThumbnail"] {
     border: 1px solid @hex_3a3a3c;
@@ -424,4 +436,3 @@ QPushButton[h5Component="aboutActionButton"]:pressed {
     background-color: @accent_pressed;
     color: @selection_text;
 }
-
