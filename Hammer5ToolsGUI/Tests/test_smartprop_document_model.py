@@ -3,6 +3,8 @@ import sys
 
 sys.path.insert(0, "Hammer5ToolsGUI")
 
+import os
+
 from gui.editors.smartprop_editor.document_model import (
     SmartPropDocumentState,
     SmartPropNode,
@@ -11,6 +13,8 @@ from gui.editors.smartprop_editor.document_model import (
     is_category_marker,
     normalize_kv3_text,
     rename_references,
+    resolve_content_path,
+    split_addon_reference,
 )
 
 
@@ -217,3 +221,24 @@ def test_format_fails_when_the_core_is_unavailable(monkeypatch):
         assert "requires Hammer5Tools Core" in str(error)
     else:
         raise AssertionError("the GUI must not fall back to a second KV3 writer")
+
+
+def test_split_addon_reference_prefers_the_addon_named_in_the_reference():
+    assert split_addon_reference("csgo_addons/other/smartprops/fence.vsmart", "active") == (
+        "other", "smartprops/fence.vsmart")
+    assert split_addon_reference("smartprops/fence.vsmart", "active") == (
+        "active", "smartprops/fence.vsmart")
+
+
+def test_resolve_content_path_finds_a_file_in_the_addon_the_reference_names(tmp_path):
+    content = tmp_path / "csgo_addons"
+    (content / "other" / "smartprops").mkdir(parents=True)
+    target = content / "other" / "smartprops" / "fence.vsmart"
+    target.write_text("{}", encoding="utf-8")
+
+    resolved = resolve_content_path(
+        "csgo_addons/other/smartprops/fence.vsmart", "active", lambda addon: str(content / addon))
+
+    assert os.path.normpath(resolved) == str(target)
+    assert resolve_content_path(
+        "smartprops/missing.vsmart", "active", lambda addon: str(content / addon)) is None

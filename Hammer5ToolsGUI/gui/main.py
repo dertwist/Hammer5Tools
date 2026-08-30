@@ -17,6 +17,17 @@ if not getattr(sys, "frozen", False):
     if source not in sys.path:
         sys.path.insert(0, source)
 
+# PyOpenGL wraps every GL call with a glGetError() round trip unless this is off.
+# The 3D viewports issue tens of thousands of calls per frame on a loaded map, and
+# each check is a driver round trip that can stall the pipeline. Must run before the
+# first `import OpenGL.GL` anywhere, so it lives at the entry point.
+try:
+    import OpenGL
+    OpenGL.ERROR_CHECKING = False
+    OpenGL.ERROR_LOGGING = False
+except ImportError:
+    pass
+
 # Initialize COM / OLE in STA apartment mode on Windows to support native OS dialogs
 if sys.platform == "win32":
     try:

@@ -12,7 +12,9 @@ from PySide6.QtGui import QColor, QCursor, QImage, QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 
-from gui.editors.smartprop_editor.viewport_3d.camera import Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix, decompose_trs
+from gui.editors.smartprop_editor.viewport_3d.camera import (
+    Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix,
+    decompose_trs, boxes_visible, frustum_planes, transformed_box)
 from gui.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
 from gui.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
 from gui.editors.smartprop_editor.viewport_3d import mesh_deform
@@ -108,6 +110,26 @@ def fly_look_delta(widget, event):
     return dx, dy
 
 
+#: {program id: {uniform name: location}}. glGetUniformLocation is a driver-side
+#: string lookup, and the draw loop asks for the same two dozen names on every
+#: submesh of every instance — tens of thousands of redundant lookups per frame on
+#: a loaded map. Locations are fixed for the life of a linked program, so they are
+#: resolved once; link_program drops the entry so a relink cannot serve stale ones.
+_uniform_locations: dict[int, dict[str, int]] = {}
+
+
+def uniform_location(program, name):
+    """The cached location of ``name`` in ``program``."""
+    from OpenGL import GL
+    locations = _uniform_locations.get(program)
+    if locations is None:
+        locations = _uniform_locations[program] = {}
+    location = locations.get(name)
+    if location is None:
+        location = locations[name] = GL.glGetUniformLocation(program, name)
+    return location
+
+
 def link_program(vertex_source, fragment_source):
     from OpenGL import GL
     vs = compile_shader(GL.GL_VERTEX_SHADER, vertex_source)
@@ -123,6 +145,9 @@ def link_program(vertex_source, fragment_source):
         raise RuntimeError(f"Program linking failed: {log}")
     GL.glDeleteShader(vs)
     GL.glDeleteShader(fs)
+    # A freed program id can be handed back for a different program; never serve
+    # its predecessor's locations.
+    _uniform_locations.pop(program, None)
     return program
 
 
@@ -225,6 +250,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # Shader Programs & GPU Buffers
         self._model_program = 0
+        #: {texture id: is a live GL texture}, rebuilt every frame.
+        self._live_textures: dict[int, bool] = {}
+        #: Material state already uploaded to the model program, so a run of
+        #: instances sharing a material binds it once instead of once per submesh.
+        self._bound_material_state = None
+        #: VAO currently bound, so a run of instances of one model binds it once.
+        #: Anything that binds a different VAO must clear this.
+        self._bound_vao = None
         self._picking_program = 0
         self._grid_program = 0
         self._gizmo_program = 0
@@ -451,6 +484,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Upload meshes ready on CPU and free ones the hierarchy dropped
         self.mesh_cache.upload_pending()
         self.mesh_cache.release_unloaded()
+        # Texture ids are only freed just above, so validity holds for the rest of
+        # the frame; _bind_material asks about the same handful of textures once per
+        # submesh of every instance, and glIsTexture is a driver round trip.
+        self._live_textures.clear()
 
         # Matrices
         view = self.camera.view_matrix
@@ -466,9 +503,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # grid quad into an outline instead of the shader-drawn overlay.
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glUseProgram(self._grid_program)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uProjection"), 1, GL.GL_FALSE, proj)
-        GL.glUniform1f(GL.glGetUniformLocation(self._grid_program, "uGridStep"), float(self.grid_step))
+        GL.glUniformMatrix4fv(uniform_location(self._grid_program, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(uniform_location(self._grid_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform1f(uniform_location(self._grid_program, "uGridStep"), float(self.grid_step))
         GL.glBindVertexArray(self._grid_vao)
         GL.glDrawArrays(GL.GL_TRIANGLE_FAN, 0, 4)
         GL.glBindVertexArray(0)
@@ -653,6 +690,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """Draw a camera-facing hierarchy icon."""
         from OpenGL import GL
 
+        # This binds its own VAO, so the batched model draw must not assume its own
+        # is still current afterwards.
+        self._bound_vao = None
+
         source = np.array([*source_position, 1.0], dtype=np.float32)
         center = (SOURCE2_TO_GL.T @ source)[:3]
         distance = float(np.linalg.norm(self.camera.position - center))
@@ -660,23 +701,23 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glUseProgram(self._billboard_program)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._billboard_program, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._billboard_program, "uProjection"), 1, GL.GL_FALSE, proj)
-        GL.glUniform3fv(GL.glGetUniformLocation(self._billboard_program, "uCenter"), 1, center)
+        GL.glUniformMatrix4fv(uniform_location(self._billboard_program, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(uniform_location(self._billboard_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform3fv(uniform_location(self._billboard_program, "uCenter"), 1, center)
         GL.glUniform3fv(
-            GL.glGetUniformLocation(self._billboard_program, "uCameraRight"),
+            uniform_location(self._billboard_program, "uCameraRight"),
             1,
             np.asarray(self.camera.right_vector, dtype=np.float32),
         )
         GL.glUniform3fv(
-            GL.glGetUniformLocation(self._billboard_program, "uCameraUp"),
+            uniform_location(self._billboard_program, "uCameraUp"),
             1,
             np.asarray(self.camera.up_vector, dtype=np.float32),
         )
-        GL.glUniform1f(GL.glGetUniformLocation(self._billboard_program, "uSize"), size)
-        GL.glUniform1i(GL.glGetUniformLocation(self._billboard_program, "uPicking"), pick_color is not None)
+        GL.glUniform1f(uniform_location(self._billboard_program, "uSize"), size)
+        GL.glUniform1i(uniform_location(self._billboard_program, "uPicking"), pick_color is not None)
         GL.glUniform3f(
-            GL.glGetUniformLocation(self._billboard_program, "uPickColor"),
+            uniform_location(self._billboard_program, "uPickColor"),
             *(pick_color or (0.0, 0.0, 0.0)),
         )
         GL.glActiveTexture(GL.GL_TEXTURE0)
@@ -690,7 +731,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 pass
         if not bound:
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        GL.glUniform1i(GL.glGetUniformLocation(self._billboard_program, "uIcon"), 0)
+        GL.glUniform1i(uniform_location(self._billboard_program, "uIcon"), 0)
         GL.glBindVertexArray(self._billboard_vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
         GL.glBindVertexArray(0)
@@ -713,8 +754,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         if use_pick:
             GL.glUseProgram(self._picking_program)
-            GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uView"), 1, GL.GL_FALSE, view)
-            GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uProjection"), 1, GL.GL_FALSE, proj)
+            GL.glUniformMatrix4fv(uniform_location(self._picking_program, "uView"), 1, GL.GL_FALSE, view)
+            GL.glUniformMatrix4fv(uniform_location(self._picking_program, "uProjection"), 1, GL.GL_FALSE, proj)
         else:
             # Configure polygon mode based on shading style
             if self.shading_mode == "wireframe":
@@ -723,9 +764,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
             GL.glUseProgram(self._model_program)
-            GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._model_program, "uView"), 1, GL.GL_FALSE, view)
-            GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._model_program, "uProjection"), 1, GL.GL_FALSE, proj)
-            GL.glUniform3fv(GL.glGetUniformLocation(self._model_program, "uCameraPos"), 1, cam_pos)
+            GL.glUniformMatrix4fv(uniform_location(self._model_program, "uView"), 1, GL.GL_FALSE, view)
+            GL.glUniformMatrix4fv(uniform_location(self._model_program, "uProjection"), 1, GL.GL_FALSE, proj)
+            GL.glUniform3fv(uniform_location(self._model_program, "uCameraPos"), 1, cam_pos)
 
         def set_pick_color(eid):
             """Upload the flat colour for the picking/mask shader.
@@ -735,12 +776,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             """
             if mask_id is not None:
                 c = 1.0 if eid == mask_id else 0.0
-                GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), c, c, c)
+                GL.glUniform3f(uniform_location(self._picking_program, "uPickColor"), c, c, c)
             else:
                 r = (eid & 0xFF) / 255.0
                 g = ((eid >> 8) & 0xFF) / 255.0
                 b = ((eid >> 16) & 0xFF) / 255.0
-                GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), r, g, b)
+                GL.glUniform3f(uniform_location(self._picking_program, "uPickColor"), r, g, b)
 
         # Translucent (BLEND) submeshes are collected here and drawn in a second
         # pass after all opaque geometry, sorted back-to-front with depth writes
@@ -749,6 +790,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         marker_items = []
 
         rendered_pool = self._model_instances if self._model_instances else list(self._model_infos.values())
+        rendered_pool = self._visible_instances(rendered_pool, view, proj)
+        # Instances of one model share their materials, and a loaded map is mostly
+        # repeats of a few models. Drawing them consecutively lets
+        # _draw_material_submesh skip re-uploading material state it already holds.
+        rendered_pool.sort(key=lambda item: item.get("path") or "")
+        # Nothing is bound for this pass yet: the previous one may have used another
+        # program, or left a different texture on unit 0.
+        self._bound_material_state = None
+        self._bound_vao = None
         for info in rendered_pool:
             eid = info.get("id", 0)
             if mask_id is not None and eid != mask_id:
@@ -794,8 +844,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 set_pick_color(eid)
 
                 if gpu_mesh:
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uModel"), 1, GL.GL_FALSE, model_matrix)
-                    GL.glBindVertexArray(gpu_mesh.vao)
+                    GL.glUniformMatrix4fv(uniform_location(self._picking_program, "uModel"), 1, GL.GL_FALSE, model_matrix)
+                    if self._bound_vao != gpu_mesh.vao:
+                        GL.glBindVertexArray(gpu_mesh.vao)
+                        self._bound_vao = gpu_mesh.vao
                     GL.glDrawElements(GL.GL_TRIANGLES, gpu_mesh.index_count, GL.GL_UNSIGNED_INT, None)
                 else:
                     self._draw_box_geometry(model_matrix, is_picking=True)
@@ -833,11 +885,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
                     # Draw fallback wireframe bounding box placeholder
                     GL.glUseProgram(self._wireframe_program)
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
+                    GL.glUniformMatrix4fv(uniform_location(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
+                    GL.glUniformMatrix4fv(uniform_location(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
 
                     box_color = np.array([0.0, 0.85, 0.85] if is_selected else [0.4, 0.6, 0.9], dtype=np.float32)
-                    GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, box_color)
+                    GL.glUniform3fv(uniform_location(self._wireframe_program, "uColor"), 1, box_color)
 
                     self._draw_box_geometry(model_matrix, is_picking=False)
 
@@ -857,6 +909,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self._draw_material_submesh(gm, sm, mm, nm, sel, True, material=mat, tint=tint)
             GL.glDepthMask(GL.GL_TRUE)
             GL.glDisable(GL.GL_CULL_FACE)
+            # Sorted back-to-front, so consecutive items rarely share a material and
+            # the run is short; the state is still whatever the last one bound.
 
         # Hierarchy icons ignore scene depth without writing it.
         if marker_items:
@@ -884,6 +938,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             else:
                 GL.glDisable(GL.GL_DEPTH_TEST)
             GL.glUseProgram(self._picking_program if use_pick else self._model_program)
+            # Billboards leave their icon on texture unit 0, so the model program's
+            # material bindings no longer describe what is actually bound.
+            self._bound_material_state = None
 
         # Restore standard polygon fill mode
         if not use_pick:
@@ -893,6 +950,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """Draw a ~50-unit placeholder box at the model's transform."""
         from OpenGL import GL
 
+        # This binds its own VAO, so the batched model draw must not assume its own
+        # is still current afterwards.
+        self._bound_vao = None
+
         # The unit box geometry spans [-0.5, 0.5]; scale it to a 50-inch cube in
         # the model's local Source space.  In this row-vector chain, local scale
         # is pre-multiplied so it is applied before the model transform.
@@ -900,7 +961,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         gl_box_matrix = scale_matrix(box_size, box_size, box_size) @ model_matrix
 
         program = self._picking_program if is_picking else self._wireframe_program
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(program, "uModel"), 1, GL.GL_FALSE, gl_box_matrix)
+        GL.glUniformMatrix4fv(uniform_location(program, "uModel"), 1, GL.GL_FALSE, gl_box_matrix)
 
         GL.glBindVertexArray(self._box_vao)
         if is_picking:
@@ -971,6 +1032,18 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return tint
         return tuple(a * b for a, b in zip(base_tint, tint))
 
+    def _is_live_texture(self, texture):
+        """Whether ``texture`` is a real GL texture, asked at most once per frame."""
+        from OpenGL import GL
+        live = self._live_textures.get(texture)
+        if live is None:
+            try:
+                live = bool(GL.glIsTexture(texture))
+            except Exception:
+                live = False
+            self._live_textures[texture] = live
+        return live
+
     def _bind_material(self, program, material, textured, force_opaque=False, tint=None):
         """Upload one GPUMaterial's uniforms and bind its textures (units 0-4).
 
@@ -985,7 +1058,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         from OpenGL import GL
 
         def loc(name):
-            return GL.glGetUniformLocation(program, name)
+            return uniform_location(program, name)
 
         tr, tg, tb, ta = tint if tint else (1.0, 1.0, 1.0, 1.0)
 
@@ -1029,13 +1102,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         def bind_tex(unit, tex, sampler_name, has_name):
             GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
             bound = False
-            if tex and textured:
-                try:
-                    if GL.glIsTexture(tex):
-                        GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
-                        bound = True
-                except Exception:
-                    pass
+            if tex and textured and self._is_live_texture(tex):
+                GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+                bound = True
             if not bound:
                 GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             GL.glUniform1i(loc(sampler_name), unit)
@@ -1058,22 +1127,32 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         from OpenGL import GL
         prog = self._model_program
 
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
-        GL.glUniformMatrix3fv(GL.glGetUniformLocation(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
+        GL.glUniformMatrix3fv(uniform_location(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
         # Selection feedback is a post-process outline (see _render_selection_outline),
         # not a per-fragment fill, so ``is_selected`` no longer feeds the model shader.
 
-        self._bind_material(prog, material or submesh.material, textured,
-                            force_opaque=force_opaque, tint=tint)
+        # Binding a material is ~50 GL calls; the uniforms and texture units survive
+        # between draws, so a run of instances sharing one only pays for it once.
+        # Identity is enough for the material: GPUMaterials are cached per resource
+        # and mutated only by a reload, which rebuilds the scene anyway.
+        resolved = material or submesh.material
+        state = (id(resolved), textured, force_opaque, tint)
+        if state != self._bound_material_state:
+            self._bind_material(prog, resolved, textured, force_opaque=force_opaque, tint=tint)
+            self._bound_material_state = state
 
-        GL.glBindVertexArray(gpu_mesh.vao)
+        # Leaving it bound is what lets the next instance of the same model skip the
+        # bind; whoever binds a different VAO clears _bound_vao to say so.
+        if self._bound_vao != gpu_mesh.vao:
+            GL.glBindVertexArray(gpu_mesh.vao)
+            self._bound_vao = gpu_mesh.vao
         # index_offset is an element count; glDrawElements wants a byte offset
         # into the element buffer (uint32 indices -> 4 bytes each).
         GL.glDrawElements(
             GL.GL_TRIANGLES, submesh.index_count, GL.GL_UNSIGNED_INT,
             GL.ctypes.c_void_p(submesh.index_offset * 4),
         )
-        GL.glBindVertexArray(0)
 
     def _ensure_pick_fbo(self, w, h):
         """Create (or resize) the single-sample picking framebuffer to w x h."""
@@ -1257,12 +1336,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glUseProgram(prog)
         GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._mask_color_tex)
-        GL.glUniform1i(GL.glGetUniformLocation(prog, "uMask"), 0)
-        GL.glUniform2f(GL.glGetUniformLocation(prog, "uTexel"), 1.0 / fb_w, 1.0 / fb_h)
-        GL.glUniform1f(GL.glGetUniformLocation(prog, "uThickness"),
+        GL.glUniform1i(uniform_location(prog, "uMask"), 0)
+        GL.glUniform2f(uniform_location(prog, "uTexel"), 1.0 / fb_w, 1.0 / fb_h)
+        GL.glUniform1f(uniform_location(prog, "uThickness"),
                        max(1.0, float(self.outline_thickness) * dpr))
         oc = self.outline_color
-        GL.glUniform3f(GL.glGetUniformLocation(prog, "uOutlineColor"), oc[0], oc[1], oc[2])
+        GL.glUniform3f(uniform_location(prog, "uOutlineColor"), oc[0], oc[1], oc[2])
 
         GL.glBindVertexArray(self._fs_vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
@@ -1274,6 +1353,55 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnable(GL.GL_DEPTH_TEST)
 
     # Camera fitting
+    @staticmethod
+    def _instance_matrix(info):
+        """The instance's Source-space world matrix, however the scene supplied it.
+
+        Map placements arrive with a baked matrix; the SmartProp editor's own
+        elements carry position/rotation/scale instead.
+        """
+        matrix = info.get("world_matrix")
+        if matrix is not None:
+            return matrix
+        return (scale_matrix(*info.get("scale", (1.0, 1.0, 1.0)))
+                @ rotation_matrix_euler(*info.get("rotation", (0.0, 0.0, 0.0)))
+                @ translation_matrix(*info.get("position", (0.0, 0.0, 0.0))))
+
+    def _visible_instances(self, pool, view, proj):
+        """``pool`` with everything outside the camera frustum dropped.
+
+        An instance whose mesh has not loaded yet is always kept: its real size is
+        unknown, and judging it by the placeholder box would blink big models out
+        while they stream in. The selection is kept too, because a gizmo drag edits
+        its world matrix in place without invalidating the cached box.
+        """
+        # ponytail: rebuilds the bounds arrays every frame — one Python pass over the
+        # pool plus two array builds, around a millisecond at a few thousand
+        # instances. Cache them against a scene generation if that starts to show.
+        planes = frustum_planes(view @ proj)
+        cullable, centers, extents, keep = [], [], [], []
+        for info in pool:
+            box = info.get("_cull_box")
+            if box is None and not info.get("is_editor_marker"):
+                mesh = self.mesh_cache.get_gpu_mesh(info.get("path", ""))
+                if mesh is not None:
+                    box = transformed_box(mesh.bbox_min, mesh.bbox_max,
+                                          self._instance_matrix(info) @ SOURCE2_TO_GL)
+                    info["_cull_box"] = box
+            if box is None or info.get("id") == self._selected_id:
+                keep.append(info)
+                continue
+            cullable.append(info)
+            centers.append(box[0])
+            extents.append(box[1])
+
+        if not cullable:
+            return keep
+        visible = boxes_visible(planes, np.array(centers, dtype=np.float32),
+                                np.array(extents, dtype=np.float32))
+        keep.extend(info for info, shown in zip(cullable, visible) if shown)
+        return keep
+
     def _compute_bounds(self, infos):
         """Return the GL-space AABB (min, max, has_bounds) enclosing ``infos``.
 
@@ -2557,8 +2685,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return
         prog = self._gizmo_program
         GL.glUseProgram(prog)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uProjection"), 1, GL.GL_FALSE, proj)
         GL.glDisable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
@@ -2593,9 +2721,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         prog = self._wireframe_program
         GL.glUseProgram(prog)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, SOURCE2_TO_GL)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uModel"), 1, GL.GL_FALSE, SOURCE2_TO_GL)
 
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
@@ -2608,7 +2736,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # 1. Spline Curve Line
             if len(curve) >= 2:
                 color = np.array([0.15, 0.95, 1.0] if is_selected else [0.95, 0.60, 0.20], dtype=np.float32)
-                GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, color)
+                GL.glUniform3fv(uniform_location(prog, "uColor"), 1, color)
                 try:
                     GL.glLineWidth(3.0 if is_selected else 2.0)
                 except Exception:
@@ -2620,7 +2748,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             ctrl_pts = path_info.get("control_points", [])
             if ctrl_pts:
                 marker_color = np.array([0.25, 1.0, 1.0] if is_selected else [1.0, 0.75, 0.30], dtype=np.float32)
-                GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, marker_color)
+                GL.glUniform3fv(uniform_location(prog, "uColor"), 1, marker_color)
                 cross_lines = []
                 s = 4.0
                 for pt in ctrl_pts:
@@ -2637,9 +2765,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     def _set_widget_uniforms(self, prog, model_matrix, color, alpha=1.0):
         from OpenGL import GL
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
-        GL.glUniform3fv(GL.glGetUniformLocation(prog, "uColor"), 1, np.asarray(color, dtype=np.float32))
-        GL.glUniform1f(GL.glGetUniformLocation(prog, "uAlpha"), float(alpha))
+        GL.glUniformMatrix4fv(uniform_location(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
+        GL.glUniform3fv(uniform_location(prog, "uColor"), 1, np.asarray(color, dtype=np.float32))
+        GL.glUniform1f(uniform_location(prog, "uAlpha"), float(alpha))
 
     def _draw_locator_widget(self, view, proj, w):
         """Draw 3D faceted locator matching Hammer 5 reference visuals."""
@@ -2659,12 +2787,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         prog = self._locator_program
         GL.glUseProgram(prog)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
-        GL.glUniformMatrix3fv(GL.glGetUniformLocation(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
-        GL.glUniform3fv(GL.glGetUniformLocation(prog, "uCameraPos"), 1, self.camera.position)
-        GL.glUniform1f(GL.glGetUniformLocation(prog, "uAlpha"), 1.0)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uModel"), 1, GL.GL_FALSE, model)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(uniform_location(prog, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniformMatrix3fv(uniform_location(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
+        GL.glUniform3fv(uniform_location(prog, "uCameraPos"), 1, self.camera.position)
+        GL.glUniform1f(uniform_location(prog, "uAlpha"), 1.0)
 
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthFunc(GL.GL_LEQUAL)

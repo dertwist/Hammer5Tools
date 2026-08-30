@@ -169,6 +169,57 @@ SOURCE2_TO_GL = np.array([
 ], dtype=np.float32)
 
 
+def frustum_planes(view_projection):
+    """The six clip-space planes of ``view_projection`` as rows of (a, b, c, d).
+
+    ``view_projection`` is a row-vector matrix (``clip = world @ view_projection``),
+    matching every other matrix in this module. A world point is inside the frustum
+    when ``a*x + b*y + c*z + d >= 0`` for all six.
+    """
+    m = np.asarray(view_projection, dtype=np.float32)
+    # clip.x is world @ m[:, 0], and so on; each plane is a sum/difference of the
+    # w column with one of the others.
+    w, x, y, z = m[:, 3], m[:, 0], m[:, 1], m[:, 2]
+    planes = np.array([w + x, w - x, w + y, w - y, w + z, w - z], dtype=np.float32)
+    # Normalising keeps the half-space test in world units, so a caller can pad it.
+    lengths = np.linalg.norm(planes[:, :3], axis=1, keepdims=True)
+    return planes / np.where(lengths > 0.0, lengths, 1.0)
+
+
+def boxes_visible(planes, centers, extents):
+    """Which of the given world AABBs touch the frustum, as a boolean array.
+
+    ``centers``/``extents`` are (N, 3); ``extents`` are half-sizes. The test is the
+    standard conservative one — a box straddling a plane counts as visible — so it
+    never hides geometry that should draw, and may keep a few that need not.
+    """
+    centers = np.asarray(centers, dtype=np.float32).reshape(-1, 3)
+    extents = np.asarray(extents, dtype=np.float32).reshape(-1, 3)
+    if not len(centers):
+        return np.zeros(0, dtype=bool)
+    normals = planes[:, :3]
+    distance = centers @ normals.T + planes[:, 3]
+    radius = extents @ np.abs(normals).T
+    return np.all(distance + radius >= 0.0, axis=1)
+
+
+def transformed_box(bbox_min, bbox_max, model_matrix):
+    """(center, half-extent) of a local AABB after ``model_matrix``, axis-aligned again.
+
+    The rotated box is re-enclosed in an axis-aligned one, so the result is a
+    superset of the real bounds — right for culling, too loose for a tight fit.
+    """
+    low = np.asarray(bbox_min, dtype=np.float32)
+    high = np.asarray(bbox_max, dtype=np.float32)
+    corners = np.array([[x, y, z, 1.0]
+                        for x in (low[0], high[0])
+                        for y in (low[1], high[1])
+                        for z in (low[2], high[2])], dtype=np.float32)
+    world = (corners @ np.asarray(model_matrix, dtype=np.float32))[:, :3]
+    low, high = world.min(axis=0), world.max(axis=0)
+    return (low + high) * 0.5, (high - low) * 0.5
+
+
 class Camera:
     """Orbit camera for the 3D viewport."""
 

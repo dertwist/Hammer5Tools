@@ -11,6 +11,7 @@ belong here.
 
 from __future__ import annotations
 
+import functools
 import logging
 import re
 from collections.abc import Mapping
@@ -314,16 +315,90 @@ def variable_rows_to_kv3(rows):
     return variables
 
 
+#: Engine content mounts holding Valve's own compiled assets, highest precedence first.
+_GAME_MOUNTS = ("csgo", "csgo_imported", "csgo_core", "core")
+
+
+def split_addon_reference(resource_path: str, default_addon: str | None = None) -> tuple[str | None, str]:
+    """(owning addon, addon-relative path) for a content reference.
+
+    A reference may name its own addon (``.../csgo_addons/<addon>/...``); otherwise
+    it belongs to whichever addon is providing the context.
+    """
+    normalized = resource_path.replace("\\", "/").lstrip("/")
+    match = re.search(r"(?:^|/)csgo_addons/([^/]+)/(.*)$", normalized, re.IGNORECASE)
+    if match:
+        return match.group(1), match.group(2)
+    return default_addon, normalized
+
+
+def resolve_content_path(resource_path: str, default_addon: str | None = None,
+                         addon_content_directory=None) -> str | None:
+    """The on-disk content file a resource reference names, or None if it is missing."""
+    import os
+
+    if addon_content_directory is None:
+        from gui.settings.common import addon_content_dir as addon_content_directory
+    addon, relative = split_addon_reference(resource_path, default_addon)
+    if not addon:
+        return None
+    full_path = os.path.join(str(addon_content_directory(addon)), relative)
+    return full_path if os.path.isfile(full_path) else None
+
+
+@functools.lru_cache(maxsize=256)
+def _read_archived_smartprop(resource_path: str) -> str | None:
+    """A stock SmartProp's KV3 text, extracted from the game archives.
+
+    Valve ships its own SmartProps only as compiled ``.vsmart_c`` inside the mount
+    VPKs, so a map that places one has no source file to read. Decoding gives back
+    the same ``smartprop2`` KV3 the uncompiled format uses, which the evaluator takes
+    unchanged. Cached because the archives cannot change while the app runs.
+    """
+    import os
+
+    from core.bridge import CoreBridge
+    from gui.settings.common import get_cs2_path
+
+    cs2_path = get_cs2_path()
+    if not cs2_path:
+        return None
+    _, relative = split_addon_reference(resource_path)
+    for mount in _GAME_MOUNTS:
+        archive = os.path.join(cs2_path, "game", mount, "pak01_dir.vpk")
+        if not os.path.isfile(archive):
+            continue
+        try:
+            content = CoreBridge.instance().read_compiled_resource(archive, f"{relative}_c")
+        except Exception:
+            log.debug("Could not read %s from %s", resource_path, mount, exc_info=True)
+            continue
+        if content is not None:
+            return content.data.decode("utf-8", errors="replace")
+    return None
+
+
+def read_smartprop_source(resource_path: str, default_addon: str | None = None) -> str | None:
+    """KV3 text for a .vsmart reference: addon content first, then the game archives.
+
+    Returns None when neither holds it — the caller decides whether that is worth a
+    diagnostic.
+    """
+    path = resolve_content_path(resource_path, default_addon)
+    if path is None:
+        return _read_archived_smartprop(resource_path)
+    with open(path, "r", encoding="utf-8") as source:
+        return source.read()
+
+
 def collect_nested_smartprops(document, default_addon: str | None = None) -> dict:
     """Load the nested SmartProp graph a document references, keyed by resource path.
 
     Core needs every nested .vsmart inlined to resolve a document, so this walks
-    the tree, reads each referenced source file from its owning addon, and recurses.
+    the tree, reads each reference from its owning addon (or the game archives, for
+    Valve's own), and recurses.
     """
-    import os
-    import re
-
-    from gui.settings.common import addon_content_dir, get_addon_name, get_cs2_path
+    from gui.settings.common import get_addon_name, get_cs2_path
 
     cs2_path = get_cs2_path()
     default_addon = default_addon or get_addon_name()
@@ -334,25 +409,16 @@ def collect_nested_smartprops(document, default_addon: str | None = None) -> dic
     visited = set()
 
     def load(resource_path, context_addon):
-        addon = context_addon or default_addon
-        normalized_path = resource_path.replace("\\", "/").lstrip("/")
-        addon_match = re.search(
-            r"(?:^|/)csgo_addons/([^/]+)/(.*)$",
-            normalized_path,
-            re.IGNORECASE,
-        )
-        if addon_match:
-            addon = addon_match.group(1)
-            normalized_path = addon_match.group(2)
-
-        full_path = os.path.join(addon_content_dir(addon), normalized_path)
-        visit_key = os.path.normcase(os.path.normpath(full_path))
-        if visit_key in visited or not os.path.isfile(full_path):
+        addon, relative = split_addon_reference(resource_path, context_addon or default_addon)
+        visit_key = f"{addon}/{relative}".casefold()
+        if visit_key in visited:
             return
         visited.add(visit_key)
 
-        with open(full_path, "r", encoding="utf-8") as nested_file:
-            nested_document = parse_smartprop(nested_file.read())
+        text = read_smartprop_source(resource_path, addon)
+        if text is None:
+            return
+        nested_document = parse_smartprop(text)
         documents[resource_path] = nested_document
         scan(nested_document, addon)
 
