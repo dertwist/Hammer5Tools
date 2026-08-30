@@ -42,7 +42,7 @@ public static class SnapshotGenerator
             new SnapshotChannel("normal", "normal_3d", normals),
             new SnapshotChannel("radius", "generic_float", points.Select(_ => DefaultRadius).ToArray()),
             new SnapshotChannel("opacity", "generic_float", points.Select(_ => DefaultOpacity).ToArray()),
-            new SnapshotChannel("rope_segment", "generic_float", points.Select((_, i) => new[] { (float)i }).ToArray()),
+            new SnapshotChannel("rope_segment_id", "generic_float", points.Select((_, i) => new[] { (float)i }).ToArray()),
         ]);
     }
 
@@ -180,9 +180,11 @@ public static class SnapshotGenerator
             new SnapshotChannel("radius", "generic_float", radii),
             new SnapshotChannel("opacity", "generic_float", opacity),
             new SnapshotChannel("color", "generic_vector_3d", colors),
-            new SnapshotChannel("branch_id", "generic_float", branchIds),
-            new SnapshotChannel("parent_branch_id", "generic_float", parentBranchIds),
-            new SnapshotChannel("rope_segment", "generic_float", ropeSegments),
+            // The engine has no branch attribute, so the branch ids ride in the scratch slots a
+            // C_OP_SetFromCPSnapshot can forward wherever the effect needs them.
+            new SnapshotChannel("scratch_float", "generic_float", branchIds),
+            new SnapshotChannel("alpha2", "generic_float", parentBranchIds),
+            new SnapshotChannel("rope_segment_id", "generic_float", ropeSegments),
         ]);
     }
 

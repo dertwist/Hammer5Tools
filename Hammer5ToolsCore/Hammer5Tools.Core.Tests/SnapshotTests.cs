@@ -23,6 +23,36 @@ public sealed class SnapshotTests
     }
 
     [Test]
+    public async Task RejectsStreamsTheEngineWouldDrop()
+    {
+        var unknownName = new SnapshotDocument([
+            new SnapshotChannel("position", "position_3d", [[1f, 2f, 3f]]),
+            new SnapshotChannel("parent_particle_id", "generic_float", [[7f]]),
+        ]);
+        var wrongType = new SnapshotDocument([
+            new SnapshotChannel("trail_length", "generic_vector_3d", [[1f, 2f, 3f]]),
+        ]);
+
+        await Assert.That(() => SnapshotDocumentSerializer.Serialize(unknownName)).Throws<InvalidDataException>();
+        await Assert.That(() => SnapshotDocumentSerializer.Serialize(wrongType)).Throws<InvalidDataException>();
+    }
+
+    [Test]
+    public async Task GeneratedSnapshotsOnlyUseLoadableStreamNames()
+    {
+        var lightning = SnapshotGenerator.GenerateLightning(
+            new Vector3(0f, 0f, 160f), new Vector3(120f, 30f, 0f), 24, 32f, 0.65f, 2, 4.5f, 840_388);
+
+        foreach (var document in new[] { lightning, SnapshotGenerator.FromPositions([[0f, 0f, 0f], [5f, 0f, 0f]]) })
+        {
+            foreach (var stream in document.Streams)
+            {
+                await Assert.That(SnapshotAttributes.Find(stream.Name)).IsNotNull();
+            }
+        }
+    }
+
+    [Test]
     public async Task GeneratesDeterministicSphereOnRequestedRadius()
     {
         var result = SnapshotGenerator.GeneratePrimitive("sphere", 32, 64f);
@@ -51,7 +81,7 @@ public sealed class SnapshotTests
         var second = SnapshotGenerator.GenerateLightning(
             new Vector3(0f, 0f, 100f), new Vector3(20f, 10f, 0f), 64, 20f, 0.65f, 2, 4f, 1234);
         var positions = first.Streams.Single(stream => stream.Name == "position").Values;
-        var branchIds = first.Streams.Single(stream => stream.Name == "branch_id").Values;
+        var branchIds = first.Streams.Single(stream => stream.Name == "scratch_float").Values;
         var radii = first.Streams.Single(stream => stream.Name == "radius").Values;
 
         await Assert.That(SnapshotDocumentSerializer.Serialize(first))

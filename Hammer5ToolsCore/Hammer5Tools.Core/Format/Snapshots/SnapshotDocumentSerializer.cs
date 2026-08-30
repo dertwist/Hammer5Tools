@@ -118,6 +118,7 @@ public static class SnapshotDocumentSerializer
     {
         foreach (var stream in document.Streams)
         {
+            SnapshotAttributes.ValidateStream(stream.Name, stream.Type);
             var width = GetWidth(stream.Type);
             if (width == 0 && stream.Values.Count == 0)
             {

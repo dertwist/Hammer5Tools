@@ -74,6 +74,17 @@ public sealed class SmartPropContext
                 ResolveComponent(components, 2, defaultValue.Z));
         }
 
+        // A named Color/Vector3 variable holds three components, so reading it as a
+        // scalar and broadcasting would turn every tint grey — [255, 0, 0] became white
+        // and [0, 255, 0] became black.
+        if (value is { Kind: SmartPropValueKind.Variable, Text: { } name } && Vectors.ContainsKey(name))
+        {
+            return new(
+                GetVectorComponent(name, 0),
+                GetVectorComponent(name, 1),
+                GetVectorComponent(name, 2));
+        }
+
         var scalar = ResolveScalar(value, defaultValue.X);
         return new(scalar);
     }
