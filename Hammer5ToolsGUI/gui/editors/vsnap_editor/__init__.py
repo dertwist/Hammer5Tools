@@ -1,2 +1,2 @@
-"""VSnap experiments — experimental source 2 particle snapshot editor."""
+"""Source 2 particle snapshot editor."""
 

@@ -311,8 +311,7 @@ class MainWindow(QMainWindow):
         self.SoundEventEditorMainWindow.load_soundevents(filepath=file_path)
 
     def open_file_in_vsnap(self, file_path):
-        # VSnap experiments: disabled in dev and stable releases.
-        if not file_path or getattr(self, 'vsnapeditor_tab', None) is None:
+        if not file_path:
             return
         tab_index = self.ui.MainWindowTools_tabs.indexOf(self.vsnapeditor_tab)
         if tab_index >= 0:
@@ -338,7 +337,14 @@ class MainWindow(QMainWindow):
             QIcon(":/valve_common/icons/tools/hammer/displacement_tool_icon.png"), "DetailProp Editor",
         )
 
-        # VSnap experiments: disabled from dev and stable releases (experimental project).
+        self.vsnapeditor_tab = QWidget()
+        self.vsnapeditor_tab.setObjectName("vsnapeditor_tab")
+        vsnap_layout = QVBoxLayout(self.vsnapeditor_tab)
+        vsnap_layout.setContentsMargins(0, 0, 0, 0)
+        insert_tab_after(
+            self.ui.MainWindowTools_tabs, self.detailpropeditor_tab, self.vsnapeditor_tab,
+            QIcon(":/valve_common/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png"), "VSnap Editor",
+        )
 
         # Vmap reading experiments: disabled from dev and stable releases (experimental project).
 
@@ -391,9 +397,6 @@ class MainWindow(QMainWindow):
         self._hook_undo_console(getattr(self.DetailPropEditorWidget_instance, 'undo_stack', None))
 
     def _build_vsnap(self):
-        # VSnap experiments: experimental project, disabled in dev and stable releases.
-        if getattr(self, 'vsnapeditor_tab', None) is None:
-            return
         if getattr(self, 'VSnapEditorMainWindow', None) is not None:
             return
         from gui.editors.vsnap_editor.main import VSnapEditorMainWindow
@@ -524,10 +527,8 @@ class MainWindow(QMainWindow):
                        self._build_detailprop, requires_cs2=True),
             EditorSlot('LoadingEditorMainWindow', "Loading Editor",
                        ui.Loading_Editor_Tab, self._build_loading, requires_cs2=True),
-            # VSnap experiments: disabled in dev and stable releases (experimental project).
-            # The slot's page is None when the tab is not created, so it is skipped everywhere.
             EditorSlot('VSnapEditorMainWindow', "VSnap Editor",
-                       getattr(self, 'vsnapeditor_tab', None), self._build_vsnap),
+                       self.vsnapeditor_tab, self._build_vsnap),
             # Vmap reading experiments: disabled in dev and stable releases (experimental project).
             # The slot's page is None when the tab is not created, so it is skipped everywhere.
             EditorSlot('VmapViewMainWindow', "Vmap View",

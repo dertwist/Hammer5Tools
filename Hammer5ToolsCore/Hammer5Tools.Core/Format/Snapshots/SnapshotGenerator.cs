@@ -1,10 +1,11 @@
 namespace Hammer5Tools.Core.Format.Snapshots;
 
-/// <summary>VSnap experiments: creates and modifies particle snapshot point streams.</summary>
+/// <summary>Creates and modifies particle snapshot point streams.</summary>
 public static class SnapshotGenerator
 {
     private static readonly float[] DefaultRadius = [4f];
     private static readonly float[] DefaultOpacity = [1f];
+    private static readonly float[] FirstRopeSegment = [0f];
     /// <summary>Generates a geometric primitive snapshot.</summary>
     public static SnapshotDocument GeneratePrimitive(string primitive, int count, float size)
     {
@@ -42,7 +43,9 @@ public static class SnapshotGenerator
             new SnapshotChannel("normal", "normal_3d", normals),
             new SnapshotChannel("radius", "generic_float", points.Select(_ => DefaultRadius).ToArray()),
             new SnapshotChannel("opacity", "generic_float", points.Select(_ => DefaultOpacity).ToArray()),
-            new SnapshotChannel("rope_segment_id", "generic_float", points.Select((_, i) => new[] { (float)i }).ToArray()),
+            // One authored stroke is one rope, so every point shares a segment id; the index
+            // along the rope is the engine's to derive.
+            new SnapshotChannel("rope_segment_id", "generic_int", points.Select(_ => FirstRopeSegment).ToArray()),
         ]);
     }
 
@@ -171,20 +174,27 @@ public static class SnapshotGenerator
             float.Lerp(1f, 0.45f, point.Progress),
             float.Lerp(1f, 0.95f, point.Progress),
         }).ToArray();
-        var branchIds = branches.SelectMany(branch => branch.Points.Select(_ => new[] { (float)branch.Id })).ToArray();
-        var parentBranchIds = branches.SelectMany(branch => branch.Points.Select(_ => new[] { (float)branch.ParentId })).ToArray();
-        var ropeSegments = branches.SelectMany(branch => branch.Points.Select((point, index) => new[] { (float)index })).ToArray();
+        // Rope Segment ID is the identity of the rope a particle belongs to, not its index along
+        // one: C_OP_RenderRopes starts a fresh strip wherever the id changes between neighbouring
+        // particles. Giving every branch its own id is what stops the renderer joining the end of
+        // one branch to the start of the next, which is what those long stray segments were.
+        // Branch points stay contiguous in the arrays so each id forms one unbroken run.
+        var ropeSegmentIds = branches.SelectMany(branch => branch.Points.Select(_ => new[] { (float)branch.Id })).ToArray();
+        // Distance along the branch, 0 to 1. Valve's own lightning feeds this slot to the rope
+        // renderer's m_nScalarFieldForTextureCoordinate (18), so it is the texture V coordinate.
+        var arcLength = points.Select(point => new[] { point.Progress }).ToArray();
+        // Valve's lightning generator also fills alpha2; deeper branches read dimmer.
+        var branchBrightness = branches.SelectMany(branch => branch.Points
+            .Select(_ => new[] { MathF.Pow(0.7f, branch.Depth) })).ToArray();
         return new SnapshotDocument([
             new SnapshotChannel("position", "position_3d", positions),
             new SnapshotChannel("normal", "normal_3d", normals),
             new SnapshotChannel("radius", "generic_float", radii),
             new SnapshotChannel("opacity", "generic_float", opacity),
             new SnapshotChannel("color", "generic_vector_3d", colors),
-            // The engine has no branch attribute, so the branch ids ride in the scratch slots a
-            // C_OP_SetFromCPSnapshot can forward wherever the effect needs them.
-            new SnapshotChannel("scratch_float", "generic_float", branchIds),
-            new SnapshotChannel("alpha2", "generic_float", parentBranchIds),
-            new SnapshotChannel("rope_segment_id", "generic_float", ropeSegments),
+            new SnapshotChannel("scratch_float", "generic_float", arcLength),
+            new SnapshotChannel("alpha2", "generic_float", branchBrightness),
+            new SnapshotChannel("rope_segment_id", "generic_int", ropeSegmentIds),
         ]);
     }
 

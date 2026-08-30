@@ -8,7 +8,7 @@ using Hammer5Tools.Core.Format.Snapshots;
 
 namespace Hammer5Tools.Core;
 
-/// <summary>VSnap experiments: NativeAOT ABI for Source 2 particle snapshot editing.</summary>
+/// <summary>NativeAOT ABI for Source 2 particle snapshot editing.</summary>
 internal static unsafe class SnapshotApi
 {
     [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_read_binary", CallConvs = [typeof(CallConvCdecl)])]
@@ -87,6 +87,35 @@ internal static unsafe class SnapshotApi
                 root.GetProperty("seed").GetInt32()));
         });
 
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vsnap_attributes_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int AttributesJson(byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer);
+            writer.WriteStartObject();
+            writer.WriteStartArray("attributes");
+            foreach (var attribute in SnapshotAttributes.All)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("name", attribute.Name);
+                writer.WriteString("type", attribute.Type);
+                writer.WriteNumber("attribute", attribute.Attribute);
+                writer.WriteString("display", attribute.DisplayName);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WriteStartObject("unnameable");
+            foreach (var (display, index) in SnapshotAttributes.UnnameableAttributes)
+            {
+                writer.WriteNumber(display, index);
+            }
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        });
+
     private static SnapshotDocument ReadDocument(string json)
     {
         using var document = JsonDocument.Parse(json);
@@ -132,7 +161,7 @@ internal static unsafe class SnapshotApi
             writer.WriteStartArray("values");
             foreach (var value in stream.Values)
             {
-                if (stream.Type == "generic_float")
+                if (stream.Type is "generic_float" or "generic_int")
                 {
                     writer.WriteNumberValue(value[0]);
                     continue;

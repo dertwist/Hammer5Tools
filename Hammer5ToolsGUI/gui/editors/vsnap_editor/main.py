@@ -1,7 +1,4 @@
-"""VSnap experiments: integrated VSnap generation and preview editor.
-
-Experimental project, disabled in dev and stable releases.
-"""
+"""Integrated VSnap generation, attribute authoring and preview editor."""
 
 from __future__ import annotations
 
@@ -11,12 +8,15 @@ from pathlib import Path
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QComboBox,
     QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QMenu,
     QMenuBar,
     QMessageBox,
@@ -54,13 +54,14 @@ class PointTableModel(QAbstractTableModel):
         super().__init__(parent)
         self.document = None
         self.columns = []
+        self.edit_requested = None
 
     def set_document(self, document) -> None:
         self.beginResetModel()
         self.document = document
         self.columns = []
         for stream_index, stream in enumerate(document.streams):
-            if stream.type == "generic_float":
+            if stream.type in ("generic_float", "generic_int"):
                 self.columns.append((stream_index, None, stream.name))
             else:
                 for component, suffix in enumerate(("x", "y", "z")):
@@ -74,12 +75,30 @@ class PointTableModel(QAbstractTableModel):
         return 0 if parent.isValid() else len(self.columns)
 
     def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid() or self.document is None or role not in (Qt.DisplayRole, Qt.ToolTipRole):
+        if not index.isValid() or self.document is None:
+            return None
+        if role not in (Qt.DisplayRole, Qt.EditRole, Qt.ToolTipRole):
             return None
         stream_index, component, _ = self.columns[index.column()]
         value = self.document.streams[stream_index].values[index.row()]
         number = value if component is None else value[component]
-        return f"{number:.6g}"
+        return float(number) if role == Qt.EditRole else f"{number:.6g}"
+
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.NoItemFlags
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+
+    def setData(self, index, value, role=Qt.EditRole) -> bool:
+        if role != Qt.EditRole or not index.isValid() or self.edit_requested is None:
+            return False
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return False
+        stream_index, component, _ = self.columns[index.column()]
+        self.edit_requested(stream_index, index.row(), component, number)
+        return True
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
@@ -88,12 +107,13 @@ class PointTableModel(QAbstractTableModel):
 
 
 class VSnapEditorMainWindow(QWidget):
-    """VSnap experiments: integrated VSnap generation and preview editor."""
+    """Integrated VSnap generation, attribute authoring and preview editor."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setProperty("h5Component", "vsnapEditor")
         self.document = VSnapDocument(self)
+        self._attribute_table = None
         self._draw_points = []
         self._draw_flush_timer = QTimer(self)
         self._draw_flush_timer.setSingleShot(True)
@@ -194,8 +214,31 @@ class VSnapEditorMainWindow(QWidget):
         lighting_form.addRow(light_button)
         controls_layout.addWidget(lighting_group)
 
+        streams_group = QGroupBox("Particle attributes", controls)
+        streams_layout = QVBoxLayout(streams_group)
+        self.stream_list = QListWidget(streams_group)
+        self.stream_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.stream_list.setMaximumHeight(190)
+        add_row = QWidget(streams_group)
+        add_layout = QHBoxLayout(add_row)
+        add_layout.setContentsMargins(0, 0, 0, 0)
+        add_layout.setSpacing(4)
+        self.attribute_combo = QComboBox(add_row)
+        self.attribute_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        add_button = QPushButton("Add", add_row)
+        add_button.clicked.connect(self._add_selected_stream)
+        remove_button = QPushButton("Remove", add_row)
+        remove_button.clicked.connect(self._remove_selected_stream)
+        add_layout.addWidget(self.attribute_combo, 1)
+        add_layout.addWidget(add_button)
+        add_layout.addWidget(remove_button)
+        streams_layout.addWidget(self.stream_list)
+        streams_layout.addWidget(add_row)
+        controls_layout.addWidget(streams_group)
+
         self.status_label = QLabel()
         self.status_label.setProperty("h5Component", "vsnapStatus")
+        self.status_label.setWordWrap(True)
         controls_layout.addWidget(self.status_label)
         controls_layout.addStretch(1)
 
@@ -204,6 +247,7 @@ class VSnapEditorMainWindow(QWidget):
         self.viewport.points_drawn.connect(self._append_drawn_points)
         self.viewport.control_point_moved.connect(self._on_control_point_moved)
         self.table_model = PointTableModel(self)
+        self.table_model.edit_requested = self._on_cell_edited
         self.table = QTableView(center)
         self.table.setModel(self.table_model)
         self.table.setAlternatingRowColors(True)
@@ -235,8 +279,57 @@ class VSnapEditorMainWindow(QWidget):
         data = self.document.data
         self.viewport.set_document(data)
         self.table_model.set_document(data)
+        self._refresh_streams(data)
         self.status_label.setText(f"{data.count:,} points · {len(data.streams)} streams")
         self._update_title()
+
+    def _attributes(self) -> tuple:
+        """The engine's loadable attribute table, fetched from Core once."""
+        if self._attribute_table is None:
+            try:
+                self._attribute_table = CoreBridge.instance().vsnap_attributes()
+            except Exception:
+                log.exception("Could not read the VSnap attribute table from Core")
+                self._attribute_table = ()
+        return self._attribute_table
+
+    def _refresh_streams(self, data) -> None:
+        """Mirrors the document's streams into the list, and the rest into the add combo."""
+        labels = {item.name: item.display for item in self._attributes()}
+        present = {stream.name for stream in data.streams}
+        self.stream_list.clear()
+        for stream in data.streams:
+            label = labels.get(stream.name, stream.name)
+            item = QListWidgetItem(f"{label}  —  {stream.name}")
+            item.setData(Qt.UserRole, stream.name)
+            item.setToolTip(f"{stream.name} ({stream.type})")
+            self.stream_list.addItem(item)
+        self.attribute_combo.clear()
+        for attribute in self._attributes():
+            if attribute.name in present:
+                continue
+            self.attribute_combo.addItem(f"{attribute.display}  —  {attribute.name}", attribute.name)
+
+    def _add_selected_stream(self) -> None:
+        name = self.attribute_combo.currentData()
+        if name:
+            self._run(lambda: self.document.add_stream(name), "Could not add the attribute")
+
+    def _remove_selected_stream(self) -> None:
+        item = self.stream_list.currentItem()
+        if item is None:
+            return
+        name = item.data(Qt.UserRole)
+        if name == "position":
+            QMessageBox.information(self, "VSnap Editor", "Position is the point cloud itself and cannot be removed.")
+            return
+        self._run(lambda: self.document.remove_stream(name), "Could not remove the attribute")
+
+    def _on_cell_edited(self, stream_index: int, row: int, component, value: float) -> None:
+        self._run(
+            lambda: self.document.set_value(stream_index, row, component, value),
+            "Could not apply the edit",
+        )
 
     def _update_title(self, _path: str = "") -> None:
         marker = "*" if self.document.dirty else ""

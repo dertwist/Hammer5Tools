@@ -23,6 +23,45 @@ public sealed class SnapshotTests
     }
 
     [Test]
+    public async Task WritesWholeSamplesAsFloatsNotIntegers()
+    {
+        var source = new SnapshotDocument([
+            new SnapshotChannel("position", "position_3d", [[0f, -14f, 160f]]),
+            new SnapshotChannel("radius", "generic_float", [[8f]]),
+        ]);
+
+        var text = SnapshotDocumentSerializer.Serialize(source);
+
+        // The engine's loader reads float streams as doubles; a bare KV3 int makes it reject
+        // the snapshot, so every sample has to keep its decimal point.
+        await Assert.That(text).Contains("[ 0.0, -14.0, 160.0 ]");
+        await Assert.That(text).Contains("8.0");
+        await Assert.That(text).DoesNotContain("[ 0, -14, 160 ]");
+    }
+
+    [Test]
+    public async Task WritesIntStreamsAsIntegers()
+    {
+        // resourcecompiler type-checks these five and fails with
+        // "Bad data type for stream ... got float expected int".
+        var source = new SnapshotDocument([
+            new SnapshotChannel("position", "position_3d", [[0f, 0f, 0f]]),
+            new SnapshotChannel("rope_segment_id", "generic_int", [[3f]]),
+            new SnapshotChannel("particle_id", "generic_int", [[7f]]),
+        ]);
+
+        var text = SnapshotDocumentSerializer.Serialize(source);
+
+        await Assert.That(text).Contains("\"generic_int\"");
+        await Assert.That(text).DoesNotContain("3.0");
+        await Assert.That(text).DoesNotContain("7.0");
+        foreach (var name in new[] { "sequence_number", "sequence_number1", "hitbox", "particle_id", "rope_segment_id" })
+        {
+            await Assert.That(SnapshotAttributes.Find(name)!.Type).IsEqualTo("generic_int");
+        }
+    }
+
+    [Test]
     public async Task RejectsStreamsTheEngineWouldDrop()
     {
         var unknownName = new SnapshotDocument([
@@ -81,14 +120,19 @@ public sealed class SnapshotTests
         var second = SnapshotGenerator.GenerateLightning(
             new Vector3(0f, 0f, 100f), new Vector3(20f, 10f, 0f), 64, 20f, 0.65f, 2, 4f, 1234);
         var positions = first.Streams.Single(stream => stream.Name == "position").Values;
-        var branchIds = first.Streams.Single(stream => stream.Name == "scratch_float").Values;
+        var ropeSegmentIds = first.Streams.Single(stream => stream.Name == "rope_segment_id").Values;
         var radii = first.Streams.Single(stream => stream.Name == "radius").Values;
 
         await Assert.That(SnapshotDocumentSerializer.Serialize(first))
             .IsEqualTo(SnapshotDocumentSerializer.Serialize(second));
         await Assert.That(positions[0]).IsEquivalentTo(new[] { 0f, 0f, 100f });
         await Assert.That(positions[63]).IsEquivalentTo(new[] { 20f, 10f, 0f });
-        await Assert.That(branchIds.Select(value => value[0]).Distinct().Count()).IsGreaterThan(1);
+        // Each branch needs its own rope segment id or C_OP_RenderRopes joins them into one strip,
+        // and each id must be one contiguous run for the renderer to close the strip in the right place.
+        await Assert.That(ropeSegmentIds.Select(value => value[0]).Distinct().Count()).IsGreaterThan(1);
+        var runs = ropeSegmentIds.Select(value => value[0]).ToArray();
+        var starts = runs.Where((value, index) => index == 0 || runs[index - 1] != value).ToArray();
+        await Assert.That(starts.Length).IsEqualTo(starts.Distinct().Count());
         await Assert.That(radii[0][0]).IsGreaterThan(radii[63][0]);
     }
 

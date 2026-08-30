@@ -1,11 +1,13 @@
-using System.Text;
 using System.Text.Json;
 
 using Hammer5Tools.Core.Format.SmartProps;
 
+using ValveKeyValue;
+using ValveResourceFormat.Serialization.KeyValues;
+
 namespace Hammer5Tools.Core.Format.Snapshots;
 
-/// <summary>VSnap experiments: reads and writes Source 2 particle snapshots in KeyValues3 text form.</summary>
+/// <summary>Reads and writes Source 2 particle snapshots in KeyValues3 text form.</summary>
 public static class SnapshotDocumentSerializer
 {
     /// <summary>Parses and validates a particle snapshot.</summary>
@@ -48,44 +50,47 @@ public static class SnapshotDocumentSerializer
         ArgumentNullException.ThrowIfNull(document);
         Validate(document);
 
-        using var output = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(output))
+        // Built as KeyValues3 directly rather than via JSON: a JSON round trip cannot tell 0.0f
+        // from 0, so every whole-valued sample came back out as a KV3 int. The engine's snapshot
+        // loader wants doubles in a float stream and rejects the file, so the types have to
+        // survive all the way to the writer.
+        var streams = KVObject.Array(document.Streams.Count);
+        foreach (var stream in document.Streams)
         {
-            writer.WriteStartObject();
-            writer.WriteStartObject("stream_data");
-            writer.WriteNumber("num_values", document.Count);
-            writer.WriteStartArray("streams");
-            foreach (var stream in document.Streams)
+            var entry = KVObject.Collection();
+            entry["name"] = new KVObject(stream.Name);
+            entry["type"] = new KVObject(stream.Type);
+            var values = KVObject.Array(stream.Values.Count);
+            foreach (var value in stream.Values)
             {
-                writer.WriteStartObject();
-                writer.WriteString("name", stream.Name);
-                writer.WriteString("type", stream.Type);
-                writer.WriteStartArray("values");
-                foreach (var value in stream.Values)
+                if (stream.Type == "generic_int")
                 {
-                    if (stream.Type == "generic_float")
-                    {
-                        writer.WriteNumberValue(value[0]);
-                    }
-                    else
-                    {
-                        writer.WriteStartArray();
-                        foreach (var component in value)
-                        {
-                            writer.WriteNumberValue(component);
-                        }
-                        writer.WriteEndArray();
-                    }
+                    // The compiler type-checks these five streams as ints and rejects a float.
+                    values.Add(new KVObject((int)value[0]));
+                    continue;
                 }
-                writer.WriteEndArray();
-                writer.WriteEndObject();
+                if (stream.Type == "generic_float")
+                {
+                    values.Add(new KVObject(value[0]));
+                    continue;
+                }
+                var vector = KVObject.Array(value.Length);
+                foreach (var component in value)
+                {
+                    vector.Add(new KVObject(component));
+                }
+                values.Add(vector);
             }
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.Flush();
+            entry["values"] = values;
+            streams.Add(entry);
         }
-        return SmartPropDocumentSerializer.SerializeJson(Encoding.UTF8.GetString(output.ToArray()));
+
+        var streamData = KVObject.Collection();
+        streamData["num_values"] = new KVObject(document.Count);
+        streamData["streams"] = streams;
+        var root = KVObject.Collection();
+        root["stream_data"] = streamData;
+        return root.ToKV3String();
     }
 
     private static float[] ReadValue(JsonElement value, int width)
@@ -109,7 +114,7 @@ public static class SnapshotDocumentSerializer
     private static int GetWidth(string type) => type switch
     {
         "position_3d" or "normal_3d" or "generic_vector_3d" => 3,
-        "generic_float" => 1,
+        "generic_float" or "generic_int" => 1,
         "bone_index_and_weight" => 0,
         _ => throw new InvalidDataException($"Unsupported snapshot stream type '{type}'."),
     };

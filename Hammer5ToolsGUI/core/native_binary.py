@@ -387,6 +387,7 @@ def _snapshot_width(stream_type: str) -> int:
         "normal_3d": 3,
         "generic_vector_3d": 3,
         "generic_float": 1,
+        "generic_int": 1,
         "bone_index_and_weight": 0,
     }
     try:

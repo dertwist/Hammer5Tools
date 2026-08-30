@@ -92,7 +92,7 @@ internal static class SnapshotBinarySerializer
     private static int GetWidth(string type) => type switch
     {
         "position_3d" or "normal_3d" or "generic_vector_3d" => 3,
-        "generic_float" => 1,
+        "generic_float" or "generic_int" => 1,
         "bone_index_and_weight" => 0,
         _ => throw new InvalidDataException($"Unsupported snapshot stream type '{type}'."),
     };

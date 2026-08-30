@@ -311,6 +311,10 @@ class SmartPropNativeClient:
             *self._buffer_arguments(self._json_bytes(request)),
         ))
 
+    def vsnap_attributes(self) -> dict:
+        """Returns the particle attributes a VSnap stream can name, straight from Core."""
+        return json.loads(self._invoke(self._library.h5t_vsnap_attributes_json))
+
     def rewrite_vmap_references(self, path: str, renames: dict) -> dict:
         """Rewrites content-relative asset paths in a VMAP. Returns {"value": bool | None, "diagnostics": [...]}."""
         return decode_vmap_rewrite(self._invoke_binary(
@@ -535,6 +539,9 @@ class SmartPropNativeClient:
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, output, output_length]
             function.restype = ctypes.c_int
+
+        self._library.h5t_vsnap_attributes_json.argtypes = [output, output_length]
+        self._library.h5t_vsnap_attributes_json.restype = ctypes.c_int
 
         self._library.h5t_vmap_write_unreal_json.argtypes = [pointer, length, pointer, length, output, output_length]
         self._library.h5t_vmap_write_unreal_json.restype = ctypes.c_int

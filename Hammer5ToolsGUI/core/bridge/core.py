@@ -285,6 +285,22 @@ class SnapshotStream:
 
 
 @dataclass(frozen=True)
+class SnapshotAttribute:
+    """A particle attribute a VSnap stream can carry, as reported by Core."""
+
+    name: str
+    type: str
+    attribute: int
+    display: str
+
+    @property
+    def width(self) -> int:
+        if self.type in ("generic_float", "generic_int"):
+            return 1
+        return 0 if self.type == "bone_index_and_weight" else 3
+
+
+@dataclass(frozen=True)
 class SnapshotDocument:
     """Python-native particle snapshot returned by Core."""
 
@@ -305,6 +321,8 @@ class CoreBridge:
         # the NativeAOT client for Core calls.
         self._interop = interop
         self._native_client = native_client
+        self._vsnap_attributes: tuple[SnapshotAttribute, ...] | None = None
+        self._vsnap_unnameable: dict[str, int] | None = None
 
     @classmethod
     def instance(cls) -> CoreBridge:
@@ -438,6 +456,22 @@ class CoreBridge:
             ) for smart_prop in scene["smartProps"]),
             tuple(scene["diagnostics"]),
         )
+
+    def vsnap_attributes(self) -> tuple[SnapshotAttribute, ...]:
+        """Returns every particle attribute a VSnap stream can name. Cached; the table is static."""
+        if self._vsnap_attributes is None:
+            payload = self._smartprop_native().vsnap_attributes()
+            self._vsnap_attributes = tuple(
+                SnapshotAttribute(str(item["name"]), str(item["type"]), int(item["attribute"]), str(item["display"]))
+                for item in payload["attributes"]
+            )
+            self._vsnap_unnameable = {str(k): int(v) for k, v in payload.get("unnameable", {}).items()}
+        return self._vsnap_attributes
+
+    def vsnap_unnameable_attributes(self) -> dict[str, int]:
+        """Attributes no stream can name, mapped to the index an operator must write to reach them."""
+        self.vsnap_attributes()
+        return dict(self._vsnap_unnameable or {})
 
     def read_vsnap(self, text: str) -> SnapshotDocument:
         """Parses KeyValues3 VSnap text through Core."""
@@ -810,7 +844,7 @@ class CoreBridge:
         for stream in document["streams"]:
             values = tuple(
                 tuple(float(component) for component in value)
-                if isinstance(value, list) else float(value)
+                if isinstance(value, (list, tuple)) else float(value)
                 for value in stream["values"]
             )
             streams.append(SnapshotStream(str(stream["name"]), str(stream["type"]), values))

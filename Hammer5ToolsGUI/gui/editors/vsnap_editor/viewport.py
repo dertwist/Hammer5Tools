@@ -132,8 +132,8 @@ class VSnap3DRenderArea(QOpenGLWidget):
         self._positions = np.empty((0, 3), dtype=np.float32)
         self._colors = np.empty((0, 4), dtype=np.float32)
         self._radii = np.empty((0,), dtype=np.float32)
-        self._branch_ids = np.empty((0,), dtype=np.int32)
-        self._branch_groups: list[np.ndarray] = []
+        self._segment_ids = np.empty((0,), dtype=np.int32)
+        self._rope_groups: list[np.ndarray] = []
         self._grid_cache = None
         self._uniform_locations: dict[tuple[int, str], int] = {}
         self._view_matrix = self.camera.view_matrix
@@ -176,7 +176,7 @@ class VSnap3DRenderArea(QOpenGLWidget):
         color_values = streams.get("color", ())
         opacity_values = streams.get("opacity", ())
         radius_values = streams.get("radius", ())
-        branch_values = streams.get("branch_id", ())
+        segment_values = streams.get("rope_segment_id", ())
         self._colors = np.ones((count, 4), dtype=np.float32)
         if len(color_values) == count:
             self._colors[:, :3] = np.asarray(color_values, dtype=np.float32)
@@ -185,15 +185,16 @@ class VSnap3DRenderArea(QOpenGLWidget):
         if len(opacity_values) == count:
             self._colors[:, 3] = np.asarray(opacity_values, dtype=np.float32)
         self._radii = np.asarray(radius_values if len(radius_values) == count else [4.0] * count, dtype=np.float32)
-        self._branch_ids = np.asarray(
-            branch_values if len(branch_values) == count else [0] * count,
+        self._segment_ids = np.asarray(
+            segment_values if len(segment_values) == count else [0] * count,
             dtype=np.int32,
         )
-        self._branch_groups = [
-            group
-            for branch_id in dict.fromkeys(self._branch_ids.tolist())
-            for group in (np.flatnonzero(self._branch_ids == branch_id),)
-            if len(group) >= 2
+        # C_OP_RenderRopes starts a fresh strip wherever Rope Segment ID changes between
+        # neighbouring particles, so split on the change rather than gathering every particle
+        # sharing an id: a snapshot may legitimately reuse ids for separate ropes.
+        breaks = np.flatnonzero(self._segment_ids[1:] != self._segment_ids[:-1]) + 1
+        self._rope_groups = [
+            group for group in np.split(np.arange(count), breaks) if len(group) >= 2
         ]
         if self.isValid():
             self.makeCurrent()
@@ -316,7 +317,7 @@ class VSnap3DRenderArea(QOpenGLWidget):
 
         screen_positions = self._project_points(self._positions)
         values = stream.values
-        is_vector = stream.type != "generic_float"
+        is_vector = stream.type not in ("generic_float", "generic_int")
 
         for i in range(len(self._positions)):
             x = screen_positions[i, 0]
@@ -429,7 +430,7 @@ class VSnap3DRenderArea(QOpenGLWidget):
 
         camera_position = self.camera.position
         layers: tuple[list, list, list] = ([], [], [])
-        for group in self._branch_groups:
+        for group in self._rope_groups:
             points, widths, radii, colors = self._rope_samples(
                 self._positions[group], self._radii[group], self._colors[group], camera_position,
             )
@@ -455,7 +456,7 @@ class VSnap3DRenderArea(QOpenGLWidget):
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
     def _rope_samples(self, positions, radii, colors, camera_position):
-        """Camera-facing Catmull-Rom samples for one branch, shared by every ribbon layer."""
+        """Camera-facing Catmull-Rom samples for one rope, shared by every ribbon layer."""
         count = len(positions)
         segments = np.arange(count - 1)
         p0 = positions[np.clip(segments - 1, 0, count - 1)][:, None, :]

@@ -1,4 +1,4 @@
-"""VSnap experiments: tests for the experimental VSnap editor."""
+"""Tests for the VSnap editor."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -40,6 +40,17 @@ class _Native:
         assert request["pointCount"] >= 8
         assert request["seed"] >= 0
         return _payload()
+
+    def vsnap_attributes(self):
+        return {
+            "attributes": [
+                {"name": "position", "type": "position_3d", "attribute": 0, "display": "Position"},
+                {"name": "radius", "type": "generic_float", "attribute": 3, "display": "Radius"},
+                {"name": "trail_length", "type": "generic_float", "attribute": 10, "display": "Trail Length"},
+                {"name": "scratch_vec", "type": "generic_vector_3d", "attribute": 17, "display": "Scratch Vector"},
+            ],
+            "unnameable": {"Rope Segment Data": 48},
+        }
 
 
 def _payload():
@@ -391,3 +402,93 @@ def test_editor_activation_contains_default_preset_failure(monkeypatch):
     )]
     assert editor.document.data.count == 0
     editor.close()
+
+
+def test_bridge_reports_the_engine_loadable_attribute_table():
+    bridge = CoreBridge(native_client=_Native())
+
+    attributes = bridge.vsnap_attributes()
+
+    assert [item.name for item in attributes] == ["position", "radius", "trail_length", "scratch_vec"]
+    assert [item.width for item in attributes] == [3, 1, 1, 3]
+    assert bridge.vsnap_unnameable_attributes() == {"Rope Segment Data": 48}
+
+
+def test_document_adds_and_removes_attribute_streams(monkeypatch):
+    monkeypatch.setattr(CoreBridge, "_instance", CoreBridge(native_client=_Native()), raising=False)
+    document = VSnapDocument()
+    document.replace(SnapshotDocument((
+        SnapshotStream("position", "position_3d", ((1.0, 2.0, 3.0), (4.0, 5.0, 6.0))),
+    )), dirty=False)
+
+    document.add_stream("trail_length")
+    document.add_stream("scratch_vec")
+
+    added = {stream.name: stream for stream in document.data.streams}
+    assert added["trail_length"].values == (0.1, 0.1)
+    assert added["scratch_vec"].values == ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+
+    document.remove_stream("trail_length")
+    assert "trail_length" not in {stream.name for stream in document.data.streams}
+
+    document.remove_stream("position")
+    assert "position" in {stream.name for stream in document.data.streams}
+
+
+def test_table_edits_write_back_into_the_document(monkeypatch):
+    monkeypatch.setattr(CoreBridge, "_instance", CoreBridge(native_client=_Native()), raising=False)
+    document = VSnapDocument()
+    document.replace(SnapshotDocument((
+        SnapshotStream("position", "position_3d", ((1.0, 2.0, 3.0),)),
+        SnapshotStream("radius", "generic_float", (2.0,)),
+    )), dirty=False)
+
+    document.set_value(1, 0, None, 9.5)
+    document.set_value(0, 0, 2, -4.0)
+
+    assert document.data.streams[1].values == (9.5,)
+    assert document.data.streams[0].values == ((1.0, 2.0, -4.0),)
+
+
+def test_bridge_reads_vector_streams_from_the_binary_decoder():
+    """The binary decoder hands back tuples, not lists; a real Valve vsnap has vector streams."""
+
+    class _TupleNative(_Native):
+        def read_vsnap(self, text):
+            return {
+                "count": 2,
+                "streams": [
+                    {"name": "scratch_vec", "type": "generic_vector_3d",
+                     "values": ((-14.1, 0.0, 98.1), (-11.4, 0.0, 96.3))},
+                    {"name": "scratch_float", "type": "generic_float", "values": (2.7, 3.1)},
+                ],
+            }
+
+    document = CoreBridge(native_client=_TupleNative()).read_vsnap("stream_data")
+
+    assert document.streams[0].values[0] == (-14.1, 0.0, 98.1)
+    assert document.streams[1].values == (2.7, 3.1)
+
+
+def test_viewport_splits_ropes_where_the_segment_id_changes():
+    """C_OP_RenderRopes starts a new strip on an id change, so reused ids stay separate ropes."""
+    import numpy as np
+
+    area = VSnap3DRenderArea()
+    area.set_document(SnapshotDocument((
+        SnapshotStream("position", "position_3d", tuple((float(i), 0.0, 0.0) for i in range(6))),
+        SnapshotStream("rope_segment_id", "generic_int", (0.0, 0.0, 1.0, 1.0, 0.0, 0.0)),
+    )))
+
+    groups = [group.tolist() for group in area._rope_groups]
+
+    assert groups == [[0, 1], [2, 3], [4, 5]]
+
+
+def test_viewport_draws_one_rope_when_no_segment_stream_exists():
+    area = VSnap3DRenderArea()
+    area.set_document(SnapshotDocument((
+        SnapshotStream("position", "position_3d", tuple((float(i), 0.0, 0.0) for i in range(4))),
+    )))
+
+    assert [group.tolist() for group in area._rope_groups] == [[0, 1, 2, 3]]

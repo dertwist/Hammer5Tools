@@ -19,6 +19,8 @@ public sealed record SnapshotAttribute(string Name, string Type, int Attribute, 
 public static class SnapshotAttributes
 {
     private const string Float = "generic_float";
+    // The compiler rejects these five as floats: "Bad data type ... expected int".
+    private const string Int = "generic_int";
     private const string Vector = "generic_vector_3d";
 
     /// <summary>Every stream name the engine's snapshot loader accepts, in attribute order.</summary>
@@ -33,12 +35,12 @@ public static class SnapshotAttributes
         new("color", Vector, 6, "Color"),
         new("opacity", Float, 7, "Alpha"),
         new("creation_time", Float, 8, "Creation Time"),
-        new("sequence_number", Float, 9, "Sequence Number"),
+        new("sequence_number", Int, 9, "Sequence Number"),
         new("trail_length", Float, 10, "Trail Length"),
-        new("particle_id", Float, 11, "Particle ID"),
+        new("particle_id", Int, 11, "Particle ID"),
         new("yaw", Float, 12, "Yaw"),
-        new("sequence_number1", Float, 13, "Second Sequence Number"),
-        new("hitbox", Float, 14, "Hitbox Index"),
+        new("sequence_number1", Int, 13, "Second Sequence Number"),
+        new("hitbox", Int, 14, "Hitbox Index"),
         new("hitbox_offset", Vector, 15, "Hitbox Offset Position"),
         new("alpha2", Float, 16, "Alpha Alternate"),
         new("scratch_vec", Vector, 17, "Scratch Vector"),
@@ -56,7 +58,7 @@ public static class SnapshotAttributes
         new("box_mins", Vector, 41, "Box Mins"),
         new("box_maxs", Vector, 42, "Box Maxs"),
         new("box_angles", Vector, 43, "Box Angles"),
-        new("rope_segment_id", Float, 47, "Rope Segment ID"),
+        new("rope_segment_id", Int, 47, "Rope Segment ID"),
     ];
 
     /// <summary>
