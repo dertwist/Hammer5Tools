@@ -17,4 +17,19 @@ public sealed class CoreApiTests
         await Assert.That(result.Value).IsEqualTo(new Version(2, 0));
         await Assert.That(result.Diagnostics).IsEmpty();
     }
+
+    [Test]
+    public async Task NativeApiReportsMatchingAbiVersion()
+    {
+        int abiVersion;
+        unsafe
+        {
+            delegate* unmanaged[Cdecl]<int> function = &NativeApi.GetAbiVersion;
+            abiVersion = function();
+        }
+
+        await Assert.That(abiVersion).IsEqualTo(CoreApi.Version.Major);
+    }
 }
+
+
