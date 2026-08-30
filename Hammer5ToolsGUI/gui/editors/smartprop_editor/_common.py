@@ -87,18 +87,19 @@ def is_category_widget(widget) -> bool:
     return False
 
 
-# Clipboard string patterns for SmartProp components (modifiers, selection criteria)
+# Clipboard string patterns for SmartProp components (modifiers, selection criteria) and properties
 CLIPBOARD_PREFIX = "hammer5tools:smartprop_editor_property"
 CLIPBOARD_BATCH_PREFIX = "hammer5tools:smartprop_editor_property_batch"
+CLIPBOARD_FIELD_PREFIX = "hammer5tools:smartprop_editor_field"
 
 
 def classify_smartprop_class(class_name: str) -> str | None:
     """Return component kind ('modifier', 'selection_criteria', 'element', 'variable', 'choice') from a _class name."""
     if not isinstance(class_name, str):
         return None
-    if class_name.startswith("CSmartPropOperation_"):
+    if class_name.startswith(("CSmartPropOperation_", "CSmartPropFilter_", "CSmartPropModifier_")):
         return "modifier"
-    if class_name.startswith(("CSmartPropSelectionCriteria_", "CSmartPropFilter_")):
+    if class_name.startswith("CSmartPropSelectionCriteria_"):
         return "selection_criteria"
     if class_name.startswith("CSmartPropElement_"):
         return "element"
@@ -208,6 +209,81 @@ def parse_component_clipboard(clip_text: str) -> tuple[str | None, list[dict]]:
             return first_kind, dicts
 
     return None, []
+
+
+def parse_property_clipboard(clip_text: str, target_value_class: str | None = None) -> tuple[bool, object]:
+    """Parse clipboard text containing a single SmartProp property / field value.
+
+    Accepts generic KV3 text (e.g. ``{ m_vEnd = { ... } }``) as well as legacy
+    semicolon-delimited strings (``hammer5tools:smartprop_editor_field;;m_vEnd;;{...}``)
+    or raw literal expressions.
+
+    Returns:
+        (success, payload) where success is True if a property value was found.
+    """
+    if not clip_text or not isinstance(clip_text, str):
+        return False, None
+
+    clip_text = clip_text.strip()
+    if not clip_text:
+        return False, None
+
+    # 1. Check legacy prefix
+    if clip_text.startswith(CLIPBOARD_FIELD_PREFIX + ";;"):
+        parts = clip_text.split(";;")
+        try:
+            import ast
+            if len(parts) >= 3:
+                return True, ast.literal_eval(parts[2])
+            elif len(parts) == 2:
+                return True, ast.literal_eval(parts[1])
+        except Exception:
+            return False, None
+
+    # 2. Try parsing as KV3
+    try:
+        from gui.common import Kv3ToJson
+        from gui.editors.smartprop_editor.document_model import normalize_kv3_text
+        parsed = Kv3ToJson(normalize_kv3_text(clip_text))
+    except Exception:
+        parsed = None
+
+    if parsed is not None:
+        if isinstance(parsed, dict):
+            # If the user copied an entire element/component or container, don't treat as single property
+            if any(k in parsed for k in ("m_Modifiers", "m_SelectionCriteria", "m_Children", "m_Variables", "m_Choices")):
+                return False, None
+            if "_class" in parsed and not target_value_class:
+                return False, None
+            if target_value_class and target_value_class in parsed:
+                return True, parsed[target_value_class]
+            if len(parsed) == 1:
+                return True, next(iter(parsed.values()))
+            if any(k in parsed for k in ("m_Components", "m_Expression", "m_SourceName", "m_VariableComparison", "m_AllowedSurfaceProperties")):
+                return True, parsed
+        elif isinstance(parsed, (list, int, float, str, bool)):
+            return True, parsed
+
+    # 3. Fallback to ast.literal_eval (Python literal dict / list / number)
+    try:
+        import ast
+        evaluated = ast.literal_eval(clip_text)
+        if isinstance(evaluated, dict):
+            if any(k in evaluated for k in ("m_Modifiers", "m_SelectionCriteria", "m_Children", "m_Variables", "m_Choices")):
+                return False, None
+            if target_value_class and target_value_class in evaluated:
+                return True, evaluated[target_value_class]
+            if len(evaluated) == 1:
+                return True, next(iter(evaluated.values()))
+            if any(k in evaluated for k in ("m_Components", "m_Expression", "m_SourceName", "m_VariableComparison")):
+                return True, evaluated
+        elif isinstance(evaluated, (list, int, float, str, bool)):
+            return True, evaluated
+    except Exception:
+        pass
+
+    return False, None
+
 
 
 

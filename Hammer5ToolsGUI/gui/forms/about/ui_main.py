@@ -318,7 +318,7 @@ class Ui_documentation_dialog(object):
         self.open_radio_sound_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Radio Soundevent Guide", None))
         self.open_smart_props_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Smart Props Guide", None))
 
-        self.support_header.setText(QCoreApplication.translate("documentation_dialog", u"Support the Project", None))
+        self.support_header.setText(QCoreApplication.translate("documentation_dialog", u"If You Want to Support the Project", None))
         self.support_desc.setText(QCoreApplication.translate("documentation_dialog", u"Mallet is a Blender addon that brings cool Hammer features to Blender, such as Hotspot UV, viewport camera, and more.\nBuying this addon will support Hammer5Tools development.", None))
         self.support_button.setText(QCoreApplication.translate("documentation_dialog", u"Mallet on Gumroad", None))
 

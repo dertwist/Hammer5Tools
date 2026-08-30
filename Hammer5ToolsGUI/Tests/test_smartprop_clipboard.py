@@ -5,9 +5,11 @@ from gui.common import JsonToKv3
 from gui.editors.smartprop_editor._common import (
     CLIPBOARD_PREFIX,
     CLIPBOARD_BATCH_PREFIX,
+    CLIPBOARD_FIELD_PREFIX,
     classify_smartprop_class,
     classify_smartprop_dict,
     parse_component_clipboard,
+    parse_property_clipboard,
 )
 from gui.editors.smartprop_editor.props.model import ComponentRef
 
@@ -15,8 +17,10 @@ from gui.editors.smartprop_editor.props.model import ComponentRef
 def test_classify_smartprop_class():
     assert classify_smartprop_class("CSmartPropOperation_Translate") == "modifier"
     assert classify_smartprop_class("CSmartPropOperation_Rotate") == "modifier"
+    assert classify_smartprop_class("CSmartPropFilter_VariableValue") == "modifier"
+    assert classify_smartprop_class("CSmartPropFilter_Expression") == "modifier"
+    assert classify_smartprop_class("CSmartPropModifier_Rotate") == "modifier"
     assert classify_smartprop_class("CSmartPropSelectionCriteria_LinearLength") == "selection_criteria"
-    assert classify_smartprop_class("CSmartPropFilter_VariableValue") == "selection_criteria"
     assert classify_smartprop_class("CSmartPropElement_Group") == "element"
     assert classify_smartprop_class("CSmartPropElement_Model") == "element"
     assert classify_smartprop_class("CSmartPropVariable_Float") == "variable"
@@ -28,8 +32,8 @@ def test_classify_smartprop_class():
 
 def test_classify_smartprop_dict():
     assert classify_smartprop_dict({"_class": "CSmartPropOperation_Translate"}) == "modifier"
+    assert classify_smartprop_dict({"_class": "CSmartPropFilter_Probability"}) == "modifier"
     assert classify_smartprop_dict({"_class": "CSmartPropSelectionCriteria_EndCap"}) == "selection_criteria"
-    assert classify_smartprop_dict({"_class": "CSmartPropFilter_Probability"}) == "selection_criteria"
     assert classify_smartprop_dict({"_class": "CSmartPropElement_SmartProp"}) == "element"
     assert classify_smartprop_dict({"_class": "CSmartPropVariable_Int"}) == "variable"
     assert classify_smartprop_dict({}) is None
@@ -49,6 +53,27 @@ def test_kv3_single_modifier_clipboard():
     assert len(dicts) == 1
     assert dicts[0]["_class"] == "CSmartPropOperation_Translate"
     assert dicts[0]["m_nElementID"] == 10
+
+
+def test_kv3_filter_modifier_clipboard():
+    clip_text = """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	m_Modifiers = 
+	[
+		{
+			_class = "CSmartPropFilter_Expression"
+			m_Expression = "(sizer_x == 128) ? true : false"
+			m_bEnabled = true
+			m_nElementID = 13
+		}
+	]
+}"""
+    group_type, dicts = parse_component_clipboard(clip_text)
+    assert group_type == "modifier"
+    assert len(dicts) == 1
+    assert dicts[0]["_class"] == "CSmartPropFilter_Expression"
+    assert dicts[0]["m_Expression"] == "(sizer_x == 128) ? true : false"
+    assert dicts[0]["m_nElementID"] == 13
 
 
 def test_kv3_batch_modifier_clipboard():
@@ -93,8 +118,8 @@ def test_kv3_batch_selection_criteria_clipboard():
         "m_nElementID": 20,
     }
     crit2 = {
-        "_class": "CSmartPropFilter_VariableValue",
-        "m_VariableName": "TestVar",
+        "_class": "CSmartPropSelectionCriteria_EndCap",
+        "m_bStart": True,
         "m_bEnabled": True,
         "m_nElementID": 21,
     }
@@ -103,7 +128,7 @@ def test_kv3_batch_selection_criteria_clipboard():
     assert group_type == "selection_criteria"
     assert len(dicts) == 2
     assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_LinearLength"
-    assert dicts[1]["_class"] == "CSmartPropFilter_VariableValue"
+    assert dicts[1]["_class"] == "CSmartPropSelectionCriteria_EndCap"
 
 
 def test_kv3_bare_component_object_clipboard():
@@ -171,13 +196,13 @@ def test_single_modifier_legacy_clipboard():
 
 def test_batch_selection_criteria_legacy_clipboard():
     crit1 = {
-        "_class": "CSmartPropSelectionCriteria_Linear",
+        "_class": "CSmartPropSelectionCriteria_LinearLength",
         "m_bEnabled": True,
         "m_nElementID": 20,
     }
     crit2 = {
-        "_class": "CSmartPropFilter_VariableValue",
-        "m_VariableName": "TestVar",
+        "_class": "CSmartPropSelectionCriteria_EndCap",
+        "m_bStart": True,
         "m_bEnabled": True,
         "m_nElementID": 21,
     }
@@ -186,8 +211,8 @@ def test_batch_selection_criteria_legacy_clipboard():
     group_type, dicts = parse_component_clipboard(clip_text)
     assert group_type == "selection_criteria"
     assert len(dicts) == 2
-    assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_Linear"
-    assert dicts[1]["_class"] == "CSmartPropFilter_VariableValue"
+    assert dicts[0]["_class"] == "CSmartPropSelectionCriteria_LinearLength"
+    assert dicts[1]["_class"] == "CSmartPropSelectionCriteria_EndCap"
 
 
 def test_invalid_clipboard_texts():
@@ -253,3 +278,55 @@ def test_batch_append_and_id_assignment():
     all_ids = [parent_element["m_nElementID"]] + [m["m_nElementID"] for m in parent_element["m_Modifiers"]]
     assert len(all_ids) == len(set(all_ids))
     assert 999 not in all_ids
+
+
+def test_property_clipboard_kv3_vector():
+    val = {"m_Components": [{"m_Expression": "sizer_x"}, 0.0, 0.0]}
+    clip_text = JsonToKv3({"m_vEnd": val})
+    ok, payload = parse_property_clipboard(clip_text, target_value_class="m_vEnd")
+    assert ok is True
+    assert payload == val
+
+
+def test_property_clipboard_kv3_cross_paste():
+    # Copy m_vEnd, paste into m_vStart
+    val = {"m_Components": [{"m_Expression": "sizer_x"}, 0.0, 0.0]}
+    clip_text = JsonToKv3({"m_vEnd": val})
+    ok, payload = parse_property_clipboard(clip_text, target_value_class="m_vStart")
+    assert ok is True
+    assert payload == val
+
+
+def test_property_clipboard_kv3_float_and_bool():
+    clip_text = JsonToKv3({"m_flScale": 2.5})
+    ok, payload = parse_property_clipboard(clip_text, target_value_class="m_flScale")
+    assert ok is True
+    assert payload == 2.5
+
+    clip_text = JsonToKv3({"m_bEnabled": True})
+    ok, payload = parse_property_clipboard(clip_text, target_value_class="m_bEnabled")
+    assert ok is True
+    assert payload is True
+
+
+def test_property_clipboard_legacy_fallback():
+    val = {"m_Components": [{"m_Expression": "sizer_x"}, 0.0, 0.0]}
+    clip_text = f"{CLIPBOARD_FIELD_PREFIX};;m_vEnd;;{repr(val)}"
+    ok, payload = parse_property_clipboard(clip_text, target_value_class="m_vEnd")
+    assert ok is True
+    assert payload == val
+
+
+def test_property_clipboard_rejects_components_and_containers():
+    # Elements or containers shouldn't accidentally parse as single property
+    elem_clip = JsonToKv3({"_class": "CSmartPropElement_Group", "m_Children": []})
+    ok, _ = parse_property_clipboard(elem_clip)
+    assert ok is False
+
+    batch_clip = JsonToKv3({"m_Modifiers": [{"_class": "CSmartPropOperation_Translate"}]})
+    ok, _ = parse_property_clipboard(batch_clip)
+    assert ok is False
+
+    assert parse_property_clipboard("") == (False, None)
+    assert parse_property_clipboard(None) == (False, None)
+

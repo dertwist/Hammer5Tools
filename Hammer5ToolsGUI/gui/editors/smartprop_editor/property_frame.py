@@ -2,7 +2,7 @@ from gui.editors.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
 from PySide6.QtCore import Signal, Qt, QEvent, QTimer, QThreadPool, QSize
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QCursor
 from gui.editors.smartprop_editor.property import compact
 from gui.styles.common import set_style_property
 
@@ -27,8 +27,11 @@ from gui.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from gui.editors.smartprop_editor.property.reference import PropertyReference
 from gui.editors.smartprop_editor.property.warning import PropertyWarning
 from gui.editors.smartprop_editor.property.path_editor import PropertyPathEditor
-from PySide6.QtGui import QCursor
 from gui.widgets import HierarchyItemModel
+from gui.editors.smartprop_editor._common import (
+    CLIPBOARD_FIELD_PREFIX,
+    parse_property_clipboard,
+)
 import uuid
 
 import ast
@@ -163,7 +166,7 @@ class PropertyFrame(QWidget):
     _BUILD_CHUNK = 4
 
     # Clipboard tag for a single copied property value.
-    _FIELD_CLIP_TAG = "hammer5tools:smartprop_editor_field"
+    _FIELD_CLIP_TAG = CLIPBOARD_FIELD_PREFIX
 
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
     _ONLY_VARIABLE_PROPERTIES = ()
@@ -582,7 +585,7 @@ class PropertyFrame(QWidget):
 
 
     def copy_property(self) -> bool:
-        """Put the selected row's value on the clipboard. False if nothing to copy."""
+        """Put the selected row's value on the clipboard as KV3. False if nothing to copy."""
         row = self._selected_row
         if row is None:
             return False
@@ -591,16 +594,20 @@ class PropertyFrame(QWidget):
             return False
         # Row values are {value_class: payload}; None means "Default" mode.
         payload = getattr(row, 'value', None)
-        if isinstance(payload, dict):
+        if isinstance(payload, dict) and value_class in payload:
             payload = payload.get(value_class)
-        QApplication.clipboard().setText(
-            f"{self._FIELD_CLIP_TAG};;{value_class};;{payload!r}"
-        )
+        from gui.common import JsonToKv3
+        try:
+            clip_str = JsonToKv3({value_class: payload})
+        except Exception:
+            clip_str = f"{self._FIELD_CLIP_TAG};;{value_class};;{payload!r}"
+        QApplication.clipboard().setText(clip_str)
         return True
 
     @classmethod
     def _clipboard_has_property(cls) -> bool:
-        return QApplication.clipboard().text().startswith(cls._FIELD_CLIP_TAG + ";;")
+        ok, _ = parse_property_clipboard(QApplication.clipboard().text())
+        return ok
 
     def paste_property(self) -> bool:
         """Apply a copied value to the selected row. False if it can't be applied.
@@ -617,12 +624,8 @@ class PropertyFrame(QWidget):
         if not value_class:
             return False
 
-        parts = QApplication.clipboard().text().split(";;")
-        if len(parts) < 3 or parts[0] != self._FIELD_CLIP_TAG:
-            return False
-        try:
-            payload = ast.literal_eval(parts[2])
-        except (ValueError, SyntaxError):
+        ok, payload = parse_property_clipboard(QApplication.clipboard().text(), target_value_class=value_class)
+        if not ok:
             return False
 
         if not self.update_property_value(value_class, payload):
@@ -915,16 +918,27 @@ class PropertyFrame(QWidget):
         """Update a single child property widget by key. Returns True if successful."""
         for w in self._property_widgets:
             if getattr(w, 'value_class', None) == key:
-                if hasattr(w, 'set_value'):
-                    w.set_value(new_value)
-                    return True
-                elif hasattr(w, 'reconfigure'):
+                if hasattr(w, 'reconfigure'):
                     # Collect widget-specific config stored from prior construction
                     extra_kw = {}
                     if hasattr(w, '_pool_items'):
                         extra_kw['items'] = w._pool_items
                     if hasattr(w, '_pool_filter_types'):
                         extra_kw['filter_types'] = w._pool_filter_types
+                    if hasattr(w, '_slider_range'):
+                        extra_kw['slider_range'] = w._slider_range
+                    if hasattr(w, 'int_bool'):
+                        extra_kw['int_bool'] = w.int_bool
+                    if hasattr(w, '_pool_expression_bool'):
+                        extra_kw['expression_bool'] = w._pool_expression_bool
+                    if hasattr(w, '_pool_only_string'):
+                        extra_kw['only_string'] = w._pool_only_string
+                    if hasattr(w, '_pool_only_variable'):
+                        extra_kw['only_variable'] = w._pool_only_variable
+                    if hasattr(w, '_pool_force_variable'):
+                        extra_kw['force_variable'] = w._pool_force_variable
+                    if hasattr(w, '_browser_type'):
+                        extra_kw['browser_type'] = w._browser_type
                     w.reconfigure(
                         element_id_generator=self.element_id_generator,
                         value_class=key,
@@ -932,6 +946,9 @@ class PropertyFrame(QWidget):
                         variables_scrollArea=self.variables_scrollArea,
                         **extra_kw,
                     )
+                    return True
+                elif hasattr(w, 'set_value'):
+                    w.set_value(new_value)
                     return True
                 return False
         return False
