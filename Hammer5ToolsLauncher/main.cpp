@@ -7,7 +7,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -188,55 +187,30 @@ bool SendRequestWithRetry(const std::string& message, DWORD timeoutMilliseconds)
     return false;
 }
 
-bool IsHook(const std::vector<std::wstring>& arguments, bool& uninstall)
+// Velopack passes --veloapp-install/-updated/-obsolete/-uninstall. Squirrel and
+// pre-release Velopack used --squirrel-*/--velopack-*. Matching on the prefix means
+// an installer argument we do not recognise still exits quietly rather than starting
+// the GUI, which is what made every install flash a real window that the installer
+// then killed.
+bool IsHook(const std::vector<std::wstring>& arguments)
 {
+    static const std::wstring prefixes[] = {L"--veloapp-", L"--velopack-", L"--squirrel-"};
     for (const auto& argument : arguments)
-    {
-        if (argument == L"--velopack-uninstall" || argument == L"--velopack-obsolete"
-            || argument == L"--velopack-obsoleted" || argument == L"--squirrel-uninstall"
-            || argument == L"--squirrel-obsolete" || argument == L"--squirrel-obsoleted")
-        {
-            uninstall = true;
-            return true;
-        }
-        if (argument == L"--velopack-install" || argument == L"--velopack-updated"
-            || argument == L"--squirrel-install" || argument == L"--squirrel-updated")
-            return true;
-    }
+        for (const auto& prefix : prefixes)
+            if (argument.rfind(prefix, 0) == 0)
+                return true;
     return false;
 }
 
-void HandleHook(const fs::path& installRoot, bool uninstall)
+// User data must never live under installRoot: Velopack replaces the whole `current`
+// folder on every update, taking anything inside it with it. Keeping it in the user
+// profile also means an uninstall no longer needs to back it up and restore it.
+fs::path UserDataRoot()
 {
-    wchar_t localAppData[MAX_PATH]{};
-    SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, localAppData);
-    const auto backupRoot = fs::path(localAppData) / "Hammer5Tools.Backup";
-    const auto userData = installRoot / "userdata";
-    const auto backupData = backupRoot / "userdata";
-    const auto sentinel = backupRoot / "USERDATA_BACKUP_VALID";
-    try
-    {
-        fs::create_directories(backupRoot);
-        if (uninstall && fs::is_directory(userData))
-        {
-            fs::remove_all(backupData);
-            fs::copy(userData, backupData, fs::copy_options::recursive);
-            std::ofstream(sentinel) << "valid";
-            Log(backupRoot, L"Backed up user data during uninstall hook.");
-        }
-        else if (!uninstall && fs::is_directory(backupData) && fs::exists(sentinel))
-        {
-            fs::remove_all(userData);
-            fs::copy(backupData, userData, fs::copy_options::recursive);
-            fs::remove_all(backupData);
-            fs::remove(sentinel);
-            Log(backupRoot, L"Restored user data during install hook.");
-        }
-    }
-    catch (const std::exception& exception)
-    {
-        Log(backupRoot, L"Hook operation failed: " + std::wstring(exception.what(), exception.what() + std::strlen(exception.what())));
-    }
+    wchar_t profile[MAX_PATH]{};
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, profile)))
+        return fs::path(profile) / L"Hammer5Tools";
+    return fs::path(EnvironmentOrDefault(L"USERPROFILE", L".")) / L"Hammer5Tools";
 }
 
 std::wstring ChildArguments(const std::vector<std::wstring>& arguments)
@@ -292,7 +266,7 @@ std::wstring ReadErrorDetails(const fs::path& directory)
 int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& arguments,
            const fs::path& installRoot, const fs::path& appRoot, const fs::path& runtimeRoot)
 {
-    const auto logsDirectory = installRoot / "userdata" / "logs";
+    const auto logsDirectory = UserDataRoot() / "logs";
     try
     {
         fs::create_directories(logsDirectory);
@@ -318,7 +292,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     SetEnvironmentVariableW(L"H5T_INSTALL_ROOT", installRoot.c_str());
     SetEnvironmentVariableW(L"H5T_APP_ROOT", appRoot.c_str());
     SetEnvironmentVariableW(L"H5T_RUNTIME_ROOT", runtimeRoot.c_str());
-    SetEnvironmentVariableW(L"H5T_USER_DATA_ROOT", (installRoot / "userdata").c_str());
+    SetEnvironmentVariableW(L"H5T_USER_DATA_ROOT", UserDataRoot().c_str());
 
     auto commandLine = L"\"" + executable.wstring() + L"\"";
     const auto childArguments = ChildArguments(arguments);
@@ -417,12 +391,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     LocalFree(nativeArguments);
 
     const auto installRoot = ExecutablePath().parent_path();
-    bool uninstall = false;
-    if (IsHook(arguments, uninstall))
-    {
-        HandleHook(installRoot, uninstall);
+    if (IsHook(arguments))
         return 0;
-    }
 
     const auto message = launcher::SerializeRequest(launcher::ParseRequest(arguments, fs::current_path()));
     if (SendRequest(message))
@@ -463,7 +433,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     auto exitCode = RunGuiOnce(guiExecutable, childArguments, installRoot, guiExecutable.parent_path(), runtimeRoot);
     while (exitCode == RestartExitCode)
     {
-        Log(installRoot / "userdata" / "logs", L"Restart requested by GUI.");
+        Log(UserDataRoot() / "logs", L"Restart requested by GUI.");
         childArguments.clear();
         exitCode = RunGuiOnce(guiExecutable, childArguments, installRoot, guiExecutable.parent_path(), runtimeRoot);
     }

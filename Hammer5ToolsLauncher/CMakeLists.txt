@@ -19,6 +19,9 @@ include(CTest)
 if(BUILD_TESTING)
     add_executable(LauncherContractTests tests.cpp request.cpp)
     target_link_libraries(LauncherContractTests PRIVATE kernel32)
+    # Release defines NDEBUG, which compiles every assert() in tests.cpp away and
+    # leaves the suite structurally unable to fail. Keep them live in every config.
+    target_compile_options(LauncherContractTests PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/UNDEBUG>)
     add_dependencies(LauncherContractTests Hammer5Tools)
     add_test(NAME LauncherContractTests COMMAND LauncherContractTests $<TARGET_FILE:Hammer5Tools>)
 endif()

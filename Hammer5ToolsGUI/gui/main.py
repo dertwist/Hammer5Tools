@@ -3,7 +3,6 @@ import sys
 import os
 import argparse
 import faulthandler
-import time
 import ctypes
 
 log = logging.getLogger(__name__)
@@ -57,80 +56,19 @@ if sys.platform == 'win32':
 # VELOPACK / SQUIRREL HOOKS
 # This MUST run before any other imports (especially Qt) to prevent the GUI from opening
 # during installation, uninstallation, or updates.
+_INSTALLER_ARG_PREFIXES = ('--veloapp-', '--velopack-', '--squirrel-')
+
+
 def _handle_velopack_hook(argv):
-    # Check if any argument contains 'velopack' or 'squirrel'
-    # This is a broad check to catch any technical calls from the installer.
-    if not any('velopack' in arg.lower() or 'squirrel' in arg.lower() for arg in argv):
-        return
+    """Exit immediately when the installer started us to run a hook.
 
-    import shutil
-    from pathlib import Path
-
-    uninstall_hooks = {
-        '--velopack-uninstall', '--velopack-obsolete', '--velopack-obsoleted',
-        '--squirrel-uninstall', '--squirrel-obsolete', '--squirrel-obsoleted',
-    }
-    install_hooks = {
-        '--velopack-install', '--velopack-updated',
-        '--squirrel-install', '--squirrel-updated',
-    }
-
-    active = set(argv) & (uninstall_hooks | install_hooks)
-    if not active:
-        # If it's a velopack flag but not a known hook, we still want to exit
-        # to prevent the GUI from popping up during background operations.
+    Velopack passes --veloapp-install/-updated/-obsolete/-uninstall. Matching the
+    prefix rather than a fixed list means an unrecognised installer argument exits
+    too, instead of opening a window the installer will later kill. User data lives
+    outside the install tree now, so there is nothing to back up or restore here.
+    """
+    if any(argument.startswith(_INSTALLER_ARG_PREFIXES) for argument in argv[1:]):
         sys.exit(0)
-
-    try:
-        exe_path = Path(sys.executable).resolve()
-        current_dir = exe_path.parent
-        install_root = current_dir.parent
-        userdata_path = install_root / "userdata"
-
-        local_appdata = Path(os.environ.get('LOCALAPPDATA') or (Path.home() / 'AppData' / 'Local'))
-        backup_root = local_appdata / "Hammer5Tools.Backup"
-        backup_userdata = backup_root / "userdata"
-        backup_sentinel = backup_root / "USERDATA_BACKUP_VALID"
-
-        def _log(msg):
-            try:
-                backup_root.mkdir(parents=True, exist_ok=True)
-                with open(backup_root / "hook.log", "a", encoding="utf-8") as fh:
-                    timestamp = time.strftime('%Y-%m-%dT%H:%M:%S')
-                    fh.write(f"{timestamp} {' '.join(argv[1:])} :: {msg}\n")
-            except Exception:
-                pass
-
-        if active & uninstall_hooks:
-            _log(f"Starting backup from {userdata_path}")
-            if userdata_path.is_dir():
-                try:
-                    if backup_userdata.exists():
-                        shutil.rmtree(backup_userdata, ignore_errors=True)
-                    backup_root.mkdir(parents=True, exist_ok=True)
-                    shutil.copytree(userdata_path, backup_userdata)
-                    if backup_userdata.exists() and any(backup_userdata.iterdir()):
-                        backup_sentinel.write_text("valid", encoding="utf-8")
-                except Exception as e:
-                    _log(f"BACKUP FAILED: {e}")
-
-        if active & install_hooks:
-            if backup_userdata.is_dir() and backup_sentinel.exists():
-                try:
-                    if userdata_path.exists():
-                        shutil.rmtree(userdata_path, ignore_errors=True)
-                    userdata_path.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copytree(backup_userdata, userdata_path)
-                    if userdata_path.exists() and any(userdata_path.iterdir()):
-                        shutil.rmtree(backup_userdata, ignore_errors=True)
-                        backup_sentinel.unlink(missing_ok=True)
-                except Exception as e:
-                    _log(f"RESTORE FAILED: {e}")
-    except Exception:
-        pass
-    
-    # ALWAYS exit after handling hooks
-    sys.exit(0)
 
 
 def format_crash_report(exc_type, exc, tb, thread_name=None):

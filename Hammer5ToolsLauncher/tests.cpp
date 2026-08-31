@@ -43,6 +43,31 @@ void TestProcessForwarding(const wchar_t* launcherPath)
     CloseHandle(process.hProcess);
     CloseHandle(pipe);
 }
+
+// Velopack runs the app with --veloapp-<action> as an install/update/uninstall hook,
+// waits, then kills it. Treating one as a normal start made every install flash a real
+// window. A launcher that starts the GUI blocks on it, so the timeout catches that.
+void TestInstallerHooksExitWithoutStartingGui(const wchar_t* launcherPath)
+{
+    for (const auto* flag : {L"--veloapp-install", L"--veloapp-updated",
+                             L"--veloapp-obsolete", L"--veloapp-uninstall",
+                             L"--velopack-install", L"--squirrel-install"})
+    {
+        std::wstring command = L"\"" + std::wstring(launcherPath) + L"\" " + flag + L" 1.0.0";
+        std::vector<wchar_t> mutableCommand(command.begin(), command.end());
+        mutableCommand.push_back(L'\0');
+        STARTUPINFOW startup{sizeof(startup)};
+        PROCESS_INFORMATION process{};
+        assert(CreateProcessW(launcherPath, mutableCommand.data(), nullptr, nullptr, FALSE, 0,
+                              nullptr, nullptr, &startup, &process));
+        assert(WaitForSingleObject(process.hProcess, 5000) == WAIT_OBJECT_0);
+        DWORD exitCode = 1;
+        GetExitCodeProcess(process.hProcess, &exitCode);
+        assert(exitCode == 0);
+        CloseHandle(process.hThread);
+        CloseHandle(process.hProcess);
+    }
+}
 }
 
 int wmain(int argc, wchar_t** argv)
@@ -61,5 +86,6 @@ int wmain(int argc, wchar_t** argv)
     assert(openRequest.FilePath == L"C:\\work\\events\\addon.vsndevts");
     assert(argc == 2);
     TestProcessForwarding(argv[1]);
+    TestInstallerHooksExitWithoutStartingGui(argv[1]);
     return 0;
 }

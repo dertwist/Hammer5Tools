@@ -88,16 +88,31 @@ jobs:
         shell: pwsh
         run: |
           Push-Location Hammer5Tools
-          if (Test-Path .\Hammer5Tools.exe) {
-            & .\Hammer5Tools.exe --velopack-install
-            & .\Hammer5Tools.exe --squirrel-install
-          } elseif (Test-Path .\app\Hammer5Tools.exe) {
-            & .\app\Hammer5Tools.exe --velopack-install
-            & .\app\Hammer5Tools.exe --squirrel-install
-          } else {
+          $exe = '.\Hammer5Tools.exe'
+          if (-not (Test-Path $exe)) { $exe = '.pp\Hammer5Tools.exe' }
+          if (-not (Test-Path $exe)) {
             Write-Host 'Hammer5Tools.exe not found; unable to test hooks. Directory content:'
             Get-ChildItem -Recurse
             exit 1
+          }
+          # --veloapp-* is what Velopack actually sends. This step used to run only the
+          # --velopack-*/--squirrel-* spellings the launcher invented, so it passed while
+          # every real install started a GUI the installer then killed.
+          $flags = @(
+            '--veloapp-install', '--veloapp-updated', '--veloapp-obsolete', '--veloapp-uninstall',
+            '--velopack-install', '--squirrel-install'
+          )
+          foreach ($flag in $flags) {
+            $process = Start-Process $exe -ArgumentList $flag, '1.0.0' -PassThru
+            if (-not $process.WaitForExit(10000)) {
+              $process.Kill()
+              throw "$flag did not exit: the installer hook was treated as a normal start."
+            }
+            $gui = @(Get-Process Hammer5ToolsGUI -ErrorAction SilentlyContinue)
+            if ($gui.Count -gt 0) {
+              $gui | Stop-Process -Force
+              throw "$flag started the GUI instead of exiting."
+            }
           }
           Pop-Location
 
