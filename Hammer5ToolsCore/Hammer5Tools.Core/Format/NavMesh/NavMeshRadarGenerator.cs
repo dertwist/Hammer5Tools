@@ -163,12 +163,15 @@ public static class NavMeshRadarGenerator
     /// <summary>
     /// Generates a replaceable radar sub-map and adds one prefab reference to the main map.
     /// </summary>
-    public static CoreResult<NavMeshRadarResult> Generate(NavMeshRadarRequest request)
+    public static CoreResult<NavMeshRadarResult> Generate(
+        NavMeshRadarRequest request,
+        Action<float, string>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         try
         {
+            progress?.Invoke(0f, "Validating paths");
             Validate(request);
             var mapName = Path.GetFileNameWithoutExtension(request.MainVmapPath);
             var geometry = request.Mode switch
@@ -177,11 +180,13 @@ public static class NavMeshRadarGenerator
                     request.VpkPath,
                     mapName,
                     request.CollapseFaces,
-                    request.CollapseFacesIntoNgons),
+                    request.CollapseFacesIntoNgons,
+                    progress),
                 NavMeshRadarMode.NavMeshOffset => ReadOffsetNavGeometry(
                     request.VpkPath,
                     mapName,
-                    request.Offset),
+                    request.Offset,
+                    progress),
                 _ => throw new InvalidDataException($"Unsupported radar mode '{request.Mode}'."),
             };
 
@@ -193,11 +198,14 @@ public static class NavMeshRadarGenerator
                 request.MainVmapPath,
                 generatedPath,
                 request.MaterialPath,
-                geometry.Faces);
+                geometry.Faces,
+                progress);
             var targetMapPath = $"maps/{Path.GetFileName(generatedPath)}";
+            progress?.Invoke(0.95f, "Updating the main map");
             var (referenceAdded, backupPath) = request.AddPrefabReference
                 ? EnsurePrefabReference(request.MainVmapPath, targetMapPath)
                 : (false, (string?)null);
+            progress?.Invoke(1f, "Done");
 
             return CoreResult.Success(new NavMeshRadarResult(
                 generatedPath,
@@ -781,9 +789,11 @@ public static class NavMeshRadarGenerator
         string vpkPath,
         string mapName,
         bool collapseFaces,
-        bool collapseFacesIntoNgons)
+        bool collapseFacesIntoNgons,
+        Action<float, string>? progress = null)
     {
         var entryPath = $"maps/{mapName}/baked_bomb_damage.vdata_c";
+        progress?.Invoke(0.05f, "Reading the compiled VPK");
         var bytes = ReadEntry(vpkPath, entryPath);
         using var resource = new Resource { FileName = entryPath };
         using var stream = new MemoryStream(bytes, writable: false);
@@ -791,20 +801,29 @@ public static class NavMeshRadarGenerator
         if (resource.DataBlock is not BombDamage bombDamage)
             throw new InvalidDataException($"'{entryPath}' is not a baked bomb-damage resource.");
 
+        progress?.Invoke(0.2f, $"Building faces from {bombDamage.Positions.Length:N0} samples");
         var faces = collapseFaces || collapseFacesIntoNgons
             ? MergeBakedSamples(bombDamage.Positions)
             : SampleQuads(bombDamage.Positions);
         if (collapseFacesIntoNgons)
+        {
+            progress?.Invoke(0.5f, $"Collapsing {faces.Count:N0} faces into N-gons");
             faces = CollapseBakedFacesIntoNgons(faces);
+        }
 
         return new RadarGeometry(
             bombDamage.Positions.Length,
             faces);
     }
 
-    private static RadarGeometry ReadOffsetNavGeometry(string vpkPath, string mapName, float offset)
+    private static RadarGeometry ReadOffsetNavGeometry(
+        string vpkPath,
+        string mapName,
+        float offset,
+        Action<float, string>? progress = null)
     {
         var entryPath = $"maps/{mapName}.nav";
+        progress?.Invoke(0.05f, "Reading the compiled VPK");
         var bytes = ReadEntry(vpkPath, entryPath);
         var navMesh = new NavMeshFile();
         using var stream = new MemoryStream(bytes, writable: false);
@@ -818,8 +837,10 @@ public static class NavMeshRadarGenerator
             .Where(area => area.HullIndex == hullIndex && area.Corners.Length >= 3)
             .OrderBy(area => area.AreaId)
             .ToList();
+        progress?.Invoke(0.2f, $"Welding {areas.Count:N0} navigation areas");
         var welded = WeldPolygons([.. areas.Select(area => (IReadOnlyList<Vector3>)area.Corners)]);
         var faces = BuildNavFaces(areas, welded);
+        progress?.Invoke(0.4f, "Splitting shared edges");
         SplitSharedEdges(faces);
         var normalized = faces
             .Select(face => (IReadOnlyList<Vector3>)face.Corners)
@@ -828,9 +849,11 @@ public static class NavMeshRadarGenerator
         // Removing the generator's offset only ever has to move the outline. The compiled areas
         // already tile their surface: on de_firewatch they cover it 1.05 times over, against 2.02
         // once each one is offset on its own, so nothing inside the outline is touched.
+        progress?.Invoke(0.55f, "Removing the generator offset");
         List<IReadOnlyList<Vector3>> surface =
             [.. normalized, .. NavMeshRadarUnion.Collar(normalized, offset)];
 
+        progress?.Invoke(0.65f, $"Triangulating {surface.Count:N0} rings");
         return new RadarGeometry(areas.Count, TriangulateNonPlanar(surface));
     }
 
@@ -928,8 +951,10 @@ public static class NavMeshRadarGenerator
         string mainVmapPath,
         string generatedPath,
         string materialPath,
-        IReadOnlyList<IReadOnlyList<Vector3>> faces)
+        IReadOnlyList<IReadOnlyList<Vector3>> faces,
+        Action<float, string>? progress = null)
     {
+        progress?.Invoke(0.7f, $"Building {faces.Count:N0} editable faces");
         var generated = VmapDocument.LoadInMemory(mainVmapPath);
         generated.ClearWorldChildren();
         generated.ClearEditorState();
@@ -945,6 +970,10 @@ public static class NavMeshRadarGenerator
                 chunk.Add(faces[start + index]);
 
             meshCount++;
+            // 0.70 -> 0.90 spans the mesh chunks: the only part of the write with real granularity.
+            progress?.Invoke(
+                0.7f + (0.2f * (start + count) / faces.Count),
+                $"Building faces {start + count:N0} / {faces.Count:N0}");
             generated.WorldChildren.Add(VmapPolygonMeshBuilder.Build(
                 generated.Model,
                 chunk,
@@ -953,6 +982,7 @@ public static class NavMeshRadarGenerator
                 $"generated_radar_{meshCount:00}"));
         }
 
+        progress?.Invoke(0.9f, "Writing the radar map");
         var tempPath = $"{generatedPath}.{Guid.NewGuid():N}.tmp";
         try
         {

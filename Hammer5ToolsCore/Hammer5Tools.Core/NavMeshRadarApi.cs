@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 
 using Hammer5Tools.Core.Format.NavMesh;
@@ -14,10 +15,17 @@ internal static unsafe class NavMeshRadarApi
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
-    /// <summary>Generates a radar sub-map from a compact binary request.</summary>
+    /// <summary>
+    /// Generates a radar sub-map from a compact binary request, streaming stage progress as
+    /// <c>"{fraction}|{stage}"</c> lines through <paramref name="progressCallback"/> (may be null).
+    /// </summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_navmesh_radar_generate_binary", CallConvs = [typeof(CallConvCdecl)])]
-    public static int GenerateBinary(byte* request, int requestLength, byte** output, int* outputLength) =>
-        NativeInterop.InvokeBinary(output, outputLength, () => GenerateBinaryPayload(request, requestLength));
+    public static int GenerateBinary(
+        byte* request, int requestLength,
+        delegate* unmanaged[Cdecl]<byte*, int, void> progressCallback,
+        byte** output, int* outputLength) =>
+        NativeInterop.InvokeBinary(output, outputLength, () =>
+            GenerateBinaryPayload(request, requestLength, progressCallback));
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
@@ -140,6 +148,15 @@ internal static unsafe class NavMeshRadarApi
             return buffer.WrittenSpan.ToArray();
         });
 
+    /// <summary>Streams one <c>"{fraction}|{stage}"</c> progress line to the caller.</summary>
+    private static void EmitProgress(
+        delegate* unmanaged[Cdecl]<byte*, int, void> progressCallback, float fraction, string stage)
+    {
+        var bytes = Encoding.UTF8.GetBytes($"{fraction.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)}|{stage}");
+        fixed (byte* pointer = bytes)
+            progressCallback(pointer, bytes.Length);
+    }
+
     private static void WriteDiagnostics(Utf8JsonWriter writer, IReadOnlyList<CoreDiagnostic> diagnostics)
     {
         writer.WriteStartArray("diagnostics");
@@ -154,7 +171,9 @@ internal static unsafe class NavMeshRadarApi
         writer.WriteEndArray();
     }
 
-    private static byte[] GenerateBinaryPayload(byte* request, int requestLength)
+    private static byte[] GenerateBinaryPayload(
+        byte* request, int requestLength,
+        delegate* unmanaged[Cdecl]<byte*, int, void> progressCallback)
     {
         var reader = NativeBinary.Read(request, requestLength, NativeBinaryMessage.NavMeshRadarRequest);
         var vpkPath = reader.ReadString();
@@ -172,15 +191,19 @@ internal static unsafe class NavMeshRadarApi
         var collapseFacesIntoNgons = reader.ReadBoolean();
         reader.EnsureFinished();
 
-        var result = NavMeshRadarGenerator.Generate(new NavMeshRadarRequest(
-            vpkPath,
-            mainVmapPath,
-            mode,
-            offset,
-            materialPath,
-            addPrefabReference,
-            collapseFaces,
-            collapseFacesIntoNgons));
+        var result = NavMeshRadarGenerator.Generate(
+            new NavMeshRadarRequest(
+                vpkPath,
+                mainVmapPath,
+                mode,
+                offset,
+                materialPath,
+                addPrefabReference,
+                collapseFaces,
+                collapseFacesIntoNgons),
+            progressCallback is null
+                ? null
+                : (fraction, stage) => EmitProgress(progressCallback, fraction, stage));
         return NativeBinary.Create(NativeBinaryMessage.NavMeshRadarResult, writer =>
         {
             writer.WriteBoolean(result.IsSuccess);

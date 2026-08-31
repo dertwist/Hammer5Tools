@@ -322,11 +322,25 @@ class SmartPropNativeClient:
             *self._buffer_arguments(encode_vmap_rewrite_request(path, renames)),
         ))
 
-    def generate_navmesh_radar(self, request: dict) -> dict:
-        """Generates radar geometry from compiled NAV data."""
+    def generate_navmesh_radar(
+        self, request: dict, progress: Callable[[float, str], None] | None = None,
+    ) -> dict:
+        """Generates radar geometry from compiled NAV data, streaming ``(fraction, stage)``
+        progress through ``progress`` while the native call runs."""
+        def on_progress(line: ctypes.c_void_p, line_length: int) -> None:
+            # A Python exception must never unwind back through the native call frame.
+            try:
+                fraction, _, stage = ctypes.string_at(line, line_length).decode(
+                    "utf-8", errors="replace").partition("|")
+                progress(float(fraction), stage)
+            except Exception:
+                pass
+
+        callback = _LOG_CALLBACK_TYPE(on_progress) if progress is not None else _LOG_CALLBACK_TYPE()
         return decode_navmesh_radar(self._invoke_binary(
             self._library.h5t_navmesh_radar_generate_binary,
             *self._buffer_arguments(encode_navmesh_radar_request(request)),
+            callback,
         ))
 
     def navmesh_radar_status(self, request: dict) -> dict:
@@ -517,7 +531,6 @@ class SmartPropNativeClient:
             "h5t_vmap_rewrite_references_json",
             "h5t_vmap_rewrite_references_binary",
             "h5t_navmesh_radar_generate_json",
-            "h5t_navmesh_radar_generate_binary",
             "h5t_navmesh_radar_status_json",
             "h5t_vsnap_read_json",
             "h5t_vsnap_read_binary",
@@ -539,6 +552,11 @@ class SmartPropNativeClient:
             function = getattr(self._library, name)
             function.argtypes = [pointer, length, output, output_length]
             function.restype = ctypes.c_int
+
+        self._library.h5t_navmesh_radar_generate_binary.argtypes = [
+            pointer, length, _LOG_CALLBACK_TYPE, output, output_length,
+        ]
+        self._library.h5t_navmesh_radar_generate_binary.restype = ctypes.c_int
 
         self._library.h5t_vsnap_attributes_json.argtypes = [output, output_length]
         self._library.h5t_vsnap_attributes_json.restype = ctypes.c_int

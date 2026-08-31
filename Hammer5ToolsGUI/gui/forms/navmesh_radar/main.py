@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Qt, Signal
@@ -35,6 +36,7 @@ class NavMeshRadarWorker(QThread):
 
     succeeded = Signal(object)
     failed = Signal(str)
+    progressed = Signal(float, str)
 
     def __init__(
         self,
@@ -66,6 +68,7 @@ class NavMeshRadarWorker(QThread):
                 add_prefab_reference=self._add_prefab_reference,
                 collapse_faces=self._collapse_faces,
                 collapse_faces_into_ngons=self._collapse_faces_into_ngons,
+                progress=lambda fraction, stage: self.progressed.emit(fraction, stage),
             )
             if result.generated_vmap_path is None:
                 message = "\n".join(result.diagnostics) or "Core did not return a generated map."
@@ -88,6 +91,7 @@ class NavMeshRadarDialog(QDialog):
         apply_title_bar_theme(self)
 
         self._worker: NavMeshRadarWorker | None = None
+        self._started_at = 0.0
         self._vpk_path: Path | None = None
         self._main_vmap_path: Path | None = None
         self._prefab_present = False
@@ -145,8 +149,10 @@ class NavMeshRadarDialog(QDialog):
         layout.addLayout(options_layout)
 
         self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 1)
+        self.progress_bar.setRange(0, 1000)
         self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("")
         layout.addWidget(self.progress_bar)
 
         buttons = QHBoxLayout()
@@ -267,7 +273,8 @@ class NavMeshRadarDialog(QDialog):
         self.collapse_faces_checkbox.setEnabled(False)
         self.collapse_ngons_checkbox.setEnabled(False)
         self.add_prefab_checkbox.setEnabled(False)
-        self.progress_bar.setRange(0, 0)
+        self._started_at = time.monotonic()
+        self._set_progress(0.0, "Starting")
 
         offset = 16.0 if self.remove_offset_checkbox.isChecked() else 0.0
         collapse_faces = self.collapse_faces_checkbox.isChecked()
@@ -283,25 +290,29 @@ class NavMeshRadarDialog(QDialog):
             collapse_faces_into_ngons=collapse_faces_into_ngons,
             parent=self,
         )
+        self._worker.progressed.connect(self._set_progress)
         self._worker.succeeded.connect(self._generation_succeeded)
         self._worker.failed.connect(self._generation_failed)
         self._worker.finished.connect(self._worker_finished)
         self._worker.start()
 
+    def _set_progress(self, fraction: float, stage: str) -> None:
+        """Shows one Core stage; the bar itself is the completion report."""
+        self.progress_bar.setValue(max(0, min(1000, round(fraction * 1000))))
+        self.progress_bar.setFormat(f"{stage} — %p%")
+
     def _generation_succeeded(self, result: NavMeshRadarResult) -> None:
-        self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(1)
-        reference_info = "\n\nAdded prefab reference to the main map." if result.reference_added else ""
-        QMessageBox.information(
-            self,
-            "NavMesh Radar complete",
-            f"Generated {result.face_count:,} editable faces.{reference_info}\n\n"
-            f"Output:\n{result.generated_vmap_path}",
+        elapsed = time.monotonic() - self._started_at
+        reference_info = ", prefab added" if result.reference_added else ""
+        self.progress_bar.setValue(1000)
+        self.progress_bar.setFormat(
+            f"Done in {elapsed:.1f} s. Written {result.face_count:,} faces{reference_info}"
         )
+        self.progress_bar.setToolTip(str(result.generated_vmap_path))
 
     def _generation_failed(self, message: str) -> None:
-        self.progress_bar.setRange(0, 1)
         self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Failed")
         QMessageBox.critical(self, "NavMesh Radar failed", message)
 
     def _worker_finished(self) -> None:

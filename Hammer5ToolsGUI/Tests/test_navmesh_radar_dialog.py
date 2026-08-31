@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 from PySide6.QtWidgets import QApplication
 import pytest
 
@@ -149,3 +150,22 @@ def test_add_prefab_is_disabled_when_the_main_map_already_references_it(qapp, mo
 
     dialog.close()
 
+
+
+def test_progress_shows_stages_and_completion_replaces_the_dialog(qapp, monkeypatch):
+    _fake_core(monkeypatch, None, False)
+    dialog = NavMeshRadarDialog()
+
+    dialog._set_progress(0.4, "Splitting shared edges")
+    assert dialog.progress_bar.value() == 400
+    assert dialog.progress_bar.format() == "Splitting shared edges — %p%"
+
+    result = SimpleNamespace(
+        face_count=15204, reference_added=True, generated_vmap_path="C:/maps/x_generated_radar.vmap",
+    )
+    dialog._generation_succeeded(result)
+    assert dialog.progress_bar.value() == 1000
+    assert dialog.progress_bar.format().startswith("Done in ")
+    assert "Written 15,204 faces, prefab added" in dialog.progress_bar.format()
+
+    dialog.close()

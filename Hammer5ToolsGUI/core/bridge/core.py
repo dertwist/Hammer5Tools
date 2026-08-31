@@ -552,8 +552,10 @@ class CoreBridge:
         add_prefab_reference: bool = True,
         collapse_faces: bool = True,
         collapse_faces_into_ngons: bool = False,
+        progress: Callable[[float, str], None] | None = None,
     ) -> NavMeshRadarResult:
-        """Generates radar faces into a replaceable prefab sub-map."""
+        """Generates radar faces into a replaceable prefab sub-map, reporting
+        ``(fraction, stage)`` progress from Core while it runs."""
         result = self._smartprop_native().generate_navmesh_radar({
             "vpkPath": vpk_path,
             "mainVmapPath": main_vmap_path,
@@ -563,7 +565,7 @@ class CoreBridge:
             "addPrefabReference": add_prefab_reference,
             "collapseFaces": collapse_faces,
             "collapseFacesIntoNgons": collapse_faces_into_ngons,
-        })
+        }, progress)
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         value = result["value"]
         if value is None:

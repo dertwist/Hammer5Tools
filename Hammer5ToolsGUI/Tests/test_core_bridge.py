@@ -43,10 +43,13 @@ def test_core_probe_translates_load_failures_to_diagnostics():
 
 def test_navmesh_radar_result_is_converted_without_core_types():
     captured = {}
+    stages = []
 
     class FakeNative:
-        def generate_navmesh_radar(self, request):
+        def generate_navmesh_radar(self, request, progress=None):
             captured.update(request)
+            if progress is not None:
+                progress(0.5, "Halfway")
             return {
                 "value": {
                     "generatedVmapPath": "maps/example_navmesh_radar.vmap",
@@ -69,6 +72,7 @@ def test_navmesh_radar_result_is_converted_without_core_types():
         add_prefab_reference=False,
         collapse_faces=False,
         collapse_faces_into_ngons=True,
+        progress=lambda fraction, stage: stages.append((fraction, stage)),
     )
 
     assert result.generated_vmap_path == "maps/example_navmesh_radar.vmap"
@@ -79,6 +83,7 @@ def test_navmesh_radar_result_is_converted_without_core_types():
     assert captured["addPrefabReference"] is False
     assert captured["collapseFaces"] is False
     assert captured["collapseFacesIntoNgons"] is True
+    assert stages == [(0.5, "Halfway")]
 
 
 def test_smartprop_models_are_converted_without_core_types():
