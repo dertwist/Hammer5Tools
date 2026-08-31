@@ -1522,7 +1522,7 @@ class SmartPropDocument(QMainWindow):
         from gui.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         import os
         
-        addon_name = get_addon_name() or "addon"
+        addon_name = get_addon_name()
         addon_dir = addon_content_dir(addon_name)
         start_dir = str(addon_dir / "maps") if addon_dir else ""
         if not os.path.exists(start_dir):

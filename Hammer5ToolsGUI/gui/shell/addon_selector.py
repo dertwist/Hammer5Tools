@@ -44,13 +44,13 @@ class AddonSelector:
 
     def __init__(self, window):
         self._window = window
+        self._create_offered = False
 
     @property
     def _combo(self):
         return self._window.ui.ComboBoxSelectAddon
 
     def populate(self):
-        window = self._window
         cs2_path = get_cs2_path()
         if cs2_path is None:
             self._show_placeholder("CS2 Path Not Set")
@@ -65,32 +65,51 @@ class AddonSelector:
                 self._show_placeholder("Addons Folder Not Found")
                 return
 
-            found_names = list_addons(cs2_path)
-            for name in found_names:
-                self._combo.addItem(name)
-
+            found_names = self.resolve_saved_addon(list_addons(cs2_path))
             if not found_names:
-                from gui.forms.create_addon.main import CreateAddonDialog
-                response = QMessageBox.question(
-                    window, "No Addon Found",
-                    "No addons found. Would you like to create one now?",
-                    QMessageBox.Yes | QMessageBox.No,
-                )
-                if response == QMessageBox.Yes:
-                    CreateAddonDialog(window).exec()
-                    self.refresh()
-                    return
                 self._show_placeholder("")
                 return
-
-            # The saved addon setting defaults to the literal "addon", which is
-            # almost never a real folder name. If it doesn't match any addon
-            # that actually exists, pick one at random instead of leaving that
-            # placeholder name selected.
-            if get_addon_name() not in found_names:
-                set_addon_name(random.choice(found_names))
+            for name in found_names:
+                self._combo.addItem(name)
         except OSError as error:
             log.error(f"Failed to load addons: {error}")
+
+    def resolve_saved_addon(self, found_names: list[str] | None = None) -> list[str]:
+        """Point the addon setting at an addon that exists, and return the addon list.
+
+        Runs before any editor is built. It tests the *stored* value rather than
+        get_addon_name(), so "nothing saved yet" stays distinguishable from a real
+        selection. With no addons on disk at all it offers to build one from a preset,
+        because the alternative -- carrying a placeholder name around -- is what used
+        to conjure a csgo_addons/addon folder into existence.
+        """
+        if found_names is None:
+            found_names = list_addons(get_cs2_path())
+        if not found_names:
+            found_names = self._offer_to_create_addon()
+        if found_names and get_settings_value('LAUNCH', 'addon', default='') not in found_names:
+            set_addon_name(random.choice(found_names))
+        return found_names
+
+    def _offer_to_create_addon(self) -> list[str]:
+        """Offer to build a first addon from a preset, returning the addon list after.
+
+        Asked at most once per session: declining leaves no addon selected, which every
+        addon path helper reports as None, so the editors simply stay unbuilt.
+        """
+        if self._create_offered:
+            return []
+        self._create_offered = True
+        response = QMessageBox.question(
+            self._window, "No Addon Found",
+            "No addons found. Would you like to create one now?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if response != QMessageBox.Yes:
+            return []
+        from gui.forms.create_addon.main import CreateAddonDialog
+        CreateAddonDialog(self._window).exec()
+        return list_addons(get_cs2_path())
 
     def refresh(self):
         """Rebuild the list without the repopulation looking like a user choice."""

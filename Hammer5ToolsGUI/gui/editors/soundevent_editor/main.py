@@ -1,6 +1,7 @@
 import ast, shutil, os
 
 from gui.settings.common import (
+    addon_content_dir,
     get_addon_name,
     get_cs2_path,
     get_settings_bool,
@@ -59,8 +60,11 @@ class CopyDefaultSoundFolders:
         self.soundevents_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'soundevents', 'soundevents_addon.vsndevts')
         self.sounds_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'sounds')
         # Destination
-        self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')
-        self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        addon_dir = addon_content_dir()
+        if addon_dir is None:
+            raise ValueError("No addon selected")
+        self.filepath_vsndevts = str(addon_dir / 'soundevents' / 'soundevents_addon.vsndevts')
+        self.filepath_sounds = str(addon_dir / 'sounds')
         self.copy_with_overwrite()
 
     def copy_with_overwrite(self):
@@ -134,9 +138,10 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Variables
         cs2_path = get_cs2_path()
-        if cs2_path:
-            self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
-            self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        addon_dir = addon_content_dir()
+        if addon_dir is not None:
+            self.filepath_vsndevts = str(addon_dir / 'soundevents' / 'soundevents_addon.vsndevts')
+            self.filepath_sounds = str(addon_dir / 'sounds')
         else:
             self.filepath_vsndevts = ""
             self.filepath_sounds = ""
@@ -241,10 +246,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.audio_player = None
 
         # Explorer
-        if os.path.exists(self.filepath_sounds):
-            pass
-        else:
-            os.makedirs(self.filepath_sounds)
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
         self.mini_explorer.tree.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.mini_explorer.play_sound.connect(self.play_sound)

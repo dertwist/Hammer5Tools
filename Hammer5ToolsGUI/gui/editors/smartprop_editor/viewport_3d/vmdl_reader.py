@@ -19,7 +19,7 @@ def _game_directory() -> str:
 
 def _active_addon() -> str:
     from gui.settings.common import get_addon_name
-    return get_addon_name() or "addon"
+    return get_addon_name()
 
 
 def _texture(value):

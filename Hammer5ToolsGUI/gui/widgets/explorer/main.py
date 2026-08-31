@@ -363,9 +363,9 @@ class Explorer(QMainWindow):
 
     def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True, base_directories: dict = None, show_root_selector: bool = True):
         super().__init__(parent)
-        self.tree_directory = self._normalize_path(tree_directory)
-        if not self.tree_directory:
-            self.tree_directory = os.getcwd()
+        # No directory means there is nothing to browse. Falling back to the working
+        # directory used to root the explorer at wherever the app happened to start.
+        self.tree_directory = self._normalize_path(tree_directory) or ""
         self.addon = addon
         self.editor_name = editor_name or 'Explorer'
         self.use_internal_player = use_internal_player
@@ -375,7 +375,11 @@ class Explorer(QMainWindow):
         self.model.setRootPath(self.tree_directory)
         addon_root = addon_content_dir(get_addon_name())
         self.rootpath = str(addon_root) if addon_root else self.tree_directory
-        if not os.path.exists(self.tree_directory):
+        # Create the folder only when its parent already exists. An Explorer aimed at
+        # an addon that was never created -- the default "addon" name, before the real
+        # one is resolved -- used to materialise the whole chain under csgo_addons, and
+        # the addon list then treated that folder as a genuine addon from then on.
+        if not os.path.exists(self.tree_directory) and os.path.isdir(os.path.dirname(self.tree_directory)):
             os.makedirs(self.tree_directory)
         if not self.use_internal_player:
             self.audio_player = None
@@ -386,6 +390,9 @@ class Explorer(QMainWindow):
         self.tree = BranchTreeView(self)
         self.tree.setModel(self.filter_proxy_model)
         self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(self.tree_directory)))
+        # A root that does not exist maps to an invalid index, which QTreeView answers
+        # by listing the drive letters. An empty panel is the honest view.
+        self.tree.setVisible(os.path.isdir(self.tree_directory))
 
         # Debounced expansion timer to prevent repetitive layout calculations
         self._expand_timer = QTimer(self)

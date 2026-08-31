@@ -153,6 +153,9 @@ class MainWindow(QMainWindow):
         self.tray = TrayIcon(self)
         self.quick_actions = QuickActions(self)
         self.addon_selector = AddonSelector(self)
+        # Before setup_tabs: an editor built against an unresolved addon name used to
+        # create a placeholder csgo_addons/addon folder on disk.
+        self.addon_selector.resolve_saved_addon()
         self.setup_tabs()
         self.setup_buttons()
         self.current_tab(False)

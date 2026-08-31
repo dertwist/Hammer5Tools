@@ -99,7 +99,14 @@ def get_steam_path():
         return None
 
 def get_addon_name():
-    return get_settings_value('LAUNCH', 'addon', default='addon')
+    """The selected addon, or '' when none is selected.
+
+    The default used to be the literal 'addon', which every path helper happily
+    turned into <cs2>/content/csgo_addons/addon -- a folder the first editor to
+    touch it created for real. Empty means empty: _addon_dir() returns None and
+    callers get "no addon" instead of a plausible-looking fake one.
+    """
+    return get_settings_value('LAUNCH', 'addon', default='')
 
 def set_addon_name(addon_name):
     set_settings_value('LAUNCH', 'addon', addon_name)
