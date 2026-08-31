@@ -89,7 +89,7 @@ jobs:
         run: |
           Push-Location Hammer5Tools
           $exe = '.\Hammer5Tools.exe'
-          if (-not (Test-Path $exe)) { $exe = '.pp\Hammer5Tools.exe' }
+          if (-not (Test-Path $exe)) { $exe = '.\app\Hammer5Tools.exe' }
           if (-not (Test-Path $exe)) {
             Write-Host 'Hammer5Tools.exe not found; unable to test hooks. Directory content:'
             Get-ChildItem -Recurse
