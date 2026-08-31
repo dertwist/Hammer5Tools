@@ -35,6 +35,19 @@ def test_development_roots_keep_mutable_data_out_of_source_package(monkeypatch):
     assert paths.user_data_root == paths.install_root / "userdata_dev"
 
 
+def test_user_data_never_resolves_inside_the_install_tree(monkeypatch, tmp_path):
+    """Velopack replaces the install tree wholesale on every update, so user data
+    kept inside it is destroyed. A launcher that points there must be overruled."""
+    install = tmp_path / "current"
+    monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))
+    monkeypatch.setenv("H5T_USER_DATA_ROOT", str(install / "userdata"))
+
+    paths = resolve_runtime_paths()
+
+    assert paths.user_data_root == Path.home() / "Hammer5Tools"
+    assert paths.install_root not in paths.user_data_root.parents
+
+
 def test_frozen_common_resolves_paths_without_error(monkeypatch, tmp_path):
     install = tmp_path / "installed"
     monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))

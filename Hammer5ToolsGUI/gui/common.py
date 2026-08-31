@@ -201,41 +201,42 @@ def get_app_paths() -> tuple[Path, Path]:
     """
     Returns (app_dir, user_data_dir).
     app_dir: The folder containing the executable.
-    user_data_dir: Persistent folder for user data (survives updates).
+    user_data_dir: Persistent user data. resolve_runtime_paths keeps this outside the
+    install tree, which Velopack replaces wholesale on every update.
     """
     runtime_paths = resolve_runtime_paths()
-    if os.environ.get("H5T_INSTALL_ROOT"):
-        return runtime_paths.app_root, runtime_paths.user_data_root
+    return runtime_paths.app_root, runtime_paths.user_data_root
 
-    if getattr(sys, 'frozen', False):
-        exe_path = Path(sys.executable)
-        current_dir = exe_path.parent
-        
-        # Keep user data outside installer-managed directories.
-        user_data = Path.home() / "Hammer5Tools"
 
-        # Migrate legacy install-local user data.
-        try:
-            if current_dir.name.lower() in ('app', 'current'):
-                old_root = current_dir.parent
-            else:
-                old_root = current_dir.parent
-            
-            old_user_data = old_root / "userdata"
-            if old_user_data.exists() and old_user_data.is_dir() and not user_data.exists():
-                print(f"Migrating userdata from {old_user_data} to {user_data}")
-                import shutil
-                user_data.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(old_user_data), str(user_data))
-        except Exception as me:
-            log.error(f"Migration failed: {me}")
-            
-        return current_dir, user_data
-    
-    return runtime_paths.install_root, runtime_paths.user_data_root
+def _migrate_install_tree_user_data(destination: Path) -> None:
+    """Recover user data that earlier 6.0.0 builds wrote into the install tree.
+
+    Those builds pointed the user-data root at <install>/userdata, which Velopack
+    deletes along with the rest of `current` on every update. Copy first and drop the
+    source only once the copy is in place, so a failure part-way leaves the original
+    intact. When both locations already hold settings, the destination wins by being
+    left alone -- silently overwriting a live settings.ini is the worse failure.
+    """
+    if (destination / 'settings.ini').exists():
+        return
+    legacy = resolve_runtime_paths().install_root / 'userdata'
+    if not (legacy / 'settings.ini').is_file():
+        return
+    import shutil
+    try:
+        shutil.copytree(legacy, destination, dirs_exist_ok=True)
+    except OSError as error:
+        log.error(f"Could not migrate user data out of {legacy}: {error}")
+        return
+    if (destination / 'settings.ini').is_file():
+        shutil.rmtree(legacy, ignore_errors=True)
+        log.info(f"Migrated user data from {legacy} to {destination}")
+
 
 app_dir, user_data_dir = get_app_paths()
 user_data_dir.mkdir(parents=True, exist_ok=True)
+_migrate_install_tree_user_data(user_data_dir)
+
 
 SoundEventEditor_Path = user_data_dir / "SoundEventEditor"
 SoundEventEditor_path = SoundEventEditor_Path
