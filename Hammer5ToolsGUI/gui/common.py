@@ -102,6 +102,14 @@ def get_build_channel() -> str:
     lines = _version_txt()
     return lines[1] if len(lines) >= 2 and lines[1] else 'stable'
 
+def is_stable_release() -> bool:
+    """True only for a frozen build published on the stable channel.
+
+    Running from source counts as dev, so in-development editors stay visible.
+    """
+    return bool(getattr(sys, 'frozen', False)) and get_build_channel() != 'dev'
+
+
 def get_channel() -> str:
     """
     Returns the update channel ('stable' or 'dev').

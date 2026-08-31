@@ -56,7 +56,7 @@ from gui.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from gui.forms.unreal_porter.main import UnrealPorterWidget
 from gui.forms.source_porter.main import SourcePorterWidget
 from gui.forms.launch_options.main import LaunchOptionsDialog
-from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, apply_title_bar_theme
+from gui.common import app_version, default_commands, JsonToKv3, compile as run_compile, apply_title_bar_theme, is_stable_release
 from gui.other.addon_validation import validate_addon_structure
 from gui.forms.cleanup.main import CleanupDialog
 from gui.forms.navmesh_radar import NavMeshRadarDialog
@@ -316,6 +316,8 @@ class MainWindow(QMainWindow):
     def open_file_in_vsnap(self, file_path):
         if not file_path:
             return
+        if getattr(self, 'vsnapeditor_tab', None) is None:
+            return
         tab_index = self.ui.MainWindowTools_tabs.indexOf(self.vsnapeditor_tab)
         if tab_index >= 0:
             self.ui.MainWindowTools_tabs.setCurrentIndex(tab_index)
@@ -340,14 +342,17 @@ class MainWindow(QMainWindow):
             QIcon(":/valve_common/icons/tools/hammer/displacement_tool_icon.png"), "DetailProp Editor",
         )
 
-        self.vsnapeditor_tab = QWidget()
-        self.vsnapeditor_tab.setObjectName("vsnapeditor_tab")
-        vsnap_layout = QVBoxLayout(self.vsnapeditor_tab)
-        vsnap_layout.setContentsMargins(0, 0, 0, 0)
-        insert_tab_after(
-            self.ui.MainWindowTools_tabs, self.detailpropeditor_tab, self.vsnapeditor_tab,
-            QIcon(":/valve_common/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png"), "VSnap Editor",
-        )
+        # VSnap editor: still in development, so it ships on the dev channel only.
+        self.vsnapeditor_tab = None
+        if not is_stable_release():
+            self.vsnapeditor_tab = QWidget()
+            self.vsnapeditor_tab.setObjectName("vsnapeditor_tab")
+            vsnap_layout = QVBoxLayout(self.vsnapeditor_tab)
+            vsnap_layout.setContentsMargins(0, 0, 0, 0)
+            insert_tab_after(
+                self.ui.MainWindowTools_tabs, self.detailpropeditor_tab, self.vsnapeditor_tab,
+                QIcon(":/valve_common/icons/tools/modeldoc_editor/outliner_icon_vsnap_file.png"), "VSnap Editor",
+            )
 
         # Vmap reading experiments: disabled from dev and stable releases (experimental project).
 
@@ -401,6 +406,8 @@ class MainWindow(QMainWindow):
 
     def _build_vsnap(self):
         if getattr(self, 'VSnapEditorMainWindow', None) is not None:
+            return
+        if getattr(self, 'vsnapeditor_tab', None) is None:
             return
         from gui.editors.vsnap_editor.main import VSnapEditorMainWindow
         self.VSnapEditorMainWindow = VSnapEditorMainWindow(parent=self.vsnapeditor_tab)
@@ -530,8 +537,9 @@ class MainWindow(QMainWindow):
                        self._build_detailprop, requires_cs2=True),
             EditorSlot('LoadingEditorMainWindow', "Loading Editor",
                        ui.Loading_Editor_Tab, self._build_loading, requires_cs2=True),
+            # Hidden in stable releases: the page is None then, so the slot is skipped everywhere.
             EditorSlot('VSnapEditorMainWindow', "VSnap Editor",
-                       self.vsnapeditor_tab, self._build_vsnap),
+                       getattr(self, 'vsnapeditor_tab', None), self._build_vsnap),
             # Vmap reading experiments: disabled in dev and stable releases (experimental project).
             # The slot's page is None when the tab is not created, so it is skipped everywhere.
             EditorSlot('VmapViewMainWindow', "Vmap View",
