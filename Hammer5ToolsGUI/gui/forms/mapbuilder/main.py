@@ -177,18 +177,21 @@ class BuildCubemapsThread(QThread):
 
     Flow:
       1. Launch CS2 (no map on the command line – just tools mode).
-      2. Wait for the netcon TCP port to become reachable.
+      2. Wait for CS2 to attach to the console command pipe.
       3. Wait for CS2 to finish initialising (``Source2Init OK`` sentinel).
       4. Query ``r_always_render_all_windows`` and save the user's value.
+         This reads the VConsole socket and returns None while the user has
+         vconsole2.exe attached, in which case the default is assumed.
       5. Set ``r_always_render_all_windows true``.
       6. For each map in the queue:
-         a. Send ``map_workshop <addon> <map>`` via netcon.
+         a. Send ``map_workshop <addon> <map>`` down the pipe.
          b. Wait for the map to fully load (``Host activate: Loading``).
          c. Send ``buildcubemaps`` and wait until the build completes.
-            CS2 disconnects its internal game server during cubemap baking,
-            which drops the netcon TCP connection. When the connection
-            closes we reconnect and wait for the map to reload, which
-            signals that the cubemap VPK has been written.
+            CS2 disconnects its internal game server during cubemap baking.
+            That used to drop the netcon TCP connection; the command pipe
+            belongs to the process and survives it, so the reconnect step
+            below now just re-checks the pipe and waits for the map reload
+            that signals the cubemap VPK was written.
       7. Restore ``r_always_render_all_windows`` to the original value.
       8. Leave CS2 running.
     """
@@ -267,15 +270,15 @@ class BuildCubemapsThread(QThread):
                 self.finished.emit(False)
                 return
 
-            self.outputReceived.emit("Waiting for CS2 to accept netcon connections...")
+            self.outputReceived.emit("Waiting for CS2 to attach to the console pipe...")
             if not self._wait_for_netcon(self.CONNECT_TIMEOUT):
                 self.outputReceived.emit(
-                    "Timed out waiting for CS2 netcon – is the game running?")
+                    "Timed out waiting for the CS2 console pipe – is the game running?")
                 all_ok = False
                 continue
 
             self.outputReceived.emit(
-                "CS2 netcon connected. Waiting for the main menu to fully load...")
+                "CS2 console connected. Waiting for the main menu to fully load...")
 
             # --- 3. Wait for CS2 to reach main menu ---
             init_ok = self._listen_for(
@@ -328,7 +331,7 @@ class BuildCubemapsThread(QThread):
 
             restore_ok = CS2Netcon.send(f"r_always_render_all_windows {original_render_all}")
             if not restore_ok:
-                # Retry: wait for netcon to be available and try again
+                # Retry: wait for the console pipe to be available and try again
                 _time.sleep(2)
                 if self._wait_for_netcon(10):
                     restore_ok = CS2Netcon.send(
@@ -360,7 +363,7 @@ class BuildCubemapsThread(QThread):
         success."""
         import time as _time
 
-        self.outputReceived.emit(f"Loading map '{map_name}' from addon '{addon_name}' via netcon...")
+        self.outputReceived.emit(f"Loading map '{map_name}' from addon '{addon_name}' via the console...")
 
         # Send map_workshop to load the map
         map_cmd = f"map_workshop {addon_name} {map_name}"
@@ -386,7 +389,7 @@ class BuildCubemapsThread(QThread):
 
         # Send buildcubemaps.
         # CS2 disconnects its internal game server while baking cubemaps,
-        # which usually drops the netcon TCP connection.  We detect
+        # which used to drop the netcon TCP connection.  We detect
         # completion by looking for the sentinel OR by reconnecting after
         # the connection drops and waiting for the map to reload.
         self.outputReceived.emit(f"Sending buildcubemaps for '{map_name}'...")
@@ -406,8 +409,8 @@ class BuildCubemapsThread(QThread):
         # Reconnect and wait for the map to reload (signals the VPK was
         # written and CS2 is back in-game with the new cubemaps).
         self.outputReceived.emit(
-            "Netcon connection dropped during cubemap build. "
-            "Reconnecting to verify completion...")
+            "No completion sentinel yet. "
+            "Re-checking the console connection to verify completion...")
 
         if not self._wait_for_netcon(self.RECONNECT_TIMEOUT):
             self.outputReceived.emit(
@@ -1344,7 +1347,7 @@ class MapBuilderDialog(QMainWindow):
         # will replace it for each addon in the queue.
 
         # Strip +map_workshop from launch args — the cubemap thread will
-        # send map_workshop via netcon after CS2 reaches the main menu.
+        # send map_workshop down the console pipe after CS2 reaches the main menu.
         commands = re.sub(r'\+map_workshop\s+\S+(?:\s+\S+)?', '', commands).strip()
 
         # Extract map data (addon, map_name)
