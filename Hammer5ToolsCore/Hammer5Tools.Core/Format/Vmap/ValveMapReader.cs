@@ -61,6 +61,12 @@ public sealed class ValveMapReader : IValveMapReader
                 case Vector4 vector:
                     properties[name] = FormattableString.Invariant($"{vector.X} {vector.Y} {vector.Z} {vector.W}");
                     break;
+                // QAngle is neither a Vector3 nor IFormattable, so without this
+                // it fell to ToString() and projected the record's debug text
+                // ("QAngle { Pitch = 7.6, ... }") instead of a usable value.
+                case QAngle angles:
+                    properties[name] = FormattableString.Invariant($"{angles.Pitch} {angles.Yaw} {angles.Roll}");
+                    break;
                 case IFormattable formattable:
                     properties[name] = formattable.ToString(null, CultureInfo.InvariantCulture);
                     break;
