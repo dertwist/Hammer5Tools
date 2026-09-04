@@ -834,7 +834,10 @@ class LoadingEditorMainWindow(QMainWindow):
         if not session_date or not self.content_history_path:
             return
 
-        camera_count = max(1, (len(commands) - 8) // 6)
+        # Count the shots themselves: a camera contributes a varying number of
+        # commands (its angles or FOV may be missing), so deriving the count
+        # from the list length drifts and the copy can start too early.
+        camera_count = max(1, sum("png_screenshot" in command for command in commands))
         delay_ms = max(3000, int(camera_count * (10 / 64) * 1000) + 2000)
 
         src_folder = os.path.join(self.history_path, session_date)
