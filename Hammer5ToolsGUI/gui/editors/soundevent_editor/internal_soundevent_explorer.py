@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from gui.common import Kv3ToJson, SoundEventEditor_path
 from core.bridge.core import CoreBridge
-from gui.settings.common import get_cs2_path
+from gui.settings.common import get_cs2_path, get_settings_bool
 from gui.editors.soundevent_editor.thread_parking import park
 
 
@@ -358,6 +358,10 @@ class InternalSoundEventExplorer(QWidget):
                 if i.data(Qt.DisplayRole)]
 
     def _on_clicked(self, index: QModelIndex) -> None:
+        # Selecting an event only plays it when the user asked for that; the
+        # context menu's Play stays available either way.
+        if not get_settings_bool('SoundEventEditor', 'play_on_click', True):
+            return
         if name := index.data(Qt.DisplayRole):
             self.play_soundevent.emit(name)
 

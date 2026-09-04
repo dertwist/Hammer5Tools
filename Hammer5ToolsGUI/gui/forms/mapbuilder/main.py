@@ -201,11 +201,11 @@ class BuildCubemapsThread(QThread):
     # Printed when a map is fully loaded and the player is in-game.
     MAP_LOADED_SENTINEL = "Host activate: Loading"
 
-    CONNECT_TIMEOUT = 180            # seconds – wait for netcon port
+    CONNECT_TIMEOUT = 180            # seconds – wait for the console pipe
     INIT_TIMEOUT = 300               # seconds – wait for main menu
     MAP_LOAD_TIMEOUT = 300           # seconds – wait for map to fully load
     BUILD_TIMEOUT = 600              # seconds – wait for cubemap build
-    RECONNECT_TIMEOUT = 60           # seconds – wait for netcon after cubemap disconnect
+    RECONNECT_TIMEOUT = 60           # seconds – wait for the pipe after a cubemap restart
 
     def __init__(self, cs2_exe: str, launch_args: str,
                  map_data: list[tuple[str, str]]):
@@ -217,23 +217,8 @@ class BuildCubemapsThread(QThread):
 
     # helpers
     def _wait_for_netcon(self, timeout: float) -> bool:
-        """Block until the netcon TCP port is reachable."""
-        import time as _time
-        import socket as _socket
-
-        host, port = CS2Netcon._get_target()
-        deadline = _time.time() + timeout
-        while _time.time() < deadline:
-            if self._stop_event.is_set():
-                return False
-            try:
-                with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as s:
-                    s.settimeout(2.0)
-                    s.connect((host, port))
-                return True
-            except (ConnectionRefusedError, TimeoutError, OSError):
-                _time.sleep(2)
-        return False
+        """Block until CS2 has attached to the console command pipe."""
+        return CS2Netcon.wait_until_available(timeout, stop_event=self._stop_event)
 
     def _listen_for(self, command: str, sentinel: str, timeout: float) -> bool:
         """Send *command* and listen until *sentinel* appears in the output."""
@@ -1255,9 +1240,6 @@ class MapBuilderDialog(QMainWindow):
                 commands = default_commands
                 set_settings_value("LAUNCH", "commands", commands)
 
-            if '-netconport' not in commands:
-                commands += ' -netconport 2121'
-
             # Ensure -disable_workshop_command_filtering is always included (mandatory flag)
             if '-disable_workshop_command_filtering' not in commands:
                 commands += ' -disable_workshop_command_filtering'
@@ -1355,8 +1337,6 @@ class MapBuilderDialog(QMainWindow):
             commands = default_commands
             set_settings_value("LAUNCH", "commands", commands)
 
-        if '-netconport' not in commands:
-            commands += ' -netconport 2121'
         if '-disable_workshop_command_filtering' not in commands:
             commands += ' -disable_workshop_command_filtering'
 
@@ -1426,8 +1406,6 @@ class MapBuilderDialog(QMainWindow):
         commands = assemble_commands(commands, addon_name)
 
         # Ensure mandatory flags are always included
-        if '-netconport' not in commands:
-            commands += ' -netconport 2121'
         if '-disable_workshop_command_filtering' not in commands:
             commands += ' -disable_workshop_command_filtering'
 

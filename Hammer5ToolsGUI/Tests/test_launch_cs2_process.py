@@ -38,7 +38,10 @@ def test_launch_cs2_process_desktop_window_success():
         mock_app.ShellExecute.assert_called_once()
         args = mock_app.ShellExecute.call_args[0]
         assert args[0] == "C:\\Games\\CS2\\game\\bin\\win64\\cs2.exe"
-        assert args[1] == "-tools -steam"
+        # Launching also opens the console channel, so the caller's options are
+        # passed through with the pipe/log flags appended.
+        assert args[1].startswith("-tools -steam")
+        assert "-concommandpipe" in args[1]
 
 
 def test_launch_cs2_process_wmi_powershell_fallback():

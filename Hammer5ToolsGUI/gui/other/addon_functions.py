@@ -78,6 +78,11 @@ def launch_cs2_process(cs2_exe_path: str, commands: str = "") -> bool:
     cs2_exe_path = str(cs2_exe_path)
     commands = str(commands).strip() if commands else ""
 
+    # Every launch goes through here, so this is where the console channel is
+    # set up: the command pipes must be served before CS2 starts, or it asserts.
+    from gui.other.cs2_netcon import CS2Console
+    commands = CS2Console.prepare_launch(commands)
+
     if sys.platform == 'win32':
         work_dir = os.path.dirname(cs2_exe_path)
         if not os.path.exists(work_dir):
@@ -201,10 +206,6 @@ def __launch_addon():
         set_settings_value("LAUNCH", "commands", commands)
 
     commands = assemble_commands(commands, addon_name)
-    
-    # Ensure -netconport 2121 is always included (mandatory flag)
-    if '-netconport' not in commands:
-        commands += ' -netconport 2121'
 
     # Ensure -disable_workshop_command_filtering is always included (mandatory flag)
     if '-disable_workshop_command_filtering' not in commands:

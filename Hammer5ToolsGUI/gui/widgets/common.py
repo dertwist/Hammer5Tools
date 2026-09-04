@@ -1,5 +1,6 @@
 import logging
 import ast
+import time
 from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, \
     QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, \
@@ -23,6 +24,9 @@ import traceback, ctypes
 from gui.common import apply_title_bar_theme
 
 log = logging.getLogger(__name__)
+
+# Timestamp of the last "CS2 is not running" notice, to keep it from repeating.
+_last_cs2_notice = 0.0
 try:
     import winsound
 except ImportError:
@@ -30,11 +34,12 @@ except ImportError:
 
 
 def require_cs2(action: str = "send this command", parent=None) -> bool:
-    """Whether CS2 can receive a netconsole command, telling the user if not.
+    """Whether CS2 can receive a console command, telling the user if not.
 
-    Only CS2 started with -netconport accepts a connection, which is how
-    Hammer5Tools launches it. Every user-facing action that talks to CS2 goes
-    through here so the check and the wording stay the same everywhere.
+    Commands travel over a pipe that CS2 only opens when Hammer5Tools launched
+    it (Launch > CS2), so this doubles as "was CS2 started through the tool".
+    Every user-facing action that talks to CS2 goes through here so the check
+    and the wording stay the same everywhere.
 
     Args:
         action: Filled into "To <action>, CS2 must be launched...".
@@ -44,16 +49,27 @@ def require_cs2(action: str = "send this command", parent=None) -> bool:
         True when CS2 is reachable, False after showing the notice.
     """
     # Imported here: gui.other pulls in settings, which imports this package.
-    from gui.other.cs2_netcon import CS2Netcon
+    from gui.other.cs2_netcon import CS2Console
 
-    if CS2Netcon.is_available():
+    if CS2Console.is_available():
         return True
+    # Clicking through a list fires one of these per click (playing a sound
+    # event on selection, say), so repeat notices are swallowed: the caller
+    # still gets False, the user just is not asked to dismiss a box each time.
+    global _last_cs2_notice
+    now = time.monotonic()
+    if now - _last_cs2_notice < 5.0:
+        return False
+    _last_cs2_notice = now
     # A one-line notice, so a plain information box rather than ErrorInfo,
     # whose details pane and Report button belong to actual failures.
     QMessageBox.information(
         parent if parent is not None else QApplication.activeWindow(),
         "CS2 is not running",
-        f"To {action}, CS2 must be launched through Hammer5Tools.",
+        f"To {action}, CS2 must be launched through Hammer5Tools.\n\n"
+        "A CS2 you started from Steam or Hammer cannot receive commands: the "
+        "console channel is opened by the launch options Hammer5Tools adds.\n\n"
+        "If CS2 is still starting up, give it a few seconds and try again.",
     )
     return False
 

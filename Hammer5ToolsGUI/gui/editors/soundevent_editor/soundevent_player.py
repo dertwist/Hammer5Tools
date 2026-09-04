@@ -1,8 +1,8 @@
-"""Soundevent playback utility for CS2 via netcon.
+"""Soundevent playback utility for CS2 via the console channel.
 
 This module provides a simple, fire-and-forget function to trigger
-CS2 sound events using the already running CS2 instance started with
--netconport 2121.
+CS2 sound events on a CS2 instance that Hammer5Tools launched (only that
+one opens the console command pipe).
 
 Constraints:
 - Fire-and-forget: no completion/finish detection.

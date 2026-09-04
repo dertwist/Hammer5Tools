@@ -340,7 +340,10 @@ seed_user_data()
 
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
 
-default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
+# The console channel flags (-insecure -concommandpipe -con_logfile) are not
+# listed here: launch_cs2_process adds them, so they stay correct even for
+# launch options a user edited or saved before.
+default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0"
 
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):

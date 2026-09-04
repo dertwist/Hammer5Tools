@@ -1,8 +1,7 @@
-"""No netconsole command may reach CS2 without checking it is reachable first.
+"""No console command may reach CS2 without checking it is reachable first.
 
-CS2 only listens on the netconsole port when it was started with -netconport,
-which is how Hammer5Tools launches it. Sending blind meant the UI looked like
-it worked while nothing happened.
+CS2 only opens the command pipe when Hammer5Tools launched it. Sending blind
+meant the UI looked like it worked while nothing happened.
 """
 
 from __future__ import annotations
@@ -19,6 +18,7 @@ app = QApplication.instance() or QApplication(sys.argv)
 
 from gui.other.cs2_netcon import CS2Netcon
 from gui.widgets import require_cs2
+from gui.widgets import common
 
 
 @pytest.fixture
@@ -32,6 +32,8 @@ def cs2(monkeypatch):
 
     Fake.sent = []
     Fake.notices = []
+    # The notice is rate limited; each test starts from a clean slate.
+    common._last_cs2_notice = 0.0
     monkeypatch.setattr(CS2Netcon, "is_available", staticmethod(lambda *a, **k: Fake.available))
     monkeypatch.setattr(CS2Netcon, "send", staticmethod(lambda cmd: Fake.sent.append(cmd) or True))
     monkeypatch.setattr(
@@ -52,7 +54,9 @@ def test_guard_explains_itself_when_cs2_is_missing(cs2):
     assert require_cs2("do a thing") is False
     (title, text), = cs2.notices
     assert title == "CS2 is not running"
-    assert text == "To do a thing, CS2 must be launched through Hammer5Tools."
+    assert text.startswith("To do a thing, CS2 must be launched through Hammer5Tools.")
+    # The wording has to name the alternative, or users retry the same way.
+    assert "launch options" in text
 
 
 def test_playing_a_soundevent_sends_nothing_without_cs2(cs2):
@@ -95,3 +99,10 @@ def test_a_short_notice_uses_a_plain_message_box(cs2):
     source = inspect.getsource(common.require_cs2)
     assert "QMessageBox.information" in source
     assert "ErrorInfo(" not in source  # the comment may name it; a call must not
+
+
+def test_the_notice_does_not_repeat_on_every_click(cs2):
+    """Selecting sound events fires the guard per click; one box is enough."""
+    for _ in range(5):
+        assert require_cs2("play a soundevent") is False
+    assert len(cs2.notices) == 1
