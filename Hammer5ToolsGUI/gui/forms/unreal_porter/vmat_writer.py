@@ -17,6 +17,8 @@ New kwargs:
 
 import os
 
+from gui.common import app_version
+
 from .shader_schemas import get_shader_schema, format_vmat, Ctx
 
 
@@ -115,7 +117,7 @@ def write_vmat(
     ctx = Ctx(flags=flags, blend_mode=blend_mode, slots=resolved_slots, values=values)
     body = format_vmat(schema, ctx)
 
-    content = f"// THIS FILE IS AUTO-GENERATED\n\nLayer0\n{{\n{body}\n}}"
+    content = f"// Generated with Hammer 5 Tools {app_version}\n\nLayer0\n{{\n{body}\n}}"
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     # newline=None lets the platform translate \n -> \r\n on Windows, matching

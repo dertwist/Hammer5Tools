@@ -8,7 +8,7 @@ texture slots, and parameter blocks.
 
 from .core import (
     Param, Block, FeatureDef, ShaderSchema,
-    KIND_SCALAR, KIND_INT, KIND_VECTOR2, KIND_COLOR, KIND_TEXTURE,
+    KIND_SCALAR, KIND_INT, KIND_VECTOR2, KIND_IVECTOR2, KIND_COLOR, KIND_TEXTURE,
 )
 
 _ALPHA_OR_TRANS = lambda c: c.flag("F_ALPHA_TEST") or c.flag("F_TRANSLUCENT")
@@ -77,6 +77,11 @@ COMPLEX_BLOCKS = (
         Param("F_RENDER_BACKFACES", "int", default=1),
     ), when=_BACKFACES),
 
+    # The flag sits near the top, before Color — matches textureanimation.vmat.
+    Block("Animation", (
+        Param("F_TEXTURE_ANIMATION", "int", default=1),
+    ), when=_ANIM),
+
     Block("Color", (
         Param("g_flModelTintAmount", KIND_SCALAR, default=1.0),
         Param("g_flTexCoordRotation", KIND_SCALAR, default=0.0),
@@ -123,7 +128,17 @@ COMPLEX_BLOCKS = (
         Param("g_nTextureAddressModeV", KIND_INT, default=0),
     )),
 
+    Block("Texture Animation", (
+        Param("g_flAnimationFrame", KIND_SCALAR, default=0.0, defined=_ANIM),
+        Param("g_flAnimationTimeOffset", KIND_SCALAR, default=0.0, defined=_ANIM),
+        Param("g_flAnimationTimePerFrame", KIND_SCALAR, default=0.1, defined=_ANIM),
+        Param("g_nNumAnimationCells", KIND_INT, default=1, defined=_ANIM),
+        Param("g_vAnimationGrid", KIND_IVECTOR2, default=(1, 1), defined=_ANIM),
+    ), when=_ANIM),
+
     Block("Translucent", (
+        Param("F_ALPHA_TEST", "int", default=1, when=lambda c: c.flag("F_ALPHA_TEST")),
+        Param("F_TRANSLUCENT", "int", default=1, when=lambda c: c.flag("F_TRANSLUCENT")),
         Param("g_flAlphaTestReference", KIND_SCALAR, default=0.5),
         Param("g_flAntiAliasedEdgeStrength", KIND_SCALAR, default=1.0),
         Param("TextureTranslucency", KIND_TEXTURE, default="", slot="opacity"),

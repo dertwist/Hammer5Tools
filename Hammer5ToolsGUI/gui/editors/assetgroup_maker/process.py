@@ -3,6 +3,7 @@ import re
 from typing import Dict, List, Optional, Set, Tuple, Any
 from PySide6.QtCore import QThread, Signal
 
+from gui.common import app_version
 from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
 from gui.editors.assetgroup_maker.analyzer import (
@@ -229,7 +230,7 @@ DEFAULT_TEMPLATES = {
 \t}
 }
 """,
-    'vmat': """// THIS FILE IS AUTO-GENERATED
+    'vmat': f"// Generated with Hammer 5 Tools {app_version}" + """
 
 Layer0
 {
