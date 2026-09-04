@@ -114,14 +114,28 @@ class _PipeServer:
         return True
 
     def _serve(self, path: str) -> None:
+        complained = False
         while True:
             handle = _k32.CreateNamedPipeW(
                 path, _PIPE_ACCESS_DUPLEX, _PIPE_TYPE_BYTE, 4,
                 _PIPE_BUFFER, _PIPE_BUFFER, 0, None)
             if handle == _INVALID_HANDLE or not handle:
-                # Another Hammer5Tools already owns the name, or the OS said no.
+                # Another Hammer5Tools owns the name (only its instances can be
+                # created), or the OS said no. Retry: this clears the moment the
+                # other process exits. Say so once, or the tool looks broken for
+                # a reason nothing reports.
+                if not complained:
+                    complained = True
+                    log.warning(
+                        "Could not serve the CS2 command pipe %s (error %d); "
+                        "another Hammer5Tools is probably still running. "
+                        "Console commands stay unavailable until it exits.",
+                        path, _k32.GetLastError())
                 time.sleep(2.0)
                 continue
+            if complained:
+                complained = False
+                log.info("Serving the CS2 command pipe %s again.", path)
             connected = _k32.ConnectNamedPipe(handle, None)
             if not connected and _k32.GetLastError() != _ERROR_PIPE_CONNECTED:
                 _k32.CloseHandle(ctypes.c_void_p(handle))
