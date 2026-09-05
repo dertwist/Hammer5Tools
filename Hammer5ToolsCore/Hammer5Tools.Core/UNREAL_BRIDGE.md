@@ -36,9 +36,10 @@ dependency for a full build/publish (see `Hammer5Tools.Core.csproj`'s
 `CUE4ParsePath`-conditioned `ItemGroup`s):
 
 1. Install the .NET 10 SDK.
-2. Clone CUE4Parse somewhere:
+2. Clone CUE4Parse somewhere and apply the NativeAOT patch:
    ```
    git clone --depth 1 https://github.com/FabianFG/CUE4Parse.git
+   git -C CUE4Parse apply <path-to-Hammer5Tools>/Hammer5ToolsCore/external/cue4parse_nativeaot.patch
    ```
 3. Point `CUE4ParsePath` (an MSBuild property, or the `CUE4ParsePathEnv`
    environment variable) at the clone. `CUE4PARSE_SKIP_NATIVE=true` skips

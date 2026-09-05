@@ -137,15 +137,10 @@ static class UnrealBridgeProgram
     // parent and textures, a component's mesh — is an FPackageIndex into it, and
     // reading it needs only the package header.
     //
-    // Deserialising the exports instead (what this used to do) is what makes the
-    // difference under NativeAOT: a StaticMesh's properties reach CUE4Parse's
-    // FPerPlatformFloat, whose ctor resolves FAssetArchive.Read<float> through a
-    // generic virtual method ILC never emitted, and the runtime FailFasts the
-    // whole process — uncatchable, and it took the GUI down on the first mesh of
-    // every reference scan. Rooting the instantiation from this assembly does
-    // not help (a statically bound call is compiled but never registered for the
-    // runtime lookup); not deserialising does. The same landmine still sits under
-    // any command that reads a mesh's properties — dump above, most of all.
+    // Reading only the import table header avoids deserializing every export,
+    // which makes reference scanning significantly faster for uncooked packages.
+    // (The generic virtual method delegate lookup failure under NativeAOT in
+    // CUE4Parse's FPerPlatformFloat constructor is resolved via cue4parse_nativeaot.patch).
     //
     // Cooked/IoStore packages carry no FObjectImport table, so they keep the
     // export walk.
@@ -849,12 +844,7 @@ static class UnrealBridgeProgram
             try
             {
                 var ppkg = provider.LoadPackage(ppath);
-                foreach (var ex in ppkg.GetExports())
-                {
-                    if (EnumText(ex, "MaterialDomain") != null || ex.GetOrDefault<FPackageIndex?>("Parent", null) != null)
-                    { next = ex; break; }
-                }
-                next ??= ppkg.GetExports().FirstOrDefault();
+                next = FindMaterialExport(ppkg) ?? ppkg.GetExports().FirstOrDefault();
             }
             catch { }
             if (next == null) break;
@@ -923,7 +913,20 @@ static class UnrealBridgeProgram
             {
                 var name = ParamName(sp);
                 if (!string.IsNullOrEmpty(name) && !scalars.ContainsKey(name))
-                    scalars[name] = sp.GetOrDefault<float>("ParameterValue", 0f);
+                {
+                    if (sp.TryGetValue<float>(out var fVal, "ParameterValue"))
+                    {
+                        scalars[name] = fVal;
+                    }
+                    else if (sp.TryGetValue<CUE4Parse.UE4.Objects.Engine.FPerPlatformFloat>(out var ppfVal, "ParameterValue") && ppfVal != null)
+                    {
+                        scalars[name] = ppfVal.Value;
+                    }
+                    else
+                    {
+                        scalars[name] = sp.GetOrDefault<float>("ParameterValue", 0f);
+                    }
+                }
             }
 
         var vectorParams = export.GetOrDefault<FStructFallback[]?>("VectorParameterValues", null);
@@ -985,7 +988,14 @@ static class UnrealBridgeProgram
                     {
                         var name = EnumText(ex, "ParameterName");
                         if (!string.IsNullOrEmpty(name) && !scalars.ContainsKey(name))
-                            scalars[name] = ex.GetOrDefault<float>("DefaultValue", 0f);
+                        {
+                            if (ex.TryGetValue<float>(out var fVal, "DefaultValue"))
+                                scalars[name] = fVal;
+                            else if (ex.TryGetValue<CUE4Parse.UE4.Objects.Engine.FPerPlatformFloat>(out var ppfVal, "DefaultValue") && ppfVal != null)
+                                scalars[name] = ppfVal.Value;
+                            else
+                                scalars[name] = ex.GetOrDefault<float>("DefaultValue", 0f);
+                        }
                         break;
                     }
                 case "MaterialExpressionVectorParameter":
@@ -1021,9 +1031,25 @@ static class UnrealBridgeProgram
     // ("Material") is the reliable signal instead.
     static CUE4Parse.UE4.Assets.Exports.UObject? FindMaterialExport(CUE4Parse.UE4.Assets.IPackage pkg)
     {
+        if (pkg is CUE4Parse.UE4.Assets.Package uncooked)
+        {
+            for (int i = 0; i < uncooked.ExportMap.Length; i++)
+            {
+                var exp = uncooked.ExportMap[i];
+                var cls = exp.ClassName;
+                if (cls.Equals("Material", StringComparison.OrdinalIgnoreCase) ||
+                    cls.StartsWith("MaterialInstance", StringComparison.OrdinalIgnoreCase))
+                {
+                    var export = pkg.GetExport(i);
+                    if (export != null) return export;
+                }
+            }
+        }
+
         foreach (var ex in pkg.GetExports())
         {
             if (ex.ExportType == "Material" ||
+                ex.ExportType.StartsWith("MaterialInstance", StringComparison.OrdinalIgnoreCase) ||
                 ex.GetOrDefault<FPackageIndex?>("Parent", null) != null ||
                 ex.GetOrDefault<FStructFallback[]?>("TextureParameterValues", null) != null)
                 return ex;

@@ -44,5 +44,6 @@ runs:
       shell: pwsh
       run: |
         git clone --depth 1 --revision 5703fc96b1b9a95e13deb3a294456842faad1d71 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
+        git -C ../CUE4Parse apply "${{ github.workspace }}/Hammer5ToolsCore/external/cue4parse_nativeaot.patch"
         echo "CUE4ParsePathEnv=${{ github.workspace }}\..\CUE4Parse" >> $env:GITHUB_ENV
         echo "CUE4PARSE_SKIP_NATIVE=true" >> $env:GITHUB_ENV

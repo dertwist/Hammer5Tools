@@ -1,0 +1,83 @@
+diff --git a/CUE4Parse/GameTypes/OtherGames/Objects/Strinova.cs b/CUE4Parse/GameTypes/OtherGames/Objects/Strinova.cs
+index d251b88..d5ec5ed 100644
+--- a/CUE4Parse/GameTypes/OtherGames/Objects/Strinova.cs
++++ b/CUE4Parse/GameTypes/OtherGames/Objects/Strinova.cs
+@@ -10,6 +10,6 @@ public abstract class TEveryPlatformProperty<T>(FAssetArchive Ar, Func<T> getter
+     public Dictionary<FName, T> PlatformOverrides = Ar.ReadMap(Ar.ReadFName, getter);
+ }
+ 
+-public class FEveryPlatformFloat(FAssetArchive Ar) : TEveryPlatformProperty<float>(Ar, Ar.Read<float>);
++public class FEveryPlatformFloat(FAssetArchive Ar) : TEveryPlatformProperty<float>(Ar, () => Ar.Read<float>());
+ public class FEveryPlatformBool(FAssetArchive Ar) : TEveryPlatformProperty<bool>(Ar, Ar.ReadBoolean);
+-public class FEveryPlatformInt(FAssetArchive Ar) : TEveryPlatformProperty<int>(Ar, Ar.Read<int>);
++public class FEveryPlatformInt(FAssetArchive Ar) : TEveryPlatformProperty<int>(Ar, () => Ar.Read<int>());
+diff --git a/CUE4Parse/UE4/Objects/Engine/PerQualityLevelProperties.cs b/CUE4Parse/UE4/Objects/Engine/PerQualityLevelProperties.cs
+index 11fadf4..4674efa 100644
+--- a/CUE4Parse/UE4/Objects/Engine/PerQualityLevelProperties.cs
++++ b/CUE4Parse/UE4/Objects/Engine/PerQualityLevelProperties.cs
+@@ -14,7 +14,7 @@ public FPerQualityLevelProperty(FArchive Ar)
+     {
+         bCooked = Ar.ReadBoolean();
+         Default = Ar.Read<T>();
+-        PerQuality = Ar.ReadMap(Ar.Read<int>, Ar.Read<T>);
++        PerQuality = Ar.ReadMap(() => Ar.Read<int>(), () => Ar.Read<T>());
+     }
+ }
+ 
+diff --git a/CUE4Parse/UE4/Objects/Engine/TPerPlatformProperty.cs b/CUE4Parse/UE4/Objects/Engine/TPerPlatformProperty.cs
+index a7962fd..8a3e002 100644
+--- a/CUE4Parse/UE4/Objects/Engine/TPerPlatformProperty.cs
++++ b/CUE4Parse/UE4/Objects/Engine/TPerPlatformProperty.cs
+@@ -35,19 +35,19 @@ public class FPerPlatformFloat : TPerPlatformProperty<float>
+ {
+     public FPerPlatformFloat() { }
+     public FPerPlatformFloat(float value) { Default = value; }
+-    public FPerPlatformFloat(FAssetArchive Ar) : base(Ar, Ar.Read<float>) { }
++    public FPerPlatformFloat(FAssetArchive Ar) : base(Ar, () => Ar.Read<float>()) { }
+ }
+ 
+ public class FPerPlatformInt : TPerPlatformProperty<int>
+ {
+     public FPerPlatformInt() { }
+-    public FPerPlatformInt(FAssetArchive Ar) : base(Ar, Ar.Read<int>) { }
++    public FPerPlatformInt(FAssetArchive Ar) : base(Ar, () => Ar.Read<int>()) { }
+ }
+ 
+ public class FPerPlatformFrameRate : TPerPlatformProperty<FFrameRate>
+ {
+     public FPerPlatformFrameRate() { }
+-    public FPerPlatformFrameRate(FAssetArchive Ar) : base(Ar, Ar.Read<FFrameRate>) { }
++    public FPerPlatformFrameRate(FAssetArchive Ar) : base(Ar, () => Ar.Read<FFrameRate>()) { }
+ }
+ 
+ public class FPerPlatformFString : TPerPlatformProperty<string>
+diff --git a/CUE4Parse/UE4/Objects/MovieScene/FMovieSceneTrackFieldData.cs b/CUE4Parse/UE4/Objects/MovieScene/FMovieSceneTrackFieldData.cs
+index 8a57113..fde35ad 100644
+--- a/CUE4Parse/UE4/Objects/MovieScene/FMovieSceneTrackFieldData.cs
++++ b/CUE4Parse/UE4/Objects/MovieScene/FMovieSceneTrackFieldData.cs
+@@ -4,5 +4,5 @@ namespace CUE4Parse.UE4.Objects.MovieScene;
+ 
+ public readonly struct FMovieSceneTrackFieldData(FAssetArchive Ar) : IUStruct
+ {
+-    public readonly TMovieSceneEvaluationTree<uint> Field = new(Ar, Ar.Read<uint>);
++    public readonly TMovieSceneEvaluationTree<uint> Field = new(Ar, () => Ar.Read<uint>());
+ }
+diff --git a/CUE4Parse/UE4/Objects/PCG/FPCGMetadataAttribute.cs b/CUE4Parse/UE4/Objects/PCG/FPCGMetadataAttribute.cs
+index 21d4154..9fc79c6 100644
+--- a/CUE4Parse/UE4/Objects/PCG/FPCGMetadataAttribute.cs
++++ b/CUE4Parse/UE4/Objects/PCG/FPCGMetadataAttribute.cs
+@@ -50,10 +50,10 @@ public static FPCGMetadataAttributeBase ReadPCGMetadataAttribute(FAssetArchive A
+         var attributeTypeId = Ar.Read<int>();
+         FPCGMetadataAttributeBase attribute = attributeTypeId switch
+         {
+-            0 => new FPCGMetadataAttribute<float>(Ar, Ar.Read<float>),
+-            1 => new FPCGMetadataAttribute<double>(Ar, Ar.Read<double>),
+-            2 => new FPCGMetadataAttribute<int>(Ar, Ar.Read<int>),
+-            3 => new FPCGMetadataAttribute<long>(Ar, Ar.Read<long>),
++            0 => new FPCGMetadataAttribute<float>(Ar, () => Ar.Read<float>()),
++            1 => new FPCGMetadataAttribute<double>(Ar, () => Ar.Read<double>()),
++            2 => new FPCGMetadataAttribute<int>(Ar, () => Ar.Read<int>()),
++            3 => new FPCGMetadataAttribute<long>(Ar, () => Ar.Read<long>()),
+             4 => new FPCGMetadataAttribute<FVector2D>(Ar, () => new FVector2D(Ar)),
+             5 => new FPCGMetadataAttribute<FVector>(Ar, () => new FVector(Ar)),
+             6 => new FPCGMetadataAttribute<FVector4>(Ar, () => new FVector4(Ar)),
