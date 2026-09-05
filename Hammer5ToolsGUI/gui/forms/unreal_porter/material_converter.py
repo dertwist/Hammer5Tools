@@ -16,6 +16,7 @@ import re
 from PIL import Image
 
 from .vmat_writer import write_vmat
+from .texture_utils import DEFAULT_TEXTURE_SIZE_LIMIT, limit_texture_size
 
 _TEX_EXTS = (".png", ".tga", ".tif", ".tiff", ".exr", ".jpg")
 
@@ -570,6 +571,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      strip_prefix: bool = True,
                      tex_format: str = "tga",
                      invert_y_normal: bool = True,
+                     max_texture_size: int = DEFAULT_TEXTURE_SIZE_LIMIT,
                      feature_flags: dict = None,
                      blend_mode: int = 0) -> MaterialResult:
     """
@@ -604,7 +606,8 @@ def process_material_textures(mat_data: dict, bulk_dir: str, output_dir: str,
                               tex_index: dict = None,
                               strip_prefix: bool = True,
                               tex_format: str = "tga",
-                              invert_y_normal: bool = True) -> tuple:
+                              invert_y_normal: bool = True,
+                              max_texture_size: int = DEFAULT_TEXTURE_SIZE_LIMIT) -> tuple:
     """Extract, split, composite, and save textures for a material instance.
     Returns: (slots_dict, written_count, clean_missing_list, split_summary)
     """
@@ -621,6 +624,7 @@ def process_material_textures(mat_data: dict, bulk_dir: str, output_dir: str,
         rel = f"{folder_rel}/{name}.{ext}"
         dst = os.path.join(output_dir, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
+        img = limit_texture_size(img, max_texture_size)
         if ext.lower() == "tga":
             img.save(dst, rle=True)
         else:
@@ -757,6 +761,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
                      strip_prefix: bool = True,
                      tex_format: str = "tga",
                      invert_y_normal: bool = True,
+                     max_texture_size: int = DEFAULT_TEXTURE_SIZE_LIMIT,
                      feature_flags: dict = None,
                      blend_mode: int = 0) -> MaterialResult:
     """Write a vmat (+ converted/split textures) from a dump-material result."""
@@ -771,7 +776,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     slots, written, missing, split_summary = process_material_textures(
         mat_data, bulk_dir, output_dir, shader=shader, slot_overrides=slot_overrides,
         tex_index=tex_index, strip_prefix=strip_prefix, tex_format=tex_format,
-        invert_y_normal=invert_y_normal
+        invert_y_normal=invert_y_normal, max_texture_size=max_texture_size
     )
 
     color_tint = None

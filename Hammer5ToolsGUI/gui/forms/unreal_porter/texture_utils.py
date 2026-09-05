@@ -4,7 +4,31 @@ from PIL import Image
 
 log = logging.getLogger(__name__)
 
-def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool = False, is_orm: bool = False):
+DEFAULT_TEXTURE_SIZE_LIMIT = 4096
+MAX_TEXTURE_SIZE_LIMIT = 16384
+
+
+def normalize_texture_size_limit(max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT) -> int:
+    """Return a valid output texture limit accepted by the porter."""
+    try:
+        value = int(max_size)
+    except (TypeError, ValueError):
+        value = DEFAULT_TEXTURE_SIZE_LIMIT
+    return max(1, min(value, MAX_TEXTURE_SIZE_LIMIT))
+
+
+def limit_texture_size(img: Image.Image, max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT) -> Image.Image:
+    """Scale a copy to fit within ``max_size`` without upscaling."""
+    limit = normalize_texture_size_limit(max_size)
+    if img.width <= limit and img.height <= limit:
+        return img
+    result = img.copy()
+    result.thumbnail((limit, limit), Image.Resampling.LANCZOS)
+    return result
+
+
+def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool = False,
+               is_orm: bool = False, max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT):
     """
     Unpacks an Unreal RMA or ORM texture into separate TGA maps.
     RMA: R -> Roughness, G -> Metalness, B -> AO
@@ -12,7 +36,8 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
     A -> Height (if has_height is True)
     """
     try:
-        img = Image.open(rma_path).convert("RGBA")
+        with Image.open(rma_path) as source:
+            img = limit_texture_size(source.convert("RGBA"), max_size)
         ch_r, ch_g, ch_b, ch_a = img.split()
 
         if is_orm:
@@ -43,13 +68,15 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
         log.error(f"Error unpacking RMA/ORM: {e}")
         return None
 
-def unpack_orh(orh_path: str, output_dir: str, base_name: str):
+def unpack_orh(orh_path: str, output_dir: str, base_name: str,
+               max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT):
     """
     Unpacks an Unreal ORH texture into separate TGA maps.
     ORH: R -> AO, G -> Roughness, B -> Height
     """
     try:
-        img = Image.open(orh_path).convert("RGBA")
+        with Image.open(orh_path) as source:
+            img = limit_texture_size(source.convert("RGBA"), max_size)
         ch_r, ch_g, ch_b, ch_a = img.split()
 
         ao_path = os.path.join(output_dir, f"{base_name}_ao.tga")
@@ -127,12 +154,15 @@ def invert_y_normal(img_or_path):
     return Image.merge(img.mode, bands)
 
 
-def convert_to_tga(input_path: str, output_dir: str, new_suffix: str, invert_y: bool = False, ext: str = "tga"):
+def convert_to_tga(input_path: str, output_dir: str, new_suffix: str,
+                   invert_y: bool = False, ext: str = "tga",
+                   max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT):
     """
     Converts an image to target format with a new suffix, optionally inverting Y normal.
     """
     try:
-        img = Image.open(input_path).convert("RGBA")
+        with Image.open(input_path) as source:
+            img = limit_texture_size(source.convert("RGBA"), max_size)
         if invert_y:
             img = invert_y_normal(img)
         output_name = f"{new_suffix}.{ext}"

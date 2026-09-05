@@ -4,7 +4,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PySide6.QtCore import QThread, Signal
 from ._worker_base import CancellableWorker
-from .texture_utils import unpack_rma, convert_to_tga, is_metallic, unpack_orh
+from .texture_utils import (
+    DEFAULT_TEXTURE_SIZE_LIMIT,
+    unpack_rma,
+    convert_to_tga,
+    is_metallic,
+    unpack_orh,
+)
 from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
 from .material_converter import strip_ue_asset_folders
@@ -65,12 +71,14 @@ class MaterialConvertWorker(QThread):
     file_done = Signal(str, bool, str)   # name, success, message
     finished = Signal(list, list)        # created, skipped
 
-    def __init__(self, input_dir, output_dir, materials_relative_path, selected_groups, parent=None):
+    def __init__(self, input_dir, output_dir, materials_relative_path, selected_groups,
+                 parent=None, max_texture_size=DEFAULT_TEXTURE_SIZE_LIMIT):
         super().__init__(parent)
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.materials_path = materials_relative_path.replace("\\", "/").strip("/")
         self.selected_groups = selected_groups # Dict of base_name -> files
+        self.max_texture_size = max_texture_size
 
     def run(self):
         total = len(self.selected_groups)
@@ -134,16 +142,19 @@ class MaterialConvertWorker(QThread):
 
                 if has_alb:
                     slots["color"] = format_vmat_path(f"{item_rel_path}/{out_name}_color.tga")
-                    convert_to_tga(suffixes["ALB"], dest_dir, f"{out_name}_color")
+                    convert_to_tga(suffixes["ALB"], dest_dir, f"{out_name}_color",
+                                   max_size=self.max_texture_size)
                 
                 if has_nrm:
                     slots["normal"] = format_vmat_path(f"{item_rel_path}/{out_name}_normal.tga")
-                    convert_to_tga(suffixes["NRM"], dest_dir, f"{out_name}_normal")
+                    convert_to_tga(suffixes["NRM"], dest_dir, f"{out_name}_normal",
+                                   max_size=self.max_texture_size)
 
                 if has_rmah or has_ormh:
                     src = suffixes.get("RMAH") or suffixes.get("ORMH")
                     is_orm = "ORMH" in suffixes
-                    res = unpack_rma(src, dest_dir, out_name, has_height=True, is_orm=is_orm)
+                    res = unpack_rma(src, dest_dir, out_name, has_height=True,
+                                     is_orm=is_orm, max_size=self.max_texture_size)
                     if res:
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
                         slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
@@ -152,14 +163,15 @@ class MaterialConvertWorker(QThread):
                 elif has_rma or has_orm:
                     src = suffixes.get("RMA") or suffixes.get("ORM")
                     is_orm = "ORM" in suffixes
-                    res = unpack_rma(src, dest_dir, out_name, has_height=False, is_orm=is_orm)
+                    res = unpack_rma(src, dest_dir, out_name, has_height=False,
+                                     is_orm=is_orm, max_size=self.max_texture_size)
                     if res:
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
                         slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
                         slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
                 elif has_orh:
                     src = suffixes.get("ORH")
-                    res = unpack_orh(src, dest_dir, out_name)
+                    res = unpack_orh(src, dest_dir, out_name, max_size=self.max_texture_size)
                     if res:
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
                         slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
@@ -167,16 +179,20 @@ class MaterialConvertWorker(QThread):
                 else:
                     if has_rough:
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
-                        convert_to_tga(suffixes["ROUGH"], dest_dir, f"{out_name}_rough")
+                        convert_to_tga(suffixes["ROUGH"], dest_dir, f"{out_name}_rough",
+                                       max_size=self.max_texture_size)
                     if has_metal:
                         slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
-                        convert_to_tga(suffixes["METAL"], dest_dir, f"{out_name}_metal")
+                        convert_to_tga(suffixes["METAL"], dest_dir, f"{out_name}_metal",
+                                       max_size=self.max_texture_size)
                     if has_ao:
                         slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
-                        convert_to_tga(suffixes["AO"], dest_dir, f"{out_name}_ao")
+                        convert_to_tga(suffixes["AO"], dest_dir, f"{out_name}_ao",
+                                       max_size=self.max_texture_size)
                     if has_height:
                         slots["height"] = format_vmat_path(f"{item_rel_path}/{out_name}_height.tga")
-                        convert_to_tga(suffixes["HEIGHT"], dest_dir, f"{out_name}_height")
+                        convert_to_tga(suffixes["HEIGHT"], dest_dir, f"{out_name}_height",
+                                       max_size=self.max_texture_size)
                 
                 if slots.get("metal"):
                     metal_local_path = os.path.join(dest_dir, f"{out_name}_metal.tga")
@@ -606,7 +622,8 @@ class MasterMaterialConvertWorker(CancellableWorker):
     finished = Signal(list, list)        # created, skipped
 
     def __init__(self, output_dir, bulk_dir, master_groups, slot_overrides=None, parent=None,
-                 strip_prefix=True, tex_format="tga", invert_y_normal=True):
+                 strip_prefix=True, tex_format="tga", invert_y_normal=True,
+                 max_texture_size=DEFAULT_TEXTURE_SIZE_LIMIT):
         super().__init__(parent)
         self.output_dir = output_dir
         self.bulk_dir = bulk_dir
@@ -614,6 +631,7 @@ class MasterMaterialConvertWorker(CancellableWorker):
         self.strip_prefix = strip_prefix
         self.tex_format = tex_format
         self.invert_y_normal = invert_y_normal
+        self.max_texture_size = max_texture_size
 
     def run(self):
         from .material_converter import convert_material, process_material_textures, get_texture_index
@@ -660,6 +678,7 @@ class MasterMaterialConvertWorker(CancellableWorker):
                         strip_prefix=self.strip_prefix,
                         tex_format=self.tex_format,
                         invert_y_normal=self.invert_y_normal,
+                        max_texture_size=self.max_texture_size,
                         feature_flags=master_feature_flags,
                         blend_mode=master_blend_mode,
                     )

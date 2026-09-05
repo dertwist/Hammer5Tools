@@ -159,6 +159,7 @@ class MasterMaterialCard(QFrame):
             title = QLabel(f"<b>{master_name}</b> <span style='color:#a5a5a5;'>(standalone material)</span>")
         else:
             title = QLabel(f"<b>{master_name}</b> ({count} instance{'s' if count != 1 else ''})")
+        title.setProperty("h5Component", "unrealMaterialCardLabel")
         head.addWidget(title)
         head.addStretch(1)
 
@@ -190,6 +191,7 @@ class MasterMaterialCard(QFrame):
         b_row.addWidget(self.thumbs_container)
 
         self.bindings = QLabel()
+        self.bindings.setProperty("h5Component", "unrealMaterialCardLabel")
         self.bindings.setWordWrap(True)
         self.bindings.setEnabled(False)
         self.bindings.setTextInteractionFlags(Qt.TextSelectableByMouse)

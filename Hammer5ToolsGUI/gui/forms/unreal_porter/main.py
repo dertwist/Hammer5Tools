@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QApplication, QDialog, QFileDialog, QMessageBox, QProgressDialog, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel,
     QLineEdit, QPushButton, QProgressBar, QTabWidget, QComboBox,
-    QCheckBox, QSplitter, QSpacerItem, QSizePolicy,
+    QCheckBox, QSplitter, QSpacerItem, QSizePolicy, QSpinBox,
 )
 
 from gui.common import apply_title_bar_theme
@@ -29,6 +29,7 @@ from ._worker_base import CancellableWorker
 from .transform import UnitScale
 from .ue_install import find_installs, install_for_project
 from .ue_export_runner import DEFAULT_CONTENT_PATHS
+from .texture_utils import DEFAULT_TEXTURE_SIZE_LIMIT, MAX_TEXTURE_SIZE_LIMIT
 
 # Exports land inside the target addon so everything one port produces lives
 # under one folder and "Clean cache" is a single rmtree.
@@ -685,6 +686,28 @@ class UnrealPorterWidget(QDialog):
             lambda checked: set_settings_bool("UnrealConverter", "tex_invert_y_normal", checked)
         )
 
+        self.tex_max_size_spin = QSpinBox()
+        self.tex_max_size_spin.setRange(1, MAX_TEXTURE_SIZE_LIMIT)
+        self.tex_max_size_spin.setSingleStep(1024)
+        self.tex_max_size_spin.setSuffix(" px")
+        self.tex_max_size_spin.setToolTip(
+            "Downscale converted textures so neither dimension exceeds this value. "
+            "Smaller textures are not enlarged. The export cache keeps its original resolution."
+        )
+        saved_max_size = get_settings_value(
+            "UnrealConverter", "tex_max_size", DEFAULT_TEXTURE_SIZE_LIMIT
+        )
+        try:
+            saved_max_size = int(saved_max_size)
+        except (TypeError, ValueError):
+            saved_max_size = DEFAULT_TEXTURE_SIZE_LIMIT
+        self.tex_max_size_spin.setValue(
+            max(1, min(saved_max_size, MAX_TEXTURE_SIZE_LIMIT))
+        )
+        self.tex_max_size_spin.valueChanged.connect(
+            lambda value: set_settings_value("UnrealConverter", "tex_max_size", value)
+        )
+
         tex_row = QHBoxLayout()
         tex_row.setContentsMargins(0, 0, 0, 0)
         tex_row.addWidget(self.tex_format_combo)
@@ -692,6 +715,7 @@ class UnrealPorterWidget(QDialog):
         tex_row.addStretch(1)
 
         form.addRow("Texture format:", tex_row)
+        form.addRow("Maximum size:", self.tex_max_size_spin)
         return box
 
     def _build_materials_tab(self):
@@ -1391,6 +1415,7 @@ class UnrealPorterWidget(QDialog):
             import_collision=self.model_collision_check.isChecked(),
             tex_format=self.tex_format_combo.currentText(),
             invert_y_normal=self.tex_invert_y_check.isChecked(),
+            max_texture_size=self.tex_max_size_spin.value(),
             import_lights=self.map_lights_check.isChecked(),
             import_sky=self.map_sky_check.isChecked(),
             import_cubemaps=self.map_cubemaps_check.isChecked(),
@@ -1411,6 +1436,17 @@ class UnrealPorterWidget(QDialog):
 
     @Slot()
     def _on_scenes_done(self):
+        worker = getattr(self, "scene_worker", None)
+        if worker is None or not worker.succeeded:
+            if worker is not None and worker.is_cancelled:
+                self.console.warn("Scenes/Models/Blueprints conversion cancelled.")
+                self.progress_bar.setFormat("Cancelled")
+            else:
+                self.console.error("Scenes/Models/Blueprints conversion failed.")
+                self.progress_bar.setFormat("Failed")
+            self._update_button_states()
+            return
+
         self.console.info("Scenes/Models/Blueprints conversion finished.")
         self._finish_conversion_pipeline()
 
@@ -1478,6 +1514,7 @@ class UnrealPorterWidget(QDialog):
             strip_prefix=self.strip_prefixes_check.isChecked(),
             tex_format=self.tex_format_combo.currentText(),
             invert_y_normal=self.tex_invert_y_check.isChecked(),
+            max_texture_size=self.tex_max_size_spin.value(),
         )
         worker.file_done.connect(self._on_file_done)
         worker.progress.connect(self._on_progress)

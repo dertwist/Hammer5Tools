@@ -83,6 +83,9 @@ QFrame[h5Component="unrealMasterMaterialCard"][parity="true"] {
 QFrame[h5Component="unrealMasterMaterialCard"][parity="false"] {
     background-color: @background;
 }
+QLabel[h5Component="unrealMaterialCardLabel"] {
+    background: transparent;
+}
 QFrame[h5Component="unrealSectionDividerLine"] {
     color: @border;
 }

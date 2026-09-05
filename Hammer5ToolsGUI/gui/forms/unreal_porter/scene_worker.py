@@ -18,6 +18,7 @@ from .vmdl_writer import (
     write_vmdl, ue_mesh_to_model_path, mirrored_model_path, find_bulk_export_mesh, GRAYBOX_VMAT,
 )
 from .engine_meshes import is_engine_mesh, generate_engine_mesh_obj, bundled_fbx_for
+from .texture_utils import DEFAULT_TEXTURE_SIZE_LIMIT
 
 _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
 
@@ -86,6 +87,7 @@ class SceneModelsWorker(CancellableWorker):
                  master_param_overrides=None, master_feature_flags=None, master_blend_modes=None,
                  selected_assets=None, import_lods=True, import_collision=True,
                  tex_format="tga", invert_y_normal=True,
+                 max_texture_size=DEFAULT_TEXTURE_SIZE_LIMIT,
                  import_lights=False, import_sky=False, import_cubemaps=False,
                  import_decals=True, mirror_negative_scale=True, parent=None):
         super().__init__(parent)
@@ -109,6 +111,7 @@ class SceneModelsWorker(CancellableWorker):
         self._decal_materials = set()
         self.tex_format = tex_format
         self.invert_y_normal = invert_y_normal
+        self.max_texture_size = max_texture_size
         # Asset keys the user picked in the port scope dialog, already expanded
         # with their references. None means no filtering — port everything.
         self.selected_stems = (
@@ -137,6 +140,7 @@ class SceneModelsWorker(CancellableWorker):
         self._processed_meshes = set()
         self.use_graybox_fallback = use_graybox_fallback
         self.bridge = None
+        self.succeeded = False
         self._landscape_sources = {}   # synthetic mesh id -> map object path
 
     def _log(self, msg, level="info"):
@@ -237,13 +241,14 @@ class SceneModelsWorker(CancellableWorker):
 
     def run(self):
         try:
-            self._run()
+            self.succeeded = self._run()
         except Exception as e:  # never let the thread die silently
+            self.succeeded = False
             self._log(f"Unexpected error: {e}", "error")
         finally:
             self.done.emit()
 
-    def _run(self):
+    def _run(self) -> bool:
         # --- Print folder summary before doing anything ---
         self._log(f"UE Project  : {self.project_dir or '(none)'}", "info")
         self._log(f"Bulk Export : {self.bulk_dir or '(none)'}", "info")
@@ -258,17 +263,15 @@ class SceneModelsWorker(CancellableWorker):
         self.bridge = bridge
         if not bridge.is_available():
             self._log("CUE4Parse bridge unavailable — " + bridge.why_unavailable(), "error")
-            return
-        # Which dll actually ran is the first thing to check when the bridge
-        # returns something the current source says it should not.
-        self._log(f"Bridge       : {bridge.dll}", "info")
+            return False
+        self._log("Bridge       : Hammer5Tools.Core NativeAOT", "info")
 
         # Discover maps from the project.
         try:
             map_keys = [k for k in bridge.list("") if k.lower().endswith(".umap")]
         except BridgeError as e:
             self._log(str(e), "error")
-            return
+            return False
 
         if self.selected_stems is not None:
             in_scope = [k for k in map_keys if self._wanted(k)]
@@ -289,7 +292,7 @@ class SceneModelsWorker(CancellableWorker):
                 self._log("No .umap files found in project.", "warn")
             for i, mk in enumerate(map_keys):
                 if self._cancel_check():
-                    return
+                    return False
                 obj = mk[:-len(".umap")]
                 name = os.path.basename(obj)
                 self.progress.emit(i + 1, len(map_keys))
@@ -337,7 +340,7 @@ class SceneModelsWorker(CancellableWorker):
             # Models-only still needs the mesh list; pull it from the maps.
             for i, mk in enumerate(map_keys):
                 if self._cancel_check():
-                    return
+                    return False
                 self.progress.emit(i + 1, len(map_keys))
                 try:
                     obj = mk[:-len(".umap")]
@@ -382,7 +385,7 @@ class SceneModelsWorker(CancellableWorker):
 
                 for i, bk in enumerate(filtered_bp_keys):
                     if self._cancel_check():
-                        return
+                        return False
                     self.progress.emit(i + 1, len(filtered_bp_keys))
                     obj = bk[:-len(".uasset")]
                     name = os.path.basename(obj)
@@ -457,7 +460,7 @@ class SceneModelsWorker(CancellableWorker):
             total = len(referenced_meshes)
             for i, mesh in enumerate(sorted(referenced_meshes)):
                 if self._cancel_check():
-                    return
+                    return False
                 self.progress.emit(i + 1, total)
                 model_rel = ue_mesh_to_model_path(mesh, strip_prefix=self.strip_prefix)                 # models/.../x.vmdl
                 vmdl_path = os.path.join(self.output_dir, model_rel)
@@ -543,6 +546,8 @@ class SceneModelsWorker(CancellableWorker):
             level = "success" if missing == 0 else "warn"
             tail = f" ({missing} without a bulk-export FBX — vmdl references a missing mesh)" if missing else ""
             self._log("Models — " + ", ".join(parts) + tail, level)
+
+        return True
 
     def _convert_materials(self, referenced_meshes):
         """Convert the Material Instances used by the scene's meshes into vmats
@@ -660,6 +665,7 @@ class SceneModelsWorker(CancellableWorker):
                                        strip_prefix=self.strip_prefix,
                                        tex_format=self.tex_format,
                                        invert_y_normal=self.invert_y_normal,
+                                       max_texture_size=self.max_texture_size,
                                        feature_flags=feature_flags, blend_mode=blend_mode)
                 done += 1
                 msg = f"  material {stem}: Success ({shader}, {source})"
