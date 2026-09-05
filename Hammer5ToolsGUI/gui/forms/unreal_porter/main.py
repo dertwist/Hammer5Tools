@@ -49,8 +49,9 @@ class PrepareWorker(CancellableWorker):
     """Export the analyzed assets, then scan what came out.
 
     The project survey used to live here; it moved to AnalyzeWorker so its
-    result could be cached and so this can only run against a project we have
-    already looked at. What is left is the expensive half: booting the Editor.
+    result could be kept in memory and so this can only run against a project
+    we have already looked at. What is left is the expensive half: booting the
+    Editor.
     """
     log = Signal(str, str)
     progress = Signal(int, int)
@@ -107,13 +108,11 @@ class AnalyzeWorker(CancellableWorker):
     """Mount the project, list what it holds, and group its materials."""
     log = Signal(str, str)
     progress = Signal(int, int)
-    done = Signal(dict)   # the manifest, or {} on failure
+    done = Signal(dict)   # analysis result dict, or {} on failure
 
-    def __init__(self, uproject_path, project_dir, output_dir, parent=None):
+    def __init__(self, project_dir, parent=None):
         super().__init__(parent)
-        self.uproject_path = uproject_path
         self.project_dir = project_dir
-        self.output_dir = output_dir
 
     def run(self):
         from .bridge_client import UnrealBridge, BridgeError
@@ -148,41 +147,34 @@ class AnalyzeWorker(CancellableWorker):
             self.done.emit({})
             return
 
-        # Cooperative cancel after the (potentially long) bridge scan: drop the
-        # result without writing the cache, so a cancelled run still re-runs on
-        # the next open rather than persisting a partial manifest.
         if self.is_cancelled:
-            self.log.emit("Analysis cancelled before persisting the result.", "warn")
+            self.log.emit("Analysis cancelled.", "warn")
             self.done.emit({})
             return
 
-        try:
-            manifest = analysis.save(self.uproject_path, self.project_dir, self.output_dir,
-                                     assets, info, materials)
-        except OSError as e:
-            # A cache we cannot persist is a slower next run, not a failure.
-            self.log.emit(f"Could not write the analysis cache: {e}", "warn")
-            manifest = {"assets": sorted(assets), "info": info or {}, "materials": materials}
-        self.done.emit(manifest)
+        result = {
+            "assets": sorted(assets),
+            "info": info or {},
+            "materials": materials or {},
+            "refs": {},
+        }
+        self.done.emit(result)
 
 
 class ExpandRefsWorker(CancellableWorker):
     """Walk the chosen assets' dependencies off the UI thread.
 
-    Assets already in the cached reference graph cost nothing; the rest are
-    read from the bridge — one process each — and folded back into the
-    manifest so no asset is ever scanned twice for the same project state.
+    Assets already in the in-memory reference graph cost nothing; the rest are
+    read from the bridge — one process each — and kept in memory so no asset
+    is ever scanned twice during the session.
     """
     log = Signal(str, str)
     progress = Signal(int, int)
     done = Signal(set, dict)
 
-    def __init__(self, uproject_path, project_dir, output_dir, chosen, all_keys,
-                 refs_map=None, parent=None):
+    def __init__(self, project_dir, chosen, all_keys, refs_map=None, parent=None):
         super().__init__(parent)
-        self.uproject_path = uproject_path
         self.project_dir = project_dir
-        self.output_dir = output_dir
         self.chosen = chosen
         self.all_keys = all_keys
         self.refs_map = refs_map
@@ -190,7 +182,6 @@ class ExpandRefsWorker(CancellableWorker):
     def run(self):
         from .bridge_client import UnrealBridge
         from .asset_selection import expand_references
-        from . import analysis
 
         new_refs = {}
         try:
@@ -205,8 +196,6 @@ class ExpandRefsWorker(CancellableWorker):
             self.log.emit(f"Reference scan failed: {e}", "error")
             # Fall back to exactly what was ticked rather than losing the picks.
             selected = set(self.chosen)
-        # Whatever was read this time is worth keeping even if the walk failed.
-        analysis.update_refs(self.output_dir, new_refs)
         self.done.emit(selected, new_refs)
 
 
@@ -234,10 +223,12 @@ class UnrealPorterWidget(QDialog):
 
         self.groups = {}
         self.worker = None
+        self._analysis_result = None
         self._analyzed_uproject = None
         self._project_assets = []
         self._project_refs = {}
         self._selected_assets = set()
+        self._compile_asset_snapshot = {}
         self._installs = find_installs()
 
         self._build_ui()
@@ -299,9 +290,8 @@ class UnrealPorterWidget(QDialog):
         actions = QHBoxLayout()
         self.reanalyze_button = QPushButton("Re-analyze")
         self.reanalyze_button.setToolTip(
-            "Re-read the project through the CUE4Parse bridge, ignoring the cached "
-            "analysis. Only needed if the project changed in a way the file "
-            "timestamps did not capture."
+            "Re-read the project through the CUE4Parse bridge from source. "
+            "Updates the asset list and material groups for the current project on disk."
         )
         self.reanalyze_button.setEnabled(False)
         self.reanalyze_button.clicked.connect(lambda: self.ensure_analysis(force=True))
@@ -535,6 +525,19 @@ class UnrealPorterWidget(QDialog):
             lambda checked: set_settings_bool("UnrealConverter", "strip_ue_prefixes", checked)
         )
         sv.addWidget(self.strip_prefixes_check)
+
+        self.compile_assets_check = QCheckBox("Compile assets")
+        self.compile_assets_check.setToolTip(
+            "Run Source 2 ResourceCompiler after porting. Compiles generated materials, "
+            "models, maps, and Smart Props; the Unreal export cache is excluded."
+        )
+        self.compile_assets_check.setChecked(
+            get_settings_bool("UnrealConverter", "compile_assets", False)
+        )
+        self.compile_assets_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "compile_assets", checked)
+        )
+        sv.addWidget(self.compile_assets_check)
         layout.addWidget(settings_box)
 
         layout.addWidget(self._build_map_settings_box())
@@ -936,7 +939,10 @@ class UnrealPorterWidget(QDialog):
 
     # prepare assets
 
-    _WORKER_ATTRS = ("worker", "prepare_worker", "scene_worker", "refs_worker", "analyze_worker")
+    _WORKER_ATTRS = (
+        "worker", "prepare_worker", "scene_worker", "refs_worker", "analyze_worker",
+        "compile_worker",
+    )
 
     def closeEvent(self, event):
         """Confirm before closing if a job is running, then stop every worker.
@@ -1033,34 +1039,24 @@ class UnrealPorterWidget(QDialog):
     def ensure_analysis(self, force=False):
         """Make sure we know what is in the project before anything else runs.
 
-        Cheap path first: if the cached manifest's fingerprint still matches the
-        project on disk, nothing runs at all.
+        Preserves an already completed analysis in memory when the same project
+        remains selected; force=True triggers a fresh analysis.
         """
-        from . import analysis
-
         uproject = self.uproject_path()
         project_dir = self.project_dir()
         if not uproject or not os.path.isfile(uproject) or not os.path.isdir(project_dir):
             self._set_analysis({}, uproject)
             return
 
-        if not force:
-            cached = analysis.load(uproject, project_dir, self.output_dir())
-            if cached:
-                self.console.info(
-                    f"Using cached analysis from {cached.get('analyzed_at')} "
-                    f"({len(cached.get('assets', []))} asset(s), "
-                    f"{len(cached.get('refs') or {})} reference scan(s) cached) — project unchanged."
-                )
-                self._set_analysis(cached, uproject)
-                return
+        if not force and self._analyzed_uproject == uproject and self._analysis_result:
+            return
 
         self.console.header("Analyzing project")
         self.console.info(f"{os.path.basename(uproject)} — reading assets through the CUE4Parse bridge…")
         self._set_analysis({}, uproject)
         self.progress_bar.setFormat("Analyzing…")
 
-        worker = AnalyzeWorker(uproject, project_dir, self.output_dir())
+        worker = AnalyzeWorker(project_dir)
         worker.log.connect(self._on_worker_log)
         worker.progress.connect(self._on_progress)
         worker.done.connect(lambda manifest, u=uproject: self._on_analysis_done(manifest, u))
@@ -1084,10 +1080,9 @@ class UnrealPorterWidget(QDialog):
         from .converter import apply_saved_swaps
 
         self._analyzed_uproject = uproject if manifest else None
+        self._analysis_result = manifest if manifest else None
         self._project_assets = list(manifest.get("assets", [])) if manifest else []
         self._selected_assets = set(self._project_assets) if self._project_assets else set()
-        # Empty for a manifest written before refs were cached — expansion then
-        # falls back to the bridge, exactly as it used to.
         self._project_refs = dict(manifest.get("refs") or {}) if manifest else {}
 
         groups = dict(manifest.get("materials") or {}) if manifest else {}
@@ -1143,7 +1138,7 @@ class UnrealPorterWidget(QDialog):
         self.console.info(f"{len(dlg.selected_keys)} asset(s) picked; following their references…")
         self._resolving_refs = True
         self._update_button_states()
-        worker = ExpandRefsWorker(self.uproject_path(), self.project_dir(), self.output_dir(),
+        worker = ExpandRefsWorker(self.project_dir(),
                                   dlg.selected_keys, self._project_assets,
                                   refs_map=self._project_refs)
         worker.log.connect(self._on_worker_log)
@@ -1249,6 +1244,9 @@ class UnrealPorterWidget(QDialog):
         if not self._project_assets:
             QMessageBox.warning(self, "Project not analyzed", "Analyze project first.")
             return
+
+        from .asset_compiler import snapshot_compile_assets
+        self._compile_asset_snapshot = snapshot_compile_assets(output_dir, self.tmp_dir())
 
         # STAGE 1: Resolving port scope and checking export cache
         self.console.header("(1/6) Resolving port scope and checking export cache")
@@ -1379,8 +1377,58 @@ class UnrealPorterWidget(QDialog):
     def _finish_conversion_pipeline(self):
         # STAGE 6: Finalizing conversion
         self.console.header("(6/6) Finalizing conversion & writing manifests")
+        if self.compile_assets_check.isChecked():
+            self._start_asset_compilation()
+            return
+        self._complete_conversion_pipeline()
+
+    def _start_asset_compilation(self):
+        from .asset_compiler import CompileAssetsWorker
+
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            self.console.error("Asset compilation needs a configured CS2 installation path.")
+            self.progress_bar.setFormat("Compile failed")
+            self._update_button_states()
+            return
+
+        self.console.header("Compiling ported assets")
+        self.convert_button.setEnabled(False)
+        self.reanalyze_button.setEnabled(False)
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setFormat("Compiling assets…")
+
+        worker = CompileAssetsWorker(
+            cs2_path,
+            self.output_dir(),
+            self.tmp_dir(),
+            baseline=self._compile_asset_snapshot,
+        )
+        worker.log.connect(self._on_worker_log)
+        worker.done.connect(self._on_asset_compilation_done)
+        if not self._start_worker("compile_worker", worker):
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setFormat("Compile failed")
+            self._update_button_states()
+
+    @Slot(bool)
+    def _on_asset_compilation_done(self, success):
+        self.progress_bar.setRange(0, 100)
+        worker = getattr(self, "compile_worker", None)
+        if not success:
+            if worker is not None and worker.is_cancelled:
+                self.progress_bar.setFormat("Cancelled")
+            else:
+                self.console.error("Conversion finished, but asset compilation failed.")
+                self.progress_bar.setFormat("Compile failed")
+            self._update_button_states()
+            return
+        self._complete_conversion_pipeline()
+
+    def _complete_conversion_pipeline(self):
         self.console.success("Conversion finished successfully!")
-        self.progress_bar.setValue(self.progress_bar.maximum())
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(100)
         self.progress_bar.setFormat("Done")
         self._update_button_states()
 

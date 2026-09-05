@@ -162,10 +162,10 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
                       refs_map=None, new_refs=None, is_cancelled=None) -> set:
     """The chosen assets plus everything they depend on, transitively.
 
-    refs_map — the graph cached in the analysis manifest — resolves a key with
-    no work at all. Anything it does not cover is read from the bridge, several
-    assets at a time, and recorded into new_refs so the caller can persist it;
-    that way each asset is scanned once per project state, not once per pick.
+    refs_map — the in-memory reference graph — resolves a key with no work at
+    all. Anything it does not cover is read from the bridge, several assets at
+    a time, and recorded into new_refs so the caller can keep it; that way each
+    asset is scanned once per session, not once per pick.
 
     Unresolvable references (engine content, assets outside the project) are
     dropped rather than reported one by one; they are normal and there are a
@@ -227,11 +227,12 @@ def expand_references(bridge, keys, all_keys, log_cb=None, progress_cb=None, max
         discovered = set()
         to_scan = []
         for key in sorted(pending):
-            cached = (refs_map or {}).get(key, new_refs.get(key))
-            if not cached:
-                to_scan.append(key)
+            if refs_map is not None and key in refs_map:
+                discovered.update(refs_map[key])
+            elif key in new_refs:
+                discovered.update(new_refs[key])
             else:
-                discovered.update(cached)
+                to_scan.append(key)
 
         done = 0
         with ThreadPoolExecutor(max_workers=REF_SCAN_WORKERS) as pool:
