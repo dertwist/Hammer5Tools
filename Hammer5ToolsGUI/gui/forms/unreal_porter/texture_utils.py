@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_TEXTURE_SIZE_LIMIT = 4096
 MAX_TEXTURE_SIZE_LIMIT = 16384
+TEXTURE_SIZE_LIMITS = tuple(2 ** exponent for exponent in range(4, 15))
 
 
 def normalize_texture_size_limit(max_size: int = DEFAULT_TEXTURE_SIZE_LIMIT) -> int:

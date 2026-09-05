@@ -10,6 +10,7 @@ from gui.forms.unreal_porter import main as porter_main
 from gui.forms.unreal_porter.texture_utils import (
     DEFAULT_TEXTURE_SIZE_LIMIT,
     MAX_TEXTURE_SIZE_LIMIT,
+    TEXTURE_SIZE_LIMITS,
     limit_texture_size,
     normalize_texture_size_limit,
 )
@@ -57,7 +58,7 @@ def test_material_texture_outputs_respect_selected_limit(tmp_path):
         assert converted.size == (40, 20)
 
 
-def test_texture_size_control_defaults_to_4096_and_caps_at_16384(monkeypatch):
+def test_texture_size_control_lists_16_through_16384_and_defaults_to_4096(monkeypatch):
     saved = []
     monkeypatch.setattr(
         porter_main, "get_settings_value", lambda _section, _key, default=None: default
@@ -75,8 +76,14 @@ def test_texture_size_control_defaults_to_4096_and_caps_at_16384(monkeypatch):
     box = porter_main.UnrealPorterWidget._build_textures_box(holder)
 
     assert box is not None
-    assert holder.tex_max_size_spin.value() == DEFAULT_TEXTURE_SIZE_LIMIT
-    assert holder.tex_max_size_spin.maximum() == MAX_TEXTURE_SIZE_LIMIT
-    holder.tex_max_size_spin.setValue(MAX_TEXTURE_SIZE_LIMIT + 1)
-    assert holder.tex_max_size_spin.value() == MAX_TEXTURE_SIZE_LIMIT
+    choices = [
+        holder.tex_max_size_combo.itemData(index)
+        for index in range(holder.tex_max_size_combo.count())
+    ]
+    assert choices == list(TEXTURE_SIZE_LIMITS)
+    assert choices[0] == 16
+    assert choices[-1] == MAX_TEXTURE_SIZE_LIMIT
+    assert holder.tex_max_size_combo.currentData() == DEFAULT_TEXTURE_SIZE_LIMIT
+    holder.tex_max_size_combo.setCurrentIndex(holder.tex_max_size_combo.count() - 1)
+    assert holder.tex_max_size_combo.currentData() == MAX_TEXTURE_SIZE_LIMIT
     assert saved[-1] == ("UnrealConverter", "tex_max_size", MAX_TEXTURE_SIZE_LIMIT)
