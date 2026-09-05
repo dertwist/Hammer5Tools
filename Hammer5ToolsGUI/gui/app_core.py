@@ -461,7 +461,7 @@ class MainWindow(QMainWindow):
         self.update_button.setVisible(False)
         self.update_button.clicked.connect(self.show_update_dialog)
         self.ui.horizontalLayout_2.insertWidget(
-            self.ui.horizontalLayout_2.indexOf(self.ui.preferences_button), self.update_button)
+            self.ui.horizontalLayout_2.indexOf(self.ui.preferences_button) + 1, self.update_button)
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.discord.clicked.connect(self.open_discord)

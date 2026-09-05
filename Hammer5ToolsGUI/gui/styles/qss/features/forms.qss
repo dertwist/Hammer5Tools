@@ -239,21 +239,10 @@ QLabel[h5Component="updaterNoteLabel"] {
     padding: 0px 5px;
 }
 
-/* app_core.py / updater/check.py: amber "Update" call to action. */
+/* app_core.py / updater/check.py: "Update" call to action. Default button
+   shape and metrics; only the background is accented. */
 QPushButton[h5Component="updateButton"] {
-    background-color: @warning;
-    border: 1px solid @warning;
-    color: @hex_1e1e1e;
-    font: 580 10pt "Segoe UI";
-    padding: 5px 12px;
-}
-QPushButton[h5Component="updateButton"]:hover {
-    background-color: @hex_f0b02a;
-    border-color: @hex_f0b02a;
-}
-QPushButton[h5Component="updateButton"]:pressed {
-    background-color: @hex_c9880a;
-    border-color: @hex_c9880a;
+    background-color: @accent;
 }
 
 /* widgets/common.py: ErrorInfo dialog's details box. border-color varies
