@@ -23,7 +23,7 @@ from gui.updater.attachment_preview import (
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
-    QProgressDialog, QApplication, QProgressBar
+    QProgressBar
 )
 from PySide6.QtCore import Qt, QUrl, QTimer, QObject, Signal
 from PySide6.QtGui import QIcon
@@ -111,10 +111,12 @@ class UpdateWorker(QObject):
 _worker_thread = None
 _worker = None
 
-def check_updates(repo_url, current_version, silent):
+def check_updates(repo_url, current_version, silent, on_update=None):
     """
-    Entry point for checking updates. 
+    Entry point for checking updates.
     Creates a worker and a thread to avoid blocking the UI.
+    `on_update(update, releases, owner, repo, mgr)` replaces the automatic
+    update dialog, so the caller can surface the update in its own UI.
     """
     global _worker, _worker_thread
     
@@ -124,7 +126,7 @@ def check_updates(repo_url, current_version, silent):
     _worker = UpdateWorker(repo_url, current_version, silent)
     
     # Connect signals to UI functions with QueuedConnection to ensure they run on the main thread
-    _worker.finished.connect(show_update_notification, Qt.QueuedConnection)
+    _worker.finished.connect(on_update or show_update_notification, Qt.QueuedConnection)
     _worker.no_update.connect(lambda r, o, re, m: show_latest_version_info(current_version, r, o, re, m), Qt.QueuedConnection)
     _worker.error.connect(lambda e: QMessageBox.critical(None, "Update Error", f"Failed to check for updates:\n{e}"), Qt.QueuedConnection)
     
@@ -145,9 +147,54 @@ def show_latest_version_info(current_version, releases, owner, repo, mgr):
     if msg.clickedButton() == show_changelog_btn:
         show_update_notification(None, releases, owner, repo, mgr)
 
+class UpdateDialog(QDialog):
+    """Release notes plus the download progress bar: the install runs inside
+    this window instead of switching to a separate progress dialog."""
+
+    progress_signal = Signal(int)
+    status_signal = Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.downloading = False
+        self.progress_signal.connect(self._set_progress)
+        self.status_signal.connect(self._set_status)
+
+    def _set_progress(self, percent: int):
+        self.progress_bar.setValue(percent)
+        self.progress_bar.setFormat(f"Downloading... {percent}%")
+
+    def _set_status(self, text: str):
+        self.status_label.setText(text)
+        self.status_label.setVisible(bool(text))
+
+    def begin_download(self):
+        self.downloading = True
+        self.button_container.setVisible(False)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Downloading... 0%")
+        self.progress_bar.setVisible(True)
+        self._set_status("Downloading update package...")
+
+    def end_download(self):
+        self.downloading = False
+        self.button_container.setVisible(True)
+        self.progress_bar.setVisible(False)
+        self._set_status("")
+
+    def reject(self):
+        # Closing mid-download would leave the install half-applied.
+        if not self.downloading:
+            super().reject()
+
+
 def show_update_notification(update, releases, owner, repo, mgr):
     print("Showing Update Notification window...")
-    dialog = QDialog()
+    build_update_dialog(update, releases, owner, repo, mgr).exec()
+
+
+def build_update_dialog(update, releases, owner, repo, mgr):
+    dialog = UpdateDialog()
     dialog.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
     dialog.setWindowTitle("Updater")
     layout = QVBoxLayout(dialog)
@@ -229,12 +276,15 @@ def show_update_notification(update, releases, owner, repo, mgr):
     scroll.setWidget(content_widget)
     layout.addWidget(scroll)
 
-    button_layout = QHBoxLayout()
+    dialog.button_container = QWidget(dialog)
+    button_layout = QHBoxLayout(dialog.button_container)
+    button_layout.setContentsMargins(0, 0, 0, 0)
     button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
     download_button = QPushButton("Update")
+    download_button.setProperty("h5Component", "updateButton")
     if update:
-        download_button.clicked.connect(lambda: show_install_dialog(update, mgr, dialog))
+        download_button.clicked.connect(lambda: start_installation(dialog, update, mgr))
     else:
         download_button.setEnabled(False)
         download_button.setToolTip("No update available.")
@@ -249,66 +299,21 @@ def show_update_notification(update, releases, owner, repo, mgr):
     ok_button.clicked.connect(dialog.accept)
     button_layout.addWidget(ok_button)
 
-    layout.addLayout(button_layout)
+    layout.addWidget(dialog.button_container)
+
+    dialog.status_label = QLabel("", dialog)
+    dialog.status_label.setProperty("h5Component", "updaterStatusLabel")
+    dialog.status_label.setVisible(False)
+    layout.addWidget(dialog.status_label)
+
+    dialog.progress_bar = QProgressBar(dialog)
+    dialog.progress_bar.setRange(0, 100)
+    dialog.progress_bar.setFixedHeight(18)
+    dialog.progress_bar.setVisible(False)
+    layout.addWidget(dialog.progress_bar)
+
     dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
-    dialog.exec()
-
-class DownloadProgressDialog(QDialog):
-    """Custom modal dialog for update download progress using MapBuilder styling."""
-
-    progress_signal = Signal(int)
-    status_signal = Signal(str)
-
-    def __init__(self, parent=None, title="Updating Hammer 5 Tools"):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        try:
-            self.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
-        except Exception:
-            pass
-        self.setWindowModality(Qt.ApplicationModal)
-        self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-        self.setFixedWidth(420)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-
-        self.status_label = QLabel("Downloading update package...")
-        self.status_label.setProperty("h5Component", "updaterStatusLabel")
-        layout.addWidget(self.status_label)
-
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("Downloading... 0%")
-        self.progress_bar.setFixedHeight(18)
-        layout.addWidget(self.progress_bar)
-
-        self.details_label = QLabel("Please wait while the update is downloaded...")
-        self.details_label.setProperty("h5Component", "updaterDetailsLabel")
-        layout.addWidget(self.details_label)
-
-        self.progress_signal.connect(self._set_progress)
-        self.status_signal.connect(self._set_status)
-
-    def update_progress(self, percent: int):
-        self.progress_signal.emit(percent)
-
-    def update_status(self, text: str):
-        self.status_signal.emit(text)
-
-    def _set_progress(self, percent: int):
-        self.progress_bar.setValue(percent)
-        self.progress_bar.setFormat(f"Downloading... {percent}%")
-
-    def _set_status(self, text: str):
-        self.status_label.setText(text)
-
-
-_active_download_dialog = None
-
+    return dialog
 
 def prepare_for_update():
     """
@@ -376,49 +381,28 @@ def prepare_for_update():
         pass
 
 
-def show_install_dialog(update, mgr, parent_dialog):
-    reply = QMessageBox.question(None, "Installation Confirmation",
+def start_installation(dialog, update, mgr):
+    reply = QMessageBox.question(dialog, "Installation Confirmation",
                                  "During update installation, Hammer5Tools will be closed.\n"
                                  "Do you wish to continue?",
                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-    if reply == QMessageBox.Yes:
-        handle_installation(update, mgr, parent_dialog)
+    if reply != QMessageBox.Yes:
+        return
 
+    dialog.begin_download()
 
-def handle_installation(update, mgr, parent_dialog=None):
-    global _active_download_dialog
-    try:
-        progress = DownloadProgressDialog(parent=parent_dialog)
-        _active_download_dialog = progress
-        progress.show()
-        
-        # Close the changelog dialog if it exists
-        if parent_dialog:
-            parent_dialog.accept()
-            
-        def on_progress(percent: int):
-            # Velopack calls this from a native thread, emit signal to main thread
-            progress.update_progress(percent)
-            
-        def run_update():
-            global _active_download_dialog
-            try:
-                mgr.download_updates(update, on_progress)
-                prepare_for_update()
-                mgr.apply_updates_and_restart(update)
-            except Exception as e:
-                # Close progress dialog and show error on main thread
-                error_msg = str(e)
-                QTimer.singleShot(0, lambda err=error_msg: (
-                    progress.close(),
-                    QMessageBox.critical(None, "Update Error", f"Failed to apply update: {err}")
-                ))
-            finally:
-                _active_download_dialog = None
-                
-        threading.Thread(target=run_update, daemon=True).start()
-    except Exception as e:
-        _active_download_dialog = None
-        QMessageBox.critical(None, "Update Error", f"Failed to start update: {e}")
+    def run_update():
+        try:
+            # Velopack reports progress from a native thread; the signal hops to the GUI thread.
+            mgr.download_updates(update, dialog.progress_signal.emit)
+            dialog.status_signal.emit("Installing update...")
+            prepare_for_update()
+            mgr.apply_updates_and_restart(update)
+        except Exception as e:
+            error_msg = str(e)
+            QTimer.singleShot(0, lambda err=error_msg: (
+                dialog.end_download(),
+                QMessageBox.critical(dialog, "Update Error", f"Failed to apply update: {err}")
+            ))
 
-
+    threading.Thread(target=run_update, daemon=True).start()

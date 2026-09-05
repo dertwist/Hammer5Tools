@@ -229,15 +229,28 @@ QLabel[h5Component="updaterStatusLabel"] {
     font-size: 12px;
     font-weight: bold;
 }
-QLabel[h5Component="updaterDetailsLabel"] {
-    color: @hex_929292;
-    font-size: 10px;
-}
 QLabel[h5Component="updaterVersionLabel"] {
     padding: 5px 5px 0px 5px;
 }
 QLabel[h5Component="updaterNoteLabel"] {
     padding: 0px 5px;
+}
+
+/* app_core.py / updater/check.py: amber "Update" call to action. */
+QPushButton[h5Component="updateButton"] {
+    background-color: @warning;
+    border: 1px solid @warning;
+    color: @hex_1e1e1e;
+    font: 580 10pt "Segoe UI";
+    padding: 5px 12px;
+}
+QPushButton[h5Component="updateButton"]:hover {
+    background-color: @hex_f0b02a;
+    border-color: @hex_f0b02a;
+}
+QPushButton[h5Component="updateButton"]:pressed {
+    background-color: @hex_c9880a;
+    border-color: @hex_c9880a;
 }
 
 /* widgets/common.py: ErrorInfo dialog's details box. border-color varies

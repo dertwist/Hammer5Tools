@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QWidget,
     QApplication,
+    QPushButton,
 )
 from PySide6.QtGui import QAction, QPainter, QColor, QIcon
 from PySide6.QtCore import (
@@ -48,7 +49,7 @@ from gui.editors.loading_editor.main import LoadingEditorMainWindow
 from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from gui.forms.create_addon.main import CreateAddonDialog
 from gui.other.addon_functions import delete_addon, launch_addon
-from gui.updater.check import check_updates
+from gui.updater.check import check_updates, show_update_notification
 from gui.forms.export.main import ExportAndImportAddonDialog
 from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from gui.editors.smartprop_editor.main import SmartPropEditorMainWindow
@@ -123,6 +124,7 @@ class MainWindow(QMainWindow):
         apply_title_bar_theme(self)
 
         self.preferences_dialog = None
+        self._pending_update = None
         # Editors are built on first tab activation: every live widget makes an
         # app-wide stylesheet repolish (live theme switching) superlinearly
         # slower, so tabs nobody looked at stay empty.
@@ -185,13 +187,29 @@ class MainWindow(QMainWindow):
         validate_addon_structure()
 
     def trigger_update_check(self):
-        check_updates("https://github.com/dertwist/Hammer5Tools", app_version, False)
+        # Manual check from Settings: surface the button and open the notes right away.
+        check_updates("https://github.com/dertwist/Hammer5Tools", app_version, False,
+                      on_update=lambda *args: self.on_update_available(*args, show=True))
 
     def deferred_update_check(self):
         try:
-            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+            # Startup check stays quiet: it only lights up the Update button.
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True,
+                          on_update=self.on_update_available)
         except Exception as e:
             log.error(f"Error checking updates: {e}")
+
+    def on_update_available(self, update, releases, owner, repo, mgr, show=False):
+        self._pending_update = (update, releases, owner, repo, mgr)
+        version = getattr(getattr(update, 'TargetFullRelease', None), 'Version', None)
+        self.update_button.setToolTip(f"Update to version {version}" if version else "An update is available")
+        self.update_button.setVisible(True)
+        if show:
+            self.show_update_dialog()
+
+    def show_update_dialog(self):
+        if self._pending_update:
+            show_update_notification(*self._pending_update)
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
@@ -437,6 +455,13 @@ class MainWindow(QMainWindow):
         if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name(): self.selected_addon_name()
         self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
         self.ui.ComboBoxSelectAddon.activated.connect(self.addon_selector.refresh)
+        self.update_button = QPushButton("Update", self.centralWidget())
+        self.update_button.setProperty("h5Component", "updateButton")
+        self.update_button.setToolTip("An update is available")
+        self.update_button.setVisible(False)
+        self.update_button.clicked.connect(self.show_update_dialog)
+        self.ui.horizontalLayout_2.insertWidget(
+            self.ui.horizontalLayout_2.indexOf(self.ui.preferences_button), self.update_button)
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.discord.clicked.connect(self.open_discord)
@@ -455,6 +480,7 @@ class MainWindow(QMainWindow):
             self.ui.discord,
             self.ui.documentation_button,
             self.ui.preferences_button,
+            self.update_button,
             self.ui.utilities_button,
             self.ui.addon_actions_button,
             self.ui.ComboBoxSelectAddon,
