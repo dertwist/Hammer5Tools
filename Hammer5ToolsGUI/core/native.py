@@ -376,6 +376,12 @@ class SmartPropNativeClient:
             *self._buffer_arguments(output_path.encode("utf-8")),
         ))
 
+    def unreal_reset(self) -> dict:
+        """Drops Core's cached project mount so the next call re-reads from disk."""
+        return json.loads(self._invoke(
+            self._library.h5t_unreal_reset, *self._buffer_arguments(b"{}"),
+        ))
+
     def unreal_info(self, content_dir: str) -> dict:
         """Project stats: {contentDir, game, totalFiles, uassets, umaps, externalActorFiles, sampleFiles}."""
         return json.loads(self._invoke(
@@ -560,6 +566,7 @@ class SmartPropNativeClient:
             "h5t_vsnap_generate_binary",
             "h5t_vsnap_light_json",
             "h5t_vsnap_lightning_json",
+            "h5t_unreal_reset",
             "h5t_unreal_info",
             "h5t_unreal_list",
             "h5t_unreal_dump",

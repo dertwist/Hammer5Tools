@@ -32,3 +32,18 @@ def test_bridge_call_translates_native_errors():
         assert isinstance(error.__cause__, NativeCoreError)
     else:
         raise AssertionError("NativeCoreError was not translated")
+
+
+def test_bridge_reset_drops_the_cached_project_mount():
+    calls = []
+
+    class FakeCoreBridge:
+        def unreal_reset(self):
+            calls.append("reset")
+            return {"ok": True}
+
+    bridge = UnrealBridge("/project/Content")
+    bridge._bridge = lambda: FakeCoreBridge()
+
+    bridge.reset()
+    assert calls == ["reset"]

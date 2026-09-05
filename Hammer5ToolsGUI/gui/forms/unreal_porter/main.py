@@ -713,21 +713,47 @@ class UnrealPorterWidget(QDialog):
 
         layout.addLayout(top_row)
 
+        filter_row = QHBoxLayout()
+        self.material_search = QLineEdit()
+        self.material_search.setPlaceholderText("Search master materials, instances, or textures…")
+        self.material_search.setClearButtonEnabled(True)
+        filter_row.addWidget(self.material_search, 1)
+        self.selected_materials_only = QCheckBox("Selected assets only")
+        self.selected_materials_only.setToolTip(
+            "Show only material groups used by the current asset selection and its references."
+        )
+        filter_row.addWidget(self.selected_materials_only)
+        layout.addLayout(filter_row)
+
         from .master_material_list import MasterMaterialList
         self.master_mat_list = MasterMaterialList()
         self.master_mat_list.map_slots_requested.connect(self._on_map_master_slots)
+        self.material_search.textChanged.connect(self._apply_material_filters)
+        self.selected_materials_only.toggled.connect(self._apply_material_filters)
         layout.addWidget(self.master_mat_list, 1)
         return tab
 
     def _populate_master_materials_table(self, master_groups: dict):
         self.master_groups = master_groups
         self.master_mat_list.populate(master_groups, bulk_dir=self.tmp_dir())
+        self._apply_material_filters()
 
-    # The card widgets belong to master_mat_list and are deleteLater()'d on every
-    # populate(), so they are read live rather than cached here — a cached dict
-    # outlives its widgets the moment anything repopulates the list without going
-    # through _populate_master_materials_table (clearing the cache does exactly
-    # that), and the next read raises "Internal C++ object already deleted".
+    def _apply_material_filters(self, *_args):
+        if not hasattr(self, "master_mat_list"):
+            return
+        search_text = self.material_search.text() if hasattr(self, "material_search") else ""
+        selected_only = (
+            self.selected_materials_only.isChecked()
+            if hasattr(self, "selected_materials_only") else False
+        )
+        self.master_mat_list.set_filters(
+            search_text=search_text,
+            selected_only=selected_only,
+            selected_assets=self._selected_assets,
+        )
+
+    # The virtualized list owns the durable state. Card widgets only exist near
+    # the viewport and may be deleted and recreated while scrolling.
     def _master_cards(self):
         return getattr(self, "master_mat_list", None)
 
@@ -738,7 +764,7 @@ class UnrealPorterWidget(QDialog):
         cards = self._master_cards()
         if cards is None:
             return {}
-        return {name: combo.currentText() for name, combo in cards.shader_combos().items()}
+        return cards.shader_selections()
 
     def master_slot_overrides(self) -> dict:
         """{master material name: texture slot overrides} from the Materials tab."""
@@ -808,14 +834,6 @@ class UnrealPorterWidget(QDialog):
             info["feature_flags"] = getattr(dlg, "result_feature_flags", {})
             info["blend_mode"] = getattr(dlg, "result_blend_mode", 0)
             info["shader"] = getattr(dlg, "result_shader", selected_shader)
-            cards = self._master_cards()
-            if cards and hasattr(cards, "cards") and master_name in cards.cards:
-                card = cards.cards[master_name]
-                c_idx = card.shader_combo.findText(info["shader"])
-                if c_idx >= 0:
-                    card.shader_combo.blockSignals(True)
-                    card.shader_combo.setCurrentIndex(c_idx)
-                    card.shader_combo.blockSignals(False)
             self.master_mat_list.refresh(master_name, info)
             slot_count = len(dlg.result_overrides)
             param_count = len(dlg.result_param_overrides)
@@ -1089,6 +1107,7 @@ class UnrealPorterWidget(QDialog):
 
         if not dlg.selected_keys:
             self._selected_assets = set(self._project_assets)
+            self._apply_material_filters()
             self.console.info("Nothing ticked — the whole project will be ported.")
             self._log_port_scope()
             self._update_button_states()
@@ -1112,6 +1131,7 @@ class UnrealPorterWidget(QDialog):
     def _on_refs_expanded(self, selected, new_refs):
         self._project_refs.update(new_refs)
         self._selected_assets = selected
+        self._apply_material_filters()
         self._resolving_refs = False
         self.progress_bar.setValue(self.progress_bar.maximum())
         self.progress_bar.setFormat("Done")
@@ -1403,16 +1423,16 @@ class UnrealPorterWidget(QDialog):
         scope = None if (ignore_scope or not self._selected_assets) else {asset_stem(k) for k in self._selected_assets}
 
         cards = self._master_cards()
-        checkboxes = cards.checkboxes() if cards else {}
-        combos = cards.shader_combos() if cards else {}
+        enabled_states = cards.enabled_states() if cards else {}
+        shader_selections = cards.shader_selections() if cards else {}
 
         active_master_groups = {}
         dropped = 0
         for master_name, info in self.master_groups.items():
-            chk = checkboxes.get(master_name)
-            combo = combos.get(master_name)
-            enabled = chk.isChecked() if chk else True
-            selected_shader = combo.currentText() if combo else info.get("shader", "csgo_environment.vfx")
+            enabled = enabled_states.get(master_name, True)
+            selected_shader = shader_selections.get(
+                master_name, info.get("shader", "csgo_environment.vfx")
+            )
             if not enabled:
                 continue
 

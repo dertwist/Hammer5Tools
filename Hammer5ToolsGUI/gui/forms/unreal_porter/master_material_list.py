@@ -1,16 +1,15 @@
 """
 The Materials tab's Master Material list.
 
-Replaces the old QTableWidget: a table forced every control into a fixed grid
-cell, so the shader picker, the slot summary and the per-master actions all had
-to fit one row height and nothing could show what a mapping actually resolves
-to. Each master material is now its own card that can lay out freely and
-display the slot bindings its instances will inherit.
+Replaces the old QTableWidget with material cards that show shader controls and
+resolved slot bindings. The scroll area only creates cards near the viewport,
+so large projects do not pay the QWidget and thumbnail cost for every material.
 """
 
+import bisect
 import os
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QComboBox,
@@ -29,6 +28,35 @@ _REMAP_ICON = gui_assets_dir("icons", "tools", "modeldoc_editor", "material_rema
 from .shader_schemas import SHADERS
 
 _CHANNEL_LABELS = {"r": "R", "g": "G", "b": "B", "a": "A", "rgb": "RGB"}
+
+_CARD_HEIGHT = 76
+_DIVIDER_HEIGHT = 40
+_ROW_SPACING = 6
+_OVERSCAN_ROWS = 3
+
+
+def material_group_matches(info: dict, master_name: str, search_text: str) -> bool:
+    """Whether a material group contains every whitespace-separated query term."""
+    terms = search_text.casefold().split()
+    if not terms:
+        return True
+
+    searchable = [master_name]
+    searchable.extend(str(value) for value in (info.get("textures") or {}).values())
+    for stem, path, _data in info.get("instances", []):
+        searchable.extend((str(stem), str(path)))
+    haystack = " ".join(searchable).casefold()
+    return all(term in haystack for term in terms)
+
+
+def material_group_is_selected(info: dict, master_name: str, selected_stems: set[str]) -> bool:
+    """Whether the master or one of its instances is in the current port scope."""
+    if not selected_stems:
+        return False
+    if os.path.splitext(os.path.basename(master_name))[0].casefold() in selected_stems:
+        return True
+    return any(str(stem).casefold() in selected_stems
+               for stem, _path, _data in info.get("instances", []))
 
 
 def describe_bindings(textures: dict, slot_overrides: dict = None, shader: str = None, info: dict = None) -> str:
@@ -108,6 +136,7 @@ class MasterMaterialCard(QFrame):
 
     def __init__(self, master_name: str, info: dict, parity: bool = False, bulk_dir: str = None, tex_index: dict = None, parent=None):
         super().__init__(parent)
+        self.setFixedHeight(_CARD_HEIGHT)
         self.setFrameShape(QFrame.StyledPanel)
         self.master_name = master_name
         self.bulk_dir = bulk_dir
@@ -220,25 +249,33 @@ class MasterMaterialCard(QFrame):
 
 
 class MasterMaterialList(QScrollArea):
-    """Scrollable column of MasterMaterialCards."""
+    """Virtualized, filterable column of MasterMaterialCards."""
 
     map_slots_requested = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.cards = {}
         self.bulk_dir = None
+        self._master_groups = {}
+        self._enabled = {}
+        self._shaders = {}
+        self._entries = []
+        self._entry_ends = []
+        self._search_text = ""
+        self._selected_only = False
+        self._selected_stems = set()
+        self._rebuilding = False
+        self._materializing = False
 
         self._body = QWidget()
-        self._layout = QVBoxLayout(self._body)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(6)
-        self._empty = QLabel("Run Scan to discover Master Materials.")
+        self._empty = QLabel("Run Scan to discover Master Materials.", self._body)
         self._empty.setEnabled(False)
-        self._layout.addWidget(self._empty)
-        self._layout.addStretch(1)
         self.setWidget(self._body)
+        self.viewport().installEventFilter(self)
+        self.verticalScrollBar().valueChanged.connect(self._materialize_visible)
 
     @staticmethod
     def _make_standalone_divider(label_text: str) -> QFrame:
@@ -264,71 +301,177 @@ class MasterMaterialList(QScrollArea):
 
     def populate(self, master_groups: dict, bulk_dir: str = None):
         self.bulk_dir = bulk_dir
-        self._body.setUpdatesEnabled(False)
+        self._master_groups = master_groups
+        self._enabled = {name: True for name in master_groups}
+        self._shaders = {
+            name: info.get("shader", "csgo_environment.vfx")
+            for name, info in master_groups.items()
+        }
+        self._rebuild_entries()
+
+    def set_filters(self, search_text: str = "", selected_only: bool = False,
+                    selected_assets=()) -> None:
+        from .asset_selection import asset_stem
+
+        self._search_text = search_text.strip()
+        self._selected_only = selected_only
+        self._selected_stems = {asset_stem(asset) for asset in selected_assets}
+        self._rebuild_entries()
+
+    def _rebuild_entries(self):
+        self._rebuilding = True
         try:
-            while self._layout.count():
-                item = self._layout.takeAt(0)
-                w = item.widget()
-                if w and w is not self._empty:
-                    w.setParent(None)
-                    w.deleteLater()
-            self.cards.clear()
-
-            self._empty.setVisible(not master_groups)
-            self._layout.addWidget(self._empty)
-
-            from .material_converter import get_texture_index
-            tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
-
-            # Sort by instance count descending so the most-used masters are on top.
+            self._clear_materialized()
+            visible_groups = [
+                (name, info) for name, info in self._master_groups.items()
+                if material_group_matches(info, name, self._search_text)
+                and (not self._selected_only
+                     or material_group_is_selected(info, name, self._selected_stems))
+            ]
             sorted_groups = sorted(
-                master_groups.items(),
+                visible_groups,
                 key=lambda item: item[1].get("count", len(item[1].get("instances", []))),
                 reverse=True,
             )
+            multi = [(name, info) for name, info in sorted_groups
+                     if info.get("count", len(info.get("instances", []))) > 1]
+            single = [(name, info) for name, info in sorted_groups
+                      if info.get("count", len(info.get("instances", []))) <= 1]
 
-            # Partition into multi-instance and single-instance (standalone) groups.
-            multi = [(n, i) for n, i in sorted_groups
-                     if i.get("count", len(i.get("instances", []))) > 1]
-            single = [(n, i) for n, i in sorted_groups
-                      if i.get("count", len(i.get("instances", []))) <= 1]
-
-            idx = 0
+            entries = []
+            card_index = 0
             for name, info in multi:
-                card = MasterMaterialCard(name, info, parity=(idx % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
-                card.map_slots_requested.connect(self.map_slots_requested)
-                self._layout.addWidget(card)
-                self.cards[name] = card
-                idx += 1
-
+                entries.append(("card", name, info, card_index % 2 == 1, _CARD_HEIGHT))
+                card_index += 1
             if single:
-                self._layout.addWidget(
-                    self._make_standalone_divider("Standalone Materials (no instances)")
-                )
+                entries.append(("divider", "Standalone Materials (no instances)", None,
+                                False, _DIVIDER_HEIGHT))
                 for name, info in single:
-                    card = MasterMaterialCard(name, info, parity=(idx % 2 == 1), bulk_dir=self.bulk_dir, tex_index=tex_index)
-                    card.map_slots_requested.connect(self.map_slots_requested)
-                    self._layout.addWidget(card)
-                    self.cards[name] = card
-                    idx += 1
+                    entries.append(("card", name, info, card_index % 2 == 1, _CARD_HEIGHT))
+                    card_index += 1
 
-            self._layout.addStretch(1)
+            self._entries = []
+            self._entry_ends = []
+            y = 0
+            for kind, name, info, parity, height in entries:
+                self._entries.append((kind, name, info, parity, y, height))
+                y += height + _ROW_SPACING
+                self._entry_ends.append(y)
+
+            total_height = max(1, y - _ROW_SPACING)
+            self._body.setMinimumHeight(total_height)
+            self._empty.setText(
+                "No materials match the current filters."
+                if self._master_groups else "Run Scan to discover Master Materials."
+            )
+            self._empty.setVisible(not self._entries)
+            self._layout_empty_label()
+            self.verticalScrollBar().setValue(0)
         finally:
-            self._body.setUpdatesEnabled(True)
+            self._rebuilding = False
+        self._materialize_visible()
+
+    def _clear_materialized(self):
+        cards = list(self.cards.values())
+        self.cards.clear()
+        for card in cards:
+            card.setParent(None)
+            card.deleteLater()
+        dividers = [
+            divider for divider in self._body.findChildren(QFrame)
+            if divider.objectName().startswith("virtualMaterialDivider_")
+        ]
+        for divider in dividers:
+            divider.setParent(None)
+            divider.deleteLater()
+
+    def _layout_empty_label(self):
+        self._empty.setGeometry(12, 8, max(0, self.viewport().width() - 24), 28)
+
+    def _materialize_visible(self):
+        if self._rebuilding or self._materializing or not self._entries:
+            return
+        self._materializing = True
+        try:
+            scroll_top = self.verticalScrollBar().value()
+            viewport_height = max(1, self.viewport().height())
+            first = max(0, bisect.bisect_right(self._entry_ends, scroll_top) - _OVERSCAN_ROWS)
+            last = min(
+                len(self._entries),
+                bisect.bisect_left(self._entry_ends, scroll_top + viewport_height) + 1 + _OVERSCAN_ROWS,
+            )
+            wanted_names = {
+                entry[1] for entry in self._entries[first:last] if entry[0] == "card"
+            }
+            for name in set(self.cards) - wanted_names:
+                card = self.cards.pop(name)
+                card.setParent(None)
+                card.deleteLater()
+
+            from .material_converter import get_texture_index
+            tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
+            width = max(0, self.viewport().width())
+            for kind, name, info, parity, y, height in self._entries[first:last]:
+                if kind == "divider":
+                    object_name = f"virtualMaterialDivider_{y}"
+                    divider = self._body.findChild(QFrame, object_name)
+                    if divider is None:
+                        divider = self._make_standalone_divider(name)
+                        divider.setObjectName(object_name)
+                        divider.setParent(self._body)
+                        divider.show()
+                    divider.setGeometry(0, y, width, height)
+                    continue
+                card = self.cards.get(name)
+                if card is None:
+                    card = MasterMaterialCard(
+                        name, info, parity=parity, bulk_dir=self.bulk_dir,
+                        tex_index=tex_index, parent=self._body,
+                    )
+                    card.checkbox.setChecked(self._enabled.get(name, True))
+                    shader_index = card.shader_combo.findText(self._shaders.get(name, ""))
+                    if shader_index >= 0:
+                        card.shader_combo.setCurrentIndex(shader_index)
+                    card.checkbox.toggled.connect(
+                        lambda checked, material_name=name: self._enabled.__setitem__(material_name, checked)
+                    )
+                    card.shader_combo.currentTextChanged.connect(
+                        lambda shader, material_name=name: self._shaders.__setitem__(material_name, shader)
+                    )
+                    card.map_slots_requested.connect(self.map_slots_requested)
+                    self.cards[name] = card
+                    card.show()
+                card.setGeometry(0, y, width, height)
+        finally:
+            self._materializing = False
+
+    def eventFilter(self, watched, event):
+        if watched is self.viewport() and event.type() == QEvent.Resize:
+            self._body.setMinimumWidth(self.viewport().width())
+            self._layout_empty_label()
+            self._materialize_visible()
+        return super().eventFilter(watched, event)
 
     def refresh(self, master_name: str, info: dict):
+        self._master_groups[master_name] = info
+        if info.get("shader"):
+            self._shaders[master_name] = info["shader"]
         card = self.cards.get(master_name)
         if card:
             from .material_converter import get_texture_index
             tex_index = get_texture_index(self.bulk_dir) if self.bulk_dir else None
+            shader_index = card.shader_combo.findText(self._shaders.get(master_name, ""))
+            if shader_index >= 0 and shader_index != card.shader_combo.currentIndex():
+                card.shader_combo.blockSignals(True)
+                card.shader_combo.setCurrentIndex(shader_index)
+                card.shader_combo.blockSignals(False)
             card.refresh(info, bulk_dir=self.bulk_dir, tex_index=tex_index)
 
-    # The Materials tab reads selection/shader back out of these at convert time.
-    def checkboxes(self) -> dict:
-        return {name: card.checkbox for name, card in self.cards.items()}
+    def enabled_states(self) -> dict[str, bool]:
+        return dict(self._enabled)
 
-    def shader_combos(self) -> dict:
-        return {name: card.shader_combo for name, card in self.cards.items()}
+    def shader_selections(self) -> dict[str, str]:
+        return dict(self._shaders)
 
 
 def demo():
@@ -364,31 +507,27 @@ def demo():
     assert "metal←SRMH.B" in summary, summary
     assert "color←Diffuse" in summary, summary
 
-    # Verify card ordering: multi-instance first (sorted desc by count),
-    # then the divider widget, then single-instance.
-    card_widgets = [widget._layout.itemAt(i).widget()
-                    for i in range(widget._layout.count())
-                    if widget._layout.itemAt(i).widget()]
-    card_names = [w.master_name for w in card_widgets if isinstance(w, MasterMaterialCard)]
+    # Verify logical ordering: multi-instance first, then the divider and the
+    # standalone material. The physical widgets are viewport-dependent.
+    card_names = [entry[1] for entry in widget._entries if entry[0] == "card"]
     assert card_names == ["bese_material", "Decal", "M_SingleUse"], card_names
 
     # Repopulating must not leave the previous cards behind.
-    stale_combo = widget.shader_combos()["Decal"]
+    stale_combo = widget.cards["Decal"].shader_combo
     widget.populate({"only": {"count": 1, "textures": {}}})
     assert set(widget.cards) == {"only"}
 
-    # The accessors must track the repopulate, not outlive it. Callers read these
-    # live for exactly this reason: a dict held across a populate() points at
-    # deleted C++ objects, which is what crashed the convert pipeline.
-    assert set(widget.shader_combos()) == {"only"}
-    assert set(widget.checkboxes()) == {"only"}
+    # State is independent of materialized cards, so it covers every row even
+    # when most rows are outside the viewport.
+    assert set(widget.shader_selections()) == {"only"}
+    assert set(widget.enabled_states()) == {"only"}
     app.processEvents()          # let deleteLater() actually reap the old cards
     try:
         stale_combo.currentText()
     except RuntimeError:
         pass                     # expected: the underlying widget is gone
     widget.populate({})
-    assert widget.shader_combos() == {} and widget.checkboxes() == {}
+    assert widget.shader_selections() == {} and widget.enabled_states() == {}
 
     if "--show" in sys.argv:
         widget.populate({

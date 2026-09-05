@@ -1,5 +1,7 @@
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
+
 from PySide6.QtCore import QThread, Signal
 from ._worker_base import CancellableWorker
 from .texture_utils import unpack_rma, convert_to_tga, is_metallic, unpack_orh
@@ -7,6 +9,10 @@ from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
 from .material_converter import strip_ue_asset_folders
 from .vmdl_writer import strip_ue_prefix
+
+# Material dumps are Core calls that release the GIL, so they overlap; matches
+# the reference scan's pool (asset_selection.REF_SCAN_WORKERS).
+MATERIAL_SCAN_WORKERS = 8
 
 _SUFFIX_MAP = {
     "ALB": "ALB", "BC": "ALB", "D": "ALB", "COLOR": "ALB", "DIFFUSE": "ALB", "BASECOLOR": "ALB", "ALBEDO": "ALB", "C": "ALB", "B": "ALB", "A": "ALB",
@@ -481,47 +487,55 @@ def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, o
         try:
             if log_cb:
                 log_cb("Listing project material assets via CUE4Parse bridge...", "info")
-            mat_keys = bridge.list_materials()
+            mat_keys = [k for k in bridge.list_materials() if k.lower().endswith(".uasset")]
             total = len(mat_keys)
             if log_cb:
                 log_cb(f"Scanning material graph parameters & texture inputs for {total} asset(s)...", "info")
 
-            for i, key in enumerate(mat_keys):
-                if progress_cb:
-                    progress_cb(i + 1, total)
-                if not key.lower().endswith(".uasset"):
-                    continue
+            # One dump per material, and each walks its parent chain off disk, so
+            # the scan is dominated by waiting on Core rather than by Python. The
+            # calls release the GIL and Core serves them from one mounted project,
+            # so they overlap; `map` keeps the results in key order, which is what
+            # decides the order of the instances inside each group.
+            def dump(key):
                 path = key[:-len(".uasset")]
                 try:
-                    mat_data = bridge.dump_material(path)
+                    return path, bridge.dump_material(path), None
                 except Exception as e:
-                    if log_cb:
-                        log_cb(f"  Skipped {os.path.basename(path)}: {e}", "warn")
-                    continue
+                    return path, None, e
 
-                master_name = get_master_material_name(mat_data, path)
-                stem = os.path.basename(path)
-                if master_name not in groups:
-                    shader = saved_swaps.get(master_name)
-                    if not shader:
-                        shader = seed_shader_for(master_name, mat_data.get("flags"))
-                        seeded[master_name] = shader
-                    groups[master_name] = {
-                        "shader": shader,
-                        "instances": [],
-                        "textures": {},
-                        "slot_overrides": saved_slot_mappings.get(master_name, {}),
-                        "param_overrides": saved_param_mappings.get(master_name, {}),
-                        "feature_flags": saved_feature_flags.get(master_name, {}),
-                        "blend_mode": saved_blend_modes.get(master_name, 0),
-                    }
-                    if log_cb:
-                        log_cb(f"Discovered Master Material: {master_name} (target CS2 shader: {shader})", "info")
+            with ThreadPoolExecutor(max_workers=MATERIAL_SCAN_WORKERS) as pool:
+                for i, (path, mat_data, error) in enumerate(pool.map(dump, mat_keys)):
+                    if progress_cb:
+                        progress_cb(i + 1, total)
+                    if error is not None:
+                        if log_cb:
+                            log_cb(f"  Skipped {os.path.basename(path)}: {error}", "warn")
+                        continue
 
-                groups[master_name]["instances"].append((stem, path, mat_data))
-                for p_name, p_path in (mat_data.get("textures") or {}).items():
-                    if p_name not in groups[master_name]["textures"]:
-                        groups[master_name]["textures"][p_name] = p_path
+                    master_name = get_master_material_name(mat_data, path)
+                    stem = os.path.basename(path)
+                    if master_name not in groups:
+                        shader = saved_swaps.get(master_name)
+                        if not shader:
+                            shader = seed_shader_for(master_name, mat_data.get("flags"))
+                            seeded[master_name] = shader
+                        groups[master_name] = {
+                            "shader": shader,
+                            "instances": [],
+                            "textures": {},
+                            "slot_overrides": saved_slot_mappings.get(master_name, {}),
+                            "param_overrides": saved_param_mappings.get(master_name, {}),
+                            "feature_flags": saved_feature_flags.get(master_name, {}),
+                            "blend_mode": saved_blend_modes.get(master_name, 0),
+                        }
+                        if log_cb:
+                            log_cb(f"Discovered Master Material: {master_name} (target CS2 shader: {shader})", "info")
+
+                    groups[master_name]["instances"].append((stem, path, mat_data))
+                    for p_name, p_path in (mat_data.get("textures") or {}).items():
+                        if p_name not in groups[master_name]["textures"]:
+                            groups[master_name]["textures"][p_name] = p_path
         except Exception as e:
             if log_cb:
                 log_cb(f"Bridge material scan failed: {e}", "error")

@@ -604,6 +604,10 @@ class CoreBridge:
             diagnostics,
         )
 
+    def unreal_reset(self) -> dict:
+        """Drops the cached project mount so the next Unreal call re-reads from disk."""
+        return self._smartprop_native().unreal_reset()
+
     def unreal_info(self, content_dir: str) -> dict:
         """Project stats for an Unreal content directory."""
         return self._smartprop_native().unreal_info(content_dir)

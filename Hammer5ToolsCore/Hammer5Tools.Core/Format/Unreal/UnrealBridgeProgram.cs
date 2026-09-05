@@ -17,11 +17,48 @@ namespace Hammer5Tools.Core.Format.Unreal;
 // Reads Unreal Engine content (loose, uncooked .uasset/.umap) via CUE4Parse for
 // the Unreal Converter. Each public command below is called from a matching
 // entry point in UnrealBridgeApi.cs — this file is the implementation, the ABI
-// file is the JSON-in/JSON-out native surface. Every command mounts its own
-// DefaultFileProvider per call (see MountProvider); no caching across calls.
+// file is the JSON-in/JSON-out native surface. Commands share one mounted
+// DefaultFileProvider (see MountProvider), dropped by ResetProviders.
 static class UnrealBridgeProgram
 {
+    // Mounting walks the whole content tree, so mounting per call made an
+    // analysis pay for the entire project once per material — and then once per
+    // asset again during the reference scan. One mount is kept and reused; only
+    // the most recent contentDir, because the converter works on one project at
+    // a time and a provider holds an index of every file in it. The old provider
+    // is dropped rather than disposed: another thread may still be reading it.
+    // ponytail: assumes CUE4Parse providers are safe for concurrent reads (the
+    // material and reference scans run several threads over one mount). If that
+    // proves wrong, make the field [ThreadStatic] rather than locking the reads —
+    // one mount per scanning thread still beats one per call.
+    private static readonly object MountLock = new();
+    private static string? _mountedDir;
+    private static DefaultFileProvider? _mounted;
+
     internal static DefaultFileProvider MountProvider(string contentDir)
+    {
+        lock (MountLock)
+        {
+            if (_mounted != null && string.Equals(_mountedDir, contentDir, StringComparison.OrdinalIgnoreCase))
+                return _mounted;
+
+            _mounted = Mount(contentDir);
+            _mountedDir = contentDir;
+            return _mounted;
+        }
+    }
+
+    /// <summary>Drops the cached mount so the next command re-reads the project from disk.</summary>
+    internal static void ResetProviders()
+    {
+        lock (MountLock)
+        {
+            _mounted = null;
+            _mountedDir = null;
+        }
+    }
+
+    private static DefaultFileProvider Mount(string contentDir)
     {
         try
         {
@@ -37,6 +74,21 @@ static class UnrealBridgeProgram
         }
     }
 
+    // Newtonsoft serialises an object by reflecting over its members, and a
+    // NativeAOT build has neither the metadata for that nor the stubs to invoke
+    // the getters: every command below that returned an anonymous type came back
+    // from the published binary as "{}" - info, dump-scene, dump-blueprint,
+    // dump-material and export-landscape all silently produced nothing, so a
+    // released build could list a project and port none of it. (Turning on
+    // IlcGenerateCompleteTypeMetadata only upgrades the silence to a throw.)
+    // Dictionaries go through Newtonsoft's dictionary converter, which reflects
+    // over nothing. Every payload here has to stay built this way.
+    private static Dictionary<string, object?> Xyz(double x, double y, double z) =>
+        new(StringComparer.Ordinal) { ["x"] = x, ["y"] = y, ["z"] = z };
+
+    private static Dictionary<string, object?> PitchYawRoll(double pitch, double yaw, double roll) =>
+        new(StringComparer.Ordinal) { ["pitch"] = pitch, ["yaw"] = yaw, ["roll"] = roll };
+
     internal static string Info(DefaultFileProvider provider, string dir)
     {
         var files = provider.Files.Keys.ToList();
@@ -44,15 +96,15 @@ static class UnrealBridgeProgram
         int umaps = files.Count(f => f.EndsWith(".umap", StringComparison.OrdinalIgnoreCase));
         int uassets = files.Count(f => f.EndsWith(".uasset", StringComparison.OrdinalIgnoreCase));
 
-        var info = new
+        var info = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            contentDir = dir,
-            game = provider.Versions.Game.ToString(),
-            totalFiles = files.Count,
-            uassets,
-            umaps,
-            externalActorFiles = external,
-            sampleFiles = files.Take(15).ToList(),
+            ["contentDir"] = dir,
+            ["game"] = provider.Versions.Game.ToString(),
+            ["totalFiles"] = files.Count,
+            ["uassets"] = uassets,
+            ["umaps"] = umaps,
+            ["externalActorFiles"] = external,
+            ["sampleFiles"] = files.Take(15).ToList(),
         };
         return JsonConvert.SerializeObject(info, Formatting.Indented);
     }
@@ -78,20 +130,47 @@ static class UnrealBridgeProgram
         return JsonConvert.SerializeObject(exports, Formatting.Indented);
     }
 
-    // Collect every asset reference in a package as a flat list of object paths,
-    // WITHOUT serialising the whole export tree. `dump` greps the rendered JSON
-    // for reference fields, which for a StaticMesh means buffering hundreds of
-    // megabytes of RenderData (and the material slots serialise as null when
-    // their FPackageIndex import doesn't resolve). This walks the live objects
-    // and resolves each ref the same way dump-scene/dump-blueprint do.
+    // Every asset reference in a package, as a flat list of object paths.
+    //
+    // Read from the import table, which IS the package's dependency list: every
+    // hard reference a property can hold — a mesh's material slots, a material's
+    // parent and textures, a component's mesh — is an FPackageIndex into it, and
+    // reading it needs only the package header.
+    //
+    // Deserialising the exports instead (what this used to do) is what makes the
+    // difference under NativeAOT: a StaticMesh's properties reach CUE4Parse's
+    // FPerPlatformFloat, whose ctor resolves FAssetArchive.Read<float> through a
+    // generic virtual method ILC never emitted, and the runtime FailFasts the
+    // whole process — uncatchable, and it took the GUI down on the first mesh of
+    // every reference scan. Rooting the instantiation from this assembly does
+    // not help (a statically bound call is compiled but never registered for the
+    // runtime lookup); not deserialising does. The same landmine still sits under
+    // any command that reads a mesh's properties — dump above, most of all.
+    //
+    // Cooked/IoStore packages carry no FObjectImport table, so they keep the
+    // export walk.
     internal static string IterRefs(DefaultFileProvider provider, string objectPath)
     {
         var pkg = provider.LoadPackage(objectPath);
         var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var export in pkg.GetExports())
+        if (pkg is CUE4Parse.UE4.Assets.Package uncooked)
         {
-            CollectExportRefs(export, refs);
+            for (int i = 0; i < uncooked.ImportMap.Length; i++)
+            {
+                var path = new FPackageIndex(uncooked, -(i + 1)).ResolvedObject?.GetPathName();
+                // Script imports (/Script/Engine.StaticMesh) are the package's own
+                // types, not content it depends on.
+                if (path != null && !path.StartsWith("/Script/", StringComparison.OrdinalIgnoreCase))
+                    AddRef(refs, path);
+            }
+        }
+        else
+        {
+            foreach (var export in pkg.GetExports())
+            {
+                CollectExportRefs(export, refs);
+            }
         }
 
         return JsonConvert.SerializeObject(refs.OrderBy(r => r).ToList(), Formatting.Indented);
@@ -377,7 +456,7 @@ static class UnrealBridgeProgram
     // happens here: the photometric and unit mapping lives in Python
     // (light_entities.py) next to the CS2 key names it has to satisfy, so both
     // halves of that mapping can be read — and tested — in one place.
-    private static object LightPayload(CUE4Parse.UE4.Assets.Exports.UObject comp, string kind, FVector worldScale)
+    private static Dictionary<string, object?> LightPayload(CUE4Parse.UE4.Assets.Exports.UObject comp, string kind, FVector worldScale)
     {
         var color = comp.GetOrDefault("LightColor", new FColor(255, 255, 255, 255));
         object? boxExtent = null;
@@ -386,30 +465,35 @@ static class UnrealBridgeProgram
         {
             // A box capture has no radius: its volume is a 100uu cube scaled by
             // the component transform, so the extent has to come from there.
-            boxExtent = new { x = worldScale.X * 100f, y = worldScale.Y * 100f, z = worldScale.Z * 100f };
+            boxExtent = Xyz(worldScale.X * 100f, worldScale.Y * 100f, worldScale.Z * 100f);
         }
 
-        return new
+        return new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            intensity = comp.GetOrDefault("Intensity", 0f),
+            ["intensity"] = comp.GetOrDefault("Intensity", 0f),
             // Nullable read, matching DumpBlueprint: an unset enum property must
             // come back as null rather than dereferencing a default FName.
-            intensityUnits = comp.GetOrDefault<FName?>("IntensityUnits", null)?.Text,
-            color = new { r = color.R, g = color.G, b = color.B },
-            useTemperature = comp.GetOrDefault("bUseTemperature", false),
-            temperature = comp.GetOrDefault("Temperature", 6500f),
-            attenuationRadius = comp.GetOrDefault("AttenuationRadius", 0f),
-            innerConeAngle = comp.GetOrDefault("InnerConeAngle", 0f),
-            outerConeAngle = comp.GetOrDefault("OuterConeAngle", 44f),
-            sourceRadius = comp.GetOrDefault("SourceRadius", 0f),
-            sourceWidth = comp.GetOrDefault("SourceWidth", 64f),
-            sourceHeight = comp.GetOrDefault("SourceHeight", 64f),
-            castShadows = comp.GetOrDefault("CastShadows", true),
-            sourceAngle = comp.GetOrDefault("LightSourceAngle", 0f),
-            cubemap = comp.GetOrDefault<FPackageIndex?>("Cubemap", null)?.ResolvedObject?.GetPathName(),
-            influenceRadius = comp.GetOrDefault("InfluenceRadius", 0f),
-            boxExtent,
-            brightness = comp.GetOrDefault("Brightness", 1f),
+            ["intensityUnits"] = comp.GetOrDefault<FName?>("IntensityUnits", null)?.Text,
+            ["color"] = new Dictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["r"] = color.R,
+                ["g"] = color.G,
+                ["b"] = color.B,
+            },
+            ["useTemperature"] = comp.GetOrDefault("bUseTemperature", false),
+            ["temperature"] = comp.GetOrDefault("Temperature", 6500f),
+            ["attenuationRadius"] = comp.GetOrDefault("AttenuationRadius", 0f),
+            ["innerConeAngle"] = comp.GetOrDefault("InnerConeAngle", 0f),
+            ["outerConeAngle"] = comp.GetOrDefault("OuterConeAngle", 44f),
+            ["sourceRadius"] = comp.GetOrDefault("SourceRadius", 0f),
+            ["sourceWidth"] = comp.GetOrDefault("SourceWidth", 64f),
+            ["sourceHeight"] = comp.GetOrDefault("SourceHeight", 64f),
+            ["castShadows"] = comp.GetOrDefault("CastShadows", true),
+            ["sourceAngle"] = comp.GetOrDefault("LightSourceAngle", 0f),
+            ["cubemap"] = comp.GetOrDefault<FPackageIndex?>("Cubemap", null)?.ResolvedObject?.GetPathName(),
+            ["influenceRadius"] = comp.GetOrDefault("InfluenceRadius", 0f),
+            ["boxExtent"] = boxExtent,
+            ["brightness"] = comp.GetOrDefault("Brightness", 1f),
         };
     }
 
@@ -441,16 +525,16 @@ static class UnrealBridgeProgram
                 {
                     landscapeActor = lp;
                     var (lLoc, lRot, lScale) = GetWorldTransform(export);
-                    actors.Add(new
+                    actors.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
                     {
-                        actor = export.Name,
-                        componentType = "Landscape",
-                        blueprint = (string?)null,
-                        mesh = (string?)null,
-                        landscapeActor = export.Name,
-                        location = new { x = lLoc.X, y = lLoc.Y, z = lLoc.Z },
-                        rotation = new { pitch = lRot.Pitch, yaw = lRot.Yaw, roll = lRot.Roll },
-                        scale = new { x = lScale.X, y = lScale.Y, z = lScale.Z },
+                        ["actor"] = export.Name,
+                        ["componentType"] = "Landscape",
+                        ["blueprint"] = null,
+                        ["mesh"] = null,
+                        ["landscapeActor"] = export.Name,
+                        ["location"] = Xyz(lLoc.X, lLoc.Y, lLoc.Z),
+                        ["rotation"] = PitchYawRoll(lRot.Pitch, lRot.Yaw, lRot.Roll),
+                        ["scale"] = Xyz(lScale.X, lScale.Y, lScale.Z),
                     });
                 }
                 continue;
@@ -468,15 +552,15 @@ static class UnrealBridgeProgram
                     var rootCompRef = actorObj?.GetOrDefault<FPackageIndex?>("RootComponent", null);
                     var rootComp = rootCompRef?.ResolvedObject?.Load();
                     var (bpLoc, bpRot, bpScale) = GetWorldTransform(rootComp ?? actorObj ?? export);
-                    actors.Add(new
+                    actors.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
                     {
-                        actor = bpActorName,
-                        componentType = "BlueprintActor",
-                        blueprint = bpName,
-                        mesh = (string?)null,
-                        location = new { x = bpLoc.X, y = bpLoc.Y, z = bpLoc.Z },
-                        rotation = new { pitch = bpRot.Pitch, yaw = bpRot.Yaw, roll = bpRot.Roll },
-                        scale = new { x = bpScale.X, y = bpScale.Y, z = bpScale.Z },
+                        ["actor"] = bpActorName,
+                        ["componentType"] = "BlueprintActor",
+                        ["blueprint"] = bpName,
+                        ["mesh"] = null,
+                        ["location"] = Xyz(bpLoc.X, bpLoc.Y, bpLoc.Z),
+                        ["rotation"] = PitchYawRoll(bpRot.Pitch, bpRot.Yaw, bpRot.Roll),
+                        ["scale"] = Xyz(bpScale.X, bpScale.Y, bpScale.Z),
                     });
                 }
                 continue;
@@ -490,16 +574,16 @@ static class UnrealBridgeProgram
                     continue;
 
                 var (dLoc, dRot, dScale) = GetWorldTransform(export);
-                actors.Add(new
+                actors.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
                 {
-                    actor = outerName,
-                    componentType = "DecalComponent",
-                    blueprint = (string?)null,
-                    mesh = (string?)null,
-                    material = decalMat,
-                    location = new { x = dLoc.X, y = dLoc.Y, z = dLoc.Z },
-                    rotation = new { pitch = dRot.Pitch, yaw = dRot.Yaw, roll = dRot.Roll },
-                    scale = new { x = dScale.X, y = dScale.Y, z = dScale.Z },
+                    ["actor"] = outerName,
+                    ["componentType"] = "DecalComponent",
+                    ["blueprint"] = null,
+                    ["mesh"] = null,
+                    ["material"] = decalMat,
+                    ["location"] = Xyz(dLoc.X, dLoc.Y, dLoc.Z),
+                    ["rotation"] = PitchYawRoll(dRot.Pitch, dRot.Yaw, dRot.Roll),
+                    ["scale"] = Xyz(dScale.X, dScale.Y, dScale.Z),
                 });
                 continue;
             }
@@ -508,16 +592,16 @@ static class UnrealBridgeProgram
             if (lightKind != null)
             {
                 var (lLoc2, lRot2, lScale2) = GetWorldTransform(export);
-                actors.Add(new
+                actors.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
                 {
-                    actor = outerName,
-                    componentType = lightKind,
-                    blueprint = (string?)null,
-                    mesh = (string?)null,
-                    light = LightPayload(export, lightKind, lScale2),
-                    location = new { x = lLoc2.X, y = lLoc2.Y, z = lLoc2.Z },
-                    rotation = new { pitch = lRot2.Pitch, yaw = lRot2.Yaw, roll = lRot2.Roll },
-                    scale = new { x = lScale2.X, y = lScale2.Y, z = lScale2.Z },
+                    ["actor"] = outerName,
+                    ["componentType"] = lightKind,
+                    ["blueprint"] = null,
+                    ["mesh"] = null,
+                    ["light"] = LightPayload(export, lightKind, lScale2),
+                    ["location"] = Xyz(lLoc2.X, lLoc2.Y, lLoc2.Z),
+                    ["rotation"] = PitchYawRoll(lRot2.Pitch, lRot2.Yaw, lRot2.Roll),
+                    ["scale"] = Xyz(lScale2.X, lScale2.Y, lScale2.Z),
                 });
                 continue;
             }
@@ -532,19 +616,24 @@ static class UnrealBridgeProgram
 
             var (loc, rot, scale) = GetWorldTransform(export);
 
-            actors.Add(new
+            actors.Add(new Dictionary<string, object?>(StringComparer.Ordinal)
             {
-                actor = outerName,
-                componentType = cls,
-                blueprint = (string?)null,
-                mesh,
-                location = new { x = loc.X, y = loc.Y, z = loc.Z },
-                rotation = new { pitch = rot.Pitch, yaw = rot.Yaw, roll = rot.Roll },
-                scale = new { x = scale.X, y = scale.Y, z = scale.Z },
+                ["actor"] = outerName,
+                ["componentType"] = cls,
+                ["blueprint"] = null,
+                ["mesh"] = mesh,
+                ["location"] = Xyz(loc.X, loc.Y, loc.Z),
+                ["rotation"] = PitchYawRoll(rot.Pitch, rot.Yaw, rot.Roll),
+                ["scale"] = Xyz(scale.X, scale.Y, scale.Z),
             });
         }
 
-        var result = new { map = mapPath, count = actors.Count, actors };
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["map"] = mapPath,
+            ["count"] = actors.Count,
+            ["actors"] = actors,
+        };
         return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
@@ -702,20 +791,25 @@ static class UnrealBridgeProgram
                 parent = string.IsNullOrEmpty(attachParentName) ? null : ScsVariableName(attachParentName);
             }
 
-            byName[name] = new
+            byName[name] = new Dictionary<string, object?>(StringComparer.Ordinal)
             {
-                name,
-                componentType = cls,
-                mesh,
-                parent,
-                location = new { x = loc.X, y = loc.Y, z = loc.Z },
-                rotation = new { pitch = rot.Pitch, yaw = rot.Yaw, roll = rot.Roll },
-                scale = new { x = scale.X, y = scale.Y, z = scale.Z },
+                ["name"] = name,
+                ["componentType"] = cls,
+                ["mesh"] = mesh,
+                ["parent"] = parent,
+                ["location"] = Xyz(loc.X, loc.Y, loc.Z),
+                ["rotation"] = PitchYawRoll(rot.Pitch, rot.Yaw, rot.Roll),
+                ["scale"] = Xyz(scale.X, scale.Y, scale.Z),
             };
         }
 
         components.AddRange(byName.Values);
-        var result = new { blueprint = bpPath, count = components.Count, components };
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["blueprint"] = bpPath,
+            ["count"] = components.Count,
+            ["components"] = components,
+        };
         return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
@@ -742,7 +836,7 @@ static class UnrealBridgeProgram
         return name.TrimStart('/');
     }
 
-    static object ResolveMaterialFlags(DefaultFileProvider provider, CUE4Parse.UE4.Assets.Exports.UObject miExport)
+    static Dictionary<string, object?> ResolveMaterialFlags(DefaultFileProvider provider, CUE4Parse.UE4.Assets.Exports.UObject miExport)
     {
         var baseMat = miExport;
         var seen = new HashSet<string>();
@@ -784,7 +878,14 @@ static class UnrealBridgeProgram
                 shading = bpo.GetOrDefault<FName?>("ShadingModel", null)?.Text ?? shading;
         }
 
-        return new { domain, blendMode = blend, shadingModel = shading, twoSided, decalBlendMode = decalBlend };
+        return new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["domain"] = domain,
+            ["blendMode"] = blend,
+            ["shadingModel"] = shading,
+            ["twoSided"] = twoSided,
+            ["decalBlendMode"] = decalBlend,
+        };
     }
 
     // Extract a UE Material's OWN instance-level overrides (TextureParameterValues
@@ -832,7 +933,13 @@ static class UnrealBridgeProgram
                 var name = ParamName(vp);
                 var val = vp.GetOrDefault<FLinearColor?>("ParameterValue", null);
                 if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
-                    vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
+                    vectors[name] = new Dictionary<string, object?>(StringComparer.Ordinal)
+                    {
+                        ["r"] = val.Value.R,
+                        ["g"] = val.Value.G,
+                        ["b"] = val.Value.B,
+                        ["a"] = val.Value.A,
+                    };
             }
 
         // Static switches ("Static Switch Parameter" nodes, e.g. "Use Normal Map")
@@ -886,7 +993,13 @@ static class UnrealBridgeProgram
                         var name = EnumText(ex, "ParameterName");
                         var val = ex.GetOrDefault<FLinearColor?>("DefaultValue", null);
                         if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
-                            vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
+                            vectors[name] = new Dictionary<string, object?>(StringComparer.Ordinal)
+                            {
+                                ["r"] = val.Value.R,
+                                ["g"] = val.Value.G,
+                                ["b"] = val.Value.B,
+                                ["a"] = val.Value.A,
+                            };
                         break;
                     }
                 case "MaterialExpressionStaticBoolParameter":
@@ -970,7 +1083,16 @@ static class UnrealBridgeProgram
             currentPath = ParentPackagePath(matExport);
         }
 
-        var result = new { material = matPath, parent, flags, textures, scalars, vectors, switches };
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["material"] = matPath,
+            ["parent"] = parent,
+            ["flags"] = flags,
+            ["textures"] = textures,
+            ["scalars"] = scalars,
+            ["vectors"] = vectors,
+            ["switches"] = switches,
+        };
         return JsonConvert.SerializeObject(result, Formatting.Indented);
     }
 
@@ -1013,7 +1135,13 @@ static class UnrealBridgeProgram
         if (exporter.TryWriteToDir(new DirectoryInfo(outDir), out var label, out var saved))
         {
             return JsonConvert.SerializeObject(
-                new { ok = true, components = comps.Length, label, saved }, Formatting.Indented);
+                new Dictionary<string, object?>(StringComparer.Ordinal)
+                {
+                    ["ok"] = true,
+                    ["components"] = comps.Length,
+                    ["label"] = label,
+                    ["saved"] = saved,
+                }, Formatting.Indented);
         }
         throw new InvalidOperationException("EXPORT_FAILED");
     }

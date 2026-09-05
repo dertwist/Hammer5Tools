@@ -9,11 +9,20 @@ namespace Hammer5Tools.Core;
 
 /// <summary>
 /// NativeAOT ABI for the Unreal content bridge (<see cref="UnrealBridgeProgram"/>).
-/// Each command mounts its own CUE4Parse <c>DefaultFileProvider</c> and returns
-/// the JSON produced by the bridge as its output buffer.
+/// Each command reuses the bridge's mounted CUE4Parse <c>DefaultFileProvider</c>
+/// and returns the JSON produced by the bridge as its output buffer.
 /// </summary>
 internal static unsafe class UnrealBridgeApi
 {
+    /// <summary>Request ignored. Drops the cached project mount so the next command re-reads from disk.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "h5t_unreal_reset", CallConvs = [typeof(CallConvCdecl)])]
+    public static int Reset(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            UnrealBridgeProgram.ResetProviders();
+            return Utf8("{\"ok\":true}");
+        });
+
     /// <summary>Request: {contentDir}.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_unreal_info", CallConvs = [typeof(CallConvCdecl)])]
     public static int Info(byte* request, int requestLength, byte** output, int* outputLength) =>

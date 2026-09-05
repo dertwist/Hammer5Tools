@@ -91,19 +91,34 @@ def _write(path, manifest) -> bool:
 
 
 def fingerprint(content_dir: str) -> str:
-    """A cheap signature of the project's content files."""
+    """A cheap signature of the project's content files.
+
+    scandir rather than walk-then-stat: the directory listing already carries
+    size and mtime on Windows, so this costs a syscall per directory instead of
+    one per asset — and it runs on every open of an analyzed project.
+    """
     parts = []
-    for dirpath, dirnames, filenames in os.walk(content_dir):
-        dirnames[:] = [d for d in dirnames if d.lower() not in IGNORED_DIRS]
-        for filename in filenames:
-            if not filename.lower().endswith(ASSET_EXTS):
-                continue
-            full = os.path.join(dirpath, filename)
+    stack = [content_dir]
+    while stack:
+        try:
+            with os.scandir(stack.pop()) as entries:
+                listing = list(entries)
+        except OSError:
+            continue
+        for entry in listing:
             try:
-                stat = os.stat(full)
+                # follow_symlinks=False matches os.walk: a symlinked directory
+                # is not descended into, so a loop cannot hang the scan.
+                if entry.is_dir(follow_symlinks=False):
+                    if entry.name.lower() not in IGNORED_DIRS:
+                        stack.append(entry.path)
+                    continue
+                if not entry.name.lower().endswith(ASSET_EXTS):
+                    continue
+                stat = entry.stat()
             except OSError:
                 continue
-            rel = os.path.relpath(full, content_dir).replace("\\", "/")
+            rel = os.path.relpath(entry.path, content_dir).replace("\\", "/")
             parts.append(f"{rel}|{stat.st_size}|{stat.st_mtime_ns}")
     parts.sort()
     digest = hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
@@ -201,6 +216,9 @@ def analyze(bridge, content_dir: str, log_cb=None, progress_cb=None):
     """
     from .converter import scan_master_materials
 
+    # Core reuses one mounted provider across calls; this run has to see the
+    # project as it is on disk now, not as the last analysis found it.
+    bridge.reset()
     info = bridge.info()
     assets, ignored = bridge.list_counted("")
     info = {**(info or {}), "ignored": ignored}

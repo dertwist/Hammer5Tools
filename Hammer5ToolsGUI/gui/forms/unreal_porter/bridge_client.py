@@ -66,6 +66,21 @@ class UnrealBridge:
 
     # commands
 
+    def reset(self) -> None:
+        """Drop Core's cached project mount before re-reading the project.
+
+        Core keeps one mounted provider so a scan pays for the content walk once
+        instead of once per asset; that mount has to be dropped when the project
+        may have changed on disk, or Re-analyze would replay the file set the
+        first analysis saw.
+        """
+        from core.native import NativeCoreError
+
+        try:
+            self._bridge().unreal_reset()
+        except NativeCoreError as e:
+            raise BridgeError(str(e)) from e
+
     def info(self) -> dict:
         return self._call("unreal_info")
 
