@@ -3,20 +3,31 @@ description: >
   Install Python, .NET, cache NuGet, compile UI, and clone CUE4Parse.
   Run actions/checkout before this.
 
+inputs:
+  python:
+    description: >
+      Set to 'false' for .NET-only jobs to skip the Python toolchain
+      (pip install and UI compilation).
+    required: false
+    default: 'true'
+
 runs:
   using: composite
   steps:
     - name: Set up Python
+      if: ${{ inputs.python == 'true' }}
       uses: actions/setup-python@v6
       with:
         python-version: "3.11"
         cache: pip
 
     - name: Install Python dependencies
+      if: ${{ inputs.python == 'true' }}
       shell: pwsh
       run: pip install -r requirements.txt
 
     - name: Compile UI and resources
+      if: ${{ inputs.python == 'true' }}
       shell: pwsh
       run: python compile_ui.py
 

@@ -1,0 +1,4 @@
+# Every .cs blob is stored LF and .editorconfig requires LF, but a Windows
+# checkout with core.autocrlf=true rewrites them to CRLF - which is why
+# `dotnet format` reported 20k ENDOFLINE errors on every CI run.
+*.cs text eol=lf

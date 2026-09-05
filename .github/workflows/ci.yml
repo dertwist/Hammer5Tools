@@ -20,8 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-          fetch-tags: false
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-project
 
@@ -35,7 +34,7 @@ jobs:
         run: python makefile.py --build-libs
 
       - name: Run Python tests
-        run: python -m pytest -q
+        run: python -m pytest -q --durations=15
         env:
           QT_QPA_PLATFORM: offscreen
 
@@ -58,32 +57,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-          fetch-tags: false
+          fetch-depth: 1
 
+      # dotnet format loads the csproj, so it needs .NET and the CUE4Parse
+      # ProjectReference target - but none of the Python toolchain.
       - uses: ./.github/actions/setup-project
+        with:
+          python: 'false'
 
       - name: Check formatting
         run: dotnet format --verify-no-changes Hammer5ToolsCore/Hammer5Tools.Core/Hammer5Tools.Core.csproj
-        continue-on-error: true
 
+  # Not gated on `test`: this job publishes nothing, and the release workflows
+  # depend on the whole CI run, so a failing test still blocks every release.
   build:
-    needs: test
     runs-on: windows-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-          fetch-tags: false
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-project
-
-      - name: Install Velopack CLI
-        run: |
-          dotnet tool install -g vpk
-          echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
 
       - name: Build All
         run: python makefile.py --build-all --${{ inputs.channel }}
@@ -137,4 +133,6 @@ jobs:
         with:
           name: hammer5tools-bundle
           path: Hammer5Tools/
+          # An empty upload would let the release job publish nothing at all.
+          if-no-files-found: error
           retention-days: 1
