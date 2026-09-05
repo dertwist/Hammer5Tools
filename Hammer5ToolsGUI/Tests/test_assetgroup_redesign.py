@@ -16,6 +16,12 @@ from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_suffix, is_file_ignored
 from gui.editors.assetgroup_maker.process import perform_batch_processing, render_asset_template
 from gui.editors.assetgroup_maker.matcher import AssetGroupItem
+from core.bridge import CoreBridge
+
+requires_native_core = pytest.mark.skipif(
+    not CoreBridge.instance().probe().available,
+    reason="Hammer5Tools Native Core was not found; publish Hammer5Tools.Core first",
+)
 
 
 @pytest.fixture
@@ -87,6 +93,7 @@ def test_analyzer_vmdl(fake_addon_dir):
     assert "#$MATERIAL$#" in res.template_content
 
 
+@requires_native_core
 def test_render_tokens_and_optional_blocks():
     item = AssetGroupItem('crate_b')
     item.slots = {'mesh': 'models/crate_b.fbx', 'collision': 'models/crate_b_phys.fbx'}
@@ -99,6 +106,7 @@ def test_render_tokens_and_optional_blocks():
         ) == 'new crate_b models/crate_b.fbx crate_b models/crate_b.fbx'
 
 
+@requires_native_core
 def test_model_variants_keep_texture_suffix_letters(fake_addon_dir):
     directory = os.path.join(fake_addon_dir, 'models', 'test23')
     os.makedirs(directory)
@@ -109,6 +117,7 @@ def test_model_variants_keep_texture_suffix_letters(fake_addon_dir):
     assert [item.name for item in items] == [f'prop_01_{suffix}' for suffix in 'abcde']
 
 
+@requires_native_core
 def test_batch_variants_preserve_reference_material_and_format(fake_addon_dir):
     from pathlib import Path
     import keyvalues3
@@ -191,6 +200,7 @@ Layer0
     assert "ao" in res.slots
 
 
+@requires_native_core
 def test_matcher_multi_file_pairing(fake_addon_dir):
     crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
     files = [
@@ -240,6 +250,7 @@ def test_matcher_multi_file_pairing(fake_addon_dir):
     assert chest_item.slots["lod1"].endswith("chest_02_lod1.fbx")
 
 
+@requires_native_core
 def test_batch_process_with_conditional_blocks(fake_addon_dir):
     crate_dir = os.path.join(fake_addon_dir, "models", "props", "crate")
     hbat_path = os.path.join(crate_dir, "batch.hbat")
@@ -311,6 +322,7 @@ def test_asset_browser_multi_type_scan(fake_addon_dir):
     assert all(e.source == "Addon" for e in entries)
 
 
+@requires_native_core
 def test_prefix_and_suffix_affix_matching(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_folder_assets, strip_known_affixes
 
@@ -513,6 +525,7 @@ def test_legacy_json_automatic_conversion(fake_addon_dir):
     assert t0['replacements'][0]['to'] == "#$FOLDER_PATH$#/#$MESH$#"
 
 
+@requires_native_core
 def test_multi_template_matching_vmdl_and_vmat(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
@@ -582,6 +595,7 @@ def test_multi_template_matching_vmdl_and_vmat(fake_addon_dir):
     assert vmat_items[0].target_output == 'wood_bark.vmat'
 
 
+@requires_native_core
 def test_multi_template_batch_processing(fake_addon_dir):
     from gui.editors.assetgroup_maker.process import perform_batch_processing
 
@@ -654,6 +668,7 @@ def test_multi_template_batch_processing(fake_addon_dir):
 
 
 
+@requires_native_core
 def test_per_template_ignore_settings(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
@@ -709,6 +724,7 @@ def test_per_template_ignore_settings(fake_addon_dir):
     assert 'normal' in vmat_items[0].slots
 
 
+@requires_native_core
 def test_material_shader_slots_orm_emissive_height(fake_addon_dir):
     from gui.editors.assetgroup_maker.analyzer import analyze_reference_file
     from gui.editors.assetgroup_maker.matcher import match_folder_assets
@@ -771,6 +787,7 @@ Layer0
     assert crate_mat.status == "ready"
 
 
+@requires_native_core
 def test_ignore_list_spaces_and_prefix_patterns(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_folder_assets
 
@@ -811,6 +828,7 @@ def test_ignore_list_spaces_and_prefix_patterns(fake_addon_dir):
     assert 'collision' not in treedead_item.slots
 
 
+@requires_native_core
 def test_include_filter_mode(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_folder_assets
 
@@ -844,6 +862,7 @@ def test_include_filter_mode(fake_addon_dir):
     assert os.path.basename(items[0].slots['mesh']) == "box_01.fbx"
 
 
+@requires_native_core
 def test_template_skipped_slots(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_folder_assets
     from gui.editors.assetgroup_maker.process import render_asset_template, perform_batch_processing
@@ -892,6 +911,7 @@ def test_template_skipped_slots(fake_addon_dir):
 
 
 
+@requires_native_core
 def test_firewatch_trees_pine_scenario(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
 
@@ -961,6 +981,7 @@ def test_firewatch_trees_pine_scenario(fake_addon_dir):
     assert "collision" not in armor_vmat.slots
 
 
+@requires_native_core
 def test_firewatch_multi_template_batch_execution(fake_addon_dir):
     from gui.editors.assetgroup_maker.process import perform_batch_processing
     from gui.editors.assetgroup_maker.objects import save_hbat_file
@@ -1132,6 +1153,7 @@ def test_template_filter_and_ignore_serialization(fake_addon_dir):
     assert t1['skipped_slots'] == ['roughness']
 
 
+@requires_native_core
 def test_preview_equals_output_11_assets(fake_addon_dir):
     from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
     from gui.editors.assetgroup_maker.process import perform_batch_processing

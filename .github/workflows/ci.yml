@@ -30,6 +30,10 @@ jobs:
       - name: Verify imports resolve
         run: python verify_imports.py
 
+      # NativeAOT library needed by CoreBridge and native-backed Python tests.
+      - name: Build Native Core
+        run: python makefile.py --build-libs
+
       - name: Run Python tests
         run: python -m pytest -q
         env:

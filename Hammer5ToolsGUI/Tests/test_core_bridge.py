@@ -442,3 +442,22 @@ def test_missing_compiled_texture_reads_as_none():
     bridge = CoreBridge(FakeInterop(), native_client=native)
 
     assert bridge.read_compiled_texture("game", "addon", "materials/missing.vtex") is None
+
+
+def test_normalize_assetgroup_name_delegates_to_native():
+    class FakeAssetGroupNative:
+        def normalize_assetgroup_name(self, name, source_extension="", algorithm=0):
+            return f"normalized_{name}"
+
+    bridge = CoreBridge(FakeInterop(), native_client=FakeAssetGroupNative())
+    assert bridge.normalize_assetgroup_name("crate_phys", ".fbx", 0) == "normalized_crate_phys"
+
+
+def test_render_assetgroup_template_delegates_to_native():
+    class FakeAssetGroupNative:
+        def render_assetgroup_template(self, request):
+            return f"rendered_{request['name']}"
+
+    bridge = CoreBridge(FakeInterop(), native_client=FakeAssetGroupNative())
+    assert bridge.render_assetgroup_template({"name": "crate"}) == "rendered_crate"
+
