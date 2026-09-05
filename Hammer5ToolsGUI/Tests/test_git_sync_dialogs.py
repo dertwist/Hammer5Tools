@@ -30,6 +30,7 @@ if str(gui_root) not in sys.path:
 from gui.forms.git_sync.backend import GitRepo
 from gui.forms.git_sync.changes_dialog import ChangesDialog
 from gui.forms.git_sync.conflict_dialog import ConflictDialog
+from gui.forms.git_sync import controller as controller_module
 from gui.forms.git_sync.controller import GitController, SyncButton
 from gui.forms.git_sync.setup_dialog import DEFAULT_BRANCH, SetupDialog, create_repository
 from gui.forms.git_sync.templates import GITATTRIBUTES, GITIGNORE
@@ -139,6 +140,67 @@ def test_changes_dialog_folder_checks_cascade_and_become_partial(qapp):
     assert dialog.selected_paths() == [
         "maps/firewatch.vmap", "materials/sign.vmat"]
     dialog.close()
+
+
+def test_failed_stash_with_created_backup_is_restored(monkeypatch):
+    """A stash may be created before its internal hard reset fails."""
+    marker = "Hammer5Tools test stash [partial]"
+    controller = object.__new__(GitController)
+    controller.main = None
+    controller.repo = type(
+        "Repo", (), {"stash_top_message": lambda _self: f"On main: {marker}"})()
+    controller._stash_msg = marker
+    controller._stashed = False
+    controller._leftover = True
+    controller._tail = "fatal: Could not reset index file to revision 'HEAD'."
+    streamed = []
+    notices = []
+    logged = []
+    controller._log = logged.append
+    controller._set_busy = lambda _busy: None
+    controller.refresh = lambda: None
+
+    def fail_pop(args, done):
+        streamed.append(args)
+        done(1)
+
+    controller._stream = fail_pop
+    monkeypatch.setattr(
+        controller_module, "_ask", lambda _parent, text: notices.append(text))
+
+    controller._after_stash(1)
+
+    assert streamed == [["stash", "pop"]]
+    assert "created a backup stash" in notices[0]
+    assert "backup stash was kept" in notices[1]
+    assert logged == [
+        "Could not set your other changes aside — sync stopped "
+        "(your other changes are still in the stash)"]
+
+
+def test_ahead_only_selective_sync_pushes_without_stashing():
+    """Unticked work stays in place when the server is already an ancestor."""
+    controller = object.__new__(GitController)
+    controller.repo = type(
+        "Repo", (), {"remote_branch_exists": lambda _self, _branch: True})()
+    controller._branch = "main"
+    controller._leftover = True
+    controller._tail = ""
+    streamed = []
+    pushed = []
+
+    def stream(args, done):
+        streamed.append(args)
+        done(0)
+
+    controller._stream = stream
+    controller._start_push = lambda: pushed.append(True)
+
+    controller._after_fetch(0)
+
+    assert streamed == [[
+        "merge-base", "--is-ancestor", "origin/main", "HEAD"]]
+    assert pushed == [True]
 
 
 class _FakeRepo:

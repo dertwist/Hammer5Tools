@@ -291,7 +291,7 @@ class GitController:
         self._is_repo = True   # assumed until the first status says otherwise
         self._has_origin = False   # set by refresh(); no origin -> commit only
         self._msg = ""         # pending commit message, mid-sync
-        self._leftover = False  # user left changes unticked -> stash them
+        self._leftover = False  # user left changes unticked
         self._stashed = False   # a stash of ours is waiting to be popped
         self._stash_msg = ""    # unique marker so an older stash is never popped
         self._tail = ""        # last thing git said, for failure reporting
@@ -476,8 +476,9 @@ class GitController:
         self._log("Repository ready — " + "; ".join(dlg.notes))
 
     # the one-button sync flow
-    # pick changes -> commit them -> stash the rest -> fetch -> pull (merge)
-    # -> resolve -> push -> restore the stash.
+    # pick changes -> commit them -> fetch -> push directly when the server is
+    # already behind us. Only stash the rest when a pull/merge is actually needed,
+    # then resolve -> push -> restore the stash.
     # With no origin there is nowhere to fetch from, so it stops after the commit.
     def sync(self):
         if self._busy:
@@ -608,24 +609,28 @@ class GitController:
             # would just fail on a missing remote.
             self._end("Committed — no server configured yet")
             return
-        if self._leftover:
-            # git refuses to merge server changes over a dirty tree, so the work
-            # the user did not tick has to go somewhere for the duration.
-            self._stream(["stash", "push", "-u", "-m", self._stash_msg],
-                         self._after_stash)
-            return
         self._start_fetch()
 
     def _after_stash(self, code):
         # `stash push` exits 0 even when it saved nothing, so confirm ours is
-        # actually on top before anything later pops it.
-        self._stashed = (
-            code == 0 and self.repo.stash_top_message().endswith(self._stash_msg))
+        # actually on top before anything later pops it. The exit code does not
+        # gate that check: stash writes refs/stash *first* and only then runs the
+        # internal `reset --hard` that clears the working tree. If that reset
+        # fails, the stash it left behind still holds real work, so ours is popped
+        # on the way out whether the push reported success or not. Otherwise the
+        # saved changes disappear from the working tree with no recovery notice.
+        self._stashed = bool(self._stash_msg) and (
+            self.repo.stash_top_message().endswith(self._stash_msg))
         if code != 0:
+            recovery = (
+                "\n\nGit created a backup stash before the failure. Hammer 5 "
+                "Tools will try to restore it now; if that cannot be completed, "
+                "the backup stash will be kept."
+                if self._stashed else "")
             self._end("Could not set your other changes aside — sync stopped",
-                      failed="git stash failed:\n\n" + self._tail)
+                      failed="git stash failed:\n\n" + self._tail + recovery)
             return
-        self._start_fetch()
+        self._start_pull()
 
     def _start_fetch(self):
         self._stream(["fetch", "--progress", "origin"], self._after_fetch)
@@ -639,6 +644,32 @@ class GitController:
         if not self.repo.remote_branch_exists(self._branch):
             self._start_push()
             return
+        if self._leftover:
+            # Fetch is safe with a dirty tree. In the common ahead-only case the
+            # selected commit can be pushed without ever moving an unticked file,
+            # avoiding stash-pop collisions with open or regenerated assets.
+            self._stream([
+                "merge-base", "--is-ancestor",
+                "origin/" + self._branch, "HEAD"],
+                self._after_remote_ancestor)
+            return
+        self._start_pull()
+
+    def _after_remote_ancestor(self, code):
+        if code == 0:
+            self._start_push()
+            return
+        if code != 1:
+            self._end(
+                "Could not compare local and server history",
+                failed="git merge-base failed:\n\n" + self._tail)
+            return
+        # The server has work that is not in HEAD, so Git must merge it over a
+        # clean tree. Only this less-common path needs to set unticked work aside.
+        self._stream(["stash", "push", "-u", "-m", self._stash_msg],
+                     self._after_stash)
+
+    def _start_pull(self):
         self._stream([
             "pull", "--no-rebase", "--allow-unrelated-histories", "--progress",
             "origin", self._branch], self._after_pull)
@@ -691,16 +722,16 @@ class GitController:
 
     def _after_unstash(self, code, message):
         if code != 0:
-            # Pop conflicts leave the stash in place, so nothing is lost — but
-            # the user has to untangle it themselves; we have no "server" side to
-            # offer here, both versions are theirs.
+            # A failed pop leaves the stash in place. This can be a conflict after
+            # a pull or a partially cleared tree after `stash push` itself failed.
             _ask(
                 self.main,
-                "Your unticked changes overlap files updated during the sync, "
-                "so Git could not put them back cleanly. The affected files are "
-                "marked as conflicts, and Git kept the backup stash.\n\nResolve "
-                "the marked files in a Git client or terminal. After confirming "
-                "your work is present, remove the backup with \"git stash drop\".")
+                "Git could not put all of your unticked changes back "
+                "automatically. Some may still be modified on disk; the backup "
+                "stash was kept so the remaining work is not lost.\n\nInspect the "
+                "working tree and the newest stash in a Git client or terminal. "
+                "After confirming all of your work is present, remove the backup "
+                "with \"git stash drop\".")
             message += " (your other changes are still in the stash)"
         self._end(message)
 

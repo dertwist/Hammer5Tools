@@ -4,11 +4,10 @@ Committing everything is wrong more often than not in a map repo: one finished
 .vmap sits next to half-imported models and a test material nobody wants
 published. So the sync button asks first, and only the ticked paths are staged.
 
-The rest is not simply ignored. Git will not pull server changes over a dirty
-tree, so whatever is left unticked is stashed for the duration of the sync and
-restored afterwards — see GitController._after_commit. That is what the note at
-the bottom of this dialog is telling the user, because a stash that appears and
-disappears without explanation is how people lose a day of work.
+Unticked changes stay local and are not uploaded. When the server has no newer
+work, the controller pushes the selected commit without touching them. Only a
+required pull temporarily stashes and restores them; the note at the bottom of
+the dialog explains that exceptional path.
 """
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -39,12 +38,12 @@ def leftover_note(left_out, behind=0):
     """
     if not left_out:
         return ""
-    text = ("%d unticked change%s will be set aside while syncing and put back "
-            "afterwards." % (len(left_out), "" if len(left_out) == 1 else "s"))
+    text = ("%d unticked change%s will stay local and will not be uploaded."
+            % (len(left_out), "" if len(left_out) == 1 else "s"))
     if behind:
-        text += (" Keep in mind the server has newer versions of some files — if "
-                 "one of them is a file you left unticked, you will have to merge "
-                 "it by hand when it comes back.")
+        text += (" The server has newer work, so these changes will be backed up "
+                 "while Git merges it. If the same file changed on both sides, "
+                 "you may have to merge it by hand.")
     return text
 
 
@@ -294,8 +293,8 @@ def _demo():
     assert human_size(2048) == "2 KB"
     assert human_size(300 * 1024 * 1024) == "300.0 MB"
     assert leftover_note([]) == ""
-    assert leftover_note(["a"]).startswith("1 unticked change will")
-    assert "changes will" in leftover_note(["a", "b"])
+    assert leftover_note(["a"]).startswith("1 unticked change will stay local")
+    assert "changes will stay local" in leftover_note(["a", "b"])
     assert "merge it by hand" in leftover_note(["a"], behind=2)
     assert "merge it by hand" not in leftover_note(["a"], behind=0)
     print("changes_dialog self-check OK")
