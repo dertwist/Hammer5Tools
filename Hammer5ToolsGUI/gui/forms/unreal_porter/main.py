@@ -284,6 +284,7 @@ class UnrealPorterWidget(QDialog):
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "General")
         self.tabs.addTab(self._build_materials_tab(), "Materials")
+        self.tabs.setCurrentIndex(1)
         left_layout.addWidget(self.tabs, 1)
 
         # Action bar in Left Panel
