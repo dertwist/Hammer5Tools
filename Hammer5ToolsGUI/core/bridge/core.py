@@ -335,6 +335,14 @@ class CoreBridge:
         """Creates a Core-owned VPK index without exposing C# namespaces to callers."""
         return VpkIndex(self._smartprop_native())
 
+    def normalize_assetgroup_name(self, name: str, source_extension: str = "", algorithm: int = 0) -> str:
+        """Normalize a batch source name using Core's file-type-specific rules."""
+        return self._smartprop_native().normalize_assetgroup_name(name, source_extension, algorithm)
+
+    def render_assetgroup_template(self, request: dict) -> str:
+        """Expand batch template tokens and reference material fallbacks in Core."""
+        return self._smartprop_native().render_assetgroup_template(request)
+
     def probe(self) -> CoreStatus:
         """Loads the versioned Core contract without changing application state."""
         try:

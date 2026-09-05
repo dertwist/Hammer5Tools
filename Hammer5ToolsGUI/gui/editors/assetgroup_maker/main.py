@@ -258,7 +258,6 @@ class BatchCreatorMainWindow(QMainWindow):
                     widget.watch_changes_cb.blockSignals(True)
                     widget.watch_changes_cb.setChecked(enabled)
                     widget.watch_changes_cb.blockSignals(False)
-                    widget.process_data['watch_changes'] = enabled
 
     def _filter_configs(self, text: str):
         search_term = text.lower().strip()

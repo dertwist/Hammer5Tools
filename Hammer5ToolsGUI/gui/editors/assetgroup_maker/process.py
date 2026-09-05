@@ -3,6 +3,7 @@ import re
 from typing import Dict, List, Optional, Set, Tuple, Any
 from PySide6.QtCore import QThread, Signal
 
+from core.bridge import CoreBridge
 from gui.common import app_version
 from gui.settings.common import get_cs2_path, get_addon_name, get_addon_dir
 from gui.editors.assetgroup_maker.matcher import match_folder_assets, AssetGroupItem
@@ -47,50 +48,18 @@ def render_asset_template(
     replacements: Optional[List[Dict[str, str]]] = None,
     skipped_slots: Optional[List[str]] = None,
     material_remaps: Optional[List[Dict[str, str]]] = None,
-    batch_directory: Optional[str] = None
+    batch_directory: Optional[str] = None,
+    material_sources: Optional[Dict[str, str]] = None
 ) -> str:
-    data = content_template
-    if skipped_slots is None:
-        skipped_slots = []
-
-    # 1. Apply user replacement rules if any
-    if replacements:
-        if isinstance(replacements, list):
-            for rep in replacements:
-                if isinstance(rep, dict):
-                    old_str = rep.get('from', '')
-                    new_str = rep.get('to', '')
-                    if old_str:
-                        data = data.replace(old_str, new_str)
-        elif isinstance(replacements, dict):
-            for _, rep_info in replacements.items():
-                old, new = rep_info.get('replacement', ['', ''])
-                if old:
-                    data = data.replace(old, new)
-
-    # 2. Base tokens
-    data = data.replace("#$FOLDER_PATH$#", relative_batch_path)
-    data = data.replace("#$ASSET_NAME$#", asset_item.name)
-
-    # 3. Slot tokens
-    for slot_name, slot_path in asset_item.slots.items():
-        if slot_name in skipped_slots:
-            continue
-        slot_filename = os.path.basename(slot_path)
-        slot_base, _ = os.path.splitext(slot_filename)
-        data = data.replace(f"#${slot_name.upper()}$#", slot_filename)
-        data = data.replace(f"#${slot_name.upper()}_NAME$#", slot_base)
-        data = data.replace(f"#${slot_name.upper()}_PATH$#", slot_path.replace('\\', '/'))
-
-    # 4. Handle conditional blocks: <!-- IF SLOT --> ... <!-- ENDIF -->
-    def evaluate_conditional(match):
-        slot_var = match.group(1).strip().lower()
-        block_content = match.group(2)
-        if slot_var not in skipped_slots and slot_var in asset_item.slots and asset_item.slots[slot_var]:
-            return block_content
-        return ""
-
-    data = re.sub(r'<!--\s*IF\s+([A-Za-z0-9_]+)\s*-->([\s\S]*?)<!--\s*ENDIF\s*-->', evaluate_conditional, data)
+    data = CoreBridge.instance().render_assetgroup_template({
+        'content': content_template,
+        'name': asset_item.name,
+        'folder': relative_batch_path,
+        'slots': asset_item.slots,
+        'replacements': replacements or [],
+        'skippedSlots': skipped_slots or [],
+        'materialSources': material_sources or {},
+    })
 
     # 5. Handle MaterialGroup material remaps if present for .vmdl
     if material_remaps:
@@ -467,7 +436,11 @@ def perform_batch_processing(
                 replacements=rep_list,
                 skipped_slots=tpl_skipped_slots,
                 material_remaps=tpl_material_remaps,
-                batch_directory=batch_directory
+                batch_directory=batch_directory,
+                material_sources={
+                    name: info.get('source', '')
+                    for name, info in slots_def.items() if info.get('is_material_remap')
+                },
             )
 
             try:

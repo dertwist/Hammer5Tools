@@ -87,6 +87,84 @@ def test_analyzer_vmdl(fake_addon_dir):
     assert "#$MATERIAL$#" in res.template_content
 
 
+def test_render_tokens_and_optional_blocks():
+    item = AssetGroupItem('crate_b')
+    item.slots = {'mesh': 'models/crate_b.fbx', 'collision': 'models/crate_b_phys.fbx'}
+    template = ('old #$ASSET_NAME$# #$FOLDER_PATH$#/#$MESH$# #$MESH_NAME$# #$MESH_PATH$#'
+                '<!-- IF COLLISION -->collision<!-- ENDIF -->'
+                '<!-- IF MISSING -->missing<!-- ENDIF -->')
+    for replacements in ([{'from': 'old', 'to': 'new'}], {'0': {'replacement': ['old', 'new']}}):
+        assert render_asset_template(
+            template, item, 'models', replacements=replacements, skipped_slots=['collision']
+        ) == 'new crate_b models/crate_b.fbx crate_b models/crate_b.fbx'
+
+
+def test_model_variants_keep_texture_suffix_letters(fake_addon_dir):
+    directory = os.path.join(fake_addon_dir, 'models', 'test23')
+    os.makedirs(directory)
+    for suffix in 'abcde':
+        with open(os.path.join(directory, f'prop_01_{suffix}.fbx'), 'w') as source:
+            source.write('mesh')
+    items = match_folder_assets(directory, {'mesh': {'required': True}}, extension='vmdl')
+    assert [item.name for item in items] == [f'prop_01_{suffix}' for suffix in 'abcde']
+
+
+def test_batch_variants_preserve_reference_material_and_format(fake_addon_dir):
+    from pathlib import Path
+    import keyvalues3
+    from gui.editors.assetgroup_maker.matcher import match_multi_template_folder_assets
+
+    directory = Path(fake_addon_dir) / 'models' / 'test23'
+    directory.mkdir()
+    for suffix in 'abcde':
+        (directory / f'prop_01_{suffix}.fbx').write_text('mesh', encoding='utf-8')
+    reference = directory / 'prop_01_a.vmdl'
+    reference_text = '''<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0} -->
+{
+    rootNode = {
+        _class = "RootNode"
+        children = [
+            { _class = "RenderMeshList" children = [
+                { _class = "RenderMeshFile" name = "prop_01_a" filename = "models/test23/prop_01_a.fbx" }
+            ] },
+            { _class = "MaterialGroupList" children = [
+                { _class = "DefaultMaterialGroup" use_global_default = true
+                  global_default_material = "dev/panorama_world_panel_hint_ui.vmat" }
+            ] }
+        ]
+    }
+}
+'''
+    reference.write_text(reference_text, encoding='utf-8')
+    keyvalues3.read(reference)
+    config = {
+        'version': 3,
+        'settings': {'algorithm': 0},
+        'templates': [{
+            'id': 'template_0', 'extension': 'vmdl', 'reference': 'models/test23/prop_01_a.vmdl',
+            'filter_mode': 'include', 'ignore_extensions': '.fbx', 'material_remaps': [],
+            'replacements': [
+                {'from': 'dev/panorama_world_panel_hint_ui.vmat', 'to': '#$FOLDER_PATH$#/#$MATERIAL$#'},
+                {'from': 'models/test23/prop_01_a.fbx', 'to': '#$FOLDER_PATH$#/#$MESH$#'},
+                {'from': 'prop_01_a', 'to': '#$ASSET_NAME$#'},
+            ],
+        }],
+    }
+    preview = match_multi_template_folder_assets(str(directory), config['templates'], config['settings'])
+    created = perform_batch_processing(str(directory.with_suffix('.hbat')), config_data=config)
+    assert [item.name for item in preview] == [f'prop_01_{suffix}' for suffix in 'bcde']
+    assert {Path(path).stem for path in created} == {item.name for item in preview}
+    assert reference.read_text(encoding='utf-8') == reference_text
+    for path in created:
+        content = Path(path).read_text(encoding='utf-8')
+        assert '#$' not in content
+        assert f'filename = "models/test23/{Path(path).stem}.fbx"' in content
+        assert 'global_default_material = "dev/panorama_world_panel_hint_ui.vmat"' in content
+        assert 'use_global_default = true' in content
+        assert content.splitlines()[0] == reference_text.splitlines()[0]
+        keyvalues3.read(path)
+
+
 def test_analyzer_vmat(fake_addon_dir):
     vmat_path = os.path.join(fake_addon_dir, "materials", "nature", "rock_01.vmat")
     vmat_content = """<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->

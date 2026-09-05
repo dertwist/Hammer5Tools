@@ -166,6 +166,24 @@ class SmartPropNativeClient:
             *self._buffer_arguments(request),
         ))
 
+    def normalize_assetgroup_name(self, name: str, source_extension: str = "", algorithm: int = 0) -> str:
+        """Normalize a source name through the Assetgroup ABI."""
+        payload = self._invoke(
+            self._library.h5t_assetgroup_normalize_name,
+            *self._buffer_arguments(self._json_bytes({
+                "name": name, "sourceExtension": source_extension, "algorithm": algorithm,
+            })),
+        )
+        return payload
+
+    def render_assetgroup_template(self, request: dict) -> str:
+        """Render an Assetgroup token request through the NativeAOT ABI."""
+        payload = self._invoke(
+            self._library.h5t_assetgroup_render_template,
+            *self._buffer_arguments(self._json_bytes(request)),
+        )
+        return payload
+
     def serialize(self, document: dict) -> str:
         """Serialize a primitive editor document to KV3 text."""
         payload = self._json_bytes(document)
@@ -516,6 +534,8 @@ class SmartPropNativeClient:
         ]
         self._library.h5t_smartprop_evaluate_json.restype = ctypes.c_int
         for name in (
+            "h5t_assetgroup_normalize_name",
+            "h5t_assetgroup_render_template",
             "h5t_smartprop_evaluate_expression",
             "h5t_smartprop_serialize_json",
             "h5t_smartprop_deserialize_text",

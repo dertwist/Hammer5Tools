@@ -14,4 +14,12 @@ public static class CoreApi
     /// Verifies that the public Core contract can be invoked by a client.
     /// </summary>
     public static CoreResult<Version> Probe() => CoreResult.Success(Version);
+
+    /// <summary>Groups a source filename using affixes appropriate to its file type.</summary>
+    public static string NormalizeAssetGroupName(string baseName, string sourceExtension = "", int algorithm = 0) =>
+        Format.AssetGroup.AssetGroupTemplate.NormalizeName(baseName, sourceExtension, algorithm);
+
+    /// <summary>Expands Assetgroup template tokens and conditionals from a JSON request.</summary>
+    public static string RenderAssetGroupTemplate(string requestJson) =>
+        Format.AssetGroup.AssetGroupTemplate.Render(requestJson);
 }

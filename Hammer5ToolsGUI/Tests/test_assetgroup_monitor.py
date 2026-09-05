@@ -4,6 +4,7 @@ import json
 import tempfile
 import pytest
 from unittest.mock import patch
+from types import SimpleNamespace
 from PySide6.QtWidgets import QApplication
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -22,6 +23,48 @@ def qapp():
     if app is None:
         app = QApplication([])
     return app
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_monitor_watch_status_updates_editor_without_feedback(qapp, tmp_path, enabled):
+    from PySide6.QtWidgets import QTabWidget, QWidget
+    from gui.editors.assetgroup_maker.editor_tab import EditorTabWidget
+    from gui.editors.assetgroup_maker.main import BatchCreatorMainWindow
+
+    with patch.object(EditorTabWidget, '_apply_default_data'):
+        editor = EditorTabWidget()
+        other = EditorTabWidget()
+        unsaved = EditorTabWidget()
+    tabs = QTabWidget()
+    try:
+        editor.file_path = str(tmp_path / 'profile.hbat')
+        other.file_path = str(tmp_path / 'other.hbat')
+        for widget in (editor, other, unsaved, QWidget()):
+            tabs.addTab(widget, 'Profile')
+        editor.watch_changes_cb.blockSignals(True)
+        editor.watch_changes_cb.setChecked(not enabled)
+        editor.watch_changes_cb.blockSignals(False)
+        changes = []
+        editor.watch_changes_cb.toggled.connect(changes.append)
+
+        BatchCreatorMainWindow._on_monitor_watch_status_changed(
+            SimpleNamespace(tab_widget=tabs), editor.file_path.upper(), enabled
+        )
+
+        assert editor.watch_changes_cb.isChecked() is enabled
+        assert not editor.watch_changes_cb.signalsBlocked()
+        assert changes == []
+        assert not editor.has_unsaved_changes()
+        assert other.watch_changes_cb.isChecked()
+        assert unsaved.watch_changes_cb.isChecked()
+        with patch.object(editor.template_manager, 'get_data', return_value={'settings': {}}), \
+                patch('gui.editors.assetgroup_maker.editor_tab.save_hbat_file', return_value=True) as save, \
+                patch.object(MonitoringFileWatcher, '_instances', []):
+            assert editor.save_file()
+        assert save.call_args.args[1]['settings']['watch_changes'] is enabled
+    finally:
+        tabs.close()
+        tabs.deleteLater()
 
 
 @pytest.fixture

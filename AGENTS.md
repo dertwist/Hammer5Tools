@@ -54,6 +54,11 @@ changing an existing binary message.
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
 
+Assetgroup source-name normalization and template token expansion use
+`CoreBridge` and the Core `Format/AssetGroup/` implementation. The additive
+`h5t_assetgroup_*` exports accept JSON requests and return UTF-8 text; keep
+these rules out of Python when extending the remaining legacy batch workflow.
+
 NavMesh Radar requests keep rectangle merging (`collapseFaces`) separate from
 same-height connected-region N-gon dissolving (`collapseFacesIntoNgons`).
 

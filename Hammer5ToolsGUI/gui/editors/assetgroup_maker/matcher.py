@@ -4,38 +4,7 @@ import fnmatch
 from typing import Dict, List, Optional, Set, Tuple, Any
 from gui.settings.common import get_addon_dir
 
-KNOWN_PREFIXES = [
-    # Collision prefixes
-    'phys_', 'col_', 'hull_', 'physics_', 'collision_',
-    # LOD prefixes
-    'lod0_', 'lod1_', 'lod2_', 'lod3_', 'lod4_',
-    # Render prefixes
-    'render_', 'mesh_', 'high_', 'low_',
-]
-
-KNOWN_SUFFIXES = [
-    # Collision suffixes
-    '_phys', '_col', '_hull', '_collision', '_physics',
-    # LOD suffixes
-    '_lod0', '_lod1', '_lod2', '_lod3', '_lod4', '_lod_0', '_lod_1', '_lod_2',
-    # Render suffixes
-    '_render', '_mesh', '_high', '_low',
-    # Texture suffixes
-    '_color', '_albedo', '_basecolor', '_c', '_diffuse', '_bc', '_alb', '_d',
-    '_normal', '_norm', '_n', '_nrm',
-    '_rough', '_roughness', '_r',
-    '_ao', '_ambient', '_occlusion',
-    '_metal', '_metallic', '_metalness', '_m',
-    '_orm', '_rma', '_arm', '_srm', '_srmh', '_packed', '_masks', '_mask',
-    '_height', '_disp', '_displacement', '_h',
-    '_emissive', '_emission', '_emi', '_selfillum',
-    '_opacity', '_opac', '_alpha', '_trans', '_translucency',
-    '_tintmask', '_tint', '_transmission', '_sss',
-    '_blendmask',
-    # Multi-layer suffixes
-    '_color2', '_basecolor2', '_normal2', '_rough2', '_roughness2', '_metal2', '_ao2', '_orm2',
-    '_color3', '_basecolor3', '_normal3', '_rough3', '_roughness3', '_metal3', '_ao3'
-]
+from core.bridge import CoreBridge
 
 
 class AssetGroupItem:
@@ -78,23 +47,8 @@ class AssetGroupItem:
         }
 
 
-def strip_known_affixes(base_name: str) -> str:
-    cleaned = base_name
-    lower = cleaned.lower()
-
-    for prefix in KNOWN_PREFIXES:
-        if lower.startswith(prefix):
-            cleaned = cleaned[len(prefix):]
-            lower = cleaned.lower()
-            break
-
-    for suffix in KNOWN_SUFFIXES:
-        if lower.endswith(suffix):
-            cleaned = cleaned[:-len(suffix)]
-            lower = cleaned.lower()
-            break
-
-    return cleaned if cleaned else base_name
+def strip_known_affixes(base_name: str, source_extension: str = "") -> str:
+    return CoreBridge.instance().normalize_assetgroup_name(base_name, source_extension)
 
 
 def strip_known_suffix(base_name: str) -> str:
@@ -248,11 +202,8 @@ def match_folder_assets(
     # Group source files by asset root name
     asset_groups: Dict[str, List[Tuple[str, str]]] = {}
     for fname, fpath in relevant_files:
-        base, _ = os.path.splitext(fname)
-        if algorithm == 1:
-            root_name = base.rsplit('_', 1)[0] if '_' in base else base
-        else:
-            root_name = strip_known_affixes(base)
+        base, source_extension = os.path.splitext(fname)
+        root_name = CoreBridge.instance().normalize_assetgroup_name(base, source_extension, algorithm)
 
         if not root_name:
             root_name = base

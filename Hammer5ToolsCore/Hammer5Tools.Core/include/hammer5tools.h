@@ -15,6 +15,11 @@ extern "C" {
 
 H5T_API int32_t h5t_core_abi_version(void);
 
+H5T_API int32_t h5t_assetgroup_normalize_name(
+    const uint8_t* request, int32_t request_length, uint8_t** output, int32_t* output_length);
+H5T_API int32_t h5t_assetgroup_render_template(
+    const uint8_t* request, int32_t request_length, uint8_t** output, int32_t* output_length);
+
 H5T_API int32_t h5t_smartprop_evaluate_json(
     const uint8_t* document,
     int32_t document_length,
