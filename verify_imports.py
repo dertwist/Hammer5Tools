@@ -18,6 +18,7 @@ CUR_DIR = REPO_DIR
 SOURCE_DIRS = (
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'gui'),
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'core'),
+    os.path.join(REPO_DIR, 'Hammer5ToolsGUI', 'automation'),
 )
 IMPORT_ROOTS = (
     os.path.join(REPO_DIR, 'Hammer5ToolsGUI'),

@@ -10,14 +10,19 @@ From a source checkout:
 ```powershell
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli capabilities
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli core-status
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli read-vmdl C:\addon\models\prop.vmdl
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli edit-vmat C:\addon\materials\surface.vmat --slots '{"TextureColor": "materials/new_color.png"}' --dry-run
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli compile-asset C:\addon\models\prop.vmdl
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli validate-addon C:\addon
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli vmap-references C:\addon\maps\example.vmap
 ```
 
 In an installed build, replace the Python invocation with the path to
 `app\Hammer5ToolsGUI.exe`.
 
-The initial command set is deliberately read-only. Run `cli capabilities` to
-discover the operations implemented by the installed version.
+Run `cli capabilities` to discover all operations implemented by the installed
+version. Modifying commands support `--dry-run` to preview changes safely without
+writing to disk.
 
 ## MCP
 

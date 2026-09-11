@@ -8,5 +8,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPOSITORY_ROOT / "Hammer5ToolsGUI"
 
 source = str(SOURCE_ROOT)
+repo = str(REPOSITORY_ROOT)
 if source not in sys.path:
     sys.path.insert(0, source)
+if repo not in sys.path:
+    sys.path.insert(0, repo)

@@ -9,7 +9,7 @@ import sys
 
 def main() -> int:
     result = subprocess.run(
-        [sys.executable, '-m', 'pyflakes', 'Hammer5ToolsGUI/gui'],
+        [sys.executable, '-m', 'pyflakes', 'Hammer5ToolsGUI/gui', 'Hammer5ToolsGUI/automation'],
         capture_output=True,
         text=True,
     )
@@ -23,7 +23,7 @@ def main() -> int:
             print(f"  {line}", file=sys.stderr)
         return 1
 
-    print("OK: No undefined names found in Hammer5ToolsGUI/gui.")
+    print("OK: No undefined names found in Hammer5ToolsGUI/gui or Hammer5ToolsGUI/automation.")
     return 0
 
 

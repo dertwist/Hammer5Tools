@@ -43,7 +43,7 @@ def kill_process(process_name: str) -> None:
 
 def kill_processes() -> None:
     """Kills running Hammer5Tools instances, including Python dev GUI processes."""
-    for p in ["Hammer5Tools.exe", "fileedit.exe"]:
+    for p in ["Hammer5Tools.exe", "Hammer5ToolsGUI.exe", "fileedit.exe"]:
         kill_process(p)
 
     try:
@@ -58,7 +58,10 @@ def kill_processes() -> None:
                 continue
             try:
                 cmdline = [str(arg).lower() for arg in (proc.info.get('cmdline') or [])]
-                is_h5t_gui = any('hammer5toolsgui' in arg for arg in cmdline) and any(
+                is_h5t_gui = any(
+                    ('hammer5toolsgui' in arg or 'hammer5tools' in arg or 'automation' in arg)
+                    for arg in cmdline
+                ) and any(
                     arg.endswith('.py') or 'main' in arg for arg in cmdline
                 )
 
@@ -298,6 +301,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--add-data={os.path.join(gui_root, "assets", "images")};images/',
         f'--add-data={os.path.join(gui_root, "styles")};styles/',
         f'--add-data={os.path.join(gui_root, "editors", "smartprop_editor", "viewport_3d", "glsl")};gui/editors/smartprop_editor/viewport_3d/glsl/',
+        f'--add-data={os.path.join(gui_python_root, "automation", "mcp", "instructions.md")};automation/mcp/',
         f'--add-data={os.path.join(cur_dir, "version.json")};.',
         *[
             f'--add-data={os.path.join(cur_dir, "Hammer5Tools", folder)};defaults/{folder}'
@@ -549,12 +553,18 @@ def package_velopack(channel: str) -> str:
 
 
 
+def run_tests() -> None:
+    """Run automated test suites using pytest."""
+    subprocess.run([sys.executable, '-m', 'pytest', '-q'], cwd=cur_dir, check=True)
+
+
 def main() -> None:
     """Main function to parse arguments and execute build and packaging tasks."""
     parser = argparse.ArgumentParser(description="Build Hammer 5 Tools for Velopack.")
     parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
     parser.add_argument('--build-libs', action='store_true', help="Build only Windows x64 .NET and native libraries.")
+    parser.add_argument('--test', action='store_true', help="Run automated test suite (pytest).")
     parser.add_argument('--package', action='store_true', help="Create a Velopack distribution after a full build.")
     parser.add_argument('--fast', action='store_true', help="Use 0 level optimization.")
     channel_group = parser.add_mutually_exclusive_group()
@@ -563,6 +573,9 @@ def main() -> None:
     args = parser.parse_args()
     if args.package and not args.build_all:
         parser.error('--package requires --build-all')
+    if not (args.build_all or args.build_app or args.build_libs or args.test):
+        parser.print_help()
+        return
     channel = 'dev' if args.dev else 'stable'
 
 
@@ -628,6 +641,12 @@ def main() -> None:
             build_libraries()
             elapsed_time = time.time() - stage_start_time
             results.append(["Build Windows x64 Libraries (.NET / NativeAOT)", f"{elapsed_time:.2f} seconds"])
+
+        elif args.test:
+            stage_start_time = time.time()
+            run_tests()
+            elapsed_time = time.time() - stage_start_time
+            results.append(["Automated Test Suite (pytest)", f"{elapsed_time:.2f} seconds"])
 
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
