@@ -16,6 +16,14 @@ if not getattr(sys, "frozen", False):
     if source not in sys.path:
         sys.path.insert(0, source)
 
+# CLI and MCP modes must dispatch before OpenGL, COM, PySide6, logging, and the
+# single-instance GUI lifecycle are initialized. This keeps one shipped
+# Hammer5ToolsGUI.exe while retaining real headless startup behavior.
+if __name__ == "__main__" and sys.argv[1:2] in (["cli"], ["mcp"]):
+    from automation.main import main as automation_main
+
+    sys.exit(automation_main(sys.argv[1:]))
+
 # PyOpenGL wraps every GL call with a glGetError() round trip unless this is off.
 # The 3D viewports issue tens of thousands of calls per frame on a loaded map, and
 # each check is a driver round trip that can stall the pipeline. Must run before the

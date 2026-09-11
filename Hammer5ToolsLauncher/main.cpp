@@ -323,7 +323,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
 
     PROCESS_INFORMATION process{};
     const auto startedAt = GetTickCount64();
-    if (!CreateProcessW(executable.c_str(), mutableCommand.data(), nullptr, nullptr, TRUE, 0, nullptr,
+    if (!CreateProcessW(executable.c_str(), mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr,
                         appRoot.c_str(), &startup, &process))
     {
         const auto errorCode = GetLastError();

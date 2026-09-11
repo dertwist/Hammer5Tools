@@ -74,6 +74,12 @@ The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/g
 ### Distribution & Updates
 The project utilizes **Velopack** for delta-based updates. The GitHub Actions pipeline handles packaging automatically whenever a new tag (e.g., `v5.0.0`) is pushed to the repository.
 
+### CLI and agent automation
+
+The existing `Hammer5ToolsGUI.exe` also hosts headless CLI and MCP stdio modes.
+See [MCP_SETUP.md](MCP_SETUP.md) for source-build commands, agent
+configuration, and the currently implemented read-only tools.
+
 </details>
 
 ### Third-Party Libraries & Dependencies

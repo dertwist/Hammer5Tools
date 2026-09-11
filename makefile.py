@@ -273,12 +273,16 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--noconfirm',
 
         '--onedir',
-        '--windowed',
+        # The same executable hosts GUI, CLI, and MCP stdio modes. The native
+        # GUI launcher starts it with CREATE_NO_WINDOW, while direct CLI/MCP
+        # launches retain real stdin/stdout/stderr handles.
+        '--console',
 
         f'--paths={gui_python_root}',
         '--hidden-import=gui.resources_rc',
         '--collect-all=gui',
         '--collect-all=core',
+        '--collect-all=automation',
         '--collect-all=keyvalues3',
         # Only OpenGL.GL is imported anywhere; collect-submodules (no data/binaries)
         # still catches PyOpenGL's lazy per-extension submodule loading.
@@ -393,6 +397,14 @@ def stage_three_root_bundle(pyi_output: str, bundle_root: str) -> None:
         raise RuntimeError("Staged bundle does not contain app/Hammer5ToolsGUI.exe and app/runtime")
 
 
+def stage_automation_documentation(documentation_path: str, bundle_root: str) -> None:
+    """Place the human-readable MCP setup guide beside the public launcher."""
+    if not os.path.isfile(documentation_path):
+        raise FileNotFoundError(f"MCP setup guide is missing: '{documentation_path}'")
+    os.makedirs(bundle_root, exist_ok=True)
+    shutil.copy2(documentation_path, os.path.join(bundle_root, 'MCP_SETUP.md'))
+
+
 
 def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Phase 0: cleanup moved to main() for thread safety
@@ -436,6 +448,11 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     if os.path.exists(pyi_output):
         stage_three_root_bundle(pyi_output, bundle_root)
         _safe_rmtree(pyinstaller_dist)
+
+    stage_automation_documentation(
+        os.path.join(cur_dir, 'MCP_SETUP.md'),
+        bundle_root,
+    )
 
     # Ensure data folders are present in bundle_root (they should be if it's the source folder)
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
