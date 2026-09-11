@@ -11,6 +11,18 @@ if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 from gui.other.addon_functions import launch_cs2_process, assemble_commands
+from gui.other import cs2_netcon
+
+
+@pytest.fixture(autouse=True)
+def isolate_console_pipe_server(monkeypatch):
+    """Exercise launch argument wiring without opening process-wide Win32 pipes."""
+
+    class FakePipeServer:
+        def start(self):
+            return True
+
+    monkeypatch.setattr(cs2_netcon, "_pipes", FakePipeServer())
 
 
 def test_assemble_commands():
