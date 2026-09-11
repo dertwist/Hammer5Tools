@@ -62,6 +62,9 @@ class KV3TextReader(parsimonious.NodeVisitor):
 
     def parse(self, text: str) -> kv3.KV3File:
         """Parse the given text into a KV3File object."""
+        # Source 2 tools write these files with a UTF-8 BOM; the grammar has no
+        # rule for it, so strip it before the header match.
+        text = text.lstrip("﻿")
         try:
             return super().parse(text)
         except parsimonious.exceptions.ParseError as e:

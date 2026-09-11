@@ -41,6 +41,13 @@ def test_soundevent_document_from_text_parses_content():
     assert "Trailing footer comment" in doc.file_footer_comments
 
 
+def test_soundevent_document_from_text_tolerates_utf8_bom():
+    # Source 2 tools save .vsndevts with a BOM; the KV3 grammar must not choke.
+    doc = SoundEventDocument.from_text("﻿" + SAMPLE_VSNDEVTS)
+
+    assert "amb.base" in doc.events
+
+
 def test_soundevent_document_rename():
     doc = SoundEventDocument.from_text(SAMPLE_VSNDEVTS)
     doc.rename("amb.base", "amb.base_custom")
