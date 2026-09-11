@@ -24,12 +24,14 @@ class _Bridge:
         return [f"{content_dir}:{object_path}:reference"]
 
 
-def test_capabilities_only_advertise_implemented_read_tools():
+def test_capabilities_advertises_tools_and_write_support():
     result = capabilities(_Bridge())
 
     assert result["core"]["available"] is True
     assert result["tools"] == [tool.name for tool in TOOLS]
-    assert result["write_tools"] is False
+    assert result["write_tools"] is True
+    assert "hammer5tools.vmdl_read" in result["tools"]
+    assert "hammer5tools.vmat_write" in result["tools"]
 
 
 def test_vmap_reference_tool_uses_core_bridge():
@@ -85,7 +87,7 @@ def test_stdio_uses_newline_delimited_json_and_ignores_notifications():
     assert json.loads(lines[0]) == {"jsonrpc": "2.0", "id": 2, "result": {}}
 
 
-def test_tools_are_annotated_as_read_only():
+def test_tools_have_accurate_read_write_annotations():
     response = McpServer(_Bridge()).handle({
         "jsonrpc": "2.0",
         "id": 3,
@@ -93,6 +95,15 @@ def test_tools_are_annotated_as_read_only():
         "params": {},
     })
 
-    assert response["result"]["tools"]
-    assert all(tool["annotations"]["readOnlyHint"] for tool in response["result"]["tools"])
-    assert all(not tool["annotations"]["destructiveHint"] for tool in response["result"]["tools"])
+    tools = {t["name"]: t for t in response["result"]["tools"]}
+
+    # Read tools
+    assert tools["hammer5tools.vmdl_read"]["annotations"]["readOnlyHint"] is True
+    assert tools["hammer5tools.vmat_read"]["annotations"]["readOnlyHint"] is True
+    assert tools["hammer5tools.vsmart_read"]["annotations"]["readOnlyHint"] is True
+
+    # Write tools
+    assert tools["hammer5tools.vmdl_write"]["annotations"]["readOnlyHint"] is False
+    assert tools["hammer5tools.vmat_write"]["annotations"]["readOnlyHint"] is False
+    assert tools["hammer5tools.vsmart_write"]["annotations"]["readOnlyHint"] is False
+    assert tools["hammer5tools.vsnap_write"]["annotations"]["readOnlyHint"] is False
