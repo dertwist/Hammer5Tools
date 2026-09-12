@@ -23,6 +23,7 @@ from gui.settings.common import (
 from gui.settings.common import get_cs2_path
 from gui.styles.common import set_style_property
 
+from gui.forms.cleanup.common import format_size
 from gui.widgets.console import ConsoleWidget
 from .constants import scan_unsupported
 from ._worker_base import CancellableWorker
@@ -43,6 +44,35 @@ ENGINE_EXPORT_ROOTS = [
     for p in DEFAULT_CONTENT_PATHS.split(";")
     if p.strip() and not p.strip().lower().startswith("/game")
 ]
+
+
+def _cache_size_suffix(tmp_dir: str) -> str:
+    """"  (1.21 GB, 412 files)" for an existing export cache, else "".
+
+    scandir rather than walk + getsize: on Windows the size comes back in the
+    directory entry itself, so a cache holding tens of thousands of exported
+    files costs a syscall per directory instead of one per file. This runs on
+    the UI thread whenever the target addon changes.
+    """
+    total, files = 0, 0
+    pending = [tmp_dir]
+    while pending:
+        try:
+            with os.scandir(pending.pop()) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            pending.append(entry.path)
+                        else:
+                            total += entry.stat(follow_symlinks=False).st_size
+                            files += 1
+                    except OSError:
+                        continue
+        except OSError:
+            continue
+    if not files:
+        return ""
+    return f"  ({format_size(total)}, {files} file{'s' if files != 1 else ''})"
 
 
 class PrepareWorker(CancellableWorker):
@@ -87,7 +117,7 @@ class PrepareWorker(CancellableWorker):
             self.log.emit(f"Exporting assets into {self.tmp_dir}", "info")
             try:
                 run_export(self.engine_root, self.project_dir, self.tmp_dir,
-                           on_line=lambda line: self.log.emit(line, "info"),
+                           on_line=lambda line, level="info": self.log.emit(line, level),
                            assets=self.assets,
                            is_cancelled=lambda: self._is_cancelled)
             except UeExportError as e:
@@ -464,7 +494,7 @@ class UnrealPorterWidget(QDialog):
             return
         self._logged_tmp = tmp
         if tmp:
-            self.console.info(f"Export cache: {tmp}")
+            self.console.info(f"Export cache: {tmp}{_cache_size_suffix(tmp)}")
         else:
             self.console.warn("Export cache: select a target addon to set one.")
 

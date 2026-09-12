@@ -7,8 +7,11 @@ tools/unreal_bridge/README.md) — this fills that gap by launching the real
 Editor to do the export.
 """
 
+import collections
+import json
 import os
 import glob
+import re
 import subprocess
 from pathlib import Path
 
@@ -68,6 +71,52 @@ def record_export_manifest(tmp_dir: str, keys) -> None:
         pass    # A cache that cannot be written still converts; it just re-exports.
 
 
+# The Editor prints tens of thousands of lines per run — asset registry chatter,
+# shader compile stats, package load warnings — none of which a user porting a
+# map can act on, and all of which used to go straight into the app console one
+# Qt signal at a time. export_assets.py tags the handful of lines that matter
+# with "[H5T][level]"; only those and genuine engine failures are forwarded.
+_H5T = re.compile(r"\[H5T\]\[(\w+)\]\s?(.*?)\s*$")
+_FATAL = re.compile(r"Fatal error|Assertion failed|LogPython:\s*Error:", re.IGNORECASE)
+_LEVELS = frozenset(("info", "warn", "error", "success"))
+
+# Raw Editor output kept for diagnostics. A full run's log is hundreds of
+# megabytes of text; the tail is what actually explains a crash.
+_RAW_TAIL_LINES = 200
+
+
+def engine_version(engine_root: str) -> str:
+    """'5.4.4' for a UE install root, or "" when it cannot be determined.
+
+    Read from Engine/Build/Build.version, which every install (launcher or
+    source build) ships, falling back to the UE_<version> folder name.
+    """
+    for base in (os.path.join(engine_root, "Engine"), engine_root):
+        try:
+            with open(os.path.join(base, "Build", "Build.version"), encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        parts = [data.get("MajorVersion"), data.get("MinorVersion"), data.get("PatchVersion")]
+        version = ".".join(str(p) for p in parts if isinstance(p, int))
+        if version:
+            return version
+    match = re.search(r"UE_?(\d[\d.]*)", os.path.basename(os.path.normpath(engine_root)))
+    return match.group(1) if match else ""
+
+
+def filter_line(line: str):
+    """(text, level) for a line worth showing the user, or None to drop it."""
+    match = _H5T.search(line)
+    if match:
+        level, text = match.group(1), match.group(2)
+        return text, (level if level in _LEVELS else "info")
+    line = line.strip()
+    if line and _FATAL.search(line):
+        return line, "error"
+    return None
+
+
 def find_uproject(project_content_dir: str) -> str:
     """The .uproject file sits one folder up from the project's Content dir."""
     project_root = os.path.dirname(os.path.normpath(project_content_dir))
@@ -115,9 +164,12 @@ DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
                 on_line=None, assets: list = None, is_cancelled=None) -> str:
-    """Runs the Editor commandlet synchronously and returns its combined
-    stdout/stderr. Raises UeExportError on a non-zero exit or missing paths.
-    If on_line callback is provided, streams output line by line in real time.
+    """Runs the Editor commandlet synchronously and returns the tail of its raw
+    output. Raises UeExportError on a non-zero exit or missing paths.
+
+    on_line(text, level) is called for each line worth reporting — the progress
+    and summary lines export_assets.py tags, plus fatal engine errors. Everything
+    else the Editor prints is dropped; see filter_line.
     If assets list is provided, only those assets will be exported.
 
     If is_cancelled is a no-arg callable returning truthy, the Editor process
@@ -147,9 +199,14 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     cmd = [
         editor_cmd, uproject,
         "-run=pythonscript", f"-script={export_script}",
-        "-unattended", "-nopause", "-nosplash", "-log",
+        "-unattended", "-nopause", "-nosplash", "-nosound", "-log",
     ]
-    output_lines = []
+    version = engine_version(engine_root)
+    tag = f"[UE {version}]" if version else "[UE]"
+    if on_line:
+        on_line(f"Running Unreal Engine {version}".rstrip(), "info")
+
+    output_lines = collections.deque(maxlen=_RAW_TAIL_LINES)
     try:
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -169,9 +226,9 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 if is_cancelled is not None and is_cancelled():
                     raise UeExportError("UE export cancelled.")
                 output_lines.append(line)
-                line_str = line.rstrip("\r\n")
-                if line_str and on_line:
-                    on_line(line_str)
+                reportable = filter_line(line) if on_line else None
+                if reportable:
+                    on_line(f"{tag} {reportable[0]}", reportable[1])
             proc.stdout.close()
 
         try:
@@ -188,10 +245,8 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
         raise
 
     output = "".join(output_lines)
-    if returncode != 0:
-        msg = f"UE export completed with exit code {returncode} (some assets or engine checks logged warnings/errors). Proceeding with conversion..."
-        if on_line:
-            on_line(msg)
+    if returncode != 0 and on_line:
+        on_line(f"{tag} exited with code {returncode}; converting what was exported.", "warn")
     return output
 
 
@@ -224,6 +279,34 @@ def demo():
         editor_exe_ue4 = os.path.join(editor_dir_ue4, "UE4Editor-Cmd.exe")
         open(editor_exe_ue4, "w").close()
         assert find_editor_cmd(os.path.join(tmp, "UE_4.27")) == editor_exe_ue4
+
+        # Build.version is authoritative; the folder name is the fallback, which
+        # is all a source build in a non-UE_ folder leaves us.
+        assert engine_version(os.path.join(tmp, "UE_5.7")) == "5.7"
+        build_dir = os.path.join(tmp, "UE_5.7", "Engine", "Build")
+        os.makedirs(build_dir)
+        with open(os.path.join(build_dir, "Build.version"), "w", encoding="utf-8") as handle:
+            json.dump({"MajorVersion": 5, "MinorVersion": 7, "PatchVersion": 2}, handle)
+        assert engine_version(os.path.join(tmp, "UE_5.7")) == "5.7.2"
+        assert engine_version(os.path.join(tmp, "SourceBuild")) == ""
+
+        # The console only ever sees our own tagged lines and real failures.
+        assert filter_line("LogPython: [H5T][info] Exported 12/40  (45.3 MB)") == (
+            "Exported 12/40  (45.3 MB)", "info")
+        assert filter_line("[H5T][warn] 3 asset(s) produced no file.") == (
+            "3 asset(s) produced no file.", "warn")
+        assert filter_line("[H5T][bogus] hi") == ("hi", "info"), "unknown level degrades to info"
+        # The real shape a line arrives in: export_assets._say goes out as
+        # log_warning, the only verbosity that survives a commandlet's stdout,
+        # so every one of our lines is wrapped in UE's timestamped Warning
+        # prefix. Captured from a UE 5.7 run.
+        assert filter_line(
+            "[2026.09.12-14.27.43:100][  0]LogPython: Warning: [H5T][success] Exported 40/40"
+        ) == ("Exported 40/40", "success")
+        assert filter_line("LogAssetRegistry: Asset discovery search completed") is None
+        assert filter_line("LogShaderCompilers: Display: Compiled 412 shaders") is None
+        assert filter_line("") is None
+        assert filter_line("LogWindows: Fatal error: [File:D:/x.cpp] Assertion failed")[1] == "error"
 
         # The manifest is what stops the cache check from having to guess an
         # asset's type from its name. An asset that was asked for counts as done

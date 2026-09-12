@@ -20,11 +20,59 @@ same output_dir afterwards (see src/forms/unreal_converter/main.py).
 
 Meshes export with FbxExportOption.force_front_x_axis so the FBX declares +X as
 its front axis instead of UE's default -Y, matching Source 2's forward vector.
+Progress is reported on stdout as "[H5T][level] text" lines; ue_export_runner.py
+forwards only those (plus fatal engine errors) to the app console, so the
+Editor's own logging never reaches the user.
 """
 
 import os
+import time
 
 _EXPORTABLE_CLASSES = ("StaticMesh", "Texture2D")
+
+# Every line meant for the user is printed with this tag. Inside the Editor,
+# `print` lands in the engine log as "LogPython: [H5T][info] ...", which is how
+# ue_export_runner.py picks our handful of lines out of the tens of thousands
+# the Editor emits per run — see its _H5T pattern.
+_TAG = "[H5T]"
+
+
+
+def _say(message: str, level: str = "info") -> None:
+    """Emit one user-facing line. Levels: info / warn / error / success.
+
+    Routed through unreal.log_warning because that is the only emitter whose
+    output reaches a commandlet's piped stdout. Measured on UE 5.7: a script's
+    own `print` and `unreal.log` (Display verbosity) are both swallowed — the
+    engine's own Display lines come through, a script's do not — while Warning
+    verbosity arrives. The level the user sees is the one in the tag, not UE's,
+    so an "info" line still reads as info in the app console.
+    """
+    line = f"{_TAG}[{level}] {message}"
+    try:
+        import unreal
+    except ImportError:
+        print(line, flush=True)     # outside the Editor, e.g. the self-check
+        return
+    unreal.log_warning(line)
+
+
+def _human_size(num_bytes) -> str:
+    """'45.3 MB'. Deliberately duplicated from gui/forms/cleanup/common.py —
+    this module only ever executes inside the Unreal Editor's own Python, which
+    has none of the app on its path."""
+    size = float(num_bytes or 0)
+    for unit in ("B", "KB", "MB"):
+        if size < 1024:
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.2f} GB"
+
+
+def _human_time(seconds: float) -> str:
+    """'3m 12s'."""
+    seconds = int(seconds)
+    return f"{seconds // 60}m {seconds % 60:02d}s" if seconds >= 60 else f"{seconds}s"
 
 # Maps routinely place engine content that lives outside /Game — the default
 # template floor (/Engine/MapTemplates/SM_Template_Map_Floor) is in every map
@@ -190,92 +238,121 @@ def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> st
     return os.path.join(output_dir, package.lstrip("/").replace("/", os.sep)) + ext
 
 
-def _export_assets(unreal, export_paths, output_dir) -> int:
-    """Export every path, returning how many succeeded.
+def _export_one(unreal, path, asset, output_dir, options=None, ext=".fbx") -> int:
+    """Export one asset; returns the bytes written, or 0 if nothing was written."""
+    filename = _export_filename(path, output_dir, ext=ext)
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    task = unreal.AssetExportTask()
+    task.set_editor_property("object", asset)
+    task.set_editor_property("filename", filename)
+    task.set_editor_property("automated", True)
+    task.set_editor_property("prompt", False)
+    task.set_editor_property("replace_identical", True)
+    if options is not None:
+        task.set_editor_property("options", options)
+    if not unreal.Exporter.run_asset_export_task(task):
+        return 0
+    try:
+        return os.path.getsize(filename)
+    except OSError:
+        return 0
+
+
+def _tally(unreal, path, written, counters, sizes):
+    """Fold one export result into the running counters dict."""
+    if written:
+        counters["exported"] += 1
+        counters["bytes"] += written
+        sizes.append((written, _asset_stem(path)))
+        return
+    counters["failed"] += 1
+    unreal.log_warning(f"Export failed for {path}")
+
+
+# How often the running "Exported n/total - size" line is printed.
+_PROGRESS_INTERVAL_SECONDS = 2.0
+
+
+def _export_assets(unreal, export_paths, output_dir):
+    """Export every path, returning (exported_count, total_bytes).
+
+    Load and export in the same pass. The old code loaded every asset in the
+    project up front and held them all live while exporting, which on a
+    Nanite-heavy pack is gigabytes resident and a long collection at the end;
+    one at a time lets the Editor drop each asset again, and is what makes a
+    running progress line possible at all.
 
     StaticMeshes and Texture2Ds go one at a time through AssetExportTask so that
     (1) meshes use FbxExportOption.force_front_x_axis for Source 2 forward alignment, and
     (2) textures export reliably in headless / commandlet mode without requiring GUI interaction.
     """
-    meshes, textures, others = [], [], []
-    has_tasks = hasattr(unreal, "AssetExportTask")
-
-    for path in export_paths:
+    export_paths = list(export_paths)
+    if not hasattr(unreal, "AssetExportTask"):
         try:
-            asset = unreal.load_asset(path) if has_tasks else None
+            unreal.AssetToolsHelpers.get_asset_tools().export_assets(export_paths, output_dir)
+            return len(export_paths), 0
+        except Exception as e:
+            _say(f"Batch export failed: {e}", "error")
+            return 0, 0
+
+    options = None
+    if hasattr(unreal, "FbxExportOption"):
+        options = unreal.FbxExportOption()
+        options.set_editor_property("force_front_x_axis", True)
+    else:
+        _say("This Unreal build has no FbxExportOption, so meshes export with UE's "
+             "default -Y front axis and will come into Hammer yawed 90 degrees.", "warn")
+
+    total = len(export_paths)
+    counters = {"exported": 0, "bytes": 0, "failed": 0}
+    sizes = []          # (bytes, name), for the largest-assets report
+    others = []         # exportable class we do not special-case; batched at the end
+    last_report = time.time()
+
+    for index, path in enumerate(export_paths, 1):
+        try:
+            asset = unreal.load_asset(path)
         except Exception as e:
             unreal.log_warning(f"Failed to load asset {path} (skipped): {e}")
-            continue
+            asset = None
 
-        if asset is not None:
-            if isinstance(asset, unreal.StaticMesh):
-                meshes.append((path, asset))
-                continue
-            elif isinstance(asset, unreal.Texture2D):
-                textures.append((path, asset))
-                continue
-            others.append(path)
-        else:
-            if has_tasks:
-                unreal.log_warning(f"Could not load asset {path} (skipped)")
-            else:
-                others.append(path)
-
-    if has_tasks and not hasattr(unreal, "FbxExportOption"):
-        unreal.log_warning(
-            "This Unreal build has no FbxExportOption — meshes export with UE's default "
-            "-Y front axis and will come into Hammer yawed 90 degrees."
-        )
-
-    exported = 0
-    if meshes:
-        options = unreal.FbxExportOption() if hasattr(unreal, "FbxExportOption") else None
-        if options:
-            options.set_editor_property("force_front_x_axis", True)
-        for path, asset in meshes:
+        if asset is None:
+            counters["failed"] += 1
+        elif isinstance(asset, unreal.StaticMesh):
             try:
-                filename = _export_filename(path, output_dir, ext=".fbx")
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                task = unreal.AssetExportTask()
-                task.set_editor_property("object", asset)
-                task.set_editor_property("filename", filename)
-                task.set_editor_property("automated", True)
-                task.set_editor_property("prompt", False)
-                task.set_editor_property("replace_identical", True)
-                if options:
-                    task.set_editor_property("options", options)
-                if unreal.Exporter.run_asset_export_task(task):
-                    exported += 1
-                else:
-                    unreal.log_warning(f"Export failed for mesh {path}")
+                written = _export_one(unreal, path, asset, output_dir, options, ".fbx")
             except Exception as e:
                 unreal.log_warning(f"Error exporting mesh {path}: {e}")
-
-    if textures:
-        for path, asset in textures:
+                written = 0
+            _tally(unreal, path, written, counters, sizes)
+        elif isinstance(asset, unreal.Texture2D):
             try:
-                filename = _export_filename(path, output_dir, ext=".tga")
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                task = unreal.AssetExportTask()
-                task.set_editor_property("object", asset)
-                task.set_editor_property("filename", filename)
-                task.set_editor_property("automated", True)
-                task.set_editor_property("prompt", False)
-                task.set_editor_property("replace_identical", True)
-                if unreal.Exporter.run_asset_export_task(task):
-                    exported += 1
-                else:
-                    unreal.log_warning(f"Export failed for texture {path}")
+                written = _export_one(unreal, path, asset, output_dir, None, ".tga")
             except Exception as e:
                 unreal.log_warning(f"Error exporting texture {path}: {e}")
+                written = 0
+            _tally(unreal, path, written, counters, sizes)
+        else:
+            others.append(path)
+
+        now = time.time()
+        if index == total or now - last_report >= _PROGRESS_INTERVAL_SECONDS:
+            last_report = now
+            _say(f"Exported {index}/{total}  ({_human_size(counters['bytes'])})")
 
     if others:
         try:
             unreal.AssetToolsHelpers.get_asset_tools().export_assets(others, output_dir)
-            exported += len(others)
+            counters["exported"] += len(others)
         except Exception as e:
-            unreal.log_warning(f"Error exporting assets batch: {e}")
-    return exported
+            _say(f"Batch export of {len(others)} other asset(s) failed: {e}", "warn")
+
+    if counters["failed"]:
+        _say(f"{counters['failed']} asset(s) produced no file; see the Unreal log.", "warn")
+    if sizes:
+        sizes.sort(reverse=True)
+        _say("Largest: " + ", ".join(f"{name} {_human_size(n)}" for n, name in sizes[:5]))
+    return counters["exported"], counters["bytes"]
 
 
 def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
@@ -286,12 +363,13 @@ def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
         raise ValueError("output_dir is required")
     import unreal  # only importable inside the UE Editor process
 
+    started = time.time()
     infos = []
     for root in _split_paths(content_path):
         try:
             found = list(_list_assets(unreal, root))
         except Exception as e:
-            unreal.log_warning(f"Skipping content path {root}: {e}")
+            _say(f"Skipping content path {root}: {e}", "warn")
             continue
         if not found:
             unreal.log_warning(f"No assets found under {root}")
@@ -302,15 +380,14 @@ def run(content_path: str = DEFAULT_CONTENT_PATHS, output_dir: str = None):
 
     export_paths = _select_export_paths(infos, asset_filter=asset_filter)
     if not export_paths:
-        msg = f"[H5T_EXPORT_COMPLETE] No StaticMesh/Texture2D assets found matching criteria under {content_path}"
-        unreal.log_warning(msg)
-        print(msg, flush=True)
+        _say(f"No StaticMesh/Texture2D assets matched under {content_path}.", "warn")
         return
 
-    ok = _export_assets(unreal, export_paths, output_dir)
-    msg = f"[H5T_EXPORT_COMPLETE] Exported {ok}/{len(export_paths)} asset(s) to {output_dir}"
-    unreal.log(msg)
-    print(msg, flush=True)
+    _say(f"{len(export_paths)} asset(s) to export into {output_dir}")
+    ok, total_bytes = _export_assets(unreal, export_paths, output_dir)
+    _say(f"Exported {ok}/{len(export_paths)} asset(s), {_human_size(total_bytes)}, "
+         f"in {_human_time(time.time() - started)}",
+         "success" if ok == len(export_paths) else "warn")
 
 
 class DummyAssetDataUE4:
@@ -377,6 +454,14 @@ def demo():
         out, "Game", "Meshes", "SM_Chair.fbx")
     assert _export_filename("/Engine/BasicShapes/Cube.Cube", out) == os.path.join(
         out, "Engine", "BasicShapes", "Cube.fbx")
+
+    assert _human_size(0) == "0 B"
+    assert _human_size(1536) == "1.5 KB"
+    assert _human_size(47 * 1024 * 1024) == "47.0 MB"
+    assert _human_size(3 * 1024 ** 3) == "3.00 GB"
+    assert _human_time(9) == "9s"
+    assert _human_time(192) == "3m 12s"
+
     print("ok")
 
 

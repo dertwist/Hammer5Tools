@@ -9,6 +9,7 @@ import pytest
 from gui.forms.unreal_porter import analysis
 from gui.forms.unreal_porter.asset_selection import expand_references
 from gui.forms.unreal_porter.main import (
+    _cache_size_suffix,
     AnalyzeWorker,
     ExpandRefsWorker,
     UnrealPorterWidget,
@@ -330,3 +331,18 @@ def test_unreal_porter_in_memory_analysis_lifecycle(qapp, tmp_path, monkeypatch)
     # 6. Verify no analyze_cache.kv3 file was created anywhere
     assert not (addon_dir / "hammer5tools" / "unrealporter" / "analyze_cache.kv3").exists()
     assert list(tmp_path.rglob("*analyze_cache*")) == []
+
+
+# 6. Export cache size reporting
+
+
+def test_cache_size_suffix_sums_the_cache_recursively(tmp_path):
+    assert _cache_size_suffix(str(tmp_path)) == "", "an empty cache reports nothing"
+    assert _cache_size_suffix(str(tmp_path / "nope")) == "", "a missing cache is not an error"
+
+    meshes = tmp_path / "Game" / "Meshes"
+    meshes.mkdir(parents=True)
+    (meshes / "SM_Rock.fbx").write_bytes(b"x" * 2048)
+    (tmp_path / "exported_assets.txt").write_bytes(b"x" * 1024)
+
+    assert _cache_size_suffix(str(tmp_path)) == "  (3.00 KB, 2 files)"
