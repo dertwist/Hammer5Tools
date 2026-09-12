@@ -78,6 +78,11 @@ def record_export_manifest(tmp_dir: str, keys) -> None:
 # with "[H5T][level]"; only those and genuine engine failures are forwarded.
 _H5T = re.compile(r"\[H5T\]\[(\w+)\]\s?(.*?)\s*$")
 _FATAL = re.compile(r"Fatal error|Assertion failed|LogPython:\s*Error:", re.IGNORECASE)
+# UE closes a run by reprinting every warning under "Warning/Error Summary
+# (Unique only)", each one re-wrapped in "LogInit: Display:". Our progress lines
+# go out as warnings — the only verbosity that survives the pipe — so without
+# this the whole export replays itself in the console after it finishes.
+_SUMMARY_ECHO = re.compile(r"LogInit:\s*Display:")
 _LEVELS = frozenset(("info", "warn", "error", "success"))
 
 # Raw Editor output kept for diagnostics. A full run's log is hundreds of
@@ -107,6 +112,8 @@ def engine_version(engine_root: str) -> str:
 
 def filter_line(line: str):
     """(text, level) for a line worth showing the user, or None to drop it."""
+    if _SUMMARY_ECHO.search(line):
+        return None
     match = _H5T.search(line)
     if match:
         level, text = match.group(1), match.group(2)
@@ -310,6 +317,12 @@ def demo():
         assert filter_line(
             "[2026.09.12-14.27.43:100][  0]LogPython: Warning: [H5T][success] Exported 40/40"
         ) == ("Exported 40/40", "success")
+        # The same line as UE replays it in its closing summary. Forwarding both
+        # made every export print itself twice.
+        assert filter_line(
+            "[2026.09.12-14.27.43:100][  0]LogInit: Display: LogPython: Warning: "
+            "[H5T][success] Exported 40/40"
+        ) is None
         assert filter_line("LogAssetRegistry: Asset discovery search completed") is None
         assert filter_line("LogShaderCompilers: Display: Compiled 412 shaders") is None
         assert filter_line("") is None

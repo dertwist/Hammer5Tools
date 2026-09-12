@@ -48,6 +48,19 @@ _TAG = "[H5T]"
 # the FBX from 7.5MB to 231MB. See _disable_nanite.
 IMPORT_NANITE = (os.environ.get("H5T_UE_NANITE") or "0") != "0"
 
+# How many Nanite meshes to switch off before exporting any of them. Clearing
+# the flag queues that mesh's rebuild on UE's asset compilation pool, so a whole
+# chunk builds in parallel, where flipping one mesh at a time blocks on each
+# build in turn. Measured on UE 5.7 over two workload-balanced halves of six
+# meshes each, ~4M triangles apiece: 2,496s one at a time against 1,294s
+# batched, with the first mesh in the batch absorbing the wait and the other
+# five returning already built.
+#
+# It is bounded because every mesh in a chunk is held at full source density at
+# once, which is the memory this trades away. Only used when IMPORT_NANITE is
+# on; otherwise nothing is flipped and the chunk is one mesh, exactly as before.
+NANITE_BATCH = max(1, int(os.environ.get("H5T_UE_NANITE_BATCH") or 8))
+
 
 
 def _say(message: str, level: str = "info") -> None:
@@ -310,6 +323,37 @@ def _disable_nanite(unreal, mesh):
     return restore
 
 
+def _chunks(items, size):
+    """Yield successive lists of at most `size` items."""
+    items = list(items)
+    for start in range(0, len(items), size):
+        yield items[start:start + size]
+
+
+def _begin_nanite_chunk(unreal, paths):
+    """Switch Nanite off across a whole chunk so UE builds them in parallel.
+
+    Returns (restores, flipped_paths). The paths are needed because once the
+    flag is off _nanite_settings reports the mesh as not-Nanite, so this is the
+    only record that it ever was. Loading an asset here is what the export loop
+    does moments later and unreal.load_asset is cached, so this costs the flips
+    and nothing else.
+    """
+    restores, flipped = [], set()
+    for path in paths:
+        try:
+            asset = unreal.load_asset(path)
+        except Exception:
+            continue
+        if not isinstance(asset, unreal.StaticMesh):
+            continue
+        restore = _disable_nanite(unreal, asset)
+        if restore is not None:
+            restores.append(restore)
+            flipped.add(path)
+    return restores, flipped
+
+
 def _export_one(unreal, path, asset, output_dir, options=None, ext=".fbx") -> int:
     """Export one asset; returns the bytes written, or 0 if nothing was written."""
     filename = _export_filename(path, output_dir, ext=ext)
@@ -381,50 +425,58 @@ def _export_assets(unreal, export_paths, output_dir):
     others = []         # exportable class we do not special-case; batched at the end
     last_report = time.time()
 
-    for index, path in enumerate(export_paths, 1):
+    index = 0
+    # One mesh per chunk unless Nanite meshes are being brought across at full
+    # geometry, in which case the chunk exists so their rebuilds overlap.
+    for chunk in _chunks(export_paths, NANITE_BATCH if IMPORT_NANITE else 1):
+        restores, flipped = _begin_nanite_chunk(unreal, chunk) if IMPORT_NANITE else ([], set())
         try:
-            asset = unreal.load_asset(path)
-        except Exception as e:
-            unreal.log_warning(f"Failed to load asset {path} (skipped): {e}")
-            asset = None
+            for path in chunk:
+                index += 1
+                try:
+                    asset = unreal.load_asset(path)
+                except Exception as e:
+                    unreal.log_warning(f"Failed to load asset {path} (skipped): {e}")
+                    asset = None
 
-        name, written = os.path.basename(path), 0
-        if asset is None:
-            counters["failed"] += 1
-        elif isinstance(asset, unreal.StaticMesh):
-            name = _asset_filename(path, ".fbx")
-            restore = None
-            if _nanite_settings(asset) is not None:
-                counters["nanite"] += 1
-                if IMPORT_NANITE:
-                    restore = _disable_nanite(unreal, asset)
-            try:
-                written = _export_one(unreal, path, asset, output_dir, options, ".fbx")
-            except Exception as e:
-                unreal.log_warning(f"Error exporting mesh {path}: {e}")
-                written = 0
-            finally:
-                if restore is not None:
-                    restore()
-            _tally(unreal, path, name, written, counters, sizes)
-        elif isinstance(asset, unreal.Texture2D):
-            name = _asset_filename(path, ".tga")
-            try:
-                written = _export_one(unreal, path, asset, output_dir, None, ".tga")
-            except Exception as e:
-                unreal.log_warning(f"Error exporting texture {path}: {e}")
-                written = 0
-            _tally(unreal, path, name, written, counters, sizes)
-        else:
-            others.append(path)
+                name, written = os.path.basename(path), 0
+                if asset is None:
+                    counters["failed"] += 1
+                elif isinstance(asset, unreal.StaticMesh):
+                    name = _asset_filename(path, ".fbx")
+                    # Nanite was already switched off for this chunk if it was
+                    # wanted, which is exactly why _nanite_settings can no
+                    # longer tell: `flipped` is the record of what it found.
+                    if path in flipped or _nanite_settings(asset) is not None:
+                        counters["nanite"] += 1
+                    try:
+                        written = _export_one(unreal, path, asset, output_dir, options, ".fbx")
+                    except Exception as e:
+                        unreal.log_warning(f"Error exporting mesh {path}: {e}")
+                        written = 0
+                    _tally(unreal, path, name, written, counters, sizes)
+                elif isinstance(asset, unreal.Texture2D):
+                    name = _asset_filename(path, ".tga")
+                    try:
+                        written = _export_one(unreal, path, asset, output_dir, None, ".tga")
+                    except Exception as e:
+                        unreal.log_warning(f"Error exporting texture {path}: {e}")
+                        written = 0
+                    _tally(unreal, path, name, written, counters, sizes)
+                else:
+                    others.append(path)
 
-        now = time.time()
-        if index == total or now - last_report >= _PROGRESS_INTERVAL_SECONDS:
-            last_report = now
-            # The asset is named because the interesting question during a long
-            # export is which one the size jumped on — a total alone cannot say.
-            _say(f"Exported {index}/{total}  {name}  {_human_size(written)}"
-                 f"  (total {_human_size(counters['bytes'])})")
+                now = time.time()
+                if index == total or now - last_report >= _PROGRESS_INTERVAL_SECONDS:
+                    last_report = now
+                    # The asset is named because the interesting question during
+                    # a long export is which one the size jumped on — a total
+                    # alone cannot say.
+                    _say(f"Exported {index}/{total}  {name}  {_human_size(written)}"
+                         f"  (total {_human_size(counters['bytes'])})")
+        finally:
+            for restore in restores:
+                restore()
 
     if others:
         try:
@@ -588,6 +640,31 @@ def demo():
     assert _asset_filename("/Game/Fences/SM_Fence_Dune_NN_01i.SM_Fence_Dune_NN_01i",
                            ".fbx") == "SM_Fence_Dune_NN_01i.fbx"
     assert _asset_filename("/Game/Tex/T_Rock_D.T_Rock_D", ".tga") == "T_Rock_D.tga"
+
+    assert list(_chunks([1, 2, 3, 4, 5], 2)) == [[1, 2], [3, 4], [5]]
+    assert list(_chunks([1, 2, 3], 1)) == [[1], [2], [3]], "chunk of 1 is the old loop"
+    assert list(_chunks([], 8)) == []
+
+    # A chunk flips every Nanite mesh in it and reports which, because once the
+    # flag is off _nanite_settings can no longer say a mesh ever had it.
+    class _FakeUnreal(DummyUnreal):
+        StaticMesh = DummyMesh
+
+        def __init__(self, assets):
+            self._assets = assets
+
+        def load_asset(self, path):
+            return self._assets[path]
+
+    nan, plain = DummyMesh(enabled=True), DummyMesh(enabled=False)
+    fake = _FakeUnreal({"a": nan, "b": plain})
+    restores, flipped = _begin_nanite_chunk(fake, ["a", "b"])
+    assert flipped == {"a"}, flipped
+    assert nan.settings.props["enabled"] is False
+    assert plain.settings.props["enabled"] is False, "a non-Nanite mesh is untouched"
+    for r in restores:
+        r()
+    assert nan.settings.props["enabled"] is True
 
     assert _human_size(0) == "0 B"
     assert _human_size(1536) == "1.5 KB"
