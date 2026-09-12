@@ -20,6 +20,9 @@ same output_dir afterwards (see src/forms/unreal_converter/main.py).
 
 Meshes export with FbxExportOption.force_front_x_axis so the FBX declares +X as
 its front axis instead of UE's default -Y, matching Source 2's forward vector.
+Nanite meshes have Nanite switched off before export so the real geometry is
+written rather than the fallback proxy — see _disable_nanite.
+
 Progress is reported on stdout as "[H5T][level] text" lines; ue_export_runner.py
 forwards only those (plus fatal engine errors) to the app console, so the
 Editor's own logging never reaches the user.
@@ -35,6 +38,12 @@ _EXPORTABLE_CLASSES = ("StaticMesh", "Texture2D")
 # ue_export_runner.py picks our handful of lines out of the tens of thousands
 # the Editor emits per run — see its _H5T pattern.
 _TAG = "[H5T]"
+
+# Set from the porter's "Nanite" model import option. On, a Nanite mesh has
+# Nanite switched off before it is exported so the real geometry is written;
+# off, it exports as-is, which means Unreal's low-poly fallback proxy. See
+# _disable_nanite.
+IMPORT_NANITE = (os.environ.get("H5T_UE_NANITE") or "1") != "0"
 
 
 
@@ -238,6 +247,56 @@ def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> st
     return os.path.join(output_dir, package.lstrip("/").replace("/", os.sep)) + ext
 
 
+def _nanite_settings(mesh):
+    """A StaticMesh's MeshNaniteSettings when Nanite is on, else None."""
+    try:
+        settings = mesh.get_editor_property("nanite_settings")
+    except Exception:
+        return None
+    try:
+        return settings if bool(settings.get_editor_property("enabled")) else None
+    except Exception:
+        return None
+
+
+def _disable_nanite(unreal, mesh):
+    """Switch Nanite off on a mesh so its full geometry can be exported.
+
+    FBX export writes LOD0 *render* data, and on a Nanite mesh that is the
+    auto-generated fallback proxy rather than the virtualized geometry. Measured
+    on UE 5.7 against a marketplace fence pack, the fallback carried under a
+    tenth of the real mesh (6,664 of 69,261 triangles), which is why this tool
+    used to tell people to disable Nanite and re-export by hand.
+
+    Setting `enabled` is the whole operation: get_editor_property hands back a
+    live reference to the mesh's MeshNaniteSettings, not a copy, so writing to
+    it changes the mesh, and the render data is rebuilt from the source mesh on
+    the next access — which is the export. StaticMeshEditorSubsystem is NOT used
+    for this: get_editor_subsystem returns None in a commandlet, because a
+    commandlet has no editor, so anything routed through it silently did nothing.
+
+    Returns a callable that switches Nanite back on, or None if this is not a
+    Nanite mesh. The change is in-memory only — the commandlet never saves, so
+    the .uasset on disk is untouched either way.
+    """
+    settings = _nanite_settings(mesh)
+    if settings is None:
+        return None
+    try:
+        settings.set_editor_property("enabled", False)
+    except Exception as e:
+        unreal.log_warning(f"Could not switch Nanite off: {e}")
+        return None
+
+    def restore():
+        try:
+            settings.set_editor_property("enabled", True)
+        except Exception:
+            pass
+
+    return restore
+
+
 def _export_one(unreal, path, asset, output_dir, options=None, ext=".fbx") -> int:
     """Export one asset; returns the bytes written, or 0 if nothing was written."""
     filename = _export_filename(path, output_dir, ext=ext)
@@ -304,7 +363,7 @@ def _export_assets(unreal, export_paths, output_dir):
              "default -Y front axis and will come into Hammer yawed 90 degrees.", "warn")
 
     total = len(export_paths)
-    counters = {"exported": 0, "bytes": 0, "failed": 0}
+    counters = {"exported": 0, "bytes": 0, "failed": 0, "nanite": 0}
     sizes = []          # (bytes, name), for the largest-assets report
     others = []         # exportable class we do not special-case; batched at the end
     last_report = time.time()
@@ -319,11 +378,19 @@ def _export_assets(unreal, export_paths, output_dir):
         if asset is None:
             counters["failed"] += 1
         elif isinstance(asset, unreal.StaticMesh):
+            restore = None
+            if _nanite_settings(asset) is not None:
+                counters["nanite"] += 1
+                if IMPORT_NANITE:
+                    restore = _disable_nanite(unreal, asset)
             try:
                 written = _export_one(unreal, path, asset, output_dir, options, ".fbx")
             except Exception as e:
                 unreal.log_warning(f"Error exporting mesh {path}: {e}")
                 written = 0
+            finally:
+                if restore is not None:
+                    restore()
             _tally(unreal, path, written, counters, sizes)
         elif isinstance(asset, unreal.Texture2D):
             try:
@@ -347,6 +414,12 @@ def _export_assets(unreal, export_paths, output_dir):
         except Exception as e:
             _say(f"Batch export of {len(others)} other asset(s) failed: {e}", "warn")
 
+    if counters["nanite"] and IMPORT_NANITE:
+        _say(f"{counters['nanite']} Nanite mesh(es) exported at full geometry "
+             "(Nanite switched off for the export).")
+    elif counters["nanite"]:
+        _say(f"{counters['nanite']} Nanite mesh(es) exported as Unreal's low-poly "
+             "fallback proxy; turn the porter's Nanite option on for full geometry.", "warn")
     if counters["failed"]:
         _say(f"{counters['failed']} asset(s) produced no file; see the Unreal log.", "warn")
     if sizes:
@@ -408,6 +481,41 @@ class DummyAssetDataUE5:
         self.object_path = obj_path
 
 
+class DummySettings:
+    """Stands in for MeshNaniteSettings, which UE hands back by reference."""
+
+    def __init__(self, props, writable=True):
+        self.props = props
+        self.writable = writable
+
+    def get_editor_property(self, name):
+        if name not in self.props:
+            raise Exception(f"no such property {name}")
+        return self.props[name]
+
+    def set_editor_property(self, name, value):
+        if not self.writable:
+            raise Exception("read-only")
+        self.props[name] = value
+
+
+class DummyMesh:
+    def __init__(self, enabled=True, writable=True):
+        self.settings = DummySettings({"enabled": enabled}, writable)
+
+    def get_editor_property(self, name):
+        assert name == "nanite_settings"
+        return self.settings
+
+
+class DummyUnreal:
+    """Just enough of the `unreal` module for the Nanite path."""
+
+    @staticmethod
+    def log_warning(message):
+        pass
+
+
 def demo():
     data_ue4 = DummyAssetDataUE4("StaticMesh")
     data_ue5 = DummyAssetDataUE5("Texture2D")
@@ -462,6 +570,23 @@ def demo():
     assert _human_time(9) == "9s"
     assert _human_time(192) == "3m 12s"
 
+    # A Nanite mesh has Nanite switched off for the export and switched back on
+    # afterwards; a mesh that never had it is left completely alone.
+    plain = DummyMesh(enabled=False)
+    assert _disable_nanite(DummyUnreal(), plain) is None
+    assert plain.settings.props["enabled"] is False
+
+    mesh = DummyMesh(enabled=True)
+    restore = _disable_nanite(DummyUnreal(), mesh)
+    assert restore is not None
+    assert mesh.settings.props["enabled"] is False, "the export must see Nanite off"
+    restore()
+    assert mesh.settings.props["enabled"] is True, "the project must be left as found"
+
+    # A mesh that refuses the write is reported as not handled rather than
+    # exported as though the switch had worked.
+    stubborn = DummyMesh(enabled=True, writable=False)
+    assert _disable_nanite(DummyUnreal(), stubborn) is None
     print("ok")
 
 

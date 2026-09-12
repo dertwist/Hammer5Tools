@@ -87,13 +87,15 @@ class PrepareWorker(CancellableWorker):
     progress = Signal(int, int)
     done = Signal(bool)
 
-    def __init__(self, engine_root, project_dir, tmp_dir, output_dir, assets=(), parent=None):
+    def __init__(self, engine_root, project_dir, tmp_dir, output_dir, assets=(),
+                 import_nanite=True, parent=None):
         super().__init__(parent)
         self.engine_root = engine_root
         self.project_dir = project_dir
         self.tmp_dir = tmp_dir
         self.output_dir = output_dir
         self.assets = list(assets)
+        self.import_nanite = import_nanite
 
     def _report_scope(self):
         """Say what is going in before spending minutes on the Editor."""
@@ -119,7 +121,8 @@ class PrepareWorker(CancellableWorker):
                 run_export(self.engine_root, self.project_dir, self.tmp_dir,
                            on_line=lambda line, level="info": self.log.emit(line, level),
                            assets=self.assets,
-                           is_cancelled=lambda: self._is_cancelled)
+                           is_cancelled=lambda: self._is_cancelled,
+                           import_nanite=self.import_nanite)
             except UeExportError as e:
                 # A cancel arrives here as "UE export cancelled." — log it but
                 # treat it as a soft stop rather than an export failure.
@@ -281,7 +284,8 @@ class UnrealPorterWidget(QDialog):
         self.console.warn("• Cables / Splines (CableComponent physics & spline mesh ropes)")
         self.console.warn("• Landscapes / Terrain (heightfield layer blending; must bake to static mesh)")
         self.console.warn("• Master Materials & HLSL graphs (only Material Instance parameters -> vmat)")
-        self.console.warn("• Nanite virtual geometry (export regular LOD triangulated mesh first)")
+        self.console.warn("• Nanite virtual geometry (Nanite is switched off before export so the "
+                          "real mesh comes across — Source 2 has no virtualized geometry)")
         self.console.warn("• Niagara / Cascade particles (must re-author in CS2 particle editor)")
         self.console.warn("• Virtual Textures / RVT (must bake to standard 2D textures in UE first)")
         self.console.warn("• Gameplay & Logic Blueprints (only static component layout Blueprints -> vsmart)")
@@ -672,10 +676,22 @@ class UnrealPorterWidget(QDialog):
             lambda checked: set_settings_bool("UnrealConverter", "model_import_collision", checked)
         )
 
+        self.model_nanite_check = QCheckBox("Nanite")
+        self.model_nanite_check.setToolTip(
+            "Switch Nanite off on a Nanite mesh before exporting it, so the FBX "
+            "carries its real geometry. Off exports Unreal's low-poly Nanite "
+            "fallback proxy instead — much faster, far less detail."
+        )
+        self.model_nanite_check.setChecked(get_settings_bool("UnrealConverter", "model_import_nanite", True))
+        self.model_nanite_check.toggled.connect(
+            lambda checked: set_settings_bool("UnrealConverter", "model_import_nanite", checked)
+        )
+
         mesh_row = QHBoxLayout()
         mesh_row.setContentsMargins(0, 0, 0, 0)
         mesh_row.addWidget(self.model_lods_check)
         mesh_row.addWidget(self.model_collision_check)
+        mesh_row.addWidget(self.model_nanite_check)
         mesh_row.addStretch(1)
         form.addRow("Import:", mesh_row)
 
@@ -1312,7 +1328,8 @@ class UnrealPorterWidget(QDialog):
             self.progress_bar.setValue(0)
             self.progress_bar.setFormat("Running Unreal Engine…")
 
-            worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing)
+            worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing,
+                                   import_nanite=self.model_nanite_check.isChecked())
             worker.log.connect(self._on_worker_log)
             worker.progress.connect(self._on_progress)
             worker.done.connect(self._on_auto_prepare_done)
@@ -1660,7 +1677,8 @@ class UnrealPorterWidget(QDialog):
                 self.progress_bar.setValue(0)
                 self.progress_bar.setFormat("Running Unreal Engine…")
 
-                worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing)
+                worker = PrepareWorker(install.root, project_dir, self.tmp_dir(), output_dir, assets=missing,
+                                       import_nanite=self.model_nanite_check.isChecked())
                 worker.log.connect(self._on_worker_log)
                 worker.progress.connect(self._on_progress)
                 worker.done.connect(self._on_reconvert_prepare_done)

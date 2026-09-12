@@ -163,7 +163,8 @@ DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
-                on_line=None, assets: list = None, is_cancelled=None) -> str:
+                on_line=None, assets: list = None, is_cancelled=None,
+                import_nanite: bool = True) -> str:
     """Runs the Editor commandlet synchronously and returns the tail of its raw
     output. Raises UeExportError on a non-zero exit or missing paths.
 
@@ -175,6 +176,10 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     If is_cancelled is a no-arg callable returning truthy, the Editor process
     is killed and UeExportError is raised — this is the close path out of an
     export that can otherwise run for minutes.
+
+    import_nanite switches Nanite off on each Nanite mesh before exporting it,
+    so the FBX carries the real geometry instead of the low-poly fallback proxy
+    UE builds for it. See export_assets._disable_nanite.
     """
     if not output_dir:
         raise UeExportError("An output folder is required.")
@@ -191,6 +196,7 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
     env = dict(os.environ)
     env["H5T_UE_CONTENT_PATH"] = content_path
     env["H5T_UE_OUTPUT_DIR"] = output_dir
+    env["H5T_UE_NANITE"] = "1" if import_nanite else "0"
     if assets:
         env["H5T_UE_ASSET_LIST"] = ";".join(str(a) for a in assets)
     else:

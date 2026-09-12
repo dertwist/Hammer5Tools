@@ -57,13 +57,6 @@ UNSUPPORTED = [
         [r"^MM_", r"^M_", r"MasterMaterial", r"Material_Functions", r"^MF_"],
     ),
     Unsupported(
-        "nanite",
-        "Nanite meshes",
-        "Nanite virtualized geometry has no Source 2 equivalent. Export a "
-        "regular LOD/triangulated mesh from Unreal before converting.",
-        [r"_Nanite", r"Nanite"],
-    ),
-    Unsupported(
         "niagara",
         "Niagara / Cascade particles",
         "Particle systems are an entirely different system in Source 2 (vpcf) "
