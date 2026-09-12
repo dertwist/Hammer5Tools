@@ -247,6 +247,16 @@ def _export_filename(object_path: str, output_dir: str, ext: str = ".fbx") -> st
     return os.path.join(output_dir, package.lstrip("/").replace("/", os.sep)) + ext
 
 
+def _asset_filename(object_path: str, ext: str) -> str:
+    """'/Game/Meshes/SM_Chair.SM_Chair' -> 'SM_Chair.fbx' — the file written.
+
+    Mirrors _export_filename's stem, without _asset_stem's lowercasing: this one
+    is read by a person looking for the asset in the Content Browser, and Unreal
+    asset names are case-sensitive there.
+    """
+    return os.path.basename(object_path).split(".", 1)[0] + ext
+
+
 def _nanite_settings(mesh):
     """A StaticMesh's MeshNaniteSettings when Nanite is on, else None."""
     try:
@@ -317,15 +327,15 @@ def _export_one(unreal, path, asset, output_dir, options=None, ext=".fbx") -> in
         return 0
 
 
-def _tally(unreal, path, written, counters, sizes):
+def _tally(unreal, path, name, written, counters, sizes):
     """Fold one export result into the running counters dict."""
-    if written:
-        counters["exported"] += 1
-        counters["bytes"] += written
-        sizes.append((written, _asset_stem(path)))
+    if not written:
+        counters["failed"] += 1
+        unreal.log_warning(f"Export failed for {path}")
         return
-    counters["failed"] += 1
-    unreal.log_warning(f"Export failed for {path}")
+    counters["exported"] += 1
+    counters["bytes"] += written
+    sizes.append((written, name))
 
 
 # How often the running "Exported n/total - size" line is printed.
@@ -375,9 +385,11 @@ def _export_assets(unreal, export_paths, output_dir):
             unreal.log_warning(f"Failed to load asset {path} (skipped): {e}")
             asset = None
 
+        name, written = os.path.basename(path), 0
         if asset is None:
             counters["failed"] += 1
         elif isinstance(asset, unreal.StaticMesh):
+            name = _asset_filename(path, ".fbx")
             restore = None
             if _nanite_settings(asset) is not None:
                 counters["nanite"] += 1
@@ -391,21 +403,25 @@ def _export_assets(unreal, export_paths, output_dir):
             finally:
                 if restore is not None:
                     restore()
-            _tally(unreal, path, written, counters, sizes)
+            _tally(unreal, path, name, written, counters, sizes)
         elif isinstance(asset, unreal.Texture2D):
+            name = _asset_filename(path, ".tga")
             try:
                 written = _export_one(unreal, path, asset, output_dir, None, ".tga")
             except Exception as e:
                 unreal.log_warning(f"Error exporting texture {path}: {e}")
                 written = 0
-            _tally(unreal, path, written, counters, sizes)
+            _tally(unreal, path, name, written, counters, sizes)
         else:
             others.append(path)
 
         now = time.time()
         if index == total or now - last_report >= _PROGRESS_INTERVAL_SECONDS:
             last_report = now
-            _say(f"Exported {index}/{total}  ({_human_size(counters['bytes'])})")
+            # The asset is named because the interesting question during a long
+            # export is which one the size jumped on — a total alone cannot say.
+            _say(f"Exported {index}/{total}  {name}  {_human_size(written)}"
+                 f"  (total {_human_size(counters['bytes'])})")
 
     if others:
         try:
@@ -562,6 +578,13 @@ def demo():
         out, "Game", "Meshes", "SM_Chair.fbx")
     assert _export_filename("/Engine/BasicShapes/Cube.Cube", out) == os.path.join(
         out, "Engine", "BasicShapes", "Cube.fbx")
+
+    # Names reach the console with their real case and the extension actually
+    # written, so they can be pasted into the Content Browser.
+    assert _asset_filename("/Game/Meshes/SM_Chair.SM_Chair", ".fbx") == "SM_Chair.fbx"
+    assert _asset_filename("/Game/Fences/SM_Fence_Dune_NN_01i.SM_Fence_Dune_NN_01i",
+                           ".fbx") == "SM_Fence_Dune_NN_01i.fbx"
+    assert _asset_filename("/Game/Tex/T_Rock_D.T_Rock_D", ".tga") == "T_Rock_D.tga"
 
     assert _human_size(0) == "0 B"
     assert _human_size(1536) == "1.5 KB"
