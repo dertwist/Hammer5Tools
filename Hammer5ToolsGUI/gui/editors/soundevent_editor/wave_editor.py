@@ -452,6 +452,9 @@ class AudioDocument(QWidget):
         self.plot.setBackground(theme.get_theme().background)
         self.curve.setPen(pg.mkPen(theme.color("#4ba0f0"), width=1))
         self.region.setBrush(_alpha("#4ba0f0", 40))
+        # setBrush leaves the hover brush alone, so pyqtgraph's opaque
+        # default blue would show whenever the cursor is over the region.
+        self.region.setHoverBrush(_alpha("#4ba0f0", 70))
         self.playhead.setPen(pg.mkPen(theme.color("#ff5050"), width=2))
         for marker in self._markers:
             self._style_marker(marker)
