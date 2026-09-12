@@ -139,14 +139,17 @@ def _list_assets(unreal, content_path: str):
     /Game and the handful of engine folders the editor always scans (BasicShapes
     is one, MapTemplates is not), so listing /Engine/MapTemplates without asking
     for it first returns zero assets and the map's template floor silently never
-    exports. scan_paths_synchronous is a no-op for a path already scanned.
+    exports. It is asked for with force_rescan=False so that it really is the
+    no-op this comment always claimed for an already-scanned path — forcing it
+    made every run re-walk the whole of /Game from disk before exporting a
+    single asset.
     """
     if not hasattr(unreal, "AssetRegistryHelpers"):
         raise RuntimeError("AssetRegistryHelpers is not available in Unreal Python.")
 
     registry = unreal.AssetRegistryHelpers.get_asset_registry()
     try:
-        registry.scan_paths_synchronous([content_path], force_rescan=True)
+        registry.scan_paths_synchronous([content_path], force_rescan=False)
     except Exception as e:
         unreal.log_warning(f"Error scanning path {content_path}: {e}")
 
@@ -158,13 +161,19 @@ def _list_assets(unreal, content_path: str):
 
     for data in assets_data:
         try:
+            cls_name = _get_asset_class_name(data)
+            # Class first: _is_valid_asset stats the package on disk, and a
+            # project is overwhelmingly made of things we never export
+            # (materials, blueprints, curves, data assets). Checking those was
+            # three syscalls each for an answer nobody used.
+            if cls_name not in _EXPORTABLE_CLASSES:
+                continue
             if not _is_valid_asset(unreal, data):
                 obj_path = _get_asset_object_path(data)
                 unreal.log_warning(f"Skipping corrupt or empty asset file: {obj_path or data}")
                 continue
             obj_path = _get_asset_object_path(data)
-            cls_name = _get_asset_class_name(data)
-            if obj_path and cls_name:
+            if obj_path:
                 yield (obj_path, cls_name)
         except Exception as e:
             unreal.log_warning(f"Skipping asset entry due to error: {e}")
