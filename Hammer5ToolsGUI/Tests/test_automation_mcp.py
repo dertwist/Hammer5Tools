@@ -1,6 +1,7 @@
 import io
 import json
 
+import automation.main as automation_main
 from automation.mcp.server import McpServer, run_stdio
 from automation.tools import TOOLS, capabilities, invoke_tool
 from core.bridge import CoreStatus
@@ -107,3 +108,49 @@ def test_tools_have_accurate_read_write_annotations():
     assert tools["hammer5tools.vmat_write"]["annotations"]["readOnlyHint"] is False
     assert tools["hammer5tools.vsmart_write"]["annotations"]["readOnlyHint"] is False
     assert tools["hammer5tools.vsnap_write"]["annotations"]["readOnlyHint"] is False
+
+
+def test_non_ascii_response_survives_a_legacy_codepage_stream():
+    # A frozen Windows build gets an ANSI codepage on stdout, so a response
+    # carrying non-ASCII asset text would raise UnicodeEncodeError and kill the
+    # process. Losing the process makes a client treat the server as dead.
+    buffer = io.BytesIO()
+    target = io.TextIOWrapper(buffer, encoding="cp1252", newline="")
+    source = io.StringIO(
+        '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":'
+        '{"name":"hammer5tools.vmap_references","arguments":{"path":"C:/addon/maps/\u0442\u0435\u0441\u0442.vmap"}}}\n'
+        '{"jsonrpc":"2.0","id":2,"method":"ping"}\n'
+    )
+
+    assert run_stdio(source, target, server=McpServer(_Bridge())) == 0
+
+    target.flush()
+    lines = buffer.getvalue().decode("cp1252").splitlines()
+    assert json.loads(lines[1]) == {"jsonrpc": "2.0", "id": 2, "result": {}}
+
+
+def test_unserializable_result_does_not_end_the_session():
+    class _Unserializable(_Bridge):
+        def read_valve_map_asset_references(self, path):
+            return (object(),)
+
+    source = io.StringIO(
+        '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":'
+        '{"name":"hammer5tools.vmap_references","arguments":{"path":"C:/addon/maps/example.vmap"}}}\n'
+        '{"jsonrpc":"2.0","id":2,"method":"ping"}\n'
+    )
+    target = io.StringIO()
+
+    assert run_stdio(source, target, server=McpServer(_Unserializable())) == 0
+    lines = target.getvalue().splitlines()
+    assert "error" in json.loads(lines[0])
+    assert json.loads(lines[1]) == {"jsonrpc": "2.0", "id": 2, "result": {}}
+
+
+def test_force_utf8_streams_reconfigures_a_legacy_stream(monkeypatch):
+    stream = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="")
+    monkeypatch.setattr(automation_main.sys, "stdout", stream)
+
+    automation_main._force_utf8_streams()
+
+    assert stream.encoding.lower().replace("-", "") == "utf8"

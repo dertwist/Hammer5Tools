@@ -106,9 +106,26 @@ def run_stdio(
             response = _error(None, -32700, f"Parse error: {error}")
         if response is None:
             continue
-        target.write(json.dumps(response, ensure_ascii=False, separators=(",", ":")) + "\n")
-        target.flush()
+        _write_response(target, response)
     return 0
+
+
+def _write_response(target: TextIO, response: Mapping[str, Any]) -> None:
+    """Write one response, degrading rather than ending the session.
+
+    A single unserializable result or an encoding failure must not break the
+    loop, because a client that loses the connection marks the server dead for
+    the rest of its session.
+    """
+    try:
+        payload = json.dumps(response, ensure_ascii=False, separators=(",", ":"))
+    except (TypeError, ValueError) as error:
+        payload = json.dumps(_error(response.get("id"), -32603, f"Result is not serializable: {error}"))
+    try:
+        target.write(payload + "\n")
+    except UnicodeEncodeError:
+        target.write(payload.encode("ascii", "backslashreplace").decode("ascii") + "\n")
+    target.flush()
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
