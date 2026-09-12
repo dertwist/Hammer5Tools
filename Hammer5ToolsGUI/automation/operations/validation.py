@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
+from automation.formats.shaping import paginate
 from core.bridge import CoreBridge
 from gui.settings.common import get_addon_dir, get_addon_name, get_cs2_path
 
@@ -13,6 +13,8 @@ def validate_addon(
     addon_name: str | None = None,
     cs2_dir: str | None = None,
     bridge: CoreBridge | None = None,
+    limit: int = 50,
+    offset: int = 0,
 ) -> dict[str, Any]:
     """Validate an addon's asset integrity using the Core validator."""
     active_bridge = bridge or CoreBridge.instance()
@@ -33,20 +35,25 @@ def validate_addon(
 
     issues = [line for line in logs if "error" in line.lower() or "missing" in line.lower() or "warning" in line.lower()]
 
-    return {
+    # The full log of a large addon runs to thousands of lines; the issues are
+    # the part worth reading, and even those are paged.
+    result = {
         "addon": active_addon,
         "cs2_dir": active_cs2.replace("\\", "/"),
         "status_code": status_code,
         "clean": (status_code == 0),
         "issues_count": len(issues),
-        "issues": issues,
-        "logs": logs,
+        "log_line_count": len(logs),
     }
+    result.update(paginate(issues, "issues", limit=limit, offset=offset))
+    return result
 
 
 def find_unused_assets(
     map_path: str,
     addon_dir: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
 ) -> dict[str, Any]:
     """Identify unused (orphan) assets in an addon by comparing disk files against map dependencies."""
     from gui.forms.cleanup.parse import get_vmap_references
@@ -61,10 +68,11 @@ def find_unused_assets(
     total_bytes = sum(size for _, size in unused_items)
     files = [{"path": p.replace("\\", "/"), "size_bytes": size} for p, size in unused_items]
 
-    return {
+    result = {
         "map_path": map_path.replace("\\", "/"),
         "addon_dir": active_addon_dir.replace("\\", "/"),
         "unused_count": len(files),
         "total_size_bytes": total_bytes,
-        "unused_files": files,
     }
+    result.update(paginate(files, "unused_files", limit=limit, offset=offset))
+    return result

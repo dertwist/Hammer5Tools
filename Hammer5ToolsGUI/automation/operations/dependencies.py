@@ -7,8 +7,20 @@ from typing import Any
 
 from automation.formats.vmat_io import read_vmat
 from automation.formats.vmdl_io import read_vmdl
-from automation.formats.vsmart_io import read_vsmart
+from automation.formats.vsmart_io import read_vsmart_full
 from automation.formats.vtex_io import read_vtex
+from automation.formats.shaping import paginate
+
+# A reference is recognised by its extension. Treating "any string containing a
+# slash" as a path turns SmartProp division expressions such as
+# "(sizer_x+32)/32" into asset dependencies.
+_REFERENCE_SUFFIXES = (
+    ".vmat", ".vmt",
+    ".png", ".tga", ".jpg", ".jpeg", ".vtex", ".hdr", ".exr", ".psd",
+    ".vmdl", ".vmdl_prefab", ".fbx", ".dmx", ".obj",
+    ".vsndevts", ".vsnd", ".wav", ".mp3", ".ogg",
+    ".vpcf", ".vsmart", ".vanim", ".vphys",
+)
 from core.bridge import CoreBridge
 from gui.settings.common import get_addon_dir
 
@@ -17,6 +29,9 @@ def resolve_dependencies(
     path: str,
     addon_dir: str | None = None,
     visited: set[str] | None = None,
+    limit: int | None = 200,
+    offset: int = 0,
+    include_all: bool = False,
 ) -> dict[str, Any]:
     """Recursively resolve all external asset dependencies for any Source 2 file."""
     if not os.path.isfile(path):
@@ -36,6 +51,7 @@ def resolve_dependencies(
             "soundevents": [],
             "particles": [],
             "smartprops": [],
+            "other": [],
             "all_references": [],
         }
     visited.add(norm_path)
@@ -49,8 +65,10 @@ def resolve_dependencies(
         try:
             mat_data = read_vmat(path)
             for slot_path in mat_data.get("slots", {}).values():
-                if slot_path:
-                    direct_refs.add(slot_path.replace("\\", "/"))
+                # A slot key containing "Texture" can hold a scalar or a vector
+                # (g_vTextureScale), so the value still has to look like a file.
+                if slot_path and slot_path.strip().lower().endswith(_REFERENCE_SUFFIXES):
+                    direct_refs.add(slot_path.strip().replace("\\", "/"))
         except Exception:
             pass
     elif ext in (".vmdl", ".vmdl_prefab"):
@@ -77,13 +95,13 @@ def resolve_dependencies(
             pass
     elif ext == ".vsmart":
         try:
-            smart_data = read_vsmart(path)
+            smart_data = read_vsmart_full(path)
 
             def walk_smart(node: Any):
                 if isinstance(node, dict):
                     for k, v in node.items():
-                        if isinstance(v, str) and (v.endswith((".vmdl", ".vmat", ".vsmart", ".vpcf")) or "/" in v):
-                            direct_refs.add(v.replace("\\", "/"))
+                        if isinstance(v, str) and v.strip().lower().endswith(_REFERENCE_SUFFIXES):
+                            direct_refs.add(v.strip().replace("\\", "/"))
                         elif isinstance(v, (dict, list)):
                             walk_smart(v)
                 elif isinstance(node, list):
@@ -105,7 +123,9 @@ def resolve_dependencies(
     for ref in direct_refs:
         child_path = os.path.join(active_addon, ref) if not os.path.isabs(ref) else ref
         if os.path.isfile(child_path):
-            child_res = resolve_dependencies(child_path, addon_dir=active_addon, visited=visited)
+            child_res = resolve_dependencies(
+                child_path, addon_dir=active_addon, visited=visited, limit=None, include_all=True
+            )
             all_refs.update(child_res["all_references"])
 
     materials = sorted(r for r in all_refs if r.endswith((".vmat", ".vmt")))
@@ -115,7 +135,7 @@ def resolve_dependencies(
     particles = sorted(r for r in all_refs if r.endswith(".vpcf"))
     smartprops = sorted(r for r in all_refs if r.endswith(".vsmart"))
 
-    return {
+    result = {
         "path": path.replace("\\", "/"),
         "total_references": len(all_refs),
         "materials": materials,
@@ -124,5 +144,13 @@ def resolve_dependencies(
         "soundevents": soundevents,
         "particles": particles,
         "smartprops": smartprops,
-        "all_references": sorted(all_refs),
     }
+    # The category lists above already name every reference by kind, so the flat
+    # list is pure duplication and is returned only when asked for. Anything a
+    # category did not claim is always reported, since that is the part the
+    # categories do not tell you.
+    categorised = set(materials) | set(textures) | set(models) | set(soundevents) | set(particles) | set(smartprops)
+    result["other"] = sorted(all_refs - categorised)
+    if include_all:
+        result.update(paginate(sorted(all_refs), "all_references", limit=limit, offset=offset))
+    return result
