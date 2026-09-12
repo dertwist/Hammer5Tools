@@ -6,13 +6,15 @@ import os
 import re
 from typing import Any
 
+from automation.formats.shaping import shape_response
+
 from keyvalues3 import KV3TextReader
 from gui.common import JsonToKv3
 
 _MODELDOC41_FORMAT = "format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0}"
 
 
-def read_vmdl(path: str) -> dict[str, Any]:
+def read_vmdl_full(path: str) -> dict[str, Any]:
     """Parse a loose .vmdl file and return its structured ModelDoc metadata."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"VMDL file not found: '{path}'")
@@ -78,6 +80,21 @@ def read_vmdl(path: str) -> dict[str, Any]:
         "lod_groups": lod_groups,
         "raw": root,
     }
+
+
+def read_vmdl(
+    path: str,
+    detail: str = "summary",
+    select: str | None = None,
+) -> dict[str, Any]:
+    """Read a .vmdl model file.
+
+    The extracted view is already compact, so `summary` and `full` are the same
+    here; `select` addresses one node of the parsed document.
+    """
+    full = read_vmdl_full(path)
+    payload = {key: value for key, value in full.items() if key != "raw"}
+    return shape_response(payload, payload, full.get("raw"), detail=detail, select=select)
 
 
 def write_vmdl(
@@ -169,7 +186,7 @@ def edit_vmdl(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Edit an existing .vmdl file in-place, updating remaps, scale, or mesh paths."""
-    read_result = read_vmdl(path)
+    read_result = read_vmdl_full(path)
     root = read_result["raw"]
     root_node = root.get("rootNode", {})
     children = root_node.get("children", [])

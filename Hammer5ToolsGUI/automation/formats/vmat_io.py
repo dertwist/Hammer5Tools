@@ -6,11 +6,13 @@ import os
 import re
 from typing import Any
 
+from automation.formats.shaping import shape_response
+
 import vdf
 from gui.common import app_version
 
 
-def read_vmat(path: str) -> dict[str, Any]:
+def read_vmat_full(path: str) -> dict[str, Any]:
     """Parse a loose .vmat file and extract shader, texture slots, parameters, and flags."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"VMAT file not found: '{path}'")
@@ -64,6 +66,21 @@ def read_vmat(path: str) -> dict[str, Any]:
         "attributes": attributes,
         "raw": layer0,
     }
+
+
+def read_vmat(
+    path: str,
+    detail: str = "summary",
+    select: str | None = None,
+) -> dict[str, Any]:
+    """Read a .vmat material file.
+
+    The extracted view is already compact, so `summary` and `full` are the same
+    here; `select` addresses one node of the parsed document.
+    """
+    full = read_vmat_full(path)
+    payload = {key: value for key, value in full.items() if key != "raw"}
+    return shape_response(payload, payload, full.get("raw"), detail=detail, select=select)
 
 
 def write_vmat(
@@ -157,7 +174,7 @@ def edit_vmat(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Edit an existing .vmat file in-place, updating texture slots, parameters, or flags."""
-    parsed = read_vmat(path)
+    parsed = read_vmat_full(path)
     layer0: dict[str, Any] = dict(parsed["raw"])
 
     modified_keys: list[str] = []

@@ -5,11 +5,13 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from automation.formats.shaping import shape_response
+
 from keyvalues3 import KV3TextReader
 from gui.common import JsonToKv3
 
 
-def read_vdata(path: str) -> dict[str, Any]:
+def read_vdata_full(path: str) -> dict[str, Any]:
     """Parse a loose .vdata file and extract its named data structures."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"VDATA file not found: '{path}'")
@@ -37,6 +39,27 @@ def read_vdata(path: str) -> dict[str, Any]:
         "entry_count": len(entries),
         "entries": entries,
         "raw": root,
+    }
+
+
+def read_vdata(
+    path: str,
+    detail: str = "summary",
+    select: str | None = None,
+) -> dict[str, Any]:
+    """Read a .vdata gamedata file; the summary lists entry names without their bodies."""
+    full = read_vdata_full(path)
+    payload = {key: value for key, value in full.items() if key != "raw"}
+    return shape_response(payload, _summarize_vdata(payload), full.get("raw"), detail=detail, select=select)
+
+
+def _summarize_vdata(payload: dict[str, Any]) -> dict[str, Any]:
+    entries = payload.get("entries") or {}
+    return {
+        "path": payload.get("path"),
+        "generic_data_type": payload.get("generic_data_type"),
+        "entry_count": len(entries),
+        "entry_names": sorted(entries),
     }
 
 
@@ -76,7 +99,7 @@ def edit_vdata(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Edit an existing .vdata file in-place, adding, updating, or removing entries."""
-    current = read_vdata(path)
+    current = read_vdata_full(path)
     root: dict[str, Any] = dict(current["raw"])
 
     modified_keys: list[str] = []

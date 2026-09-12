@@ -114,14 +114,14 @@ def test_vsmart_write_read_edit_and_evaluate(tmp_path):
     assert os.path.exists(vsmart_path)
 
     # 2. Read
-    data = read_vsmart(vsmart_path)
+    data = read_vsmart(vsmart_path, detail="full")
     assert data["root_class"] == "CSmartPropElement_Group"
     assert len(data["variables"]) == 1
     assert data["variables"][0]["m_VariableName"] == "Length"
 
     # 3. Edit
     edit_vsmart(vsmart_path, {"set_variable": {"name": "Height", "value": 50.0}})
-    updated = read_vsmart(vsmart_path)
+    updated = read_vsmart(vsmart_path, detail="full")
     var_names = [v.get("m_VariableName") for v in updated["variables"]]
     assert "Height" in var_names
 
@@ -132,7 +132,7 @@ def test_vsmart_write_read_edit_and_evaluate(tmp_path):
         widgets=(),
         diagnostics=(),
     )
-    eval_result = evaluate_vsmart(mock_bridge, vsmart_path)
+    eval_result = evaluate_vsmart(mock_bridge, vsmart_path, {"include_models": True})
     assert eval_result["model_count"] == 1
     assert eval_result["models"][0]["model_name"] == "models/props/test.vmdl"
 
@@ -145,13 +145,13 @@ def test_vdata_write_read_edit_roundtrip(tmp_path):
     assert os.path.exists(vdata_path)
 
     # 2. Read
-    data = read_vdata(vdata_path)
+    data = read_vdata(vdata_path, detail="full")
     assert "grass_group" in data["entries"]
     assert data["entries"]["grass_group"]["m_flDensity"] == 0.5
 
     # 3. Edit
     edit_vdata(vdata_path, {"fern_group": {"m_flDensity": 0.2}}, remove_keys=["grass_group"])
-    updated = read_vdata(vdata_path)
+    updated = read_vdata(vdata_path, detail="full")
     assert "grass_group" not in updated["entries"]
     assert "fern_group" in updated["entries"]
 

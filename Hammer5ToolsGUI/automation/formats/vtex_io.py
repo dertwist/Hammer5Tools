@@ -6,11 +6,13 @@ import os
 import re
 from typing import Any
 
+from automation.formats.shaping import shape_response
+
 from keyvalues3 import KV3TextReader
 from gui.common import JsonToKv3
 
 
-def read_vtex(path: str) -> dict[str, Any]:
+def read_vtex_full(path: str) -> dict[str, Any]:
     """Parse a loose .vtex file (KV3 or DMX format) and return its texture compile configuration."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"VTEX file not found: '{path}'")
@@ -65,6 +67,21 @@ def read_vtex(path: str) -> dict[str, Any]:
     }
 
 
+def read_vtex(
+    path: str,
+    detail: str = "summary",
+    select: str | None = None,
+) -> dict[str, Any]:
+    """Read a .vtex texture compile file.
+
+    The extracted view is already compact, so `summary` and `full` are the same
+    here; `select` addresses one node of the parsed document.
+    """
+    full = read_vtex_full(path)
+    payload = {key: value for key, value in full.items() if key != "raw"}
+    return shape_response(payload, payload, full.get("raw"), detail=detail, select=select)
+
+
 def write_vtex(
     path: str,
     input_file: str,
@@ -114,7 +131,7 @@ def edit_vtex(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Edit an existing .vtex file, updating input texture references or compile format."""
-    current = read_vtex(path)
+    current = read_vtex_full(path)
     raw = current["raw"]
 
     input_file = updates.get("input_file")
