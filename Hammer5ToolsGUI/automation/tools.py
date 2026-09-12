@@ -9,15 +9,21 @@ from typing import Any
 from core.bridge import CoreBridge
 from core.version import APP_VERSION
 
+from automation.guides.loader import TOPICS, guide
+from automation.formats.fgd_io import entity_info
+from automation.formats.vmap_io import read_vmap, read_vmap_scene
 from automation.formats.vmdl_io import edit_vmdl, read_vmdl, write_vmdl
 from automation.formats.vmat_io import edit_vmat, read_vmat, write_vmat
 from automation.formats.vtex_io import edit_vtex, read_vtex, write_vtex
 from automation.formats.vsmart_io import edit_vsmart, evaluate_vsmart, read_vsmart, write_vsmart
+from automation.formats.vsmart_lint import lint_vsmart
+from automation.formats.vsmart_patch import patch_vsmart
 from automation.formats.vdata_io import edit_vdata, read_vdata, write_vdata
 from automation.formats.vsnap_io import edit_vsnap, generate_vsnap, read_vsnap, write_vsnap
 from automation.operations.compiler import compile_asset
 from automation.operations.dependencies import resolve_dependencies
 from automation.operations.validation import find_unused_assets, validate_addon
+from automation.operations.vmap_blockout import DEFAULT_BOX_MODEL, write_blockout
 from automation.operations.vmap_ops import vmap_rewrite_references
 from automation.operations.vpk_ops import vpk_extract, vpk_search
 
@@ -42,14 +48,25 @@ class AutomationTool:
             "name": self.name,
             "description": self.description,
             "inputSchema": self.input_schema,
-            "annotations": {
-                "title": self.name.replace("hammer5tools.", "Hammer5Tools ").replace("_", " ").title(),
-                "readOnlyHint": self.read_only,
-                "destructiveHint": self.destructive,
-                "idempotentHint": self.idempotent,
-                "openWorldHint": False,
-            },
+            "annotations": self._annotations(),
         }
+
+
+    def _annotations(self) -> JsonObject:
+        """MCP annotations, omitting the hints that carry no meaning.
+
+        destructiveHint and idempotentHint are defined only when readOnlyHint is
+        false, so a read-only tool that emits them pays for nothing.
+        """
+        annotations: JsonObject = {
+            "title": self.name.replace("hammer5tools.", "Hammer5Tools ").replace("_", " ").title(),
+            "readOnlyHint": self.read_only,
+            "openWorldHint": False,
+        }
+        if not self.read_only:
+            annotations["destructiveHint"] = self.destructive
+            annotations["idempotentHint"] = self.idempotent
+        return annotations
 
 
 def _object_schema(properties: JsonObject, required: tuple[str, ...] = ()) -> JsonObject:
@@ -113,6 +130,11 @@ def _optional_list(arguments: Mapping[str, Any], name: str) -> list[Any] | None:
 
 
 # Existing tools handlers
+
+def _guide(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return guide(_optional_string(arguments, "topic"))
+
+
 def _core_status(bridge: CoreBridge, _arguments: Mapping[str, Any]) -> JsonObject:
     return asdict(bridge.probe())
 
@@ -120,6 +142,40 @@ def _core_status(bridge: CoreBridge, _arguments: Mapping[str, Any]) -> JsonObjec
 def _vmap_references(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     path = _required_string(arguments, "path")
     return {"path": path, "references": list(bridge.read_valve_map_asset_references(path))}
+
+
+def _entity_info(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return entity_info(
+        classname=_optional_string(arguments, "classname"),
+        search=_optional_string(arguments, "search"),
+        include_properties=_optional_bool(arguments, "include_properties", True),
+        cs2_path=_optional_string(arguments, "cs2_path"),
+        limit=_optional_int(arguments, "limit", 40),
+    )
+
+
+def _vmap_read(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return read_vmap(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        classname=_optional_string(arguments, "classname"),
+        select=_optional_string(arguments, "select"),
+        structures=_optional_string(arguments, "structures"),
+        limit=_optional_int(arguments, "limit", 50),
+        offset=_optional_int(arguments, "offset", 0),
+        bridge=bridge,
+    )
+
+
+def _vmap_scene(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return read_vmap_scene(
+        _required_string(arguments, "path"),
+        include=_optional_string(arguments, "include") or "summary",
+        resource=_optional_string(arguments, "resource"),
+        limit=_optional_int(arguments, "limit", 50),
+        offset=_optional_int(arguments, "offset", 0),
+        bridge=bridge,
+    )
 
 
 def _unreal_info(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -148,7 +204,11 @@ def _unreal_references(bridge: CoreBridge, arguments: Mapping[str, Any]) -> Json
 
 # VMDL handlers
 def _vmdl_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
-    return read_vmdl(_required_string(arguments, "path"))
+    return read_vmdl(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        select=_optional_string(arguments, "select"),
+    )
 
 
 def _vmdl_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -172,7 +232,11 @@ def _vmdl_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
 
 # VMAT handlers
 def _vmat_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
-    return read_vmat(_required_string(arguments, "path"))
+    return read_vmat(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        select=_optional_string(arguments, "select"),
+    )
 
 
 def _vmat_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -202,7 +266,11 @@ def _vmat_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
 
 # VTEX handlers
 def _vtex_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
-    return read_vtex(_required_string(arguments, "path"))
+    return read_vtex(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        select=_optional_string(arguments, "select"),
+    )
 
 
 def _vtex_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -226,7 +294,11 @@ def _vtex_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
 
 # VSMART handlers
 def _vsmart_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
-    return read_vsmart(_required_string(arguments, "path"))
+    return read_vsmart(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        select=_optional_string(arguments, "select"),
+    )
 
 
 def _vsmart_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -257,9 +329,27 @@ def _vsmart_evaluate(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonOb
     )
 
 
+def _vsmart_patch(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return patch_vsmart(
+        path=_required_string(arguments, "path"),
+        operations=_optional_list(arguments, "operations") or [],
+        dry_run=_optional_bool(arguments, "dry_run", False),
+        reindex=_optional_bool(arguments, "reindex", True),
+    )
+
+
+def _vsmart_lint(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return lint_vsmart(_required_string(arguments, "path"))
+
+
+
 # VDATA handlers
 def _vdata_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
-    return read_vdata(_required_string(arguments, "path"))
+    return read_vdata(
+        _required_string(arguments, "path"),
+        detail=_optional_string(arguments, "detail") or "summary",
+        select=_optional_string(arguments, "select"),
+    )
 
 
 def _vdata_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -332,6 +422,8 @@ def _validate_addon(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObj
         addon_name=_optional_string(arguments, "addon_name"),
         cs2_dir=_optional_string(arguments, "cs2_dir"),
         bridge=bridge,
+        limit=_optional_int(arguments, "limit", 50),
+        offset=_optional_int(arguments, "offset", 0),
     )
 
 
@@ -339,6 +431,8 @@ def _find_unused_assets(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> Js
     return find_unused_assets(
         map_path=_required_string(arguments, "map_path"),
         addon_dir=_optional_string(arguments, "addon_dir"),
+        limit=_optional_int(arguments, "limit", 100),
+        offset=_optional_int(arguments, "offset", 0),
     )
 
 
@@ -346,6 +440,19 @@ def _resolve_dependencies(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> 
     return resolve_dependencies(
         path=_required_string(arguments, "path"),
         addon_dir=_optional_string(arguments, "addon_dir"),
+        limit=_optional_int(arguments, "limit", 200),
+        offset=_optional_int(arguments, "offset", 0),
+        include_all=_optional_bool(arguments, "include_all", False),
+    )
+
+
+def _vmap_write_blockout(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    return write_blockout(
+        path=_required_string(arguments, "path"),
+        boxes=_optional_list(arguments, "boxes") or [],
+        skeleton=_optional_string(arguments, "skeleton"),
+        cs2_path=_optional_string(arguments, "cs2_path"),
+        dry_run=_optional_bool(arguments, "dry_run", False),
     )
 
 
@@ -382,6 +489,14 @@ def _vpk_extract(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject
 
 TOOLS: tuple[AutomationTool, ...] = (
     AutomationTool(
+        "hammer5tools.guide",
+        "Read a Source 2 authoring topic before doing the work: " + ", ".join(TOPICS) +
+        ". Call with no topic for one-line summaries of each.",
+        _object_schema({"topic": {"type": "string", "enum": sorted(TOPICS), "description": "Topic name; omit to list."}}),
+        _guide,
+        read_only=True,
+    ),
+    AutomationTool(
         "hammer5tools.core_status",
         "Check whether the versioned Hammer5Tools NativeAOT Core can be loaded.",
         _object_schema({}),
@@ -396,6 +511,62 @@ TOOLS: tuple[AutomationTool, ...] = (
             ("path",),
         ),
         _vmap_references,
+        read_only=True,
+    ),
+    AutomationTool(
+        "hammer5tools.entity_info",
+        "Describe a map entity class from the game's own FGD definitions: what it is for, and "
+        "every keyvalue with its type and help text, including inherited ones. Pass search to "
+        "find classes by name or description. Covers every entity the installed build defines.",
+        _object_schema(
+            {
+                "classname": {"type": "string", "description": "Entity class, e.g. prop_static or light_omni2."},
+                "search": {"type": "string", "description": "Find classes matching a name or description substring."},
+                "include_properties": {"type": "boolean", "description": "Include keyvalues (default true)."},
+                "cs2_path": {"type": "string"},
+                "limit": {"type": "integer", "description": "Maximum search results (default 40)."},
+            },
+        ),
+        _entity_info,
+        read_only=True,
+    ),
+    AutomationTool(
+        "hammer5tools.vmap_read",
+        "Read an uncompiled .vmap: entity counts by class, node counts by class, and asset "
+        "references. classname lists one class of entity with its properties; structures reaches "
+        "what is not an entity - overlays (decals), paths, instances (prefabs), connections "
+        "(entity I/O) and groups. The node tree is never returned whole.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the uncompiled .vmap file."},
+                "classname": {"type": "string", "description": "List only entities of this class, e.g. prop_static."},
+                "structures": {"type": "string", "enum": ["overlays", "paths", "instances", "connections", "groups"]},
+                "detail": {"type": "string", "enum": ["summary", "full"]},
+                "select": {"type": "string"},
+                "limit": {"type": "integer", "description": "Maximum entities to return (default 50)."},
+                "offset": {"type": "integer"},
+            },
+            ("path",),
+        ),
+        _vmap_read,
+        read_only=True,
+    ),
+    AutomationTool(
+        "hammer5tools.vmap_scene",
+        "Read a .vmap's drawable projection: brush meshes, model placements, and SmartProp "
+        "placements with the per-instance variable overrides the map applied. include selects "
+        "props, smartprops, meshes, or summary for counts and world bounds.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the uncompiled .vmap file."},
+                "include": {"type": "string", "enum": ["summary", "props", "smartprops", "meshes"]},
+                "resource": {"type": "string", "description": "Only placements of this model or .vsmart."},
+                "limit": {"type": "integer", "description": "Maximum placements to return (default 50)."},
+                "offset": {"type": "integer"},
+            },
+            ("path",),
+        ),
+        _vmap_scene,
         read_only=True,
     ),
     AutomationTool(
@@ -438,7 +609,14 @@ TOOLS: tuple[AutomationTool, ...] = (
     AutomationTool(
         "hammer5tools.vmdl_read",
         "Read and parse a Source 2 .vmdl file, returning meshes, materials, LODs, and collision hulls.",
-        _object_schema({"path": {"type": "string", "description": "Path to the .vmdl file."}}, ("path",)),
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vmdl file."},
+                "detail": {"type": "string", "enum": ["names", "summary", "full"]},
+                "select": {"type": "string"},
+            },
+            ("path",),
+        ),
         _vmdl_read,
         read_only=True,
     ),
@@ -452,7 +630,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "material_remaps": {"type": "array", "description": "List of material remap objects."},
                 "import_scale": {"type": "number", "description": "Import scale factor (default 1.0)."},
                 "physics": {"type": "boolean", "description": "Generate default physics hull."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "mesh_rel_path"),
         ),
@@ -467,7 +645,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Path to the .vmdl file."},
                 "updates": {"type": "object", "description": "Dictionary of fields to update."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "updates"),
         ),
@@ -479,7 +657,14 @@ TOOLS: tuple[AutomationTool, ...] = (
     AutomationTool(
         "hammer5tools.vmat_read",
         "Read and parse a Source 2 .vmat file, extracting shader, texture slots, parameters, and flags.",
-        _object_schema({"path": {"type": "string", "description": "Path to the .vmat file."}}, ("path",)),
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vmat file."},
+                "detail": {"type": "string", "enum": ["names", "summary", "full"]},
+                "select": {"type": "string"},
+            },
+            ("path",),
+        ),
         _vmat_read,
         read_only=True,
     ),
@@ -495,7 +680,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "flags": {"type": "object", "description": "Feature flags (F_*)."},
                 "system_attributes": {"type": "object", "description": "System attributes."},
                 "attributes": {"type": "object", "description": "Tool attributes."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path",),
         ),
@@ -514,7 +699,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "set_flags": {"type": "object", "description": "Feature flags to set/update."},
                 "remove_keys": {"type": "array", "description": "Keys to remove."},
                 "shader": {"type": "string", "description": "New shader name."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path",),
         ),
@@ -526,7 +711,14 @@ TOOLS: tuple[AutomationTool, ...] = (
     AutomationTool(
         "hammer5tools.vtex_read",
         "Read a Source 2 .vtex compile configuration, extracting input textures and output format.",
-        _object_schema({"path": {"type": "string", "description": "Path to the .vtex file."}}, ("path",)),
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vtex file."},
+                "detail": {"type": "string", "enum": ["names", "summary", "full"]},
+                "select": {"type": "string"},
+            },
+            ("path",),
+        ),
         _vtex_read,
         read_only=True,
     ),
@@ -540,7 +732,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "output_format": {"type": "string", "description": "Compression format (BC7, DXT1, etc.)."},
                 "color_space": {"type": "string", "description": "Color space (srgb, linear)."},
                 "output_type": {"type": "string", "description": "Texture type (2D, Cube)."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "input_file"),
         ),
@@ -555,7 +747,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Path to the .vtex file."},
                 "updates": {"type": "object", "description": "Updates dict."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "updates"),
         ),
@@ -566,8 +758,15 @@ TOOLS: tuple[AutomationTool, ...] = (
     # VSMART
     AutomationTool(
         "hammer5tools.vsmart_read",
-        "Read and parse a Source 2 .vsmart file, extracting variables, choices, and element tree.",
-        _object_schema({"path": {"type": "string", "description": "Path to the .vsmart file."}}, ("path",)),
+        "Read a .vsmart SmartProp. Summary gives every exposed parameter plus an element outline, with CSmartProp class prefixes stripped; detail='full' returns every node and real class names; select addresses one node.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vsmart file."},
+                "detail": {"type": "string", "enum": ["names", "summary", "full"]},
+                "select": {"type": "string"},
+            },
+            ("path",),
+        ),
         _vsmart_read,
         read_only=True,
     ),
@@ -582,7 +781,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "choices": {"type": "array", "description": "SmartProp choices definitions."},
                 "children": {"type": "array", "description": "Child elements."},
                 "modifiers": {"type": "array", "description": "Root modifiers."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path",),
         ),
@@ -597,7 +796,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Path to the .vsmart file."},
                 "updates": {"type": "object", "description": "Updates dict."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "updates"),
         ),
@@ -611,18 +810,52 @@ TOOLS: tuple[AutomationTool, ...] = (
         _object_schema(
             {
                 "path": {"type": "string", "description": "Path to the .vsmart file."},
-                "options": {"type": "object", "description": "Evaluation options."},
+                "options": {"type": "object", "description": "maximum_depth, maximum_models, include_models (default false), offset, limit."},
             },
             ("path",),
         ),
         _vsmart_evaluate,
         read_only=True,
     ),
+    AutomationTool(
+        "hammer5tools.vsmart_patch",
+        "Apply addressed edits to a .vsmart without sending the whole document. Operations: "
+        "set (target, value), remove (target), add_variable (variable, optional after), "
+        "add_category (name, contains). Reindexes element IDs and lints on write.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vsmart file."},
+                "operations": {"type": "array", "description": "Ordered operations, each an object with 'op'."},
+                "dry_run": {"type": "boolean"},
+                "reindex": {"type": "boolean", "description": "Reassign unique element IDs (default true)."},
+            },
+            ("path", "operations"),
+        ),
+        _vsmart_patch,
+        read_only=False,
+        destructive=False,
+    ),
+    AutomationTool(
+        "hammer5tools.vsmart_lint",
+        "Check a .vsmart for the failure modes that make props vanish silently: NaN-producing "
+        "division, empty typed defaults, duplicate element IDs, LinearScale on end caps, "
+        "unpaired category markers, and expressions naming variables that do not exist.",
+        _object_schema({"path": {"type": "string", "description": "A .vsmart file, or a directory to audit recursively."}}, ("path",)),
+        _vsmart_lint,
+        read_only=True,
+    ),
     # VDATA
     AutomationTool(
         "hammer5tools.vdata_read",
-        "Read and parse a Source 2 .vdata file, extracting its named data types.",
-        _object_schema({"path": {"type": "string", "description": "Path to the .vdata file."}}, ("path",)),
+        "Read a .vdata gamedata file. Summary lists entry names; detail='full' returns every entry body; select='<entry name>' returns one.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Path to the .vdata file."},
+                "detail": {"type": "string", "enum": ["names", "summary", "full"]},
+                "select": {"type": "string"},
+            },
+            ("path",),
+        ),
         _vdata_read,
         read_only=True,
     ),
@@ -634,7 +867,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "path": {"type": "string", "description": "Destination .vdata path."},
                 "entries": {"type": "object", "description": "Named data entries."},
                 "generic_data_type": {"type": "string", "description": "Gamedata type name."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "entries"),
         ),
@@ -650,7 +883,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "path": {"type": "string", "description": "Path to the .vdata file."},
                 "updates": {"type": "object", "description": "Entries to add or update."},
                 "remove_keys": {"type": "array", "description": "Entry keys to remove."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "updates"),
         ),
@@ -673,7 +906,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Destination .vsnap path."},
                 "positions": {"type": "array", "description": "Array of [x, y, z] points."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path", "positions"),
         ),
@@ -690,7 +923,7 @@ TOOLS: tuple[AutomationTool, ...] = (
                 "primitive": {"type": "string", "description": "Shape (cube, sphere, cylinder)."},
                 "count": {"type": "integer", "description": "Number of points."},
                 "size": {"type": "number", "description": "Dimensions in units."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path",),
         ),
@@ -705,7 +938,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Path to the .vsnap file."},
                 "lighting": {"type": "object", "description": "Lighting parameters (first_index, second_index)."},
-                "dry_run": {"type": "boolean", "description": "Preview without writing to disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("path",),
         ),
@@ -720,7 +953,7 @@ TOOLS: tuple[AutomationTool, ...] = (
         _object_schema(
             {
                 "path": {"type": "string", "description": "Path to the uncompiled asset file."},
-                "cs2_path": {"type": "string", "description": "Optional CS2 root install path."},
+                "cs2_path": {"type": "string"},
                 "force": {"type": "boolean", "description": "Force recompilation."},
                 "timeout_seconds": {"type": "integer", "description": "Maximum compilation timeout in seconds."},
             },
@@ -737,6 +970,8 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "addon_name": {"type": "string", "description": "Optional addon name."},
                 "cs2_dir": {"type": "string", "description": "Optional CS2 directory."},
+                "limit": {"type": "integer", "description": "Maximum issues to return (default 50)."},
+                "offset": {"type": "integer"},
             },
         ),
         _validate_addon,
@@ -749,6 +984,8 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "map_path": {"type": "string", "description": "Path to the map (.vmap)."},
                 "addon_dir": {"type": "string", "description": "Optional addon content directory."},
+                "limit": {"type": "integer", "description": "Maximum unused files to return (default 100)."},
+                "offset": {"type": "integer"},
             },
             ("map_path",),
         ),
@@ -762,6 +999,9 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "path": {"type": "string", "description": "Path to the asset file."},
                 "addon_dir": {"type": "string", "description": "Optional addon content directory."},
+                "include_all": {"type": "boolean", "description": "Also return the flat list, which duplicates the per-kind lists."},
+                "limit": {"type": "integer", "description": "Maximum references to return (default 200)."},
+                "offset": {"type": "integer"},
             },
             ("path",),
         ),
@@ -775,7 +1015,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "vmap_path": {"type": "string", "description": "Path to the .vmap file."},
                 "replacements": {"type": "object", "description": "Dictionary of from_path: to_path pairs."},
-                "dry_run": {"type": "boolean", "description": "Preview matching replacements without modifying disk."},
+                "dry_run": {"type": "boolean"},
             },
             ("vmap_path", "replacements"),
         ),
@@ -784,13 +1024,32 @@ TOOLS: tuple[AutomationTool, ...] = (
         destructive=False,
     ),
     AutomationTool(
+        "hammer5tools.vmap_write_blockout",
+        "Write a .vmap of prop_static blockout boxes, built on an existing valid map. Each box "
+        "takes size (world units) and optional position, angles, model, skin. Use this instead of "
+        "authoring map geometry directly: synthesized CMapMesh crashes Hammer and the compiler.",
+        _object_schema(
+            {
+                "path": {"type": "string", "description": "Destination .vmap path."},
+                "boxes": {"type": "array", "description": "Boxes, each {size:[x,y,z], position?, angles?, model?, skin?}."},
+                "skeleton": {"type": "string", "description": "Existing .vmap to build on. Defaults to the addon template."},
+                "cs2_path": {"type": "string"},
+                "dry_run": {"type": "boolean"},
+            },
+            ("path", "boxes"),
+        ),
+        _vmap_write_blockout,
+        read_only=False,
+        destructive=True,
+    ),
+    AutomationTool(
         "hammer5tools.vpk_search",
         "Search for stock Valve assets inside the official CS2 game VPK archive.",
         _object_schema(
             {
                 "query": {"type": "string", "description": "Search query substring."},
                 "extension": {"type": "string", "description": "Optional extension filter."},
-                "game_dir": {"type": "string", "description": "Optional CS2 root install path."},
+                "game_dir": {"type": "string"},
                 "limit": {"type": "integer", "description": "Maximum number of results."},
             },
             ("query",),
@@ -805,7 +1064,7 @@ TOOLS: tuple[AutomationTool, ...] = (
             {
                 "internal_path": {"type": "string", "description": "Internal asset path inside the VPK."},
                 "output_path": {"type": "string", "description": "Destination file path on disk."},
-                "game_dir": {"type": "string", "description": "Optional CS2 root install path."},
+                "game_dir": {"type": "string"},
             },
             ("internal_path", "output_path"),
         ),

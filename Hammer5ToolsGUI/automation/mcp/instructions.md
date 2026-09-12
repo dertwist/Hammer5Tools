@@ -1,20 +1,28 @@
-Use Hammer5Tools for Source 2 and Unreal asset inspection, authoring, and level maintenance. Prefer the narrowest read-only tool that answers the request. Treat content-relative asset paths as case-insensitive and use forward slashes when presenting them.
+Hammer5Tools inspects and authors Source 2 (CS2) and Unreal assets. Asset paths are content-relative, case-insensitive, and presented with forward slashes.
 
-Format tools:
-- Models (.vmdl): Use hammer5tools.vmdl_read, hammer5tools.vmdl_write, and hammer5tools.vmdl_edit.
-- Materials (.vmat): Use hammer5tools.vmat_read, hammer5tools.vmat_write, and hammer5tools.vmat_edit.
-- Textures (.vtex): Use hammer5tools.vtex_read, hammer5tools.vtex_write, and hammer5tools.vtex_edit.
-- SmartProps (.vsmart): Use hammer5tools.vsmart_read, hammer5tools.vsmart_write, hammer5tools.vsmart_edit, and hammer5tools.vsmart_evaluate.
-- Gamedata (.vdata): Use hammer5tools.vdata_read, hammer5tools.vdata_write, and hammer5tools.vdata_edit.
-- Snapshots (.vsnap): Use hammer5tools.vsnap_read, hammer5tools.vsnap_write, hammer5tools.vsnap_generate, and hammer5tools.vsnap_edit.
+Common parameters, the same on every tool that takes them: `dry_run` previews without writing; `detail` is `summary` (default) or `full`; `select` addresses one node (`m_Variables[m_VariableName=Length]`); `limit` and `offset` page a result; `cs2_path` and `game_dir` override the configured CS2 root.
 
-Operation tools:
-- Compilation: Use hammer5tools.compile_asset to invoke resourcecompiler.exe on changed assets.
-- Validation: Use hammer5tools.validate_addon to diagnose broken references, and hammer5tools.find_unused_assets to locate orphans.
-- Dependencies: Use hammer5tools.resolve_dependencies to recursively trace all required files for an asset.
-- Level design: Use hammer5tools.vmap_rewrite_references for batch search-and-replace across map dependencies.
-- Official assets: Use hammer5tools.vpk_search and hammer5tools.vpk_extract to inspect official CS2 game archives.
+Working rules:
 
-Safety Rules:
-- When modifying existing files, always specify dry_run: true first to preview the planned changes and verify diffs before writing to disk.
-- Never claim that a file was changed when dry_run: true was set or when using read-only tools.
+- Read tools return a summary; escalate to `full` or `select` deliberately. Never read a whole document to look at one field.
+- Change a SmartProp with `vsmart_patch` (`set`, `remove`, `add_variable`, `add_category`), not `vsmart_edit`: it edits one node, repairs duplicate element IDs, and lints on write, where `vsmart_edit` replaces whole arrays.
+- Preview modifying calls with `dry_run: true` and read the diff before writing. Never report a file as changed when `dry_run` was set, or when a read-only tool was used.
+- Verify before reporting success. `compile_asset` exit code 0 is the claim you may make; for SmartProps, `vsmart_lint` and `vsmart_evaluate` first. A `model_count` of 0 means something is broken, not that the prop is empty.
+- List results are paged. Check `total` and `truncated` before treating a page as the whole answer.
+- Never hand-author `.vmap` geometry: synthesized mesh structures crash Hammer and the compiler. Use `vmap_write_blockout` for boxes, and `guide("vmap-authoring")` for anything else.
+
+Call `hammer5tools.guide` before writing Source 2 content; one call prevents a compile cycle spent guessing. Topics:
+
+- `vsmart-authoring` — elements, modifiers, filters
+- `vsmart-creating` — building one from scratch, with recipes
+- `vsmart-expressions` — intrinsics, the NaN cascade that makes props vanish
+- `vsmart-ui` — categories, hide/read-only expressions, sizers
+- `vsmart-enums` — Hammer labels to KV3 enum values
+- `vmap-reading` — map entities, meshes, SmartProp placements, entity definitions
+- `vmap-authoring` — map geometry, blockout, what writing supports
+- `addon-maintenance` — dependencies, orphans, validation, compile order
+- `official-assets` — stock content in the CS2 VPK archives
+- `particles-and-porting` — vsnap clouds, read-only Unreal tools
+- `gamedata-vdata` — gamedata tables and their schema type
+- `compile-verify` — the compiler as a test harness
+- `material-texture` — vmat/vtex/vmdl conventions, colour spaces
