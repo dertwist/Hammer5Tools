@@ -39,11 +39,14 @@ _EXPORTABLE_CLASSES = ("StaticMesh", "Texture2D")
 # the Editor emits per run — see its _H5T pattern.
 _TAG = "[H5T]"
 
-# Set from the porter's "Nanite" model import option. On, a Nanite mesh has
-# Nanite switched off before it is exported so the real geometry is written;
-# off, it exports as-is, which means Unreal's low-poly fallback proxy. See
-# _disable_nanite.
-IMPORT_NANITE = (os.environ.get("H5T_UE_NANITE") or "1") != "0"
+# Set from the porter's "Nanite" model import option, and off by default. On, a
+# Nanite mesh has Nanite switched off before it is exported so the real geometry
+# is written; off, it exports as-is, which means Unreal's low-poly fallback
+# proxy. Off is the default because the full-geometry path is what a first port
+# spends nearly all of its time and disk on — measured on UE 5.7, rebuilding
+# twelve meshes at source density cost 320s against 18s to export them, and grew
+# the FBX from 7.5MB to 231MB. See _disable_nanite.
+IMPORT_NANITE = (os.environ.get("H5T_UE_NANITE") or "0") != "0"
 
 
 
@@ -435,7 +438,7 @@ def _export_assets(unreal, export_paths, output_dir):
              "(Nanite switched off for the export).")
     elif counters["nanite"]:
         _say(f"{counters['nanite']} Nanite mesh(es) exported as Unreal's low-poly "
-             "fallback proxy; turn the porter's Nanite option on for full geometry.", "warn")
+             "fallback proxy; tick Models > Nanite for their full geometry.")
     if counters["failed"]:
         _say(f"{counters['failed']} asset(s) produced no file; see the Unreal log.", "warn")
     if sizes:

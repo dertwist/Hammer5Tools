@@ -88,7 +88,7 @@ class PrepareWorker(CancellableWorker):
     done = Signal(bool)
 
     def __init__(self, engine_root, project_dir, tmp_dir, output_dir, assets=(),
-                 import_nanite=True, parent=None):
+                 import_nanite=False, parent=None):
         super().__init__(parent)
         self.engine_root = engine_root
         self.project_dir = project_dir
@@ -284,8 +284,8 @@ class UnrealPorterWidget(QDialog):
         self.console.warn("• Cables / Splines (CableComponent physics & spline mesh ropes)")
         self.console.warn("• Landscapes / Terrain (heightfield layer blending; must bake to static mesh)")
         self.console.warn("• Master Materials & HLSL graphs (only Material Instance parameters -> vmat)")
-        self.console.warn("• Nanite virtual geometry (Nanite is switched off before export so the "
-                          "real mesh comes across — Source 2 has no virtualized geometry)")
+        self.console.warn("• Nanite virtual geometry (exported as Unreal's low-poly fallback; tick "
+                          "Models > Nanite for the real mesh, far slower and much larger)")
         self.console.warn("• Niagara / Cascade particles (must re-author in CS2 particle editor)")
         self.console.warn("• Virtual Textures / RVT (must bake to standard 2D textures in UE first)")
         self.console.warn("• Gameplay & Logic Blueprints (only static component layout Blueprints -> vsmart)")
@@ -679,10 +679,11 @@ class UnrealPorterWidget(QDialog):
         self.model_nanite_check = QCheckBox("Nanite")
         self.model_nanite_check.setToolTip(
             "Switch Nanite off on a Nanite mesh before exporting it, so the FBX "
-            "carries its real geometry. Off exports Unreal's low-poly Nanite "
-            "fallback proxy instead — much faster, far less detail."
+            "carries its real geometry — hundreds of thousands of triangles per "
+            "prop, and by far the slowest part of a first port. Off (the default) "
+            "exports Unreal's low-poly Nanite fallback proxy instead."
         )
-        self.model_nanite_check.setChecked(get_settings_bool("UnrealConverter", "model_import_nanite", True))
+        self.model_nanite_check.setChecked(get_settings_bool("UnrealConverter", "model_import_nanite", False))
         self.model_nanite_check.toggled.connect(
             lambda checked: set_settings_bool("UnrealConverter", "model_import_nanite", checked)
         )

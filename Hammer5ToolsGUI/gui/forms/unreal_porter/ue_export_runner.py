@@ -164,7 +164,7 @@ DEFAULT_CONTENT_PATHS = "/Game;/Engine/MapTemplates;/Engine/BasicShapes"
 def run_export(engine_root: str, project_content_dir: str, output_dir: str,
                 content_path: str = DEFAULT_CONTENT_PATHS, timeout: int = 1800,
                 on_line=None, assets: list = None, is_cancelled=None,
-                import_nanite: bool = True) -> str:
+                import_nanite: bool = False) -> str:
     """Runs the Editor commandlet synchronously and returns the tail of its raw
     output. Raises UeExportError on a non-zero exit or missing paths.
 
@@ -179,7 +179,8 @@ def run_export(engine_root: str, project_content_dir: str, output_dir: str,
 
     import_nanite switches Nanite off on each Nanite mesh before exporting it,
     so the FBX carries the real geometry instead of the low-poly fallback proxy
-    UE builds for it. See export_assets._disable_nanite.
+    UE builds for it. It defaults off: the rebuild it forces is the single
+    largest cost in a first port. See export_assets._disable_nanite.
     """
     if not output_dir:
         raise UeExportError("An output folder is required.")
