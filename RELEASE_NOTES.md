@@ -1,8 +1,13 @@
 ## Automation
 
 * Added CLI and MCP modes to `Hammer5ToolsGUI.exe`, so scripts and AI agents can use Hammer5Tools without the GUI.
-* Available operations: read and edit Source 2 formats, compile assets, validate an addon, list VMAP references. Editing commands support `--dry-run`.
-* Setup instructions are in [MCP_SETUP.md](MCP_SETUP.md).
+* Available operations: read and edit Source 2 formats, compile assets, validate an addon, resolve dependencies, find unused assets, and search the game archives. Editing commands support `--dry-run`.
+* Maps can now be read in detail: entities by class with their properties, brush meshes, model placements, and SmartProp placements with the variable overrides the map applied. Decals, paths, prefab instances and entity I/O connections are reachable too.
+* Entity classes are described from the game's own definitions, including every keyvalue and its help text.
+* SmartProps can be edited one node at a time instead of rewritten, and checked for the mistakes that make a prop silently render nothing, such as division that can produce a NaN or a stretched end cap. A whole folder can be checked in one pass.
+* Added blockout map generation from `prop_static` boxes.
+* Reads return a summary by default and can address a single value, so inspecting a large asset no longer means loading all of it.
+* Setup instructions are in [MCP_SETUP.md](MCP_SETUP.md), and the built-in guides cover authoring conventions.
 
 ## Unreal Porter
 
