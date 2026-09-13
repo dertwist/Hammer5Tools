@@ -35,6 +35,7 @@ def test_preferences_dialog_initialization(qapp):
     # Verify ActionButtonsPanel contains Open Console after Open UserData
     panel = dialog.action_buttons_panel
     assert hasattr(panel, "open_userdata_folder_button")
+    assert hasattr(panel, "open_program_folder_button")
     assert hasattr(panel, "btn_open_console")
     assert dialog.btn_open_console is panel.btn_open_console
 
@@ -51,7 +52,7 @@ def test_preferences_dialog_initialization(qapp):
             console_idx = i
 
     assert userdata_idx != -1
-    assert console_idx == userdata_idx + 1
+    assert console_idx > userdata_idx
 
     # Verify SmartProp Editor tab settings
     assert hasattr(dialog, "spe_display_id_with_variable_class")

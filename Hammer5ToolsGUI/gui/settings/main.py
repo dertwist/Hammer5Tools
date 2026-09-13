@@ -32,6 +32,11 @@ class ActionButtonsPanel(QFrame):
         self.open_userdata_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_userdata_folder_button)
 
+        self.open_program_folder_button = Button(text=" Open Program Folder")
+        self.open_program_folder_button.set_icon_folder_open()
+        self.open_program_folder_button.setToolTip("Open the folder Hammer5Tools is installed in.")
+        h_layout_bottom.addWidget(self.open_program_folder_button)
+
         self.btn_open_console = Button(text=" Open Console")
         self.btn_open_console.set_icon(":/icons/terminal_16dp.svg")
         self.btn_open_console.setToolTip("Open a console window for log output.")
@@ -396,6 +401,7 @@ class PreferencesDialog(QDialog):
             lambda: set_settings_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
         self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
+        self.action_buttons_panel.open_program_folder_button.clicked.connect(self.open_program_folder)
         self.cleanup_model_browser_button.clicked.connect(self.cleanup_model_browser_cache)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
@@ -442,6 +448,10 @@ class PreferencesDialog(QDialog):
     def open_userdata_folder(self):
         from gui.common import user_data_dir
         os.startfile(str(user_data_dir))
+
+    def open_program_folder(self):
+        from gui.common import app_dir
+        os.startfile(str(app_dir))
 
     def cleanup_model_browser_cache(self):
         """Delete the model browser's asset index and generated thumbnails.
