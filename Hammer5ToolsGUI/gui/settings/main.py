@@ -189,6 +189,22 @@ class PreferencesDialog(QDialog):
         layout_git.addWidget(self.checkBox_git_generate_commit_messages)
         layout_git.addStretch()
         layout.addWidget(self.frame_git)
+        layout.addWidget(self.create_divider(general_tab_content))
+
+        label_loading_header = QLabel("Loading Screen Editor", general_tab_content)
+        layout.addWidget(label_loading_header)
+        self.frame_loading = QFrame(general_tab_content)
+        layout_loading = QHBoxLayout(self.frame_loading)
+        self.checkBox_loading_saved_cameras = QCheckBox(
+            "Use saved editor cameras instead of point_camera", self.frame_loading)
+        self.checkBox_loading_saved_cameras.setProperty("h5Component", "legacyCheckbox")
+        self.checkBox_loading_saved_cameras.setToolTip(
+            "Take screenshots from Hammer's saved viewport cameras (CMapSavedCamera) "
+            "instead of point_camera entities."
+        )
+        layout_loading.addWidget(self.checkBox_loading_saved_cameras)
+        layout_loading.addStretch()
+        layout.addWidget(self.frame_loading)
 
         layout.addStretch()
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
@@ -328,6 +344,8 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
         self.checkBox_git_generate_commit_messages.setChecked(
             get_settings_bool('GitSync', 'generate_commit_messages', True))
+        self.checkBox_loading_saved_cameras.setChecked(
+            get_settings_bool('LoadingEditor', 'use_saved_cameras', True))
         self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
         version_text = f"Version: {self.app_version}"
         if get_build_channel() == 'dev':
@@ -389,6 +407,9 @@ class PreferencesDialog(QDialog):
         )
         self.checkBox_git_generate_commit_messages.toggled.connect(
             lambda checked: set_settings_bool('GitSync', 'generate_commit_messages', checked)
+        )
+        self.checkBox_loading_saved_cameras.toggled.connect(
+            lambda checked: set_settings_bool('LoadingEditor', 'use_saved_cameras', checked)
         )
         self.action_buttons_panel.btn_open_console.clicked.connect(self._open_console)
         self.spe_display_id_with_variable_class.toggled.connect(

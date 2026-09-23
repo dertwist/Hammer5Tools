@@ -14,7 +14,7 @@ from gui.editors.loading_editor.commands import PLAYER_EYE_HEIGHT, generate_comm
 
 
 def build(cameras, monkeypatch, history=False):
-    monkeypatch.setattr(commands_module, "parse", lambda path, show_entity_properties=False: cameras)
+    monkeypatch.setattr(commands_module, "parse", lambda path, show_entity_properties=False, saved_cameras=False: cameras)
     monkeypatch.setattr(commands_module.CS2Netcon, "query", staticmethod(lambda *a, **k: None))
     generated, session = generate_commands("maps/de_test.vmap", history=history)
     return generated, session
@@ -113,3 +113,8 @@ def test_history_mode_uses_a_dated_subdir(monkeypatch):
     generated, session = build([dict(CAMERA)], monkeypatch, history=True)
     assert session is not None
     assert any(f"screenshot_subdir" in c and session in c for c in generated)
+
+
+def test_a_map_without_cameras_generates_nothing(monkeypatch):
+    # The editor treats an empty list as "warn about missing cameras".
+    assert build([], monkeypatch) == ([], None)

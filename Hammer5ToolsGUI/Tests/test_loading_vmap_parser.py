@@ -6,7 +6,11 @@ def test_parse_returns_point_camera_presentation_data(monkeypatch):
     document = ValveMapDocument(
         "maps/example.vmap",
         ValveMapNode("world", "CMapWorld", {}, ()),
-        (),
+        (
+            ValveMapNode("", "CMapSavedCamera", {
+                "origin": "4 5 6", "angles": "7 8 9", "fov": "75", "cameraName": "",
+            }, ()),
+        ),
         (
             ValveMapEntity(
                 "point_camera",
@@ -33,6 +37,14 @@ def test_parse_returns_point_camera_presentation_data(monkeypatch):
     monkeypatch.setattr(CoreBridge, "instance", classmethod(lambda cls: FakeBridge()))
 
     cameras = parse("maps/example.vmap", show_entity_properties=True)
+
+    assert parse("maps/example.vmap", saved_cameras=True) == [{
+        "classname": "CMapSavedCamera",
+        "origin": "4 5 6",
+        "angles": "7 8 9",
+        "targetname": None,
+        "FOV": "75",
+    }]
 
     assert cameras == [{
         "classname": "point_camera",

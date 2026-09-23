@@ -43,6 +43,47 @@ from gui.other.cs2_netcon import CS2Netcon
 from gui.styles.common import set_style_property
 
 
+def warn_no_cameras(parent: QWidget | None) -> None:
+    """Tell the user the map has no cameras to shoot from, and where to add them."""
+    from gui.common import apply_title_bar_theme, gui_assets_dir
+    from gui.settings.common import get_settings_bool
+
+    if not get_settings_bool("LoadingEditor", "use_saved_cameras", True):
+        QMessageBox.warning(
+            parent, "No cameras found",
+            "The map has no point_camera entities.\n\n"
+            "Place point_camera entities in Hammer, or enable "
+            "\"Use saved editor cameras instead of point_camera\" in Settings.")
+        return
+
+    dialog = QDialog(parent)
+    apply_title_bar_theme(dialog)
+    dialog.setWindowTitle("No saved cameras found")
+    layout = QVBoxLayout(dialog)
+    text = QLabel(
+        "The map has no saved editor cameras.\n\n"
+        "In Hammer, open Window > Saved Cameras, frame the view you want and "
+        "press + to save a camera. Save the map, then take the screenshots again.",
+        dialog)
+    text.setWordWrap(True)
+    layout.addWidget(text)
+    from gui.editors.smartprop_editor.props.help import HelpImageDialog, _ClickableLabel
+
+    image_path = gui_assets_dir("images", "help", "saved_cameras.jpg")
+    pixmap = QPixmap(image_path)
+    image = _ClickableLabel(dialog)
+    image.setPixmap(pixmap)
+    image.setMinimumSize(900, 900 * pixmap.height() // max(1, pixmap.width()))
+    image.setToolTip("Click to view full image in viewer")
+    # Parented to the dialog: a modal dialog blocks input to other windows.
+    image.clicked.connect(lambda: HelpImageDialog(image_path, "Image viewer — Saved Cameras", dialog).show())
+    layout.addWidget(image)
+    ok_button = QPushButton("OK", dialog)
+    ok_button.clicked.connect(dialog.accept)
+    layout.addWidget(ok_button, alignment=Qt.AlignRight)
+    dialog.exec()
+
+
 class SvgPreviewWidget(QFrame):
     """
     A widget for drag and drop of SVG files. Displays a styled drop zone until an SVG is loaded.
@@ -823,6 +864,7 @@ class LoadingEditorMainWindow(QMainWindow):
         vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
         commands, session_date = generate_commands(vmap_path, history=True)
         if not commands:
+            warn_no_cameras(self)
             return
 
         from gui.widgets import require_cs2
@@ -860,6 +902,13 @@ class LoadingEditorMainWindow(QMainWindow):
 
     def take_loading_screen_shots_action(self):
         """Generate commands for loading screen screenshots, clear previous shots, and send to CS2 via netcon."""
+        path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
+        commands, _ = generate_commands(path, history=False)
+        # Checked before clearing so a map without cameras keeps its old shots.
+        if not commands:
+            warn_no_cameras(self)
+            return
+
         if os.path.exists(self.loadingscreen_path):
             for filename in os.listdir(self.loadingscreen_path):
                 file_path = os.path.join(self.loadingscreen_path, filename)
@@ -871,13 +920,10 @@ class LoadingEditorMainWindow(QMainWindow):
                 except Exception:
                     pass
 
-        path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
-        commands, _ = generate_commands(path, history=False)
-        if commands:
-            from gui.widgets import require_cs2
-            if not require_cs2("take screenshots"):
-                return
-            CS2Netcon.send_many(commands)
+        from gui.widgets import require_cs2
+        if not require_cs2("take screenshots"):
+            return
+        CS2Netcon.send_many(commands)
 
     def loading_editor_cs2_description(self, description_text: str):
         game_dir = addon_game_dir()

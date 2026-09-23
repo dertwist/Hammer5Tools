@@ -75,9 +75,14 @@ def generate_commands(vmap_path, history=False) -> tuple[list, str | None]:
             otherwise None).
     """
     print(f"Loading VMAP file: {vmap_path}")
-    cameras = parse(vmap_path, show_entity_properties=False)
+    from gui.settings.common import get_settings_bool
+    saved_cameras = get_settings_bool("LoadingEditor", "use_saved_cameras", True)
+    cameras = parse(vmap_path, show_entity_properties=False, saved_cameras=saved_cameras)
     print(cameras)
-    print(f"Loaded {len(cameras)} point_camera entities from the VMAP file.")
+    kind = "saved editor cameras" if saved_cameras else "point_camera entities"
+    print(f"Loaded {len(cameras)} {kind} from the VMAP file.")
+    if not cameras:
+        return [], None
 
     # Query the user's current value of r_always_render_all_windows so we
     # can restore it after taking screenshots.
