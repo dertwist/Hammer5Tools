@@ -65,6 +65,12 @@ def write_vsmart(
             p = None
         children_by_parent.setdefault(p, []).append(c)
 
+    choice_option_values = {
+        (choice.get("name", "Choice"), opt.get("name", "Option")): opt.get("value", 0)
+        for choice in (choices or [])
+        for opt in choice.get("options", [])
+    }
+
     def new_element_id() -> int:
         elem_id = element_id_counter[0]
         element_id_counter[0] += 1
@@ -127,27 +133,28 @@ def write_vsmart(
                 "m_flScale": round(float(st.scales[0]), 4)
             })
 
-        selection_criteria = []
+        # CS2 has no Choice/Expression selection criteria; IsValid with an
+        # expression covers all three condition kinds.
+        condition = None
         if "choice_name" in c and "choice_value" in c:
-            selection_criteria.append({
-                "_class": "CSmartPropSelectionCriteria_Choice",
-                "m_sChoiceName": c["choice_name"],
-                "m_sChoiceValue": c["choice_value"],
-            })
+            name = c["choice_name"]
+            # Each choice option sets a Float variable named after the choice,
+            # so compare against the option's value, not its display name.
+            value = choice_option_values.get((name, c["choice_value"]), c["choice_value"])
+            condition = f"{name} == {value}"
         elif "expression" in c:
-            selection_criteria.append({
-                "_class": "CSmartPropSelectionCriteria_Expression",
-                "m_sExpression": c["expression"],
-            })
+            condition = c["expression"]
         elif "variable_condition" in c:
             cond = c["variable_condition"]
             if isinstance(cond, dict):
-                v_name = cond.get("variable", "Choice")
-                v_val = cond.get("value", 0)
-                selection_criteria.append({
-                    "_class": "CSmartPropSelectionCriteria_Expression",
-                    "m_sExpression": f"{v_name} == {v_val}",
-                })
+                condition = f"{cond.get('variable', 'Choice')} == {cond.get('value', 0)}"
+
+        selection_criteria = []
+        if condition:
+            selection_criteria.append({
+                "_class": "CSmartPropSelectionCriteria_IsValid",
+                "m_Expression": condition,
+            })
 
         def group(children: list) -> dict:
             return {
@@ -248,7 +255,7 @@ def write_vsmart(
         cond_var = None
         if elem.get("_class") == "CSmartPropElement_Model" and elem.get("m_SelectionCriteria"):
             for sc in elem["m_SelectionCriteria"]:
-                expr = sc.get("m_sExpression", "")
+                expr = sc.get("m_Expression", "")
                 if "==" in expr:
                     cond_var = expr.split("==")[0].strip()
                     break
