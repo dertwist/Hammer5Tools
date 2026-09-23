@@ -27,6 +27,7 @@ from PySide6.QtCore import Qt, Signal, QRect, QSize, QStringListModel
 from gui.common import JsonToKv3, fast_deepcopy
 from gui.editors.smartprop_editor.choices_model import format_choices
 from gui.editors.smartprop_editor.document_model import parse_smartprop
+from gui.editors.smartprop_editor.objects import variable_class_aliases
 
 
 
@@ -760,6 +761,7 @@ class ManualEditor(QWidget):
             cls = v.get("_class", "")
             if cls.startswith("CSmartPropVariable_"):
                 var_class = cls.replace("CSmartPropVariable_", "")
+                var_class = variable_class_aliases.get(var_class, var_class)
             else:
                 var_class = cls
 

@@ -24,6 +24,7 @@ from gui.editors.smartprop_editor.variable_frame import VariableFrame, CategoryF
 from gui.editors.smartprop_editor.completion_utils import CompletionUtils
 from gui.editors.smartprop_editor.objects import (
     variables_list,
+    variable_class_aliases,
 )
 from gui.editors.smartprop_editor.ui_variables_viewport import Ui_Form
 from gui.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
@@ -366,6 +367,7 @@ class SmartPropEditorVariableViewport(QWidget):
                     continue
 
                 var_class = _class.replace('CSmartPropVariable_', '')
+                var_class = variable_class_aliases.get(var_class, var_class)
                 var_name = variable.get('m_VariableName', '')
                 var_visible = variable.get('m_bExposeAsParameter', False)
 

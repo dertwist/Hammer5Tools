@@ -18,7 +18,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-from gui.editors.smartprop_editor.objects import variable_prefix
+from gui.editors.smartprop_editor.objects import variable_prefix, variable_class_aliases
 
 log = logging.getLogger(__name__)
 
@@ -176,6 +176,7 @@ class Variable:
 def decode_variable(entry: dict) -> Variable:
     """Turn one raw KV3 variable into the shape the editor's widgets take."""
     var_class = entry.get("_class", "").replace(variable_prefix, "")
+    var_class = variable_class_aliases.get(var_class, var_class)
     name = entry.get("m_VariableName")
     is_category = is_category_marker(name)
     category_name = entry.get("m_Hammer5ToolsCategoryName")

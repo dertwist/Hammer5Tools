@@ -194,7 +194,8 @@ class VariableFrame(PropertyDragDropMixin, QWidget):
             )
         elif var_class in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 'ScaleMode',
                            'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 'RadiusPlacementMode',
-                           'DistributionMode', 'PathPositions', 'Direction']:
+                           'DistributionMode', 'PathPositions', 'DirectionVector',
+                           'ColorSelectionMode', 'OrientationMode']:
             from gui.editors.smartprop_editor.variables.combobox import ComboboxVariable
             elements = self._get_combobox_elements(var_class)
             self.var_int_instance = ComboboxVariable(
@@ -220,7 +221,8 @@ class VariableFrame(PropertyDragDropMixin, QWidget):
 
     def update_colors(self):
         enum_types = [
-            'Direction', 'CoordinateSpace', 'GridPlacementMode', 'GridOriginMode',
+            'DirectionVector', 'ColorSelectionMode', 'OrientationMode',
+            'CoordinateSpace', 'GridPlacementMode', 'GridOriginMode',
             'PickMode', 'ScaleMode', 'TraceNoHit', 'ApplyColorMode',
             'ChoiceSelectionMode', 'RadiusPlacementMode', 'DistributionMode', 'PathPositions'
         ]

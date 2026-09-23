@@ -64,7 +64,9 @@ class CompletionUtils:
             'RadiusPlacementMode': ['SPHERE', 'CIRCLE'],
             'DistributionMode': ['RANDOM', 'REGULAR'],
             'PathPositions': ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'],
-            'Direction': ['FORWARD', 'LEFT', 'UP'],
+            'DirectionVector': ['FORWARD', 'LEFT', 'UP'],
+            'ColorSelectionMode': ['SPECIFIC_COLOR', 'GRADIENT_RANDOM', 'GRADIENT_RANDOM_STOP', 'GRADIENT_LOCATION'],
+            'OrientationMode': ['FIRST_OPEN_EDGE', 'FIRST_CLOSED_EDGE', 'UVMAP1', 'UVMAP2'],
         }
         return elements_dict.get(var_type, [])
 
@@ -205,7 +207,8 @@ class CompletionUtils:
         # Enum-type variable completions (combobox types)
         elif var_type in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 
                          'ScaleMode', 'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 
-                         'RadiusPlacementMode', 'DistributionMode', 'PathPositions', 'Direction']:
+                         'RadiusPlacementMode', 'DistributionMode', 'PathPositions', 'DirectionVector',
+                         'ColorSelectionMode', 'OrientationMode']:
             enum_values = CompletionUtils.get_combobox_elements(var_type)
             for enum_value in enum_values:
                 completions.extend([

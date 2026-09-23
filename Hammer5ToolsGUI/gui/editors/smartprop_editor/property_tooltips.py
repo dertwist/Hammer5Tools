@@ -115,6 +115,7 @@ property_tooltips = {
     "m_bStart": "Is this an element which should be placed at the start of the line.",
     "m_bStartAsleep": "Should this physics prop start in a sleeping (non-simulating) state such that it won't update until it is woken up by an external event.",
     "m_bTraceAway": "If enabled, instead of tracing from the origin to the target point, trace away from the target point for the specified distance starting at the origin.",
+    "m_bNoRoll": "When computing the transform at each path point ensure that there is no roll around the path relative to the up direction. This prevents objects from tilting side to side while still allowing them to tilt along the path (unlike Use Fixed Up which does not allow them to tilt along the path).",
     "m_bUseFixedUpDirection": "If true, treat the specified up direction as fixed up direction to apply to all elements placed on the path. If false the up direction is just an initial direction.",
     "m_bUseProjectedDistance": "Compute the spacing distance in the 2d plane defined by the up direction. Most useful when using a fixed up direction, if maintaining a distance in the 2d plane is more important than maintaing distance along the path.",
     "m_bVerticalLength": "Layout length vertically (Along Z axis instead of Y).",

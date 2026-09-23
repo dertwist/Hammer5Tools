@@ -59,7 +59,7 @@ class PropertyFrame(QWidget):
         'SmartProp': ['m_nReferenceID', 'm_bEnabled', 'm_sSmartProp', 'm_bLocalEvaluationState'],
         'PlaceInSphere': ['m_nReferenceID', 'm_bEnabled', 'm_flRandomness', 'm_nCountMin', 'm_nCountMax', 'm_flPositionRadiusInner', 'm_flPositionRadiusOuter', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'],
         'PlaceMultiple': ['m_nReferenceID', 'm_bEnabled', 'm_nCount', 'm_Expression'],
-        'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPathInWorldSpace', 'm_DefaultPath'],
+        'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_bNoRoll', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPathInWorldSpace', 'm_DefaultPath'],
         'FitOnLine': ['m_nReferenceID', 'm_bEnabled', 'm_vStart', 'm_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'],
         'PickOne': ['m_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'],
         'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_bDisableDynamicDeformable', 'm_nLodLevel', 'm_nDetailObjectFadeLevel', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
@@ -76,9 +76,11 @@ class PropertyFrame(QWidget):
         'Translate': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
         'SetTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_ColorSelection', 'm_Mode', 'm_ColorChoices'],
         'MaterialOverride': ['m_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'],
-        'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
+        'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_Gradient', 'm_ColorPosition'],
+        'RandomColorTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_ColorPosition', 'm_Mode', 'm_Gradient'],
         'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
         'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
+        'RandomRotation': ['m_bEnabled', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vSnapIncrement'],
         'RigidDeformation': ['m_bEnabled'],
         'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel',
                         'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX', 'm_OutputVariableMinX', 'm_OutputVariableMaxX',
@@ -90,10 +92,6 @@ class PropertyFrame(QWidget):
         'TraceInDirection': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_vTraceDirection', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
         'SaveState': ['m_bEnabled', 'm_StateName'],
         'SetVariable': ['m_bEnabled', 'm_VariableValue'],
-        'SetVariableBool': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
-        'SetVariableFloat': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
-        'SetVariableInt': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
-        'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
         'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
         'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
         'RotateTowards': ['m_bEnabled', 'm_vOriginPos', 'm_vTargetPos', 'm_vUpPos', 'm_flWeight', 'm_OriginSpace', 'm_TargetSpace', 'm_UpSpace'],
@@ -102,14 +100,17 @@ class PropertyFrame(QWidget):
         'SavePosition': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
         'SaveScale': ['m_bEnabled', 'm_VariableName'],
         'SaveSurfaceNormal': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
-        'SetMaterialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
+        'SetMateraialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
         'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
         'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
         'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
+        'TraceToPoint': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables', 'm_TargetPoint', 'm_TargetPointSpace', 'm_bTraceAway', 'm_flTraceLength'],
+        'TraceToLine': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables', 'm_EndPointA', 'm_EndPointSpaceA', 'm_EndPointB', 'm_EndPointSpaceB', 'm_bTraceAway', 'm_flTraceLength'],
         'Expression': ['m_bEnabled', 'm_Expression'],
         'Probability': ['m_bEnabled', 'm_flProbability'],
         'SurfaceAngle': ['m_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'],
         'SurfaceProperties': ['m_bEnabled', 'm_AllowedSurfaceProperties', 'm_DisallowedSurfaceProperties'],
+        'MaterialAttributes': ['m_bEnabled', 'm_AllowedMaterialAttributes', 'm_DisallowedMaterialAttributes'],
         'VariableValue': ['m_bEnabled', 'm_VariableComparison'],
         'EndCap': ['m_bEnabled', 'm_bStart', 'm_bEnd'],
         'ChoiceWeight': ['m_bEnabled', 'm_flWeight'],
@@ -185,7 +186,7 @@ class PropertyFrame(QWidget):
         ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC'], ['ChoiceSelectionMode']),
         ('m_PlacementMode', ['SPHERE', 'CIRCLE'], ['RadiusPlacementMode']),
         ('m_DistributionMode', ['RANDOM', 'REGULAR'], ['DistributionMode']),
-        ('m_DirectionVector', ['FORWARD', 'LEFT', 'UP'], ['Direction']),
+        ('m_DirectionVector', ['FORWARD', 'LEFT', 'UP'], ['DirectionVector']),
         ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_sPhysicsType', ['normal', 'multiplayer'], ['String']),
         ('m_nDetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
@@ -212,8 +213,11 @@ class PropertyFrame(QWidget):
     # distinguish two classes reusing the same field name for different enums.
     # PlaceOnMesh's m_nPickMode (FIRST_OPEN_EDGE/FIRST_CLOSED_EDGE/UVMAP1/UVMAP2) vs
     # FitOnLine's m_nPickMode (LARGEST_FIRST/RANDOM/ALL_IN_ORDER) is the current case.
+    _COLOR_SELECTION_MODES = ['SPECIFIC_COLOR', 'GRADIENT_RANDOM', 'GRADIENT_RANDOM_STOP', 'GRADIENT_LOCATION']
     _CLASS_FIELD_COMBOBOX_OVERRIDES = {
         ('PlaceOnMesh', 'm_nPickMode'): (['FIRST_OPEN_EDGE', 'FIRST_CLOSED_EDGE', 'UVMAP1', 'UVMAP2'], ['OrientationMode']),
+        ('MaterialTint', 'm_SelectionMode'): (_COLOR_SELECTION_MODES, ['ColorSelectionMode']),
+        ('RandomColorTintColor', 'm_SelectionMode'): (_COLOR_SELECTION_MODES, ['ColorSelectionMode']),
     }
 
     # Populated lazily in _resolve_dispatch() ΓÇö ordered prefix fallthrough.
@@ -753,6 +757,18 @@ class PropertyFrame(QWidget):
                 element_id_generator=self.element_id_generator,
             )
             self.ui.property_class.setText('Variable Comparison')
+            add_instance()
+            return
+
+        # CColorGradient ({m_Stops: [{m_flPosition, m_Color}]}) and material
+        # attribute lists have no dedicated widget yet; edit them as raw data
+        # instead of letting the 'm_' prefix rule flatten them into a string.
+        if value_class in ('m_Gradient', 'm_AllowedMaterialAttributes', 'm_DisallowedMaterialAttributes'):
+            property_instance = PropertyLegacy(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+            )
             add_instance()
             return
 

@@ -1,7 +1,9 @@
 variable_prefix = 'CSmartPropVariable_'
+# Variable classes the editor used to write that Valve's schema doesn't have.
+variable_class_aliases = {'Direction': 'DirectionVector'}
 variables_list = [
     'CoordinateSpace',
-    'Direction',
+    'DirectionVector',
     'DistributionMode',
     'RadiusPlacementMode',
     'ChoiceSelectionMode',
@@ -61,6 +63,7 @@ elements_list = [
         'm_SelectionCriteria': [],
         'm_bUseFixedUpDirection': False,
         'm_bUseProjectedDistance': False,
+        'm_bNoRoll': False,
         'm_vUpDirection': [0.0, 0.0, 1.0],
         'm_UpDirectionSpace': 'WORLD',
         'm_DefaultPathInWorldSpace': True,
@@ -160,7 +163,6 @@ elements_list = [
         'm_SelectionCriteria': []
     }},
     {'PlaceOnMesh': {
-        '_WARN_NOT_VERIFIED': True,
         '_class': 'CSmartPropElement_PlaceOnMesh',
         'm_nPickMode': 'FIRST_OPEN_EDGE',
         'm_MeshName': '',
@@ -192,6 +194,7 @@ filters_list = [
     {'Probability': {'_class': 'CSmartPropFilter_Probability', 'm_flProbability': 1}},
     {'SurfaceAngle': {'_class': 'CSmartPropFilter_SurfaceAngle', 'm_flSurfaceSlopeMin': 0, 'm_flSurfaceSlopeMax': 0}},
     {'SurfaceProperties': {'_class': 'CSmartPropFilter_SurfaceProperties', 'm_AllowedSurfaceProperties': [], "m_DisallowedSurfaceProperties": []}},
+    {'MaterialAttributes': {'_class': 'CSmartPropFilter_MaterialAttributes', 'm_AllowedMaterialAttributes': [], 'm_DisallowedMaterialAttributes': []}},
     {'VariableValue': {'_class': 'CSmartPropFilter_VariableValue', 'm_VariableComparison': {'m_Name': '', 'm_Value': 0, 'm_Comparison': 'EQUAL'}}}
 ]
 
@@ -202,7 +205,8 @@ operators_list = [
     {'Translate': {'_class': "CSmartPropOperation_Translate", "m_vPosition": {"m_Components":[0,0,0]}, "m_CoordinateSpace": "ELEMENT"}},
     {'SetTintColor': {'_class': "CSmartPropOperation_SetTintColor", "m_SelectionMode": "RANDOM", "m_ColorSelection": 0, "m_Mode": "MULTIPLY_OBJECT", "m_ColorChoices": []}},
     {'MaterialOverride': {'_class': "CSmartPropOperation_MaterialOverride", "m_bClearCurrentOverrides": False, "m_MaterialReplacements": []}},
-    {'MaterialTint': {'_class': "CSmartPropOperation_MaterialTint", "m_Material": "", "m_SelectionMode": "SPECIFIC_COLOR", "m_Color": [255, 255, 255], "m_ColorPosition": 0.0}},
+    {'MaterialTint': {'_class': "CSmartPropOperation_MaterialTint", "m_Material": "", "m_SelectionMode": "SPECIFIC_COLOR", "m_Color": [255, 255, 255], "m_Gradient": {"m_Stops": [{"m_flPosition": 0.0, "m_Color": [255, 255, 255, 255]}, {"m_flPosition": 1.0, "m_Color": [0, 0, 0, 255]}]}, "m_ColorPosition": 0.0}},
+    {'RandomColorTintColor': {'_class': "CSmartPropOperation_RandomColorTintColor", "m_SelectionMode": "GRADIENT_RANDOM", "m_ColorPosition": 0.0, "m_Mode": "MULTIPLY_OBJECT", "m_Gradient": {"m_Stops": [{"m_flPosition": 0.0, "m_Color": [255, 255, 255, 255]}, {"m_flPosition": 1.0, "m_Color": [0, 0, 0, 255]}]}}},
     {'RandomOffset': {'_class': "CSmartPropOperation_RandomOffset", "m_vRandomPositionMin": None, "m_vRandomPositionMax": None, "m_vSnapIncrement": None}},
     {'RandomScale': {'_class': "CSmartPropOperation_RandomScale", "m_flRandomScaleMin": 1.0, "m_flRandomScaleMax": 1.0, "m_flSnapIncrement": 0.0}},
     {'RandomRotation': {'_class': "CSmartPropOperation_RandomRotation", "m_vRandomRotationMin": None, "m_vRandomRotationMax": None, "m_vSnapIncrement": None}},
@@ -221,7 +225,6 @@ operators_list = [
     {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_vTraceDirection': None, 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500, 'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False}},
     {'SaveState': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
     {'SetVariable': {'_class': 'CSmartPropOperation_SetVariable', 'm_VariableValue': {'m_TargetName': None, 'm_DataType': None, 'm_Value':None}}},
-    {'RandomRotationSnapped': {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropOperation_RandomRotationSnapped', 'm_vMinAngles': None, 'm_vMaxAngles': None, 'm_flSnapIncrement': 45.0, 'm_RotationAxes': 'Z'}},
     {'ResetRotation': {'_class': 'CSmartPropOperation_ResetRotation', 'm_bIgnoreObjectRotation': False, 'm_bResetPitch': True, 'm_bResetYaw': True, 'm_bResetRoll': True}},
     {'ResetScale': {'_class': 'CSmartPropOperation_ResetScale', 'm_bIgnoreObjectScale': False}},
     {'RotateTowards': {'_class': 'CSmartPropOperation_RotateTowards', 'm_vOriginPos': None, 'm_vTargetPos': None, 'm_vUpPos': None, 'm_flWeight': 1.0, 'm_OriginSpace': 'WORLD', 'm_TargetSpace': 'WORLD', 'm_UpSpace': 'WORLD'}},
@@ -251,10 +254,10 @@ selection_criteria_list = [
     {"IsValid": {'_class': 'CSmartPropSelectionCriteria_IsValid', 'm_Expression': ''}},
     {"LinearLength": {'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flLength': 0, 'm_bAllowScale': False, 'm_flMinLength': 0, 'm_flMaxLength': 0}},
     {"PathPosition": {'_class': 'CSmartPropSelectionCriteria_PathPosition', 'm_PlaceAtPositions': 'ALL', 'm_nPlaceEveryNthPosition': 2, 'm_nNthPositionIndexOffset': 0, 'm_bAllowAtStart': True, 'm_bAllowAtEnd': True}},
-    {"EdgeAngleCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_EdgeAngleCriteria', 'm_flMinAngle': 0, 'm_flMaxAngle': 0, 'm_bInvert': False}},
-    {"TopoEdgeCountCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_TopoEdgeCountCriteria', 'm_nTargetOpenEdgeCount': 0, 'm_bInvert': False, 'm_bSharedVert': False}},
-    {"VertexCountCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_VertexCountCriteria', 'm_nTargetVertexCount': 0}},
-    {"MaterialCriteria": {'_WARN_NOT_VERIFIED': True, '_class': 'CSmartPropSelectionCriteria_MaterialCriteria', 'm_material': '', 'm_bInvert': False}}
+    {"EdgeAngleCriteria": {'_class': 'CSmartPropSelectionCriteria_EdgeAngleCriteria', 'm_flMinAngle': 0, 'm_flMaxAngle': 0, 'm_bInvert': False}},
+    {"TopoEdgeCountCriteria": {'_class': 'CSmartPropSelectionCriteria_TopoEdgeCountCriteria', 'm_nTargetOpenEdgeCount': 0, 'm_bInvert': False, 'm_bSharedVert': False}},
+    {"VertexCountCriteria": {'_class': 'CSmartPropSelectionCriteria_VertexCountCriteria', 'm_nTargetVertexCount': 0}},
+    {"MaterialCriteria": {'_class': 'CSmartPropSelectionCriteria_MaterialCriteria', 'm_material': '', 'm_bInvert': False}}
 ]
 
 surfaces_list = [{'default': {}}, {'solidmetal': {}}, {'metal': {}}, {'metal_barrelSoundOverride': {}}, {'metal_vehicleSoundOverride': {}}, {'metal_survivalCase': {}}, {'metal_survivalCase_unpunchable': {}}, {'metaldogtags': {}}, {'metalgrate': {}}, {'Metal_Box': {}}, {'metal_bouncy': {}}, {'slipperymetal': {}}, {'grate': {}}, {'metalvent': {}}, {'metalpanel': {}}, {'dirt': {}}, {'mud': {}}, {'slipperyslime': {}}, {'grass': {}}, {'slowgrass': {}}, {'sugarcane': {}}, {'tile': {}}, {'tile_survivalCase': {}}, {'tile_survivalCase_GIB': {}}, {'Wood': {}}, {'Wood_lowdensity': {}}, {'Wood_Box': {}}, {'Wood_Basket': {}}, {'Wood_Crate': {}}, {'Wood_Plank': {}}, {'Wood_Solid': {}}, {'Wood_Furniture': {}}, {'Wood_Panel': {}}, {'Wood_Dense': {}}, {'water': {}}, {'wet': {}}, {'puddle': {}}, {'slime': {}}, {'quicksand': {}}, {'wade': {}}, {'ladder': {}}, {'Wood_Ladder': {}}, {'glass': {}}, {'glassfloor': {}}, {'computer': {}}, {'weapon_magazine': {}}, {'concrete': {}}, {'asphalt': {}}, {'rock': {}}, {'porcelain': {}}, {'boulder': {}}, {'brick': {}}, {'concrete_block': {}}, {'stucco': {}}, {'chainlink': {}}, {'chain': {}}, {'flesh': {}}, {'bloodyflesh': {}}, {'alienflesh': {}}, {'armorflesh': {}}, {'ice': {}}, {'carpet': {}}, {'dufflebag_survivalCase': {}}, {'upholstery': {}}, {'plaster': {}}, {'sheetrock': {}}, {'cardboard': {}}, {'plastic_barrel': {}}, {'Plastic_Box': {}}, {'plastic': {}}, {'plastic_survivalCase': {}}, {'sand': {}}, {'rubber': {}}, {'rubbertire': {}}, {'jeeptire': {}}, {'slidingrubbertire': {}}, {'brakingrubbertire': {}}, {'slidingrubbertire_front': {}}, {'slidingrubbertire_rear': {}}, {'glassbottle': {}}, {'pottery': {}}, {'clay': {}}, {'canister': {}}, {'metal_barrel': {}}, {'metal_barrel_explodingSurvival': {}}, {'floating_metal_barrel': {}}, {'plastic_barrel_buoyant': {}}, {'roller': {}}, {'popcan': {}}, {'paintcan': {}}, {'paper': {}}, {'papercup': {}}, {'ceiling_tile': {}}, {'foliage': {}}, {'slipperyslide': {}}, {'strongman_bell': {}}, {'watermelon': {}}, {'item': {}}, {'floatingstandable': {}}, {'grenade': {}}, {'weapon': {}}, {'metal_shield': {}}, {'default_silent': {}}, {'player': {}}, {'player_control_clip': {}}, {'no_decal': {}}, {'soccerball': {}}, {'gravel': {}}, {'snow': {}}, {'metalvehicle': {}}, {'brass_bell_large': {}}, {'brass_bell_medium': {}}, {'brass_bell_small': {}}, {'brass_bell_smallest': {}}, {'metal_sand_barrel': {}}, {'blockbullets': {}}, {'jalopytire': {}}, {'slidingrubbertire_jalopyfront': {}}, {'slidingrubbertire_jalopyrear': {}}, {'jalopy': {}}, {'Balloon': {}}, {'metal_ventslat': {}}, {'metal_sheetmetal': {}}, {'plasticbottle': {}}, {'concrete_polished': {}}, {'plastic_dumpster': {}}, {'metal_dumpster': {}}, {'Cloth': {}}, {'plaster_drywall': {}}, {'Wood_Tree': {}}, {'beans': {}}, {'WeaponHeavy': {}}, {'WeaponPistol': {}}, {'WeaponSMG': {}}, {'WeaponRifle': {}}, {'WeaponC4': {}}, {'WeaponShotgun': {}}, {'Defuser': {}}, {'WeaponMolotov': {}}, {'WeaponFlashbang': {}}, {'WeaponSniper': {}}, {'WeaponHEGrenade': {}}, {'WeaponIncendiary': {}}, {'cardboard_smallbox': {}}, {'papertowel': {}}, {'potterylarge': {}}, {'plastic_tape': {}}, {'playerflesh': {}}, {'fruit': {}}, {'WeaponMagazine': {}}, {'audioblocker': {}}, {'wet_sand': {}}, {'plastic_autoCover': {}}, {'plastic_milkCrate': {}}, {'WeaponKnife': {}}, {'brass_bell_smallest_g': {}}, {'metalrailing': {}}, {'plastic_solid': {}}]

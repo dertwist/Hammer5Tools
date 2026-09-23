@@ -99,6 +99,13 @@ def test_decode_leaves_range_empty_for_non_numeric_classes():
     assert variable.value["max"] is None
 
 
+def test_decode_maps_legacy_direction_variable_to_valve_class():
+    # Valve's schema only has CSmartPropVariable_DirectionVector; older files
+    # written by this editor used CSmartPropVariable_Direction.
+    variable = decode_variable({"_class": "CSmartPropVariable_Direction", "m_VariableName": "dir"})
+    assert variable.var_class == "DirectionVector"
+
+
 def test_display_name_falls_back_only_when_the_key_is_missing():
     assert decode_variable({"m_sCommentary": "note"}).display_name == "note"
     assert decode_variable({"m_ParameterName": "param"}).display_name == "param"
