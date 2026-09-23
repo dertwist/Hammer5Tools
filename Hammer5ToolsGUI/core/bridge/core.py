@@ -416,10 +416,11 @@ class CoreBridge:
         """Reads a VMAP through SourcePorter's shared Core reader contract."""
         document = self._smartprop_native().read_valve_map(path)
         thumbnail = document["thumbnail"]
+        world = self._convert_valve_map_node_json(document["world"])
         return ValveMapDocument(
             document["path"],
-            self._convert_valve_map_node_json(document["world"]),
-            tuple(self._convert_valve_map_node_json(node) for node in document["nodes"]),
+            world,
+            tuple(self._walk_valve_map_nodes(world)),
             tuple(self._convert_valve_map_entity_json(entity) for entity in document["entities"]),
             tuple(document["assetReferences"]),
             None if thumbnail is None else base64.b64decode(thumbnail),
@@ -708,6 +709,15 @@ class CoreBridge:
             node["name"], node["className"], dict(node["properties"]),
             tuple(cls._convert_valve_map_node_json(child) for child in node["children"]),
         )
+
+    @staticmethod
+    def _walk_valve_map_nodes(root: ValveMapNode):
+        """Pre-order walk of a node tree, the order Core's ValveMapDocument.Nodes uses."""
+        stack = [root]
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend(reversed(node.children))
 
     @staticmethod
     def _convert_valve_map_entity_json(entity: Mapping) -> ValveMapEntity:

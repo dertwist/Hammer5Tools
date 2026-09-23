@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from core.bridge.core import CoreBridge, SmartPropDeformer, SmartPropModel, SmartPropWidget, ValveMapEntity, VpkIndex
+from core.bridge.core import CoreBridge, SmartPropDeformer, SmartPropModel, SmartPropWidget, ValveMapEntity, ValveMapNode, VpkIndex
 
 
 def test_core_bridge_is_a_process_singleton():
@@ -461,3 +461,12 @@ def test_render_assetgroup_template_delegates_to_native():
     bridge = CoreBridge(FakeInterop(), native_client=FakeAssetGroupNative())
     assert bridge.render_assetgroup_template({"name": "crate"}) == "rendered_crate"
 
+
+
+def test_valve_map_nodes_are_walked_in_pre_order():
+    leaf = lambda name: ValveMapNode(name, "", {}, ())
+    world = ValveMapNode("world", "", {}, (ValveMapNode("a", "", {}, (leaf("a1"),)), leaf("b")))
+
+    names = [node.name for node in CoreBridge._walk_valve_map_nodes(world)]
+
+    assert names == ["world", "a", "a1", "b"]

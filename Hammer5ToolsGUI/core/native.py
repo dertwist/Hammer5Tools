@@ -281,7 +281,7 @@ class SmartPropNativeClient:
         ))
 
     def read_valve_map(self, path: str) -> dict:
-        """Reads an uncompiled VMAP into the shared read-only projection (path/world/nodes/entities/...)."""
+        """Reads an uncompiled VMAP into the shared read-only projection (path/world/entities/...)."""
         return json.loads(self._invoke(
             self._library.h5t_vmap_read_json, *self._buffer_arguments(path.encode("utf-8")),
         ))

@@ -285,10 +285,9 @@ internal static unsafe class VmapApi
         writer.WriteString("path", document.Path);
         writer.WritePropertyName("world");
         WriteValveMapNode(writer, document.World);
-        writer.WriteStartArray("nodes");
-        foreach (var node in document.Nodes)
-            WriteValveMapNode(writer, node);
-        writer.WriteEndArray();
+        // Nodes is the world tree flattened, and each node carries its whole
+        // subtree, so writing it re-serialized the map once per nesting level.
+        // Callers rebuild it by walking "world".
         writer.WriteStartArray("entities");
         foreach (var entity in document.Entities)
             WriteValveMapEntity(writer, entity);
