@@ -22,6 +22,24 @@ def test_empty_hotkey_bindings_are_not_serialized():
     assert document.to_mapping()["m_Bindings"] == []
 
 
+def test_valve_context_typo_is_normalized_and_extra_fields_survive():
+    document = HotkeyDocument.from_mapping({
+        "m_Bindings": [{
+            "m_COntext": "HammerEditorSession",
+            "m_Command": "ReorientCameraToWorkplane",
+            "m_Input": "Shift+Alt+W",
+            "m_CustomField": 7,
+        }],
+    })
+
+    assert document.to_mapping()["m_Bindings"] == [{
+        "m_CustomField": 7,
+        "m_Context": "HammerEditorSession",
+        "m_Command": "ReorientCameraToWorkplane",
+        "m_Input": "Shift+Alt+W",
+    }]
+
+
 SAMPLE = '''<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
 {
 \tm_InputMacros =

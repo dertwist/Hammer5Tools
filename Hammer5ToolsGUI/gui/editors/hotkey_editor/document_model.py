@@ -10,6 +10,7 @@ class HotkeyBinding:
     context: str
     command: str
     input: str | None = None
+    extra_fields: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -22,9 +23,14 @@ class HotkeyDocument:
         metadata = {key: item for key, item in value.items() if key != "m_Bindings"}
         bindings = [
             HotkeyBinding(
-                context=item.get("m_Context", ""),
+                context=item.get("m_Context", item.get("m_COntext", "")),
                 command=item.get("m_Command", ""),
                 input=item.get("m_Input"),
+                extra_fields={
+                    key: field_value
+                    for key, field_value in item.items()
+                    if key not in {"m_Context", "m_COntext", "m_Command", "m_Input"}
+                },
             )
             for item in value.get("m_Bindings", [])
             if isinstance(item, dict)
@@ -48,7 +54,12 @@ class HotkeyDocument:
     def to_mapping(self) -> dict:
         value = dict(self.metadata)
         value["m_Bindings"] = [
-            {"m_Context": binding.context, "m_Command": binding.command, "m_Input": binding.input}
+            {
+                **binding.extra_fields,
+                "m_Context": binding.context,
+                "m_Command": binding.command,
+                "m_Input": binding.input,
+            }
             for binding in self.bindings
             if binding.input
         ]
@@ -72,7 +83,7 @@ def _literal(value) -> str:
         return "true" if value else "false"
     if isinstance(value, (int, float)):
         return str(value)
-    return f'"{value}"'
+    return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"') + '"'
 
 
 def _entry_lines(entries: list[dict], indent: int) -> list[str]:
@@ -94,9 +105,9 @@ def _entry_lines(entries: list[dict], indent: int) -> list[str]:
             lines.append("")
         previous = group
         text, column = "\t" * indent + "{ ", indent * TAB_WIDTH + 2
-        for index, field in enumerate(row):
-            text += field
-            column += len(field)
+        for index, rendered_field in enumerate(row):
+            text += rendered_field
+            column += len(rendered_field)
             while column < targets[index]:
                 text += "\t"
                 column = _next_stop(column)
@@ -118,7 +129,10 @@ def serialize(value: dict) -> str:
             lines.append("\t]")
         else:
             lines.append("\t{")
-            lines.extend(f"\t\t{name} = {_literal(field)}" for name, field in item.items())
+            lines.extend(
+                f"\t\t{name} = {_literal(field_value)}"
+                for name, field_value in item.items()
+            )
             lines.append("\t}")
     lines.append("}")
     return "\n".join(lines) + "\n"
