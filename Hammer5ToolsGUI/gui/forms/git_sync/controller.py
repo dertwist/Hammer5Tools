@@ -511,7 +511,8 @@ class GitController:
             dlg = ChangesDialog(
                 entries, self._behind,
                 get_settings_bool('GitSync', 'generate_commit_messages', True),
-                self.main)
+                repo=self.repo,
+                parent=self.main)
             if not dlg.exec():
                 return  # user cancelled
             selected = dlg.selected_paths()

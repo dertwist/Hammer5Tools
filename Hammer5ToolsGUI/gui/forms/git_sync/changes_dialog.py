@@ -9,10 +9,12 @@ work, the controller pushes the selected commit without touching them. Only a
 required pull temporarily stashes and restores them; the note at the bottom of
 the dialog explains that exceptional path.
 """
+import os
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog, QDialogButtonBox, QHeaderView, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QMenu, QMessageBox, QPushButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
 )
 
 from gui.forms.git_sync import git_icon
@@ -56,12 +58,13 @@ class ChangesDialog(QDialog):
     means the message box starts empty and the user has to write one.
     """
 
-    def __init__(self, entries, behind=0, suggest=True, parent=None):
+    def __init__(self, entries, behind=0, suggest=True, repo=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Sync changes")
         self.setWindowIcon(git_icon())
         self.resize(720, 480)
         self._entries = list(entries)
+        self._repo = repo
         self._suggest = suggest
         self._message_edited = False
         self._updating_checks = False
@@ -81,6 +84,13 @@ class ChangesDialog(QDialog):
             button = QPushButton(label)
             button.clicked.connect(action)
             picker.addWidget(button)
+        self.discard_btn = QPushButton("Discard")
+        self.discard_btn.setToolTip(
+            "Permanently discard the selected change, restoring the file to "
+            "its last committed state.")
+        self.discard_btn.setEnabled(False)
+        self.discard_btn.clicked.connect(self._discard_selected)
+        picker.addWidget(self.discard_btn)
         picker.addStretch(1)
         self.count_label = QLabel()
         picker.addWidget(self.count_label)
@@ -92,7 +102,11 @@ class ChangesDialog(QDialog):
         self.tree.setRootIsDecorated(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setUniformRowHeights(True)
+        self.tree.setSelectionMode(QTreeWidget.ExtendedSelection)
         self.tree.header().setStretchLastSection(False)
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._show_context_menu)
+        self.tree.itemSelectionChanged.connect(self._on_selection_changed)
         self._populate_tree()
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -245,6 +259,108 @@ class ChangesDialog(QDialog):
         # ticked set changes.
         self._message_edited = bool(text.strip())
         self._refresh()
+
+    # discard
+    def _leaf_items_for_selection(self):
+        """Unique leaf items under the current tree selection, including folder descendants."""
+        seen = set()
+        leaves = []
+        for item in self.tree.selectedItems():
+            if item.data(0, _PATH_ROLE) is not None:
+                # Leaf item (file).
+                path = item.data(0, _PATH_ROLE)
+                if path not in seen:
+                    seen.add(path)
+                    leaves.append(item)
+            else:
+                # Folder item — collect all leaf descendants.
+                for child in self._descendants(item):
+                    if child.data(0, _PATH_ROLE) is not None:
+                        path = child.data(0, _PATH_ROLE)
+                        if path not in seen:
+                            seen.add(path)
+                            leaves.append(child)
+        return leaves
+
+    def _on_selection_changed(self):
+        has_selection = bool(self._leaf_items_for_selection()) and self._repo is not None
+        self.discard_btn.setEnabled(has_selection)
+
+    def _show_context_menu(self, pos):
+        items = self._leaf_items_for_selection()
+        if not items or self._repo is None:
+            return
+        menu = QMenu(self)
+        label = ("Discard change" if len(items) == 1
+                 else "Discard %d changes" % len(items))
+        menu.addAction(label, self._discard_selected)
+        menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def _discard_selected(self):
+        items = self._leaf_items_for_selection()
+        if not items or self._repo is None:
+            return
+        paths = [item.data(0, _PATH_ROLE) for item in items]
+        noun = "this change" if len(paths) == 1 else "%d changes" % len(paths)
+        r = QMessageBox.question(
+            self, "Discard",
+            "Permanently discard %s?\n\n%s\n\n"
+            "This cannot be undone." % (noun, "\n".join(paths)),
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if r != QMessageBox.Yes:
+            return
+        succeeded = []
+        for item in items:
+            path = item.data(0, _PATH_ROLE)
+            word = item.text(1)
+            if not self._discard_path(path, word):
+                break
+            succeeded.append(item)
+        self._remove_discarded_items(succeeded)
+
+    def _discard_path(self, path, word):
+        """Revert one path. Returns True on success."""
+        if word == "New":
+            full = os.path.join(self._repo.dir, path) if self._repo.dir else path
+            try:
+                os.remove(full)
+            except OSError:
+                pass
+            return True
+        code, _out, err = self._repo._run("checkout", "--", path)
+        if code != 0:
+            QMessageBox.warning(
+                self, "Discard failed",
+                "Could not discard %s:\n\n%s" % (path, err.strip() or "Unknown error"))
+            return False
+        return True
+
+    def _remove_discarded_items(self, items):
+        """Remove successfully discarded items from the tree and the entry list."""
+        if not items:
+            return
+        discarded = set()
+        for item in items:
+            path = item.data(0, _PATH_ROLE)
+            discarded.add(path)
+            parent = item.parent() or self.tree.invisibleRootItem()
+            parent.removeChild(item)
+        self._entries = [(w, p, s) for w, p, s in self._entries if p not in discarded]
+        self._leaf_items = [i for i in self._leaf_items if i.data(0, _PATH_ROLE) not in discarded]
+        self._prune_empty_folders()
+        self._sync_folder_states()
+        self._refresh()
+
+    def _prune_empty_folders(self):
+        """Recursively remove folder nodes that have no children left."""
+        def prune(parent):
+            for index in range(parent.childCount() - 1, -1, -1):
+                child = parent.child(index)
+                if child.data(0, _PATH_ROLE) is None:  # folder node
+                    prune(child)
+                    if child.childCount() == 0:
+                        parent.removeChild(child)
+        prune(self.tree.invisibleRootItem())
 
     # results
     def selected_paths(self):

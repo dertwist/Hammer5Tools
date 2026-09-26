@@ -19,7 +19,7 @@ if __name__ != "__main__":
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QPushButton, QVBoxLayout, QWidget,
+    QApplication, QLabel, QMessageBox, QPushButton, QVBoxLayout, QWidget,
 )
 
 repo_root = Path(__file__).resolve().parents[2]
@@ -141,6 +141,156 @@ def test_changes_dialog_folder_checks_cascade_and_become_partial(qapp):
         "maps/firewatch.vmap", "materials/sign.vmat"]
     dialog.close()
 
+
+def test_discard_button_disabled_without_repo(qapp):
+    """The Discard button stays disabled when no repo is provided."""
+    dialog = ChangesDialog([
+        ("Modified", "maps/a.vmap", 100),
+    ])
+    assert not dialog.discard_btn.isEnabled()
+    dialog.tree.setCurrentItem(dialog._items()[0])
+    # Still disabled because no repo was passed.
+    assert not dialog.discard_btn.isEnabled()
+    dialog.close()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_discard_removes_new_file_from_tree_and_disk(qapp, tmp_path, monkeypatch):
+    """Discarding an untracked (New) file deletes it and removes the tree item."""
+    addon = tmp_path / "addon"
+    _init_repo(addon)
+    (addon / "maps").mkdir()
+    (addon / "maps" / "base.vmap").write_text("base\n", encoding="utf-8")
+    _git(addon, "add", "-A")
+    _git(addon, "commit", "-m", "base")
+
+    untracked = addon / "maps" / "scratch.vmap"
+    untracked.write_text("scratch\n", encoding="utf-8")
+    assert untracked.is_file()
+
+    repo = GitRepo(addon)
+    dialog = ChangesDialog([
+        ("New", "maps/scratch.vmap", 8),
+    ], repo=repo)
+
+    # Select the item in the tree.
+    dialog.tree.setCurrentItem(dialog._items()[0])
+    assert dialog.discard_btn.isEnabled()
+
+    # Bypass the confirmation dialog.
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a, **_kw: QMessageBox.Yes)
+    dialog._discard_selected()
+
+    assert not untracked.is_file()
+    assert dialog._items() == []
+    assert dialog._entries == []
+    dialog.close()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_discard_restores_modified_file(qapp, tmp_path, monkeypatch):
+    """Discarding a Modified file runs git checkout and removes the tree item."""
+    addon = tmp_path / "addon"
+    _init_repo(addon)
+    (addon / "maps").mkdir()
+    (addon / "maps" / "dust.vmap").write_text("original\n", encoding="utf-8")
+    _git(addon, "add", "-A")
+    _git(addon, "commit", "-m", "base")
+    (addon / "maps" / "dust.vmap").write_text("edited\n", encoding="utf-8")
+
+    repo = GitRepo(addon)
+    dialog = ChangesDialog([
+        ("Modified", "maps/dust.vmap", 7),
+    ], repo=repo)
+
+    dialog.tree.setCurrentItem(dialog._items()[0])
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a, **_kw: QMessageBox.Yes)
+    dialog._discard_selected()
+
+    assert (addon / "maps" / "dust.vmap").read_text(encoding="utf-8") == "original\n"
+    assert dialog._items() == []
+    dialog.close()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_discard_folder_discards_all_descendants(qapp, tmp_path, monkeypatch):
+    """Selecting a folder and discarding removes all its leaf descendants."""
+    addon = tmp_path / "addon"
+    _init_repo(addon)
+    (addon / "maps").mkdir()
+    (addon / "maps" / "a.vmap").write_text("base a\n", encoding="utf-8")
+    (addon / "maps" / "b.vmap").write_text("base b\n", encoding="utf-8")
+    (addon / "other.txt").write_text("keep\n", encoding="utf-8")
+    _git(addon, "add", "-A")
+    _git(addon, "commit", "-m", "base")
+
+    # Create new untracked files in maps/.
+    (addon / "maps" / "c.vmap").write_text("new c\n", encoding="utf-8")
+    (addon / "maps" / "a.vmap").write_text("edited a\n", encoding="utf-8")
+
+    repo = GitRepo(addon)
+    dialog = ChangesDialog([
+        ("Modified", "maps/a.vmap", 10),
+        ("New", "maps/c.vmap", 6),
+        ("Modified", "other.txt", 5),
+    ], repo=repo)
+
+    # Select the "maps" folder node.
+    maps_folder = dialog.tree.topLevelItem(0)
+    assert maps_folder.text(0) == "maps"
+    dialog.tree.setCurrentItem(maps_folder)
+
+    leaves = dialog._leaf_items_for_selection()
+    assert len(leaves) == 2
+    assert {item.data(0, Qt.UserRole) for item in leaves} == {
+        "maps/a.vmap", "maps/c.vmap"}
+
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a, **_kw: QMessageBox.Yes)
+    dialog._discard_selected()
+
+    assert (addon / "maps" / "a.vmap").read_text(encoding="utf-8") == "base a\n"
+    assert not (addon / "maps" / "c.vmap").is_file()
+    # other.txt should still be in the dialog.
+    assert [item.data(0, Qt.UserRole) for item in dialog._items()] == ["other.txt"]
+    dialog.close()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
+def test_discard_multiple_selected_files(qapp, tmp_path, monkeypatch):
+    """Multi-selecting individual files and discarding removes all of them."""
+    addon = tmp_path / "addon"
+    _init_repo(addon)
+    (addon / "a.txt").write_text("a\n", encoding="utf-8")
+    (addon / "b.txt").write_text("b\n", encoding="utf-8")
+    _git(addon, "add", "-A")
+    _git(addon, "commit", "-m", "base")
+
+    (addon / "c.txt").write_text("new\n", encoding="utf-8")
+    (addon / "a.txt").write_text("edited\n", encoding="utf-8")
+
+    repo = GitRepo(addon)
+    dialog = ChangesDialog([
+        ("Modified", "a.txt", 7),
+        ("New", "c.txt", 4),
+        ("Modified", "b.txt", 2),  # not selected
+    ], repo=repo)
+
+    # Multi-select the first two items.
+    items = dialog._items()
+    dialog.tree.setCurrentItem(items[0])
+    items[1].setSelected(True)
+
+    leaves = dialog._leaf_items_for_selection()
+    assert len(leaves) == 2
+
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a, **_kw: QMessageBox.Yes)
+    dialog._discard_selected()
+
+    assert (addon / "a.txt").read_text(encoding="utf-8") == "a\n"
+    assert not (addon / "c.txt").is_file()
+    remaining = [item.data(0, Qt.UserRole) for item in dialog._items()]
+    assert remaining == ["b.txt"]
+    dialog.close()
 
 def test_failed_stash_with_created_backup_is_restored(monkeypatch):
     """A stash may be created before its internal hard reset fails."""
