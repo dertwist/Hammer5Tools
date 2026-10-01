@@ -1,8 +1,11 @@
+import logging
 import os
 from PySide6.QtWidgets import QMessageBox
 from gui.settings.common import get_cs2_path
 from gui.common import editor_info
 import keyvalues3
+
+log = logging.getLogger(__name__)
 
 ASSETTYPES_FILENAME = 'assettypes_common.txt'
 VSMART_BLOCK = {
@@ -34,6 +37,13 @@ def read_assettypes():
     try:
         data = keyvalues3.read(file_path).value
         return file_path, data
+    except FileNotFoundError:
+        log.warning(
+            "Skipping Smart Prop configuration because %s is missing. "
+            "Check that the CS2 update and Workshop Tools installation are complete.",
+            file_path,
+        )
+        return file_path, None
     except Exception as e:
         raise ValueError(f"Failed to read assettypes from {file_path}: {e}")
 
