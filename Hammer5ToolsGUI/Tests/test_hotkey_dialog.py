@@ -38,3 +38,25 @@ def test_keyboard_modifiers_and_custom_chords_are_composed():
     dialog.ui.list.setCurrentText("Ctrl+Shift+K")
 
     assert dialog.value == "Ctrl+Shift+K"
+
+
+def test_populate_editor_fills_missing_actions_with_defaults_and_preserves_custom():
+    from gui.editors.hotkey_editor.main import HotkeyEditorMainWindow
+    from gui.editors.hotkey_editor.document_model import HotkeyDocument, HotkeyBinding
+
+    win = HotkeyEditorMainWindow()
+    win.editor = "hammer"
+    # Document has a custom binding for JumpToSavedCamera1, but lacks JumpToSavedCamera2
+    win.document = HotkeyDocument(bindings=[
+        HotkeyBinding("HammerEditorSession", "JumpToSavedCamera1", "CustomKey"),
+    ])
+    win.populate_editor()
+
+    custom_binding = win.document.find("HammerEditorSession", "JumpToSavedCamera1")
+    assert custom_binding is not None
+    assert custom_binding.input == "CustomKey"
+
+    missing_binding = win.document.find("HammerEditorSession", "JumpToSavedCamera2")
+    assert missing_binding is not None
+    assert missing_binding.input == "Shift+F2"
+

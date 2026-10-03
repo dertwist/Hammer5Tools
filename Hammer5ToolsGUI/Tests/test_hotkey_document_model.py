@@ -95,3 +95,61 @@ def test_every_default_binding_is_offered_by_its_catalog():
         for binding in EDITOR_DEFAULTS[stem]["m_Bindings"]:
             context, command = binding["m_Context"], binding["m_Command"]
             assert command in catalog.get(context, []), f"{stem}: {context}/{command}"
+
+
+def test_read_installed_keybindings_returns_empty_for_missing_path():
+    from gui.editors.hotkey_editor.objects import read_installed_keybindings
+
+    catalog, defaults = read_installed_keybindings("", "hammer")
+    assert catalog == {}
+    assert defaults == {}
+    catalog, defaults = read_installed_keybindings(r"C:\nonexistent", "hammer")
+    assert catalog == {}
+    assert defaults == {}
+
+
+def test_read_installed_keybindings_parses_catalog_and_defaults(tmp_path):
+    from gui.editors.hotkey_editor.document_model import serialize
+    from gui.editors.hotkey_editor.objects import read_installed_keybindings
+
+    keybindings_dir = tmp_path / "game" / "core" / "tools" / "keybindings"
+    keybindings_dir.mkdir(parents=True)
+    (keybindings_dir / "hammer_key_bindings.txt").write_text(
+        serialize({
+            "m_Bindings": [
+                {"m_Context": "Camera", "m_Command": "Zoom", "m_Input": "MWheelUp"},
+                {"m_Context": "Camera", "m_Command": "Pan", "m_Input": "MMouse"},
+                {"m_Context": "HammerEditorSession", "m_Command": "JumpToSavedCamera1", "m_Input": "Shift+F1"},
+            ],
+        }),
+        encoding="utf-8",
+        newline="\n",
+    )
+    catalog, defaults = read_installed_keybindings(str(tmp_path), "hammer")
+    assert "Zoom" in catalog["Camera"]
+    assert "Pan" in catalog["Camera"]
+    assert "JumpToSavedCamera1" in catalog["HammerEditorSession"]
+    assert defaults[("Camera", "Zoom")] == "MWheelUp"
+    assert defaults[("HammerEditorSession", "JumpToSavedCamera1")] == "Shift+F1"
+
+
+def test_new_actions_get_default_inputs_from_installed_file(tmp_path):
+    from gui.editors.hotkey_editor.document_model import serialize
+    from gui.editors.hotkey_editor.objects import EDITOR_CATALOGS, read_installed_keybindings
+
+    keybindings_dir = tmp_path / "game" / "core" / "tools" / "keybindings"
+    keybindings_dir.mkdir(parents=True)
+    (keybindings_dir / "hammer_key_bindings.txt").write_text(
+        serialize({
+            "m_Bindings": [
+                {"m_Context": "BrandNewCtx", "m_Command": "BrandNewCmd", "m_Input": "Shift+F12"},
+            ],
+        }),
+        encoding="utf-8",
+        newline="\n",
+    )
+    catalog, defaults = read_installed_keybindings(str(tmp_path), "hammer")
+    assert "BrandNewCmd" in catalog.get("BrandNewCtx", [])
+    assert defaults[("BrandNewCtx", "BrandNewCmd")] == "Shift+F12"
+    assert "BrandNewCmd" not in EDITOR_CATALOGS.get("hammer", {}).get("BrandNewCtx", [])
+

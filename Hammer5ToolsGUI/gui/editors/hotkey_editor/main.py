@@ -6,14 +6,15 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushB
 from PySide6.QtCore import Signal
 from gui.editors.hotkey_editor.dialog import KeyDialog
 from gui.editors.hotkey_editor.objects import (
-    EDITOR_CATALOGS, EDITOR_DEFAULTS, EDITOR_MACROS, EDITOR_STEMS)
+    EDITOR_CATALOGS, EDITOR_DEFAULTS, EDITOR_MACROS, EDITOR_STEMS,
+    read_installed_keybindings)
 from gui.settings.common import get_addon_name, get_cs2_path
 from gui.other.addon_functions import launch_addon, kill_addon
 from gui.widgets.explorer.main import Explorer
 import os
 import datetime
 import keyvalues3 as kv3
-from gui.common import app_dir, Hotkeys_Path, user_data_dir
+from gui.common import Hotkeys_Path
 from gui.editors.hotkey_editor.document_model import HotkeyDocument, serialize
 
 log = logging.getLogger(__name__)
@@ -172,7 +173,31 @@ class HotkeyEditorMainWindow(QMainWindow):
                 context_item.addChild(new_item)
                 self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
-        for context, commands in EDITOR_CATALOGS.get(self.editor, {}).items():
+        # Collect default inputs from built-in EDITOR_DEFAULTS
+        defaults: dict[tuple[str, str], str] = {
+            (b.get("m_Context", b.get("m_COntext", "")), b.get("m_Command", "")): b.get("m_Input", "")
+            for b in EDITOR_DEFAULTS.get(self.editor, {}).get("m_Bindings", [])
+            if isinstance(b, dict) and b.get("m_Command")
+        }
+
+        # Overlay live CS2 keybindings if available
+        installed_catalog, installed_defaults = read_installed_keybindings(
+            get_cs2_path() or "", self.editor,
+        )
+        defaults.update(installed_defaults)
+
+        # Build a merged catalog: hardcoded actions + actions from the
+        # installed CS2 keybinding file, so new commands added by game updates
+        # appear automatically even when the hardcoded list is outdated.
+        merged_catalog: dict[str, list[str]] = {}
+        for source in (EDITOR_CATALOGS.get(self.editor, {}), installed_catalog):
+            for ctx, cmds in source.items():
+                target = merged_catalog.setdefault(ctx, [])
+                for cmd in cmds:
+                    if cmd not in target:
+                        target.append(cmd)
+
+        for context, commands in merged_catalog.items():
             context_item = add_context_if_not_exist(context)
 
             # Collect existing commands once per context
@@ -180,11 +205,14 @@ class HotkeyEditorMainWindow(QMainWindow):
 
             for command in commands:
                 if command not in {cmd for cmd, _ in existing_commands}:
-                    existing_items[context].add((command, ""))  # Assuming no specific input for additional actions
+                    default_input = defaults.get((context, command), "")
+                    existing_items[context].add((command, default_input))
                     new_item = QTreeWidgetItem(context_item)
                     new_item.setText(0, command)
-                    key_editor = KeyButton(name="")  # Assuming no specific input for additional actions
                     binding = self.document.ensure(context, command)
+                    if default_input:
+                        binding.input = default_input
+                    key_editor = KeyButton(name=binding.input)
                     key_editor.key_changed.connect(
                         lambda value, target=binding: setattr(target, "input", value)
                     )
@@ -204,13 +232,13 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.opened_file = filename
 
         self.populate_editor()
-        print(f'Opened: {self.opened_file}')
+        log.info('Opened: %s', self.opened_file)
 
 
     def save_preset(self):
         if self.opened_file != '':
             self.write_preset(self.opened_file, self.document.to_mapping())
-            print('Preset saved')
+            log.info('Preset saved')
 
     def write_preset(self, path, value):
         output = dict(EDITOR_MACROS.get(self.editor, {}))

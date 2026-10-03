@@ -2310,3 +2310,51 @@ for _stem, _default in EDITOR_DEFAULTS.items():
         _commands = EDITOR_CATALOGS.setdefault(_stem, {}).setdefault(_binding['m_Context'], [])
         if _binding['m_Command'] not in _commands:
             _commands.append(_binding['m_Command'])
+
+
+def read_installed_keybindings(
+    cs2_path: str, stem: str,
+) -> tuple[dict[str, list[str]], dict[tuple[str, str], str]]:
+    """Read the live CS2 keybinding file for *stem*.
+
+    Returns ``(catalog, defaults)`` where *catalog* is
+    ``{context: [commands]}`` and *defaults* is
+    ``{(context, command): input}``.
+
+    Both dicts are empty when the file is missing or unreadable, so the
+    hardcoded data remains the fallback.
+    """
+    import logging
+    import os
+
+    _log = logging.getLogger(__name__)
+    if not cs2_path:
+        return {}, {}
+    path = os.path.join(
+        cs2_path, "game", "core", "tools", "keybindings",
+        f"{stem}_key_bindings.txt",
+    )
+    if not os.path.isfile(path):
+        return {}, {}
+    try:
+        import keyvalues3 as kv3
+        data = kv3.read(path).value
+    except Exception as exc:
+        _log.warning("Could not read installed keybindings %s: %s", path, exc)
+        return {}, {}
+    catalog: dict[str, list[str]] = {}
+    defaults: dict[tuple[str, str], str] = {}
+    for entry in data.get("m_Bindings", []):
+        if not isinstance(entry, dict):
+            continue
+        context = entry.get("m_Context", entry.get("m_COntext", ""))
+        command = entry.get("m_Command", "")
+        input_val = entry.get("m_Input", "")
+        if context and command:
+            commands = catalog.setdefault(context, [])
+            if command not in commands:
+                commands.append(command)
+            if input_val:
+                defaults[(context, command)] = input_val
+    return catalog, defaults
+
