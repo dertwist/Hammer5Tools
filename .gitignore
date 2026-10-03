@@ -114,6 +114,7 @@ settings.cfg
 /Hammer5Tools/SoundEventEditor/soundevents_cache
 /Hammer5Tools/app
 /Hammer5Tools/version.txt
+/Hammer5Tools/MCP_SETUP.md
 SoundEventEditor/soundevents_cache
 /dumps/*
 /Hammer5Tools/Hammer5ToolsUpdater.exe
@@ -151,6 +152,7 @@ docs
 Hammer5ToolsCore/**/bin/
 Hammer5ToolsCore/**/obj/
 Hammer5ToolsCore/**/publish/
+Hammer5ToolsCore/**/build/
 TestResults/
 /SoundEventEditor/*
 Hammer5Tools/userdata

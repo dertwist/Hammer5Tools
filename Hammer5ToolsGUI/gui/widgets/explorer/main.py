@@ -816,6 +816,10 @@ class Explorer(QMainWindow):
                     self.audio_player = QMediaPlayer()
                     self.audio_output = QAudioOutput()
                     self.audio_player.setAudioOutput(self.audio_output)
+                    from gui.other.audio_device import bind_audio_output_monitoring, ensure_valid_audio_output, log_audio_playback
+                    bind_audio_output_monitoring(self.audio_output, self.audio_player, context="Explorer")
+                    ensure_valid_audio_output(self.audio_output, context="Explorer")
+                    log_audio_playback(self.audio_output, context="Explorer")
                     self.audio_player.setSource(QUrl.fromLocalFile(file_path))
                     self.audio_player.play()
                 except Exception as e:

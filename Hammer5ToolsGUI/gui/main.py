@@ -269,7 +269,7 @@ if __name__ == "__main__":
             else:
                 message = IPCMessage.create_open_file(file_path)
         else:
-            message = IPCMessage.create_show()
+            message = IPCMessage.create_show(["--console"] if args.console else None)
         
         existing_socket.write(message.encode('utf-8'))
         existing_socket.flush()

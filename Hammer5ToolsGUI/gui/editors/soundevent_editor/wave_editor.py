@@ -35,6 +35,7 @@ from gui.editors.soundevent_editor.audio_player import (
 from gui.widgets.explorer.main import Explorer
 from gui.settings.common import get_cs2_path, get_addon_name
 from gui.styles import theme
+from gui.other.audio_device import bind_audio_output_monitoring, ensure_valid_audio_output, log_audio_playback
 
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
 
@@ -277,6 +278,7 @@ class AudioDocument(QWidget):
         self.player = QMediaPlayer()
         self.audio_out = QAudioOutput()
         self.player.setAudioOutput(self.audio_out)
+        bind_audio_output_monitoring(self.audio_out, self.player, context="WaveEditor")
         self.player.positionChanged.connect(self._on_position)
         self.player.playbackStateChanged.connect(self._on_state)
 
@@ -739,6 +741,8 @@ class AudioDocument(QWidget):
         if self._render_dirty:
             self._render_temp()
             self.player.setSource(QUrl.fromLocalFile(self._temp_wav))
+        ensure_valid_audio_output(self.audio_out, context="WaveEditor")
+        log_audio_playback(self.audio_out, context="WaveEditor")
         self.player.play()
         self._vu_timer.start()
 

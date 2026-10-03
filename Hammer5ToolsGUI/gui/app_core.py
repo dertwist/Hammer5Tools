@@ -700,6 +700,10 @@ def handle_new_connection(server, widget):
         data = socket.readAll().data()
         message = IPCMessage.parse(data)
         if message:
+            arguments = message.get("arguments") or []
+            if "--console" in arguments:
+                from gui.other.console import open_console
+                open_console()
             command = message.get("command")
             if command == IPCCommand.SHOW_WINDOW.value:
                 widget.tray.restore_window()

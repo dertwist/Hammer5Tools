@@ -10,6 +10,7 @@ from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFon
 from gui.settings.common import set_settings_bool, get_settings_bool
 from gui.editors.soundevent_editor.ui_audio_player import Ui_Form
 from gui.styles import theme
+from gui.other.audio_device import bind_audio_output_monitoring, ensure_valid_audio_output, log_audio_playback
 
 log = logging.getLogger(__name__)
 
@@ -323,6 +324,7 @@ class AudioPlayer(QWidget):
         self.audio_player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.audio_player.setAudioOutput(self.audio_output)
+        bind_audio_output_monitoring(self.audio_output, self.audio_player, context="AudioPlayer")
 
         self.filepath = None
         self.duration = "00:00"
@@ -436,6 +438,8 @@ class AudioPlayer(QWidget):
             self.play_sound()
 
     def play_sound(self):
+        ensure_valid_audio_output(self.audio_output, context="AudioPlayer")
+        log_audio_playback(self.audio_output, context="AudioPlayer")
         self.audio_player.play()
         self.timer.start()
         self.vu_timer.start()

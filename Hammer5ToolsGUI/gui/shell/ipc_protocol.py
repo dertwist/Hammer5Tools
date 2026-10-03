@@ -27,10 +27,15 @@ class IPCMessage:
     PROTOCOL_VERSION = 1
     
     @staticmethod
-    def create_show():
+    def create_show(arguments=None):
         """Create a message to show/focus the main window."""
-        return json.dumps({"protocol_version": IPCMessage.PROTOCOL_VERSION,
-                           "command": IPCCommand.SHOW_WINDOW.value})
+        payload = {
+            "protocol_version": IPCMessage.PROTOCOL_VERSION,
+            "command": IPCCommand.SHOW_WINDOW.value,
+        }
+        if arguments:
+            payload["arguments"] = list(arguments)
+        return json.dumps(payload)
     
     @staticmethod
     def create_open_file(file_path, editor_type="smartprop"):
