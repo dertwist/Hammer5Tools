@@ -6,7 +6,7 @@ QProgressBar {
     border: 1px solid @hex_5e5e5e;
     border-radius: 2px;
     text-align: center;
-    color: white;
+    color: @text;
     font-size: 10px;
     background-color: @background;
 }

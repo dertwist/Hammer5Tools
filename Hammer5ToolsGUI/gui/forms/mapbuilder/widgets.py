@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QScrollArea
 )
 import os
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, Signal, QSize, QEvent
 from PySide6.QtGui import QIcon, QColor
 from dataclasses import fields
 from typing import Any, Dict, Optional
@@ -228,7 +228,7 @@ class FolderSettingWidget(SettingWidget):
     def set_value(self, value: str):
         self.map_list.clear()
         default_vmap = self.find_default_vmap()
-        default_color = theme.qcolor("#65666d")
+        default_color = theme.qcolor(theme.get_theme().text_muted)
         
         if value:
             parts = [p for p in value.split(";") if p]
@@ -247,6 +247,16 @@ class FolderSettingWidget(SettingWidget):
             self._add_default_vmap_item(default_vmap, default_color)
             
         self.valueChanged.emit(self.get_value())
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.StyleChange:
+            default_vmap = self.find_default_vmap()
+            default_color = theme.qcolor(theme.get_theme().text_muted)
+            for i in range(self.map_list.count()):
+                item = self.map_list.item(i)
+                if item and item.data(Qt.UserRole) == default_vmap:
+                    item.setForeground(default_color)
 
     def _add_default_vmap_item(self, path, color):
         display_text = self._get_display_text(path)

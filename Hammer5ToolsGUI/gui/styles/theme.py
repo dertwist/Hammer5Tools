@@ -179,6 +179,10 @@ _BRIGHT_COLORS = (
     ("#ff5050", "#b60000"),  # fg
     ("#ffc850", "#795300"),  # fg
     ("#ffd54f", "#6e5300"),  # fg
+    ("#00ff00", "#2a5f30"),  # fg - terminal success
+    ("#4da6ff", "#0d589f"),  # fg - terminal header/phase
+    ("#ff4444", "#a71f1f"),  # fg - terminal error
+    ("#ffaa00", "#704e11"),  # fg - terminal warning
 )
 
 
@@ -277,6 +281,8 @@ _VINTAGE_COLORS = (
     ("#393939", "#606c53"), ("#505864", "#7a8c66"),
     ("#707070", "#8c9c79"), ("#878787", "#9daa8f"),
     ("#e0d28a", "#d5cc97"), ("#fff8be", "#f6f2c7"),
+    ("#00ff00", "#6fb175"), ("#4da6ff", "#70a3cd"),
+    ("#ff4444", "#ce6e6b"), ("#ffaa00", "#c99e4b"),
 )
 
 def _make_theme(*, level, palette, viewport_clear, **colors):

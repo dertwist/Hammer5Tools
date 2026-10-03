@@ -529,12 +529,16 @@ class SystemMonitor(QWidget):
         else:
             self.gpu_graph.update_value(0.0, " (No GPU detected)")
 
-    def closeEvent(self, event):
+    def stop(self):
         """Clean shutdown of worker thread"""
         self.timer.stop()
         self.gpu_worker.stop()
         self.gpu_thread.quit()
-        self.gpu_thread.wait()
+        self.gpu_thread.wait(2000)
+
+    def closeEvent(self, event):
+        """Clean shutdown of worker thread"""
+        self.stop()
         event.accept()
 
 

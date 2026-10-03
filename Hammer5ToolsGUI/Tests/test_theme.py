@@ -303,6 +303,22 @@ def test_mapbuilder_group_label_background_is_transparent():
         assert col_header == col_label_bg, f"Label background mismatch for theme {level}: {col_label_bg} vs {col_header}"
 
 
+def test_mapbuilder_default_map_color_follows_theme():
+    """Default vmap in MapBuilder queue must use text_muted so it has high contrast in all themes."""
+    from gui.forms.mapbuilder.widgets import FolderSettingWidget
+    from PySide6.QtWidgets import QApplication
+
+    _app = QApplication.instance() or QApplication([])
+    for level in (theme.LEVEL_STANDARD, theme.LEVEL_BRIGHT, theme.LEVEL_VINTAGE):
+        theme.set_level(level)
+        widget = FolderSettingWidget("mappath", str, "")
+        expected_color = theme.qcolor(theme.get_theme().text_muted)
+        item = widget.map_list.item(0)
+        assert item is not None
+        assert item.foreground().color().name().lower() == expected_color.name().lower()
+
+
+
 def test_progress_bar_is_styled_in_compiled_qss():
     """QProgressBar uses the compact Map Builder progress bar style globally."""
     qss = compile_stylesheet(theme.STANDARD_THEME)
@@ -317,6 +333,86 @@ def test_mapbuilder_chart_colours_change_with_the_theme():
     chart_colours = ("#ff5a5a", "#ffd700", "#32b8c6")
     for canonical in chart_colours:
         assert theme.resolve_hex(theme.BRIGHT_THEME, canonical) != canonical
+
+
+def test_mapbuilder_log_colours_resolve_for_bright_theme():
+    """All log colors used in Map Builder must resolve to dark, high-contrast
+    counterparts when the Bright theme is active, so output text remains legible."""
+    log_colours = (
+        "#5aa0e0",  # phase / header
+        "#5fb96a",  # success
+        "#e05656",  # error
+        "#e0a030",  # warning
+        "#d0d0d0",  # info (must never blend into #d1d1d1 background)
+        "#8e8e8e",  # separator
+        "#8a8a8a",  # timestamp
+        "#4da6ff",  # legacy phase
+        "#00ff00",  # legacy success
+        "#ff4444",  # legacy error
+        "#ffaa00",  # legacy warning
+    )
+    for canonical in log_colours:
+        resolved = theme.resolve_hex(theme.BRIGHT_THEME, canonical)
+        assert resolved != canonical, f"{canonical} has no Bright counterpart"
+        # In Bright theme (light background #d1d1d1), foreground text must be darkened
+        assert int(resolved[1:3], 16) + int(resolved[3:5], 16) + int(resolved[5:7], 16) < \
+               int(canonical[1:3], 16) + int(canonical[3:5], 16) + int(canonical[5:7], 16), \
+               f"{canonical} was not darkened in Bright theme: {resolved}"
+
+
+def test_mapbuilder_qss_progress_bar_and_preset_contrast():
+    """QProgressBar and active PresetButton must use semantic tokens that adapt to Bright theme."""
+    bright_qss = compile_stylesheet(theme.BRIGHT_THEME)
+    assert f"color: {theme.BRIGHT_THEME.text};" in bright_qss
+    assert 'h5Component="mapbuilderPreset"' in bright_qss
+    assert 'h5Component="mapbuilderPresetLabel"' in bright_qss
+
+
+def test_mapbuilder_dialog_log_uses_theme_colors(monkeypatch, tmp_path):
+    """MapBuilderDialog must render log messages with theme-adapted colors in Bright theme."""
+    from gui.forms.mapbuilder.main import MapBuilderDialog
+    from PySide6.QtWidgets import QApplication
+
+    _app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr("gui.forms.mapbuilder.main.get_cs2_path", lambda: str(tmp_path))
+    monkeypatch.setattr("gui.forms.mapbuilder.main.get_addon_dir", lambda: str(tmp_path))
+
+    theme.set_level(theme.LEVEL_BRIGHT)
+    dialog = MapBuilderDialog()
+    dialog.log_info("Info test message")
+    dialog.log_phase("Phase test message")
+    dialog.log_success("Success test message")
+    dialog.log_error("Error test message")
+    dialog.log_warning("Warning test message")
+
+    html = dialog.ui.output_list_widget.toHtml().lower()
+    # In Bright theme, info is #2f2f2f, not invisible #d0d0d0
+    assert "#2f2f2f" in html
+    assert "#d0d0d0" not in html
+    # Phase is #1b5890, not pale #4da6ff
+    assert "#1b5890" in html
+    assert "#4da6ff" not in html
+    # Success is #2a5f30, not neon #00ff00
+    assert "#2a5f30" in html
+    assert "#00ff00" not in html
+    # Error is #a71f1f, not light #ff4444
+    assert "#a71f1f" in html
+    # Warning is #704e11, not light #ffaa00
+    assert "#704e11" in html
+
+    # Live theme switch back to Standard should re-render existing logs with Standard colors
+    theme.set_level(theme.LEVEL_STANDARD)
+    from PySide6.QtCore import QEvent
+    dialog.changeEvent(QEvent(QEvent.Type.StyleChange))
+    html_standard = dialog.ui.output_list_widget.toHtml().lower()
+    assert "#d0d0d0" in html_standard
+    assert "#5aa0e0" in html_standard
+    assert "#5fb96a" in html_standard
+
+    dialog.close()
+    dialog.deleteLater()
+
+
 
 
 

@@ -100,14 +100,17 @@ QPushButton[h5Component="mapbuilderPreset"]:hover {
     background-color: @accent_hover;
 }
 QPushButton[h5Component="mapbuilderPreset"][h5State="active"] {
-    background-color: @accent;
+    background-color: @selection;
     color: @selection_text;
-    border: @border_width solid @accent_pressed;
+    border: @border_width solid @accent;
 }
 QLabel[h5Component="mapbuilderPresetLabel"] {
     font-size: 10px;
     background-color: transparent;
     color: @text;
+}
+QPushButton[h5Component="mapbuilderPreset"][h5State="active"] QLabel[h5Component="mapbuilderPresetLabel"] {
+    color: @selection_text;
 }
 
 QWidget[h5Component="systemMonitor"] {

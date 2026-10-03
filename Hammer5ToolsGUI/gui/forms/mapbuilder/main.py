@@ -23,8 +23,9 @@ from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
     QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow, QLabel
 )
-from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint, QEvent
 
+from gui.styles import theme
 from gui.styles.common import set_style_property
 from gui.forms.mapbuilder.ui_main import Ui_mapbuilder_dialog
 from gui.forms.mapbuilder.system_monitor import SystemMonitor
@@ -773,11 +774,15 @@ class MapBuilderDialog(QMainWindow):
                     self.cubemap_thread.abort()
                     self.cubemap_thread.wait(2000)
                 self.elapsed_timer.stop()
+                if hasattr(self, 'system_monitor') and self.system_monitor:
+                    self.system_monitor.stop()
                 event.accept()
                 self.hide()
             else:
                 event.ignore()
         else:
+            if hasattr(self, 'system_monitor') and self.system_monitor:
+                self.system_monitor.stop()
             event.accept()
             self.hide()
 
@@ -954,6 +959,7 @@ class MapBuilderDialog(QMainWindow):
                 break
 
         self.ui.output_list_widget.clear()
+        self.current_build_logs.clear()
 
         if settings.cleanup_vrad3_cache:
             self.cleanup_vrad3_cache(self.map_queue)
@@ -1423,38 +1429,55 @@ class MapBuilderDialog(QMainWindow):
         launch_cs2_process(str(cs2_exe), f'{commands} +map_workshop {addon_name} {map_name}')
 
     def log_phase(self, message: str):
-        self._log_colored(message, '#4DA6FF')
+        self._log_colored(message, '#5aa0e0')
 
     def log_success(self, message: str):
-        self._log_colored(message, '#00FF00')
+        self._log_colored(message, '#5fb96a')
 
     def log_error(self, message: str):
-        self._log_colored(message, '#FF4444')
+        self._log_colored(message, '#e05656')
 
     def log_warning(self, message: str):
-        self._log_colored(message, '#FFAA00')
+        self._log_colored(message, '#e0a030')
 
     def log_info(self, message: str):
         self._log_colored(message, '#d0d0d0')
 
     def log_separator(self, char='=', length=70):
-        self._log_colored(char * length, '#727272')
+        self._log_colored(char * length, '#8e8e8e')
+
+    def _append_log_line(self, timestamp: str, formatted_message: str, color: str | None = None):
+        ts_color = theme.color("#8a8a8a")
+        if color:
+            resolved_color = theme.color(color)
+            line = f'<span style="color:{ts_color};">[{timestamp}]</span> <span style="color:{resolved_color};">{formatted_message}</span>'
+        else:
+            line = f'<span style="color:{ts_color};">[{timestamp}]</span> {formatted_message}'
+        self.ui.output_list_widget.append(line)
+        scrollbar = self.ui.output_list_widget.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def _log_colored(self, message: str, color: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = OutputFormatter.parse_output_line(message)
-        timestamped_message = f'<span style="color:#8a8a8a;">[{timestamp}]</span> <span style="color:{color};">{formatted_message}</span>'
-        self.ui.output_list_widget.append(timestamped_message)
-        scrollbar = self.ui.output_list_widget.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self.current_build_logs.append((timestamp, formatted_message, color))
+        self._append_log_line(timestamp, formatted_message, color)
 
     def add_log_message(self, message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = OutputFormatter.parse_output_line(message)
-        timestamped_message = f'<span style="color:#8a8a8a;">[{timestamp}]</span> {formatted_message}'
-        self.ui.output_list_widget.append(timestamped_message)
-        scrollbar = self.ui.output_list_widget.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self.current_build_logs.append((timestamp, formatted_message, None))
+        self._append_log_line(timestamp, formatted_message, None)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.StyleChange:
+            scrollbar = self.ui.output_list_widget.verticalScrollBar()
+            val = scrollbar.value()
+            self.ui.output_list_widget.clear()
+            for timestamp, msg, col in self.current_build_logs:
+                self._append_log_line(timestamp, msg, col)
+            scrollbar.setValue(val)
 
     def _output_context_menu(self, pos: QPoint):
         menu = QMenu(self)
