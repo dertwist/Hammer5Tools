@@ -1,5 +1,4 @@
 import logging
-from gui.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 import sys
 import os
 import subprocess

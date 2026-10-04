@@ -71,7 +71,8 @@ def get_cs2_path():
     def cs2_exe_exists(path):
         if not path or Path(path) == app_dir:
             return False
-        return (Path(path) / "game" / "bin" / "win64" / "cs2.exe").exists()
+        p = Path(path)
+        return (p / "game" / "bin" / "win64" / "cs2.exe").is_file() or (p / "game" / "csgo" / "gameinfo.gi").is_file()
 
     manual_path = get_settings_value('PATHS', 'manual_cs2_path')
     if manual_path:

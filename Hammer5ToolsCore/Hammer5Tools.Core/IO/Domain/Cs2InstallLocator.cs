@@ -103,8 +103,8 @@ public static class Cs2InstallLocator
                     path = path.Replace('/', '\\');
 
                     var apps = Child(entry.Value, "apps");
-                    var hasCs2 = apps is not null &&
-                                 apps.Any(a => a.Key == Cs2AppId.ToString());
+                    var hasCs2 = (apps is not null && apps.Any(a => a.Key == Cs2AppId.ToString()))
+                                 || File.Exists(Path.Combine(path, "steamapps", $"appmanifest_{Cs2AppId}.acf"));
                     (hasCs2 ? ownsCs2 : others).Add(path);
                 }
             }

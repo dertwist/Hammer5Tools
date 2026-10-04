@@ -31,7 +31,7 @@ _CEILINGS = {
 
 
 def _response_size(payload: dict) -> int:
-    return len(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    return len(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
 
 def _big_variables(count: int) -> list[dict]:
