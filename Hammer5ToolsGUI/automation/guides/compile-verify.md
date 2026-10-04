@@ -9,6 +9,17 @@ builder. You do not need to open Hammer to find out whether an asset is sound.
 hammer5tools.compile_asset path=<file>
 ```
 
+Use an absolute source-file path. Optional `cs2_path` selects the installation;
+otherwise the configured CS2 path is read at call time. `force: true` forwards
+`-f` to the compiler. `timeout_seconds` defaults to 120 and controls the execution
+deadline, separately from the MCP client's tool timeout. These options already
+exist in the single-file tool; each asset currently needs its own call/process.
+
+Check `success`, `exit_code`, and `error` in the structured result. The MCP
+envelope's `isError: false` alone does not mean compilation succeeded. Output
+currently includes full stdout/stderr. A timeout can carry byte streams that
+fail JSON serialization; the server returns a JSON-RPC error and remains usable.
+
 Reading the result:
 
 - **exit code 0** — the asset parsed, loaded, and compiled.

@@ -48,3 +48,17 @@ Server-wide agent guidance is maintained in
 `Hammer5ToolsGUI/automation/mcp/instructions.md`. Tool descriptions, JSON
 schemas, annotations, and implementations are registered in
 `Hammer5ToolsGUI/automation/tools.py`.
+
+Use `initialize` to read the server version and `tools/list` to inspect the
+schema exposed by the executable your client actually launches. Source and
+installed builds can differ even when their application version matches. A
+client adapter can also rename tools; compare schemas after normalizing those
+names before treating an argument as unsupported.
+
+The current single-file `hammer5tools.compile_asset` schema includes `force`
+(boolean, default false) and `timeout_seconds` (integer, default 120), plus
+optional `cs2_path`. Force forwards `-f`. Prefer an absolute asset path. The
+execution timeout is separate from the client's `tool_timeout_sec` above.
+
+Reproducible fixture measurements and the inspected local deployment parity
+are recorded in [docs/mcp_feedback_progress.md](docs/mcp_feedback_progress.md).

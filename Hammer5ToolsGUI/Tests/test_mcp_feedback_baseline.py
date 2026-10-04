@@ -15,7 +15,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from automation.mcp.server import McpServer, run_stdio
+from automation.mcp.server import McpServer, _write_response, run_stdio
 from automation.operations import compiler
 from automation.tools import TOOLS_BY_NAME, invoke_tool
 from test_automation_budget import _fixture, _response_size
@@ -207,6 +207,11 @@ def test_baseline_sizes(case, monkeypatch):
         assert payload["stdout"] == STDOUT
         assert _utf8_size(payload) > 16 * 1024, "P2 fixture must expose the current unbounded logs"
     assert _utf8_size(response) > _utf8_size(payload)
+    output = io.StringIO()
+    _write_response(output, response)
+    wire = output.getvalue().encode("utf-8")
+    assert wire.endswith(b"\n") and json.loads(wire) == response
+    assert len(wire) == _utf8_size(response) + 1
     print(json.dumps({"case": case, "logical_utf8_bytes": _utf8_size(payload),
-                      "wire_utf8_bytes": _utf8_size(response) + 1, "tool_calls": 0 if case == "tools_list" else 1,
+                      "wire_utf8_bytes": len(wire), "tool_calls": 0 if case == "tools_list" else 1,
                       "fake_process_calls": runner.call_count, "handler_ms": round(elapsed * 1000, 3)}))
