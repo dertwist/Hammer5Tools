@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate
     QListWidget, QApplication, QTreeView, QHeaderView, QComboBox
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator
+from PySide6.QtCore import Signal, Slot, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer, QDirIterator
 from shiboken6 import isValid
 
 from gui.settings.common import (
@@ -400,8 +400,6 @@ class Explorer(QMainWindow):
         self._expand_timer.setInterval(30)
         self._expand_timer.timeout.connect(self._expand_all_filtered)
 
-        self.model.directoryLoaded.connect(lambda path: self._expand_timer.start() if self.filter_editline.text().strip() else None)
-        self.filter_proxy_model.rowsInserted.connect(lambda *args: self._expand_timer.start() if self.filter_editline.text().strip() else None)
         self.tree.setSortingEnabled(True)
         self.tree.setAlternatingRowColors(True)
         for column in range(self.model.columnCount()):
@@ -429,6 +427,8 @@ class Explorer(QMainWindow):
         self.filter_editline.setPlaceholderText("Filter files...")
         self.filter_editline.textChanged.connect(lambda text: self._filter_timer.start())
         self.top_layout.addWidget(self.filter_editline)
+        self.model.directoryLoaded.connect(self._schedule_filtered_expansion)
+        self.filter_proxy_model.rowsInserted.connect(self._schedule_filtered_expansion)
 
         if self.base_directories:
             self.root_selector = QComboBox(self)
@@ -529,8 +529,13 @@ class Explorer(QMainWindow):
         if text.strip() != "":
             self._expand_all_filtered()
 
+    @Slot()
+    def _schedule_filtered_expansion(self) -> None:
+        if isValid(self.filter_editline) and self.filter_editline.text().strip():
+            self._expand_timer.start()
+
     def _expand_all_filtered(self):
-        if not hasattr(self, 'filter_editline') or not self.filter_editline.text().strip():
+        if not hasattr(self, 'filter_editline') or not isValid(self.filter_editline) or not self.filter_editline.text().strip():
             return
         if hasattr(self, 'tree') and isValid(self.tree):
             self.tree.expandAll()
