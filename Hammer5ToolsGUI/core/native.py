@@ -66,6 +66,21 @@ class SmartPropNativeClient:
     ABI_VERSION = 2
     LIBRARY_NAME = "Hammer5Tools.Core.dll"
 
+    def resolve_asset_path(self, path: str, addon_root: str | None, must_exist: bool = True) -> str:
+        return self.automation_request("h5t_resolve_asset_path_json", {
+            "path": path, "addonRoot": addon_root, "mustExist": must_exist,
+        })
+
+    def automation_request(self, export: str, request: dict) -> dict | str:
+        """Invoke an additive JSON export, leaving older ABI-2 features usable."""
+        try:
+            function = getattr(self._library, export)
+        except AttributeError as error:
+            raise NativeCoreError(f"Core lacks {export}; publish the updated NativeAOT library") from error
+        function.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(ctypes.c_int)]
+        function.restype = ctypes.c_int
+        return json.loads(self._invoke(function, *self._buffer_arguments(self._json_bytes(request))))
+
     def __init__(self, library_path: str | os.PathLike[str] | None = None) -> None:
         path = Path(library_path).resolve() if library_path else self._find_library()
         if path is None:
@@ -279,6 +294,17 @@ class SmartPropNativeClient:
         return json.loads(self._invoke(
             self._library.h5t_compiled_resource_read_json, *self._buffer_arguments(self._json_bytes(request)),
         ))
+
+    def read_valve_map_import(self, path: str, content_root: str = "") -> dict:
+        """Read schema-versioned DCC import data through the additive Core export."""
+        reader = getattr(self._library, "h5t_vmap_read_import_json", None)
+        if reader is None:
+            raise NativeCoreError("This Core build lacks VMAP import support; publish the current Core first")
+        request = self._json_bytes({"path": path, "contentRoot": content_root or None})
+        result = json.loads(self._invoke(reader, *self._buffer_arguments(request)))
+        if result.get("schemaVersion") != 1:
+            raise NativeCoreError("Unsupported VMAP import schema")
+        return result
 
     def read_valve_map(self, path: str) -> dict:
         """Reads an uncompiled VMAP into the shared read-only projection (path/world/entities/...)."""
@@ -523,6 +549,11 @@ class SmartPropNativeClient:
         length = ctypes.c_int
         output = ctypes.POINTER(pointer)
         output_length = ctypes.POINTER(length)
+
+        import_reader = getattr(self._library, "h5t_vmap_read_import_json", None)
+        if import_reader is not None:
+            import_reader.argtypes = [pointer, length, output, output_length]
+            import_reader.restype = ctypes.c_int
 
         self._library.h5t_core_abi_version.argtypes = []
         self._library.h5t_core_abi_version.restype = ctypes.c_int

@@ -2,6 +2,20 @@
 
 For creating or modifying one, see the `vmap-authoring` topic.
 
+Loose file arguments accept absolute paths or addon-relative paths with
+`addon_root` (absolute content directory), otherwise the active configured addon.
+Context is read per request. Reads check existence; new output paths are allowed
+for writes. Relative paths cannot escape through `..`, symlinks, or junctions.
+
+`vmap_references` now defaults to 50 names. Its `references` list is retained;
+check `total`, `returned`, `offset`, and `truncated`, then page with `offset`.
+`limit` is 1..500. `pattern` is a case-insensitive glob over normalized forward
+slashes: `*` crosses directories, `?` matches one character, `[]` matches a class.
+`extension` optionally filters by suffix, with or without a leading dot.
+Filtering precedes sorting/pagination. `detail` accepts summary/names/full;
+references are strings at every level because Core has no extra per-reference
+metadata. All references remain recoverable through pages.
+
 Core deserializes a `.vmap` completely — the node tree, every entity with its
 properties, triangulated brush meshes, model placements, and SmartProp
 placements with their per-instance variable overrides. The tools shape that,

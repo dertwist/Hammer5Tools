@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
+import ntpath
+import os
+from fnmatch import fnmatchcase
 from typing import Any
 
 from core.bridge import CoreBridge
 from core.version import APP_VERSION
 
 from automation.guides.loader import TOPICS, guide
+from automation.formats.shaping import paginate
 from automation.formats.fgd_io import entity_info
 from automation.formats.vmap_io import read_vmap, read_vmap_scene
 from automation.formats.vmdl_io import edit_vmdl, read_vmdl, write_vmdl
@@ -20,10 +24,10 @@ from automation.formats.vsmart_lint import lint_vsmart
 from automation.formats.vsmart_patch import patch_vsmart
 from automation.formats.vdata_io import edit_vdata, read_vdata, write_vdata
 from automation.formats.vsnap_io import edit_vsnap, generate_vsnap, read_vsnap, write_vsnap
-from automation.operations.compiler import compile_asset
+from automation.operations.compiler import compile_asset, compile_assets
 from automation.operations.dependencies import resolve_dependencies
 from automation.operations.validation import find_unused_assets, validate_addon
-from automation.operations.vmap_blockout import DEFAULT_BOX_MODEL, write_blockout
+from automation.operations.vmap_blockout import write_blockout
 from automation.operations.vmap_ops import vmap_rewrite_references
 from automation.operations.vpk_ops import vpk_extract, vpk_search
 
@@ -141,7 +145,26 @@ def _core_status(bridge: CoreBridge, _arguments: Mapping[str, Any]) -> JsonObjec
 
 def _vmap_references(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     path = _required_string(arguments, "path")
-    return {"path": path, "references": list(bridge.read_valve_map_asset_references(path))}
+    limit, offset = _query_page(arguments)
+    pattern = _optional_string(arguments, "pattern") or "*"
+    extension = (_optional_string(arguments, "extension") or "").lstrip(".").lower()
+    detail = _optional_string(arguments, "detail") or "summary"
+    if detail not in {"summary", "names", "full"}:
+        raise ValueError("detail must be summary, names, or full")
+    references = [value.replace("\\", "/") for value in bridge.read_valve_map_asset_references(path)]
+    matches = sorted((value for value in references
+                      if fnmatchcase(value.lower(), pattern.replace("\\", "/").lower())
+                      and (not extension or value.lower().endswith("." + extension))), key=str.casefold)
+    return {"path": path, "detail": detail, **paginate(matches, "references", limit=limit, offset=offset)}
+
+
+def _query_page(arguments: Mapping[str, Any], default: int = 50) -> tuple[int, int]:
+    limit, offset = arguments.get("limit", default), arguments.get("offset", 0)
+    if type(limit) is not int or not 1 <= limit <= 500:
+        raise ValueError("limit must be an integer between 1 and 500")
+    if type(offset) is not int or offset < 0:
+        raise ValueError("offset must be a nonnegative integer")
+    return limit, offset
 
 
 def _entity_info(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
@@ -211,7 +234,7 @@ def _vmdl_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     )
 
 
-def _vmdl_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmdl_write(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return write_vmdl(
         path=_required_string(arguments, "path"),
         mesh_rel_path=_required_string(arguments, "mesh_rel_path"),
@@ -219,19 +242,21 @@ def _vmdl_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject
         import_scale=_optional_float(arguments, "import_scale", 1.0),
         physics=_optional_bool(arguments, "physics", True),
         dry_run=_optional_bool(arguments, "dry_run", False),
+        bridge=bridge,
     )
 
 
-def _vmdl_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmdl_edit(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return edit_vmdl(
         path=_required_string(arguments, "path"),
         updates=_optional_dict(arguments, "updates") or {},
         dry_run=_optional_bool(arguments, "dry_run", False),
+        bridge=bridge,
     )
 
 
 # VMAT handlers
-def _vmat_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmat_read(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return read_vmat(
         _required_string(arguments, "path"),
         detail=_optional_string(arguments, "detail") or "summary",
@@ -239,7 +264,7 @@ def _vmat_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     )
 
 
-def _vmat_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmat_write(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return write_vmat(
         path=_required_string(arguments, "path"),
         shader=_optional_string(arguments, "shader") or "csgo_environment.vfx",
@@ -249,10 +274,11 @@ def _vmat_write(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject
         system_attributes=_optional_dict(arguments, "system_attributes"),
         attributes=_optional_dict(arguments, "attributes"),
         dry_run=_optional_bool(arguments, "dry_run", False),
+        bridge=bridge,
     )
 
 
-def _vmat_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmat_edit(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return edit_vmat(
         path=_required_string(arguments, "path"),
         set_slots=_optional_dict(arguments, "set_slots"),
@@ -261,11 +287,12 @@ def _vmat_edit(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
         remove_keys=_optional_list(arguments, "remove_keys"),
         shader=_optional_string(arguments, "shader"),
         dry_run=_optional_bool(arguments, "dry_run", False),
+        bridge=bridge,
     )
 
 
 # VTEX handlers
-def _vtex_read(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vtex_read(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return read_vtex(
         _required_string(arguments, "path"),
         detail=_optional_string(arguments, "detail") or "summary",
@@ -408,12 +435,16 @@ def _vsnap_edit(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
 
 
 # Operations handlers
-def _compile_asset(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _compile_asset(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return compile_asset(
         path=_required_string(arguments, "path"),
         cs2_path=_optional_string(arguments, "cs2_path"),
         force=_optional_bool(arguments, "force", False),
         timeout_seconds=_optional_int(arguments, "timeout_seconds", 120),
+        bridge=bridge,
+        addon_root=_optional_string(arguments, "addon_root"),
+        dry_run=_optional_bool(arguments, "dry_run", False),
+        background=_optional_bool(arguments, "background", False),
     )
 
 
@@ -446,13 +477,16 @@ def _resolve_dependencies(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> 
     )
 
 
-def _vmap_write_blockout(_bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+def _vmap_write_blockout(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
     return write_blockout(
         path=_required_string(arguments, "path"),
-        boxes=_optional_list(arguments, "boxes") or [],
+        boxes=_optional_list(arguments, "boxes"),
         skeleton=_optional_string(arguments, "skeleton"),
         cs2_path=_optional_string(arguments, "cs2_path"),
         dry_run=_optional_bool(arguments, "dry_run", False),
+        bridge=bridge,
+        items_file=_optional_string(arguments, "items_file"),
+        addon_root=_optional_string(arguments, "addon_root"),
     )
 
 
@@ -469,12 +503,15 @@ def _vmap_rewrite_references(bridge: CoreBridge, arguments: Mapping[str, Any]) -
 
 
 def _vpk_search(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    limit, offset = _query_page(arguments, 100)
     return vpk_search(
         query=_required_string(arguments, "query"),
         extension=_optional_string(arguments, "extension"),
         game_dir=_optional_string(arguments, "game_dir"),
         bridge=bridge,
-        limit=_optional_int(arguments, "limit", 100),
+        limit=limit,
+        offset=offset,
+        detail=_optional_string(arguments, "detail") or "full",
     )
 
 
@@ -485,6 +522,33 @@ def _vpk_extract(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject
         game_dir=_optional_string(arguments, "game_dir"),
         bridge=bridge,
     )
+
+
+def _author_batch(bridge: CoreBridge, arguments: Mapping[str, Any], format_name: str) -> JsonObject:
+    from gui.settings.common import addon_content_dir, get_cs2_path
+    payload = dict(arguments)
+    if not payload.get("addon_root"):
+        configured = addon_content_dir()
+        payload["addon_root"] = str(configured) if configured else None
+    payload["cs2_path"] = payload.get("cs2_path") or get_cs2_path()
+    return bridge.author_source_assets(payload, format_name, batch=True)
+
+
+def _model_bounds(bridge: CoreBridge, arguments: Mapping[str, Any]) -> JsonObject:
+    from gui.settings.common import get_cs2_path, get_addon_name
+    payload = dict(arguments)
+    payload["game_dir"] = payload.get("game_dir") or get_cs2_path()
+    payload["addon"] = payload.get("addon") or get_addon_name()
+    return bridge.inspect_model_bounds(payload)
+
+
+def _texture_operation(bridge: CoreBridge, arguments: Mapping[str, Any], operation: str) -> JsonObject:
+    from gui.settings.common import addon_content_dir
+    payload = dict(arguments)
+    if not payload.get("addon_root"):
+        root = addon_content_dir()
+        payload["addon_root"] = str(root) if root else None
+    return bridge.prepare_texture(payload, operation)
 
 
 TOOLS: tuple[AutomationTool, ...] = (
@@ -962,6 +1026,7 @@ TOOLS: tuple[AutomationTool, ...] = (
         _compile_asset,
         read_only=False,
         destructive=False,
+        idempotent=False,
     ),
     AutomationTool(
         "hammer5tools.validate_addon",
@@ -1041,6 +1106,7 @@ TOOLS: tuple[AutomationTool, ...] = (
         _vmap_write_blockout,
         read_only=False,
         destructive=True,
+        idempotent=False,
     ),
     AutomationTool(
         "hammer5tools.vpk_search",
@@ -1074,7 +1140,137 @@ TOOLS: tuple[AutomationTool, ...] = (
     ),
 )
 
+_PATH_TOOLS = {
+    "vmdl_read": ("path", True), "vmdl_write": ("path", False), "vmdl_edit": ("path", True),
+    "vmat_read": ("path", True), "vmat_write": ("path", False), "vmat_edit": ("path", True),
+    "vmap_read": ("path", True), "vmap_scene": ("path", True), "vmap_references": ("path", True),
+    "vmap_rewrite_references": ("vmap_path", True), "compile_asset": ("path", True),
+    "vmap_write_blockout": ("path", False),
+}
+for _tool in TOOLS:
+    if _tool.name.removeprefix("hammer5tools.") in _PATH_TOOLS:
+        _tool.input_schema["properties"]["addon_root"] = {"type": "string", "description": "Absolute content addon root for relative file paths."}
+
+TOOLS += (
+    AutomationTool("hammer5tools.model_bounds", "Inspect compiled LoD0 render bounds; physics/source-FBX data may be unsupported.",
+                   _object_schema({"path": {"type": "string"}, "game_dir": {"type": "string"}, "addon": {"type": "string"},
+                                   "position": {"type": "array"}, "angles": {"type": "array"},
+                                   "scale": {"oneOf": [{"type": "number"}, {"type": "array"}]},
+                                   "triangle_warning_threshold": {"type": "integer", "minimum": 1}}, ("path",)), _model_bounds),
+    AutomationTool("hammer5tools.compile_job_status", "Query queued, running, terminal, or recovered interrupted compilation jobs.",
+                   _object_schema({"job_id": {"type": "string"}}, ("job_id",)),
+                   lambda bridge, args: bridge.compilation_job_status(dict(args))),
+    AutomationTool("hammer5tools.compile_job_cancel", "Cancel a live owned compilation and its child process tree.",
+                   _object_schema({"job_id": {"type": "string"}}, ("job_id",)),
+                   lambda bridge, args: bridge.cancel_compilation_job(dict(args)), read_only=False),
+    AutomationTool("hammer5tools.compile_assets", "Compile a validated batch through Core; aggregate exit status does not prove per-asset success.",
+                   _object_schema({
+                       "paths": {"type": "array", "items": {"type": "string"}},
+                       "pattern": {"type": "string"}, "paths_file": {"type": "string"},
+                       "addon_root": {"type": "string"}, "cs2_path": {"type": "string"},
+                       "force": {"type": "boolean"}, "dry_run": {"type": "boolean"},
+                       "background": {"type": "boolean"}, "timeout_seconds": {"type": "integer", "minimum": 1},
+                   }), lambda bridge, args: compile_assets(dict(args), bridge), read_only=False, idempotent=False),
+    AutomationTool("hammer5tools.compile_log", "Read a bounded compiler log window (character offsets; seven-day retention).",
+                   _object_schema({"log_id": {"type": "string"}, "offset": {"type": "integer", "minimum": 0},
+                                   "limit": {"type": "integer", "minimum": 1, "maximum": 8192}}, ("log_id",)),
+                   lambda bridge, args: bridge.read_compiler_log(dict(args))),
+)
 TOOLS_BY_NAME = {tool.name: tool for tool in TOOLS}
+for _format in ("vmat", "vmdl"):
+    _item_properties = {
+        **TOOLS_BY_NAME[f"hammer5tools.{_format}_write"].input_schema["properties"],
+        **TOOLS_BY_NAME[f"hammer5tools.{_format}_edit"].input_schema["properties"],
+        "action": {"type": "string", "enum": ["create", "update"], "default": "create"},
+    }
+    for _context_key in ("dry_run", "addon_root"):
+        _item_properties.pop(_context_key, None)
+    _batch_tool = AutomationTool(
+        f"hammer5tools.{_format}_batch", "Create/update validated source assets; per-file backups, dry-run, and partial failures.",
+        _object_schema({"items": {"type": "array", "minItems": 1, "items": _object_schema(_item_properties, ("path",)),
+                                  "description": "Exactly one of items or manifest. Reuse write fields for create, edit fields for update."},
+                        "manifest": {"type": "string", "description": "UTF-8 JSON array of the same items."},
+                        "addon_root": {"type": "string"}, "cs2_path": {"type": "string", "description": "Stock compiled resource validation context."},
+                        "overwrite": {"type": "boolean"}, "dry_run": {"type": "boolean"}}),
+        lambda bridge, args, format_name=_format: _author_batch(bridge, args, format_name), read_only=False, idempotent=False)
+    TOOLS += (_batch_tool,)
+    TOOLS_BY_NAME[_batch_tool.name] = _batch_tool
+TOOLS_BY_NAME["hammer5tools.compile_asset"].input_schema["properties"].update({
+    "dry_run": {"type": "boolean"}, "background": {"type": "boolean"},
+})
+_blockout_schema = TOOLS_BY_NAME["hammer5tools.vmap_write_blockout"].input_schema
+_blockout_schema["required"] = ["path"]
+_blockout_schema["properties"]["items_file"] = {"type": "string", "description": "UTF-8 JSON array, exclusive with boxes."}
+_blockout_schema["properties"]["boxes"]["description"] = "Items {model?, size? or scale?, position?, angles?, skin?}; size retains legacy size/10 conversion."
+
+def _map_operation(bridge: CoreBridge, arguments: Mapping[str, Any], operation: str) -> JsonObject:
+    from gui.settings.common import addon_content_dir, get_cs2_path, get_addon_name
+    payload = dict(arguments)
+    if not payload.get("addon_root"):
+        root = addon_content_dir()
+        payload["addon_root"] = str(root) if root else None
+    payload["cs2_path"] = payload.get("cs2_path") or get_cs2_path()
+    if operation == "zoo" and payload.get("ground_align"):
+        payload["addon"] = payload.get("addon") or get_addon_name()
+    return bridge.author_map(payload, operation)
+
+
+for _operation in ("nodes", "transform", "group", "zoo"):
+    _properties = {"path": {"type": "string"}, "addon_root": {"type": "string"}}
+    if _operation == "nodes":
+        _properties.update({"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}})
+    else:
+        _properties["dry_run"] = {"type": "boolean"}
+    if _operation == "transform":
+        _properties.update({"id": {"type": "string"}, "position": {"type": "array"}, "angles": {"type": "array"}, "scale": {"oneOf": [{"type": "number"}, {"type": "array"}]}})
+    if _operation == "group":
+        _properties.update({"action": {"type": "string", "enum": ["create", "rename", "reparent", "remove"]},
+                            "id": {"type": "string"}, "parent_id": {"type": "string"}, "name": {"type": "string"}})
+    if _operation == "zoo":
+        _properties.update({"models": {"type": "array", "items": {"type": "string"}}, "pattern": {"type": "string"},
+                            "ground_align": {"type": "boolean", "description": "Opt-in alignment from supported compiled render bounds; missing geometry is an error."},
+                            "game_dir": {"type": "string"}, "addon": {"type": "string"},
+                            "skeleton": {"type": "string"}, "cs2_path": {"type": "string"}, "group_id": {"type": "string"},
+                            "position": {"type": "array"}, "spacing": {"type": "array"}, "columns": {"type": "integer", "minimum": 1},
+                            "scale": {"oneOf": [{"type": "number"}, {"type": "array"}]}})
+    _map_tool = AutomationTool(f"hammer5tools.vmap_{_operation}",
+                              "Read stable node IDs." if _operation == "nodes" else "Structured map editing with dry-run, backups, and world-transform preservation.",
+                              _object_schema(_properties, ("path",)),
+                              lambda bridge, args, operation=_operation: _map_operation(bridge, args, operation), read_only=_operation == "nodes", idempotent=False)
+    TOOLS += (_map_tool,)
+    TOOLS_BY_NAME[_map_tool.name] = _map_tool
+
+for _operation in ("inspect", "split", "pack"):
+    _properties = {"addon_root": {"type": "string"}, "dry_run": {"type": "boolean"}, "overwrite": {"type": "boolean"}}
+    if _operation != "pack":
+        _properties["input"] = {"type": "string"}
+    if _operation == "inspect":
+        _properties["constant_threshold"] = {"type": "integer", "minimum": 0, "maximum": 255}
+    elif _operation == "split":
+        _properties["outputs"] = {"type": "array", "minItems": 1, "items": _object_schema({
+            "path": {"type": "string"}, "channel": {"type": "string", "enum": ["r", "g", "b", "a"]}}, ("path", "channel"))}
+    else:
+        _channel = {"oneOf": [{"type": "integer", "minimum": 0, "maximum": 255},
+                              _object_schema({"path": {"type": "string"}, "channel": {"type": "string", "enum": ["r", "g", "b", "a"]}}, ("path", "channel"))]}
+        _properties.update({"path": {"type": "string"}, "channels": _object_schema({key: _channel for key in "rgba"}, tuple("rgba"))})
+    _texture_tool = AutomationTool(f"hammer5tools.texture_{_operation}",
+                                  "Explicit raw channel preparation; supports lossless 8-bit PNG, rejects other bit depths/formats.",
+                                  _object_schema(_properties, ("path", "channels") if _operation == "pack" else ("input", "outputs") if _operation == "split" else ("input",)),
+                                  lambda bridge, args, operation=_operation: _texture_operation(bridge, args, operation), read_only=_operation == "inspect", idempotent=False)
+    TOOLS += (_texture_tool,)
+    TOOLS_BY_NAME[_texture_tool.name] = _texture_tool
+
+for _name in ("vmap_references", "vpk_search"):
+    _properties = TOOLS_BY_NAME[f"hammer5tools.{_name}"].input_schema["properties"]
+    _properties.update({
+        "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 50 if _name == "vmap_references" else 100},
+        "offset": {"type": "integer", "minimum": 0, "default": 0},
+        "detail": {"type": "string", "enum": ["summary", "names", "full"]},
+    })
+TOOLS_BY_NAME["hammer5tools.vmap_references"].input_schema["properties"].update({
+    "pattern": {"type": "string", "description": "Case-insensitive glob (* crosses slash, ? and [] supported)."},
+    "extension": {"type": "string"},
+})
 
 
 def capabilities(bridge: CoreBridge | None = None) -> JsonObject:
@@ -1096,4 +1292,51 @@ def invoke_tool(name: str, arguments: Mapping[str, Any] | None = None, *, bridge
     tool = TOOLS_BY_NAME.get(name)
     if tool is None:
         raise KeyError(f"Unknown Hammer5Tools tool '{name}'")
-    return tool.invoke(bridge or CoreBridge.instance(), arguments or {})
+    _validate_arguments(tool.input_schema, arguments or {})
+    active_bridge = bridge or CoreBridge.instance()
+    resolved_arguments = dict(arguments or {})
+    path_spec = _PATH_TOOLS.get(name.removeprefix("hammer5tools."))
+    if path_spec:
+        key, must_exist = path_spec
+        path = _required_string(resolved_arguments, key)
+        drive, tail = ntpath.splitdrive(path)
+        if drive and not tail.startswith(("/", "\\")):
+            raise ValueError("Drive-relative paths are unsupported; use C:/path or an addon-relative path")
+        absolute = bool(drive) and ntpath.isabs(path) if os.name == "nt" else os.path.isabs(path)
+        if not absolute:
+            from gui.settings.common import addon_content_dir
+            root = _optional_string(resolved_arguments, "addon_root")
+            if root is None:
+                configured = addon_content_dir()
+                root = str(configured) if configured else None
+            resolved_arguments[key] = active_bridge.resolve_asset_path(path, root, must_exist)
+    return tool.invoke(active_bridge, resolved_arguments)
+
+
+def _validate_arguments(schema: dict, arguments: Mapping[str, Any]) -> None:
+    if not isinstance(arguments, Mapping):
+        raise ValueError("Tool arguments must be an object")
+    for key in schema.get("required", []):
+        if key not in arguments or arguments[key] is None:
+            raise ValueError(f"'{key}' is required")
+    properties = schema.get("properties", {})
+    unknown = set(arguments) - set(properties)
+    if unknown and schema.get("additionalProperties") is False:
+        raise ValueError(f"Unknown arguments: {', '.join(sorted(unknown))}")
+    for key, value in arguments.items():
+        if value is None:
+            continue
+        definition = properties.get(key, {})
+        expected = definition.get("type")
+        checks = {"string": isinstance(value, str), "integer": type(value) is int,
+                  "number": type(value) in (int, float), "boolean": type(value) is bool,
+                  "array": isinstance(value, list), "object": isinstance(value, Mapping)}
+        if expected and not checks.get(expected, True):
+            raise ValueError(f"'{key}' must be {expected}")
+        if "enum" in definition and value not in definition["enum"]:
+            raise ValueError(f"'{key}' must be one of {definition['enum']}")
+        if expected in {"integer", "number"}:
+            if "minimum" in definition and value < definition["minimum"]:
+                raise ValueError(f"'{key}' must be at least {definition['minimum']}")
+            if "maximum" in definition and value > definition["maximum"]:
+                raise ValueError(f"'{key}' must be at most {definition['maximum']}")

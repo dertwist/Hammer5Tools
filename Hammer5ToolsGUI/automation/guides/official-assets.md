@@ -59,3 +59,11 @@ references it.
 - `materials/dev/blockout/` — blockout materials
 
 See `vmap-authoring` for using these as `prop_static` blockout geometry.
+# Search pagination
+
+`hammer5tools.vpk_search` supports `offset`, `limit` (1..500, default 100),
+and `detail: "names"` for path strings; default `full` retains path/size objects.
+`summary` also uses strings. Archive mount precedence is unchanged. Results are
+sorted case-insensitively after filtering. `total` counts all matches before
+paging; compatibility `match_count` remains the number returned on this page.
+Read `returned` and `truncated` before assuming the result is complete.

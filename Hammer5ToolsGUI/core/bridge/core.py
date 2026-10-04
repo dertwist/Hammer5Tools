@@ -431,6 +431,46 @@ class CoreBridge:
         """Reads only the asset-reference list from a VMAP, skipping the full document projection."""
         return tuple(self._smartprop_native().read_valve_map_asset_references(path))
 
+    def resolve_asset_path(self, path: str, addon_root: str | None = None, must_exist: bool = True) -> str:
+        """Resolve a loose file through Core using explicit request-time context."""
+        return self._smartprop_native().resolve_asset_path(path, addon_root, must_exist)
+
+    def compile_assets(self, request: dict) -> dict:
+        """Execute validated compilation in Core, with bounded diagnostics."""
+        return self._smartprop_native().automation_request("h5t_compile_assets_json", request)
+
+    def read_compiler_log(self, request: dict) -> dict:
+        """Read a bounded window of a Core-owned compiler log."""
+        return self._smartprop_native().automation_request("h5t_compile_log_json", request)
+
+    def compilation_job_status(self, request: dict) -> dict:
+        return self._smartprop_native().automation_request("h5t_compile_job_status_json", request)
+
+    def cancel_compilation_job(self, request: dict) -> dict:
+        return self._smartprop_native().automation_request("h5t_compile_job_cancel_json", request)
+
+    def author_source_assets(self, request: dict, format_name: str, batch: bool = False) -> dict:
+        """Mutate source documents in Core with validated per-file replacement."""
+        if format_name not in {"vmat", "vmdl"}:
+            raise ValueError("Unsupported source format")
+        return self._smartprop_native().automation_request(
+            f"h5t_{format_name}_{'batch' if batch else 'author'}_json", request)
+
+    def author_map(self, request: dict, operation: str) -> dict:
+        """Read stable node IDs or edit the actual Core DMX graph."""
+        if operation not in {"insert", "nodes", "transform", "group", "zoo"}:
+            raise ValueError("Unsupported map operation")
+        return self._smartprop_native().automation_request(f"h5t_vmap_{operation}_json", request)
+
+    def inspect_model_bounds(self, request: dict) -> dict:
+        """Inspect compiled render geometry through Core."""
+        return self._smartprop_native().automation_request("h5t_model_bounds_json", request)
+
+    def prepare_texture(self, request: dict, operation: str) -> dict:
+        if operation not in {"inspect", "split", "pack"}:
+            raise ValueError("Unsupported texture operation")
+        return self._smartprop_native().automation_request(f"h5t_texture_{operation}_json", request)
+
     def read_valve_map_scene(self, path: str) -> ValveMapSceneDocument:
         """Reads a VMAP into world-space meshes and placements for a viewport."""
         import numpy as np
@@ -724,6 +764,10 @@ class CoreBridge:
         return ValveMapEntity(
             entity["className"], entity["origin"], entity["angles"], dict(entity["properties"]),
         )
+
+    def read_valve_map_import(self, path: str, *, content_root: str = "") -> dict:
+        """Read editable VMAP polygons, hierarchy, sets and evaluated SmartProps for a DCC."""
+        return self._smartprop_native().read_valve_map_import(path, content_root)
 
     def read_compiled_model(self, game_directory: str, active_addon: str, resource_path: str,
                             *, context_addon: str | None = None, maximum_texture_dimension: int = 1024,

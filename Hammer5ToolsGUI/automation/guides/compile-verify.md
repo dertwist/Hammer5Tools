@@ -13,12 +13,53 @@ Use an absolute source-file path. Optional `cs2_path` selects the installation;
 otherwise the configured CS2 path is read at call time. `force: true` forwards
 `-f` to the compiler. `timeout_seconds` defaults to 120 and controls the execution
 deadline, separately from the MCP client's tool timeout. These options already
-exist in the single-file tool; each asset currently needs its own call/process.
+exist in the single-file tool.
 
 Check `success`, `exit_code`, and `error` in the structured result. The MCP
 envelope's `isError: false` alone does not mean compilation succeeded. Output
-currently includes full stdout/stderr. A timeout can carry byte streams that
-fail JSON serialization; the server returns a JSON-RPC error and remains usable.
+is bounded. Full Unicode logs live in Core-owned files; timeout and cancellation
+results remain JSON-safe.
+
+## Batch and background compilation
+
+`hammer5tools.compile_assets` accepts exactly one of `paths` (string array),
+`pattern` (addon-relative glob), or `paths_file` (UTF-8 JSON array of strings).
+Compiler/grid patterns use * and ? (crossing path separators); directory links
+are not traversed. Reference-list patterns also support bracket character sets.
+Use `addon_root` for the explicit absolute content directory, otherwise the
+active addon is read at request time. Absolute asset paths work independently.
+Drive-relative paths such as `C:foo` and relative escapes through `..` or links
+are rejected. Resource names inside materials/models remain resource names.
+
+Inputs are validated, deduplicated, and sorted before launching anything.
+`dry_run: true` returns a bounded preview. Batches use the compiler's documented
+`-filelist` option with one temporary UTF-8 line list; it is removed afterwards.
+`force: true` forwards `-f`. The aggregate `success`/`exit_code` describe the
+compiler invocation. `unknown_count` honestly records that aggregate output
+does not establish individual asset outcomes; zero per-asset compiled/failed
+counts are not a promise that every asset succeeded.
+
+Pass `background: true` to either compilation tool to get a `job_id` promptly.
+`hammer5tools.compile_job_status` returns queued/running/succeeded/failed/
+cancelled/interrupted state. `hammer5tools.compile_job_cancel` requests cancellation
+of the live owned process tree; poll until the job reaches a terminal state.
+Compilation runs in Core, with one shared slot per host for foreground/background
+calls. Independent server processes must not compile into the same output scope.
+
+`hammer5tools.compile_log` accepts `log_id`, `offset` (Unicode scalar character
+offset), and `limit` (default 4096, maximum 8192 characters). Responses contain
+bounded warning/error samples and counts from both streams, duration, and a log
+ID. Full logs and job metadata live under LocalAppData/Hammer5Tools/automation
+and are retained seven days. Backups of authored files are retained separately.
+
+A client timeout/disconnection does not cancel a running job while its server
+process remains alive. Closing the server ends its in-process job supervision;
+on restart, persisted active jobs become interrupted and report any possible
+surviving process. Stale PIDs are never killed or restarted automatically.
+Jobs belonging to another live host can be inspected from persisted metadata;
+cancellable_here is false and cancellation must use their original server.
+No tool terminates CS2/Hammer. Ping/status remain responsive during background
+work. EOF still means the transport input closed; encoding recovery is preserved.
 
 Reading the result:
 

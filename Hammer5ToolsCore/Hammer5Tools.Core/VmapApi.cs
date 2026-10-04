@@ -15,6 +15,19 @@ internal static unsafe class VmapApi
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
+    [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_read_import_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadValveMapImportJson(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            using var document = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength));
+            var root = document.RootElement;
+            var contentRoot = root.TryGetProperty("contentRoot", out var content) ? content.GetString() : null;
+            return System.Text.Encoding.UTF8.GetBytes(CoreApi.ReadValveMapImport(root.GetProperty("path").GetString()!, contentRoot));
+        });
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ElementFactory))]
     /// <summary>Reads an uncompiled VMAP into a compact binary scene projection.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_vmap_read_scene_binary", CallConvs = [typeof(CallConvCdecl)])]
     public static int ReadValveMapSceneBinary(byte* request, int requestLength, byte** output, int* outputLength) =>

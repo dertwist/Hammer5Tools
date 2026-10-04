@@ -72,3 +72,48 @@ you the slots.
 `hammer5tools.vmap_rewrite_references` does batch search-and-replace across a
 map's dependencies atomically. Always run it with `dry_run: true` first and read
 the matched replacements before writing.
+# Bulk source authoring and geometry inspection
+
+`hammer5tools.vmat_batch` and `hammer5tools.vmdl_batch` accept exactly one of
+`items` or `manifest` (UTF-8 JSON array). Each item has path and action create
+(default) or update. Fields mirror the single-item writer/editor; VMDL update
+uses its updates object. Use addon_root for an explicit content directory, or
+the active addon. All destinations and asset references in requested changes are
+validated before writing. Create refuses existing files unless overwrite is
+true. Shared material destinations in the same manifest can be referenced.
+cs2_path (or the configured install) enables stock VPK reference validation.
+Existing unknown document fields are retained by edits.
+
+dry_run previews changes without destination writes. Every changed file is
+staged beside its destination, re-parsed, and replaced with a retained .bak.
+Writes are serialized. The batch has no rollback: changed/skipped/failed counts
+and results report partial completion truthfully. Results and property names
+are capped at 50; truncated means the response omits additional entries.
+Each result also includes field_count and fields_truncated for its property preview.
+Rerunning unchanged updates skips writes and creates no new backup.
+
+`hammer5tools.model_bounds` reports compiled LoD0 render bounds, dimensions,
+center, pivot-to-ground offset, vertex/triangle and render-submesh counts.
+Optional position/angles/scale transform the measured geometry. Units are the
+native compiled Source 2 world units; no conversion is inferred. VMDL inputs
+use their compiled counterpart. Source-FBX and unavailable physics bounds are
+explicitly unsupported, never labelled exact. A caller can set a positive
+triangle_warning_threshold for advisory render-complexity warnings; it does
+not measure or modify collision hulls.
+
+## Explicit texture channels
+
+`hammer5tools.texture_inspect` accepts input and optional constant_threshold
+(0..255; zero tests exact constancy). It reports min/max and constancy per RGBA
+channel. `hammer5tools.texture_split` accepts input and outputs, each {path,
+channel:"r"|"g"|"b"|"a"}; the selected value fills RGB and alpha is opaque.
+`hammer5tools.texture_pack` accepts path and channels with all r/g/b/a mappings.
+Each mapping is a byte constant (0..255) or {path, channel}; at least one image
+supplies dimensions and all input images must match.
+
+These tools preserve raw channel values without gamma/linear conversion.
+They support 8-bit PNG and lossless PNG output; other formats/bit depths are
+rejected explicitly. Alpha is decoded unpremultiplied. Mutations support dry_run,
+explicit overwrite, staged round-trip validation, and retained backups. No
+default-texture substitution or FBM cleanup occurs automatically; referenced
+textures and source files are retained.

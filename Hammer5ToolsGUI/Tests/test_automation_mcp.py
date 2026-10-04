@@ -129,7 +129,9 @@ def test_non_ascii_response_survives_a_legacy_codepage_stream():
     assert json.loads(lines[1]) == {"jsonrpc": "2.0", "id": 2, "result": {}}
 
 
-def test_unserializable_result_does_not_end_the_session():
+def test_unserializable_result_does_not_end_the_session(monkeypatch):
+    import automation.mcp.server as server_module
+    monkeypatch.setattr(server_module, "invoke_tool", lambda *args, **kwargs: {"bad": object()})
     class _Unserializable(_Bridge):
         def read_valve_map_asset_references(self, path):
             return (object(),)

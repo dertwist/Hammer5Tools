@@ -31,7 +31,9 @@ public sealed class ProcessRunner
         IReadOnlyDictionary<string, string>? environment,
         StringBuilder? captured,
         CancellationToken ct = default,
-        string? standardInput = null)
+        string? standardInput = null,
+        IReadOnlyList<string>? argumentList = null,
+        Action<Process>? onStarted = null)
     {
         var psi = new ProcessStartInfo
         {
@@ -50,6 +52,15 @@ public sealed class ProcessRunner
             StandardErrorEncoding = Encoding.UTF8,
         };
 
+        if (argumentList is not null)
+        {
+            psi.Arguments = "";
+            foreach (var argument in argumentList)
+            {
+                psi.ArgumentList.Add(argument);
+            }
+        }
+
         if (environment is not null)
             foreach (var (k, v) in environment)
                 psi.Environment[k] = v;
@@ -60,7 +71,13 @@ public sealed class ProcessRunner
         {
             if (line is null)
                 return;
-            captured?.AppendLine(line);
+            if (captured is not null)
+            {
+                lock (captured)
+                {
+                    captured.AppendLine(line);
+                }
+            }
             OnOutput?.Invoke(new ProcessLine(line, isError));
         }
 
@@ -69,6 +86,17 @@ public sealed class ProcessRunner
 
         if (!process.Start())
             throw new InvalidOperationException($"Failed to start '{fileName}'.");
+
+        try
+        {
+            onStarted?.Invoke(process);
+        }
+        catch
+        {
+            TryKill(process);
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            throw;
+        }
 
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
@@ -89,7 +117,16 @@ public sealed class ProcessRunner
 
         await using (ct.Register(() => TryKill(process)))
         {
-            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                TryKill(process);
+                await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
         }
 
         return process.ExitCode;

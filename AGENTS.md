@@ -27,12 +27,17 @@ before moving behavior that has no coverage.
 - `Hammer5ToolsGUI/gui/`: PySide6 views, input, presentation state, and OpenGL
   drawing only.
 - `Hammer5ToolsGUI/core/`: the pure-Python NativeAOT `ctypes` bridge.
+- `Hammer5ToolsGUI/automation/`: MCP/CLI transport, schemas, request-time settings,
+  and response shaping. Compilation, source-asset mutation, map authoring,
+  model bounds, and texture-channel preparation run in Core through CoreBridge.
 - `Hammer5ToolsGUI/keyvalues3/`: the standalone KV3 library.
 - `Hammer5ToolsCore/`: all domain logic. This includes Source 2 parsing,
   VPK/resource access, SmartProp evaluation, VMAP work, conversions, Source
   porting, and Unreal extraction.
 - `Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
 - `Hammer5ToolsGUI/gui/tools/`: external tools and scripts shipped with the app.
+- `../Source2Houdini/`: separate Houdini 21 package and SOP presentation adapters.
+  Source 2 interpretation remains in Core, accessed through its NativeAOT C ABI.
 - `makefile.py`: build and packaging entry point.
 - `version.json` and `Hammer5ToolsGUI/gui/common.py`: application version.
 
@@ -54,6 +59,11 @@ changing an existing binary message.
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
 
+The additive `h5t_vmap_read_import_json` export returns schema-versioned DCC
+import data, preserving polygon corners, node identities, hierarchy and editor
+metadata. It is separate from the flattened binary VMAP preview contract.
+Increment its `schemaVersion` when changing existing fields or semantics.
+
 Assetgroup source-name normalization and template token expansion use
 `CoreBridge` and the Core `Format/AssetGroup/` implementation. The additive
 `h5t_assetgroup_*` exports accept JSON requests and return UTF-8 text; keep
@@ -61,6 +71,15 @@ these rules out of Python when extending the remaining legacy batch workflow.
 
 NavMesh Radar requests keep rectangle merging (`collapseFaces`) separate from
 same-height connected-region N-gon dissolving (`collapseFacesIntoNgons`).
+
+Automation uses additive `h5t_*_json` exports in `AutomationApi.cs` for confined
+loose-file path resolution, compilation/jobs/log windows, VMAT/VMDL authoring,
+structured map editing, model bounds, and texture preparation. These exports
+leave existing versioned binary messages unchanged. JSON serialization must use
+source-generated metadata under NativeAOT. Compilation job metadata and Unicode
+logs are Core-owned; recovered active jobs become interrupted without signalling
+stale PIDs. Source/map/texture writes stage and validate before per-file atomic
+replacement with retained backups; batches have no rollback.
 
 ## C# Rules
 

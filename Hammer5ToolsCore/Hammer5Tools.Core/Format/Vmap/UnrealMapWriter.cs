@@ -210,7 +210,7 @@ public static class UnrealMapWriter
         return (document, world);
     }
 
-    private static Element CreateEntity(DM document, UnrealMapPlacement placement, int nodeId)
+    internal static Element CreateEntity(DM document, UnrealMapPlacement placement, int nodeId)
     {
         var properties = Create(document, "EditGameClassProps");
         foreach (var (key, value) in placement.Properties ?? new Dictionary<string, string>())
@@ -473,7 +473,7 @@ public static class UnrealMapWriter
         return array;
     }
 
-    private static Element NodeDefaults(
+    internal static Element NodeDefaults(
         Element element,
         int nodeId,
         UnrealMapPlacement? placement = null)

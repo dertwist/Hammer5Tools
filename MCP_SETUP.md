@@ -10,10 +10,10 @@ From a source checkout:
 ```powershell
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli capabilities
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli core-status
-.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli read-vmdl C:\addon\models\prop.vmdl
-.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli edit-vmat C:\addon\materials\surface.vmat --slots '{"TextureColor": "materials/new_color.png"}' --dry-run
-.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli compile-asset C:\addon\models\prop.vmdl
-.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli validate-addon C:\addon
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli vmdl-read C:\addon\models\prop.vmdl
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli call hammer5tools.vmat_edit --args '{"path":"C:/addon/materials/surface.vmat","set_slots":{"TextureColor":"materials/new_color.png"},"dry_run":true}'
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli compile C:\addon\models\prop.vmdl --background
+.\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli validate --addon example
 .\.venv\Scripts\python.exe Hammer5ToolsGUI\gui\main.py cli vmap-references C:\addon\maps\example.vmap
 ```
 
@@ -57,8 +57,28 @@ names before treating an argument as unsupported.
 
 The current single-file `hammer5tools.compile_asset` schema includes `force`
 (boolean, default false) and `timeout_seconds` (integer, default 120), plus
-optional `cs2_path`. Force forwards `-f`. Prefer an absolute asset path. The
+optional `cs2_path`, `addon_root`, `background`, and `dry_run`. Force forwards `-f`. The
 execution timeout is separate from the client's `tool_timeout_sec` above.
+
+File tools resolve relative names against explicit `addon_root`, otherwise the
+configured addon at request time. Absolute workflows remain supported. Relative
+paths require an unambiguous root and cannot escape it through junctions.
+References default to 50 rows; use filtering and offsets to recover full lists.
+
+`compile_assets` accepts exactly one of paths, pattern, or paths_file (UTF-8 JSON
+string array). Background calls return a job_id; use compile_job_status,
+compile_job_cancel, and compile_log. Active jobs become interrupted after host
+restart; they are never automatically restarted or signalled by a stale PID.
+Logs/terminal metadata have seven-day retention with cleanup on later requests.
+See the compile-verify guide for timeout/shutdown and aggregate-result semantics.
+
+VMAT/VMDL batch creation/updates, structured VMAP insertion/groups/grid layouts,
+compiled render bounds, and explicit 8-bit PNG channel preparation are available
+through `cli call` and MCP. Fetch the applicable guide and inspect tools/list.
+These features require the updated Python surface **and** NativeAOT library.
+An older ABI-2 library still loads existing features; invoking a missing additive
+export reports that the updated library must be published. This checkout does
+not update an already installed executable or a running adapter automatically.
 
 Reproducible fixture measurements and the inspected local deployment parity
 are recorded in [docs/mcp_feedback_progress.md](docs/mcp_feedback_progress.md).

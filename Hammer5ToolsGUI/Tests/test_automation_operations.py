@@ -59,7 +59,9 @@ def test_resolve_dependencies_on_vmat(tmp_path):
 
 def test_compiler_missing_file():
     with pytest.raises(FileNotFoundError):
-        compile_asset("non_existent_file.vmat", cs2_path="C:/fake_cs2")
+        bridge = MagicMock()
+        bridge.compile_assets.side_effect = FileNotFoundError("Asset file not found")
+        compile_asset("non_existent_file.vmat", cs2_path="C:/fake_cs2", bridge=bridge)
 
 
 def test_validate_addon_invokes_core_bridge():

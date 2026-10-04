@@ -59,11 +59,17 @@ def _run_cli(argv: Sequence[str]) -> int:
     # VMAP & Unreal
     vmap = subparsers.add_parser("vmap-references", help="Read references from an uncompiled VMAP")
     vmap.add_argument("path")
+    vmap.add_argument("--addon-root")
+    vmap.add_argument("--pattern")
+    vmap.add_argument("--extension")
+    vmap.add_argument("--limit", type=int, default=50)
+    vmap.add_argument("--offset", type=int, default=0)
 
     vmap_rewrite = subparsers.add_parser("vmap-rewrite", help="Rewrite asset paths in an uncompiled VMAP")
     vmap_rewrite.add_argument("vmap_path")
     vmap_rewrite.add_argument("replacements", help="JSON dictionary of from: to path replacements")
     vmap_rewrite.add_argument("--dry-run", action="store_true")
+    vmap_rewrite.add_argument("--addon-root")
 
     unreal_info = subparsers.add_parser("unreal-info", help="Inspect an Unreal Content directory")
     unreal_info.add_argument("content_dir")
@@ -79,9 +85,11 @@ def _run_cli(argv: Sequence[str]) -> int:
     # Format Readers
     vmdl_r = subparsers.add_parser("vmdl-read", help="Read and inspect a .vmdl file")
     vmdl_r.add_argument("path")
+    vmdl_r.add_argument("--addon-root")
 
     vmat_r = subparsers.add_parser("vmat-read", help="Read and inspect a .vmat file")
     vmat_r.add_argument("path")
+    vmat_r.add_argument("--addon-root")
 
     vtex_r = subparsers.add_parser("vtex-read", help="Read and inspect a .vtex file")
     vtex_r.add_argument("path")
@@ -102,6 +110,11 @@ def _run_cli(argv: Sequence[str]) -> int:
     compile_cmd = subparsers.add_parser("compile", help="Compile an uncompiled asset via resourcecompiler")
     compile_cmd.add_argument("path")
     compile_cmd.add_argument("--force", action="store_true")
+    compile_cmd.add_argument("--addon-root")
+    compile_cmd.add_argument("--cs2-path")
+    compile_cmd.add_argument("--timeout-seconds", type=int, default=120)
+    compile_cmd.add_argument("--background", action="store_true")
+    compile_cmd.add_argument("--dry-run", action="store_true")
 
     validate = subparsers.add_parser("validate", help="Validate addon assets")
     validate.add_argument("--addon", default=None)
@@ -128,13 +141,15 @@ def _run_cli(argv: Sequence[str]) -> int:
             parsed_args = json.loads(args.args)
             result = invoke_tool(args.tool_name, parsed_args)
         elif args.command == "vmap-references":
-            result = invoke_tool("hammer5tools.vmap_references", {"path": args.path})
+            result = invoke_tool("hammer5tools.vmap_references", {"path": args.path, "addon_root": args.addon_root,
+                                 "pattern": args.pattern, "extension": args.extension, "limit": args.limit, "offset": args.offset})
         elif args.command == "vmap-rewrite":
             rep_dict = json.loads(args.replacements)
             result = invoke_tool("hammer5tools.vmap_rewrite_references", {
                 "vmap_path": args.vmap_path,
                 "replacements": rep_dict,
                 "dry_run": args.dry_run,
+                "addon_root": args.addon_root,
             })
         elif args.command == "unreal-info":
             result = invoke_tool("hammer5tools.unreal_info", {"content_dir": args.content_dir})
@@ -149,9 +164,9 @@ def _run_cli(argv: Sequence[str]) -> int:
                 "object_path": args.object_path,
             })
         elif args.command == "vmdl-read":
-            result = invoke_tool("hammer5tools.vmdl_read", {"path": args.path})
+            result = invoke_tool("hammer5tools.vmdl_read", {"path": args.path, "addon_root": args.addon_root})
         elif args.command == "vmat-read":
-            result = invoke_tool("hammer5tools.vmat_read", {"path": args.path})
+            result = invoke_tool("hammer5tools.vmat_read", {"path": args.path, "addon_root": args.addon_root})
         elif args.command == "vtex-read":
             result = invoke_tool("hammer5tools.vtex_read", {"path": args.path})
         elif args.command == "vsmart-read":
@@ -163,7 +178,9 @@ def _run_cli(argv: Sequence[str]) -> int:
         elif args.command == "vsnap-read":
             result = invoke_tool("hammer5tools.vsnap_read", {"path": args.path})
         elif args.command == "compile":
-            result = invoke_tool("hammer5tools.compile_asset", {"path": args.path, "force": args.force})
+            result = invoke_tool("hammer5tools.compile_asset", {"path": args.path, "force": args.force,
+                                 "addon_root": args.addon_root, "cs2_path": args.cs2_path,
+                                 "timeout_seconds": args.timeout_seconds, "background": args.background, "dry_run": args.dry_run})
         elif args.command == "validate":
             result = invoke_tool("hammer5tools.validate_addon", {
                 "addon_name": args.addon,

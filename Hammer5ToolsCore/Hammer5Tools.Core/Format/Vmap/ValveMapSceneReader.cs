@@ -127,7 +127,7 @@ public sealed class ValveMapSceneReader
     /// A prefab path is relative to the addon's content root, which is not handed to the
     /// reader � so walk up from the referencing map until the relative path resolves.
     /// </summary>
-    private static string? ResolveContentRelative(string mapPath, string relativePath)
+    internal static string? ResolveContentRelative(string mapPath, string relativePath)
     {
         var normalized = relativePath.Replace('\\', '/').TrimStart('/');
         var directory = Path.GetDirectoryName(Path.GetFullPath(mapPath));
@@ -180,7 +180,7 @@ public sealed class ValveMapSceneReader
     /// under <c>nodeData/parameters/values[i]/value</c>; a resource-typed override nests its
     /// string one level deeper under <c>value_with_specific_type</c>.
     /// </summary>
-    private static Dictionary<string, object?> ReadParameters(Element node)
+    internal static Dictionary<string, object?> ReadParameters(Element node)
     {
         var overrides = new Dictionary<string, object?>(StringComparer.Ordinal);
         if (Value(node, "nodeData") is not Element nodeData
@@ -351,7 +351,7 @@ public sealed class ValveMapSceneReader
         }
     }
 
-    private static string MaterialOf(int face, IntArray? faceDataIndices, IntArray? materialIndices, StringArray? materials)
+    internal static string MaterialOf(int face, IntArray? faceDataIndices, IntArray? materialIndices, StringArray? materials)
     {
         if (materials is null || materialIndices is null)
         {
@@ -369,7 +369,7 @@ public sealed class ValveMapSceneReader
     }
 
     /// <summary>The <c>data</c> array of the named stream inside one of the mesh's data arrays.</summary>
-    private static object? StreamData(Element meshData, string arrayName, string streamName)
+    internal static object? StreamData(Element meshData, string arrayName, string streamName)
     {
         if (Value(meshData, arrayName) is not Element array || Value(array, "streams") is not ElementArray streams)
         {
@@ -393,7 +393,7 @@ public sealed class ValveMapSceneReader
     /// The node's own transform, in the row-vector convention the viewport uses
     /// (translation in the last row), from Source's pitch=Y, yaw=Z, roll=X angles.
     /// </summary>
-    private static Matrix4x4 LocalTransform(Element node)
+    internal static Matrix4x4 LocalTransform(Element node)
     {
         var origin = Value(node, "origin") is Vector3 position ? position : Vector3.Zero;
         var scales = Value(node, "scales") is Vector3 scale ? scale : Vector3.One;

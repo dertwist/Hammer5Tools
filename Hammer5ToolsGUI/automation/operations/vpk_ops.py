@@ -6,6 +6,7 @@ import os
 from typing import Any
 
 from core.bridge import CoreBridge
+from automation.formats.shaping import paginate
 from gui.settings.common import get_cs2_path
 
 # CS2 splits stock content across several archives, and the one an asset lives in
@@ -39,9 +40,15 @@ def vpk_search(
     game_dir: str | None = None,
     bridge: CoreBridge | None = None,
     limit: int = 100,
+    offset: int = 0,
+    detail: str = "full",
 ) -> dict[str, Any]:
     """Search for assets matching a query string inside the CS2 game VPK archive."""
     active_bridge = bridge or CoreBridge.instance()
+    if type(limit) is not int or not 1 <= limit <= 500 or type(offset) is not int or offset < 0:
+        raise ValueError("limit must be 1..500 and offset must be nonnegative integers")
+    if detail not in {"summary", "names", "full"}:
+        raise ValueError("detail must be summary, names, or full")
     root = game_dir or get_cs2_path()
     if not root:
         raise ValueError("CS2 directory must be specified or configured in settings")
@@ -52,26 +59,35 @@ def vpk_search(
     query_lower = query.lower()
 
     matches: list[dict[str, Any]] = []
+    seen: set[str] = set()
 
     with active_bridge.create_vpk_index() as index:
         for archive in archives:
             index.mount(archive)
         all_entries = index.entries(suffixes)
         for entry_path, entry_size in all_entries:
-            if query_lower in entry_path.lower():
+            normalized = entry_path.replace("\\", "/")
+            key = normalized.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            if query_lower in normalized.lower():
                 matches.append({
-                    "path": entry_path.replace("\\", "/"),
+                    "path": normalized,
                     "size_bytes": entry_size,
                 })
-                if len(matches) >= limit:
-                    break
+
+    matches.sort(key=lambda item: item["path"].casefold())
+    page = paginate(matches if detail == "full" else [item["path"] for item in matches],
+                    "matches", limit=limit, offset=offset)
 
     return {
         "archives": [path.replace("\\", "/") for path in archives],
         "query": query,
         "extension_filter": extension,
-        "match_count": len(matches),
-        "matches": matches,
+        "match_count": page["returned"],
+        "detail": detail,
+        **page,
     }
 
 
