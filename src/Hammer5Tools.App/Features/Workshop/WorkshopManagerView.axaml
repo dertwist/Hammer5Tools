@@ -3,11 +3,11 @@
              xmlns:vm="using:Hammer5Tools.App.Features.Workshop"
              x:Class="Hammer5Tools.App.Features.Workshop.WorkshopManagerView"
              x:DataType="vm:WorkshopManagerViewModel">
-  <Grid ColumnDefinitions="360,*" Margin="12">
+  <Grid ColumnDefinitions="360,*" Margin="8">
     <!-- Left Column: Workshop Metadata & Options -->
-    <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="6" Padding="16" Margin="0,0,8,0">
+    <Border Grid.Column="0" Background="{DynamicResource H5TBackgroundBrush}" CornerRadius="2" Padding="8" Margin="0,0,8,0">
       <StackPanel Spacing="12">
-        <TextBlock Text="Workshop Publishing" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
+        <TextBlock Text="Workshop Packaging" FontSize="14.667" FontWeight="Bold" Margin="0,0,0,8" />
 
         <Grid ColumnDefinitions="100,*">
           <TextBlock Grid.Column="0" Text="Title:" VerticalAlignment="Center" />
@@ -19,19 +19,19 @@
           <TextBox Grid.Column="1" Text="{Binding Description}" AcceptsReturn="True" Height="80" PlaceholderText="Workshop item summary..." />
         </Grid>
 
-        <CheckBox Content="Exclude Unused Assets &amp; Backups" IsChecked="{Binding ExcludeUnused}" />
+        <CheckBox Content="Exclude unused content" IsChecked="{Binding ExcludeUnused}" />
 
         <Button Content="Scan Addon Files" Command="{Binding RefreshFilesCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
-        <Button Content="Build Workshop Package (.vpk)" Command="{Binding BuildPackageCommand}" HorizontalAlignment="Stretch" Background="#2E7D32" FontWeight="Bold" />
+        <Button Content="Build Workshop Package (.vpk)" Command="{Binding BuildPackageCommand}" HorizontalAlignment="Stretch" Background="{DynamicResource H5TSuccessDarkBrush}" FontWeight="Bold" />
 
-        <Border Background="#141414" CornerRadius="4" Padding="8" Margin="0,12,0,0">
-          <TextBlock Text="{Binding Status}" Foreground="#80CBC4" FontSize="11" TextWrapping="Wrap" />
+        <Border Background="{DynamicResource H5TBackgroundBrush}" CornerRadius="4" Padding="8" Margin="0,12,0,0">
+          <TextBlock Text="{Binding Status}" Foreground="{DynamicResource H5TSuccessBrush}" FontSize="11" TextWrapping="Wrap" />
         </Border>
       </StackPanel>
     </Border>
 
     <!-- Right Column: Package Manifest / File Explorer -->
-    <Border Grid.Column="1" Background="#141414" CornerRadius="6" Padding="12">
+    <Border Grid.Column="1" Background="{DynamicResource H5TBackgroundBrush}" CornerRadius="2" Padding="12">
       <Grid RowDefinitions="Auto,*">
         <TextBlock Grid.Row="0" Text="Packaged Files Manifest" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
 

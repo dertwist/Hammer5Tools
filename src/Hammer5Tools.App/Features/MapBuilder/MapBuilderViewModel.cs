@@ -17,6 +17,8 @@ public class MapBuilderViewModel : DocumentViewModel
     private bool LaunchAfterBuildValue;
     private MapBuildJob? SelectedJobValue;
 
+    public MapBuildPreset[] Presets { get; } = Enum.GetValues<MapBuildPreset>();
+
     public ObservableCollection<MapBuildJob> Jobs { get; } = [];
 
     public string MapName
@@ -62,19 +64,7 @@ public class MapBuilderViewModel : DocumentViewModel
         StartBuildCommand = new AsyncRelayCommand(OnStartBuildAsync);
         CancelBuildCommand = new RelayCommand(OnCancelBuild);
 
-        MapBuilderService.JobUpdated += (_, job) =>
-        {
-            // Sync job in UI list
-            var existing = Jobs.FirstOrDefault(j => j.Id == job.Id);
-            if (existing is null)
-            {
-                Jobs.Insert(0, job);
-            }
-            else
-            {
-                OnPropertyChanged(nameof(SelectedJob));
-            }
-        };
+        MapBuilderService.JobUpdated += OnJobUpdated;
 
         if (AddonService.ActiveAddon is not null)
         {
@@ -100,5 +90,30 @@ public class MapBuilderViewModel : DocumentViewModel
         {
             MapBuilderService.CancelJob(SelectedJob.Id);
         }
+    }
+    private void OnJobUpdated(object? sender, MapBuildJob job)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            var existing = Jobs.FirstOrDefault(item => item.Id == job.Id);
+            if (existing is null)
+            {
+                Jobs.Insert(0, job);
+            }
+            else
+            {
+                var index = Jobs.IndexOf(existing);
+                Jobs[index] = job;
+            }
+
+            OnPropertyChanged(nameof(SelectedJob));
+        });
+    }
+
+    public override void Dispose()
+    {
+        MapBuilderService.JobUpdated -= OnJobUpdated;
+        base.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

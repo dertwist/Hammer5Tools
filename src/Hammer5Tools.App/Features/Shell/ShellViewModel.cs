@@ -29,7 +29,7 @@ using Hammer5Tools.Core.SoundEvents;
 using Hammer5Tools.Core.Workshop;
 using Hammer5Tools.Infrastructure.Cs2;
 
-public class ShellViewModel : ViewModelBase
+public class ShellViewModel : ViewModelBase, IDisposable
 {
     private readonly IAddonService AddonService;
     private readonly ICs2Launcher Cs2Launcher;
@@ -47,6 +47,8 @@ public class ShellViewModel : ViewModelBase
     private readonly IAssetToolsService AssetToolsService;
     private readonly IGitSyncService GitSyncService;
     private readonly Services.IDialogService DialogService;
+
+    private bool IsChangingDocuments;
 
     private DocumentViewModel? ActiveDocumentValue;
     private string StatusMessageValue = "Ready";
@@ -71,10 +73,50 @@ public class ShellViewModel : ViewModelBase
         {
             if (value is not null && AddonService.ActiveAddon?.Name != value.Name)
             {
-                AddonService.SetActiveAddon(value.Name);
-                OnPropertyChanged(nameof(SelectedAddon));
-                StatusMessage = $"Active addon: {value.Name}";
+                _ = SwitchAddonAsync(value);
             }
+        }
+    }
+
+    public async Task<bool> SwitchAddonAsync(Addon addon)
+    {
+        if (IsChangingDocuments)
+        {
+            return false;
+        }
+
+        IsChangingDocuments = true;
+        try
+        {
+            if (!await DialogService.ConfirmCloseAsync(Documents.ToArray()))
+            {
+                OnPropertyChanged(nameof(SelectedAddon));
+                return false;
+            }
+
+            Controls.WorkspaceView.SaveAllLayouts();
+            DialogService.CloseUtilities();
+            Controls.WorkspaceView.CloseAllFloatingWindows();
+            if (!AddonService.SetActiveAddon(addon.Name))
+            {
+                OnPropertyChanged(nameof(SelectedAddon));
+                return false;
+            }
+
+            DisposeDocuments();
+            OpenDefaultEditors();
+            StatusMessage = $"Active addon: {addon.Name}";
+            OnPropertyChanged(nameof(SelectedAddon));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+            return false;
+        }
+        finally
+        {
+            IsChangingDocuments = false;
         }
     }
 
@@ -100,6 +142,20 @@ public class ShellViewModel : ViewModelBase
     public string Cs2StatusText => IsCs2Running ? "CS2: Running" : "CS2: Stopped";
 
     public string Cs2StatusColor => IsCs2Running ? "#5ab55e" : "#797979";
+
+    public IRelayCommand OpenPreferencesCommand { get; }
+
+    public IRelayCommand OpenFileCommand { get; }
+
+    public IRelayCommand UndoDocumentCommand { get; }
+
+    public IRelayCommand RedoDocumentCommand { get; }
+
+    public IRelayCommand ResetLayoutCommand { get; }
+
+    public IRelayCommand ExitCommand { get; }
+
+    public event EventHandler? ExitRequested;
 
     public IRelayCommand LaunchCs2Command { get; }
 
@@ -197,16 +253,26 @@ public class ShellViewModel : ViewModelBase
         RefreshAddonsCommand = new RelayCommand(OnRefreshAddons);
         OpenUrlCommand = new RelayCommand<string>(OnOpenUrl);
 
-        CloseDocumentCommand = new RelayCommand<DocumentViewModel>(CloseDocument);
-        SaveDocumentCommand = new RelayCommand(SaveCurrentDocument);
+        CloseDocumentCommand = new AsyncRelayCommand<DocumentViewModel>(CloseDocumentAsync);
+        SaveDocumentCommand = new AsyncRelayCommand(SaveCurrentDocumentAsync);
+        OpenPreferencesCommand = new RelayCommand(OpenPreferences);
+        OpenFileCommand = new AsyncRelayCommand(OpenFileAsync);
+        UndoDocumentCommand = new RelayCommand(() => ActiveDocument?.Undo.Undo());
+        RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.Undo.Redo());
+        ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
+        ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
 
-        AddonService.AddonsChanged += (_, _) => SyncAddons();
-        AddonService.ActiveAddonChanged += (_, _) => OnPropertyChanged(nameof(SelectedAddon));
-        Cs2Launcher.ProcessStateChanged += (_, running) => IsCs2Running = running;
+        AddonService.AddonsChanged += OnAddonsChanged;
+        AddonService.ActiveAddonChanged += OnActiveAddonChanged;
+        Cs2Launcher.ProcessStateChanged += OnProcessStateChanged;
 
         SyncAddons();
 
-        // Default open the 4 main editors in tabs
+        OpenDefaultEditors();
+    }
+
+    private void OpenDefaultEditors()
+    {
         OpenLoadingEditor();
         OpenSoundEventEditor();
         OpenHotkeyEditor();
@@ -234,7 +300,7 @@ public class ShellViewModel : ViewModelBase
             return;
         }
 
-        var editor = new HotkeyEditorViewModel(Cs2Locator);
+        var editor = new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher);
         AddDocument(editor);
     }
 
@@ -247,7 +313,7 @@ public class ShellViewModel : ViewModelBase
             return;
         }
 
-        var editor = new DetailPropEditorViewModel(AddonService);
+        var editor = new DetailPropEditorViewModel(AddonService, DialogService);
         AddDocument(editor);
     }
 
@@ -266,7 +332,7 @@ public class ShellViewModel : ViewModelBase
             return;
         }
 
-        var editor = new LoadingEditorViewModel(AddonService, LoadingScreenService);
+        var editor = new LoadingEditorViewModel(AddonService, LoadingScreenService, DialogService);
         AddDocument(editor);
     }
 
@@ -279,7 +345,7 @@ public class ShellViewModel : ViewModelBase
             return;
         }
 
-        var editor = new SoundEventEditorViewModel(AddonService, SoundEventService);
+        var editor = new SoundEventEditorViewModel(AddonService, SoundEventService, DialogService);
         AddDocument(editor);
     }
 
@@ -297,7 +363,7 @@ public class ShellViewModel : ViewModelBase
 
     public void OpenWorkshopManager()
     {
-        var workshop = new WorkshopManagerViewModel(AddonService, WorkshopManagerService);
+        var workshop = new WorkshopManagerViewModel(AddonService, WorkshopManagerService, DialogService);
         DialogService.ShowUtility("Workshop Manager", workshop, 960, 680);
     }
 
@@ -309,40 +375,139 @@ public class ShellViewModel : ViewModelBase
 
     public void OpenGitSync()
     {
-        var sync = new GitSyncViewModel(AddonService, GitSyncService);
+        var sync = new GitSyncViewModel(AddonService, GitSyncService, SettingsService);
         DialogService.ShowUtility("Git Sync", sync, 920, 620);
     }
 
     private void AddDocument(DocumentViewModel doc)
     {
-        doc.RequestClose += (_, _) => CloseDocument(doc);
+        doc.RequestClose += async (_, _) => await CloseDocumentAsync(doc);
         Documents.Add(doc);
         ActiveDocument = doc;
     }
 
-    private void CloseDocument(DocumentViewModel? doc)
+    public async Task CloseDocumentAsync(DocumentViewModel? doc)
     {
-        if (doc is null)
+        if (doc is null || IsChangingDocuments)
         {
             return;
         }
 
-        Documents.Remove(doc);
-        if (ActiveDocument == doc)
+        IsChangingDocuments = true;
+        try
         {
-            ActiveDocument = Documents.LastOrDefault();
+            if (!await DialogService.ConfirmCloseAsync([doc]))
+            {
+                return;
+            }
+
+            Controls.WorkspaceView.SaveAllLayouts();
+            Documents.Remove(doc);
+            doc.Dispose();
+            if (ActiveDocument == doc)
+            {
+                ActiveDocument = Documents.LastOrDefault();
+            }
+        }
+        finally
+        {
+            IsChangingDocuments = false;
         }
     }
 
-    private void SaveCurrentDocument()
+    public async Task<bool> CanExitAsync()
     {
-        ActiveDocument?.Save();
-        StatusMessage = $"Saved {ActiveDocument?.Title}";
+        return !IsChangingDocuments && await DialogService.ConfirmCloseAsync(Documents.ToArray());
+    }
+
+    private void DisposeDocuments()
+    {
+        foreach (var document in Documents)
+        {
+            document.Dispose();
+        }
+
+        Documents.Clear();
+        ActiveDocument = null;
+    }
+
+    private async Task SaveCurrentDocumentAsync()
+    {
+        var document = ActiveDocument;
+        if (document is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (await document.SaveAsync())
+            {
+                StatusMessage = $"Saved {document.Title}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Save failed: {ex.Message}";
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private void OpenPreferences()
+    {
+        var preferences = new Preferences.PreferencesViewModel(SettingsService, DialogService);
+        var pathChanged = false;
+        preferences.BeforeApply = async () =>
+        {
+            pathChanged = preferences.Cs2Path != (SettingsService.Settings.Cs2PathOverride ?? string.Empty);
+            return !pathChanged || await DialogService.ConfirmCloseAsync(Documents.ToArray());
+        };
+        preferences.Applied += (_, _) =>
+        {
+            if (pathChanged)
+            {
+                Controls.WorkspaceView.SaveAllLayouts();
+                Cs2Locator.FindCs2Path();
+                AddonService.RefreshAddons();
+                DisposeDocuments();
+                OpenDefaultEditors();
+            }
+        };
+        DialogService.ShowUtility("Settings", preferences, 830, 600);
+    }
+
+    private async Task OpenFileAsync()
+    {
+        var path = await DialogService.OpenFileAsync("Open source document", "*");
+        if (path is not null)
+        {
+            OnOpenFileFromExplorer(path);
+        }
+    }
+
+    private void OnAddonsChanged(object? sender, IReadOnlyList<Addon> addons)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(SyncAddons);
+    }
+
+    private void OnActiveAddonChanged(object? sender, Addon? addon)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(SelectedAddon)));
+    }
+
+    private void OnProcessStateChanged(object? sender, bool running)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => IsCs2Running = running);
+        if (!running)
+        {
+            CommandService.Stop();
+        }
     }
 
     private async Task OnLaunchCs2Async()
     {
         StatusMessage = "Launching Counter-Strike 2 Workshop Tools...";
+        CommandService.Start();
         var success = await Cs2Launcher.LaunchAsync();
         StatusMessage = success ? "CS2 running" : "Failed to launch CS2";
     }
@@ -425,35 +590,54 @@ public class ShellViewModel : ViewModelBase
         }
     }
 
-    private void OnOpenFileFromExplorer(string filePath)
+    public void OnOpenFileFromExplorer(string filePath)
     {
-        var ext = Path.GetExtension(filePath).ToLowerInvariant();
-        if (ext is ".vsndevts" or ".vsnd")
+        try
         {
-            OpenSoundEventEditor();
-            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
-        }
-        else if (ext is ".vdata" or ".vsmart")
-        {
-            OpenDetailPropEditor();
-            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
-        }
-        else if (ext is ".vmap")
-        {
-            OpenLoadingEditor();
-            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
-        }
-        else
-        {
-            try
+            var fullPath = Path.GetFullPath(filePath);
+            var existing = Documents.FirstOrDefault(document => string.Equals(document.DocumentPath, fullPath, StringComparison.OrdinalIgnoreCase));
+            if (existing is not null)
             {
-                Process.Start(new ProcessStartInfo { FileName = filePath, UseShellExecute = true });
-                StatusMessage = $"Opened {Path.GetFileName(filePath)}";
+                ActiveDocument = existing;
+                return;
             }
-            catch (Exception ex)
+
+            var extension = Path.GetExtension(fullPath).ToLowerInvariant();
+            DocumentViewModel? document = extension switch
             {
-                StatusMessage = $"Failed to open file: {ex.Message}";
+                ".vsndevts" => new SoundEventEditorViewModel(AddonService, SoundEventService, DialogService, fullPath),
+                ".vdata" when Path.GetFileName(fullPath).Equals("detail_prop_types.vdata", StringComparison.OrdinalIgnoreCase)
+                    => new DetailPropEditorViewModel(AddonService, DialogService, fullPath),
+                ".txt" when Path.GetFileName(fullPath).StartsWith("keybindings", StringComparison.OrdinalIgnoreCase)
+                    => new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher, fullPath),
+                _ => null,
+            };
+            if (document is not null)
+            {
+                AddDocument(document);
             }
+            else
+            {
+                Process.Start(new ProcessStartInfo { FileName = fullPath, UseShellExecute = true });
+            }
+
+            StatusMessage = $"Opened {Path.GetFileName(fullPath)}";
         }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to open file: {ex.Message}";
+        }
+    }
+
+    public void Dispose()
+    {
+        AddonService.AddonsChanged -= OnAddonsChanged;
+        AddonService.ActiveAddonChanged -= OnActiveAddonChanged;
+        Cs2Launcher.ProcessStateChanged -= OnProcessStateChanged;
+        DialogService.CloseUtilities();
+        Controls.WorkspaceView.CloseAllFloatingWindows();
+        Explorer.Dispose();
+        DisposeDocuments();
+        GC.SuppressFinalize(this);
     }
 }

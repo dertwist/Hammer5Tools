@@ -17,6 +17,12 @@ public class NavMeshRadarViewModel : DocumentViewModel
     private bool CollapseNgonsValue = true;
     private string StatusValue = "Ready";
 
+    public string VpkPath => AddonService.ActiveAddon is { } addon
+        ? Path.Combine(addon.GamePath, "maps", $"{MapName}.vpk") : string.Empty;
+
+    public string VmapPath => AddonService.ActiveAddon is { } addon
+        ? Path.Combine(addon.ContentPath, "maps", $"{MapName}.vmap") : string.Empty;
+
     public string MapName
     {
         get => MapNameValue;

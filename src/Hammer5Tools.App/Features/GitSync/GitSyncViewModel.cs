@@ -10,6 +10,7 @@ public class GitSyncViewModel : DocumentViewModel
 {
     private readonly IAddonService AddonService;
     private readonly IGitSyncService GitSyncService;
+    private readonly Core.Settings.ISettingsService? SettingsService;
 
     private string BranchNameValue = "main";
     private string CommitMessageValue = string.Empty;
@@ -50,10 +51,11 @@ public class GitSyncViewModel : DocumentViewModel
 
     public IRelayCommand CommitCommand { get; }
 
-    public GitSyncViewModel(IAddonService addonService, IGitSyncService gitSyncService)
+    public GitSyncViewModel(IAddonService addonService, IGitSyncService gitSyncService, Core.Settings.ISettingsService? settingsService = null)
     {
         AddonService = addonService;
         GitSyncService = gitSyncService;
+        SettingsService = settingsService;
         Title = "Git Sync (Prototype)";
 
         RefreshStatusCommand = new AsyncRelayCommand(OnRefreshStatusAsync);
@@ -86,6 +88,11 @@ public class GitSyncViewModel : DocumentViewModel
         foreach (var file in result.UntrackedFiles)
         {
             ChangedFiles.Add($"?  {file}");
+        }
+
+        if (SettingsService?.Settings.Editor.GenerateGitCommitMessages == true && string.IsNullOrWhiteSpace(CommitMessage) && ChangedFiles.Count > 0)
+        {
+            CommitMessage = $"chore(assets): update {ChangedFiles.Count} addon file(s)";
         }
 
         Status = IsRepo

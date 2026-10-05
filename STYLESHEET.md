@@ -138,3 +138,9 @@ regenerating `ui_*.py`; never hand-edit generated modules.
 
 Application startup applies the selected theme from
 `Hammer5ToolsGUI/gui/main.py`.
+
+## C# migration styling
+
+The Avalonia preview uses `src/Hammer5Tools.App/Styles/HammerTheme.axaml` for shared control rules and `ThemeService.cs` for the exact Standard, Bright and Vintage Steam colors from Python's `theme.py`. Keep these values synchronized with the Python baseline; do not substitute the default Fluent palette. Qt point sizes convert to Avalonia device-independent pixels at 96/72 (10pt = 13.333, 9pt = 12). Shared buttons and inputs use the QSS two-pixel border, compact padding and two-pixel radius; tabs retain the top accent stripe. Docking headers use the same semantic colors and nine-point title typography.
+
+Fluent remains the underlying control implementation. Feature views must consume shared semantic resources. Preserve baseline editor/dialog layouts, keep viewport/data colors separate, and verify palette changes with `Hammer5Tools.App.Tests` plus rendered snapshots.

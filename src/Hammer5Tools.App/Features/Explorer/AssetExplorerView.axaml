@@ -9,9 +9,9 @@
     <conv:UriToBitmapConverter x:Key="UriToBitmapConverter" />
   </UserControl.Resources>
 
-  <Grid RowDefinitions="Auto,Auto,*" Background="#272727">
+  <Grid RowDefinitions="Auto,Auto,*" Background="{DynamicResource H5TSurfaceBrush}">
     <!-- Filter Search Box and Toolbar -->
-    <Border Grid.Row="0" Background="#2e2e2e" BorderBrush="#464649" BorderThickness="0,0,0,1" Padding="4,4">
+    <Border Grid.Row="0" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,0,0,1" Padding="4,4">
       <Grid ColumnDefinitions="*,Auto,Auto,Auto">
         <TextBox Grid.Column="0"
                  Text="{Binding FilterText}"
@@ -46,17 +46,17 @@
     </Border>
 
     <!-- Header bar: Name | Size -->
-    <Border Grid.Row="1" Background="#242424" BorderBrush="#3f3f42" BorderThickness="0,0,0,1" Padding="8,3">
+    <Border Grid.Row="1" Background="{DynamicResource H5TBackgroundBrush}" BorderBrush="{DynamicResource H5TBorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="8,3">
       <Grid ColumnDefinitions="*,60">
-        <TextBlock Grid.Column="0" Text="Name" Foreground="#a5a5a5" FontSize="11" FontWeight="SemiBold" />
-        <TextBlock Grid.Column="1" Text="Size" Foreground="#a5a5a5" FontSize="11" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,8,0" />
+        <TextBlock Grid.Column="0" Text="Name" Foreground="{DynamicResource H5TTextMutedBrush}" FontSize="11" FontWeight="SemiBold" />
+        <TextBlock Grid.Column="1" Text="Size" Foreground="{DynamicResource H5TTextMutedBrush}" FontSize="11" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,8,0" />
       </Grid>
     </Border>
 
     <!-- Tree View -->
     <TreeView Grid.Row="2"
               ItemsSource="{Binding RootItems}"
-              Background="#272727"
+              Background="{DynamicResource H5TSurfaceBrush}"
               Padding="2,2">
       <TreeView.ItemTemplate>
         <TreeDataTemplate DataType="{x:Type explorer:FileItemViewModel}" ItemsSource="{Binding Children}">
@@ -76,13 +76,13 @@
                      VerticalAlignment="Center" />
               <TextBlock Grid.Column="1"
                          Text="{Binding Name}"
-                         Foreground="#e5e5e5"
+                         Foreground="{DynamicResource H5TTextBrush}"
                          FontSize="12"
                          VerticalAlignment="Center"
                          TextTrimming="CharacterEllipsis" />
               <TextBlock Grid.Column="2"
                          Text="{Binding FormattedSize}"
-                         Foreground="#797979"
+                         Foreground="{DynamicResource H5TTextMutedBrush}"
                          FontSize="11"
                          VerticalAlignment="Center"
                          Margin="8,0,4,0" />

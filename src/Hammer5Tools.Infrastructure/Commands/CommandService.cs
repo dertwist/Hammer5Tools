@@ -15,6 +15,8 @@ public class CommandService : ICommandService, IDisposable
     private readonly ILogger<CommandService>? Logger;
     private readonly Cs2CommandPipe Pipe;
 
+    private bool IsStarted;
+
     private ConsoleLogListener? LogListener;
 
     public bool IsConnected => Pipe.IsConnected;
@@ -34,6 +36,12 @@ public class CommandService : ICommandService, IDisposable
     /// <inheritdoc/>
     public void Start()
     {
+        if (IsStarted)
+        {
+            return;
+        }
+
+        IsStarted = true;
         Pipe.Start();
 
         var cs2Path = Cs2Locator.ResolvedCs2Path;
@@ -49,6 +57,7 @@ public class CommandService : ICommandService, IDisposable
     /// <inheritdoc/>
     public void Stop()
     {
+        IsStarted = false;
         Pipe.Stop();
         LogListener?.Stop();
         LogListener?.Dispose();

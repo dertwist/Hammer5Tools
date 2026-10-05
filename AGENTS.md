@@ -6,6 +6,20 @@ Hammer 5 Tools is a Counter-Strike 2 desktop toolkit.
 Optional C++ launcher -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> external libraries
 ```
 
+## C# migration workspace
+
+The replacement application under `src/` uses `Core -> Infrastructure -> App/Cli` dependencies:
+
+- `src/Hammer5Tools.Core/`: typed domain documents, contracts, settings and undo; no Avalonia dependencies.
+- `src/Hammer5Tools.Infrastructure/`: filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the upstream NuGet package; do not duplicate its packing rules.
+- `src/Hammer5Tools.App/`: Avalonia views, presentation state and editor lifecycle. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources.
+- `src/Hammer5Tools.Cli/`: command-line presentation.
+- `tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
+
+Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
+
+`IResourceCompiler` retains its existing asset compile overload and adds an overload for map-build arguments, with cancellation terminating the process tree. `ILoadingScreenService` includes addon-description loading and SVG map-icon application; parsing and IO are kept out of views. The legacy ownership rules below apply to the existing Python/NativeAOT application, not the replacement managed application. Neither application is removed until migration parity is verified.
+
 ## Mandatory Workflow
 
 Before changing code:

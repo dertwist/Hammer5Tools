@@ -10,13 +10,24 @@
              xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
              xmlns:assettools="using:Hammer5Tools.App.Features.AssetTools"
              xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
+             xmlns:preferences="using:Hammer5Tools.App.Features.Preferences"
+             xmlns:dock="using:Dock.Model.Mvvm.Controls"
+             xmlns:dockthemes="using:Dock.Avalonia.Themes.Fluent"
              xmlns:conv="using:Hammer5Tools.App.Converters"
              x:Class="Hammer5Tools.App.App"
              RequestedThemeVariant="Dark">
   <Application.Resources>
+    <x:Boolean x:Key="DockDocumentControlTabStripVisible">False</x:Boolean>
     <conv:UriToBitmapConverter x:Key="UriToBitmapConverter" />
   </Application.Resources>
   <Application.DataTemplates>
+    <DataTemplate DataType="{x:Type preferences:PreferencesViewModel}"><preferences:PreferencesView /></DataTemplate>
+    <DataTemplate DataType="{x:Type dock:Tool}" x:DataType="dock:Tool">
+      <ContentControl Content="{Binding Context}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type dock:Document}" x:DataType="dock:Document">
+      <ContentControl Content="{Binding Context}" />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type hotkeys:HotkeyEditorViewModel}">
       <hotkeys:HotkeyEditorView />
     </DataTemplate>
@@ -50,6 +61,7 @@
   </Application.DataTemplates>
   <Application.Styles>
     <FluentTheme />
+    <dockthemes:DockFluentTheme />
     <StyleInclude Source="avares://Hammer5Tools.App/Styles/HammerTheme.axaml" />
   </Application.Styles>
 </Application>

@@ -10,6 +10,7 @@ public class WorkshopManagerViewModel : DocumentViewModel
 {
     private readonly IAddonService AddonService;
     private readonly IWorkshopManagerService WorkshopService;
+    private readonly Services.IDialogService DialogService;
 
     private string TitleValue = string.Empty;
     private string DescriptionValue = string.Empty;
@@ -46,10 +47,11 @@ public class WorkshopManagerViewModel : DocumentViewModel
 
     public IRelayCommand BuildPackageCommand { get; }
 
-    public WorkshopManagerViewModel(IAddonService addonService, IWorkshopManagerService workshopService)
+    public WorkshopManagerViewModel(IAddonService addonService, IWorkshopManagerService workshopService, Services.IDialogService dialogService)
     {
         AddonService = addonService;
         WorkshopService = workshopService;
+        DialogService = dialogService;
         Title = "Workshop Manager";
 
         RefreshFilesCommand = new AsyncRelayCommand(OnRefreshFilesAsync);
@@ -74,7 +76,16 @@ public class WorkshopManagerViewModel : DocumentViewModel
         }
 
         Status = "Scanning addon files...";
-        var files = await WorkshopService.AnalyzeAddonFilesAsync(addon.Name, ExcludeUnused);
+        IReadOnlyList<string> files;
+        try
+        {
+            files = await WorkshopService.AnalyzeAddonFilesAsync(addon.Name, ExcludeUnused);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Cannot scan addon: {ex.Message}";
+            return;
+        }
         foreach (var f in files)
         {
             PackageFiles.Add(f);
@@ -92,7 +103,12 @@ public class WorkshopManagerViewModel : DocumentViewModel
         }
 
         Status = "Building VPK package...";
-        var outVpk = Path.Combine(addon.GamePath, $"{addon.Name}.vpk");
+        var outVpk = await DialogService.SaveFileAsync("Save Workshop package", $"{addon.Name}_dir.vpk");
+        if (outVpk is null)
+        {
+            Status = "Packaging cancelled";
+            return;
+        }
         var config = new WorkshopPackConfig
         {
             AddonName = addon.Name,
@@ -102,7 +118,14 @@ public class WorkshopManagerViewModel : DocumentViewModel
             OutputVpkPath = outVpk
         };
 
-        var success = await WorkshopService.BuildWorkshopPackageAsync(config);
-        Status = success ? $"VPK successfully prepared at {outVpk}" : "Packaging failed.";
+        try
+        {
+            var success = await WorkshopService.BuildWorkshopPackageAsync(config);
+            Status = success ? $"Package written to {outVpk} and its numbered chunks" : "Packaging failed";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Packaging failed: {ex.Message}";
+        }
     }
 }

@@ -12,7 +12,7 @@ public class HotkeyEditorViewModel : DocumentViewModel
     public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/hotkey_editor.png";
 
     private readonly ICs2Locator Cs2Locator;
-    private readonly string? FilePath;
+    private readonly Services.IDialogService DialogService;
     private HotkeyDocument Document;
 
     private string FilterTextValue = string.Empty;
@@ -66,17 +66,31 @@ public class HotkeyEditorViewModel : DocumentViewModel
         set => SetProperty(ref NewKeyInputValue, value);
     }
 
+    public IRelayCommand NewPresetCommand { get; }
+
+    public IRelayCommand OpenPresetCommand { get; }
+
+    public IRelayCommand ApplyAndRestartCommand { get; }
+
     public IRelayCommand ApplyBindingCommand { get; }
 
     public IRelayCommand ApplyToCs2Command { get; }
 
-    public HotkeyEditorViewModel(ICs2Locator cs2Locator, string? filePath = null)
+    public HotkeyEditorViewModel(ICs2Locator cs2Locator, Services.IDialogService dialogService, ICs2Launcher? launcher = null, string? filePath = null)
     {
         Cs2Locator = cs2Locator;
-        FilePath = filePath;
+        DocumentPath = filePath;
+        DialogService = dialogService;
+        ReportSaveFailure = dialogService.ShowErrorAsync;
         Title = string.IsNullOrWhiteSpace(filePath) ? "Hotkey Editor" : Path.GetFileName(filePath);
 
-        if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+        var installedPath = cs2Locator.ResolvedCs2Path is { } root
+            ? Path.Combine(Cs2Paths.GetKeybindingsPath(root), "keybindings_hammer.txt") : null;
+        if (string.IsNullOrWhiteSpace(filePath) && File.Exists(installedPath))
+        {
+            Document = HotkeyDocument.Load(installedPath!);
+        }
+        else if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
         {
             Document = HotkeyDocument.Load(filePath);
         }
@@ -91,9 +105,48 @@ public class HotkeyEditorViewModel : DocumentViewModel
         }
 
         ApplyBindingCommand = new RelayCommand(OnApplyBinding);
-        ApplyToCs2Command = new RelayCommand(OnApplyToCs2);
+        ApplyToCs2Command = new AsyncRelayCommand(OnApplyToCs2Async);
 
+        NewPresetCommand = new AsyncRelayCommand(async () =>
+        {
+            if (await DialogService.ConfirmCloseAsync([this]))
+            {
+                Document = HotkeyDocument.Parse(Document.Serialize());
+                DocumentPath = null;
+                Title = "Hotkey Editor";
+                RefreshContexts();
+                ObserveModels(Document.Bindings);
+                MarkDirty();
+            }
+        });
+        OpenPresetCommand = new AsyncRelayCommand(async () =>
+        {
+            if (!await DialogService.ConfirmCloseAsync([this]))
+            {
+                return;
+            }
+
+            var path = await DialogService.OpenFileAsync("Open hotkey preset", "*.txt");
+            if (path is not null)
+            {
+                Document = HotkeyDocument.Load(path);
+                DocumentPath = path;
+                Title = Path.GetFileName(path);
+                RefreshContexts();
+                ObserveModels(Document.Bindings);
+                InitializeHistory(() => Document.Serialize(), RestoreHistory);
+            }
+        });
+        ApplyAndRestartCommand = new AsyncRelayCommand(async () =>
+        {
+            if (await ApplyToCs2Async() && launcher is not null)
+            {
+                await launcher.RestartAsync();
+            }
+        });
         RefreshContexts();
+        InitializeHistory(() => Document.Serialize(), RestoreHistory);
+        ObserveModels(Document.Bindings);
     }
 
     private void RefreshContexts()
@@ -143,27 +196,54 @@ public class HotkeyEditorViewModel : DocumentViewModel
         ApplyFilter();
     }
 
-    private void OnApplyToCs2()
+    private async Task OnApplyToCs2Async()
+    {
+        await ApplyToCs2Async();
+    }
+
+    private async Task<bool> ApplyToCs2Async()
     {
         var cs2Path = Cs2Locator.ResolvedCs2Path;
         if (string.IsNullOrWhiteSpace(cs2Path))
         {
-            return;
+            await DialogService.ShowErrorAsync("CS2 installation not found.");
+            return false;
         }
 
-        var keybindingsDir = Cs2Paths.GetKeybindingsPath(cs2Path);
-        var targetFile = Path.Combine(keybindingsDir, "keybindings_hammer.txt");
-        Document.Save(targetFile);
-        Save();
+        if (!await DialogService.ConfirmCloseAsync([this]))
+        {
+            return false;
+        }
+
+        var targetFile = Path.Combine(Cs2Paths.GetKeybindingsPath(cs2Path), "keybindings_hammer.txt");
+        try
+        {
+            Document.Save(targetFile);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+            return false;
+        }
     }
 
-    public override void Save()
+    protected override async Task<bool> SaveCoreAsync()
     {
-        if (!string.IsNullOrWhiteSpace(FilePath))
+        DocumentPath ??= await DialogService.SaveFileAsync("Save hotkey preset", "keybindings_hammer.txt");
+        if (DocumentPath is null)
         {
-            Document.Save(FilePath);
+            return false;
         }
 
-        base.Save();
+        Document.Save(DocumentPath);
+        Title = Path.GetFileName(DocumentPath);
+        return true;
+    }
+    private void RestoreHistory(string text)
+    {
+        Document = HotkeyDocument.Parse(text);
+        RefreshContexts();
+        ObserveModels(Document.Bindings);
     }
 }

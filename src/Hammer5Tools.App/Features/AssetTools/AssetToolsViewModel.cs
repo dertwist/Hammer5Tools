@@ -32,6 +32,8 @@ public class AssetToolsViewModel : DocumentViewModel
         set => SetProperty(ref StatusValue, value);
     }
 
+    public Explorer.AssetExplorerViewModel Explorer { get; }
+
     public IRelayCommand MoveAssetCommand { get; }
 
     public AssetToolsViewModel(IAddonService addonService, IAssetToolsService assetToolsService)
@@ -39,8 +41,22 @@ public class AssetToolsViewModel : DocumentViewModel
         AddonService = addonService;
         AssetToolsService = assetToolsService;
         Title = "Asset Tools";
+        Explorer = new Explorer.AssetExplorerViewModel(addonService, path =>
+        {
+            if (addonService.ActiveAddon is { } addon)
+            {
+                OldPath = Path.GetRelativePath(addon.ContentPath, path);
+            }
+        });
 
         MoveAssetCommand = new AsyncRelayCommand(OnMoveAssetAsync);
+    }
+
+    public override void Dispose()
+    {
+        Explorer.Dispose();
+        base.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private async Task OnMoveAssetAsync()

@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.Preferences"
+             x:Class="Hammer5Tools.App.Features.Preferences.PreferencesView" x:DataType="vm:PreferencesViewModel">
+  <Grid RowDefinitions="*,Auto" Margin="10">
+    <TabControl>
+      <TabItem Header="General">
+        <ScrollViewer>
+          <StackPanel Spacing="8" Margin="10">
+            <TextBlock Text="Paths" Classes="section" />
+            <Grid ColumnDefinitions="130,*,Auto">
+              <TextBlock Text="Archive path:" VerticalAlignment="Center" />
+              <TextBox Grid.Column="1" Text="{Binding ArchivePath}" />
+              <Button Grid.Column="2" Content="Browse" Command="{Binding BrowseArchiveCommand}" Margin="6,0,0,0" />
+            </Grid>
+            <Grid ColumnDefinitions="130,*,Auto">
+              <TextBlock Text="CS2 path:" VerticalAlignment="Center" />
+              <TextBox Grid.Column="1" Text="{Binding Cs2Path}" PlaceholderText="Automatic Steam discovery" />
+              <Button Grid.Column="2" Content="Browse" Command="{Binding BrowseCs2Command}" Margin="6,0,0,0" />
+            </Grid>
+            <Separator />
+            <TextBlock Text="Appearance" Classes="section" />
+            <Grid ColumnDefinitions="130,*">
+              <TextBlock Text="Theme:" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" Width="200" />
+            </Grid>
+            <Button Content="Reset dock layouts" Command="{Binding ResetLayoutCommand}" HorizontalAlignment="Left" />
+            <Separator />
+            <TextBlock Text="Application" Classes="section" />
+            <CheckBox Content="Minimize on Close" IsChecked="{Binding MinimizeToTray}" />
+            <Grid ColumnDefinitions="130,*">
+              <TextBlock Text="Update channel:" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" ItemsSource="{Binding UpdateChannels}" SelectedItem="{Binding UpdateChannel}" Width="200" />
+            </Grid>
+            <Separator />
+            <TextBlock Text="Git Sync" Classes="section" />
+            <CheckBox Content="Generate commit messages" IsChecked="{Binding GenerateGitCommitMessages}" />
+            <Separator />
+            <TextBlock Text="Loading Screen Editor" Classes="section" />
+            <CheckBox Content="Use saved editor cameras instead of point_camera" IsChecked="{Binding LoadingUseSavedCameras}" />
+            <Separator />
+            <TextBlock Text="Launch options" Classes="section" />
+            <TextBox Text="{Binding CustomLaunchArgs}" />
+            <CheckBox Content="NCM mode" IsChecked="{Binding LaunchNcmMode}" />
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+      <TabItem Header="SmartProp Editor">
+        <StackPanel Spacing="8" Margin="10">
+          <TextBlock Text="SmartProp is deferred in the C# migration. These preferences are retained for its port." TextWrapping="Wrap" />
+          <TextBlock Text="Interface" Classes="section" />
+          <CheckBox Content="Display ID with variable class" IsChecked="{Binding SmartPropDisplayIds}" />
+          <CheckBox Content="Hide experimental properties and elements" IsChecked="{Binding SmartPropHideExperimental}" />
+          <Separator />
+          <TextBlock Text="VMAP Importing" Classes="section" />
+          <CheckBox Content="Round values during VMAP import" IsChecked="{Binding SmartPropRoundVmapValues}" />
+          <Grid ColumnDefinitions="130,100"><TextBlock Text="Decimal places:" /><NumericUpDown Grid.Column="1" Value="{Binding SmartPropRoundDecimals}" Minimum="0" Maximum="6" /></Grid>
+          <Separator />
+          <TextBlock Text="3D Viewport" Classes="section" />
+          <Grid ColumnDefinitions="130,100"><TextBlock Text="MSAA samples:" /><NumericUpDown Grid.Column="1" Value="{Binding SmartPropMsaa}" Minimum="0" Maximum="8" Increment="2" /></Grid>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="AssetGroup Maker">
+        <StackPanel Spacing="8" Margin="10">
+          <TextBlock Text="AssetGroup Maker is deferred in the C# migration." />
+          <TextBlock Text="Monitor" Classes="section" />
+          <TextBlock Text="Folders to monitor (restart program to apply changes):" />
+          <TextBox Text="{Binding AssetGroupMonitorPaths}" />
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="SoundEvent Editor">
+        <StackPanel Spacing="8" Margin="10">
+          <TextBlock Text="Audio Preview" Classes="section" />
+          <CheckBox Content="Play on click" IsChecked="{Binding SoundEventPlayOnClick}" />
+          <TextBlock Text="Audio playback is pending in the C# editor." />
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+    <Button Grid.Row="1" Content="Apply" Command="{Binding ApplyCommand}" HorizontalAlignment="Right" Margin="0,10,0,0" />
+  </Grid>
+</UserControl>

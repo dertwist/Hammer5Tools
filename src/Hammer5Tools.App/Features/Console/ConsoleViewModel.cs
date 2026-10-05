@@ -58,4 +58,10 @@ public class ConsoleViewModel : DocumentViewModel
             }
         });
     }
+    public override void Dispose()
+    {
+        CommandService.OutputLineReceived -= OnOutputLineReceived;
+        base.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }

@@ -12,8 +12,10 @@ public class DetailPropEditorViewModel : DocumentViewModel
     public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/detailprop_editor.png";
 
     private readonly IAddonService AddonService;
-    private readonly string? FilePath;
+    private readonly Services.IDialogService DialogService;
     private DetailPropDocument Document;
+
+    private object? SelectedNodeValue;
 
     private DetailPropType? SelectedTypeValue;
     private DetailPropModel? SelectedModelValue;
@@ -21,6 +23,29 @@ public class DetailPropEditorViewModel : DocumentViewModel
     public ObservableCollection<DetailPropType> Types { get; } = [];
 
     public ObservableCollection<DetailPropModel> Models { get; } = [];
+
+    public object? SelectedNode
+    {
+        get => SelectedNodeValue;
+        set
+        {
+            if (!SetProperty(ref SelectedNodeValue, value))
+            {
+                return;
+            }
+
+            if (value is DetailPropType type)
+            {
+                SelectedType = type;
+                SelectedModel = null;
+            }
+            else if (value is DetailPropModel model)
+            {
+                SelectedType = Types.FirstOrDefault(type => type.Models.Contains(model));
+                SelectedModel = model;
+            }
+        }
+    }
 
     public DetailPropType? SelectedType
     {
@@ -37,7 +62,96 @@ public class DetailPropEditorViewModel : DocumentViewModel
     public DetailPropModel? SelectedModel
     {
         get => SelectedModelValue;
-        set => SetProperty(ref SelectedModelValue, value);
+        set
+        {
+            if (SetProperty(ref SelectedModelValue, value))
+            {
+                OnPropertyChanged(nameof(RotationMinX));
+                OnPropertyChanged(nameof(RotationMinY));
+                OnPropertyChanged(nameof(RotationMinZ));
+                OnPropertyChanged(nameof(RotationMaxX));
+                OnPropertyChanged(nameof(RotationMaxY));
+                OnPropertyChanged(nameof(RotationMaxZ));
+            }
+        }
+    }
+
+    public float RotationMinX
+    {
+        get => SelectedModel?.RotationMin.X ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMin;
+                model.RotationMin = new Vector3(value, vector.Y, vector.Z);
+            }
+        }
+    }
+
+    public float RotationMinY
+    {
+        get => SelectedModel?.RotationMin.Y ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMin;
+                model.RotationMin = new Vector3(vector.X, value, vector.Z);
+            }
+        }
+    }
+
+    public float RotationMinZ
+    {
+        get => SelectedModel?.RotationMin.Z ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMin;
+                model.RotationMin = new Vector3(vector.X, vector.Y, value);
+            }
+        }
+    }
+
+    public float RotationMaxX
+    {
+        get => SelectedModel?.RotationMax.X ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMax;
+                model.RotationMax = new Vector3(value, vector.Y, vector.Z);
+            }
+        }
+    }
+
+    public float RotationMaxY
+    {
+        get => SelectedModel?.RotationMax.Y ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMax;
+                model.RotationMax = new Vector3(vector.X, value, vector.Z);
+            }
+        }
+    }
+
+    public float RotationMaxZ
+    {
+        get => SelectedModel?.RotationMax.Z ?? 0;
+        set
+        {
+            if (SelectedModel is { } model)
+            {
+                var vector = model.RotationMax;
+                model.RotationMax = new Vector3(vector.X, vector.Y, value);
+            }
+        }
     }
 
     public IRelayCommand AddTypeCommand { get; }
@@ -48,10 +162,13 @@ public class DetailPropEditorViewModel : DocumentViewModel
 
     public IRelayCommand DeleteModelCommand { get; }
 
-    public DetailPropEditorViewModel(IAddonService addonService, string? filePath = null)
+    public DetailPropEditorViewModel(IAddonService addonService, Services.IDialogService dialogService, string? filePath = null)
     {
         AddonService = addonService;
-        FilePath = filePath;
+        DialogService = dialogService;
+        ReportSaveFailure = dialogService.ShowErrorAsync;
+        filePath ??= addonService.ActiveAddon is { } active ? Path.Combine(active.ContentPath, "scripts", "detail_prop_types.vdata") : null;
+        DocumentPath = filePath;
         Title = string.IsNullOrWhiteSpace(filePath) ? "DetailProp Editor" : Path.GetFileName(filePath);
 
         if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
@@ -79,6 +196,19 @@ public class DetailPropEditorViewModel : DocumentViewModel
         DeleteModelCommand = new RelayCommand(OnDeleteModel);
 
         RefreshTypes();
+        InitializeHistory(() => Document.Serialize(), text =>
+        {
+            Document = DetailPropDocument.Parse(text);
+            RefreshTypes();
+            ObserveDocument();
+        });
+        ObserveDocument();
+    }
+
+    private void ObserveDocument()
+    {
+        ObserveModels(Document.Types.Cast<System.ComponentModel.INotifyPropertyChanged>()
+            .Concat(Document.Types.SelectMany(type => type.Models)));
     }
 
     private void RefreshTypes()
@@ -113,6 +243,7 @@ public class DetailPropEditorViewModel : DocumentViewModel
         Document.Types.Add(newType);
         Types.Add(newType);
         SelectedType = newType;
+        ObserveDocument();
         MarkDirty();
     }
 
@@ -126,6 +257,7 @@ public class DetailPropEditorViewModel : DocumentViewModel
         Document.Types.Remove(SelectedType);
         Types.Remove(SelectedType);
         SelectedType = Types.FirstOrDefault();
+        ObserveDocument();
         MarkDirty();
     }
 
@@ -140,6 +272,7 @@ public class DetailPropEditorViewModel : DocumentViewModel
         SelectedType.Models.Add(newModel);
         Models.Add(newModel);
         SelectedModel = newModel;
+        ObserveDocument();
         MarkDirty();
     }
 
@@ -153,23 +286,21 @@ public class DetailPropEditorViewModel : DocumentViewModel
         SelectedType.Models.Remove(SelectedModel);
         Models.Remove(SelectedModel);
         SelectedModel = Models.FirstOrDefault();
+        ObserveDocument();
         MarkDirty();
     }
 
-    public override void Save()
+    protected override async Task<bool> SaveCoreAsync()
     {
-        var savePath = FilePath;
-        if (string.IsNullOrWhiteSpace(savePath) && AddonService.ActiveAddon is { } addon)
+        DocumentPath ??= AddonService.ActiveAddon is { } addon
+            ? Path.Combine(addon.ContentPath, "scripts", "detail_prop_types.vdata")
+            : await DialogService.SaveFileAsync("Save detail props", "detail_prop_types.vdata");
+        if (DocumentPath is null)
         {
-            var scriptsDir = Path.Combine(addon.ContentPath, "scripts");
-            savePath = Path.Combine(scriptsDir, "detail_prop_types.vdata");
+            return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(savePath))
-        {
-            Document.Save(savePath);
-        }
-
-        base.Save();
+        Document.Save(DocumentPath);
+        return true;
     }
 }

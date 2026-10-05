@@ -4,6 +4,7 @@
         xmlns:vm="using:Hammer5Tools.App.ViewModels"
         xmlns:addons="using:Hammer5Tools.Core.Addons"
         xmlns:explorer="using:Hammer5Tools.App.Features.Explorer"
+        xmlns:workspace="using:Hammer5Tools.App.Controls"
         xmlns:conv="using:Hammer5Tools.App.Converters"
         x:Class="Hammer5Tools.App.MainWindow"
         x:DataType="shell:ShellViewModel"
@@ -17,10 +18,17 @@
     <!-- Top Menu Bar -->
     <Menu Grid.Row="0">
       <MenuItem Header="_File">
+        <MenuItem Header="_Open" Command="{Binding OpenFileCommand}" HotKey="Ctrl+O" />
         <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
         <Separator />
-        <MenuItem Header="E_xit" />
+        <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
       </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="Undo" Command="{Binding UndoDocumentCommand}" HotKey="Ctrl+Z" />
+        <MenuItem Header="Redo" Command="{Binding RedoDocumentCommand}" HotKey="Ctrl+Shift+Z" />
+        <MenuItem Header="Preferences" Command="{Binding OpenPreferencesCommand}" />
+      </MenuItem>
+      <MenuItem Header="_View"><MenuItem Header="Reset dock layouts" Command="{Binding ResetLayoutCommand}" /></MenuItem>
       <MenuItem Header="_Addon">
         <MenuItem Header="Refresh Addon List" Command="{Binding RefreshAddonsCommand}" />
         <MenuItem Header="Open Content Folder" Command="{Binding OpenContentFolderCommand}" />
@@ -57,19 +65,15 @@
       </MenuItem>
     </Menu>
 
-    <!-- Main Work Area: Asset Explorer (Left) | Splitter | Main Editor Tabs (Right) -->
-    <Grid Grid.Row="1" ColumnDefinitions="260,3,*">
-      <!-- Asset Explorer Panel -->
-      <explorer:AssetExplorerView Grid.Column="0" DataContext="{Binding Explorer}" />
-
-      <!-- Splitter Divider -->
-      <GridSplitter Grid.Column="1" Background="#38383a" ResizeDirection="Columns" Width="3" />
-
-      <!-- Main Tool Document Tabs (Loading, SoundEvent, Hotkey, DetailProp) -->
-      <TabControl Grid.Column="2"
+    <workspace:WorkspaceView Grid.Row="1" LayoutKey="Shell" LeftTitle="Asset Explorer">
+      <workspace:WorkspaceView.LeftContent>
+        <explorer:AssetExplorerView DataContext="{Binding Explorer}" />
+      </workspace:WorkspaceView.LeftContent>
+      <workspace:WorkspaceView.CenterContent>
+      <TabControl
                   ItemsSource="{Binding Documents}"
                   SelectedItem="{Binding ActiveDocument}"
-                  Background="#2f2f31">
+                  Background="{DynamicResource H5TSurfaceRaisedBrush}">
         <TabControl.ItemTemplate>
           <DataTemplate x:DataType="vm:DocumentViewModel">
             <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
@@ -92,10 +96,11 @@
           </DataTemplate>
         </TabControl.ItemTemplate>
       </TabControl>
-    </Grid>
+      </workspace:WorkspaceView.CenterContent>
+    </workspace:WorkspaceView>
 
     <!-- Bottom Button Line with Console Line, Addon Selector, Actions, Utilities, Edit Map (Classic Hammer5Tools Layout) -->
-    <Border Grid.Row="2" Background="#272727" BorderBrush="#464649" BorderThickness="0,1" Padding="8,4">
+    <Border Grid.Row="2" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,1" Padding="8,4">
       <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
         <!-- Left: Twitter, Discord, About, Git Sync buttons -->
         <Button Grid.Column="0"
@@ -117,11 +122,11 @@
           <Image Source="avares://Hammer5Tools.App/Assets/Icons/discord.png" Width="16" Height="16" />
         </Button>
         <Button Grid.Column="2"
-                Command="{Binding OpenGitSyncCommand}"
-                ToolTip.Tip="Git synchronization dialog"
+                Command="{Binding OpenPreferencesCommand}"
+                ToolTip.Tip="Preferences"
                 Margin="2,0,2,0">
           <StackPanel Orientation="Horizontal" Spacing="4">
-            <TextBlock Text="Git Sync" VerticalAlignment="Center" />
+            <TextBlock Text="Settings" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
         <Button Grid.Column="3"
@@ -132,11 +137,11 @@
         </Button>
 
         <!-- Center: Wide Sunken Console Line showing status/logs, clickable to open console dialog -->
-        <Border Grid.Column="4" Background="#1e1e1e" BorderBrush="#3f3f42" BorderThickness="1" CornerRadius="2" Margin="2,0" Padding="8,2" ToolTip.Tip="Console activity — click to open full console window">
+        <Border Grid.Column="4" Background="{DynamicResource H5TConsoleBgBrush}" BorderBrush="{DynamicResource H5TBorderSubtleBrush}" BorderThickness="1" CornerRadius="2" Margin="2,0" Padding="8,2" ToolTip.Tip="Console activity — click to open full console window">
           <Button Command="{Binding OpenConsoleCommand}" Classes="subtle" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Padding="0">
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="0" Text="▶ " Foreground="#4a83c9" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
-              <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="#a5a5a5" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
+              <TextBlock Grid.Column="0" Text="▶ " Foreground="{DynamicResource H5TAccentBrush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
+              <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource H5TTextMutedBrush}" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
             </Grid>
           </Button>
         </Border>

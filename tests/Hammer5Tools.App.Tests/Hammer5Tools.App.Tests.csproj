@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><IsTestProject>true</IsTestProject></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Hammer5Tools.App/Hammer5Tools.App.csproj" />
+    <PackageReference Include="TUnit" />
+    <PackageReference Include="Avalonia.Headless" />
+  </ItemGroup>
+</Project>

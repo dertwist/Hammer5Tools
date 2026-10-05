@@ -3,47 +3,20 @@
              xmlns:vm="using:Hammer5Tools.App.Features.GitSync"
              x:Class="Hammer5Tools.App.Features.GitSync.GitSyncView"
              x:DataType="vm:GitSyncViewModel">
-  <Grid ColumnDefinitions="320,*" Margin="12">
-    <!-- Left Column: Git Actions -->
-    <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="6" Padding="16" Margin="0,0,8,0">
-      <StackPanel Spacing="12">
-        <TextBlock Text="Addon Git Sync" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
-
-        <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="{Binding BranchName, StringFormat='Branch: {0}'}" FontWeight="SemiBold" Foreground="#00E5FF" VerticalAlignment="Center" />
-          <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshStatusCommand}" />
-        </Grid>
-
-        <Grid ColumnDefinitions="*,*" Margin="0,8,0,0">
-          <Button Grid.Column="0" Content="Pull (Rebase)" Command="{Binding PullCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-          <Button Grid.Column="1" Content="Push" Command="{Binding PushCommand}" HorizontalAlignment="Stretch" Margin="4,0,0,0" />
-        </Grid>
-
-        <Separator Margin="0,8" />
-
-        <TextBlock Text="Commit Changes:" FontWeight="SemiBold" />
-        <TextBox Text="{Binding CommitMessage}" PlaceholderText="Commit message..." AcceptsReturn="True" Height="70" />
-        <Button Content="Commit All" Command="{Binding CommitCommand}" HorizontalAlignment="Stretch" Background="#2E7D32" FontWeight="Bold" />
-
-        <Border Background="#141414" CornerRadius="4" Padding="8" Margin="0,8,0,0">
-          <TextBlock Text="{Binding Status}" Foreground="#80CBC4" FontSize="11" TextWrapping="Wrap" />
-        </Border>
-      </StackPanel>
-    </Border>
-
-    <!-- Right Column: Modified / Untracked files -->
-    <Border Grid.Column="1" Background="#141414" CornerRadius="6" Padding="12">
-      <Grid RowDefinitions="Auto,*">
-        <TextBlock Grid.Row="0" Text="Changed Files in Addon" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
-
-        <ListBox Grid.Row="1" ItemsSource="{Binding ChangedFiles}" Background="Transparent">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="x:String">
-              <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, Monospace" FontSize="11" />
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-      </Grid>
-    </Border>
+  <Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="8">
+    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+      <TextBlock Text="{Binding BranchName, StringFormat='Branch: {0}'}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshStatusCommand}" />
+    </Grid>
+    <ListBox Grid.Row="1" ItemsSource="{Binding ChangedFiles}" />
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6" Margin="0,6">
+      <Button Content="Pull (Rebase)" Command="{Binding PullCommand}" />
+      <Button Content="Push" Command="{Binding PushCommand}" />
+    </StackPanel>
+    <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+      <TextBox Text="{Binding CommitMessage}" PlaceholderText="Commit message..." AcceptsReturn="True" MinHeight="70" />
+      <Button Grid.Column="1" Content="Commit All" Command="{Binding CommitCommand}" Margin="6,0,0,0" />
+    </Grid>
+    <TextBlock Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,6,0,0" />
   </Grid>
 </UserControl>

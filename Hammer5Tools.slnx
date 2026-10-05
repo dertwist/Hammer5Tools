@@ -6,6 +6,7 @@
     <Project Path="src/Hammer5Tools.Cli/Hammer5Tools.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Hammer5Tools.App.Tests/Hammer5Tools.App.Tests.csproj" />
     <Project Path="tests/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
     <Project Path="tests/Hammer5Tools.IntegrationTests/Hammer5Tools.IntegrationTests.csproj" />
   </Folder>

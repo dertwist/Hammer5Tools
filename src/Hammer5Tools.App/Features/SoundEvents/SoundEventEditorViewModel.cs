@@ -13,14 +13,22 @@ public class SoundEventEditorViewModel : DocumentViewModel
     private readonly IAddonService AddonService;
     private readonly ISoundEventService SoundEventService;
 
+    private bool LoadSucceeded;
+
     private SoundEventDocument Document = new();
     private SoundEvent? SelectedEventValue;
     private string SearchFilterValue = string.Empty;
-    private string DocumentFilePath = string.Empty;
+    private readonly Services.IDialogService DialogService;
+
+    public Task Initialization { get; }
 
     public ObservableCollection<SoundEvent> FilteredEvents { get; } = [];
 
     public ObservableCollection<string> Templates { get; } = [];
+
+    public ObservableCollection<string> AddonSounds { get; } = [];
+
+    public IRelayCommand ReloadCommand { get; }
 
     public ObservableCollection<string> VpkSounds { get; } = [];
 
@@ -52,10 +60,13 @@ public class SoundEventEditorViewModel : DocumentViewModel
 
     public IRelayCommand SearchVpkCommand { get; }
 
-    public SoundEventEditorViewModel(IAddonService addonService, ISoundEventService soundEventService)
+    public SoundEventEditorViewModel(IAddonService addonService, ISoundEventService soundEventService, Services.IDialogService dialogService, string? filePath = null)
     {
         AddonService = addonService;
         SoundEventService = soundEventService;
+        DialogService = dialogService;
+        ReportSaveFailure = dialogService.ShowErrorAsync;
+        DocumentPath = filePath;
         Title = "SoundEvent Editor";
 
         AddEventCommand = new RelayCommand(OnAddEvent);
@@ -63,24 +74,62 @@ public class SoundEventEditorViewModel : DocumentViewModel
         AddPropertyCommand = new RelayCommand(OnAddProperty);
         DeletePropertyCommand = new RelayCommand<SoundProperty>(OnDeleteProperty);
         SearchVpkCommand = new AsyncRelayCommand(OnSearchVpkAsync);
+        ReloadCommand = new AsyncRelayCommand(async () =>
+        {
+            if (await DialogService.ConfirmCloseAsync([this]))
+            {
+                await LoadDocumentSafelyAsync();
+            }
+        });
+        if (AddonService.ActiveAddon is { } activeAddon)
+        {
+            var soundsPath = Path.Combine(activeAddon.ContentPath, "sounds");
+            if (Directory.Exists(soundsPath))
+            {
+                foreach (var sound in Directory.EnumerateFiles(soundsPath, "*", SearchOption.AllDirectories)
+                    .Where(path => Path.GetExtension(path).ToLowerInvariant() is ".wav" or ".mp3" or ".vsnd")
+                    .OrderBy(path => path))
+                {
+                    AddonSounds.Add(Path.GetRelativePath(activeAddon.ContentPath, sound));
+                }
+            }
+        }
 
         foreach (var t in SoundEventService.GetPredefinedTemplates())
         {
             Templates.Add(t);
         }
 
-        _ = LoadInitialDocumentAsync();
+        Initialization = LoadDocumentSafelyAsync();
+    }
+
+    private async Task LoadDocumentSafelyAsync()
+    {
+        LoadSucceeded = false;
+        try
+        {
+            await LoadInitialDocumentAsync();
+            LoadSucceeded = true;
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync($"Could not load sound events: {ex.Message}");
+        }
     }
 
     private async Task LoadInitialDocumentAsync()
     {
         var addon = AddonService.ActiveAddon;
-        if (addon is not null)
+        if (DocumentPath is not null)
         {
-            DocumentFilePath = Path.Combine(addon.ContentPath, "sounds", "soundevents_addon.vsndevts");
-            if (File.Exists(DocumentFilePath))
+            Document = await SoundEventService.LoadDocumentAsync(DocumentPath);
+        }
+        else if (addon is not null)
+        {
+            DocumentPath ??= Path.Combine(addon.ContentPath, "soundevents", "soundevents_addon.vsndevts");
+            if (File.Exists(DocumentPath))
             {
-                Document = await SoundEventService.LoadDocumentAsync(DocumentFilePath);
+                Document = await SoundEventService.LoadDocumentAsync(DocumentPath);
             }
             else
             {
@@ -97,6 +146,20 @@ public class SoundEventEditorViewModel : DocumentViewModel
 
         ApplyFilter();
         SelectedEvent = FilteredEvents.FirstOrDefault();
+        InitializeHistory(() => Document.Serialize(), text =>
+        {
+            Document = SoundEventDocument.Parse(text);
+            ApplyFilter();
+            SelectedEvent = FilteredEvents.FirstOrDefault();
+            ObserveDocument();
+        });
+        ObserveDocument();
+    }
+
+    private void ObserveDocument()
+    {
+        ObserveModels(Document.Events.Cast<System.ComponentModel.INotifyPropertyChanged>()
+            .Concat(Document.Events.SelectMany(item => item.Properties)));
     }
 
     private void ApplyFilter()
@@ -120,7 +183,8 @@ public class SoundEventEditorViewModel : DocumentViewModel
         Document.Events.Add(newEvent);
         ApplyFilter();
         SelectedEvent = newEvent;
-        IsDirty = true;
+        ObserveDocument();
+        MarkDirty();
     }
 
     private void OnDeleteEvent()
@@ -133,7 +197,8 @@ public class SoundEventEditorViewModel : DocumentViewModel
         Document.Events.Remove(SelectedEvent);
         ApplyFilter();
         SelectedEvent = FilteredEvents.FirstOrDefault();
-        IsDirty = true;
+        ObserveDocument();
+        MarkDirty();
     }
 
     private void OnAddProperty()
@@ -144,7 +209,8 @@ public class SoundEventEditorViewModel : DocumentViewModel
         }
 
         SelectedEvent.Properties.Add(new SoundProperty("param_name", "\"default\""));
-        IsDirty = true;
+        ObserveDocument();
+        MarkDirty();
     }
 
     private void OnDeleteProperty(SoundProperty? prop)
@@ -155,7 +221,8 @@ public class SoundEventEditorViewModel : DocumentViewModel
         }
 
         SelectedEvent.Properties.Remove(prop);
-        IsDirty = true;
+        ObserveDocument();
+        MarkDirty();
     }
 
     private async Task OnSearchVpkAsync()
@@ -168,12 +235,21 @@ public class SoundEventEditorViewModel : DocumentViewModel
         }
     }
 
-    public override void Save()
+    protected override async Task<bool> SaveCoreAsync()
     {
-        if (!string.IsNullOrEmpty(DocumentFilePath))
+        await Initialization;
+        if (!LoadSucceeded)
         {
-            _ = SoundEventService.SaveDocumentAsync(DocumentFilePath, Document);
-            IsDirty = false;
+            throw new InvalidOperationException("Reload the sound-event file before saving; the original could not be read.");
         }
+
+        DocumentPath ??= await DialogService.SaveFileAsync("Save sound events", "soundevents_addon.vsndevts");
+        if (DocumentPath is null)
+        {
+            return false;
+        }
+
+        await SoundEventService.SaveDocumentAsync(DocumentPath, Document);
+        return true;
     }
 }

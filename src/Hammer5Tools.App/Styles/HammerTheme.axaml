@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dock="using:Dock.Avalonia.Controls">
 
   <!-- ========================================================================= -->
   <!-- Semantic Theme Palette & Design Factors from theme.py & STYLESHEET.md    -->
@@ -65,8 +66,8 @@
 
     <!-- Design Factor Metrics -->
     <CornerRadius x:Key="H5TRadius">2</CornerRadius>
-    <Thickness x:Key="H5TBorderThickness">1</Thickness>
-    <x:Double x:Key="H5TControlHeight">24</x:Double>
+    <Thickness x:Key="H5TBorderThickness">2</Thickness>
+    <x:Double x:Key="H5TControlHeight">22</x:Double>
     <FontFamily x:Key="H5TFontFamily">Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif</FontFamily>
     <FontFamily x:Key="H5TMonospaceFont">Consolas, Menlo, Monaco, Courier New, monospace</FontFamily>
   </Styles.Resources>
@@ -75,73 +76,73 @@
   <!-- Window Default Styling                                                    -->
   <!-- ========================================================================= -->
   <Style Selector="Window">
-    <Setter Property="Background" Value="{StaticResource H5TBackgroundBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
     <Setter Property="FontFamily" Value="{StaticResource H5TFontFamily}" />
-    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontSize" Value="13.333" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- Button Styling (Matching buttons.qss: 2px radius, 1px strong border)     -->
   <!-- ========================================================================= -->
   <Style Selector="Button">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceRaisedBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
-    <Setter Property="Padding" Value="10,3" />
-    <Setter Property="MinHeight" Value="24" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="FontWeight" Value="580" />
+    <Setter Property="FontSize" Value="13.333" />
   </Style>
   <Style Selector="Button:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
   </Style>
   <Style Selector="Button:pressed /template/ ContentPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TBackgroundBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderBrush}" />
   </Style>
   <Style Selector="Button:disabled /template/ ContentPresenter">
-    <Setter Property="Background" Value="#292929" />
-    <Setter Property="BorderBrush" Value="#3f3f42" />
+    <Setter Property="Background" Value="{DynamicResource H5TDisabledBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderSubtleBrush}" />
   </Style>
   <Style Selector="Button:disabled">
-    <Setter Property="Foreground" Value="{StaticResource H5TTextDisabledBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TButtonDisabledTextBrush}" />
   </Style>
 
   <!-- Button Variants -->
   <Style Selector="Button.primary">
-    <Setter Property="Background" Value="{StaticResource H5TAccentBrush}" />
-    <Setter Property="Foreground" Value="#ffffff" />
-    <Setter Property="BorderBrush" Value="#356fb0" />
+    <Setter Property="Background" Value="{DynamicResource H5TAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TPrimaryBorderBrush}" />
   </Style>
   <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TAccentHoverBrush}" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="{DynamicResource H5TAccentHoverBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
   </Style>
 
   <Style Selector="Button.success">
-    <Setter Property="Background" Value="{StaticResource H5TSuccessDarkBrush}" />
-    <Setter Property="Foreground" Value="#ffffff" />
-    <Setter Property="BorderBrush" Value="#1b5e20" />
+    <Setter Property="Background" Value="{DynamicResource H5TSuccessDarkBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TSuccessBorderBrush}" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
   <Style Selector="Button.success:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#388e3c" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="{DynamicResource H5TSuccessHoverBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
   </Style>
 
   <Style Selector="Button.danger">
-    <Setter Property="Background" Value="{StaticResource H5TErrorDarkBrush}" />
-    <Setter Property="Foreground" Value="#ffffff" />
-    <Setter Property="BorderBrush" Value="#b71c1c" />
+    <Setter Property="Background" Value="{DynamicResource H5TErrorDarkBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TDangerBorderBrush}" />
   </Style>
   <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#d32f2f" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="{DynamicResource H5TDangerHoverBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
   </Style>
 
   <Style Selector="Button.subtle">
@@ -151,87 +152,88 @@
     <Setter Property="MinHeight" Value="20" />
   </Style>
   <Style Selector="Button.subtle:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceInputBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- TextBox / Inputs (Matching inputs.qss: surface_input, border, accent)     -->
   <!-- ========================================================================= -->
   <Style Selector="TextBox">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceInputBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
-    <Setter Property="Padding" Value="6,3" />
-    <Setter Property="MinHeight" Value="24" />
-    <Setter Property="FontSize" Value="12" />
-    <Setter Property="SelectionBrush" Value="{StaticResource H5TSelectionBrush}" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource H5TSelectionBrush}" />
   </Style>
   <Style Selector="TextBox:focus /template/ Border">
-    <Setter Property="BorderBrush" Value="{StaticResource H5TAccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- ComboBox (Matching inputs.qss: background #2e2e2e / surface_input)        -->
   <!-- ========================================================================= -->
   <Style Selector="ComboBox">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceInputBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
-    <Setter Property="Padding" Value="8,2" />
-    <Setter Property="MinHeight" Value="24" />
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="MinHeight" Value="30" />
     <Setter Property="FontSize" Value="12" />
-  </Style>
+      <Setter Property="FontWeight" Value="580" />
+</Style>
   <Style Selector="ComboBox:pointerover">
-    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- ListBox & Views (Matching views.qss: surface, selection #515965)          -->
   <!-- ========================================================================= -->
   <Style Selector="ListBox">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
   </Style>
   <Style Selector="ListBoxItem">
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="Padding" Value="6,3" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="FontSize" Value="13.333" />
   </Style>
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
   </Style>
   <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#38383a" />
+    <Setter Property="Background" Value="{DynamicResource H5TRowHoverBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- Menu Bar & ContextMenu (Matching menus.qss: surface #272727, hover #515965) -->
   <!-- ========================================================================= -->
   <Style Selector="Menu">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
     <Setter Property="Height" Value="26" />
     <Setter Property="Padding" Value="2,0" />
   </Style>
   <Style Selector="MenuItem">
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="FontSize" Value="13.333" />
     <Setter Property="Padding" Value="8,4" />
   </Style>
   <Style Selector="MenuItem:pointerover /template/ Border">
-    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
   </Style>
   <Style Selector="ContextMenu, MenuFlyoutPresenter">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceRaisedBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="2" />
@@ -241,37 +243,37 @@
   <!-- TabControl (Matching tabs.qss: surface_raised pane, 2px top accent on sel) -->
   <!-- ========================================================================= -->
   <Style Selector="TabControl">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
     <Setter Property="Padding" Value="0" />
   </Style>
   <Style Selector="TabItem">
-    <Setter Property="Foreground" Value="{StaticResource H5TTextMutedBrush}" />
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
-    <Setter Property="Padding" Value="14,6" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="FontWeight" Value="580" />
     <Setter Property="FontSize" Value="12" />
-    <Setter Property="BorderThickness" Value="1,2,1,0" />
+    <Setter Property="BorderThickness" Value="1,1,1,1" />
     <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="CornerRadius" Value="2,2,0,0" />
-    <Setter Property="Margin" Value="0,0,2,0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Margin" Value="0" />
   </Style>
   <Style Selector="TabItem:pointerover">
-    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
-    <Setter Property="Background" Value="#363637" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
   </Style>
   <Style Selector="TabItem:selected">
-    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceRaisedBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- ToolTip Styling (Matching base.qss: background, strong border, padding)    -->
   <!-- ========================================================================= -->
   <Style Selector="ToolTip">
-    <Setter Property="Background" Value="{StaticResource H5TBackgroundBrush}" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="6,3" />
@@ -282,7 +284,7 @@
   <!-- Separator & Dividers                                                      -->
   <!-- ========================================================================= -->
   <Style Selector="Separator">
-    <Setter Property="Background" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TBorderBrush}" />
     <Setter Property="Height" Value="1" />
     <Setter Property="Margin" Value="0,2" />
   </Style>
@@ -291,34 +293,106 @@
   <!-- ScrollBar Styling (Matching base.qss: handle selection #515965)           -->
   <!-- ========================================================================= -->
   <Style Selector="ScrollBar">
-    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
   </Style>
 
   <!-- ========================================================================= -->
   <!-- Typography & Helper Classes                                              -->
   <!-- ========================================================================= -->
   <Style Selector="TextBlock.muted">
-    <Setter Property="Foreground" Value="{StaticResource H5TTextMutedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
   </Style>
   <Style Selector="TextBlock.accent">
-    <Setter Property="Foreground" Value="{StaticResource H5TAccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TAccentBrush}" />
   </Style>
   <Style Selector="TextBlock.success">
-    <Setter Property="Foreground" Value="{StaticResource H5TSuccessBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSuccessBrush}" />
   </Style>
   <Style Selector="TextBlock.danger">
-    <Setter Property="Foreground" Value="{StaticResource H5TErrorBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TErrorBrush}" />
   </Style>
   <Style Selector="TextBlock.warning">
-    <Setter Property="Foreground" Value="{StaticResource H5TWarningBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TWarningBrush}" />
   </Style>
   <Style Selector="TextBlock.header">
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="FontSize" Value="14" />
-    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
   </Style>
   <Style Selector="TextBlock.mono">
     <Setter Property="FontFamily" Value="{StaticResource H5TMonospaceFont}" />
   </Style>
 
+  <Style Selector="TextBlock.section"><Setter Property="FontWeight" Value="Bold" /><Setter Property="Margin" Value="0,6,0,2" /></Style>
+  <Style Selector="dock|ToolChromeControl /template/ Button">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="TextBlock">
+    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+  </Style>
+  <Style Selector="CheckBox">
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontWeight" Value="580" />
+    <Setter Property="MinHeight" Value="30" />
+  </Style>
+  <Style Selector="CheckBox:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+  </Style>
+  <Style Selector="NumericUpDown">
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="FontSize" Value="13.333" />
+  </Style>
+  <Style Selector="TreeView">
+    <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+  </Style>
+  <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+  </Style>
+  <Style Selector="TabItem">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid>
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{DynamicResource H5TBorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}">
+            <ContentPresenter Content="{TemplateBinding Header}"
+                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center" />
+          </Border>
+          <Border Name="PART_BaselineAccent" Background="{DynamicResource H5TAccentBrush}"
+                  Height="2" VerticalAlignment="Top" Margin="1,0" IsVisible="False" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="TabItem:selected">
+    <Setter Property="CornerRadius" Value="2,2,0,0" />
+  </Style>
+  <Style Selector="TabItem:selected /template/ Border#PART_BaselineAccent">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="dock|ToolChromeControl /template/ TextBlock">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
 </Styles>

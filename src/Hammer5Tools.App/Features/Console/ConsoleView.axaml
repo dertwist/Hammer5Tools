@@ -3,9 +3,9 @@
              xmlns:vm="using:Hammer5Tools.App.Features.Console"
              x:Class="Hammer5Tools.App.Features.Console.ConsoleView"
              x:DataType="vm:ConsoleViewModel">
-  <Grid RowDefinitions="*,Auto" Margin="12">
+  <Grid RowDefinitions="*,Auto" Margin="8">
     <!-- Log Output -->
-    <Border Grid.Row="0" Background="#141414" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+    <Border Grid.Row="0" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="8" Margin="0,0,0,8">
       <ListBox ItemsSource="{Binding OutputLines}" Background="Transparent">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="x:String">

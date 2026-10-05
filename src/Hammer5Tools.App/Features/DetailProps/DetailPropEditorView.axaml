@@ -1,92 +1,72 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Hammer5Tools.App.Features.DetailProps"
-             xmlns:m="using:Hammer5Tools.Core.DetailProps"
-             x:Class="Hammer5Tools.App.Features.DetailProps.DetailPropEditorView"
-             x:DataType="vm:DetailPropEditorViewModel">
-  <Grid ColumnDefinitions="250,250,*" Margin="12">
-    <!-- Column 0: Prop Types list -->
-    <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="6" Padding="8" Margin="0,0,8,0">
-      <Grid RowDefinitions="Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Detail Types" FontWeight="Bold" Margin="4,0,0,8" />
-        <ListBox Grid.Row="1" ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedType}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:DetailPropType">
-              <TextBlock Text="{Binding Name}" />
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,8,0,0">
-          <Button Grid.Column="0" Content="Add Type" Command="{Binding AddTypeCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-          <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteTypeCommand}" HorizontalAlignment="Stretch" Margin="4,0,0,0" />
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.DetailProps" xmlns:m="using:Hammer5Tools.Core.DetailProps"
+             xmlns:workspace="using:Hammer5Tools.App.Controls"
+             x:Class="Hammer5Tools.App.Features.DetailProps.DetailPropEditorView" x:DataType="vm:DetailPropEditorViewModel">
+  <workspace:WorkspaceView LayoutKey="DetailProps" RightTitle="History">
+    <workspace:WorkspaceView.CenterContent>
+      <Grid ColumnDefinitions="380,3,*" Margin="8">
+        <Grid RowDefinitions="*,Auto">
+          <TreeView ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedNode}">
+            <TreeView.DataTemplates>
+              <TreeDataTemplate DataType="{x:Type m:DetailPropType}" x:DataType="m:DetailPropType" ItemsSource="{Binding Models}"><TextBlock Text="{Binding Name}" /></TreeDataTemplate>
+              <DataTemplate DataType="{x:Type m:DetailPropModel}" x:DataType="m:DetailPropModel"><TextBlock Text="{Binding DisplayName}" /></DataTemplate>
+            </TreeView.DataTemplates>
+          </TreeView>
+          <WrapPanel Grid.Row="1" Margin="0,4,0,0">
+            <Button Content="Type" Command="{Binding AddTypeCommand}" />
+            <Button Content="Model" Command="{Binding AddModelCommand}" />
+            <Button Content="Save" Command="{Binding SaveCommand}" />
+            <Button Content="Delete Type" Command="{Binding DeleteTypeCommand}" />
+            <Button Content="Delete Model" Command="{Binding DeleteModelCommand}" />
+          </WrapPanel>
         </Grid>
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
+        <ScrollViewer Grid.Column="2">
+          <StackPanel Spacing="6" Margin="8,0">
+            <TextBlock Text="Detail Type" Classes="section" />
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Name" /><TextBox Grid.Column="1" Text="{Binding SelectedType.Name}" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Density" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedType.Density}" Increment="0.0001" FormatString="0.#######" /></Grid>
+            <TextBlock Text="Model" Classes="section" />
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Model" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.ModelName}" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Material Group" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.MaterialGroup}" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.Weight}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Start fade out size" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.StartFadeSize}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Complete fade out size" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.EndFadeSize}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Use World Space Up" VerticalAlignment="Center" /><CheckBox Grid.Column="1" IsChecked="{Binding SelectedModel.WorldSpaceOrientation}" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Orient To Surface" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.OrientToSurface}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Min Surface Slope" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MinSurfaceSlope}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Max Surface Slope" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MaxSurfaceSlope}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Vertical Offset Min" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMin}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Vertical Offset Max" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMax}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Scale Min" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMin}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Scale Max" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMax}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Density Scale" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.DensityMinScale}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Blend Weight Scale" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMinScale}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Min Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMin}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Max Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMax}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Full Density Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightFullDensity}" Increment="0.01" FormatString="0.#######" /></Grid>
+            <Grid ColumnDefinitions="200,*"><TextBlock Text="Cast Static Shadows" VerticalAlignment="Center" /><CheckBox Grid.Column="1" IsChecked="{Binding SelectedModel.CastStaticShadows}" /></Grid>
+            <TextBlock Text="Random Rotation Min" Classes="section" />
+            <Grid ColumnDefinitions="*,*,*">
+              <NumericUpDown Grid.Column="0" Value="{Binding RotationMinX}" Increment="1" />
+              <NumericUpDown Grid.Column="1" Value="{Binding RotationMinY}" Increment="1" />
+              <NumericUpDown Grid.Column="2" Value="{Binding RotationMinZ}" Increment="1" />
+            </Grid>
+            <TextBlock Text="Random Rotation Max" Classes="section" />
+            <Grid ColumnDefinitions="*,*,*">
+              <NumericUpDown Grid.Column="0" Value="{Binding RotationMaxX}" Increment="1" />
+              <NumericUpDown Grid.Column="1" Value="{Binding RotationMaxY}" Increment="1" />
+              <NumericUpDown Grid.Column="2" Value="{Binding RotationMaxZ}" Increment="1" />
+            </Grid>
+          </StackPanel>
+        </ScrollViewer>
       </Grid>
-    </Border>
-
-    <!-- Column 1: Models list of selected type -->
-    <Border Grid.Column="1" Background="#1E1E1E" CornerRadius="6" Padding="8" Margin="0,0,8,0">
-      <Grid RowDefinitions="Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Models in Type" FontWeight="Bold" Margin="4,0,0,8" />
-        <ListBox Grid.Row="1" ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:DetailPropModel">
-              <TextBlock Text="{Binding DisplayName}" />
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,8,0,0">
-          <Button Grid.Column="0" Content="Add Model" Command="{Binding AddModelCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-          <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteModelCommand}" HorizontalAlignment="Stretch" Margin="4,0,0,0" />
-        </Grid>
+    </workspace:WorkspaceView.CenterContent>
+    <workspace:WorkspaceView.RightContent>
+      <Grid RowDefinitions="*,Auto" Margin="8">
+        <ListBox ItemsSource="{Binding UndoHistory}" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4"><Button Content="Undo" Command="{Binding UndoCommand}" /><Button Content="Redo" Command="{Binding RedoCommand}" /></StackPanel>
       </Grid>
-    </Border>
-
-    <!-- Column 2: Property Inspector -->
-    <Border Grid.Column="2" Background="#1E1E1E" CornerRadius="6" Padding="16">
-      <ScrollViewer>
-        <StackPanel Spacing="12">
-          <TextBlock Text="Property Inspector" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
-
-          <!-- Type Properties -->
-          <TextBlock Text="Type Settings" FontWeight="SemiBold" Foreground="#00E5FF" />
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Type Name:" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding SelectedType.Name, FallbackValue=''}" />
-          </Grid>
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Type Density:" VerticalAlignment="Center" />
-            <NumericUpDown Grid.Column="1" Value="{Binding SelectedType.Density, FallbackValue=1.0}" Minimum="0.01" Maximum="100.0" Increment="0.1" />
-          </Grid>
-
-          <Separator Margin="0,8" />
-
-          <!-- Model Properties -->
-          <TextBlock Text="Model Settings" FontWeight="SemiBold" Foreground="#00E5FF" />
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Model Path:" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding SelectedModel.ModelName, FallbackValue=''}" />
-          </Grid>
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Min Scale:" VerticalAlignment="Center" />
-            <NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MinScale, FallbackValue=1.0}" Minimum="0.01" Maximum="10.0" Increment="0.05" />
-          </Grid>
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Max Scale:" VerticalAlignment="Center" />
-            <NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MaxScale, FallbackValue=1.0}" Minimum="0.01" Maximum="10.0" Increment="0.05" />
-          </Grid>
-          <Grid ColumnDefinitions="140,*">
-            <TextBlock Grid.Column="0" Text="Model Density:" VerticalAlignment="Center" />
-            <NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.Density, FallbackValue=1.0}" Minimum="0.01" Maximum="10.0" Increment="0.1" />
-          </Grid>
-
-          <!-- Booleans -->
-          <CheckBox Content="Random Yaw" IsChecked="{Binding SelectedModel.RandomYaw, FallbackValue=true}" />
-          <CheckBox Content="Random Pitch" IsChecked="{Binding SelectedModel.RandomPitch, FallbackValue=false}" />
-          <CheckBox Content="Random Roll" IsChecked="{Binding SelectedModel.RandomRoll, FallbackValue=false}" />
-          <CheckBox Content="Align to Surface" IsChecked="{Binding SelectedModel.AlignToSurface, FallbackValue=false}" />
-          <CheckBox Content="Keep Upright" IsChecked="{Binding SelectedModel.Upright, FallbackValue=true}" />
-        </StackPanel>
-      </ScrollViewer>
-    </Border>
-  </Grid>
+    </workspace:WorkspaceView.RightContent>
+  </workspace:WorkspaceView>
 </UserControl>

@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core.Addons;
 
-public class AssetExplorerViewModel : ViewModelBase
+public class AssetExplorerViewModel : ViewModelBase, IDisposable
 {
     private readonly IAddonService AddonService;
     private readonly Action<string> OnOpenFileAction;
@@ -47,7 +47,7 @@ public class AssetExplorerViewModel : ViewModelBase
         OpenDirectoryCommand = new RelayCommand(OpenCurrentDirectory);
         FileActivatedCommand = new RelayCommand<FileItemViewModel>(OnFileActivated);
 
-        AddonService.ActiveAddonChanged += (_, _) => Refresh();
+        AddonService.ActiveAddonChanged += OnActiveAddonChanged;
         Refresh();
     }
 
@@ -205,5 +205,15 @@ public class AssetExplorerViewModel : ViewModelBase
         }
 
         OnOpenFileAction(item.FullPath);
+    }
+    private void OnActiveAddonChanged(object? sender, Addon? addon)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(Refresh);
+    }
+
+    public void Dispose()
+    {
+        AddonService.ActiveAddonChanged -= OnActiveAddonChanged;
+        GC.SuppressFinalize(this);
     }
 }

@@ -3,37 +3,45 @@
              xmlns:vm="using:Hammer5Tools.App.Features.NavMesh"
              x:Class="Hammer5Tools.App.Features.NavMesh.NavMeshRadarView"
              x:DataType="vm:NavMeshRadarViewModel">
-  <Grid RowDefinitions="Auto,*,Auto" Margin="16" MaxWidth="600" HorizontalAlignment="Left">
-    <TextBlock Grid.Row="0" Text="NavMesh Radar Generator" FontSize="16" FontWeight="Bold" Margin="0,0,0,16" />
-
-    <StackPanel Grid.Row="1" Spacing="12">
-      <Grid ColumnDefinitions="140,*">
-        <TextBlock Grid.Column="0" Text="Map Name:" VerticalAlignment="Center" />
-        <TextBox Grid.Column="1" Text="{Binding MapName}" PlaceholderText="e.g. de_overpass" />
+  <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="8">
+    <TextBlock Text="NavMesh Radar" FontSize="14.667" Margin="0,0,0,8" />
+    <StackPanel Grid.Row="1" Spacing="6">
+      <Grid ColumnDefinitions="100,*">
+        <TextBlock Text="Mode" VerticalAlignment="Center" />
+        <ComboBox Grid.Column="1" SelectedIndex="0" IsEnabled="False" HorizontalAlignment="Stretch">
+          <ComboBoxItem Content="Baked bomb damage" />
+          <ComboBoxItem Content="Navmesh offset" />
+        </ComboBox>
       </Grid>
-
-      <Grid ColumnDefinitions="140,*">
-        <TextBlock Grid.Column="0" Text="Resolution:" VerticalAlignment="Center" />
-        <NumericUpDown Grid.Column="1" Value="{Binding Resolution}" Minimum="512" Maximum="4096" Increment="512" />
+      <Grid ColumnDefinitions="100,*">
+        <TextBlock Text="VPK" VerticalAlignment="Center" />
+        <TextBox Grid.Column="1" Text="{Binding VpkPath}" IsReadOnly="True" />
       </Grid>
-
-      <Grid ColumnDefinitions="140,*">
-        <TextBlock Grid.Column="0" Text="Min Height (Z):" VerticalAlignment="Center" />
-        <NumericUpDown Grid.Column="1" Value="{Binding HeightMin}" Minimum="-10000" Maximum="10000" Increment="50" />
+      <Grid ColumnDefinitions="100,*">
+        <TextBlock Text="VMAP" VerticalAlignment="Center" />
+        <TextBox Grid.Column="1" Text="{Binding VmapPath}" IsReadOnly="True" />
       </Grid>
-
-      <Grid ColumnDefinitions="140,*">
-        <TextBlock Grid.Column="0" Text="Max Height (Z):" VerticalAlignment="Center" />
-        <NumericUpDown Grid.Column="1" Value="{Binding HeightMax}" Minimum="-10000" Maximum="10000" Increment="50" />
+      <Grid ColumnDefinitions="100,*" IsEnabled="False">
+        <TextBlock Text="Offset" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Column="1" Value="0" />
       </Grid>
-
-      <CheckBox Content="Collapse Faces into N-gons" IsChecked="{Binding CollapseNgons}" />
-
-      <Button Content="Generate Radar (.png &amp; .vdata)" Command="{Binding GenerateRadarCommand}" Background="#1976D2" HorizontalAlignment="Left" Margin="0,8,0,0" />
+      <Grid ColumnDefinitions="100,*" IsEnabled="False">
+        <TextBlock Text="Material" VerticalAlignment="Center" />
+        <TextBox Grid.Column="1" Text="materials/tools/toolsnodraw.vmat" />
+      </Grid>
+      <WrapPanel IsEnabled="False">
+        <CheckBox Content="Prefab" Margin="0,0,8,0" />
+        <CheckBox Content="Collapse faces" Margin="0,0,8,0" />
+        <CheckBox Content="Collapse faces into N-gons" Margin="0,0,8,0" />
+        <CheckBox Content="Remove offset" />
+      </WrapPanel>
     </StackPanel>
-
-    <Border Grid.Row="2" Background="#1E1E1E" CornerRadius="4" Padding="12" Margin="0,16,0,0">
-      <TextBlock Text="{Binding Status}" Foreground="#80CBC4" />
-    </Border>
+    <StackPanel Grid.Row="2" Spacing="6" Margin="0,8">
+      <TextBlock Text="The C# radar generator is awaiting the Core geometry port." TextWrapping="Wrap" />
+      <ProgressBar Value="0" />
+    </StackPanel>
+    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+      <Button Content="Generate" IsEnabled="False" />
+    </StackPanel>
   </Grid>
 </UserControl>
