@@ -16,6 +16,11 @@ public class DetailPropType
         Name = name;
     }
 
+    public DetailPropType(string name, float density) : this(name)
+    {
+        Density = density;
+    }
+
     public DetailPropType()
     {
     }

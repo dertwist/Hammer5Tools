@@ -1,15 +1,17 @@
 namespace Hammer5Tools.Core.Hotkeys;
 
-using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using ValveKeyValue;
 
 /// <summary>
-/// Represents and parses a Source 2 .keybindings KV3 document.
+/// Represents and parses a Source 2 .keybindings KV3 document using ValveKeyValue.
 /// </summary>
 public partial class HotkeyDocument
 {
     public const string DefaultHeader = "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->";
+
+    private static readonly KVSerializer Kv3Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues3Text);
 
     [GeneratedRegex(@"\{\s*m_Name\s*=\s*""([^""]*)""\s+m_Input\s*=\s*""([^""]*)""\s*\}", RegexOptions.IgnoreCase)]
     private static partial Regex MacroRegex();
@@ -31,19 +33,62 @@ public partial class HotkeyDocument
             return doc;
         }
 
+        try
+        {
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
+            var kvDoc = Kv3Serializer.Deserialize(ms);
+
+            // Read macros
+            if (kvDoc.Root.TryGetValue("m_InputMacros", out var macrosObj) || kvDoc.Root.TryGetValue("m_Macros", out macrosObj))
+            {
+                if (macrosObj is not null)
+                {
+                    foreach (var item in macrosObj.Children)
+                    {
+                        var name = item.Value.TryGetValue("m_Name", out var n) ? n.ToString() : string.Empty;
+                        var input = item.Value.TryGetValue("m_Input", out var inp) ? inp.ToString() : string.Empty;
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            doc.Macros.Add(new HotkeyMacro(name, input));
+                        }
+                    }
+                }
+            }
+
+            // Read bindings
+            if (kvDoc.Root.TryGetValue("m_Bindings", out var bindingsObj) && bindingsObj is not null)
+            {
+                foreach (var item in bindingsObj.Children)
+                {
+                    var ctx = item.Value.TryGetValue("m_Context", out var c) ? c.ToString() : string.Empty;
+                    var cmd = item.Value.TryGetValue("m_Command", out var cm) ? cm.ToString() : string.Empty;
+                    var inp = item.Value.TryGetValue("m_Input", out var i) ? i.ToString() : string.Empty;
+                    if (!string.IsNullOrEmpty(cmd))
+                    {
+                        doc.Bindings.Add(new HotkeyBinding(ctx, cmd, inp));
+                    }
+                }
+            }
+
+            if (doc.Bindings.Count > 0 || doc.Macros.Count > 0)
+            {
+                return doc;
+            }
+        }
+        catch
+        {
+            // Graceful fallback for non-standard fragments
+        }
+
+        // Fallback for fragmented text
         foreach (Match match in MacroRegex().Matches(text))
         {
-            var name = match.Groups[1].Value;
-            var input = match.Groups[2].Value;
-            doc.Macros.Add(new HotkeyMacro(name, input));
+            doc.Macros.Add(new HotkeyMacro(match.Groups[1].Value, match.Groups[2].Value));
         }
 
         foreach (Match match in BindingRegex().Matches(text))
         {
-            var context = match.Groups[1].Value;
-            var command = match.Groups[2].Value;
-            var input = match.Groups[3].Value;
-            doc.Bindings.Add(new HotkeyBinding(context, command, input));
+            doc.Bindings.Add(new HotkeyBinding(match.Groups[1].Value, match.Groups[2].Value, match.Groups[3].Value));
         }
 
         return doc;

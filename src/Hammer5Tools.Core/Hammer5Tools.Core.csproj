@@ -8,6 +8,10 @@
     <PackageReference Include="ValveResourceFormat" />
     <PackageReference Include="ValvePak" />
     <PackageReference Include="ValveKeyValue" />
+    <PackageReference Include="KeyValues2" />
+    <PackageReference Include="Sledge.Formats.Map" />
+    <PackageReference Include="Sledge.Formats.Texture" />
+    <PackageReference Include="Sledge.Formats.GameData" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />

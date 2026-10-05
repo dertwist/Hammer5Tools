@@ -3,10 +3,13 @@ namespace Hammer5Tools.Core.SoundEvents;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using ValveKeyValue;
 
 public partial class SoundEventDocument
 {
     public const string DefaultHeader = "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->";
+
+    private static readonly KVSerializer Kv3Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues3Text);
 
     public ObservableCollection<SoundEvent> Events { get; } = [];
 
@@ -18,7 +21,42 @@ public partial class SoundEventDocument
             return doc;
         }
 
-        // Find outermost { ... }, skipping header comment if present
+        // 1. Try ValveKeyValue KV3 parser
+        try
+        {
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(kv3Text));
+            var kv = Kv3Serializer.Deserialize(ms);
+
+            foreach (var (eventName, eventObj) in kv.Root.Children)
+            {
+                var soundEvent = new SoundEvent(eventName);
+
+                foreach (var (propKey, propVal) in eventObj.Children)
+                {
+                    if (propKey.Equals("type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        soundEvent.Type = propVal.ToString().Trim('"', '\'');
+                    }
+                    else
+                    {
+                        soundEvent.Properties.Add(new SoundProperty(propKey, propVal.ToString()));
+                    }
+                }
+
+                doc.Events.Add(soundEvent);
+            }
+
+            if (doc.Events.Count > 0)
+            {
+                return doc;
+            }
+        }
+        catch
+        {
+            // Fallback to line parser to preserve custom syntax or comments
+        }
+
+        // 2. Custom line/brace parser preserving comments and unquoted tokens
         var searchStart = 0;
         var headerEnd = kv3Text.IndexOf("-->", StringComparison.Ordinal);
         if (headerEnd != -1)

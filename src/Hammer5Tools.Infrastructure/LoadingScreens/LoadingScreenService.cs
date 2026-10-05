@@ -4,13 +4,17 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
+using Datamodel;
 using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Compiler;
 using Hammer5Tools.Core.LoadingScreens;
 using Microsoft.Extensions.Logging;
+using ValveKeyValue;
 
 public partial class LoadingScreenService : ILoadingScreenService
 {
+    private static readonly KVSerializer Kv1Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+
     private readonly ICommandService CommandService;
     private readonly IResourceCompiler ResourceCompiler;
     private readonly ILogger<LoadingScreenService> Logger;
@@ -34,12 +38,53 @@ public partial class LoadingScreenService : ILoadingScreenService
             return cameras;
         }
 
+        var index = 1;
+
+        // 1. Try DMX / KeyValues2 Datamodel parsing
+        try
+        {
+            await using var fs = new FileStream(vmapPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var dm = Datamodel.Load(fs);
+
+            foreach (var elem in dm.AllElements)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (elem.ClassName is "CMapCamera" or "point_camera" or "info_camera_link")
+                {
+                    var pos = Vector3.Zero;
+                    if (elem.TryGetValue("origin", out var o) && o is System.Numerics.Vector3 v)
+                    {
+                        pos = v;
+                    }
+
+                    var ang = Vector3.Zero;
+                    if (elem.TryGetValue("angles", out var a) && a is global::Datamodel.QAngle q)
+                    {
+                        ang = new Vector3(q.Pitch, q.Yaw, q.Roll);
+                    }
+
+                    var fov = elem.TryGetValue("fov", out var f) && f is float fval ? fval : 90f;
+                    var name = !string.IsNullOrWhiteSpace(elem.Name) ? elem.Name : $"Camera {index++}";
+
+                    cameras.Add(new CameraInfo(name, pos, ang, fov));
+                }
+            }
+
+            if (cameras.Count > 0)
+            {
+                return cameras;
+            }
+        }
+        catch
+        {
+            // Fallback to text parsing
+        }
+
+        // 2. Text / Regex fallback
         try
         {
             var content = await File.ReadAllTextAsync(vmapPath, cancellationToken);
-            // Search for camera blocks or point_camera entities
             var entityMatches = CameraEntityRegex().Matches(content);
-            var index = 1;
             foreach (Match match in entityMatches)
             {
                 var block = match.Value;
@@ -56,7 +101,6 @@ public partial class LoadingScreenService : ILoadingScreenService
                 cameras.Add(new CameraInfo(name, origin, angles, fov));
             }
 
-            // Fallback default camera if none found
             if (cameras.Count == 0)
             {
                 cameras.Add(new CameraInfo("Default Spawn View", new Vector3(0, 0, 64), new Vector3(0, 0, 0), 90f));
@@ -103,7 +147,6 @@ public partial class LoadingScreenService : ILoadingScreenService
                 return false;
             }
 
-            // Create panorama/images/map_icons/screenshots/1080p/
             var addonPath = Path.Combine(Directory.GetCurrentDirectory(), "content", "csgo_addons", config.AddonName);
             var targetDir = Path.Combine(addonPath, "panorama", "images", "map_icons", "screenshots", "1080p");
             Directory.CreateDirectory(targetDir);
@@ -126,7 +169,6 @@ public partial class LoadingScreenService : ILoadingScreenService
 
             await File.WriteAllTextAsync(targetVtex, vtexContent, cancellationToken);
 
-            // Trigger compilation
             var result = await ResourceCompiler.CompileAssetAsync(targetVtex, addonName: config.AddonName, cancellationToken);
             return result.Success;
         }
@@ -142,16 +184,17 @@ public partial class LoadingScreenService : ILoadingScreenService
         try
         {
             var infoPath = Path.Combine(addonContentPath, "addoninfo.txt");
-            var sb = new StringBuilder();
-            sb.AppendLine("\"AddonInfo\"");
-            sb.AppendLine("{");
-            sb.AppendLine($"\t\"addonTitle\"\t\t\"{Escape(title)}\"");
-            sb.AppendLine($"\t\"addonAuthor\"\t\t\"{Escape(author)}\"");
-            sb.AppendLine($"\t\"addonDescription\"\t\"{Escape(description)}\"");
-            sb.AppendLine($"\t\"mapName\"\t\t\"{Escape(mapName)}\"");
-            sb.AppendLine("}");
+            var root = new KVObject();
+            root["addonTitle"] = new KVObject(title);
+            root["addonAuthor"] = new KVObject(author);
+            root["addonDescription"] = new KVObject(description);
+            root["mapName"] = new KVObject(mapName);
 
-            await File.WriteAllTextAsync(infoPath, sb.ToString(), cancellationToken);
+            var doc = new KVDocument(new KVHeader(), "AddonInfo", root);
+
+            using var ms = new MemoryStream();
+            Kv1Serializer.Serialize(ms, doc);
+            await File.WriteAllBytesAsync(infoPath, ms.ToArray(), cancellationToken);
             return true;
         }
         catch (Exception ex)
@@ -160,8 +203,6 @@ public partial class LoadingScreenService : ILoadingScreenService
             return false;
         }
     }
-
-    private static string Escape(string val) => val.Replace("\"", "\\\"");
 
     private static Vector3 ParseVector(string str)
     {

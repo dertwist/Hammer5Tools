@@ -27,6 +27,10 @@
     <PackageVersion Include="ValveResourceFormat" Version="20.0.6980" />
     <PackageVersion Include="ValvePak" Version="6.0.0.182" />
     <PackageVersion Include="ValveKeyValue" Version="0.71.0.528" />
+    <PackageVersion Include="KeyValues2" Version="1.0.0" />
+    <PackageVersion Include="Sledge.Formats.Map" Version="1.2.9" />
+    <PackageVersion Include="Sledge.Formats.Texture" Version="1.1.0" />
+    <PackageVersion Include="Sledge.Formats.GameData" Version="1.1.8" />
 
     <!-- CLI -->
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />

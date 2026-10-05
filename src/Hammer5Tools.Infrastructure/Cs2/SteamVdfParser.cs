@@ -1,21 +1,14 @@
 namespace Hammer5Tools.Infrastructure.Cs2;
 
-using System.IO;
-using System.Text.RegularExpressions;
+using System.Text;
+using ValveKeyValue;
 
 /// <summary>
-/// Parser for Steam KeyValue 1 format files (libraryfolders.vdf and appmanifest_*.acf).
+/// Parser for Steam KeyValue 1 format files (libraryfolders.vdf and appmanifest_*.acf) using ValveKeyValue.
 /// </summary>
-public static partial class SteamVdfParser
+public static class SteamVdfParser
 {
-    [GeneratedRegex(@"""path""\s+""([^""]+)""", RegexOptions.IgnoreCase)]
-    private static partial Regex PathRegex();
-
-    [GeneratedRegex(@"""installdir""\s+""([^""]+)""", RegexOptions.IgnoreCase)]
-    private static partial Regex InstallDirRegex();
-
-    [GeneratedRegex(@"""(\d+)""\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}", RegexOptions.Singleline)]
-    private static partial Regex LibraryBlockRegex();
+    private static readonly KVSerializer Kv1Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
 
     /// <summary>
     /// Parses libraryfolders.vdf content and returns ordered library folders (those with CS2 730 first).
@@ -31,48 +24,43 @@ public static partial class SteamVdfParser
         var otherFolders = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var blocks = LibraryBlockRegex().Matches(vdfContent);
-        foreach (Match block in blocks)
+        try
         {
-            var text = block.Groups[2].Value;
-            var pathMatch = PathRegex().Match(text);
-            if (!pathMatch.Success)
-            {
-                continue;
-            }
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(vdfContent));
+            var doc = Kv1Serializer.Deserialize(ms);
 
-            var rawPath = pathMatch.Groups[1].Value.Replace(@"\\", @"\");
-            var normalized = Path.GetFullPath(rawPath);
-
-            if (!seen.Add(normalized))
+            foreach (var (_, folderObj) in doc.Root.Children)
             {
-                continue;
-            }
-
-            var hasCs2 = text.Contains(@"""730""", StringComparison.OrdinalIgnoreCase);
-            if (hasCs2)
-            {
-                cs2Folders.Add(normalized);
-            }
-            else
-            {
-                otherFolders.Add(normalized);
-            }
-        }
-
-        // Fallback for simple "path" "..." without block nesting
-        if (cs2Folders.Count == 0 && otherFolders.Count == 0)
-        {
-            var allPaths = PathRegex().Matches(vdfContent);
-            foreach (Match m in allPaths)
-            {
-                var raw = m.Groups[1].Value.Replace(@"\\", @"\");
-                var norm = Path.GetFullPath(raw);
-                if (seen.Add(norm))
+                if (folderObj.TryGetValue("path", out var pathObj) && pathObj is not null)
                 {
-                    otherFolders.Add(norm);
+                    var rawPath = pathObj.ToString().Replace(@"\\", @"\");
+                    if (!string.IsNullOrWhiteSpace(rawPath))
+                    {
+                        var normalized = Path.GetFullPath(rawPath);
+                        if (!seen.Add(normalized))
+                        {
+                            continue;
+                        }
+
+                        var hasCs2 = folderObj.TryGetValue("apps", out var appsObj) &&
+                                     appsObj is not null &&
+                                     appsObj.ContainsKey("730");
+
+                        if (hasCs2)
+                        {
+                            cs2Folders.Add(normalized);
+                        }
+                        else
+                        {
+                            otherFolders.Add(normalized);
+                        }
+                    }
                 }
             }
+        }
+        catch
+        {
+            // Graceful handling for non-standard input
         }
 
         var result = new List<string>(cs2Folders.Count + otherFolders.Count);
@@ -91,7 +79,20 @@ public static partial class SteamVdfParser
             return null;
         }
 
-        var match = InstallDirRegex().Match(acfContent);
-        return match.Success ? match.Groups[1].Value.Replace(@"\\", @"\").Trim() : null;
+        try
+        {
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(acfContent));
+            var doc = Kv1Serializer.Deserialize(ms);
+            if (doc.Root.TryGetValue("installdir", out var installDirObj) && installDirObj is not null)
+            {
+                return installDirObj.ToString().Replace(@"\\", @"\").Trim();
+            }
+        }
+        catch
+        {
+            // Graceful handling for non-standard input
+        }
+
+        return null;
     }
 }
