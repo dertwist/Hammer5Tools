@@ -23,6 +23,17 @@ public class HotkeyDocumentTests
         """;
 
     [Test]
+    public async Task EditsPreserveUnknownDocumentAndBindingFields()
+    {
+        var text = SampleKeybindings.Replace("m_Bindings =", "custom_metadata = { value = 42 }\nm_Bindings =")
+            .Replace("m_Command = \"FileSave\"", "m_Command = \"FileSave\" custom_flag = true");
+        var document = HotkeyDocument.Parse(text);
+        document.SetBinding("HammerApp", "FileSave", "Ctrl+Alt+S");
+        await Assert.That(document.Serialize()).Contains("custom_metadata");
+        await Assert.That(document.Serialize()).Contains("custom_flag");
+    }
+
+    [Test]
     public async Task ParseExtractsMacrosAndBindings()
     {
         var doc = HotkeyDocument.Parse(SampleKeybindings);

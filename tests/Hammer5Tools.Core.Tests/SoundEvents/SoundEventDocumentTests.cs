@@ -42,6 +42,18 @@ public class SoundEventDocumentTests
     }
 
     [Test]
+    public async Task RoundTripPreservesQuotedStringsAndNestedValues()
+    {
+        var source = SoundEventDocument.DefaultHeader + "\n{ sound = { type = \"csgo_mega\" source = resource:\"sounds/a.vsnd\" nested = { value = \"quoted text\" } } }";
+        var document = SoundEventDocument.Parse(source);
+        var restored = SoundEventDocument.Parse(document.Serialize());
+        await Assert.That(restored.Events[0].GetValue("source")).Contains("resource:");
+        await Assert.That(restored.Events[0].GetValue("nested")).Contains("quoted text");
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(document.Serialize()));
+        ValveKeyValue.KVSerializer.Create(ValveKeyValue.KVSerializationFormat.KeyValues3Text).Deserialize(stream);
+    }
+
+    [Test]
     public async Task ParseEmptyOrInvalidStringReturnsEmptyDocument()
     {
         var doc = SoundEventDocument.Parse(string.Empty);

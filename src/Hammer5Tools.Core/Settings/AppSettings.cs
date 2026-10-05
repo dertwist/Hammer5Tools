@@ -9,9 +9,13 @@ public class AppSettings
 
     public string? Cs2PathOverride { get; set; }
 
-    public string Theme { get; set; } = "Dark";
+    public string Theme { get; set; } = "Standard";
 
     public string UpdateChannel { get; set; } = "stable";
+
+    public Dictionary<string, string> WorkspaceLayouts { get; set; } = [];
+
+    public string ArchivePath { get; set; } = string.Empty;
 
     public WindowStateSettings WindowState { get; set; } = new();
 

@@ -3,13 +3,27 @@ namespace Hammer5Tools.Core.DetailProps;
 /// <summary>
 /// A detail prop type containing density parameters and a collection of model variations.
 /// </summary>
-public class DetailPropType
+public class DetailPropType : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public string Name { get; set; } = string.Empty;
+    private string NameValue = string.Empty;
 
-    public float Density { get; set; } = 1.0f;
+    public string Name
+    {
+        get => NameValue;
+        set => SetProperty(ref NameValue, value);
+    }
 
-    public List<DetailPropModel> Models { get; } = [];
+    private float DensityValue = 1.0f;
+
+    public float Density
+    {
+        get => DensityValue;
+        set => SetProperty(ref DensityValue, value);
+    }
+
+    public System.Collections.ObjectModel.ObservableCollection<DetailPropModel> Models { get; } = [];
+
+    internal ValveKeyValue.KVObject Original { get; set; } = new();
 
     public DetailPropType(string name)
     {

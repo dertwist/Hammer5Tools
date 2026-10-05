@@ -5,6 +5,8 @@ namespace Hammer5Tools.Core.Hotkeys;
 /// </summary>
 public class HotkeyMacro
 {
+    internal ValveKeyValue.KVObject Original { get; set; } = new();
+
     public string Name { get; set; }
 
     public string Input { get; set; }

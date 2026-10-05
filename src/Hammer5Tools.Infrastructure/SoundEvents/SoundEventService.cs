@@ -24,12 +24,14 @@ public class SoundEventService : ISoundEventService
         try
         {
             var content = await File.ReadAllTextAsync(vsndevtsPath, cancellationToken);
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+            ValveKeyValue.KVSerializer.Create(ValveKeyValue.KVSerializationFormat.KeyValues3Text).Deserialize(stream);
             return SoundEventDocument.Parse(content);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load SoundEvent document from {Path}", vsndevtsPath);
-            return new SoundEventDocument();
+            throw;
         }
     }
 
@@ -44,7 +46,9 @@ public class SoundEventService : ISoundEventService
             }
 
             var text = document.Serialize();
-            await File.WriteAllTextAsync(vsndevtsPath, text, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Hammer5Tools.Core.Formats.DocumentFile.Write(vsndevtsPath, text);
+            await Task.CompletedTask;
             Logger.LogInformation("Saved SoundEvent document to {Path}", vsndevtsPath);
         }
         catch (Exception ex)

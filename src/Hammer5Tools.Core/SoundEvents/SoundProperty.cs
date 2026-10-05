@@ -1,10 +1,22 @@
 namespace Hammer5Tools.Core.SoundEvents;
 
-public class SoundProperty
+public class SoundProperty : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public string Key { get; set; } = string.Empty;
+    private string KeyValue = string.Empty;
 
-    public string Value { get; set; } = string.Empty;
+    public string Key
+    {
+        get => KeyValue;
+        set => SetProperty(ref KeyValue, value);
+    }
+
+    private string ValueValue = string.Empty;
+
+    public string Value
+    {
+        get => ValueValue;
+        set => SetProperty(ref ValueValue, value);
+    }
 
     public SoundProperty()
     {

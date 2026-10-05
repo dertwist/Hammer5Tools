@@ -3,13 +3,33 @@ namespace Hammer5Tools.Core.Hotkeys;
 /// <summary>
 /// A keybinding mapping an input shortcut to a command within a specific context.
 /// </summary>
-public class HotkeyBinding
+public class HotkeyBinding : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public string Context { get; set; }
+    private string ContextValue = string.Empty;
 
-    public string Command { get; set; }
+    internal ValveKeyValue.KVObject Original { get; set; } = new();
 
-    public string Input { get; set; }
+    public string Context
+    {
+        get => ContextValue;
+        set => SetProperty(ref ContextValue, value);
+    }
+
+    private string CommandValue = string.Empty;
+
+    public string Command
+    {
+        get => CommandValue;
+        set => SetProperty(ref CommandValue, value);
+    }
+
+    private string InputValue = string.Empty;
+
+    public string Input
+    {
+        get => InputValue;
+        set => SetProperty(ref InputValue, value);
+    }
 
     public HotkeyBinding(string context, string command, string input)
     {

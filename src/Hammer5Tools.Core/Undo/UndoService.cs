@@ -8,6 +8,8 @@ public class UndoService : IUndoService
     private readonly Stack<IUndoCommand> UndoStack = new();
     private readonly Stack<IUndoCommand> RedoStack = new();
 
+    public IReadOnlyList<string> History => UndoStack.Reverse().Select(command => command.Description).ToArray();
+
     public bool CanUndo => UndoStack.Count > 0;
 
     public bool CanRedo => RedoStack.Count > 0;

@@ -18,15 +18,19 @@ public partial class LoadingScreenService : ILoadingScreenService
     private readonly ICommandService CommandService;
     private readonly IResourceCompiler ResourceCompiler;
     private readonly ILogger<LoadingScreenService> Logger;
+    private readonly Core.Cs2.ICs2Locator Cs2Locator;
+    private readonly Core.Settings.ISettingsService SettingsService;
 
     public LoadingScreenService(
         ICommandService commandService,
         IResourceCompiler resourceCompiler,
-        ILogger<LoadingScreenService> logger)
+        ILogger<LoadingScreenService> logger, Core.Cs2.ICs2Locator cs2Locator, Core.Settings.ISettingsService settingsService)
     {
         CommandService = commandService;
         ResourceCompiler = resourceCompiler;
         Logger = logger;
+        Cs2Locator = cs2Locator;
+        SettingsService = settingsService;
     }
 
     public async Task<IReadOnlyList<CameraInfo>> ExtractCamerasFromVmapAsync(string vmapPath, CancellationToken cancellationToken = default)
@@ -49,7 +53,7 @@ public partial class LoadingScreenService : ILoadingScreenService
             foreach (var elem in dm.AllElements)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (elem.ClassName is "CMapCamera" or "point_camera" or "info_camera_link")
+                if (SettingsService.Settings.Editor.LoadingUseSavedCameras ? elem.ClassName == "CMapSavedCamera" : elem.ClassName == "CMapCamera" || elem.ClassName == "point_camera" || elem.ClassName == "info_camera_link")
                 {
                     var pos = Vector3.Zero;
                     if (elem.TryGetValue("origin", out var o) && o is System.Numerics.Vector3 v)
@@ -121,6 +125,11 @@ public partial class LoadingScreenService : ILoadingScreenService
             var posCmd = string.Format(CultureInfo.InvariantCulture, "setpos {0} {1} {2}", camera.Position.X, camera.Position.Y, camera.Position.Z);
             var angCmd = string.Format(CultureInfo.InvariantCulture, "setang {0} {1} {2}", camera.Angles.X, camera.Angles.Y, camera.Angles.Z);
 
+            if (!CommandService.IsConnected)
+            {
+                return false;
+            }
+
             await CommandService.SendCommandAsync("r_drawviewmodel 0", cancellationToken);
             await CommandService.SendCommandAsync(posCmd, cancellationToken);
             await CommandService.SendCommandAsync(angCmd, cancellationToken);
@@ -147,7 +156,8 @@ public partial class LoadingScreenService : ILoadingScreenService
                 return false;
             }
 
-            var addonPath = Path.Combine(Directory.GetCurrentDirectory(), "content", "csgo_addons", config.AddonName);
+            var cs2Root = Cs2Locator.FindCs2Path() ?? throw new InvalidOperationException("CS2 installation not found.");
+            var addonPath = Core.Cs2.Cs2Paths.GetAddonContentPath(cs2Root, config.AddonName);
             var targetDir = Path.Combine(addonPath, "panorama", "images", "map_icons", "screenshots", "1080p");
             Directory.CreateDirectory(targetDir);
 
@@ -179,12 +189,36 @@ public partial class LoadingScreenService : ILoadingScreenService
         }
     }
 
+    public async Task<LoadingScreenConfig> LoadAddonInfoAsync(string addonContentPath, CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(addonContentPath, "addoninfo.txt");
+        if (!File.Exists(path))
+        {
+            return new LoadingScreenConfig();
+        }
+
+        var bytes = await File.ReadAllBytesAsync(path, cancellationToken);
+        using var stream = new MemoryStream(bytes);
+        var root = Kv1Serializer.Deserialize(stream).Root;
+        return new LoadingScreenConfig
+        {
+            Title = root["addonTitle"]?.ToString() ?? string.Empty,
+            Author = root["addonAuthor"]?.ToString() ?? string.Empty,
+            Description = root["addonDescription"]?.ToString() ?? string.Empty
+        };
+    }
+
     public async Task<bool> SaveAddonInfoAsync(string addonContentPath, string mapName, string title, string author, string description, CancellationToken cancellationToken = default)
     {
         try
         {
             var infoPath = Path.Combine(addonContentPath, "addoninfo.txt");
             var root = new KVObject();
+            if (File.Exists(infoPath))
+            {
+                using var existing = File.OpenRead(infoPath);
+                root = Kv1Serializer.Deserialize(existing).Root;
+            }
             root["addonTitle"] = new KVObject(title);
             root["addonAuthor"] = new KVObject(author);
             root["addonDescription"] = new KVObject(description);
@@ -194,7 +228,9 @@ public partial class LoadingScreenService : ILoadingScreenService
 
             using var ms = new MemoryStream();
             Kv1Serializer.Serialize(ms, doc);
-            await File.WriteAllBytesAsync(infoPath, ms.ToArray(), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Hammer5Tools.Core.Formats.DocumentFile.WriteKeyValues1(infoPath, System.Text.Encoding.UTF8.GetString(ms.ToArray()));
+            await Task.CompletedTask;
             return true;
         }
         catch (Exception ex)
@@ -202,6 +238,29 @@ public partial class LoadingScreenService : ILoadingScreenService
             Logger.LogError(ex, "Failed to save addoninfo.txt");
             return false;
         }
+    }
+
+    public async Task<bool> ApplyMapIconAsync(string addonContentPath, string addonName, string svgPath, CancellationToken cancellationToken = default)
+    {
+        var text = await File.ReadAllTextAsync(svgPath, cancellationToken);
+        using var reader = System.Xml.XmlReader.Create(new StringReader(text), new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Prohibit });
+        var document = System.Xml.Linq.XDocument.Load(reader);
+        if (document.Root?.Name.LocalName != "svg")
+        {
+            throw new InvalidDataException("Select an SVG document.");
+        }
+
+        var target = Path.Combine(addonContentPath, "panorama", "images", "map_icons", $"map_icon_{addonName}.svg");
+        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        var staged = $"{target}.tmp";
+        await File.WriteAllTextAsync(staged, document.ToString(), cancellationToken);
+        if (File.Exists(target))
+        {
+            File.Copy(target, $"{target}.bak", overwrite: true);
+        }
+
+        File.Move(staged, target, overwrite: true);
+        return true;
     }
 
     private static Vector3 ParseVector(string str)

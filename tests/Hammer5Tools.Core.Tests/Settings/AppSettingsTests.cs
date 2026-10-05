@@ -10,7 +10,7 @@ public class AppSettingsTests
     {
         var settings = new AppSettings();
 
-        await Assert.That(settings.Theme).IsEqualTo("Dark");
+        await Assert.That(settings.Theme).IsEqualTo("Standard");
         await Assert.That(settings.UpdateChannel).IsEqualTo("stable");
         await Assert.That(settings.SelectedAddon).IsNull();
         await Assert.That(settings.Cs2PathOverride).IsNull();

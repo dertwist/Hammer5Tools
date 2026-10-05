@@ -19,6 +19,9 @@ public partial class HotkeyDocument
     [GeneratedRegex(@"\{\s*m_Context\s*=\s*""([^""]*)""\s+m_Command\s*=\s*""([^""]*)""\s+m_Input\s*=\s*""([^""]*)""\s*\}", RegexOptions.IgnoreCase)]
     private static partial Regex BindingRegex();
 
+    private KVObject Original = new();
+    private KVHeader Header = new();
+
     public List<HotkeyMacro> Macros { get; } = [];
 
     public List<HotkeyBinding> Bindings { get; } = [];
@@ -37,6 +40,8 @@ public partial class HotkeyDocument
         {
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
             var kvDoc = Kv3Serializer.Deserialize(ms);
+            doc.Original = kvDoc.Root;
+            doc.Header = kvDoc.Header ?? new KVHeader();
 
             // Read macros
             if (kvDoc.Root.TryGetValue("m_InputMacros", out var macrosObj) || kvDoc.Root.TryGetValue("m_Macros", out macrosObj))
@@ -49,7 +54,7 @@ public partial class HotkeyDocument
                         var input = item.Value.TryGetValue("m_Input", out var inp) ? inp.ToString() : string.Empty;
                         if (!string.IsNullOrEmpty(name))
                         {
-                            doc.Macros.Add(new HotkeyMacro(name, input));
+                            doc.Macros.Add(new HotkeyMacro(name, input) { Original = item.Value });
                         }
                     }
                 }
@@ -65,7 +70,7 @@ public partial class HotkeyDocument
                     var inp = item.Value.TryGetValue("m_Input", out var i) ? i.ToString() : string.Empty;
                     if (!string.IsNullOrEmpty(cmd))
                     {
-                        doc.Bindings.Add(new HotkeyBinding(ctx, cmd, inp));
+                        doc.Bindings.Add(new HotkeyBinding(ctx, cmd, inp) { Original = item.Value });
                     }
                 }
             }
@@ -102,46 +107,51 @@ public partial class HotkeyDocument
 
     public void Save(string filePath)
     {
-        var text = Serialize();
-        var dir = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-
-        File.WriteAllText(filePath, text);
+        Formats.DocumentFile.Write(filePath, Serialize());
     }
 
     public string Serialize()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine(DefaultHeader);
-        sb.AppendLine("{");
-
-        if (Macros.Count > 0)
+        var root = Copy(Original);
+        var macros = KVObject.Array();
+        foreach (var macro in Macros)
         {
-            sb.AppendLine("\tm_InputMacros =");
-            sb.AppendLine("\t[");
-            foreach (var macro in Macros)
-            {
-                sb.AppendLine($"\t\t{{ m_Name = \"{macro.Name}\"\t\tm_Input = \"{macro.Input}\"\t}},");
-            }
-
-            sb.AppendLine("\t]");
-            sb.AppendLine();
+            var item = Copy(macro.Original);
+            item["m_Name"] = new KVObject(macro.Name);
+            item["m_Input"] = new KVObject(macro.Input);
+            macros.Add(item);
         }
 
-        sb.AppendLine("\tm_Bindings =");
-        sb.AppendLine("\t[");
+        if (Macros.Count > 0 || root.ContainsKey("m_InputMacros") || root.ContainsKey("m_Macros"))
+        {
+            root[root.ContainsKey("m_Macros") ? "m_Macros" : "m_InputMacros"] = macros;
+        }
+
+        var bindings = KVObject.Array();
         foreach (var binding in Bindings)
         {
-            sb.AppendLine($"\t\t{{ m_Context = \"{binding.Context}\"\tm_Command = \"{binding.Command}\"\tm_Input = \"{binding.Input}\"\t}},");
+            var item = Copy(binding.Original);
+            item["m_Context"] = new KVObject(binding.Context);
+            item["m_Command"] = new KVObject(binding.Command);
+            item["m_Input"] = new KVObject(binding.Input);
+            bindings.Add(item);
         }
 
-        sb.AppendLine("\t]");
-        sb.AppendLine("}");
+        root["m_Bindings"] = bindings;
+        using var output = new MemoryStream();
+        Kv3Serializer.Serialize(output, new KVDocument(Header, string.Empty, root));
+        return Encoding.UTF8.GetString(output.ToArray());
+    }
 
-        return sb.ToString();
+    private static KVObject Copy(KVObject value)
+    {
+        var copy = new KVObject();
+        foreach (var (key, child) in value.Children)
+        {
+            copy[key] = child;
+        }
+
+        return copy;
     }
 
     public void SetBinding(string context, string command, string input)

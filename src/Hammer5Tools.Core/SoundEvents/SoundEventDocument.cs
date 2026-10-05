@@ -39,7 +39,7 @@ public partial class SoundEventDocument
                     }
                     else
                     {
-                        soundEvent.Properties.Add(new SoundProperty(propKey, propVal.ToString()));
+                        soundEvent.Properties.Add(new SoundProperty(propKey, SerializeValue(propVal)));
                     }
                 }
 
@@ -140,6 +140,16 @@ public partial class SoundEventDocument
         }
 
         return soundEvent;
+    }
+
+    private static string SerializeValue(KVObject value)
+    {
+        var root = new KVObject();
+        root["value"] = value;
+        using var stream = new MemoryStream();
+        Kv3Serializer.Serialize(stream, new KVDocument(new KVHeader(), null, root));
+        var text = Encoding.UTF8.GetString(stream.ToArray());
+        return text[(text.IndexOf('=', text.IndexOf("-->", StringComparison.Ordinal) + 3) + 1)..text.LastIndexOf('}')].Trim();
     }
 
     public string Serialize()

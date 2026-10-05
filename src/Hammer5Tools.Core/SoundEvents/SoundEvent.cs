@@ -2,11 +2,23 @@ namespace Hammer5Tools.Core.SoundEvents;
 
 using System.Collections.ObjectModel;
 
-public class SoundEvent
+public class SoundEvent : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public string Name { get; set; } = string.Empty;
+    private string NameValue = string.Empty;
 
-    public string Type { get; set; } = "csgo_mega";
+    public string Name
+    {
+        get => NameValue;
+        set => SetProperty(ref NameValue, value);
+    }
+
+    private string TypeValue = "csgo_mega";
+
+    public string Type
+    {
+        get => TypeValue;
+        set => SetProperty(ref TypeValue, value);
+    }
 
     public ObservableCollection<SoundProperty> Properties { get; } = [];
 

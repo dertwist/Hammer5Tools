@@ -52,7 +52,7 @@ public class JsonSettingsServiceTests
             var service = new JsonSettingsService(settingsFile);
 
             await Assert.That(service.Settings).IsNotNull();
-            await Assert.That(service.Settings.Theme).IsEqualTo("Dark");
+            await Assert.That(service.Settings.Theme).IsEqualTo("Standard");
             await Assert.That(service.Settings.SelectedAddon).IsNull();
         }
         finally
@@ -103,7 +103,10 @@ public class JsonSettingsServiceTests
             var iniContent = """
                 [PATHS]
                 manual_cs2_path=C:\CustomCS2Path
-                archive=legacy_addon
+                archive=C:\Archive
+
+                [LAUNCH]
+                addon=legacy_addon
 
                 [APP]
                 theme_level=1
@@ -119,6 +122,7 @@ public class JsonSettingsServiceTests
 
             await Assert.That(service.Settings.Cs2PathOverride).IsEqualTo(@"C:\CustomCS2Path");
             await Assert.That(service.Settings.SelectedAddon).IsEqualTo("legacy_addon");
+            await Assert.That(service.Settings.ArchivePath).IsEqualTo(@"C:\Archive");
             await Assert.That(service.Settings.Theme).IsEqualTo("Light");
             await Assert.That(service.Settings.Editor.MinimizeToTray).IsTrue();
             await Assert.That(service.Settings.Editor.SoundEventPlayOnClick).IsFalse();

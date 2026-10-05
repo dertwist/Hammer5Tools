@@ -2,280 +2,171 @@ namespace Hammer5Tools.Core.DetailProps;
 
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 using ValveKeyValue;
 
 /// <summary>
-/// Document managing the reading, modification, and serialization of scripts/detail_prop_types.vdata using ValveKeyValue.
+/// Reads the baseline CDetailPropType schema and preserves metadata and unknown fields.
 /// </summary>
-public partial class DetailPropDocument
+public class DetailPropDocument
 {
     public const string DefaultHeader = "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->";
-
-    private static readonly KVSerializer Kv3Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues3Text);
-
-    [GeneratedRegex(@"m_flDensity\s*=\s*([0-9.]+)", RegexOptions.IgnoreCase)]
-    private static partial Regex DensityRegex();
-
-    [GeneratedRegex(@"m_ModelName\s*=\s*""([^""]*)""", RegexOptions.IgnoreCase)]
-    private static partial Regex ModelNameRegex();
-
-    [GeneratedRegex(@"m_flMinScale\s*=\s*([0-9.]+)", RegexOptions.IgnoreCase)]
-    private static partial Regex MinScaleRegex();
-
-    [GeneratedRegex(@"m_flMaxScale\s*=\s*([0-9.]+)", RegexOptions.IgnoreCase)]
-    private static partial Regex MaxScaleRegex();
-
-    [GeneratedRegex(@"m_bRandomYaw\s*=\s*(true|false)", RegexOptions.IgnoreCase)]
-    private static partial Regex RandomYawRegex();
-
-    [GeneratedRegex(@"m_bRandomPitch\s*=\s*(true|false)", RegexOptions.IgnoreCase)]
-    private static partial Regex RandomPitchRegex();
-
-    [GeneratedRegex(@"m_bRandomRoll\s*=\s*(true|false)", RegexOptions.IgnoreCase)]
-    private static partial Regex RandomRollRegex();
-
-    [GeneratedRegex(@"m_bAlignToSurface\s*=\s*(true|false)", RegexOptions.IgnoreCase)]
-    private static partial Regex AlignToSurfaceRegex();
-
-    [GeneratedRegex(@"m_bUpright\s*=\s*(true|false)", RegexOptions.IgnoreCase)]
-    private static partial Regex UprightRegex();
-
+    private static readonly KVSerializer Serializer = KVSerializer.Create(KVSerializationFormat.KeyValues3Text);
+    private readonly KVObject Metadata = new();
+    private KVHeader Header = new();
     public List<DetailPropType> Types { get; } = [];
 
-    public static DetailPropDocument Parse(string kv3Text)
+    public static DetailPropDocument Parse(string text)
     {
-        var doc = new DetailPropDocument();
-        if (string.IsNullOrWhiteSpace(kv3Text))
+        var document = new DetailPropDocument();
+        if (string.IsNullOrWhiteSpace(text))
         {
-            return doc;
+            return document;
         }
 
-        try
+        using var input = new MemoryStream(Encoding.UTF8.GetBytes(text));
+        var parsed = Serializer.Deserialize(input);
+        document.Header = parsed.Header ?? new KVHeader();
+        foreach (var (name, value) in parsed.Root.Children)
         {
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(kv3Text));
-            var kvDoc = Kv3Serializer.Deserialize(ms);
-
-            foreach (var (typeName, typeObj) in kvDoc.Root.Children)
+            if (!value.IsCollection || name is "generic_data_type" or "editor_info")
             {
-                var propType = new DetailPropType(typeName);
-
-                if (typeObj.TryGetValue("m_flDensity", out var densityObj) && densityObj is not null)
-                {
-                    propType.Density = densityObj.ToSingle(CultureInfo.InvariantCulture);
-                }
-
-                if (typeObj.TryGetValue("m_Models", out var modelsObj) && modelsObj is not null)
-                {
-                    foreach (var modelItem in modelsObj.Children)
-                    {
-                        var modelObj = modelItem.Value;
-                        var model = new DetailPropModel();
-
-                        if (modelObj.TryGetValue("m_ModelName", out var nameObj) && nameObj is not null)
-                        {
-                            model.ModelName = nameObj.ToString();
-                        }
-                        if (modelObj.TryGetValue("m_flMinScale", out var minScaleObj) && minScaleObj is not null)
-                        {
-                            model.MinScale = minScaleObj.ToSingle(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_flMaxScale", out var maxScaleObj) && maxScaleObj is not null)
-                        {
-                            model.MaxScale = maxScaleObj.ToSingle(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_flDensity", out var modelDensityObj) && modelDensityObj is not null)
-                        {
-                            model.Density = modelDensityObj.ToSingle(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_bRandomYaw", out var yawObj) && yawObj is not null)
-                        {
-                            model.RandomYaw = yawObj.ToBoolean(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_bRandomPitch", out var pitchObj) && pitchObj is not null)
-                        {
-                            model.RandomPitch = pitchObj.ToBoolean(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_bRandomRoll", out var rollObj) && rollObj is not null)
-                        {
-                            model.RandomRoll = rollObj.ToBoolean(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_bAlignToSurface", out var alignObj) && alignObj is not null)
-                        {
-                            model.AlignToSurface = alignObj.ToBoolean(CultureInfo.InvariantCulture);
-                        }
-                        if (modelObj.TryGetValue("m_bUpright", out var uprightObj) && uprightObj is not null)
-                        {
-                            model.Upright = uprightObj.ToBoolean(CultureInfo.InvariantCulture);
-                        }
-
-                        propType.Models.Add(model);
-                    }
-                }
-
-                doc.Types.Add(propType);
+                document.Metadata[name] = value;
+                continue;
             }
 
-            if (doc.Types.Count > 0)
+            var type = new DetailPropType(name) { Original = value, Density = ReadFloat(value, "m_flDensity", 1f) };
+            if (value.TryGetValue("m_Models", out var models))
             {
-                return doc;
-            }
-        }
-        catch
-        {
-            // Fallback for non-standard fragments
-        }
-
-        // Fallback for partial/manual snippets
-        var firstBrace = kv3Text.IndexOf('{');
-        var lastBrace = kv3Text.LastIndexOf('}');
-        if (firstBrace == -1 || lastBrace <= firstBrace)
-        {
-            return doc;
-        }
-
-        var inner = kv3Text.Substring(firstBrace + 1, lastBrace - firstBrace - 1);
-        var typeBlocks = ExtractObjectBlocks(inner);
-
-        foreach (var (typeName, body) in typeBlocks)
-        {
-            var propType = new DetailPropType(typeName);
-
-            var densityMatch = DensityRegex().Match(body);
-            if (densityMatch.Success && float.TryParse(densityMatch.Groups[1].Value, CultureInfo.InvariantCulture, out var density))
-            {
-                propType.Density = density;
-            }
-
-            var modelsIndex = body.IndexOf("m_Models", StringComparison.OrdinalIgnoreCase);
-            if (modelsIndex != -1)
-            {
-                var bracketOpen = body.IndexOf('[', modelsIndex);
-                var bracketClose = FindMatchingBracket(body, bracketOpen, '[', ']');
-                if (bracketOpen != -1 && bracketClose > bracketOpen)
+                foreach (var item in models.Values)
                 {
-                    var modelsContent = body.Substring(bracketOpen + 1, bracketClose - bracketOpen - 1);
-                    var modelBlocks = ExtractBraceBlocks(modelsContent);
-
-                    foreach (var modelBody in modelBlocks)
-                    {
-                        var model = new DetailPropModel();
-
-                        var nameMatch = ModelNameRegex().Match(modelBody);
-                        if (nameMatch.Success)
-                        {
-                            model.ModelName = nameMatch.Groups[1].Value;
-                        }
-
-                        var minScaleMatch = MinScaleRegex().Match(modelBody);
-                        if (minScaleMatch.Success && float.TryParse(minScaleMatch.Groups[1].Value, CultureInfo.InvariantCulture, out var minScale))
-                        {
-                            model.MinScale = minScale;
-                        }
-
-                        var maxScaleMatch = MaxScaleRegex().Match(modelBody);
-                        if (maxScaleMatch.Success && float.TryParse(maxScaleMatch.Groups[1].Value, CultureInfo.InvariantCulture, out var maxScale))
-                        {
-                            model.MaxScale = maxScale;
-                        }
-
-                        var yawMatch = RandomYawRegex().Match(modelBody);
-                        if (yawMatch.Success)
-                        {
-                            model.RandomYaw = bool.Parse(yawMatch.Groups[1].Value);
-                        }
-
-                        var pitchMatch = RandomPitchRegex().Match(modelBody);
-                        if (pitchMatch.Success)
-                        {
-                            model.RandomPitch = bool.Parse(pitchMatch.Groups[1].Value);
-                        }
-
-                        var rollMatch = RandomRollRegex().Match(modelBody);
-                        if (rollMatch.Success)
-                        {
-                            model.RandomRoll = bool.Parse(rollMatch.Groups[1].Value);
-                        }
-
-                        var alignMatch = AlignToSurfaceRegex().Match(modelBody);
-                        if (alignMatch.Success)
-                        {
-                            model.AlignToSurface = bool.Parse(alignMatch.Groups[1].Value);
-                        }
-
-                        var uprightMatch = UprightRegex().Match(modelBody);
-                        if (uprightMatch.Success)
-                        {
-                            model.Upright = bool.Parse(uprightMatch.Groups[1].Value);
-                        }
-
-                        propType.Models.Add(model);
-                    }
+                    var model = new DetailPropModel { Original = item };
+                    model.ModelName = ReadString(item, "m_ModelName", string.Empty);
+                    model.MinScale = ReadFloat(item, "m_flMinScale", 1f);
+                    model.MaxScale = ReadFloat(item, "m_flMaxScale", 1f);
+                    model.Density = ReadFloat(item, "m_flDensity", 1f);
+                    model.RandomYaw = ReadBool(item, "m_bRandomYaw", true);
+                    model.RandomPitch = ReadBool(item, "m_bRandomPitch", false);
+                    model.RandomRoll = ReadBool(item, "m_bRandomRoll", false);
+                    model.AlignToSurface = ReadBool(item, "m_bAlignToSurface", false);
+                    model.Upright = ReadBool(item, "m_bUpright", true);
+                    model.MaterialGroup = ReadString(item, "m_MaterialGroup", string.Empty);
+                    model.Weight = ReadFloat(item, "m_flWeight", 1f);
+                    model.StartFadeSize = ReadFloat(item, "m_flStartFadeSize", 0.02f);
+                    model.EndFadeSize = ReadFloat(item, "m_flEndFadeSize", 0.0125f);
+                    model.WorldSpaceOrientation = ReadBool(item, "m_bWorldSpaceOrientation", false);
+                    model.OrientToSurface = ReadFloat(item, "m_flOrientToSurface", 1f);
+                    model.MinSurfaceSlope = ReadFloat(item, "m_flMinSurfaceSlope", 0f);
+                    model.MaxSurfaceSlope = ReadFloat(item, "m_flMaxSurfaceSlope", 180f);
+                    model.VerticalOffsetMin = ReadFloat(item, "m_flRandomVerticalOffsetMin", 0f);
+                    model.VerticalOffsetMax = ReadFloat(item, "m_flRandomVerticalOffsetMax", 0f);
+                    model.RotationMin = ReadVector(item, "m_vRandomRotationMin", Vector3.Zero);
+                    model.RotationMax = ReadVector(item, "m_vRandomRotationMax", new(0, 360, 0));
+                    model.RandomScaleMin = ReadFloat(item, "m_flRandomScaleMin", 1f);
+                    model.RandomScaleMax = ReadFloat(item, "m_flRandomScaleMax", 1f);
+                    model.DensityMinScale = ReadFloat(item, "m_flDensityMinScale", 1f);
+                    model.BlendWeightMinScale = ReadFloat(item, "m_flBlendWeightMinScale", 1f);
+                    model.BlendWeightMin = ReadFloat(item, "m_flBlendWeightMin", 0.25f);
+                    model.BlendWeightMax = ReadFloat(item, "m_flBlendWeightMax", 1f);
+                    model.BlendWeightFullDensity = ReadFloat(item, "m_flBlendWeightFullDenstity", 0.75f);
+                    model.CastStaticShadows = ReadBool(item, "m_bCastStaticShadows", false);
+                    type.Models.Add(model);
                 }
             }
 
-            doc.Types.Add(propType);
+            document.Types.Add(type);
         }
 
-        return doc;
+        return document;
     }
 
-    public static DetailPropDocument Load(string filePath)
+    public static DetailPropDocument Load(string path)
     {
-        var text = File.ReadAllText(filePath);
-        return Parse(text);
+        return Parse(File.ReadAllText(path));
     }
 
-    public void Save(string filePath)
+    public void Save(string path)
     {
-        var text = Serialize();
-        var dir = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-
-        File.WriteAllText(filePath, text);
+        Formats.DocumentFile.Write(path, Serialize());
     }
 
     public string Serialize()
     {
-        var sb = new StringBuilder();
-        sb.AppendLine(DefaultHeader);
-        sb.AppendLine("{");
-
+        var root = Copy(Metadata);
+        root.TryAdd("generic_data_type", new KVObject("CDetailPropType"));
         foreach (var type in Types)
         {
-            sb.AppendLine($"\t{type.Name} =");
-            sb.AppendLine("\t{");
-            sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "\t\tm_flDensity = {0:F1}", type.Density));
-            sb.AppendLine("\t\tm_Models =");
-            sb.AppendLine("\t\t[");
-
+            var value = Copy(type.Original);
+            value["m_flDensity"] = new KVObject(type.Density);
+            var models = KVObject.Array();
             foreach (var model in type.Models)
             {
-                sb.AppendLine("\t\t\t{");
-                sb.AppendLine($"\t\t\t\tm_ModelName = \"{model.ModelName}\"");
-                sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "\t\t\t\tm_flMinScale = {0:F2}", model.MinScale));
-                sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "\t\t\t\tm_flMaxScale = {0:F2}", model.MaxScale));
-                sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "\t\t\t\tm_flDensity = {0:F1}", model.Density));
-                sb.AppendLine($"\t\t\t\tm_bRandomYaw = {model.RandomYaw.ToString().ToLowerInvariant()}");
-                sb.AppendLine($"\t\t\t\tm_bRandomPitch = {model.RandomPitch.ToString().ToLowerInvariant()}");
-                sb.AppendLine($"\t\t\t\tm_bRandomRoll = {model.RandomRoll.ToString().ToLowerInvariant()}");
-                sb.AppendLine($"\t\t\t\tm_bAlignToSurface = {model.AlignToSurface.ToString().ToLowerInvariant()}");
-                sb.AppendLine($"\t\t\t\tm_bUpright = {model.Upright.ToString().ToLowerInvariant()}");
-                sb.AppendLine("\t\t\t},");
+                var item = Copy(model.Original);
+                item["m_ModelName"] = new KVObject(model.ModelName) { Flag = KVFlag.ResourceName };
+                item["m_MaterialGroup"] = new KVObject(model.MaterialGroup);
+                item["m_flWeight"] = new KVObject(model.Weight);
+                item["m_flStartFadeSize"] = new KVObject(model.StartFadeSize);
+                item["m_flEndFadeSize"] = new KVObject(model.EndFadeSize);
+                item["m_bWorldSpaceOrientation"] = new KVObject(model.WorldSpaceOrientation);
+                item["m_flOrientToSurface"] = new KVObject(model.OrientToSurface);
+                item["m_flMinSurfaceSlope"] = new KVObject(model.MinSurfaceSlope);
+                item["m_flMaxSurfaceSlope"] = new KVObject(model.MaxSurfaceSlope);
+                item["m_flRandomVerticalOffsetMin"] = new KVObject(model.VerticalOffsetMin);
+                item["m_flRandomVerticalOffsetMax"] = new KVObject(model.VerticalOffsetMax);
+                item["m_vRandomRotationMin"] = KVObject.Array([new KVObject(model.RotationMin.X), new KVObject(model.RotationMin.Y), new KVObject(model.RotationMin.Z)]);
+                item["m_vRandomRotationMax"] = KVObject.Array([new KVObject(model.RotationMax.X), new KVObject(model.RotationMax.Y), new KVObject(model.RotationMax.Z)]);
+                item["m_flRandomScaleMin"] = new KVObject(model.RandomScaleMin);
+                item["m_flRandomScaleMax"] = new KVObject(model.RandomScaleMax);
+                item["m_flDensityMinScale"] = new KVObject(model.DensityMinScale);
+                item["m_flBlendWeightMinScale"] = new KVObject(model.BlendWeightMinScale);
+                item["m_flBlendWeightMin"] = new KVObject(model.BlendWeightMin);
+                item["m_flBlendWeightMax"] = new KVObject(model.BlendWeightMax);
+                item["m_flBlendWeightFullDenstity"] = new KVObject(model.BlendWeightFullDensity);
+                item["m_bCastStaticShadows"] = new KVObject(model.CastStaticShadows);
+                if (model.Original.ContainsKey("m_flMinScale"))
+                {
+                    item["m_flMinScale"] = new KVObject(model.MinScale);
+                }
+                if (model.Original.ContainsKey("m_flMaxScale"))
+                {
+                    item["m_flMaxScale"] = new KVObject(model.MaxScale);
+                }
+                if (model.Original.ContainsKey("m_flDensity"))
+                {
+                    item["m_flDensity"] = new KVObject(model.Density);
+                }
+                if (model.Original.ContainsKey("m_bRandomYaw"))
+                {
+                    item["m_bRandomYaw"] = new KVObject(model.RandomYaw);
+                }
+                if (model.Original.ContainsKey("m_bRandomPitch"))
+                {
+                    item["m_bRandomPitch"] = new KVObject(model.RandomPitch);
+                }
+                if (model.Original.ContainsKey("m_bRandomRoll"))
+                {
+                    item["m_bRandomRoll"] = new KVObject(model.RandomRoll);
+                }
+                if (model.Original.ContainsKey("m_bAlignToSurface"))
+                {
+                    item["m_bAlignToSurface"] = new KVObject(model.AlignToSurface);
+                }
+                if (model.Original.ContainsKey("m_bUpright"))
+                {
+                    item["m_bUpright"] = new KVObject(model.Upright);
+                }
+                models.Add(item);
             }
 
-            sb.AppendLine("\t\t]");
-            sb.AppendLine("\t}");
+            value["m_Models"] = models;
+            root[type.Name] = value;
         }
 
-        sb.AppendLine("}");
-        return sb.ToString();
+        using var output = new MemoryStream();
+        Serializer.Serialize(output, new KVDocument(Header, string.Empty, root));
+        return Encoding.UTF8.GetString(output.ToArray());
     }
 
-    public DetailPropType AddType(string name, float density = 1.0f)
+    public DetailPropType AddType(string name, float density = 1f)
     {
         var type = new DetailPropType(name, density);
         Types.Add(type);
@@ -284,123 +175,40 @@ public partial class DetailPropDocument
 
     public bool RemoveType(string name)
     {
-        var existing = Types.FirstOrDefault(t => t.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        return existing is not null && Types.Remove(existing);
+        var type = Types.FirstOrDefault(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        return type is not null && Types.Remove(type);
     }
 
-    private static List<(string TypeName, string Body)> ExtractObjectBlocks(string innerText)
+    private static KVObject Copy(KVObject value)
     {
-        var list = new List<(string, string)>();
-        var pos = 0;
-
-        while (pos < innerText.Length)
+        var copy = new KVObject();
+        foreach (var (key, child) in value.Children)
         {
-            var assignIndex = innerText.IndexOf('=', pos);
-            if (assignIndex == -1)
-            {
-                break;
-            }
-
-            var leftPart = innerText.Substring(pos, assignIndex - pos).Trim();
-            var lines = leftPart.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-            var typeName = lines.Length > 0 ? lines[^1].Trim() : string.Empty;
-
-            var openBrace = innerText.IndexOf('{', assignIndex);
-            if (openBrace == -1)
-            {
-                break;
-            }
-
-            var closeBrace = FindMatchingBracket(innerText, openBrace, '{', '}');
-            if (closeBrace == -1)
-            {
-                break;
-            }
-
-            var body = innerText.Substring(openBrace + 1, closeBrace - openBrace - 1);
-            if (!string.IsNullOrWhiteSpace(typeName))
-            {
-                list.Add((typeName, body));
-            }
-
-            pos = closeBrace + 1;
+            copy[key] = child;
         }
 
-        return list;
+        return copy;
     }
 
-    private static List<string> ExtractBraceBlocks(string arrayContent)
+    private static string ReadString(KVObject value, string key, string fallback)
     {
-        var blocks = new List<string>();
-        var pos = 0;
-
-        while (pos < arrayContent.Length)
-        {
-            var open = arrayContent.IndexOf('{', pos);
-            if (open == -1)
-            {
-                break;
-            }
-
-            var close = FindMatchingBracket(arrayContent, open, '{', '}');
-            if (close == -1)
-            {
-                break;
-            }
-
-            blocks.Add(arrayContent.Substring(open + 1, close - open - 1));
-            pos = close + 1;
-        }
-
-        return blocks;
+        return value.TryGetValue(key, out var item) ? item.ToString() : fallback;
     }
 
-    private static int FindMatchingBracket(string text, int openIndex, char openChar, char closeChar)
+    private static float ReadFloat(KVObject value, string key, float fallback)
     {
-        if (openIndex < 0 || openIndex >= text.Length || text[openIndex] != openChar)
-        {
-            return -1;
-        }
+        return value.TryGetValue(key, out var item) ? item.ToSingle(CultureInfo.InvariantCulture) : fallback;
+    }
 
-        var depth = 0;
-        var inQuotes = false;
-        var quoteChar = '\0';
+    private static bool ReadBool(KVObject value, string key, bool fallback)
+    {
+        return value.TryGetValue(key, out var item) ? item.ToBoolean(CultureInfo.InvariantCulture) : fallback;
+    }
 
-        for (var i = openIndex; i < text.Length; i++)
-        {
-            var c = text[i];
-            if (inQuotes)
-            {
-                if (c == '\\')
-                {
-                    i++;
-                }
-                else if (c == quoteChar)
-                {
-                    inQuotes = false;
-                }
-                continue;
-            }
-
-            if (c is '"' or '\'')
-            {
-                inQuotes = true;
-                quoteChar = c;
-            }
-            else if (c == openChar)
-            {
-                depth++;
-            }
-            else if (c == closeChar)
-            {
-                depth--;
-                if (depth == 0)
-                {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
+    private static Vector3 ReadVector(KVObject value, string key, Vector3 fallback)
+    {
+        return value.TryGetValue(key, out var item) && item.Count == 3
+            ? new Vector3(item[0].ToSingle(CultureInfo.InvariantCulture), item[1].ToSingle(CultureInfo.InvariantCulture), item[2].ToSingle(CultureInfo.InvariantCulture))
+            : fallback;
     }
 }

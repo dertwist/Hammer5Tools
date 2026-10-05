@@ -83,6 +83,10 @@ internal class LegacySettingsMigrator
                 break;
 
             case "PATHS/archive":
+                settings.ArchivePath = value;
+                break;
+
+            case "LAUNCH/addon":
             case "General/SelectedAddon":
             case "APP/SelectedAddon":
                 if (!string.IsNullOrWhiteSpace(value))
@@ -95,7 +99,9 @@ internal class LegacySettingsMigrator
                 settings.Theme = value switch
                 {
                     "1" => "Light",
-                    "2" => "System",
+                    "0" => "System",
+                    "3" => "Bright",
+                    "4" => "Vintage Steam",
                     _ => "Dark",
                 };
                 break;
