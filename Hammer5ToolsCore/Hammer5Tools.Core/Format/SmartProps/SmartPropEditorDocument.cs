@@ -38,6 +38,10 @@ internal static class SmartPropEditorDocument
     public static string Edit(string json, string[] path, string operation, string valueJson)
     {
         var root = JsonNode.Parse(Validate(json))!;
+        if (operation == "hierarchy")
+        {
+            return SmartPropHierarchyDocument.Edit(root.AsObject(), valueJson);
+        }
         if (operation == "replace" && path.Length == 0)
         {
             return Validate(valueJson);

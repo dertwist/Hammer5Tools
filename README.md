@@ -1,37 +1,11 @@
-<h1 align="center">
-  <img src="https://hammer5tools.github.io/static/logo.png" width="64" valign="middle" alt="Hammer 5 Tools Logo">
-  &nbsp;Hammer 5 Tools
-</h1>
+# Hammer 5 Tools
 
-<p align="center">
-    <strong>The ultimate toolkit for Counter-Strike 2 level designers and modders.</strong>
-</p>
+The managed Avalonia application is `src/Hammer5Tools.App`. Build with `dotnet build Hammer5Tools.slnx -c Release` and run with `dotnet run --project src/Hammer5Tools.App`.
 
-<p align="center">
-    <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
-        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/download.svg" height="45" alt="Download">
-    </a>
-    <a href="https://discord.com/invite/DvCXEyhssd">
-        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" height="45" alt="Discord">
-    </a>
-    <a href="https://hammer5tools.github.io/docs.html">
-        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/docs.svg" height="45" alt="Docs">
-    </a>
-</p>
+SmartProp is integrated into the main application. Workshop Manager runs in the same process as an owned utility window. Application commands use the menu bar; the menu beside the addon selector contains addon lifecycle and folder actions. The old standalone SmartProp preview was removed; its regression host lives in `tests/Hammer5Tools.SmartProp.Tests`.
 
----
+The previous Python/PySide6 application, its tests and bridge are preserved under `legacy/Hammer5ToolsGUI`. Run legacy scripts from `legacy/` (for example, `python Hammer5ToolsGUI/gui/main.py`). The native Core remains under `Hammer5ToolsCore`.
 
-Welcome to **Hammer 5 Tools**. This toolkit is designed to bridge the gaps and streamline the level design workflow in Counter-Strike 2.
-
-Whether it's managing sound events, working with Smart Props, or compiling projects, the toolkit provides the necessary solutions.
-
-[**Check out Website**](https://hammer5tools.github.io/)
-
-<p align="center">
-  <img width="2560" height="1392" alt="image" src="https://github.com/user-attachments/assets/b273ff75-72e9-4569-b659-f2817ef7b401" />
-</p>
-
-### SmartProp Editor
 Editing `.vsmart` files manually is no longer necessary. The editor provides a visual way to manage position, rotation, and scaling in real-time. It is fully compatible with Valve's formats and includes presets to help build complex scenes efficiently.
 
 ### SoundEvent Editor
@@ -50,18 +24,22 @@ Is your addon folder getting messy? This tool scans your `.vmap` and sweeps away
 Want to contribute or build your own version? Here's the lowdown on the project structure.
 
 ### Project Architecture
-The app is modular. Each editor lives in its own folder under `Hammer5ToolsGUI/gui/` and can run standalone if you point it to the right paths. `Hammer5ToolsGUI/gui/main.py` is the entry point that brings everything together.
+The managed GUI and CLI reference one shared Core library. The C# application starts directly and owns single-instance startup and update checks; the C++ launcher has been removed.
 
-*   `Hammer5ToolsGUI/`: PySide6 application, editors, widgets, styles, and resources.
+*   `src/Hammer5Tools.App/`: Avalonia application, editors, presentation and application lifecycle.
+*   `src/Hammer5Tools.Cli/`: Command-line presentation and headless operations.
+*   `src/Hammer5Tools.Core/`: Shared documents, domain logic and services; filesystem/process integrations live in `IO/`.
+*   `third_party/CS2WorkshopManager/`: Pinned upstream library and GUI; Core uses the library and App hosts the GUI in-process.
+*   `tests/`: Managed Core, integration, App and SmartProp regression tests.
+*   `legacy/Hammer5ToolsGUI/`: Archived PySide6 application, editors, widgets, styles, and resources.
 *   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL — Source 2 parsing, porting, and Unreal bridge logic.
-*   `Hammer5ToolsLauncher/`: Native startup, IPC, and GUI supervision.
-*   `Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
+*   `legacy/Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
 *   `Hammer5ToolsCore/external/`: External libraries and .NET resources.
-*   `Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
+*   `legacy/Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
 
 ### Getting Started
 1.  **Environment**: Requires Python 3.11+. Install dependencies via `pip install -r requirements.txt`.
-2.  **Running**: Launch `Hammer5ToolsGUI/gui/main.py`. Ensure your working directory is set to the project root.
+2.  **Running**: Launch `legacy/Hammer5ToolsGUI/gui/main.py`. Ensure your working directory is set to `legacy/`.
 3.  **Building**: A custom `makefile.py` handles the build process:
     ```powershell
     # Build a stable release

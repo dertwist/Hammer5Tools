@@ -12,9 +12,11 @@
         Icon="avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png"
         Width="1440"
         Height="900"
+        MinWidth="800"
+        MinHeight="500"
         WindowStartupLocation="CenterScreen">
 
-  <Grid RowDefinitions="Auto,*,Auto">
+  <Grid RowDefinitions="Auto,Auto,*,Auto">
       <TabControl Grid.Row="0"
                   ItemsSource="{Binding Documents}"
                   SelectedItem="{Binding ActiveDocument}"
@@ -40,7 +42,52 @@
         </TabControl.Template>
       </TabControl>
 
-    <workspace:WorkspaceView Grid.Row="1" LayoutKey="Shell" LeftTitle="Explorer" ShowLeft="{Binding IsAssetExplorerVisible}">
+    <Menu Grid.Row="1" Name="ApplicationMenu">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open" Command="{Binding OpenFileCommand}" HotKey="Ctrl+O" />
+        <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
+        <Separator />
+        <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="Undo" Command="{Binding UndoDocumentCommand}" HotKey="Ctrl+Z" />
+        <MenuItem Header="Redo" Command="{Binding RedoDocumentCommand}" HotKey="Ctrl+Shift+Z" />
+        <MenuItem Header="Preferences" Command="{Binding OpenPreferencesCommand}" />
+      </MenuItem>
+      <MenuItem Header="_View"><MenuItem Header="Reset dock layouts" Command="{Binding ResetLayoutCommand}" /></MenuItem>
+      <MenuItem Header="_CS2">
+        <MenuItem Header="Launch Workshop Tools" Command="{Binding LaunchCs2Command}" />
+        <MenuItem Header="Restart Workshop Tools" Command="{Binding RestartCs2Command}" />
+        <MenuItem Header="Kill Workshop Tools" Command="{Binding KillCs2Command}" />
+        <Separator />
+        <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Editors">
+        <MenuItem Header="SmartProp Editor" Command="{Binding OpenSmartPropEditorCommand}" />
+        <MenuItem Header="Loading Screen Editor" Command="{Binding OpenLoadingEditorCommand}" />
+        <MenuItem Header="SoundEvent Editor" Command="{Binding OpenSoundEventEditorCommand}" />
+        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
+        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Utilities">
+        <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
+        <MenuItem Header="Workshop Manager" Command="{Binding OpenWorkshopManagerCommand}" />
+        <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
+        <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
+        <Separator />
+        <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
+        <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
+        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.gg/hammer5tools" />
+        <MenuItem Header="GitHub Repository" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
+        <Separator />
+        <MenuItem Header="_About Hammer 5 Tools" />
+      </MenuItem>
+    </Menu>
+
+    <workspace:WorkspaceView Grid.Row="2" LayoutKey="Shell" LeftTitle="Explorer" ShowLeft="{Binding IsAssetExplorerVisible}">
       <workspace:WorkspaceView.LeftContent>
         <explorer:AssetExplorerView DataContext="{Binding Explorer}" />
       </workspace:WorkspaceView.LeftContent>
@@ -50,7 +97,7 @@
     </workspace:WorkspaceView>
 
     <!-- Bottom Button Line with Console Line, Addon Selector, Actions, Utilities, Edit Map (Classic Hammer5Tools Layout) -->
-    <Border Grid.Row="2" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,1" Padding="8,2">
+    <Border Grid.Row="3" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,1" Padding="8,2">
       <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
         <!-- Left: Twitter, Discord, About, Git Sync buttons -->
         <Button Grid.Column="0"
@@ -102,55 +149,20 @@
         </Button>
 
         <!-- Actions Menu Button (Folder navigation, refresh, cache, CS2 controls) -->
-        <Button Grid.Column="6" Content="☰" Margin="4,0" ToolTip.Tip="Addon actions and tool settings">
+        <Button Grid.Column="6" x:Name="AddonActionsButton" Content="☰" Margin="4,0" ToolTip.Tip="Addon actions and tool settings">
           <Button.Flyout>
             <MenuFlyout Placement="Top">
-      <MenuItem Header="_File">
-        <MenuItem Header="_Open" Command="{Binding OpenFileCommand}" HotKey="Ctrl+O" />
-        <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
-        <Separator />
-        <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Edit">
-        <MenuItem Header="Undo" Command="{Binding UndoDocumentCommand}" HotKey="Ctrl+Z" />
-        <MenuItem Header="Redo" Command="{Binding RedoDocumentCommand}" HotKey="Ctrl+Shift+Z" />
-        <MenuItem Header="Preferences" Command="{Binding OpenPreferencesCommand}" />
-      </MenuItem>
-      <MenuItem Header="_View"><MenuItem Header="Reset dock layouts" Command="{Binding ResetLayoutCommand}" /></MenuItem>
-      <MenuItem Header="_Addon">
-        <MenuItem Header="Refresh Addon List" Command="{Binding RefreshAddonsCommand}" />
-        <MenuItem Header="Open Content Folder" Command="{Binding OpenContentFolderCommand}" />
-        <MenuItem Header="Open Game Folder" Command="{Binding OpenGameFolderCommand}" />
-      </MenuItem>
-      <MenuItem Header="_CS2">
-        <MenuItem Header="Launch Workshop Tools" Command="{Binding LaunchCs2Command}" />
-        <MenuItem Header="Restart Workshop Tools" Command="{Binding RestartCs2Command}" />
-        <MenuItem Header="Kill Workshop Tools" Command="{Binding KillCs2Command}" />
-        <Separator />
-        <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Editors">
-        <MenuItem Header="Loading Screen Editor" Command="{Binding OpenLoadingEditorCommand}" />
-        <MenuItem Header="SoundEvent Editor" Command="{Binding OpenSoundEventEditorCommand}" />
-        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
-        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Utilities">
-        <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
-        <MenuItem Header="Workshop Manager" Command="{Binding OpenWorkshopManagerCommand}" />
-        <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
-        <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
-        <Separator />
-        <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
-        <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Help">
-        <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
-        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.gg/hammer5tools" />
-        <MenuItem Header="GitHub Repository" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
-        <Separator />
-        <MenuItem Header="_About Hammer 5 Tools" />
-      </MenuItem>
+              <MenuItem Header="Edit launch parameters" Command="{Binding OpenPreferencesCommand}" />
+              <Separator />
+              <MenuItem Header="Create new addon" Command="{Binding CreateAddonCommand}" />
+              <MenuItem Header="Remove addon" Command="{Binding RemoveAddonCommand}" />
+              <Separator />
+              <MenuItem Header="Export addon" Command="{Binding ExportAddonCommand}" />
+              <MenuItem Header="Import addon" Command="{Binding ImportAddonCommand}" />
+              <Separator />
+              <MenuItem Header="Open content folder" Command="{Binding OpenContentFolderCommand}" />
+              <MenuItem Header="Open game folder" Command="{Binding OpenGameFolderCommand}" />
+              <MenuItem Header="Refresh addon list" Command="{Binding RefreshAddonsCommand}" />
                 </MenuFlyout>
           </Button.Flyout>
         </Button>

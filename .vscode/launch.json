@@ -5,7 +5,7 @@
             "name": "main",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/Hammer5ToolsGUI/gui/main.py",
+            "program": "${workspaceFolder}/legacy/Hammer5ToolsGUI/gui/main.py",
             "python": "${workspaceFolder}/.venv/Scripts/python.exe",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

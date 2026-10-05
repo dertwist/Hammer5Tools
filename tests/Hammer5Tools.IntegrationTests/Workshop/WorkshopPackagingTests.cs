@@ -1,13 +1,45 @@
 namespace Hammer5Tools.IntegrationTests.Workshop;
 
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
+using Hammer5Tools.Core.IO.Workshop;
 using Hammer5Tools.Core.Workshop;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
-using Hammer5Tools.Infrastructure.Workshop;
-using ValvePak;
+using SteamDatabase.ValvePak;
 
 public class WorkshopPackagingTests
 {
+    [Test]
+    public async Task ChunkedPackagesPreservePayloadsAcrossArchiveBoundaries()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"h5t-chunks-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var path = Path.Combine(directory, "sample_dir.vpk");
+            using (var writer = new CS2WorkshopManager.ChunkedPackage { WriteChunkSize = 4 })
+            {
+                writer.AddFile("materials/first.vmat_c", [1, 2, 3]);
+                writer.AddFile("materials/second.vmat_c", [4, 5, 6]);
+                writer.Write(path);
+            }
+            using var package = new Package();
+            package.Read(path);
+            var first = package.FindEntry("materials/first.vmat_c")!;
+            var second = package.FindEntry("materials/second.vmat_c")!;
+            package.ReadEntry(first, out var firstData, validateCrc: true);
+            package.ReadEntry(second, out var secondData, validateCrc: true);
+            await Assert.That(firstData.SequenceEqual(new byte[] { 1, 2, 3 })).IsTrue();
+            await Assert.That(secondData.SequenceEqual(new byte[] { 4, 5, 6 })).IsTrue();
+            await Assert.That(first.ArchiveIndex).IsEqualTo((ushort)0);
+            await Assert.That(second.ArchiveIndex).IsEqualTo((ushort)1);
+            package.VerifyHashes();
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     [Test]
     public async Task WritesReadableVpkUsingUpstreamPackingRules()
     {

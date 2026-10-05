@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <ManagePackageVersionsCentrally Condition="'$(Hammer5ToolsLegacyProject)' != 'true'">true</ManagePackageVersionsCentrally>
+    <ManagePackageVersionsCentrally Condition="'$(Hammer5ToolsLegacyProject)' == 'true'">false</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
@@ -27,9 +28,11 @@
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="12.1.0.6" />
     <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
 
+    <PackageVersion Include="SkiaSharp" Version="4.151.1" />
+
     <!-- Source 2 & Valve formats -->
     <PackageVersion Include="ValveResourceFormat" Version="20.0.6980" />
-    <PackageVersion Include="ValvePak" Version="6.0.0.182" />
+    <PackageVersion Include="ValvePak" Version="5.0.2.177" />
     <PackageVersion Include="ValveKeyValue" Version="0.71.0.528" />
     <PackageVersion Include="KeyValues2" Version="1.0.0" />
     <PackageVersion Include="Sledge.Formats.Map" Version="1.2.9" />

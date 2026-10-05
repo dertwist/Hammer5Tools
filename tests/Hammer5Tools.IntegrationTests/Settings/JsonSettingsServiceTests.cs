@@ -1,8 +1,8 @@
 namespace Hammer5Tools.IntegrationTests.Settings;
 
 using System.IO;
+using Hammer5Tools.Core.IO.Settings;
 using Hammer5Tools.Core.Settings;
-using Hammer5Tools.Infrastructure.Settings;
 
 public class JsonSettingsServiceTests
 {

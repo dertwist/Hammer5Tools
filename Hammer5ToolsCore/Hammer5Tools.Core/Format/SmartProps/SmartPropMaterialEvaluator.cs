@@ -213,7 +213,7 @@ internal static class SmartPropMaterialEvaluator
     private sealed record MaterialState(
         Vector4 Tint,
         IReadOnlyList<EvaluatedSmartPropMaterialTint> MaterialTints,
-        IReadOnlyList<EvaluatedSmartPropMaterialReplacement> MaterialOverrides)
+        List<EvaluatedSmartPropMaterialReplacement> MaterialOverrides)
     {
         public static readonly MaterialState Empty = new(Vector4.One, [], []);
 

@@ -1,10 +1,10 @@
 namespace Hammer5Tools.IntegrationTests.Compiler;
 
 using System.IO;
-using Hammer5Tools.Infrastructure.Addons;
-using Hammer5Tools.Infrastructure.Compiler;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
+using Hammer5Tools.Core.IO.Addons;
+using Hammer5Tools.Core.IO.Compiler;
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 
 public class ResourceCompilerTests
 {
@@ -17,8 +17,8 @@ public class ResourceCompilerTests
         try
         {
             var settings = new JsonSettingsService(settingsFile);
-            var locator = new Cs2Locator(settings);
-            var addonService = new AddonService(locator, settings);
+            var locator = new Cs2Locator(settings, customSteamPath: tempDir);
+            using var addonService = new AddonService(locator, settings);
             var compiler = new ResourceCompiler(locator, addonService);
 
             var argsNoAddon = compiler.BuildArguments("-i \"file.vmat\"");
@@ -45,8 +45,8 @@ public class ResourceCompilerTests
         try
         {
             var settings = new JsonSettingsService(settingsFile);
-            var locator = new Cs2Locator(settings);
-            var addonService = new AddonService(locator, settings);
+            var locator = new Cs2Locator(settings, customSteamPath: tempDir);
+            using var addonService = new AddonService(locator, settings);
             var compiler = new ResourceCompiler(locator, addonService);
 
             await Assert.That(compiler.IsAvailable).IsFalse();
@@ -134,8 +134,8 @@ public class ResourceCompilerTests
             await File.WriteAllTextAsync(meshFile, "mock fbx content");
 
             var settings = new JsonSettingsService(settingsFile);
-            var locator = new Cs2Locator(settings);
-            var addonService = new AddonService(locator, settings);
+            var locator = new Cs2Locator(settings, customSteamPath: tempDir);
+            using var addonService = new AddonService(locator, settings);
             var compiler = new ResourceCompiler(locator, addonService);
 
             // Execute (will fail compile step since RC is not installed in tempDir, but file generation occurs)

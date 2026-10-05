@@ -4,7 +4,7 @@ Wraps [CUE4Parse](https://github.com/FabianFG/CUE4Parse) and exposes it through
 the same `[UnmanagedCallersOnly]` native ABI as the rest of `Hammer5Tools.Core`
 (see `UnrealBridgeApi.cs`; the CUE4Parse-facing logic itself is
 `Format/Unreal/UnrealBridgeProgram.cs`). The Unreal Converter (Python side,
-`Hammer5ToolsGUI/gui/forms/unreal_porter/bridge_client.py`) calls it in-process
+`legacy/Hammer5ToolsGUI/gui/forms/unreal_porter/bridge_client.py`) calls it in-process
 through `core/native.py`/`bridge/core.py` — no subprocess, no
 separate `.NET` runtime invocation — to read Unreal Engine `.uasset` / `.umap`
 files directly. **No Unreal install required.**

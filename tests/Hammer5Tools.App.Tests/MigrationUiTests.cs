@@ -11,19 +11,67 @@ using Hammer5Tools.App.Features.Hotkeys;
 using Hammer5Tools.App.Features.LoadingScreens;
 using Hammer5Tools.App.Features.Preferences;
 using Hammer5Tools.App.Features.Shell;
+using Hammer5Tools.App.Features.SmartProps;
 using Hammer5Tools.App.Features.SoundEvents;
 using Hammer5Tools.App.Services;
 using Hammer5Tools.App.ViewModels;
+using Hammer5Tools.Core;
 using Hammer5Tools.Core.Addons;
 using Hammer5Tools.Core.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 using Hammer5Tools.Core.Settings;
-using Hammer5Tools.Infrastructure;
-using Hammer5Tools.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
 [NotInParallel]
 public class MigrationUiTests
 {
+    [Test]
+    public async Task SmartPropFilesOpenInTheShellAndTrackSaveUndoAndUnsavedEdits()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            var path = Path.Combine(fixture.Root, "sample.vsmart");
+            await File.WriteAllTextAsync(path, Core.CoreApi.SerializeSmartPropDocument(Core.CoreApi.CreateSmartPropDocument()));
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var defaults = shell.Documents.Count;
+            shell.OpenSmartPropEditorCommand.Execute(null);
+            shell.OpenSmartPropEditorCommand.Execute(null);
+            await Assert.That(shell.Documents.Count).IsEqualTo(defaults);
+            await Assert.That(shell.ActiveDocument is SmartPropEditorViewModel).IsTrue();
+            await Assert.That(shell.IsAssetExplorerVisible).IsFalse();
+            shell.OnOpenFileFromExplorer(path);
+            var document = (SmartPropEditorViewModel)shell.ActiveDocument!;
+            var view = document.View;
+            var window = new Window { Content = view, Width = 1600, Height = 900 };
+            window.Show();
+            await document.InitialLoadTask;
+            Dispatcher.UIThread.RunJobs();
+            await Assert.That(document.DocumentPath).IsEqualTo(path);
+            await Assert.That(document.IsDirty).IsFalse();
+            var version = view.FindControl<NumericUpDown>("ContentVersion")!;
+            version.Value = 7;
+            await Assert.That(document.IsDirty).IsTrue();
+            document.UndoCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            await Assert.That(document.IsDirty).IsFalse();
+            document.RedoCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            await Assert.That(document.IsDirty).IsTrue();
+            await Assert.That(await document.SaveAsync()).IsTrue();
+            await Assert.That(document.IsDirty).IsFalse();
+            await Assert.That(await File.ReadAllTextAsync(path)).Contains("m_nContentVersion = 7");
+            view.FindControl<TextBox>("SourceKv3")!.Text += " invalid";
+            Dispatcher.UIThread.RunJobs();
+            await Assert.That(document.IsDirty).IsTrue();
+            await Assert.That(await document.SaveAsync()).IsFalse();
+            shell.OnOpenFileFromExplorer(path);
+            await Assert.That(shell.ActiveDocument).IsEqualTo(document);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
     [Test]
     public async Task NumberSliderPreservesAuthoredValuesAndForwardsEdits()
     {
@@ -36,6 +84,18 @@ public class MigrationUiTests
         await Assert.That(control.Value).IsEqualTo(0.75);
         grid.Children.OfType<Slider>().Single().Value = 0.5;
         await Assert.That(control.Value).IsEqualTo(0.5);
+    }
+
+    [Test]
+    public async Task MainWindowEnforcesMinimumDimensions()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            var window = new MainWindow();
+            await Assert.That(window.MinWidth).IsEqualTo(800.0);
+            await Assert.That(window.MinHeight).IsEqualTo(500.0);
+            return true;
+        }, CancellationToken.None);
     }
 
     [Test]
@@ -284,28 +344,62 @@ public class MigrationUiTests
     }
 
     [Test]
-    public async Task WorkshopLauncherUsesTheBundleAndSupportsPathsWithSpaces()
+    public async Task WorkshopIsAnAvaloniaWindowInTheHostProcess()
     {
-        var root = Path.Combine(Path.GetTempPath(), $"h5t workshop {Guid.NewGuid():N}");
-        try
+        await Assert.That(typeof(GUI.MainWindow).IsSubclassOf(typeof(Avalonia.Controls.Window))).IsTrue();
+    }
+
+    [Test]
+    public async Task IntegratedSmartPropRetainsItsScopedPropertyStyles()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
         {
-            Directory.CreateDirectory(Path.Combine(root, "WorkshopManager"));
-            await Assert.That(() => WorkshopManagerLaunch.CreateStartInfo(root)).Throws<FileNotFoundException>();
-            var assembly = Path.Combine(root, "WorkshopManager", "CS2WorkshopManager-GUI.dll");
-            await File.WriteAllTextAsync(assembly, string.Empty);
-            var managed = WorkshopManagerLaunch.CreateStartInfo(root);
-            await Assert.That(managed.FileName).IsEqualTo("dotnet");
-            await Assert.That(managed.ArgumentList.Single()).IsEqualTo(assembly);
-            var executable = Path.Combine(root, "WorkshopManager", OperatingSystem.IsWindows() ? "CS2WorkshopManager-GUI.exe" : "CS2WorkshopManager-GUI");
-            await File.WriteAllTextAsync(executable, string.Empty);
-            var native = WorkshopManagerLaunch.CreateStartInfo(root);
-            await Assert.That(native.FileName).IsEqualTo(executable);
-            await Assert.That(native.WorkingDirectory).IsEqualTo(Path.GetDirectoryName(executable));
-        }
-        finally
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenSmartPropEditor();
+            var editor = shell.Documents.OfType<SmartPropEditorViewModel>().Single().View;
+            var window = new Hammer5Tools.App.MainWindow(shell);
+            window.Show();
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            await editor.InitialLoadTask;
+            editor.FindControl<StackPanel>("Fields")!.Children.Add(new SmartPropPropertyRow("m_bEnabled", System.Text.Json.Nodes.JsonValue.Create(true), "Bool", [], []));
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var property = editor.GetVisualDescendants().OfType<TextBlock>().First(control => control.Classes.Contains("propertyName") && control.Classes.Contains("Bool"));
+            await Assert.That(((Avalonia.Media.ISolidColorBrush)property.Foreground!).Color.ToString()).IsEqualTo("#ffffbdbe");
+            var button = editor.FindControl<Button>("HierarchyAdd")!;
+            await Assert.That(button.FontSize).IsEqualTo(12);
+            await Assert.That(button.MinHeight).IsEqualTo(22);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task ApplicationMenusAreSeparateFromAddonActions()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
         {
-            Directory.Delete(root, recursive: true);
-        }
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var window = new Hammer5Tools.App.MainWindow(shell);
+            var menu = window.FindControl<Menu>("ApplicationMenu")!;
+            await Assert.That(menu.Items.OfType<MenuItem>().Select(item => item.Header).Contains("_Editors")).IsTrue();
+            window.Show();
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var addonButton = window.FindControl<Button>("AddonActionsButton");
+            await Assert.That(addonButton).IsNotNull();
+            await Assert.That(addonButton!.Flyout).IsNotNull();
+            var flyout = (MenuFlyout)addonButton.Flyout!;
+            var actions = flyout.Items.OfType<MenuItem>().Select(item => item.Header).ToArray();
+            await Assert.That(actions.Contains("Export addon")).IsTrue();
+            await Assert.That(actions.Contains("Remove addon")).IsTrue();
+            await Assert.That(actions.Contains("_File")).IsFalse();
+            window.Close();
+            return true;
+        }, CancellationToken.None);
     }
 
     [Test]
@@ -394,7 +488,7 @@ public class MigrationUiTests
 
     private sealed class Fixture : IDisposable
     {
-        private readonly string Root = Path.Combine(Path.GetTempPath(), $"h5t-ui-{Guid.NewGuid():N}");
+        public string Root { get; } = Path.Combine(Path.GetTempPath(), $"h5t-ui-{Guid.NewGuid():N}");
         public JsonSettingsService Settings { get; }
         public TestDialogs Dialogs { get; } = new();
         public ServiceProvider Services { get; }
@@ -413,7 +507,7 @@ public class MigrationUiTests
 
             var services = new ServiceCollection();
             services.AddLogging();
-            services.AddInfrastructure();
+            services.AddHammer5ToolsCore();
             services.AddSingleton<ISettingsService>(Settings);
             services.AddSingleton<IDialogService>(Dialogs);
             services.AddTransient<ShellViewModel>();

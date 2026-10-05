@@ -1,8 +1,8 @@
 namespace Hammer5Tools.IntegrationTests.MapBuilder;
 
+using Hammer5Tools.Core;
+using Hammer5Tools.Core.IO.Settings;
 using Hammer5Tools.Core.MapBuilder;
-using Hammer5Tools.Infrastructure;
-using Hammer5Tools.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
 public class MapBuilderServiceTests
@@ -29,7 +29,7 @@ public class MapBuilderServiceTests
             settings.Update(value => value.Cs2PathOverride = root);
             var registrations = new ServiceCollection();
             registrations.AddLogging();
-            registrations.AddInfrastructure();
+            registrations.AddHammer5ToolsCore();
             registrations.AddSingleton<Core.Settings.ISettingsService>(settings);
             using var services = registrations.BuildServiceProvider();
             var builder = services.GetRequiredService<IMapBuilderService>();

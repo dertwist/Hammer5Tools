@@ -10,9 +10,10 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Hammer5Tools.IntegrationTests" />
     <PackageReference Include="StbImageSharp" Version="2.30.16" />
     <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
-    <PackageReference Include="ValvePak" Version="6.0.0.182" />
+    <PackageReference Include="ValvePak" Version="5.0.2.177" />
     <PackageReference Include="ValveResourceFormat" Version="20.0.6980" />
   </ItemGroup>
   <ItemGroup>

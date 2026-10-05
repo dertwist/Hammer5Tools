@@ -150,21 +150,8 @@ public sealed class ValveMapSceneReader
     /// A prefab path is relative to the addon's content root, which is not handed to the
     /// reader � so walk up from the referencing map until the relative path resolves.
     /// </summary>
-    internal static string? ResolveContentRelative(string mapPath, string relativePath)
-    {
-        var normalized = relativePath.Replace('\\', '/').TrimStart('/');
-        var directory = Path.GetDirectoryName(Path.GetFullPath(mapPath));
-        while (directory is not null)
-        {
-            var candidate = Path.Combine(directory, normalized);
-            if (File.Exists(candidate))
-            {
-                return Path.GetFullPath(candidate);
-            }
-            directory = Path.GetDirectoryName(directory);
-        }
-        return null;
-    }
+    internal static string? ResolveContentRelative(string mapPath, string relativePath) =>
+        IO.ContentPathResolver.Resolve(mapPath, relativePath);
 
     private void AddEntity(Element node, Matrix4x4 transform)
     {

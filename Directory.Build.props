@@ -38,8 +38,18 @@
     <NoWarn>$(NoWarn);CA2000</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <Hammer5ToolsLegacyProject Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Hammer5ToolsCore')) Or $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Hammer5Tools.SmartProp.Tests'))">true</Hammer5ToolsLegacyProject>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Hammer5ToolsLegacyProject)' == 'true'">
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisMode>Default</AnalysisMode>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
   <!-- Explicit global usings -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(Hammer5ToolsLegacyProject)' != 'true'">
     <Using Include="System" />
     <Using Include="System.Linq" />
     <Using Include="System.Numerics" />

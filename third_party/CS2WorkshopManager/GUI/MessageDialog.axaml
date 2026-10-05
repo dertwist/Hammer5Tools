@@ -7,6 +7,13 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource AppBrush}">
+    <Window.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+          <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+        </ResourceDictionary.MergedDictionaries>
+      </ResourceDictionary>
+    </Window.Resources>
     <Panel>
         <!-- the main window's gradient in the colour of the news, which the window's accent sets -->
         <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="105%,-1%" />

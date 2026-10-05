@@ -17,6 +17,8 @@ public partial class MainWindow : Window, IDisposable
     public MainWindow()
     {
         InitializeComponent();
+        MinWidth = 800;
+        MinHeight = 500;
         Closing += OnClosing;
     }
 
@@ -27,8 +29,8 @@ public partial class MainWindow : Window, IDisposable
         if (settings is not null)
         {
             var saved = settings.Settings.WindowState;
-            Width = Math.Max(800, saved.Width);
-            Height = Math.Max(500, saved.Height);
+            Width = Math.Max(MinWidth, saved.Width);
+            Height = Math.Max(MinHeight, saved.Height);
             if (saved.X is { } x && saved.Y is { } y)
             {
                 var position = new PixelPoint((int)x, (int)y);
@@ -103,8 +105,8 @@ public partial class MainWindow : Window, IDisposable
         {
             if (WindowState == WindowState.Normal)
             {
-                value.WindowState.Width = Width;
-                value.WindowState.Height = Height;
+                value.WindowState.Width = Math.Max(MinWidth, Width);
+                value.WindowState.Height = Math.Max(MinHeight, Height);
                 value.WindowState.X = Position.X;
                 value.WindowState.Y = Position.Y;
             }

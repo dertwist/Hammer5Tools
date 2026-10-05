@@ -1,6 +1,6 @@
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
@@ -45,6 +45,11 @@ public partial class App : Application
     /// </summary>
     public static void ApplyAccent(string? accent)
     {
+        if (Current is not App)
+        {
+            return;
+        }
+
         if (accent != null && Color.TryParse(accent, out var color))
         {
             Current!.Resources["AccentColor"] = color;
@@ -72,6 +77,11 @@ public partial class App : Application
     /// <summary>Gives every window the theme set, or the system's.</summary>
     public static void ApplyTheme(AppTheme theme)
     {
+        if (Current is not App)
+        {
+            return;
+        }
+
         Current!.RequestedThemeVariant = theme switch
         {
             AppTheme.Light => ThemeVariant.Light,

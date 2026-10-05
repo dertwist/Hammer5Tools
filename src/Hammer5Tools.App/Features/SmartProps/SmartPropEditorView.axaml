@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:Hammer5Tools.App.Features.SmartProps" x:Class="Hammer5Tools.App.Features.SmartProps.SmartPropEditorView" x:CompileBindings="False" Classes="smartPropEditor">
+  <UserControl.Styles><StyleInclude Source="avares://Hammer5Tools.App/Styles/SmartPropEditor.axaml" /></UserControl.Styles>
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="File"><MenuItem Header="New" Click="NewClicked" /><MenuItem Header="Open…" Click="OpenClicked" /><MenuItem x:Name="SaveButton" Header="Save" Click="SaveClicked" /><MenuItem Header="Save As…" Click="SaveAsClicked" /><Separator /><MenuItem Header="Load cargo van" Click="DefaultResourceClicked" /><MenuItem Header="Example" Click="ExampleClicked" /></MenuItem>
+      <MenuItem Header="Edit"><MenuItem x:Name="UndoButton" Header="Undo" Click="UndoClicked" /><MenuItem x:Name="RedoButton" Header="Redo" Click="RedoClicked" /><Separator /><MenuItem Header="Cut" Tag="cut" Click="HierarchyCommandClicked" /><MenuItem Header="Copy" Tag="copy" Click="HierarchyCommandClicked" /><MenuItem Header="Paste" Tag="paste" Click="HierarchyCommandClicked" /><MenuItem Header="Paste with replacement…" Tag="paste-replace" Click="HierarchyCommandClicked" /><MenuItem Header="Group selected" Tag="group" Click="HierarchyCommandClicked" /></MenuItem>
+      <MenuItem Header="Element"><MenuItem Header="Add group" Click="AddGroupClicked" /><MenuItem Header="Add model" Click="AddModelClicked" /><MenuItem Header="Duplicate" Click="DuplicateClicked" /><MenuItem Header="Delete" Click="DeleteClicked" /><MenuItem Header="Move up" Click="MoveUpClicked" /><MenuItem Header="Move down" Click="MoveDownClicked" /></MenuItem>
+      <MenuItem Header="View"><MenuItem Header="Frame all" Click="FrameClicked" /></MenuItem>
+    </Menu>
+    <Border DockPanel.Dock="Bottom" Classes="toolbar" Padding="4,2"><TextBlock x:Name="Status" Text="Ready" FontSize="11" TextTrimming="CharacterEllipsis" /></Border>
+    <Grid Margin="2,0" ColumnDefinitions="1.65*,4,3*,4,3.05*,4,2.15*">
+      <Border Classes="panel">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Hierarchy" Classes="heading" />
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="*,24" Margin="2,0,2,4"><Button x:Name="HierarchyAdd" Content="✚  Add" HorizontalAlignment="Stretch" /><Button x:Name="HierarchyFavorites" Grid.Column="1" Content="★" Classes="icon" ToolTip.Tip="Favorite elements" /></Grid>
+          <TextBox x:Name="HierarchyFilter" DockPanel.Dock="Top" PlaceholderText="Filter…" TextChanged="HierarchyFilterChanged" Margin="2,2,2,4" />
+          <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,*" Height="24"><TextBlock Text="Content Version" VerticalAlignment="Center" Margin="4,0" FontSize="11" /><NumericUpDown x:Name="ContentVersion" Grid.Column="1" Minimum="0" Increment="1" FormatString="0" ValueChanged="ContentVersionChanged" /></Grid>
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="*,65,32" Classes="treeHeader"><TextBlock Text="Label" Margin="4,3" /><TextBlock Grid.Column="1" Text="Class" Margin="2,3" /><TextBlock Grid.Column="2" Text="ID" /></Grid>
+          <local:SmartPropHierarchy x:Name="Hierarchy" SelectionChanged="HierarchySelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+            <local:SmartPropHierarchy.Styles><Style Selector="TreeViewItem"><Setter Property="IsExpanded" Value="{Binding Expanded, Mode=TwoWay}" /></Style></local:SmartPropHierarchy.Styles>
+            <local:SmartPropHierarchy.ItemTemplate><TreeDataTemplate DataType="local:HierarchyRow" ItemsSource="{Binding Children}">
+              <Grid ColumnDefinitions="*,65,32" MinWidth="140" Height="22"><local:HierarchyLabel /><TextBlock Grid.Column="1" Text="{Binding Subtitle}" Classes="muted" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" /><TextBlock Grid.Column="2" Text="{Binding ElementId}" Classes="muted" FontSize="11" VerticalAlignment="Center" /></Grid>
+            </TreeDataTemplate></local:SmartPropHierarchy.ItemTemplate>
+          </local:SmartPropHierarchy>
+        </DockPanel>
+      </Border>
+      <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+      <Border Grid.Column="2" Classes="panel">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Property Editor" Classes="heading" />
+          <TabControl x:Name="PropertyTabs" TabStripPlacement="Bottom">
+            <TabItem Header="Property Editor"><DockPanel>
+              <Border DockPanel.Dock="Top" Classes="componentList"><StackPanel x:Name="Components" Spacing="1" /></Border>
+              <Border DockPanel.Dock="Bottom" Classes="description"><DockPanel><TextBlock DockPanel.Dock="Top" Text="▤   Description" Classes="heading muted" /><StackPanel Margin="8,6"><TextBlock x:Name="DescriptionTitle" Classes="propertyName" /><TextBlock x:Name="DescriptionText" TextWrapping="Wrap" Classes="muted" FontSize="11" Margin="0,4" /></StackPanel></DockPanel></Border>
+              <ScrollViewer><StackPanel x:Name="Fields" Spacing="1" /></ScrollViewer>
+            </DockPanel></TabItem>
+            <TabItem Header="Manual Editor"><DockPanel Margin="2"><Button DockPanel.Dock="Bottom" Content="Apply source" Click="ApplySourceClicked" HorizontalAlignment="Right" /><TextBox x:Name="SourceKv3" Classes="code" /></DockPanel></TabItem>
+          </TabControl>
+        </DockPanel>
+      </Border>
+      <GridSplitter Grid.Column="3" ResizeDirection="Columns" />
+      <Border Grid.Column="4" Classes="panel">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="3D Viewport" Classes="heading" />
+          <Border DockPanel.Dock="Top" Classes="toolbar"><WrapPanel Margin="2,0">
+            <TextBlock Text="View:" VerticalAlignment="Center" FontSize="11" Margin="4,0" /><ComboBox x:Name="ShadingMode" Width="82" SelectedIndex="0" SelectionChanged="ShadingModeChanged"><ComboBoxItem Content="Textured" /><ComboBoxItem Content="Solid" /><ComboBoxItem Content="Wireframe" /></ComboBox>
+            <CheckBox x:Name="ShowGrid" Content="Grid" IsChecked="True" IsCheckedChanged="ShowGridChanged" Margin="4,0" />
+            <TextBlock Text="Grid Step:" VerticalAlignment="Center" FontSize="11" Margin="4,0" /><ComboBox x:Name="GridStep" Width="48" SelectedIndex="3" SelectionChanged="GridStepChanged"><ComboBoxItem Content="1" /><ComboBoxItem Content="2" /><ComboBoxItem Content="4" /><ComboBoxItem Content="8" /><ComboBoxItem Content="16" /><ComboBoxItem Content="32" /><ComboBoxItem Content="64" /></ComboBox>
+          </WrapPanel></Border>
+          <Grid ToolTip.Tip="MMB orbit · Shift+MMB pan · RMB + WASD fly · F frame"><local:SmartPropViewport x:Name="Viewport" ClipToBounds="True" /><local:SmartPropGlViewport x:Name="GpuViewport" /><Border Classes="objectCount" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"><TextBlock x:Name="ObjectCount" Text="Objects: 0" FontSize="11" /></Border></Grid>
+        </DockPanel>
+      </Border>
+      <GridSplitter Grid.Column="5" ResizeDirection="Columns" />
+      <Grid Grid.Column="6" RowDefinitions="0.95*,4,*">
+        <Border Classes="panel"><DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Variables" Classes="heading" /><TextBox x:Name="VariableFilter" DockPanel.Dock="Top" PlaceholderText="Search…" TextChanged="VariableFilterChanged" Margin="2,0,2,2" />
+          <ScrollViewer><StackPanel x:Name="VariableFields" Spacing="1" /></ScrollViewer>
+        </DockPanel></Border>
+        <GridSplitter Grid.Row="1" ResizeDirection="Rows" />
+        <Border Grid.Row="2" Classes="panel"><DockPanel><TextBlock DockPanel.Dock="Top" Text="Choices" Classes="heading" /><TabControl TabStripPlacement="Bottom">
+          <TabItem Header="Choices"><DockPanel><Grid DockPanel.Dock="Top" ColumnDefinitions="*,*" Classes="treeHeader"><TextBlock Text="Label" Margin="4,3" /><TextBlock Grid.Column="1" Text="Value" Margin="4,3" /></Grid><StackPanel x:Name="ChoiceFields" Spacing="1" /></DockPanel></TabItem>
+          <TabItem Header="History"><ListBox x:Name="History" /></TabItem>
+        </TabControl></DockPanel></Border>
+      </Grid>
+    </Grid>
+  </DockPanel>
+</UserControl>

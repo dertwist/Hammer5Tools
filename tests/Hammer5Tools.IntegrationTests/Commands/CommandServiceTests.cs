@@ -1,9 +1,9 @@
 namespace Hammer5Tools.IntegrationTests.Commands;
 
 using System.IO;
-using Hammer5Tools.Infrastructure.Commands;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
+using Hammer5Tools.Core.IO.Commands;
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 
 public class CommandServiceTests
 {

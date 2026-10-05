@@ -2,9 +2,9 @@ namespace Hammer5Tools.IntegrationTests.Addons;
 
 using System.IO;
 using Hammer5Tools.Core.Cs2;
-using Hammer5Tools.Infrastructure.Addons;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
+using Hammer5Tools.Core.IO.Addons;
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 
 public class AddonServiceTests
 {

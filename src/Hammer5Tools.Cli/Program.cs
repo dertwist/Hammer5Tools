@@ -2,7 +2,6 @@ namespace Hammer5Tools.Cli;
 
 using Hammer5Tools.Cli.Commands;
 using Hammer5Tools.Core;
-using Hammer5Tools.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
@@ -14,7 +13,6 @@ public static class Program
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         services.AddHammer5ToolsCore();
-        services.AddInfrastructure();
 
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);

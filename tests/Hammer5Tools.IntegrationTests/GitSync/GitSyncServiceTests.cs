@@ -1,6 +1,6 @@
 namespace Hammer5Tools.IntegrationTests.GitSync;
 
-using Hammer5Tools.Infrastructure.GitSync;
+using Hammer5Tools.Core.IO.GitSync;
 using Microsoft.Extensions.Logging.Abstractions;
 
 public class GitSyncServiceTests

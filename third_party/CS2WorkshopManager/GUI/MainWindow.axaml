@@ -13,6 +13,10 @@
         Background="{DynamicResource AppBrush}"
         local:WindowAccent.Color="{DynamicResource AccentColor}">
     <Window.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+        </ResourceDictionary.MergedDictionaries>
         <!-- the visibility pills: a tint of the accent for public, of amber for unlisted and of the heading blue for friends, private stays the plain control tint -->
         <SolidColorBrush x:Key="PublicPillBrush" Color="{DynamicResource AccentColor}" Opacity="0.45" />
         <SolidColorBrush x:Key="UnlistedPillBrush" Color="{DynamicResource WarningAccentColor}" Opacity="0.35" />
@@ -53,6 +57,7 @@
                 </MenuItem.Icon>
             </MenuItem>
         </ContextMenu>
+          </ResourceDictionary>
     </Window.Resources>
 
     <Window.Styles>

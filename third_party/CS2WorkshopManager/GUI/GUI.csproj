@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RollForward>LatestMajor</RollForward>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <Description>Counter-Strike 2 Workshop manager</Description>
     <AssemblyName>CS2WorkshopManager-GUI</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
     <!-- one self contained exe with the native libraries unpacked on first run, like Source2Viewer -->
     <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
-    <PublishSingleFile Condition="'$(Configuration)' != 'Debug'">true</PublishSingleFile>
+    <PublishSingleFile>false</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <!-- CA2007: continuations must stay on the UI thread -->
@@ -17,6 +17,9 @@
     <!-- Avalonia renders with SkiaSharp, so its native library must stay in the output -->
     <UsesSkiaSharp>true</UsesSkiaSharp>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Program.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.2" />
     <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.2" />

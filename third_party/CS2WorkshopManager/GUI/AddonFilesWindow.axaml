@@ -9,8 +9,13 @@
         Background="{DynamicResource AppBrush}"
         local:WindowAccent.Color="{DynamicResource AccentColor}">
     <Window.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+        </ResourceDictionary.MergedDictionaries>
         <!-- tree rows are many, so they sit tight -->
         <x:Double x:Key="TreeViewItemMinHeight">24</x:Double>
+          </ResourceDictionary>
     </Window.Resources>
     <Window.Styles>
         <!-- what is expanded belongs to the node, so it survives the tree being shown again -->

@@ -1,0 +1,47 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+    generic_data_type = "CSmartPropRoot"
+    m_Variables = [
+        { _class = "CSmartPropVariable_Float" m_VariableName = "spacing" m_DefaultValue = 96.0 m_bExposeAsParameter = true }
+    ]
+    m_Choices = []
+    m_Children = [
+        {
+            _class = "CSmartPropElement_Group"
+            m_sLabel = "Barrel arrangement"
+            m_nElementID = 0
+            m_bEnabled = true
+            m_Modifiers = []
+            m_SelectionCriteria = []
+            m_Children = [
+                {
+                    _class = "CSmartPropElement_Model"
+                    m_sLabel = "Left barrel"
+                    m_nElementID = 1
+                    m_bEnabled = true
+                    m_sModelName = "models/props/de_dust/hr_dust/dust_barrel/dust_barrel.vmdl"
+                    m_Modifiers = [{ _class = "CSmartPropOperation_Translate" m_vPosition = { m_Components = [-96.0, 0.0, 0.0] } }]
+                    m_SelectionCriteria = []
+                },
+                {
+                    _class = "CSmartPropElement_Model"
+                    m_sLabel = "Center barrel"
+                    m_nElementID = 2
+                    m_bEnabled = true
+                    m_sModelName = "models/props/de_dust/hr_dust/dust_barrel/dust_barrel.vmdl"
+                    m_Modifiers = []
+                    m_SelectionCriteria = []
+                },
+                {
+                    _class = "CSmartPropElement_Model"
+                    m_sLabel = "Right barrel"
+                    m_nElementID = 3
+                    m_bEnabled = true
+                    m_sModelName = "models/props/de_dust/hr_dust/dust_barrel/dust_barrel.vmdl"
+                    m_Modifiers = [{ _class = "CSmartPropOperation_Translate" m_vPosition = { m_Components = [96.0, 0.0, 0.0] } }]
+                    m_SelectionCriteria = []
+                }
+            ]
+        }
+    ]
+}

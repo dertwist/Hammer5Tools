@@ -34,9 +34,12 @@ public static class Cs2InstallLocator
 
             foreach (var library in EnumerateLibraries(steamPath))
             {
-                var install = new Cs2Install(Path.Combine(library, "steamapps", "common", Cs2FolderName));
-                if (install.IsValid(out _))
-                    return install.InstallRoot;
+                var installRoot = Path.Combine(library, "steamapps", "common", Cs2FolderName);
+                if (File.Exists(Path.Combine(installRoot, "csgo", "gameinfo.txt"))
+                    && File.Exists(Path.Combine(installRoot, "game", "csgo", "gameinfo.gi")))
+                {
+                    return installRoot;
+                }
             }
         }
         catch

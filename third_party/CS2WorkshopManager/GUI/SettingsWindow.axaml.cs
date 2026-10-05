@@ -22,6 +22,14 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        if (Application.Current is not App)
+        {
+            ThemeBox.IsEnabled = false;
+            AccentPicker.IsEnabled = false;
+            AccentReset.IsEnabled = false;
+            ToolTip.SetTip(ThemeBox, "Appearance follows Hammer 5 Tools preferences.");
+            ToolTip.SetTip(AccentPicker, "Appearance follows Hammer 5 Tools preferences.");
+        }
 
         // the path from the user's profile folder on, which is where it differs between users and systems
         FilePath.Text = $"Settings file: {Path.GetRelativePath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), AppSettings.FilePath)}";
@@ -67,7 +75,7 @@ public partial class SettingsWindow : Window
     {
         showingAccent = true;
         AccentPicker.Color = settings.Accent != null && Color.TryParse(settings.Accent, out var custom) ? custom : App.ThemeAccent(Application.Current!.ActualThemeVariant);
-        AccentReset.IsEnabled = settings.Accent != null;
+        AccentReset.IsEnabled = Application.Current is App && settings.Accent != null;
         showingAccent = false;
     }
 

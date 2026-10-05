@@ -46,7 +46,7 @@
       </TabItem>
       <TabItem Header="SmartProp Editor">
         <StackPanel Spacing="8" Margin="10">
-          <TextBlock Text="SmartProp is deferred in the C# migration. These preferences are retained for its port." TextWrapping="Wrap" />
+          <TextBlock Text="SmartProp Editor" TextWrapping="Wrap" />
           <TextBlock Text="Interface" Classes="section" />
           <CheckBox Content="Display ID with variable class" IsChecked="{Binding SmartPropDisplayIds}" />
           <CheckBox Content="Hide experimental properties and elements" IsChecked="{Binding SmartPropHideExperimental}" />

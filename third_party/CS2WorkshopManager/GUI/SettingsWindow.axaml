@@ -8,6 +8,13 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource AppBrush}"
         local:WindowAccent.Color="{DynamicResource AccentColor}">
+    <Window.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+        </ResourceDictionary.MergedDictionaries>
+          </ResourceDictionary>
+    </Window.Resources>
     <Panel>
         <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="90%,0%" />
 

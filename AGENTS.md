@@ -3,18 +3,18 @@
 Hammer 5 Tools is a Counter-Strike 2 desktop toolkit.
 
 ```text
-Optional C++ launcher -> Python/PySide6 GUI -> Hammer5Tools Core (.NET) -> external libraries
+Managed Avalonia GUI -> Hammer5Tools Core (.NET) -> external libraries
+Archived Python/PySide6 GUI -> NativeAOT Core
 ```
 
 ## C# migration workspace
 
-The replacement application under `src/` uses `Core -> Infrastructure -> App/Cli` dependencies:
+The replacement application under `src/` uses `App/Cli -> Core` dependencies:
 
-- `src/Hammer5Tools.Core/`: typed domain documents, contracts, settings and undo; no Avalonia dependencies.
-- `src/Hammer5Tools.Infrastructure/`: filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the upstream NuGet package; do not duplicate its packing rules.
-- `src/Hammer5Tools.App/`: Avalonia views, presentation state and editor lifecycle. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources.
+- `src/Hammer5Tools.Core/`: typed domain documents, contracts, settings, undo and shared services; no Avalonia dependencies. `IO/` owns filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the pinned upstream library; do not duplicate its packing rules. `AddHammer5ToolsCore` registers shared services for App and Cli.
+- `src/Hammer5Tools.App/`: Avalonia views, presentation state, editor lifecycle, update checks and single-instance startup. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources. The managed executable starts directly; the C++ launcher has been removed.
 - `src/Hammer5Tools.Cli/`: command-line presentation.
-- `third_party/CS2WorkshopManager/`: pinned, unmodified upstream GUI, library and Steamworks sources with licenses and original build settings. The App builds and publishes the full upstream GUI into `WorkshopManager/` and its Tools command opens that executable. It owns its UI, settings and Steam lifecycle in a separate process; do not port its dialogs or apply Hammer5Tools styling to it. Preserve its upstream source formatting and license notices when updating; run `dotnet format --exclude third_party` for owned code.
+- `third_party/CS2WorkshopManager/`: pinned upstream GUI, library and Steamworks sources with licenses and original build settings. Core references the library; App hosts the upstream GUI in-process as an owned utility window. Preserve its upstream source formatting and license notices when updating; run `dotnet format --exclude third_party` for owned code.
 - `tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
 
 Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
@@ -22,7 +22,7 @@ Python views remain the layout and lifecycle baseline. Preserve panel placement 
 `IResourceCompiler` retains its existing asset compile overload and adds an overload for map-build arguments, with cancellation terminating the process tree. `ILoadingScreenService` includes addon-description loading and SVG map-icon application; parsing and IO are kept out of views. The legacy ownership rules below apply to the existing Python/NativeAOT application, not the replacement managed application. Neither application is removed until migration parity is verified.
 
 The managed Map Builder uses Core `MapBuildOptions` for compiler flags and
-`MapBuildConfiguration` for saved presets. Infrastructure owns the serial build
+`MapBuildConfiguration` for saved presets. Core `IO/MapBuilder/` owns the serial build
 queue, confined VMAP resolution, live compiler output, retained build logs and
 system usage counters. `MapBuildJob.OutputLogs` is a thread-safe snapshot;
 workers append through `AppendOutput`. The legacy enum build overload remains
@@ -45,30 +45,30 @@ before moving behavior that has no coverage.
 
 ## Ownership Boundaries
 
-- `Hammer5ToolsLauncher/`: startup, single-instance IPC, crash reporting, and
-  update startup only.
-- `Hammer5ToolsGUI/gui/`: PySide6 views, input, presentation state, and OpenGL
+- `src/Hammer5Tools.App/Services/`: managed application startup, single-instance
+  ownership and update checks; shared filesystem/process services stay in Core.
+- `legacy/Hammer5ToolsGUI/gui/`: PySide6 views, input, presentation state, and OpenGL
   drawing only.
-- `Hammer5ToolsGUI/core/`: the pure-Python NativeAOT `ctypes` bridge.
-- `Hammer5ToolsGUI/automation/`: MCP/CLI transport, schemas, request-time settings,
+- `legacy/Hammer5ToolsGUI/core/`: the pure-Python NativeAOT `ctypes` bridge.
+- `legacy/Hammer5ToolsGUI/automation/`: MCP/CLI transport, schemas, request-time settings,
   and response shaping. Compilation, source-asset mutation, map authoring,
   model bounds, and texture-channel preparation run in Core through CoreBridge.
-- `Hammer5ToolsGUI/keyvalues3/`: the standalone KV3 library.
+- `legacy/Hammer5ToolsGUI/keyvalues3/`: the standalone KV3 library.
 - `Hammer5ToolsCore/`: all domain logic. This includes Source 2 parsing,
   VPK/resource access, SmartProp evaluation, VMAP work, conversions, Source
   porting, and Unreal extraction.
-- `Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
-- `Hammer5ToolsGUI/gui/tools/`: external tools and scripts shipped with the app.
+- `legacy/Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
+- `legacy/Hammer5ToolsGUI/gui/tools/`: external tools and scripts shipped with the app.
 - `../Source2Houdini/`: separate Houdini 21 package and SOP presentation adapters.
   Source 2 interpretation remains in Core, accessed through its NativeAOT C ABI.
 - `makefile.py`: build and packaging entry point.
-- `version.json` and `Hammer5ToolsGUI/gui/common.py`: application version.
+- `version.json` and `legacy/Hammer5ToolsGUI/gui/common.py`: application version.
 
 The GUI must use `CoreBridge` for domain work. Do not duplicate Core logic in
 Python. Do not expose .NET namespaces to editors. Shipped code must not use
 pythonnet, CLR reflection, or a subprocess CLI.
 
-The Core must remain independent of the GUI and launcher. Keep it as one C#
+The Core must remain independent of the GUI. Keep it as one C#
 project and publish it as one NativeAOT library. Put environment access in
 `IO/`, format interpretation and conversion in `Format/`, public contracts in
 `CoreApi.cs`, and unmanaged ABI methods in the root `*Api.cs` files.
@@ -99,7 +99,9 @@ The additive managed `CoreApi` SmartProp editor methods create, validate, parse,
 serialize, edit and save source documents, locate CS2, load source/compiled
 resources and evaluate previews with nested dependencies and textured geometry.
 Core owns the editor component templates and assigns fresh IDs when adding or
-pasting components. Editor paths are arrays of object keys and
+pasting components. Managed hierarchy requests perform atomic batch moves, copies,
+grouping, renames and clipboard insertion; file-reference imports resolve CS2
+content paths in Core IO. Editor paths are arrays of object keys and
 array indices. These methods do not change the existing NativeAOT ABI. The C#
 preview keeps undo snapshots and pending input as presentation state; it does not
 replace the shipped Python editor or its packaging.
@@ -161,7 +163,7 @@ replacement with retained backups; batches have no rollback.
 - Before renaming a class, search its old name in `*.py`, `*.ui`, `*.qss`,
   `*.qrc`, and `QSettings` keys. Update UI class entries, QSS type selectors,
   and resource paths. Never rename an existing `QSettings` key.
-- Put global styling in `Hammer5ToolsGUI/gui/styles/`. Do not add inline palettes.
+- Put global styling in `legacy/Hammer5ToolsGUI/gui/styles/`. Do not add inline palettes.
 - Read settings at the point of use. Do not cache settings in module globals.
 - Import setting accessors from `gui.settings.common`. Use `gui.settings.main`
   only for the Preferences dialog.
@@ -195,7 +197,7 @@ Run the checks affected by the change:
 - New TUnit Core suites: `dotnet run --project <test-project>`.
 - Legacy xUnit suites: `dotnet test <test-project>`.
 - Python or bridge changes: affected Python tests.
-- Python changes: `python -m pyflakes Hammer5ToolsGUI/gui` must report no
+- Python changes: `python -m pyflakes legacy/Hammer5ToolsGUI/gui` must report no
   `undefined name` errors.
 
 Before finishing, remove debug logging and commented-out code introduced by the
@@ -217,3 +219,23 @@ git config core.hooksPath .githooks
 
 The tracked hook checks local commit messages. CI checks commits pushed to
 GitHub.
+
+## Managed SmartProp editor
+
+`src/Hammer5Tools.App/Features/SmartProps/` owns the integrated Avalonia view,
+hierarchy interactions, presentation and OpenGL rendering. `tests/Hammer5Tools.SmartProp.Tests/`
+owns its headless and native GPU regression host. The editor participates in the shell's
+document tabs, dirty-file prompts and save/undo commands.
+
+`src/Hammer5Tools.Core/` compiles the existing SmartProp domain/resource sources
+from `Hammer5ToolsCore/Hammer5Tools.Core/` into its single managed Core assembly.
+Keep those sources shared with the NativeAOT bridge; do not duplicate evaluators,
+hierarchy mutations or source serialization in the App. `CoreApi.SmartProps.cs`
+is the shared public editor contract.
+
+The SmartProp-capable bundled ValveResourceFormat DLL requires ValvePak 5.
+Keep the managed Core and bundled Workshop library on that same
+version and retain the Workshop chunking/CRC/checksum regression tests when
+updating these dependencies.
+
+The Python application is archived in `legacy/`. Workshop UI is referenced as a library and hosted in-process by the managed application; do not launch a separate Workshop executable.

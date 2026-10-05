@@ -259,7 +259,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
 
     private GameFileLoader CreateLoader(string addonFolder, string packageFile)
     {
-        var loader = new GameFileLoader(null!, packageFile);
+        // Discover the mount without marking its VPK as an already-open CurrentPackage.
+        var loader = new GameFileLoader(null!, Path.Combine(Path.GetDirectoryName(packageFile)!, "h5t-preview.vmdl_c"));
         if (Directory.Exists(addonFolder))
             loader.AddDiskPathToSearch(addonFolder);
         var activeFolder = Path.Combine(gameDirectory, "csgo_addons", activeAddon);
@@ -623,7 +624,7 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         return new Vector2(value.X, value.Y);
     }
 
-    private IEnumerable<Mesh> ReadMeshes(GameFileLoader loader, Model model)
+    private static IEnumerable<Mesh> ReadMeshes(GameFileLoader loader, Model model)
     {
         foreach (var entry in model.GetEmbeddedMeshesAndLoD())
             if ((entry.Item4 & 1) != 0)

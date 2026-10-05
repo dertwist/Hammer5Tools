@@ -1,6 +1,6 @@
 namespace Hammer5Tools.IntegrationTests.NavMesh;
 
-using Hammer5Tools.Infrastructure.NavMesh;
+using Hammer5Tools.Core.IO.NavMesh;
 using Microsoft.Extensions.Logging.Abstractions;
 
 public class NavMeshRadarServiceTests

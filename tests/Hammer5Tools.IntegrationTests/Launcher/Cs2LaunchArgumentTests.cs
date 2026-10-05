@@ -1,9 +1,9 @@
 namespace Hammer5Tools.IntegrationTests.Launcher;
 
 using System.IO;
-using Hammer5Tools.Infrastructure.Addons;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
+using Hammer5Tools.Core.IO.Addons;
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 
 public class Cs2LaunchArgumentTests
 {
@@ -16,8 +16,8 @@ public class Cs2LaunchArgumentTests
         try
         {
             var settingsService = new JsonSettingsService(settingsFile);
-            var locator = new Cs2Locator(settingsService);
-            var addonService = new AddonService(locator, settingsService);
+            var locator = new Cs2Locator(settingsService, customSteamPath: tempDir);
+            using var addonService = new AddonService(locator, settingsService);
             var launcher = new Cs2Launcher(locator, addonService, settingsService);
 
             var args = launcher.BuildLaunchArguments();
@@ -53,8 +53,8 @@ public class Cs2LaunchArgumentTests
                 s.Editor.CustomLaunchArgs = "-vconsole";
             });
 
-            var locator = new Cs2Locator(settingsService);
-            var addonService = new AddonService(locator, settingsService);
+            var locator = new Cs2Locator(settingsService, customSteamPath: tempDir);
+            using var addonService = new AddonService(locator, settingsService);
             var launcher = new Cs2Launcher(locator, addonService, settingsService);
 
             var args = launcher.BuildLaunchArguments(additionalArgs: "-dev");

@@ -13,6 +13,7 @@ using Hammer5Tools.App.Features.Hotkeys;
 using Hammer5Tools.App.Features.LoadingScreens;
 using Hammer5Tools.App.Features.MapBuilder;
 using Hammer5Tools.App.Features.NavMesh;
+using Hammer5Tools.App.Features.SmartProps;
 using Hammer5Tools.App.Features.SoundEvents;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core.Addons;
@@ -20,13 +21,13 @@ using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Compiler;
 using Hammer5Tools.Core.Cs2;
 using Hammer5Tools.Core.GitSync;
+using Hammer5Tools.Core.IO.Cs2;
 using Hammer5Tools.Core.LoadingScreens;
 using Hammer5Tools.Core.MapBuilder;
 using Hammer5Tools.Core.NavMesh;
 using Hammer5Tools.Core.Settings;
 using Hammer5Tools.Core.SoundEvents;
 using Hammer5Tools.Core.Workshop;
-using Hammer5Tools.Infrastructure.Cs2;
 
 public class ShellViewModel : ViewModelBase, IDisposable
 {
@@ -72,7 +73,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
     }
 
     public bool IsAssetExplorerVisible => ActiveDocument is not
-        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel);
+        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel or SmartPropEditorViewModel);
 
     public Addon? SelectedAddon
     {
@@ -175,6 +176,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public IRelayCommand OpenHotkeyEditorCommand { get; }
 
+    public IRelayCommand OpenSmartPropEditorCommand { get; }
+
     public IRelayCommand OpenDetailPropEditorCommand { get; }
 
     public IRelayCommand OpenConsoleCommand { get; }
@@ -196,6 +199,11 @@ public class ShellViewModel : ViewModelBase, IDisposable
     public IRelayCommand OpenContentFolderCommand { get; }
 
     public IRelayCommand OpenGameFolderCommand { get; }
+
+    public IRelayCommand CreateAddonCommand { get; }
+    public IRelayCommand RemoveAddonCommand { get; }
+    public IRelayCommand ExportAddonCommand { get; }
+    public IRelayCommand ImportAddonCommand { get; }
 
     public IRelayCommand RefreshAddonsCommand { get; }
 
@@ -246,6 +254,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         RestartCs2Command = new AsyncRelayCommand(OnRestartCs2Async);
         ClearVrad3CacheCommand = new RelayCommand(OnClearVrad3Cache);
         OpenHotkeyEditorCommand = new RelayCommand(OpenHotkeyEditor);
+        OpenSmartPropEditorCommand = new RelayCommand(OpenSmartPropEditor);
         OpenDetailPropEditorCommand = new RelayCommand(OpenDetailPropEditor);
         OpenConsoleCommand = new RelayCommand(OpenConsole);
         OpenLoadingEditorCommand = new RelayCommand(OpenLoadingEditor);
@@ -258,6 +267,10 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
         OpenContentFolderCommand = new RelayCommand(OnOpenContentFolder);
         OpenGameFolderCommand = new RelayCommand(OnOpenGameFolder);
+        CreateAddonCommand = new AsyncRelayCommand(CreateAddonAsync);
+        RemoveAddonCommand = new AsyncRelayCommand(RemoveAddonAsync);
+        ExportAddonCommand = new AsyncRelayCommand(ExportAddonAsync);
+        ImportAddonCommand = new AsyncRelayCommand(ImportAddonAsync);
         RefreshAddonsCommand = new RelayCommand(OnRefreshAddons);
         OpenUrlCommand = new RelayCommand<string>(OnOpenUrl);
 
@@ -265,8 +278,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
         SaveDocumentCommand = new AsyncRelayCommand(SaveCurrentDocumentAsync);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenFileCommand = new AsyncRelayCommand(OpenFileAsync);
-        UndoDocumentCommand = new RelayCommand(() => ActiveDocument?.Undo.Undo());
-        RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.Undo.Redo());
+        UndoDocumentCommand = new RelayCommand(() => ActiveDocument?.UndoCommand.Execute(null));
+        RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.RedoCommand.Execute(null));
         ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
 
@@ -285,6 +298,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         OpenSoundEventEditor();
         OpenHotkeyEditor();
         OpenDetailPropEditor();
+        OpenSmartPropEditor();
         ActiveDocument = Documents.FirstOrDefault();
     }
 
@@ -310,6 +324,17 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
         var editor = new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher);
         AddDocument(editor);
+    }
+
+    public void OpenSmartPropEditor()
+    {
+        var existing = Documents.OfType<SmartPropEditorViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+        AddDocument(new SmartPropEditorViewModel(Cs2Locator, AddonService, DialogService));
     }
 
     public void OpenDetailPropEditor()
@@ -571,6 +596,102 @@ public class ShellViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private async Task CreateAddonAsync()
+    {
+        var name = await DialogService.PromptAsync("Create addon", "Addon name");
+        if (string.IsNullOrWhiteSpace(name) || !await DialogService.ConfirmCloseAsync(Documents.ToArray()))
+        {
+            return;
+        }
+        try
+        {
+            AddonArchive.ValidateName(name);
+            if (Addons.Any(addon => addon.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("An addon with that name already exists.");
+            }
+            AddonService.CreateAddon(name);
+            DisposeDocuments();
+            OpenDefaultEditors();
+            OnRefreshAddons();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private async Task RemoveAddonAsync()
+    {
+        var addon = SelectedAddon;
+        if (addon is null || !await DialogService.ConfirmCloseAsync(Documents.ToArray())
+            || !await DialogService.ConfirmAsync("Remove addon", $"Remove {addon.Name}? Both its source content and compiled game files will be deleted."))
+        {
+            return;
+        }
+        try
+        {
+            AddonArchive.ValidateName(addon.Name);
+            if (!AddonService.DeleteAddon(addon.Name))
+            {
+                throw new IOException("The addon could not be removed.");
+            }
+            DialogService.CloseUtilities();
+            DisposeDocuments();
+            OpenDefaultEditors();
+            OnRefreshAddons();
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private async Task ExportAddonAsync()
+    {
+        var addon = SelectedAddon;
+        if (addon is null || !await DialogService.ConfirmCloseAsync(Documents.ToArray()))
+        {
+            return;
+        }
+        var destination = await DialogService.SaveFileAsync("Export addon", $"{addon.Name}.zip");
+        if (destination is null)
+        {
+            return;
+        }
+        try
+        {
+            await Task.Run(() => AddonArchive.Export(addon, destination));
+            StatusMessage = $"Exported {addon.Name}";
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private async Task ImportAddonAsync()
+    {
+        var archive = await DialogService.OpenFileAsync("Import addon", "*.zip");
+        var install = Cs2Locator.ResolvedCs2Path;
+        if (archive is null || install is null)
+        {
+            return;
+        }
+        try
+        {
+            var name = await Task.Run(() => AddonArchive.Import(archive, install));
+            OnRefreshAddons();
+            var addon = Addons.Single(item => item.Name == name);
+            await SwitchAddonAsync(addon);
+            StatusMessage = $"Imported {name}";
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
     private void OnRefreshAddons()
     {
         AddonService.RefreshAddons();
@@ -621,6 +742,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             var extension = Path.GetExtension(fullPath).ToLowerInvariant();
             DocumentViewModel? document = extension switch
             {
+                ".vsmart" => new SmartPropEditorViewModel(Cs2Locator, AddonService, DialogService, fullPath),
                 ".vsndevts" => new SoundEventEditorViewModel(AddonService, SoundEventService, DialogService, fullPath),
                 ".vdata" when Path.GetFileName(fullPath).Equals("detail_prop_types.vdata", StringComparison.OrdinalIgnoreCase)
                     => new DetailPropEditorViewModel(AddonService, DialogService, fullPath),

@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using SteamDatabase.ValvePak;
 using ValveKeyValue;
-using ValvePak;
 
 namespace CS2WorkshopManager;
 
@@ -166,7 +166,7 @@ public static class AddonPackager
 
         var files = CollectFiles(addonPath, gameInfoPath, rules);
 
-        using var package = new Package();
+        using var package = new ChunkedPackage();
         package.WriteChunkSize = ChunkSize;
 
         var totalSize = 0L;
@@ -185,7 +185,7 @@ public static class AddonPackager
                 throw new InvalidOperationException($"VPK: Exceeded single VPK 2.0 GB limit! Error adding '{file.FullName}'.");
             }
 
-            package.AddFile(GetRelativePath(addonPath, file.FullName), File.ReadAllBytes(file.FullName), multiChunk: true);
+            package.AddFile(GetRelativePath(addonPath, file.FullName), File.ReadAllBytes(file.FullName));
 
             totalSize += size;
         }

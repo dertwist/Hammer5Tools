@@ -1,0 +1,151 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="UserControl:is(UserControl).smartPropEditor">
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button">
+      <Setter Property="MinHeight" Value="22" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Padding" Value="7,2" />
+      <Setter Property="Margin" Value="1" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBox">
+      <Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
+      <Setter Property="MinHeight" Value="22" />
+      <Setter Property="Padding" Value="5,2" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="CornerRadius" Value="2" />
+      <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBox.code">
+      <Setter Property="FontFamily" Value="Consolas" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="AcceptsReturn" Value="True" />
+      <Setter Property="TextWrapping" Value="NoWrap" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.panel">
+      <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.heading">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Margin" Value="3,1" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.muted">
+      <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button.primary">
+      <Setter Property="Background" Value="{DynamicResource H5TAccentBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TabItem">
+      <Setter Property="MinHeight" Value="26" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="TabBorder" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="1,0,1,1" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TabItem:selected /template/ Border#TabBorder">
+      <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" />
+      <Setter Property="BorderThickness" Value="1,2,1,1" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TabItem:selected"><Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.toolbar"><Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Grid.treeHeader"><Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor ComboBox">
+      <Setter Property="MinHeight" Value="22" /><Setter Property="FontSize" Value="11" />
+      <Setter Property="Padding" Value="4,1" /><Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeViewItem">
+      <Setter Property="MinHeight" Value="22" /><Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeView.smartHierarchy TreeViewItem /template/ Panel#PART_ExpandCollapseChevronContainer"><Setter Property="Margin" Value="2,0,4,0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeView.smartHierarchy TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron">
+      <Setter Property="Width" Value="9" /><Setter Property="Height" Value="9" />
+      <Setter Property="Template"><ControlTemplate><Border Width="9" Height="9" CornerRadius="5" BorderThickness="1" BorderBrush="{DynamicResource H5TBorderBrush}" Background="{DynamicResource H5TSurfaceInputBrush}"><TextBlock x:Name="HierarchyExpandMark" Text="+" FontSize="8" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border></ControlTemplate></Setter>
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeView.smartHierarchy TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:checked /template/ TextBlock#HierarchyExpandMark"><Setter Property="Text" Value="−" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Expander /template/ ToggleButton"><Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" /><Setter Property="MinHeight" Value="26" /><Setter Property="Padding" Value="8,3" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Expander /template/ Border"><Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource H5TBorderBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor CheckBox"><Setter Property="MinHeight" Value="22" /><Setter Property="FontSize" Value="12" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button.icon"><Setter Property="Padding" Value="2,0" /><Setter Property="MinWidth" Value="22" /><Setter Property="Height" Value="22" /><Setter Property="FontSize" Value="14" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button.component"><Setter Property="Margin" Value="0" /><Setter Property="CornerRadius" Value="0" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="6,3" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button.component.active"><Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.componentList"><Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="Margin" Value="2,0,2,3" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.componentSection"><Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Grid.propertyRow"><Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Grid.propertyRow.alternate"><Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor .alternate > Grid.propertyRow"><Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor ComboBox.valueMode"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="1,0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName"><Setter Property="Foreground" Value="#95B9DF" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName.Bool"><Setter Property="Foreground" Value="#FFBDBE" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName.Int"><Setter Property="Foreground" Value="#6C87FF" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName.Float"><Setter Property="Foreground" Value="#B5FFEF" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName.String"><Setter Property="Foreground" Value="#FFD199" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TextBlock.propertyName.Vector3D"><Setter Property="Foreground" Value="#A375FF" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Grid.propertyRow TextBox"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /><Setter Property="CornerRadius" Value="0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.description"><Setter Property="MinHeight" Value="90" /><Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource H5TBorderBrush}" /><Setter Property="BorderThickness" Value="0,1,0,0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Border.objectCount"><Setter Property="Padding" Value="8,6" /><Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /><Setter Property="BorderThickness" Value="2,0,0,0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor NumericUpDown"><Setter Property="MinHeight" Value="22" /><Setter Property="Padding" Value="3,0" /><Setter Property="FontSize" Value="11" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Expander.variableRow">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderStrongBrush}" BorderThickness="1">
+            <StackPanel>
+              <ToggleButton Name="PART_ToggleButton" Content="{TemplateBinding Header}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" HorizontalAlignment="Stretch" MinHeight="22" Padding="0">
+                <ToggleButton.Template><ControlTemplate>
+                  <Border Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderBrush="{DynamicResource H5TAccentBrush}" BorderThickness="3,0,0,0" Padding="3,2">
+                    <Grid ColumnDefinitions="18,*"><TextBlock Name="Arrow" Text="▸" Classes="muted" VerticalAlignment="Center" /><ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" /></Grid>
+                  </Border>
+                </ControlTemplate></ToggleButton.Template>
+              </ToggleButton>
+              <ContentPresenter Content="{TemplateBinding Content}" IsVisible="{TemplateBinding IsExpanded}" />
+            </StackPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor Expander.variableRow /template/ ToggleButton:checked /template/ TextBlock#Arrow"><Setter Property="Text" Value="▾" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor CheckBox">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Grid ColumnDefinitions="20,*" MinHeight="22">
+            <Border Width="13" Height="13" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="{DynamicResource H5TTextMutedBrush}" BorderThickness="1" Background="{DynamicResource H5TSurfaceBrush}">
+              <TextBlock Name="CheckMark" Text="✓" IsVisible="False" FontSize="12" Foreground="{DynamicResource H5TTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" VerticalAlignment="Center" />
+          </Grid>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor CheckBox:checked /template/ TextBlock#CheckMark"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor CheckBox:indeterminate /template/ TextBlock#CheckMark"><Setter Property="IsVisible" Value="True" /><Setter Property="Text" Value="–" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeViewItem:selected /template/ Border#PART_LayoutRoot"><Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeViewItem.dropinside /template/ Border#PART_LayoutRoot"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /><Setter Property="BorderThickness" Value="1" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeViewItem.dropbefore /template/ Border#PART_LayoutRoot"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /><Setter Property="BorderThickness" Value="0,2,0,0" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor TreeViewItem.dropafter /template/ Border#PART_LayoutRoot"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /><Setter Property="BorderThickness" Value="0,0,0,2" /></Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource H5TAccentHoverBrush}" />
+    </Style>
+    <Style Selector=":is(UserControl).smartPropEditor Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource H5TAccentPressedBrush}" />
+    </Style>
+
+</Styles>

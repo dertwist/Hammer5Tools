@@ -86,7 +86,7 @@
     <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
     <Setter Property="FontFamily" Value="{StaticResource H5TFontFamily}" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontSize" Value="12" />
   </Style>
 
   <!-- ========================================================================= -->
@@ -99,9 +99,9 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="4,2" />
-    <Setter Property="MinHeight" Value="26" />
-    <Setter Property="FontWeight" Value="580" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="12" />
   </Style>
   <Style Selector="Button:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
@@ -173,8 +173,8 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="2" />
-    <Setter Property="MinHeight" Value="26" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="SelectionBrush" Value="{DynamicResource H5TSelectionBrush}" />
   </Style>
   <Style Selector="TextBox:focus /template/ Border">
@@ -191,9 +191,9 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="4,2" />
-    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="MinHeight" Value="22" />
     <Setter Property="FontSize" Value="12" />
-      <Setter Property="FontWeight" Value="580" />
+      <Setter Property="FontWeight" Value="Normal" />
 </Style>
   <Style Selector="ComboBox:pointerover">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
@@ -212,7 +212,7 @@
   <Style Selector="ListBoxItem">
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
     <Setter Property="Padding" Value="2" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontSize" Value="12" />
   </Style>
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
@@ -232,7 +232,7 @@
   </Style>
   <Style Selector="MenuItem">
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="Padding" Value="8,4" />
   </Style>
   <Style Selector="MenuItem:pointerover /template/ Border">
@@ -257,8 +257,8 @@
     <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
     <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
     <Setter Property="Padding" Value="8,2" />
-    <Setter Property="MinHeight" Value="26" />
-    <Setter Property="FontWeight" Value="580" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontWeight" Value="Normal" />
     <Setter Property="FontSize" Value="12" />
     <Setter Property="BorderThickness" Value="1,1,1,1" />
     <Setter Property="BorderBrush" Value="Transparent" />
@@ -338,7 +338,7 @@
     <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style Selector="TextBlock">
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="Normal" />
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
   </Style>
@@ -349,9 +349,9 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="2" />
     <Setter Property="Padding" Value="4,2" />
-    <Setter Property="FontSize" Value="13.333" />
-    <Setter Property="FontWeight" Value="580" />
-    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="MinHeight" Value="22" />
   </Style>
   <Style Selector="CheckBox:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
@@ -363,8 +363,8 @@
     <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="2" />
-    <Setter Property="MinHeight" Value="26" />
-    <Setter Property="FontSize" Value="13.333" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="12" />
   </Style>
   <Style Selector="TreeView">
     <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
@@ -472,7 +472,7 @@
     </Setter>
   </Style>
   <Style Selector="CheckBox.map-option"><Setter Property="FontWeight" Value="Normal" />
-    <Setter Property="Padding" Value="0" /><Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="0" /><Setter Property="MinHeight" Value="22" />
     <Setter Property="Template">
       <ControlTemplate>
         <Grid ColumnDefinitions="18,*" Background="Transparent">

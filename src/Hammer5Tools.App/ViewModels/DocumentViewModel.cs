@@ -57,9 +57,9 @@ public abstract class DocumentViewModel : ViewModelBase, IDisposable
 
     public IRelayCommand SaveCommand { get; }
 
-    public IRelayCommand UndoCommand { get; }
+    public virtual IRelayCommand UndoCommand { get; }
 
-    public IRelayCommand RedoCommand { get; }
+    public virtual IRelayCommand RedoCommand { get; }
 
     protected DocumentViewModel()
     {

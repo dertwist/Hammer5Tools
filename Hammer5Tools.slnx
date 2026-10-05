@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Hammer5Tools.Core/Hammer5Tools.Core.csproj" />
-    <Project Path="src/Hammer5Tools.Infrastructure/Hammer5Tools.Infrastructure.csproj" />
     <Project Path="src/Hammer5Tools.App/Hammer5Tools.App.csproj" />
     <Project Path="src/Hammer5Tools.Cli/Hammer5Tools.Cli.csproj" />
   </Folder>
@@ -11,6 +10,7 @@
     <Project Path="third_party/CS2WorkshopManager/GUI/GUI.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj" />
     <Project Path="tests/Hammer5Tools.App.Tests/Hammer5Tools.App.Tests.csproj" />
     <Project Path="tests/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
     <Project Path="tests/Hammer5Tools.IntegrationTests/Hammer5Tools.IntegrationTests.csproj" />

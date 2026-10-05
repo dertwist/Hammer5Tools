@@ -1,4 +1,7 @@
 # Build and output directories
+.build/
+__pycache__/
+*.pyc
 [Bb]in/
 [Oo]bj/
 [Ll]og/

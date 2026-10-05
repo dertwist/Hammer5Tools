@@ -1,9 +1,9 @@
 namespace Hammer5Tools.IntegrationTests.Cs2;
 
 using System.IO;
+using Hammer5Tools.Core.IO.Cs2;
+using Hammer5Tools.Core.IO.Settings;
 using Hammer5Tools.Core.Settings;
-using Hammer5Tools.Infrastructure.Cs2;
-using Hammer5Tools.Infrastructure.Settings;
 
 public class Cs2LocatorTests
 {

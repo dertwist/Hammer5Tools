@@ -24,30 +24,67 @@ public interface IDialogService
     void CloseUtilities();
 
     void ShowWorkshopManager();
+
+    Task<string?> PromptAsync(string title, string label) => Task.FromResult<string?>(null);
+
+    Task<bool> ConfirmAsync(string title, string message) => Task.FromResult(false);
 }
 
 public class DialogService : IDialogService, IDisposable
 {
     private readonly Dictionary<Type, Window> OpenWindows = [];
-    private System.Diagnostics.Process? WorkshopManagerProcess;
 
     public void ShowWorkshopManager()
     {
-        if (WorkshopManagerProcess is { HasExited: false })
+        var type = typeof(GUI.MainWindow);
+        if (OpenWindows.TryGetValue(type, out var existing))
         {
+            existing.Activate();
             return;
         }
 
-        WorkshopManagerProcess?.Dispose();
-        var start = WorkshopManagerLaunch.CreateStartInfo(AppContext.BaseDirectory);
-        WorkshopManagerProcess = System.Diagnostics.Process.Start(start)
-            ?? throw new InvalidOperationException("Workshop Manager could not be started.");
+        var window = new GUI.MainWindow { Title = "Workshop Manager - Hammer 5 Tools" };
+        window.Closed += (_, _) => OpenWindows.Remove(type);
+        OpenWindows[type] = window;
+        window.Show(MainWindow);
     }
 
     public void Dispose()
     {
-        WorkshopManagerProcess?.Dispose();
+        CloseUtilities();
+        CS2WorkshopManager.WorkshopManager.ShutdownSteam();
         GC.SuppressFinalize(this);
+    }
+
+    public async Task<string?> PromptAsync(string title, string label)
+    {
+        var window = CreateDialog(title, 440, 180);
+        var input = new TextBox();
+        var accept = new Button { Content = "Create", HorizontalAlignment = HorizontalAlignment.Right };
+        accept.Click += (_, _) => window.Close(input.Text);
+        window.Content = new StackPanel
+        {
+            Margin = new Thickness(12),
+            Spacing = 12,
+            Children = { new TextBlock { Text = label }, input, accept },
+        };
+        return await window.ShowDialog<string?>(MainWindow);
+    }
+
+    public async Task<bool> ConfirmAsync(string title, string message)
+    {
+        var window = CreateDialog(title, 520, 220);
+        var accept = new Button { Content = "Remove", HorizontalAlignment = HorizontalAlignment.Right };
+        accept.Click += (_, _) => window.Close(true);
+        var cancel = new Button { Content = "Cancel" };
+        cancel.Click += (_, _) => window.Close(false);
+        window.Content = new StackPanel
+        {
+            Margin = new Thickness(12),
+            Spacing = 12,
+            Children = { new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap }, cancel, accept },
+        };
+        return await window.ShowDialog<bool>(MainWindow);
     }
 
     private static Window MainWindow =>

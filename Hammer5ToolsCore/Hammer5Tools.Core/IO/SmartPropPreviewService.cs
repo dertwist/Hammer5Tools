@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using Hammer5Tools.Core.Format.Resources;
 using Hammer5Tools.Core.Format.SmartProps;
-using Hammer5Tools.Core.Format.Vmap;
 using Hammer5Tools.Core.IO.CompiledResource;
 
 namespace Hammer5Tools.Core.IO;
@@ -18,7 +17,7 @@ internal static class SmartPropPreviewService
         {
             root["generic_data_type"] = "CSmartPropRoot";
         }
-        return SmartPropEditorDocument.Validate(root.ToJsonString(VmapImportJsonContext.Default.Options));
+        return SmartPropEditorDocument.Validate(root.ToJsonString(SmartPropPreviewJsonContext.Default.Options));
     }
 
     public static SmartPropPreviewScene Build(string json, string gameDirectory, string addon, string? sourcePath, CancellationToken cancellationToken)
@@ -27,7 +26,7 @@ internal static class SmartPropPreviewService
         var contentRoot = ContentRoot(gameDirectory, addon);
         using var files = new VmapContentFiles(sourcePath ?? Path.Combine(contentRoot, "preview.vsmart"), contentRoot, gameDirectory, addon);
         var nested = files.ReadSmartPropDependencies(root);
-        var result = SmartPropEvaluator.EvaluateJson(json, nested.ToJsonString(VmapImportJsonContext.Default.Options),
+        var result = SmartPropEvaluator.EvaluateJson(json, nested.ToJsonString(SmartPropPreviewJsonContext.Default.Options),
             new SmartPropEvaluationOptions(maximumModels: 10_000, cancellationToken: cancellationToken));
         using var reader = new CompiledModelReader(gameDirectory, addon);
         var cache = new Dictionary<(string Path, string? Group), CompiledModel?>();

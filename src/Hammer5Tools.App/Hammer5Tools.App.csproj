@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
@@ -10,13 +11,24 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
-    <ProjectReference Include="..\Hammer5Tools.Infrastructure\Hammer5Tools.Infrastructure.csproj" />
-    <ProjectReference Include="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" ReferenceOutputAssembly="false" Private="false"
-                      AdditionalProperties="ShouldBeValidatedAsExecutableReference=false;PublishSingleFile=false" />
+    <ProjectReference Include="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <EmbeddedResource Include="Features/SmartProps/SmartPropPresentation.json" />
+    <EmbeddedResource Include="Assets/SmartProps/model_sm.png" LogicalName="Hierarchy.model" />
+    <EmbeddedResource Include="Assets/SmartProps/vsmart_sm.png" LogicalName="Hierarchy.smartprop" />
+    <EmbeddedResource Include="Assets/SmartProps/generic_sm.png" LogicalName="Hierarchy.generic" />
+    <EmbeddedResource Include="Assets/SmartProps/animation_group_sm.png" LogicalName="Hierarchy.group" />
+    <EmbeddedResource Include="Assets/SmartProps/model.vert" LogicalName="Shaders.model.vert" />
+    <EmbeddedResource Include="Assets/SmartProps/model.frag" LogicalName="Shaders.model.frag" />
+    <EmbeddedResource Include="Assets/SmartProps/grid.vert" LogicalName="Shaders.grid.vert" />
+    <EmbeddedResource Include="Assets/SmartProps/grid.frag" LogicalName="Shaders.grid.frag" />
+    <None Update="Features/SmartProps/Example.vsmart" Link="Example.vsmart" CopyToOutputDirectory="PreserveNewest" />
+    <InternalsVisibleTo Include="Hammer5Tools.SmartProp.Tests" />
+    <InternalsVisibleTo Include="Hammer5Tools.App.Tests" />
+
   </ItemGroup>
 
   <ItemGroup>
@@ -34,24 +46,4 @@
     <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 
-  <Target Name="CopyWorkshopManager" AfterTargets="Build">
-    <MSBuild Projects="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" Targets="GetTargetPath"
-             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier)">
-      <Output TaskParameter="TargetOutputs" ItemName="WorkshopManagerAssembly" />
-    </MSBuild>
-    <ItemGroup>
-      <WorkshopManagerFiles Include="%(WorkshopManagerAssembly.RootDir)%(WorkshopManagerAssembly.Directory)**/*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(WorkshopManagerFiles)"
-          DestinationFiles="@(WorkshopManagerFiles->'$(TargetDir)WorkshopManager/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="PublishWorkshopManager" AfterTargets="Publish">
-    <PropertyGroup>
-      <WorkshopManagerPublishDir>$([System.IO.Path]::GetFullPath('$(PublishDir)WorkshopManager/', '$(MSBuildProjectDirectory)'))</WorkshopManagerPublishDir>
-    </PropertyGroup>
-    <MSBuild Projects="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" Targets="Publish"
-             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);PublishSingleFile=false;PublishDir=$(WorkshopManagerPublishDir)" />
-  </Target>
 </Project>

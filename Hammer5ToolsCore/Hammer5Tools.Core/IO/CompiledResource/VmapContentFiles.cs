@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Hammer5Tools.Core.Format.SmartProps;
-using Hammer5Tools.Core.Format.Vmap;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
 using ValveResourceFormat.ResourceTypes;
@@ -32,7 +31,7 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot, stri
                 return Path.GetFullPath(candidate);
             }
         }
-        return ValveMapSceneReader.ResolveContentRelative(referringMap ?? mapPath, relative);
+        return ContentPathResolver.Resolve(referringMap ?? mapPath, relative);
     }
 
     public JsonObject ReadSmartProp(string resource, out JsonObject nested)
@@ -128,7 +127,8 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot, stri
             return null;
         if (loader is null)
         {
-            loader = new GameFileLoader(null, Path.Combine(gameDirectory, "csgo", "pak01_dir.vpk"));
+            // VRF skips the current file's VPK, expecting CurrentPackage to already own it.
+            loader = new GameFileLoader(null, Path.Combine(gameDirectory, "csgo", "gameinfo.gi"));
             var addon = Path.Combine(gameDirectory, "csgo_addons", activeAddon);
             if (Directory.Exists(addon))
                 loader.AddDiskPathToSearch(addon);
