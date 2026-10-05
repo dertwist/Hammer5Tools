@@ -18,6 +18,17 @@ public interface IResourceCompiler
     /// <summary>Compiles a source asset with additional map-build flags.</summary>
     Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName, string? additionalArguments, CancellationToken ct = default);
 
+    /// <summary>Compiles a map while reporting output lines as they arrive.</summary>
+    async Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName, string? additionalArguments, Action<string> output, CancellationToken ct = default)
+    {
+        var result = await CompileAssetAsync(assetFilePath, addonName, additionalArguments, ct);
+        foreach (var line in (result.StandardOutput + "\n" + result.StandardError).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            output(line);
+        }
+        return result;
+    }
+
     /// <summary>
     /// Recursively compiles all assets within a directory.
     /// </summary>

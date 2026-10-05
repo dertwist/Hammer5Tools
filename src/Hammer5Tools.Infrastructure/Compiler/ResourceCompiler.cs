@@ -52,6 +52,14 @@ public class ResourceCompiler : IResourceCompiler
     }
 
     /// <inheritdoc/>
+    public Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName, string? additionalArguments, Action<string> output, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assetFilePath);
+        var args = BuildArguments($"-i \"{Path.GetFullPath(assetFilePath)}\" {additionalArguments}".TrimEnd(), addonName);
+        return ExecuteCompilerAsync(args, ct, output);
+    }
+
+    /// <inheritdoc/>
     public async Task<CompileResult> CompileFolderAsync(string folderPath, string? addonName = null, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
@@ -116,7 +124,7 @@ public class ResourceCompiler : IResourceCompiler
         return sb.ToString();
     }
 
-    private async Task<CompileResult> ExecuteCompilerAsync(string arguments, CancellationToken ct)
+    private async Task<CompileResult> ExecuteCompilerAsync(string arguments, CancellationToken ct, Action<string>? output = null)
     {
         var cs2Path = Cs2Locator.ResolvedCs2Path;
         if (string.IsNullOrWhiteSpace(cs2Path))
@@ -154,6 +162,7 @@ public class ResourceCompiler : IResourceCompiler
                 if (e.Data is not null)
                 {
                     stdout.AppendLine(e.Data);
+                    output?.Invoke(e.Data);
                 }
             };
             process.ErrorDataReceived += (_, e) =>
@@ -161,6 +170,7 @@ public class ResourceCompiler : IResourceCompiler
                 if (e.Data is not null)
                 {
                     stderr.AppendLine(e.Data);
+                    output?.Invoke(e.Data);
                 }
             };
 

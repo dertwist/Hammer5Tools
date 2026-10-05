@@ -1,31 +1,47 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Hammer5Tools.App.Features.Hotkeys" xmlns:m="using:Hammer5Tools.Core.Hotkeys"
              x:Class="Hammer5Tools.App.Features.Hotkeys.HotkeyEditorView" x:DataType="vm:HotkeyEditorViewModel">
-  <Grid ColumnDefinitions="260,3,*" Margin="8">
-    <StackPanel Spacing="6" Margin="0,0,8,0">
+  <Grid ColumnDefinitions="1*,3,2*" Margin="8,0">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="0,0,4,0">
       <TextBlock Text="Keybindings presets" Classes="section" />
-      <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
-      <Button Content="Set current" Command="{Binding ApplyToCs2Command}" HorizontalAlignment="Stretch" />
-      <Button Content="New preset" Command="{Binding NewPresetCommand}" HorizontalAlignment="Stretch" />
-      <Button Content="Open preset" Command="{Binding OpenPresetCommand}" HorizontalAlignment="Stretch" />
-      <TextBlock Text="Context" Classes="section" />
-      <ComboBox ItemsSource="{Binding Contexts}" SelectedItem="{Binding SelectedContext}" HorizontalAlignment="Stretch" />
-    </StackPanel>
+      <ComboBox Grid.Row="1" ItemsSource="{Binding Contexts}" SelectedItem="{Binding SelectedContext}"
+                HorizontalAlignment="Stretch" ToolTip.Tip="Keybinding context" />
+      <Border Grid.Row="2" Classes="editor-panel" Margin="0,6,0,4">
+        <StackPanel>
+          <TextBlock Text="Name" Classes="column-header" />
+          <TextBlock Text="{Binding Title}" Margin="8,4" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <Grid Grid.Row="3" ColumnDefinitions="*,*,*">
+        <Button Content="Set current" Command="{Binding ApplyToCs2Command}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
+        <Button Grid.Column="1" Content="New preset" Command="{Binding NewPresetCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
+        <Button Grid.Column="2" Content="Open preset" Command="{Binding OpenPresetCommand}" HorizontalAlignment="Stretch" />
+      </Grid>
+    </Grid>
     <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
-    <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,Auto" Margin="8,0,0,0">
+    <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto" Margin="4,0,0,0">
       <TextBlock Text="Keybindings editor" Classes="section" />
-      <ListBox Grid.Row="1" ItemsSource="{Binding FilteredBindings}" SelectedItem="{Binding SelectedBinding}">
+      <Grid Grid.Row="1" ColumnDefinitions="240,*" Background="{DynamicResource H5TSurfaceRaisedBrush}">
+        <TextBlock Text="Command" Classes="column-header" />
+        <TextBlock Grid.Column="1" Text="Input" Classes="column-header" />
+      </Grid>
+      <ListBox Grid.Row="2" Classes="bindings" ItemsSource="{Binding FilteredBindings}" SelectedItem="{Binding SelectedBinding}">
         <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="m:HotkeyBinding"><Grid ColumnDefinitions="180,*,140"><TextBlock Text="{Binding Context}" /><TextBlock Grid.Column="1" Text="{Binding Command}" /><TextBlock Grid.Column="2" Text="{Binding Input}" /></Grid></DataTemplate>
+          <DataTemplate x:DataType="m:HotkeyBinding">
+            <Grid ColumnDefinitions="240,*">
+              <TextBlock Text="{Binding Command}" Margin="8,0" VerticalAlignment="Center" ToolTip.Tip="{Binding Context}" />
+              <TextBlock Grid.Column="1" Text="{Binding Input}" Margin="8,0" VerticalAlignment="Center" />
+            </Grid>
+          </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
-      <TextBox Grid.Row="2" Text="{Binding FilterText}" PlaceholderText="Filter commands or shortcuts" Margin="0,6" />
-      <WrapPanel Grid.Row="3">
-        <TextBox Text="{Binding NewKeyInput}" PlaceholderText="Key binding" Width="150" />
-        <Button Content="Change Binding" Command="{Binding ApplyBindingCommand}" />
-        <Button Content="Save preset" Command="{Binding SaveCommand}" />
-        <Button Content="Set and restart" Command="{Binding ApplyAndRestartCommand}" />
-      </WrapPanel>
+      <Grid Grid.Row="3" ColumnDefinitions="*,150,Auto,Auto,Auto" Margin="0,4,0,0">
+        <TextBox Text="{Binding FilterText}" PlaceholderText="Command filter" Margin="0,0,4,0" />
+        <TextBox Grid.Column="1" Text="{Binding NewKeyInput}" PlaceholderText="Key binding" Margin="0,0,4,0" />
+        <Button Grid.Column="2" Content="Change Binding" Command="{Binding ApplyBindingCommand}" Margin="0,0,4,0" />
+        <Button Grid.Column="3" Content="Save preset" Command="{Binding SaveCommand}" Margin="0,0,4,0" />
+        <Button Grid.Column="4" Content="Set and restart" Command="{Binding ApplyAndRestartCommand}" />
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

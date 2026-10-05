@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <Description>Packs a compiled addon from "game/csgo_addons" and publishes it to Steam.</Description>
+    <!-- the source generated P/Invokes reading another process's command line -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible Condition="'$(Configuration)' != 'Debug'">true</IsAotCompatible>
+    <PackageTags>counter-strike2 cs2 steam workshop valve manager</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
+    <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
+    <PackageReference Include="ValvePak" Version="6.0.0.182" />
+    <PackageReference Include="ValveResourceFormat" Version="20.0.6980" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Steamworks ships inside this package instead of as a dependency, so consumers get it with the library -->
+    <ProjectReference Include="..\Steamworks\Steamworks.csproj" PrivateAssets="all" />
+    <None Include="..\Steamworks\bin\$(Configuration)\Steamworks.dll" Pack="true" PackagePath="lib\$(TargetFramework)" Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the licence text and the readme go into the package, the licence expression in Directory.Build.props stays what NuGet lists -->
+    <None Include="..\LICENSE" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\README.md" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+</Project>

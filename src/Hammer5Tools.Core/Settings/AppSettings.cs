@@ -17,6 +17,8 @@ public class AppSettings
 
     public string ArchivePath { get; set; } = string.Empty;
 
+    public List<MapBuilder.MapBuildConfiguration> MapBuildPresets { get; set; } = [];
+
     public WindowStateSettings WindowState { get; set; } = new();
 
     public EditorPreferences Editor { get; set; } = new();

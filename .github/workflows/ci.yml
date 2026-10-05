@@ -32,4 +32,4 @@ jobs:
         run: dotnet test --no-build -c Release
 
       - name: Check code formatting
-        run: dotnet format --verify-no-changes
+        run: dotnet format --verify-no-changes --exclude third_party

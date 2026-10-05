@@ -7,7 +7,6 @@
              xmlns:sound="using:Hammer5Tools.App.Features.SoundEvents"
              xmlns:mapbuild="using:Hammer5Tools.App.Features.MapBuilder"
              xmlns:navmesh="using:Hammer5Tools.App.Features.NavMesh"
-             xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
              xmlns:assettools="using:Hammer5Tools.App.Features.AssetTools"
              xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
              xmlns:preferences="using:Hammer5Tools.App.Features.Preferences"
@@ -48,9 +47,6 @@
     </DataTemplate>
     <DataTemplate DataType="{x:Type navmesh:NavMeshRadarViewModel}">
       <navmesh:NavMeshRadarView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}">
-      <workshop:WorkshopManagerView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type assettools:AssetToolsViewModel}">
       <assettools:AssetToolsView />

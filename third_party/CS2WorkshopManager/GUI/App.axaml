@@ -1,0 +1,42 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="GUI.App"
+             RequestedThemeVariant="Dark">
+    <!-- dark is what the designer preview shows, the app itself applies the theme from the settings as it starts -->
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+
+        <!-- popups inherit the cursor of the text they open from, which shows the text cursor over the copy menu -->
+        <Style Selector="MenuFlyoutPresenter, MenuItem">
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+
+        <!-- Fluent leaves what a button shows at its left, and buttons here have a set width to line up. Check boxes are buttons too, and keep their text beside the box -->
+        <Style Selector="Button, ToggleButton, DropDownButton">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="CheckBox:indeterminate /template/ Path#CheckGlyph">
+            <Setter Property="Data" Value="M0,0 L10,0 10,2 0,2 Z" />
+            <Setter Property="Stretch" Value="Fill" />
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="1" />
+        </Style>
+
+        <!-- Fluent shrinks a pressed button a little, which a dropdown stretched across a column shows as a squeeze -->
+        <Style Selector="DropDownButton:pressed">
+            <Setter Property="RenderTransform" Value="none" />
+        </Style>
+    </Application.Styles>
+</Application>

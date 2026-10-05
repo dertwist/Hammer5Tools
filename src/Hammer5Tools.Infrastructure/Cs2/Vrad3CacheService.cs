@@ -49,6 +49,19 @@ public class Vrad3CacheService
         return results;
     }
 
+    /// <summary>Removes the named addon's generated _vrad3 cache directory.</summary>
+    public void ClearAddonCache(string addonName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(addonName);
+        if (addonName.IndexOfAny(['/', '\\', '"']) >= 0 || addonName is "." or "..")
+        {
+            throw new ArgumentException("Invalid addon name.", nameof(addonName));
+        }
+        var root = Cs2Locator.ResolvedCs2Path ?? throw new InvalidOperationException("CS2 path is not resolved.");
+        var directory = Path.Combine(Cs2Paths.GetAddonGamePath(root, addonName), "_vrad3");
+        if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+    }
+
     /// <summary>
     /// Clears the discovered VRAD3 cache files.
     /// </summary>

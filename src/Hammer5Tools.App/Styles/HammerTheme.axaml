@@ -6,6 +6,13 @@
   <!-- Semantic Theme Palette & Design Factors from theme.py & STYLESHEET.md    -->
   <!-- ========================================================================= -->
   <Styles.Resources>
+    <SolidColorBrush x:Key="H5TPropertyFloatBrush" Color="#b5ffef" />
+    <SolidColorBrush x:Key="H5TPropertyBoolBrush" Color="#ffbdbe" />
+    <SolidColorBrush x:Key="H5TPropertyStringBrush" Color="#ffd199" />
+    <SolidColorBrush x:Key="H5TPropertySectionBrush" Color="#b3d096" />
+    <SolidColorBrush x:Key="H5TCpuChartBrush" Color="#ff5a5a" />
+    <SolidColorBrush x:Key="H5TMemoryChartBrush" Color="#ffd700" />
+    <SolidColorBrush x:Key="H5TGpuChartBrush" Color="#32b8c6" />
     <!-- Core Surface Palette -->
     <Color x:Key="H5TBackgroundColor">#2e2e2e</Color>
     <Color x:Key="H5TSurfaceColor">#272727</Color>
@@ -92,7 +99,7 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="4,2" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinHeight" Value="26" />
     <Setter Property="FontWeight" Value="580" />
     <Setter Property="FontSize" Value="13.333" />
   </Style>
@@ -184,7 +191,7 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="{StaticResource H5TRadius}" />
     <Setter Property="Padding" Value="4,2" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinHeight" Value="26" />
     <Setter Property="FontSize" Value="12" />
       <Setter Property="FontWeight" Value="580" />
 </Style>
@@ -249,7 +256,8 @@
   <Style Selector="TabItem">
     <Setter Property="Foreground" Value="{DynamicResource H5TTextMutedBrush}" />
     <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
-    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="MinHeight" Value="26" />
     <Setter Property="FontWeight" Value="580" />
     <Setter Property="FontSize" Value="12" />
     <Setter Property="BorderThickness" Value="1,1,1,1" />
@@ -331,7 +339,7 @@
   </Style>
   <Style Selector="TextBlock">
     <Setter Property="FontSize" Value="13.333" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Normal" />
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
   </Style>
   <Style Selector="CheckBox">
@@ -343,7 +351,7 @@
     <Setter Property="Padding" Value="4,2" />
     <Setter Property="FontSize" Value="13.333" />
     <Setter Property="FontWeight" Value="580" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinHeight" Value="26" />
   </Style>
   <Style Selector="CheckBox:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
@@ -355,7 +363,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="2" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinHeight" Value="26" />
     <Setter Property="FontSize" Value="13.333" />
   </Style>
   <Style Selector="TreeView">
@@ -391,8 +399,155 @@
   <Style Selector="TabItem:selected /template/ Border#PART_BaselineAccent">
     <Setter Property="IsVisible" Value="True" />
   </Style>
+  <Style Selector="dock|ToolChromeControl /template/ Button">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+  </Style>
   <Style Selector="dock|ToolChromeControl /template/ TextBlock">
     <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
+  <Style Selector="Border.editor-panel">
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="TextBlock.column-header">
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="ListBox.bindings ListBoxItem">
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="ListBox.bindings ListBoxItem:nth-child(2n)">
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceInputBrush}" />
+  </Style>
+  <Style Selector="ListBox.build-presets">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+  <Style Selector="ListBox.build-presets ListBoxItem">
+    <Setter Property="Width" Value="64" /><Setter Property="Height" Value="64" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ListBox.build-presets ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource H5TAccentBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource H5TBorderStrongBrush}" />
+  </Style>
+  <Style Selector="Expander.map-group">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel>
+          <ToggleButton Name="PART_Header" IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="32"
+                        Padding="8,0" Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderThickness="0">
+            <Grid ColumnDefinitions="*,24">
+              <TextBlock Text="{TemplateBinding Header}" FontSize="16" FontWeight="Normal" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Border Grid.Column="1" BorderBrush="{DynamicResource H5TBorderStrongBrush}" BorderThickness="2" Height="24" Width="24"><TextBlock Text="▾" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+            </Grid>
+          </ToggleButton>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" IsVisible="{TemplateBinding IsExpanded}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Expander.map-group /template/ ToggleButton">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource H5TSurfaceRaisedBrush}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Content="{TemplateBinding Content}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox.map-option"><Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Padding" Value="0" /><Setter Property="MinHeight" Value="26" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="18,*" Background="Transparent">
+          <Border Name="PART_OptionBox" Width="12" Height="12" BorderThickness="1" BorderBrush="{DynamicResource H5TBorderStrongBrush}" VerticalAlignment="Center">
+            <Path Name="PART_OptionCheck" Data="M 1,5 L 4,8 L 10,1" Stroke="{DynamicResource H5TTextBrush}" StrokeThickness="1.5" IsVisible="False" />
+          </Border>
+          <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox.map-option:checked /template/ Path#PART_OptionCheck"><Setter Property="IsVisible" Value="True" /></Style>
+  <Style Selector="CheckBox.map-option:focus-visible /template/ Border#PART_OptionBox"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /></Style>
+  <Style Selector="CheckBox.map-option:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+  <Style Selector="ListBox.map-list"><Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" /></Style>
+  <Style Selector="ListBox.build-output"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="0" /></Style>
+  <Style Selector="ListBox.build-output ListBoxItem"><Setter Property="Padding" Value="0" /><Setter Property="MinHeight" Value="18" /></Style>
+  <Style Selector="TextBlock.log-error"><Setter Property="Foreground" Value="{DynamicResource H5TErrorBrush}" /></Style>
+  <Style Selector="TextBlock.log-warning"><Setter Property="Foreground" Value="{DynamicResource H5TWarningBrush}" /></Style>
+  <Style Selector="TextBlock.log-phase"><Setter Property="Foreground" Value="{DynamicResource H5TAccentBrush}" /></Style>
+  <Style Selector="Border.build-log"><Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" /></Style>
+  <Style Selector="NumericUpDown.compact"><Setter Property="Height" Value="26" /></Style>
+  <Style Selector="Button"><Setter Property="HorizontalContentAlignment" Value="Center" /></Style>
+  <Style Selector="Slider.h5-slider:horizontal">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid><Border Height="8" VerticalAlignment="Center" Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderBrush="{DynamicResource H5TBorderStrongBrush}" BorderThickness="2" /><Track Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+               Value="{TemplateBinding Value, Mode=TwoWay}" Orientation="{TemplateBinding Orientation}"
+               IsDirectionReversed="{TemplateBinding IsDirectionReversed}" VerticalAlignment="Center" Height="18">
+          <Track.DecreaseButton><RepeatButton Name="PART_DecreaseButton" Opacity="0" Classes="slider-track" /></Track.DecreaseButton>
+          <Track.Thumb><Thumb Name="PART_Thumb" Width="8" Height="16"><Thumb.Template><ControlTemplate><Border Name="SliderThumbBody" Background="{DynamicResource H5TSelectionBrush}" /></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+          <Track.IncreaseButton><RepeatButton Name="PART_IncreaseButton" Opacity="0" Classes="slider-track" /></Track.IncreaseButton>
+        </Track></Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="RepeatButton.slider-track">
+    <Setter Property="MinHeight" Value="0" /><Setter Property="MinWidth" Value="0" /><Setter Property="Padding" Value="0" />
+    <Setter Property="Template"><ControlTemplate><Border Height="8" Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderBrush="{DynamicResource H5TBorderStrongBrush}" BorderThickness="2" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="Slider /template/ Thumb">
+    <Setter Property="Template"><ControlTemplate><Border Background="{TemplateBinding Background}" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="Slider:pointerover /template/ Thumb"><Setter Property="Background" Value="{DynamicResource H5TAccentHoverBrush}" /></Style>
+  <Style Selector="Slider:focus-visible /template/ Thumb"><Setter Property="Background" Value="{DynamicResource H5TAccentBrush}" /></Style>
+  <Style Selector="Slider:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+  <Style Selector="TextBlock.property-section"><Setter Property="FontSize" Value="10" /><Setter Property="FontWeight" Value="Normal" /><Setter Property="Margin" Value="0,10,0,4" /><Setter Property="Foreground" Value="{DynamicResource H5TPropertySectionBrush}" /></Style>
+  <Style Selector="TextBlock.property-float"><Setter Property="Foreground" Value="{DynamicResource H5TPropertyFloatBrush}" /><Setter Property="FontSize" Value="12" /></Style>
+  <Style Selector="TextBlock.property-bool"><Setter Property="Foreground" Value="{DynamicResource H5TPropertyBoolBrush}" /><Setter Property="FontSize" Value="12" /></Style>
+  <Style Selector="TextBlock.property-string"><Setter Property="Foreground" Value="{DynamicResource H5TPropertyStringBrush}" /><Setter Property="FontSize" Value="12" /></Style>
+  <Style Selector="NumericUpDown.compact">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="NumericFrame" Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderBrush="{DynamicResource H5TBorderStrongBrush}" BorderThickness="2">
+          <ButtonSpinner Name="PART_Spinner" AllowSpin="{TemplateBinding AllowSpin}" ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}">
+            <ButtonSpinner.Template>
+              <ControlTemplate>
+                <DockPanel LastChildFill="True">
+                  <Grid DockPanel.Dock="Right" Width="14" RowDefinitions="*,*" IsVisible="{TemplateBinding ShowButtonSpinner}">
+                    <RepeatButton Name="PART_IncreaseButton" Classes="numeric-arrow"><Path Width="6" Height="3" Stretch="Fill" Data="M 0,3 L 3,0 L 6,3 Z" Fill="{DynamicResource H5TTextMutedBrush}" /></RepeatButton>
+                    <RepeatButton Name="PART_DecreaseButton" Grid.Row="1" Classes="numeric-arrow"><Path Width="6" Height="3" Stretch="Fill" Data="M 0,0 L 3,3 L 6,0 Z" Fill="{DynamicResource H5TTextMutedBrush}" /></RepeatButton>
+                  </Grid>
+                  <ContentPresenter Content="{TemplateBinding Content}" />
+                </DockPanel>
+              </ControlTemplate>
+            </ButtonSpinner.Template>
+            <TextBox Name="PART_TextBox" Text="{TemplateBinding Text, Mode=TwoWay}" BorderThickness="0" Background="Transparent" Padding="8,0" MinWidth="0" Margin="0" MinHeight="22" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" />
+          </ButtonSpinner>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="RepeatButton.numeric-arrow">
+    <Setter Property="MinHeight" Value="0" /><Setter Property="MinWidth" Value="0" /><Setter Property="Padding" Value="0" />
+    <Setter Property="Template"><ControlTemplate><Border Background="{DynamicResource H5TSurfaceRaisedBrush}"><ContentPresenter Content="{TemplateBinding Content}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" /></Border></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="NumericUpDown.compact:focus-within /template/ Border#NumericFrame"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /></Style>
 </Styles>

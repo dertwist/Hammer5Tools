@@ -1,0 +1,114 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:GUI"
+        x:Class="GUI.AddonFilesWindow"
+        Title="Addon Files"
+        Icon="avares://CS2WorkshopManager-GUI/assets/icon.ico"
+        Width="1100" Height="760"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBrush}"
+        local:WindowAccent.Color="{DynamicResource AccentColor}">
+    <Window.Resources>
+        <!-- tree rows are many, so they sit tight -->
+        <x:Double x:Key="TreeViewItemMinHeight">24</x:Double>
+    </Window.Resources>
+    <Window.Styles>
+        <!-- what is expanded belongs to the node, so it survives the tree being shown again -->
+        <Style Selector="TreeView#FilesTree TreeViewItem" x:DataType="local:FileNode">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+        <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="90%,0%" />
+
+        <DockPanel Margin="12">
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                <TextBlock Text="Addon:" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource ContrastBrush}" />
+                <ComboBox Name="AddonBox" HorizontalAlignment="Stretch" SelectionChanged="OnAddonChanged" />
+            </DockPanel>
+
+            <!-- the same graph as the publish form -->
+            <local:ContentsBar Name="Contents" DockPanel.Dock="Top" Height="44" Margin="0,0,0,12" Foreground="{DynamicResource ContrastBrush}" />
+
+            <TextBlock Name="Status" DockPanel.Dock="Bottom" Margin="0,8,0,0" Foreground="{DynamicResource ContrastBrush}" />
+
+            <Grid ColumnDefinitions="2*,12,3*">
+                <!-- the user's rules, saved as they change -->
+                <Border Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="12">
+                    <Grid RowDefinitions="Auto,*">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Rules" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource ContrastBrush}" />
+                            <ScrollViewer Name="RulesScroller">
+                                <ItemsControl Name="RulesList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:RuleRow">
+                                            <DockPanel Margin="0,4">
+                                                <Button DockPanel.Dock="Right" Content="Remove" Click="OnRemoveRule" />
+                                                <TextBlock Text="{Binding Kind}" Width="70" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                                <SelectableTextBlock Text="{Binding Pattern}" VerticalAlignment="Center" />
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+
+                        <!-- what a crawl of the map wrote, shown but not edited: a tick in the tree is what overrules one of these -->
+                        <DockPanel Grid.Row="1" Name="AutoSection" Margin="0,12,0,0">
+                            <TextBlock DockPanel.Dock="Top" Text="Rules (Auto)" FontWeight="SemiBold" Foreground="{DynamicResource ContrastBrush}" />
+                            <TextBlock DockPanel.Dock="Top" Name="AutoSummary" Margin="0,2,0,8" Foreground="{DynamicResource ContrastSoftBrush}" />
+                            <TextBlock DockPanel.Dock="Bottom" Name="AutoMore" Margin="0,4,0,0" Foreground="{DynamicResource ContrastSoftBrush}" />
+                            <ScrollViewer>
+                                <ItemsControl Name="AutoRulesList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:RuleRow">
+                                            <DockPanel Margin="0,2">
+                                                <TextBlock Text="{Binding Kind}" Width="70" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                                <TextBlock Text="{Binding Pattern}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Grid>
+                </Border>
+
+                <!-- every folder and file under the addon, ticked when the upload takes it -->
+                <Border Grid.Column="2" Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="12">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Files" FontWeight="SemiBold" Foreground="{DynamicResource ContrastBrush}" />
+                        <TextBlock DockPanel.Dock="Top" Margin="0,4,0,8" TextWrapping="Wrap" Foreground="{DynamicResource ContrastSoftBrush}"
+                                   Text="Every file in the addon, files ticked by default are packed by gameinfo.gi. A folder is ticked when all of its files are, and half ticked when some are. &#10;&#10;Untick a file or folder to keep it out, or tick one that is kept out to bring it in. Custom packing rules are saved in publish_rules.txt in the addon's content root, and the rules for every addon from the settings are counted in too." />
+                        <!-- keeping out what the map never reaches, the map to read it from picked beside it -->
+                        <Border DockPanel.Dock="Top" Margin="0,0,0,8" BorderBrush="{DynamicResource OutlineBrush}" BorderThickness="1" CornerRadius="5" Padding="8">
+                            <StackPanel>
+                                <DockPanel>
+                                    <ComboBox DockPanel.Dock="Right" Name="MapBox" MinWidth="170" Margin="8,0,0,0" SelectionChanged="OnMapChanged" />
+                                    <CheckBox Name="ExcludeUnused" Content="Exclude unused content" VerticalAlignment="Center" Click="OnExcludeUnusedChanged" />
+                                </DockPanel>
+                                <TextBlock Name="UnusedNotice" Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}"
+                                           Text="The program searches for the assets used in the selected vpk file. Be careful using this feature, because it has limitations in specific scenarios like scripts: you must have clean path names to be parsed correctly." />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBox Name="SearchBox" DockPanel.Dock="Top" Margin="0,0,0,8" PlaceholderText="Search files" TextChanged="OnSearchChanged" />
+                        <TreeView Name="FilesTree" Background="Transparent" BorderThickness="0">
+                            <TreeView.ItemTemplate>
+                                <TreeDataTemplate x:DataType="local:FileNode" ItemsSource="{Binding Children}">
+                                    <DockPanel>
+                                        <CheckBox IsChecked="{Binding Packed, Mode=OneWay}" IsThreeState="{Binding IsFolder}" Click="OnNodeClick" DoubleTapped="OnNodeDoubleTapped" MinHeight="0" Padding="0" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding SizeText}" Margin="12,0,16,0" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                        <local:SvgIcon Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </TreeDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </DockPanel>
+    </Panel>
+</Window>

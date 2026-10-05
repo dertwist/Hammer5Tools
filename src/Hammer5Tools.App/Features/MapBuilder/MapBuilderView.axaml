@@ -1,73 +1,125 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Hammer5Tools.App.Features.MapBuilder"
-             xmlns:m="using:Hammer5Tools.Core.MapBuilder"
-             x:Class="Hammer5Tools.App.Features.MapBuilder.MapBuilderView"
-             x:DataType="vm:MapBuilderViewModel">
-  <Grid ColumnDefinitions="340,3,*" Margin="8">
-    <!-- Left Column: Build Configuration & Queue -->
-    <Border Grid.Column="0" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="12" Margin="0,0,8,0">
-      <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Compile Map" FontWeight="Bold" FontSize="14" Margin="0,0,0,10" />
-
-        <StackPanel Grid.Row="1" Spacing="10" Margin="0,0,0,12">
-          <Grid ColumnDefinitions="100,*">
-            <TextBlock Grid.Column="0" Text="Map Name:" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding MapName}" PlaceholderText="Map name (without .vmap)" />
-          </Grid>
-
-          <Grid ColumnDefinitions="100,*">
-            <TextBlock Grid.Column="0" Text="Preset:" VerticalAlignment="Center" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" HorizontalAlignment="Stretch">
-            </ComboBox>
-          </Grid>
-
-          <CheckBox Content="Clear VRAD3 Cache Before Build" IsChecked="{Binding ClearVrad}" />
-          <CheckBox Content="Launch CS2 &amp; Load Map After Build" IsChecked="{Binding LaunchAfterBuild}" />
-
-          <Button Content="Start Map Compile" Command="{Binding StartBuildCommand}" HorizontalAlignment="Stretch" Background="{DynamicResource H5TSuccessDarkBrush}" FontWeight="Bold" />
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Hammer5Tools.App.Controls" xmlns:vm="using:Hammer5Tools.App.Features.MapBuilder" xmlns:m="using:Hammer5Tools.Core.MapBuilder"
+             x:Class="Hammer5Tools.App.Features.MapBuilder.MapBuilderView" x:DataType="vm:MapBuilderViewModel">
+  <Grid ColumnDefinitions="2*,4,3*" Margin="2">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <Border Classes="editor-panel" Padding="10,12" Margin="0,0,0,6">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <ListBox Classes="build-presets" ItemsSource="{Binding Configurations}" SelectedItem="{Binding SelectedConfiguration}">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBox.ItemTemplate><DataTemplate x:DataType="m:MapBuildConfiguration"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" FontSize="10" Width="44" /></DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <Button Content="+" Width="64" Height="64" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+            <Button.Flyout><Flyout><StackPanel Spacing="6"><TextBlock Text="Preset name" /><TextBox Text="{Binding NewPresetName}" /><Button Content="Create preset" Command="{Binding NewPresetCommand}" /></StackPanel></Flyout></Button.Flyout>
+          </Button>
         </StackPanel>
-
-        <!-- Build Queue / History -->
-        <TextBlock Grid.Row="2" Text="Build History" FontWeight="SemiBold" Margin="0,4,0,4" />
-        <ListBox Grid.Row="2" ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}" Margin="0,24,0,0">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:MapBuildJob">
-              <Grid ColumnDefinitions="*,Auto" Margin="0,2">
-                <StackPanel Grid.Column="0">
-                  <TextBlock Text="{Binding MapName}" FontWeight="SemiBold" />
-                  <TextBlock Text="{Binding StartedAt, StringFormat='Started: {0:HH:mm:ss}'}" FontSize="11" Foreground="{DynamicResource H5TTextMutedBrush}" />
+      </Border>
+      <Border Grid.Row="1" Classes="editor-panel">
+        <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <Expander Header="Common" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="4" Margin="12,8,12,12">
+                <TextBlock Text="Mappath" Margin="6,4" />
+                <ListBox ItemsSource="{Binding Maps}" SelectedItem="{Binding SelectedMap}" Height="70" Classes="map-list" />
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,4">
+                  <Button Content="⌕ Add vmap" Command="{Binding AddMapCommand}" />
+                  <Button Content="▥ Remove" Command="{Binding RemoveMapCommand}" />
+                  <Button Content="▣ Save changes" Command="{Binding SavePresetCommand}" />
                 </StackPanel>
-                <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
-    <Border Grid.Column="2" Background="{DynamicResource H5TSurfaceInputBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource H5TAccentBrush}" />
-                </Border>
-              </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-
-        <Button Grid.Row="3" Content="Cancel Build" Command="{Binding CancelBuildCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" Background="{DynamicResource H5TErrorDarkBrush}" />
+                <CheckBox Classes="map-option" Content="Save Map Path To Preset" IsChecked="{Binding Options.SaveMapPath}" />
+                <Grid ColumnDefinitions="*,64"><TextBlock Text="Threads" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Classes="compact" Value="{Binding Options.Threads}" Minimum="-1" Maximum="1024" Increment="1" FormatString="0" /></Grid>
+                <CheckBox Classes="map-option" Content="Save Build Logs" IsChecked="{Binding Options.SaveBuildLogs}" />
+                <CheckBox Classes="map-option" Content="Cleanup _vrad3 cache" IsChecked="{Binding Options.ClearVradCache}" />
+              </StackPanel>
+            </Expander>
+            <Expander Header="World" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Build World" IsChecked="{Binding Options.BuildWorld}" />
+                <CheckBox Classes="map-option" Content="Entities Only" IsChecked="{Binding Options.EntitiesOnly}" />
+                <CheckBox Classes="map-option" Content="No Settle" IsChecked="{Binding Options.NoSettle}" />
+              </StackPanel>
+            </Expander>
+            <Expander Header="Lightmapping" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Bake Lighting" IsChecked="{Binding Options.BakeLighting}" />
+                <CheckBox Classes="map-option" Content="Noise Removal" IsChecked="{Binding Options.NoiseRemoval}" />
+                <CheckBox Classes="map-option" Content="No Light Calculations" IsChecked="{Binding Options.NoLightCalculations}" />
+                <CheckBox Classes="map-option" Content="Vrad3 Large Block Size" IsChecked="{Binding Options.LargeBlockSize}" />
+                <Grid ColumnDefinitions="Auto,70,Auto,86,*" Margin="6,0,0,0">
+                  <TextBlock Text="Resolution" VerticalAlignment="Center" Margin="0,0,8,0" />
+                  <ComboBox Grid.Column="1" ItemsSource="{Binding Resolutions}" SelectedItem="{Binding Options.LightmapResolution}" HorizontalAlignment="Stretch" />
+                  <TextBlock Grid.Column="2" Text="Quality" VerticalAlignment="Center" Margin="12,0,8,0" />
+                  <ComboBox Grid.Column="3" ItemsSource="{Binding Qualities}" SelectedIndex="{Binding Options.LightmapQuality}" HorizontalAlignment="Stretch" />
+                  <CheckBox Grid.Column="4" Classes="map-option" Content="Compression" IsChecked="{Binding Options.LightmapCompression}" Margin="8,0,0,0" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+            <Expander Header="Physics" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Build Physics" IsChecked="{Binding Options.BuildPhysics}" />
+                <CheckBox Classes="map-option" Content="Legacy Compile Collision Mesh" IsChecked="{Binding Options.LegacyCollisionMesh}" />
+              </StackPanel>
+            </Expander>
+            <Expander Header="Visibility" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Build Vis" IsChecked="{Binding Options.BuildVisibility}" />
+                <CheckBox Classes="map-option" Content="Debug Vis Geo" IsChecked="{Binding Options.DebugVisibility}" />
+              </StackPanel>
+            </Expander>
+            <Expander Header="Navigation" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Build Nav" IsChecked="{Binding Options.BuildNavigation}" />
+                <CheckBox Classes="map-option" Content="Nav Debug" IsChecked="{Binding Options.DebugNavigation}" />
+                <CheckBox Classes="map-option" Content="Grid Nav" IsChecked="{Binding Options.GridNavigation}" />
+              </StackPanel>
+            </Expander>
+            <Expander Header="Audio" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Build Reverb" IsChecked="{Binding Options.BuildReverb}" />
+                <CheckBox Classes="map-option" Content="Build Paths" IsChecked="{Binding Options.BuildAudioPaths}" />
+                <CheckBox Classes="map-option" Content="Bake Custom Audio" IsChecked="{Binding Options.BakeCustomAudio}" />
+                <Grid ColumnDefinitions="*,64"><TextBlock Text="Audio Threads" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Classes="compact" Value="{Binding Options.AudioThreads}" Minimum="-1" Maximum="1024" Increment="1" FormatString="0" /></Grid>
+              </StackPanel>
+            </Expander>
+            <Expander Header="Load Map In Engine" Classes="map-group" IsExpanded="True">
+              <StackPanel Spacing="6" Margin="12,8,12,12">
+                <CheckBox Classes="map-option" Content="Load In Engine After Build" IsChecked="{Binding Options.LaunchAfterBuild}" />
+                <CheckBox Classes="map-option" Content="Build Cubemaps" IsChecked="{Binding Options.BuildCubemaps}" />
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="0,6,0,0">
+        <Button Content="Build" Command="{Binding StartBuildCommand}" HorizontalAlignment="Stretch" Margin="0,0,6,0" />
+        <Button Grid.Column="1" Content="Run (Skip Build)" Command="{Binding RunMapCommand}" HorizontalAlignment="Stretch" Margin="0,0,6,0" />
+        <Button Grid.Column="2" Content="Abort" Command="{Binding CancelBuildCommand}" HorizontalAlignment="Stretch" />
       </Grid>
-    </Border>
-
-    <!-- Right Column: Compile Logs Viewer -->
+    </Grid>
     <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
-    <Border Grid.Column="2" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="12">
-      <Grid RowDefinitions="Auto,*">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-          <TextBlock Grid.Column="0" Text="Compilation Logs" FontWeight="Bold" FontSize="14" />
-          <TextBlock Grid.Column="1" Text="{Binding SelectedJob.Status, FallbackValue='No Job Selected', StringFormat='Status: {0}'}" Foreground="{DynamicResource H5TSuccessBrush}" FontWeight="SemiBold" />
-        </Grid>
-
-        <ListBox Grid.Row="1" ItemsSource="{Binding SelectedJob.OutputLogs}" Background="Transparent">
+    <Grid Grid.Column="2" RowDefinitions="*,128,Auto" Margin="2,0,0,0">
+      <Border Classes="editor-panel build-log" Padding="6">
+        <ListBox Name="BuildOutput" ItemsSource="{Binding Logs}" Classes="build-output" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
           <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="x:String">
-              <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, Monospace" FontSize="11" />
+            <DataTemplate x:DataType="vm:BuildLogLine">
+              <TextBlock Text="{Binding Text}" Classes.log-error="{Binding IsError}" Classes.log-warning="{Binding IsWarning}" Classes.log-phase="{Binding IsPhase}" />
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
+      </Border>
+      <Border Grid.Row="1" Classes="editor-panel" Margin="0,6,0,0" Padding="8">
+        <Grid ColumnDefinitions="*,*,*">
+          <StackPanel><TextBlock Text="{Binding CpuUsage}" /><Border Background="{DynamicResource H5TSurfaceRaisedBrush}" Height="82" Margin="0,6,8,0" ><controls:UsageChart Values="{Binding CpuSamples}" Stroke="{DynamicResource H5TCpuChartBrush}" /></Border></StackPanel>
+          <StackPanel Grid.Column="1"><TextBlock Text="{Binding MemoryUsage}" /><Border Background="{DynamicResource H5TSurfaceRaisedBrush}" Height="82" Margin="0,6,8,0" ><controls:UsageChart Values="{Binding MemorySamples}" Stroke="{DynamicResource H5TMemoryChartBrush}" /></Border></StackPanel>
+          <StackPanel Grid.Column="2"><TextBlock Text="{Binding GpuUsage}" /><Border Background="{DynamicResource H5TSurfaceRaisedBrush}" Height="82" Margin="0,6,0,0" ><controls:UsageChart Values="{Binding GpuSamples}" Stroke="{DynamicResource H5TGpuChartBrush}" /></Border></StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+        <Grid><ProgressBar IsIndeterminate="{Binding IsBuilding}" Height="18" /><TextBlock Text="{Binding Status}" FontSize="10" TextAlignment="Center" VerticalAlignment="Center" /></Grid>
+        <ComboBox Grid.Column="1" ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}" Width="130" Margin="6,0,0,0" ToolTip.Tip="Build history">
+          <ComboBox.ItemTemplate><DataTemplate x:DataType="m:MapBuildJob"><TextBlock Text="{Binding MapName}" FontSize="10" /></DataTemplate></ComboBox.ItemTemplate>
+        </ComboBox>
       </Grid>
-    </Border>
+    </Grid>
   </Grid>
 </UserControl>

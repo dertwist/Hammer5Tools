@@ -22,11 +22,33 @@ public interface IDialogService
     Task ShowErrorAsync(string message);
 
     void CloseUtilities();
+
+    void ShowWorkshopManager();
 }
 
-public class DialogService : IDialogService
+public class DialogService : IDialogService, IDisposable
 {
     private readonly Dictionary<Type, Window> OpenWindows = [];
+    private System.Diagnostics.Process? WorkshopManagerProcess;
+
+    public void ShowWorkshopManager()
+    {
+        if (WorkshopManagerProcess is { HasExited: false })
+        {
+            return;
+        }
+
+        WorkshopManagerProcess?.Dispose();
+        var start = WorkshopManagerLaunch.CreateStartInfo(AppContext.BaseDirectory);
+        WorkshopManagerProcess = System.Diagnostics.Process.Start(start)
+            ?? throw new InvalidOperationException("Workshop Manager could not be started.");
+    }
+
+    public void Dispose()
+    {
+        WorkshopManagerProcess?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     private static Window MainWindow =>
         (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow

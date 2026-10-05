@@ -25,6 +25,20 @@ using Microsoft.Extensions.DependencyInjection;
 public class MigrationUiTests
 {
     [Test]
+    public async Task NumberSliderPreservesAuthoredValuesAndForwardsEdits()
+    {
+        var control = new Hammer5Tools.App.Controls.NumberSlider { Minimum = 0, Maximum = 1, Value = 2.5 };
+        await Assert.That(control.Value).IsEqualTo(2.5);
+        var grid = (Grid)control.Content!;
+        var number = grid.Children.OfType<NumericUpDown>().Single();
+        await Assert.That(number.Value).IsEqualTo(2.5m);
+        number.Value = 0.75m;
+        await Assert.That(control.Value).IsEqualTo(0.75);
+        grid.Children.OfType<Slider>().Single().Value = 0.5;
+        await Assert.That(control.Value).IsEqualTo(0.5);
+    }
+
+    [Test]
     public async Task BaselineViewsRenderWithDockedPanelsAndBoundPreferences()
     {
         using var fixture = new Fixture();
@@ -43,7 +57,6 @@ public class MigrationUiTests
                 ("assettools", new Features.AssetTools.AssetToolsView { DataContext = new Features.AssetTools.AssetToolsViewModel(fixture.Services.GetRequiredService<IAddonService>(), fixture.Services.GetRequiredService<Core.Workshop.IAssetToolsService>()) }),
                 ("gitsync", new Features.GitSync.GitSyncView { DataContext = new Features.GitSync.GitSyncViewModel(fixture.Services.GetRequiredService<IAddonService>(), fixture.Services.GetRequiredService<Core.GitSync.IGitSyncService>()) }),
                 ("mapbuilder", new Features.MapBuilder.MapBuilderView { DataContext = new Features.MapBuilder.MapBuilderViewModel(fixture.Services.GetRequiredService<IAddonService>(), fixture.Services.GetRequiredService<Core.MapBuilder.IMapBuilderService>()) }),
-                ("workshop", new Features.Workshop.WorkshopManagerView { DataContext = new Features.Workshop.WorkshopManagerViewModel(fixture.Services.GetRequiredService<IAddonService>(), fixture.Services.GetRequiredService<Core.Workshop.IWorkshopManagerService>(), fixture.Dialogs) }),
                 ("preferences", new PreferencesView { DataContext = new PreferencesViewModel(fixture.Settings, fixture.Dialogs) }),
             };
             var output = Path.Combine(AppContext.BaseDirectory, "UiSnapshots");
@@ -51,6 +64,8 @@ public class MigrationUiTests
             foreach (var (name, view) in views)
             {
                 var window = view as Window ?? new Window { Content = view, Width = 1200, Height = 760 };
+                window.Width = name == "mapbuilder" ? 1282 : 2214;
+                window.Height = name == "mapbuilder" ? 901 : 1110;
                 window.Show();
                 Dispatcher.UIThread.RunJobs();
                 window.UpdateLayout();
@@ -66,7 +81,23 @@ public class MigrationUiTests
 
                 if (name == "shell")
                 {
+                    var loading = window.GetVisualDescendants().OfType<LoadingEditorView>().Single();
+                    await Assert.That(loading.DataContext).IsSameReferenceAs(shell.ActiveDocument);
+                    await Assert.That(window.GetVisualDescendants().OfType<Features.Explorer.AssetExplorerView>().Any()).IsFalse();
+                    shell.ActiveDocument = shell.Documents.OfType<SoundEventEditorViewModel>().Single();
+                    Dispatcher.UIThread.RunJobs();
+                    window.UpdateLayout();
+                    var sound = window.GetVisualDescendants().OfType<SoundEventEditorView>().Single();
+                    await Assert.That(sound.DataContext).IsSameReferenceAs(shell.ActiveDocument);
                     await Assert.That(window.GetVisualDescendants().OfType<Features.Explorer.AssetExplorerView>().Any()).IsTrue();
+                    foreach (var document in shell.Documents)
+                    {
+                        shell.ActiveDocument = document;
+                        Dispatcher.UIThread.RunJobs();
+                        window.UpdateLayout();
+                        using var editorFrame = window.CaptureRenderedFrame();
+                        editorFrame!.Save(Path.Combine(output, $"shell-{document.GetType().Name}.png"), Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+                    }
                 }
 
                 window.Close();
@@ -239,6 +270,45 @@ public class MigrationUiTests
     }
 
     [Test]
+    public async Task WorkshopCommandOpensTheUpstreamApplication()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.OpenWorkshopManagerCommand).ExecuteAsync(null);
+            await Assert.That(fixture.Dialogs.WorkshopLaunchCount).IsEqualTo(1);
+            await Assert.That(fixture.Dialogs.Errors).IsEmpty();
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task WorkshopLauncherUsesTheBundleAndSupportsPathsWithSpaces()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"h5t workshop {Guid.NewGuid():N}");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "WorkshopManager"));
+            await Assert.That(() => WorkshopManagerLaunch.CreateStartInfo(root)).Throws<FileNotFoundException>();
+            var assembly = Path.Combine(root, "WorkshopManager", "CS2WorkshopManager-GUI.dll");
+            await File.WriteAllTextAsync(assembly, string.Empty);
+            var managed = WorkshopManagerLaunch.CreateStartInfo(root);
+            await Assert.That(managed.FileName).IsEqualTo("dotnet");
+            await Assert.That(managed.ArgumentList.Single()).IsEqualTo(assembly);
+            var executable = Path.Combine(root, "WorkshopManager", OperatingSystem.IsWindows() ? "CS2WorkshopManager-GUI.exe" : "CS2WorkshopManager-GUI");
+            await File.WriteAllTextAsync(executable, string.Empty);
+            var native = WorkshopManagerLaunch.CreateStartInfo(root);
+            await Assert.That(native.FileName).IsEqualTo(executable);
+            await Assert.That(native.WorkingDirectory).IsEqualTo(Path.GetDirectoryName(executable));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task InvalidSoundDocumentCannotBeOverwrittenBySaving()
     {
         using var fixture = new Fixture();
@@ -295,6 +365,33 @@ public class MigrationUiTests
         await Assert.That(editor.IsDirty).IsTrue();
     }
 
+    [Test]
+    public async Task MapBuilderPresetsPersistEditsWithoutChangingOtherPresets()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var builder = new Features.MapBuilder.MapBuilderViewModel(
+                fixture.Services.GetRequiredService<IAddonService>(),
+                fixture.Services.GetRequiredService<Core.MapBuilder.IMapBuilderService>(), fixture.Settings, fixture.Dialogs);
+            builder.SelectedConfiguration = builder.Configurations.Single(configuration => configuration.Name == "Full Compile");
+            builder.Options.LightmapResolution = 2048;
+            builder.Options.SaveMapPath = true;
+            builder.SavePresetCommand.Execute(null);
+            fixture.Settings.Load();
+            using var reopened = new Features.MapBuilder.MapBuilderViewModel(
+                fixture.Services.GetRequiredService<IAddonService>(),
+                fixture.Services.GetRequiredService<Core.MapBuilder.IMapBuilderService>(), fixture.Settings, fixture.Dialogs);
+            reopened.SelectedConfiguration = reopened.Configurations.Single(configuration => configuration.Name == "Full Compile");
+            await Assert.That(reopened.Options.LightmapResolution).IsEqualTo(2048);
+            await Assert.That(reopened.Maps.Single()).IsEqualTo("first");
+            reopened.SelectedConfiguration = reopened.Configurations[0];
+            await Assert.That(reopened.Options.BakeLighting).IsFalse();
+            await Assert.That(reopened.Options.LightmapResolution).IsEqualTo(512);
+            return true;
+        }, CancellationToken.None);
+    }
+
     private sealed class Fixture : IDisposable
     {
         private readonly string Root = Path.Combine(Path.GetTempPath(), $"h5t-ui-{Guid.NewGuid():N}");
@@ -341,6 +438,8 @@ public class MigrationUiTests
         public Task<string?> PickFolderAsync(string title) { return Task.FromResult<string?>(null); }
         public Task ShowErrorAsync(string message) { Errors.Add(message); return Task.CompletedTask; }
         public void CloseUtilities() { }
+        public int WorkshopLaunchCount { get; private set; }
+        public void ShowWorkshopManager() { WorkshopLaunchCount++; }
     }
 }
 

@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Hammer5Tools.App.Features.DetailProps" xmlns:m="using:Hammer5Tools.Core.DetailProps"
-             xmlns:workspace="using:Hammer5Tools.App.Controls"
+             xmlns:controls="using:Hammer5Tools.App.Controls" xmlns:workspace="using:Hammer5Tools.App.Controls"
              x:Class="Hammer5Tools.App.Features.DetailProps.DetailPropEditorView" x:DataType="vm:DetailPropEditorViewModel">
   <workspace:WorkspaceView LayoutKey="DetailProps" RightTitle="History">
     <workspace:WorkspaceView.CenterContent>
@@ -22,42 +22,50 @@
         </Grid>
         <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
         <ScrollViewer Grid.Column="2">
-          <StackPanel Spacing="6" Margin="8,0">
-            <TextBlock Text="Detail Type" Classes="section" />
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Name" /><TextBox Grid.Column="1" Text="{Binding SelectedType.Name}" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Density" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedType.Density}" Increment="0.0001" FormatString="0.#######" /></Grid>
-            <TextBlock Text="Model" Classes="section" />
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Model" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.ModelName}" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Material Group" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.MaterialGroup}" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.Weight}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Start fade out size" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.StartFadeSize}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Complete fade out size" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.EndFadeSize}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Use World Space Up" VerticalAlignment="Center" /><CheckBox Grid.Column="1" IsChecked="{Binding SelectedModel.WorldSpaceOrientation}" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Orient To Surface" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.OrientToSurface}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Min Surface Slope" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MinSurfaceSlope}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Max Surface Slope" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.MaxSurfaceSlope}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Vertical Offset Min" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMin}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Vertical Offset Max" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMax}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Scale Min" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMin}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Random Scale Max" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMax}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Density Scale" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.DensityMinScale}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Blend Weight Scale" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMinScale}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Min Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMin}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Max Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMax}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Full Density Blend Weight" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Value="{Binding SelectedModel.BlendWeightFullDensity}" Increment="0.01" FormatString="0.#######" /></Grid>
-            <Grid ColumnDefinitions="200,*"><TextBlock Text="Cast Static Shadows" VerticalAlignment="Center" /><CheckBox Grid.Column="1" IsChecked="{Binding SelectedModel.CastStaticShadows}" /></Grid>
-            <TextBlock Text="Random Rotation Min" Classes="section" />
-            <Grid ColumnDefinitions="*,*,*">
-              <NumericUpDown Grid.Column="0" Value="{Binding RotationMinX}" Increment="1" />
-              <NumericUpDown Grid.Column="1" Value="{Binding RotationMinY}" Increment="1" />
-              <NumericUpDown Grid.Column="2" Value="{Binding RotationMinZ}" Increment="1" />
+          <StackPanel Spacing="2" Margin="8,0">
+            <StackPanel IsVisible="{Binding IsTypeSelected}">
+            <TextBlock Text="DETAIL TYPE" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Name" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedType.Name}" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Density" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedType.Density}" Maximum="10" Increment="0.0001" /></Grid>
+            </StackPanel>
+            <StackPanel IsVisible="{Binding HasSelectedModel}" Spacing="2">
+            <TextBlock Text="MODEL" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Model" Classes="property-string" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.ModelName}" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Material Group" Classes="property-string" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding SelectedModel.MaterialGroup}" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Weight" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.Weight}" Minimum="0" Maximum="1" Increment="0.01" /></Grid>
+            <TextBlock Text="FADE" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Start fade out size" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.StartFadeSize}" Minimum="0.001" Maximum="1" Increment="0.0001" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Complete fade out size" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.EndFadeSize}" Minimum="0.001" Maximum="1" Increment="0.0001" /></Grid>
+            <TextBlock Text="ORIENTATION" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Use World Space Up" Classes="property-bool" VerticalAlignment="Center" /><CheckBox Grid.Column="1" Classes="map-option" IsChecked="{Binding SelectedModel.WorldSpaceOrientation}" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Orient To Surface" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.OrientToSurface}" Minimum="0" Maximum="1" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*,*,*"><TextBlock Text="Random Rotation Min" Classes="property-float" VerticalAlignment="Center" />
+              <Grid Grid.Column="1" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="P" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMinX}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
+              <Grid Grid.Column="2" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="Y" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMinY}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
+              <Grid Grid.Column="3" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="R" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMinZ}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
             </Grid>
-            <TextBlock Text="Random Rotation Max" Classes="section" />
-            <Grid ColumnDefinitions="*,*,*">
-              <NumericUpDown Grid.Column="0" Value="{Binding RotationMaxX}" Increment="1" />
-              <NumericUpDown Grid.Column="1" Value="{Binding RotationMaxY}" Increment="1" />
-              <NumericUpDown Grid.Column="2" Value="{Binding RotationMaxZ}" Increment="1" />
+            <Grid ColumnDefinitions="150,*,*,*"><TextBlock Text="Random Rotation Max" Classes="property-float" VerticalAlignment="Center" />
+              <Grid Grid.Column="1" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="P" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMaxX}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
+              <Grid Grid.Column="2" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="Y" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMaxY}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
+              <Grid Grid.Column="3" ColumnDefinitions="20,*" Margin="0,0,8,0"><TextBlock Text="R" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding RotationMaxZ}" Minimum="-360" Maximum="360" Increment="1" /></Grid>
             </Grid>
+            <TextBlock Text="PLACEMENT" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Min Surface Slope" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.MinSurfaceSlope}" Minimum="0" Maximum="180" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Max Surface Slope" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.MaxSurfaceSlope}" Minimum="0" Maximum="180" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Random Vertical Offset Min" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMin}" Minimum="-100" Maximum="100" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Random Vertical Offset Max" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.VerticalOffsetMax}" Minimum="-100" Maximum="100" Increment="0.01" /></Grid>
+            <TextBlock Text="SCALE" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Random Scale Min" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMin}" Minimum="0" Maximum="2" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Random Scale Max" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.RandomScaleMax}" Minimum="0" Maximum="2" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Density Scale" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.DensityMinScale}" Minimum="0.01" Maximum="1" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Blend Weight Scale" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMinScale}" Minimum="0.01" Maximum="1" Increment="0.01" /></Grid>
+            <TextBlock Text="BLEND WEIGHT" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Min Blend Weight" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMin}" Minimum="0.01" Maximum="1" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Max Blend Weight" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.BlendWeightMax}" Minimum="0.01" Maximum="1" Increment="0.01" /></Grid>
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Full Density Blend Weight" Classes="property-float" VerticalAlignment="Center" /><controls:NumberSlider Grid.Column="1" Value="{Binding SelectedModel.BlendWeightFullDensity}" Minimum="0.01" Maximum="1" Increment="0.01" /></Grid>
+            <TextBlock Text="LIGHTING" Classes="property-section" />
+            <Grid ColumnDefinitions="150,*"><TextBlock Text="Cast Static Shadows" Classes="property-bool" VerticalAlignment="Center" /><CheckBox Grid.Column="1" Classes="map-option" IsChecked="{Binding SelectedModel.CastStaticShadows}" /></Grid>
+            </StackPanel>
           </StackPanel>
         </ScrollViewer>
       </Grid>

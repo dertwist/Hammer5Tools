@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:GUI"
+        x:Class="GUI.SettingsWindow"
+        Title="Settings"
+        Icon="avares://CS2WorkshopManager-GUI/assets/icon.ico"
+        Width="640" Height="480"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBrush}"
+        local:WindowAccent.Color="{DynamicResource AccentColor}">
+    <Panel>
+        <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="90%,0%" />
+
+        <DockPanel Margin="12">
+            <TextBlock Name="Status" DockPanel.Dock="Bottom" Margin="0,8,0,0" Foreground="{DynamicResource ContrastBrush}" />
+
+            <!-- the theme and the accent over it, applied and saved as they are picked -->
+            <Border DockPanel.Dock="Top" Margin="0,0,0,12" Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="12">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,12,Auto">
+                    <TextBlock Text="Theme" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource ContrastBrush}" />
+                    <ComboBox Grid.Column="1" Name="ThemeBox" Width="160" SelectionChanged="OnThemeChanged">
+                        <ComboBoxItem Content="System" />
+                        <ComboBoxItem Content="Light" />
+                        <ComboBoxItem Content="Dark" />
+                    </ComboBox>
+                    <StackPanel Grid.Row="2" VerticalAlignment="Center">
+                        <TextBlock Text="Accent" FontWeight="SemiBold" Foreground="{DynamicResource ContrastBrush}" />
+                        <TextBlock Text="The color for the window background gradient and highlights." Foreground="{DynamicResource ContrastSoftBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <ColorPicker Name="AccentPicker" Width="96" IsAlphaEnabled="False" IsAlphaVisible="False" ColorChanged="OnAccentChanged" />
+                        <Button Name="AccentReset" Content="Reset" Click="OnAccentReset" ToolTip.Tip="Back to the theme's own accent" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- the packing rules for every addon, saved as they change -->
+            <Border Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="12">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Global packing rules" FontWeight="SemiBold" Foreground="{DynamicResource ContrastBrush}" />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}" Text="These apply to every addon." />
+                    <TextBlock DockPanel.Dock="Top" Margin="0,4,0,12" TextWrapping="Wrap" Foreground="{DynamicResource ContrastSoftBrush}"
+                               Text="Global rules get matched just like the per-addon and gameinfo.gi ones, they win over both." />
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0">
+                            <Button Content="Exclude" Click="OnExclude" />
+                            <Button Content="Include" Click="OnInclude" />
+                        </StackPanel>
+                        <TextBox Name="PatternBox" PlaceholderText="Enter a path such as materials/dev/" />
+                    </DockPanel>
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="Open folder" Margin="8,0,0,0" Click="OnOpenFolder" />
+                        <SelectableTextBlock Name="FilePath" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource ContrastSoftBrush}" />
+                    </DockPanel>
+                    <ScrollViewer>
+                        <ItemsControl Name="RulesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:RuleRow">
+                                    <DockPanel Margin="0,4">
+                                        <Button DockPanel.Dock="Right" Content="Remove" Click="OnRemoveRule" />
+                                        <TextBlock Text="{Binding Kind}" Width="70" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                        <SelectableTextBlock Text="{Binding Pattern}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </DockPanel>
+    </Panel>
+</Window>

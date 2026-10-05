@@ -1,0 +1,9 @@
+<Project>
+  <!-- native package assets that end up in the output without being used: debug symbols, VRF's shader tooling, and its image library unless a project opts in with UsesSkiaSharp -->
+  <Target Name="RemoveUnusedNativeAssets" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)" Condition="'%(Extension)' == '.pdb' or '%(Filename)' == 'spirv-cross' or '%(Filename)' == 'libspirv-cross' or ('%(Filename)' == 'libSkiaSharp' and '$(UsesSkiaSharp)' != 'true')" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)" Condition="'%(Extension)' == '.pdb' or '%(Filename)' == 'spirv-cross' or '%(Filename)' == 'libspirv-cross' or ('%(Filename)' == 'libSkiaSharp' and '$(UsesSkiaSharp)' != 'true')" />
+    </ItemGroup>
+  </Target>
+</Project>

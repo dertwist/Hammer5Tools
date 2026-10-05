@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Vendored applications keep their upstream dependency versions. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+</Project>

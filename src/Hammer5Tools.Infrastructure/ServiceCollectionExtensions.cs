@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISoundEventService, SoundEventService>();
         services.AddSingleton<INavMeshRadarService, NavMeshRadarService>();
         services.AddSingleton<IMapBuilderService, MapBuilderService>();
+        services.AddSingleton<ISystemUsageService, SystemUsageService>();
         services.AddSingleton<IWorkshopManagerService, WorkshopManagerService>();
         services.AddSingleton<IAssetToolsService, AssetToolsService>();
         services.AddSingleton<IGitSyncService, GitSyncService>();

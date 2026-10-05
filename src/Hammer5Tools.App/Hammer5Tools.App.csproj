@@ -11,6 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
     <ProjectReference Include="..\Hammer5Tools.Infrastructure\Hammer5Tools.Infrastructure.csproj" />
+    <ProjectReference Include="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" ReferenceOutputAssembly="false" Private="false"
+                      AdditionalProperties="ShouldBeValidatedAsExecutableReference=false;PublishSingleFile=false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,4 +34,24 @@
     <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 
+  <Target Name="CopyWorkshopManager" AfterTargets="Build">
+    <MSBuild Projects="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier)">
+      <Output TaskParameter="TargetOutputs" ItemName="WorkshopManagerAssembly" />
+    </MSBuild>
+    <ItemGroup>
+      <WorkshopManagerFiles Include="%(WorkshopManagerAssembly.RootDir)%(WorkshopManagerAssembly.Directory)**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WorkshopManagerFiles)"
+          DestinationFiles="@(WorkshopManagerFiles->'$(TargetDir)WorkshopManager/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishWorkshopManager" AfterTargets="Publish">
+    <PropertyGroup>
+      <WorkshopManagerPublishDir>$([System.IO.Path]::GetFullPath('$(PublishDir)WorkshopManager/', '$(MSBuildProjectDirectory)'))</WorkshopManagerPublishDir>
+    </PropertyGroup>
+    <MSBuild Projects="../../third_party/CS2WorkshopManager/GUI/GUI.csproj" Targets="Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);PublishSingleFile=false;PublishDir=$(WorkshopManagerPublishDir)" />
+  </Target>
 </Project>

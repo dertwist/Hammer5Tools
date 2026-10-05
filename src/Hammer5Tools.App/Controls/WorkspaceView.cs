@@ -24,6 +24,7 @@ public class WorkspaceView : UserControl
     private readonly Factory Factory = new();
     private RootDock? Layout;
     private DockControl? DockControl;
+    private IDockable? LeftPanel;
 
     public ISettingsService? SettingsService { get; set; }
 
@@ -39,6 +40,15 @@ public class WorkspaceView : UserControl
 
     public Control? RightBottomContent { get; set; }
 
+    public static readonly StyledProperty<bool> ShowLeftProperty =
+        AvaloniaProperty.Register<WorkspaceView, bool>(nameof(ShowLeft), true);
+
+    public bool ShowLeft
+    {
+        get => GetValue(ShowLeftProperty);
+        set => SetValue(ShowLeftProperty, value);
+    }
+
     public string LeftTitle { get; set; } = "Explorer";
 
     public string RightTitle { get; set; } = "Properties";
@@ -48,6 +58,32 @@ public class WorkspaceView : UserControl
     public WorkspaceView()
     {
         DataContextChanged += (_, _) => UpdateContexts();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == ShowLeftProperty && Layout is not null)
+        {
+            UpdateLeftVisibility();
+        }
+    }
+
+    private void UpdateLeftVisibility()
+    {
+        if (LeftPanel is null)
+        {
+            return;
+        }
+
+        if (ShowLeft)
+        {
+            Factory.RestoreDockable(LeftPanel);
+        }
+        else
+        {
+            Factory.HideDockable(LeftPanel);
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -131,10 +167,30 @@ public class WorkspaceView : UserControl
 
         Layout ??= CreateDefaultLayout();
         UpdateContexts();
+        LeftPanel = FindLeftPanel(Layout) ?? Layout.HiddenDockables?.FirstOrDefault(panel => panel.Id == "Left");
         Factory.InitLayout(Layout);
+        UpdateLeftVisibility();
         DockControl ??= new DockControl();
         DockControl.Layout = Layout;
         Content = DockControl;
+    }
+
+    private static IDockable? FindLeftPanel(IDock dock)
+    {
+        foreach (var panel in dock.VisibleDockables ?? [])
+        {
+            if (panel.Id == "Left")
+            {
+                return panel;
+            }
+
+            if (panel is IDock child && FindLeftPanel(child) is { } left)
+            {
+                return left;
+            }
+        }
+
+        return null;
     }
 
     private RootDock CreateDefaultLayout()
@@ -155,7 +211,7 @@ public class WorkspaceView : UserControl
         };
         if (LeftContent is not null)
         {
-            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, 0.25));
+            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, 0.23));
             main.VisibleDockables.Add(new ProportionalDockSplitter());
         }
 
@@ -163,16 +219,17 @@ public class WorkspaceView : UserControl
         if (RightContent is not null)
         {
             main.VisibleDockables.Add(new ProportionalDockSplitter());
-            var right = CreateToolDock("Right", RightTitle, Alignment.Right, 0.25);
+            var right = CreateToolDock("Right", RightTitle, Alignment.Right, 0.15);
             if (RightBottomContent is null)
             {
                 main.VisibleDockables.Add(right);
             }
             else
             {
+                right.Proportion = 0.5;
                 main.VisibleDockables.Add(new ProportionalDock
                 {
-                    Proportion = 0.25,
+                    Proportion = 0.15,
                     Orientation = Orientation.Vertical,
                     VisibleDockables = Factory.CreateList<IDockable>(right, new ProportionalDockSplitter(),
                         CreateToolDock("RightBottom", RightBottomTitle, Alignment.Right, double.NaN)),

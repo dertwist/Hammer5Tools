@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:GUI"
+        x:Class="GUI.MessageDialog"
+        Icon="avares://CS2WorkshopManager-GUI/assets/icon.ico"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBrush}">
+    <Panel>
+        <!-- the main window's gradient in the colour of the news, which the window's accent sets -->
+        <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="105%,-1%" />
+
+        <StackPanel Margin="20" Spacing="16" MaxWidth="540">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Image Name="Symbol" Width="96" Height="96" VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                <TextBlock Name="Message" TextWrapping="Wrap" MaxWidth="440" VerticalAlignment="Center" />
+            </StackPanel>
+            <!-- the line of text a question asks for, when it does -->
+            <TextBox Name="InputBox" IsVisible="False" MinWidth="440" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Name="ConfirmButton" Classes="accent" MinWidth="80" Click="OnConfirm" />
+                <Button Name="CancelButton" MinWidth="80" Click="OnCancel" />
+                <Button Name="OkButton" Content="OK" Classes="accent" MinWidth="80" Click="OnConfirm" />
+            </StackPanel>
+        </StackPanel>
+    </Panel>
+</Window>

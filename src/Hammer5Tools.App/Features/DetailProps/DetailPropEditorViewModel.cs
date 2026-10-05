@@ -55,6 +55,7 @@ public class DetailPropEditorViewModel : DocumentViewModel
             if (SetProperty(ref SelectedTypeValue, value))
             {
                 RefreshModels();
+                OnPropertyChanged(nameof(IsTypeSelected));
             }
         }
     }
@@ -66,6 +67,8 @@ public class DetailPropEditorViewModel : DocumentViewModel
         {
             if (SetProperty(ref SelectedModelValue, value))
             {
+                OnPropertyChanged(nameof(IsTypeSelected));
+                OnPropertyChanged(nameof(HasSelectedModel));
                 OnPropertyChanged(nameof(RotationMinX));
                 OnPropertyChanged(nameof(RotationMinY));
                 OnPropertyChanged(nameof(RotationMinZ));
@@ -75,6 +78,10 @@ public class DetailPropEditorViewModel : DocumentViewModel
             }
         }
     }
+
+    public bool IsTypeSelected => SelectedModel is null && SelectedType is not null;
+
+    public bool HasSelectedModel => SelectedModel is not null;
 
     public float RotationMinX
     {

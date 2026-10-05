@@ -14,7 +14,6 @@ using Hammer5Tools.App.Features.LoadingScreens;
 using Hammer5Tools.App.Features.MapBuilder;
 using Hammer5Tools.App.Features.NavMesh;
 using Hammer5Tools.App.Features.SoundEvents;
-using Hammer5Tools.App.Features.Workshop;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core.Addons;
 using Hammer5Tools.Core.Commands;
@@ -42,8 +41,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
     private readonly ILoadingScreenService LoadingScreenService;
     private readonly ISoundEventService SoundEventService;
     private readonly IMapBuilderService MapBuilderService;
+    private readonly ISystemUsageService? SystemUsageService;
     private readonly INavMeshRadarService NavMeshRadarService;
-    private readonly IWorkshopManagerService WorkshopManagerService;
     private readonly IAssetToolsService AssetToolsService;
     private readonly IGitSyncService GitSyncService;
     private readonly Services.IDialogService DialogService;
@@ -63,8 +62,17 @@ public class ShellViewModel : ViewModelBase, IDisposable
     public DocumentViewModel? ActiveDocument
     {
         get => ActiveDocumentValue;
-        set => SetProperty(ref ActiveDocumentValue, value);
+        set
+        {
+            if (SetProperty(ref ActiveDocumentValue, value))
+            {
+                OnPropertyChanged(nameof(IsAssetExplorerVisible));
+            }
+        }
     }
+
+    public bool IsAssetExplorerVisible => ActiveDocument is not
+        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel);
 
     public Addon? SelectedAddon
     {
@@ -209,10 +217,10 @@ public class ShellViewModel : ViewModelBase, IDisposable
         ISoundEventService soundEventService,
         IMapBuilderService mapBuilderService,
         INavMeshRadarService navMeshRadarService,
-        IWorkshopManagerService workshopManagerService,
         IAssetToolsService assetToolsService,
         IGitSyncService gitSyncService,
-        Services.IDialogService dialogService)
+        Services.IDialogService dialogService,
+        ISystemUsageService? systemUsageService = null)
     {
         AddonService = addonService;
         Cs2Launcher = cs2Launcher;
@@ -225,8 +233,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
         LoadingScreenService = loadingScreenService;
         SoundEventService = soundEventService;
         MapBuilderService = mapBuilderService;
+        SystemUsageService = systemUsageService;
         NavMeshRadarService = navMeshRadarService;
-        WorkshopManagerService = workshopManagerService;
         AssetToolsService = assetToolsService;
         GitSyncService = gitSyncService;
         DialogService = dialogService;
@@ -244,7 +252,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         OpenSoundEventEditorCommand = new RelayCommand(OpenSoundEventEditor);
         OpenMapBuilderCommand = new RelayCommand(OpenMapBuilder);
         OpenNavMeshRadarCommand = new RelayCommand(OpenNavMeshRadar);
-        OpenWorkshopManagerCommand = new RelayCommand(OpenWorkshopManager);
+        OpenWorkshopManagerCommand = new AsyncRelayCommand(OpenWorkshopManagerAsync);
         OpenAssetToolsCommand = new RelayCommand(OpenAssetTools);
         OpenGitSyncCommand = new RelayCommand(OpenGitSync);
 
@@ -351,8 +359,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public void OpenMapBuilder()
     {
-        var builder = new MapBuilderViewModel(AddonService, MapBuilderService);
-        DialogService.ShowUtility("Map Builder", builder, 1020, 700);
+        var builder = new MapBuilderViewModel(AddonService, MapBuilderService, SettingsService, DialogService, SystemUsageService);
+        DialogService.ShowUtility("Map Builder", builder, 1282, 933);
     }
 
     public void OpenNavMeshRadar()
@@ -361,10 +369,18 @@ public class ShellViewModel : ViewModelBase, IDisposable
         DialogService.ShowUtility("NavMesh Radar", radar, 920, 640);
     }
 
-    public void OpenWorkshopManager()
+    private async Task OpenWorkshopManagerAsync()
     {
-        var workshop = new WorkshopManagerViewModel(AddonService, WorkshopManagerService, DialogService);
-        DialogService.ShowUtility("Workshop Manager", workshop, 960, 680);
+        try
+        {
+            DialogService.ShowWorkshopManager();
+            StatusMessage = "CS2 Workshop Manager opened";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Workshop Manager could not be opened: {ex.Message}";
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
     }
 
     public void OpenAssetTools()

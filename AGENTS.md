@@ -14,11 +14,20 @@ The replacement application under `src/` uses `Core -> Infrastructure -> App/Cli
 - `src/Hammer5Tools.Infrastructure/`: filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the upstream NuGet package; do not duplicate its packing rules.
 - `src/Hammer5Tools.App/`: Avalonia views, presentation state and editor lifecycle. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources.
 - `src/Hammer5Tools.Cli/`: command-line presentation.
+- `third_party/CS2WorkshopManager/`: pinned, unmodified upstream GUI, library and Steamworks sources with licenses and original build settings. The App builds and publishes the full upstream GUI into `WorkshopManager/` and its Tools command opens that executable. It owns its UI, settings and Steam lifecycle in a separate process; do not port its dialogs or apply Hammer5Tools styling to it. Preserve its upstream source formatting and license notices when updating; run `dotnet format --exclude third_party` for owned code.
 - `tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
 
 Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
 
 `IResourceCompiler` retains its existing asset compile overload and adds an overload for map-build arguments, with cancellation terminating the process tree. `ILoadingScreenService` includes addon-description loading and SVG map-icon application; parsing and IO are kept out of views. The legacy ownership rules below apply to the existing Python/NativeAOT application, not the replacement managed application. Neither application is removed until migration parity is verified.
+
+The managed Map Builder uses Core `MapBuildOptions` for compiler flags and
+`MapBuildConfiguration` for saved presets. Infrastructure owns the serial build
+queue, confined VMAP resolution, live compiler output, retained build logs and
+system usage counters. `MapBuildJob.OutputLogs` is a thread-safe snapshot;
+workers append through `AppendOutput`. The legacy enum build overload remains
+available. App owns option presentation and usage charts; unavailable counters
+are null, never simulated percentages.
 
 ## Mandatory Workflow
 

@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <OutputType>WinExe</OutputType>
+    <Description>Counter-Strike 2 Workshop manager</Description>
+    <AssemblyName>CS2WorkshopManager-GUI</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>assets\icon.ico</ApplicationIcon>
+    <!-- one self contained exe with the native libraries unpacked on first run, like Source2Viewer -->
+    <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
+    <PublishSingleFile Condition="'$(Configuration)' != 'Debug'">true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- CA2007: continuations must stay on the UI thread -->
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+    <!-- Avalonia renders with SkiaSharp, so its native library must stay in the output -->
+    <UsesSkiaSharp>true</UsesSkiaSharp>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Labs.Gif" Version="12.0.2" />
+    <PackageReference Include="Svg.Skia" Version="5.1.1" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CS2WorkshopManager\CS2WorkshopManager.csproj" />
+    <!-- the library keeps Steamworks to itself for its package, so the Steam errors it throws are referenced directly -->
+    <ProjectReference Include="..\Steamworks\Steamworks.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the window icon, the exe icon above is only used by Windows -->
+    <AvaloniaResource Include="assets\icon.ico" />
+    <AvaloniaResource Include="assets\buttons\*.png" />
+    <AvaloniaResource Include="assets/*.png" />
+    <AvaloniaResource Include="assets/filetypes/*" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the licence and the notices ship next to the executable -->
+    <None Include="..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\THIRD_PARTY_NOTICES.txt" Link="THIRD_PARTY_NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

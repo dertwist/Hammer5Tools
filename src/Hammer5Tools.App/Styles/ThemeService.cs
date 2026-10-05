@@ -39,6 +39,13 @@ public static class ThemeService
         // Values copied from the Python theme.py semantic tokens and explicit palettes.
         var colors = new Dictionary<string, string>
         {
+            ["PropertyFloat"] = light ? "#00634e" : vintage ? "#c0f5e9" : "#b5ffef",
+            ["PropertyBool"] = light ? "#b30003" : vintage ? "#f6c7c7" : "#ffbdbe",
+            ["PropertyString"] = light ? "#854900" : vintage ? "#f1d1a8" : "#ffd199",
+            ["PropertySection"] = light ? "#4c692f" : vintage ? "#b5caa0" : "#b3d096",
+            ["CpuChart"] = light ? "#c84040" : vintage ? "#e97573" : "#ff5a5a",
+            ["MemoryChart"] = light ? "#a87d00" : vintage ? "#ddc327" : "#ffd700",
+            ["GpuChart"] = light ? "#167a88" : vintage ? "#49aeb4" : "#32b8c6",
             ["Background"] = light ? "#d1d1d1" : vintage ? "#58624c" : "#2e2e2e",
             ["Surface"] = light ? "#d8d8d8" : vintage ? "#525c47" : "#272727",
             ["SurfaceRaised"] = light ? "#ceced0" : vintage ? "#59644d" : "#2f2f31",
