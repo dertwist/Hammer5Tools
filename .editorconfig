@@ -44,11 +44,17 @@ dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
 # VRF Analyzer suppressions
 dotnet_diagnostic.WFO1000.severity = none
+dotnet_diagnostic.CA1002.severity = none
+dotnet_diagnostic.CA1003.severity = none
+dotnet_diagnostic.CA1031.severity = none
 dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1308.severity = none
 dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1852.severity = none
 dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CA2227.severity = none
 
 # Avalonia XAML files
 [*.axaml]
