@@ -97,7 +97,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         IsChangingDocuments = true;
         try
         {
-            if (!await DialogService.ConfirmCloseAsync(Documents.ToArray()))
+            if (!await DialogService.ConfirmContextChangeAsync(Documents.ToArray()))
             {
                 OnPropertyChanged(nameof(SelectedAddon));
                 return false;
@@ -501,7 +501,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         preferences.BeforeApply = async () =>
         {
             pathChanged = preferences.Cs2Path != (SettingsService.Settings.Cs2PathOverride ?? string.Empty);
-            return !pathChanged || await DialogService.ConfirmCloseAsync(Documents.ToArray());
+            return !pathChanged || await DialogService.ConfirmContextChangeAsync(Documents.ToArray());
         };
         preferences.Applied += (_, _) =>
         {

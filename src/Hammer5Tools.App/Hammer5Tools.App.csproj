@@ -6,6 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Icons/appicon.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
@@ -26,6 +27,7 @@
     <EmbeddedResource Include="Assets/SmartProps/grid.vert" LogicalName="Shaders.grid.vert" />
     <EmbeddedResource Include="Assets/SmartProps/grid.frag" LogicalName="Shaders.grid.frag" />
     <None Update="Features/SmartProps/Example.vsmart" Link="Example.vsmart" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="CreateToolShortcuts.ps1" CopyToPublishDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Hammer5Tools.SmartProp.Tests" />
     <InternalsVisibleTo Include="Hammer5Tools.App.Tests" />
 

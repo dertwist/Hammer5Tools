@@ -13,6 +13,8 @@ public interface IDialogService
 
     Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents);
 
+    Task<bool> ConfirmContextChangeAsync(IReadOnlyList<DocumentViewModel> documents) => ConfirmCloseAsync(documents);
+
     Task<string?> OpenFileAsync(string title, string pattern);
 
     Task<string?> SaveFileAsync(string title, string filename);
@@ -33,9 +35,23 @@ public interface IDialogService
 public class DialogService : IDialogService, IDisposable
 {
     private readonly Dictionary<Type, Window> OpenWindows = [];
+    private bool CheckingContext;
+    private bool IsDisposed;
+
+    public Func<IReadOnlyList<DocumentViewModel>>? ContextDocuments { get; set; }
+
+    public Action? OpenWorkshop { get; set; }
+
+    public Func<Window?>? OwnerWindow { get; set; }
 
     public void ShowWorkshopManager()
     {
+        if (OpenWorkshop is not null)
+        {
+            OpenWorkshop();
+            return;
+        }
+
         var type = typeof(GUI.MainWindow);
         if (OpenWindows.TryGetValue(type, out var existing))
         {
@@ -51,6 +67,8 @@ public class DialogService : IDialogService, IDisposable
 
     public void Dispose()
     {
+        if (IsDisposed) return;
+        IsDisposed = true;
         CloseUtilities();
         CS2WorkshopManager.WorkshopManager.ShutdownSteam();
         GC.SuppressFinalize(this);
@@ -87,9 +105,18 @@ public class DialogService : IDialogService, IDisposable
         return await window.ShowDialog<bool>(MainWindow);
     }
 
-    private static Window MainWindow =>
-        (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow
-        ?? throw new InvalidOperationException("The application window is not available.");
+    private Window MainWindow
+    {
+        get
+        {
+            var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            return desktop?.Windows.FirstOrDefault(window => window.IsActive)
+                ?? desktop?.Windows.FirstOrDefault(window => window.IsVisible)
+                ?? desktop?.MainWindow
+                ?? OwnerWindow?.Invoke()
+                ?? throw new InvalidOperationException("The application window is not available.");
+        }
+    }
 
     public void ShowUtility(string title, object viewModel, double width = 960, double height = 650)
     {
@@ -134,7 +161,9 @@ public class DialogService : IDialogService, IDisposable
         }
     }
 
-    public async Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents)
+    public Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents) => ConfirmCloseAsync(documents, null);
+
+    public async Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents, Window? owner)
     {
         var dirty = documents.Where(document => document.IsDirty).ToArray();
         if (dirty.Length == 0)
@@ -181,7 +210,21 @@ public class DialogService : IDialogService, IDisposable
         buttons.Children.Add(cancel);
         panel.Children.Add(buttons);
         window.Content = panel;
-        return await window.ShowDialog<bool>(MainWindow);
+        return await window.ShowDialog<bool>(owner ?? MainWindow);
+    }
+
+    public async Task<bool> ConfirmContextChangeAsync(IReadOnlyList<DocumentViewModel> documents)
+    {
+        if (CheckingContext) return false;
+        CheckingContext = true;
+        try
+        {
+            return await ConfirmCloseAsync(documents.Concat(ContextDocuments?.Invoke() ?? []).Distinct().ToArray());
+        }
+        finally
+        {
+            CheckingContext = false;
+        }
     }
 
     public async Task<string?> OpenFileAsync(string title, string pattern)

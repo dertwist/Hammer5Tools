@@ -141,6 +141,22 @@ public class MigrationUiTests
 
                 if (name == "shell")
                 {
+                    var menu = window.FindControl<Menu>("ApplicationMenu")!;
+                    var tabs = window.FindControl<TabControl>("EditorTabs")!;
+                    await Assert.That(menu.Parent).IsSameReferenceAs(tabs.Parent);
+                    await Assert.That(menu.Bounds.Bottom <= tabs.Bounds.Top).IsTrue();
+                    await Assert.That(window.Icon).IsNotNull();
+                    var mapBuilder = window.FindControl<Button>("MapBuilderButton")!;
+                    var gitSync = window.FindControl<Button>("GitSyncButton")!;
+                    await Assert.That(mapBuilder.Command).IsSameReferenceAs(shell.OpenMapBuilderCommand);
+                    await Assert.That(gitSync.Command).IsSameReferenceAs(shell.OpenGitSyncCommand);
+                    await Assert.That(((Image)mapBuilder.Content!).Source).IsNotNull();
+                    await Assert.That(window.FindControl<Button>("PreferencesButton")).IsNull();
+                    await Assert.That(mapBuilder.Bounds.Width).IsEqualTo(26.0);
+                    await Assert.That(mapBuilder.Bounds.Height).IsEqualTo(26.0);
+                    await Assert.That(gitSync.Bounds.Height).IsEqualTo(mapBuilder.Bounds.Height);
+                    await Assert.That(window.FindControl<ComboBox>("AddonSelector")!.Bounds.Height).IsEqualTo(26.0);
+                    await Assert.That(gitSync.Bounds.Right <= mapBuilder.Bounds.Left).IsTrue();
                     var loading = window.GetVisualDescendants().OfType<LoadingEditorView>().Single();
                     await Assert.That(loading.DataContext).IsSameReferenceAs(shell.ActiveDocument);
                     await Assert.That(window.GetVisualDescendants().OfType<Features.Explorer.AssetExplorerView>().Any()).IsFalse();

@@ -9,7 +9,7 @@
         x:Class="Hammer5Tools.App.MainWindow"
         x:DataType="shell:ShellViewModel"
         Title="Hammer 5 Tools"
-        Icon="avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png"
+        Icon="avares://Hammer5Tools.App/Assets/Icons/appicon.ico"
         Width="1440"
         Height="900"
         MinWidth="800"
@@ -17,7 +17,7 @@
         WindowStartupLocation="CenterScreen">
 
   <Grid RowDefinitions="Auto,Auto,*,Auto">
-      <TabControl Grid.Row="0"
+      <TabControl Grid.Row="1" Name="EditorTabs"
                   ItemsSource="{Binding Documents}"
                   SelectedItem="{Binding ActiveDocument}"
                   Background="{DynamicResource H5TSurfaceRaisedBrush}">
@@ -42,7 +42,7 @@
         </TabControl.Template>
       </TabControl>
 
-    <Menu Grid.Row="1" Name="ApplicationMenu">
+    <Menu Grid.Row="0" Name="ApplicationMenu">
       <MenuItem Header="_File">
         <MenuItem Header="_Open" Command="{Binding OpenFileCommand}" HotKey="Ctrl+O" />
         <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
@@ -80,7 +80,7 @@
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
-        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.gg/hammer5tools" />
+        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.com/invite/DvCXEyhssd" />
         <MenuItem Header="GitHub Repository" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
         <Separator />
         <MenuItem Header="_About Hammer 5 Tools" />
@@ -96,37 +96,12 @@
       </workspace:WorkspaceView.CenterContent>
     </workspace:WorkspaceView>
 
-    <!-- Bottom Button Line with Console Line, Addon Selector, Actions, Utilities, Edit Map (Classic Hammer5Tools Layout) -->
-    <Border Grid.Row="3" Background="{DynamicResource H5TSurfaceBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,1" Padding="8,2">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
-        <!-- Left: Twitter, Discord, About, Git Sync buttons -->
-        <Button Grid.Column="0"
-                Command="{Binding OpenUrlCommand}"
-                CommandParameter="https://twitter.com"
-                ToolTip.Tip="Twitter / X profile"
-                Padding="6,2"
-                Margin="0,0,2,0">
-          <Image Source="avares://Hammer5Tools.App/Assets/Icons/twitter.png" Width="16" Height="16" />
-        </Button>
-        <Button Grid.Column="1"
-                Command="{Binding OpenUrlCommand}"
-                CommandParameter="https://discord.gg/hammer5tools"
-                ToolTip.Tip="Discord Community Server"
-                Padding="6,2"
-                Margin="0,0,2,0">
-          <Image Source="avares://Hammer5Tools.App/Assets/Icons/discord.png" Width="16" Height="16" />
-        </Button>
-        <Button Grid.Column="2" Content="?"
-                Command="{Binding OpenUrlCommand}"
-                CommandParameter="https://github.com/dertwist/Hammer5Tools"
-                ToolTip.Tip="About Hammer 5 Tools" Margin="0,0,4,0" Padding="6,2" />
-        <Button Grid.Column="3" Content="⚙ Settings"
-                Command="{Binding OpenPreferencesCommand}"
-                ToolTip.Tip="Preferences" Margin="0,0,6,0" Padding="12,2" />
-
-        <!-- Center: Wide Sunken Console Line showing status/logs, clickable to open console dialog -->
-        <Border Grid.Column="4" Background="Transparent" BorderThickness="0" Margin="2,0" Padding="8,2" ToolTip.Tip="Console activity — click to open full console window">
-          <Button Command="{Binding OpenConsoleCommand}" Classes="subtle" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Padding="0">
+    <!-- Legacy shell shortcuts and addon actions. -->
+    <Border Grid.Row="3" Name="BottomBar" Classes="shell-bottom" Background="{DynamicResource H5TSurfaceBrush}">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
+        <!-- Recent activity opens the console. -->
+        <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity — click to open full console window">
+          <Button Command="{Binding OpenConsoleCommand}" Classes="subtle shell-status" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
             <Grid ColumnDefinitions="Auto,*">
               <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource H5TTextMutedBrush}" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
             </Grid>
@@ -134,7 +109,13 @@
         </Border>
 
         <!-- Utilities Menu Button (Map Builder, Workshop Manager, Asset Tools, NavMesh Radar dialogs) -->
-        <Button Grid.Column="5" Content="Utilities ▾" Margin="4,0" ToolTip.Tip="Open standalone utility tools">
+        <Button Grid.Column="1" Width="90" ToolTip.Tip="Open standalone utility tools">
+          <Button.Content>
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Path Classes="shell-icon" Data="{StaticResource H5TShellUtilitiesIcon}" />
+              <TextBlock Text="Utilities" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button.Content>
           <Button.Flyout>
             <MenuFlyout Placement="Top">
               <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
@@ -149,7 +130,8 @@
         </Button>
 
         <!-- Actions Menu Button (Folder navigation, refresh, cache, CS2 controls) -->
-        <Button Grid.Column="6" x:Name="AddonActionsButton" Content="☰" Margin="4,0" ToolTip.Tip="Addon actions and tool settings">
+        <Button Grid.Column="2" x:Name="AddonActionsButton" Classes="shell-icon" ToolTip.Tip="Addon actions and tool settings">
+          <Button.Content><Path Classes="shell-icon" Data="{StaticResource H5TShellMenuIcon}" /></Button.Content>
           <Button.Flyout>
             <MenuFlyout Placement="Top">
               <MenuItem Header="Edit launch parameters" Command="{Binding OpenPreferencesCommand}" />
@@ -168,11 +150,10 @@
         </Button>
 
         <!-- Addon Selector ComboBox -->
-        <ComboBox Grid.Column="7"
+        <ComboBox Grid.Column="3"
                   ItemsSource="{Binding Addons}"
                   SelectedItem="{Binding SelectedAddon}"
-                  Width="210"
-                  Margin="4,0"
+                  Name="AddonSelector" Width="220"
                   VerticalAlignment="Center"
                   ToolTip.Tip="Selected Addon workspace">
           <ComboBox.ItemTemplate>
@@ -182,27 +163,25 @@
           </ComboBox.ItemTemplate>
         </ComboBox>
 
-        <!-- Launch Workshop Tools for the selected addon. -->
-        <Button Grid.Column="8"
+        <Button Grid.Column="4" Name="GitSyncButton" Classes="shell-icon"
+                Command="{Binding OpenGitSyncCommand}" ToolTip.Tip="Git Sync">
+          <Path Classes="shell-icon" Data="{StaticResource H5TShellSyncIcon}" />
+        </Button>
 
+        <!-- Launch Workshop Tools for the selected addon. -->
+        <Button Grid.Column="5" Width="104"
                 Command="{Binding LaunchCs2Command}"
-                ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for selected addon"
-                Margin="4,0"
-                Padding="8,2">
+                ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for selected addon">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
             <Image Source="avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png" Width="16" Height="16" VerticalAlignment="Center" />
             <TextBlock Text="Edit map" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
 
-        <!-- Documentation shortcut. -->
-        <Button Grid.Column="9"
-                Content="?"
-                Command="{Binding OpenUrlCommand}"
-                CommandParameter="https://github.com/dertwist/Hammer5Tools"
-                ToolTip.Tip="Documentation"
-                Margin="2,0,0,0"
-                Padding="8,4" />
+        <Button Grid.Column="6" Name="MapBuilderButton" Classes="shell-icon"
+                Command="{Binding OpenMapBuilderCommand}" ToolTip.Tip="Map Builder: compile VMAP files">
+          <Image Source="avares://Hammer5Tools.App/Assets/Icons/emoji_objects_24dp.png" Width="16" Height="16" />
+        </Button>
       </Grid>
     </Border>
   </Grid>

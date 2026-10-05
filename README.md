@@ -2,7 +2,19 @@
 
 The managed Avalonia application is `src/Hammer5Tools.App`. Build with `dotnet build Hammer5Tools.slnx -c Release` and run with `dotnet run --project src/Hammer5Tools.App`.
 
-SmartProp is integrated into the main application. Workshop Manager runs in the same process as an owned utility window. Application commands use the menu bar; the menu beside the addon selector contains addon lifecycle and folder actions. The old standalone SmartProp preview was removed; its regression host lives in `tests/Hammer5Tools.SmartProp.Tests`.
+SmartProp is integrated into the main application. Workshop Manager runs in its own window in the same process. Application commands use the menu bar; the menu beside the addon selector contains addon lifecycle and folder actions. The old standalone SmartProp preview was removed; its regression host lives in `tests/Hammer5Tools.SmartProp.Tests`.
+
+SoundEvent Editor, Map Builder and Workshop Manager can also open independently from the same installation:
+
+```powershell
+Hammer5Tools.App.exe --tool soundevents
+Hammer5Tools.App.exe --tool mapbuilder
+Hammer5Tools.App.exe --tool workshop
+```
+
+For source builds, use `dotnet run --project src/Hammer5Tools.App -- --tool soundevents` (or another tool name). Without `--tool`, the full toolkit opens. Launches reuse the running process and activate an existing tool window when possible. Closing a standalone tool leaves other windows open; the process exits when its last window closes. SoundEvent and Map Builder windows include addon selection and Settings, with unsaved-document confirmation before changing addons or installations.
+
+Published Windows builds include `CreateToolShortcuts.ps1`. Run `powershell -File .\CreateToolShortcuts.ps1` from the installation folder to add optional Start-menu shortcuts. All four shortcuts target the same executable and reuse its DLLs; no extra application copies are installed. Use `-Destination <folder>` to place shortcuts elsewhere.
 
 The previous Python/PySide6 application, its tests and bridge are preserved under `legacy/Hammer5ToolsGUI`. Run legacy scripts from `legacy/` (for example, `python Hammer5ToolsGUI/gui/main.py`). The native Core remains under `Hammer5ToolsCore`.
 
