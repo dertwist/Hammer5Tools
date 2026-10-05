@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Hammer5Tools.App.MainWindow"
+        Title="Hammer 5 Tools"
+        Width="1280"
+        Height="800"
+        WindowStartupLocation="CenterScreen">
+  <Grid RowDefinitions="Auto,*">
+    <TextBlock Grid.Row="1"
+               Text="Hammer 5 Tools 7.0"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               FontSize="24" />
+  </Grid>
+</Window>

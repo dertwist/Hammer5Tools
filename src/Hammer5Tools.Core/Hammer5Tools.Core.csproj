@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Hammer5Tools domain logic and file format libraries</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ValveResourceFormat" />
+    <PackageReference Include="ValvePak" />
+    <PackageReference Include="ValveKeyValue" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+</Project>

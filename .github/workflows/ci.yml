@@ -1,138 +1,35 @@
 name: CI
 
 on:
-  workflow_call:
-    inputs:
-      channel:
-        description: 'Release channel (dev or stable)'
-        required: false
-        default: 'dev'
-        type: string
+  push:
+    branches: [ main, csharp ]
+  pull_request:
+    branches: [ main, csharp ]
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  build-and-test:
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          fetch-depth: 1
+          dotnet-version: '10.0.x'
 
-      - uses: ./.github/actions/setup-project
+      - name: Restore dependencies
+        run: dotnet restore
 
-      # PyInstaller only warns about modules it cannot find, so an import of a
-      # package missing from requirements.txt ships and crashes on launch.
-      - name: Verify imports resolve
-        run: python verify_imports.py
+      - name: Build solution
+        run: dotnet build --no-restore -c Release
 
-      # NativeAOT library needed by CoreBridge and native-backed Python tests.
-      - name: Build Native Core
-        run: python makefile.py --build-libs
+      - name: Run tests
+        run: dotnet test --no-build -c Release
 
-      - name: Run Python tests
-        run: python -m pytest -q --durations=15
-        env:
-          QT_QPA_PLATFORM: offscreen
-
-      # Star imports hide these from every reader; a NameError only shows up when
-      # the branch runs. Unused-import warnings are not gated on yet.
-      - name: Check for undefined names
-        run: python check_undefined_names.py
-
-      # TUnit runs as its own executable; the legacy xUnit suite still needs
-      # `dotnet test` until it moves to Microsoft Testing Platform.
-      - name: Run Core tests
-        run: |
-          dotnet run --project Hammer5ToolsCore/Hammer5Tools.Core.Tests -c Release
-          dotnet test Hammer5ToolsCore/SourcePorter.Core.Tests -c Release
-
-  analyze:
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-
-      # dotnet format loads the csproj, so it needs .NET and the CUE4Parse
-      # ProjectReference target - but none of the Python toolchain.
-      - uses: ./.github/actions/setup-project
-        with:
-          python: 'false'
-
-      - name: Check formatting
-        run: dotnet format --verify-no-changes Hammer5ToolsCore/Hammer5Tools.Core/Hammer5Tools.Core.csproj
-
-  # Not gated on `test`: this job publishes nothing, and the release workflows
-  # depend on the whole CI run, so a failing test still blocks every release.
-  build:
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-
-      - uses: ./.github/actions/setup-project
-
-      - name: Build All
-        run: python makefile.py --build-all --${{ inputs.channel }}
-
-      - name: Validate Velopack hooks
-        shell: pwsh
-        run: |
-          Push-Location Hammer5Tools
-          $exe = '.\Hammer5Tools.exe'
-          if (-not (Test-Path $exe)) { $exe = '.\app\Hammer5Tools.exe' }
-          if (-not (Test-Path $exe)) {
-            Write-Host 'Hammer5Tools.exe not found; unable to test hooks. Directory content:'
-            Get-ChildItem -Recurse
-            exit 1
-          }
-          # --veloapp-* is what Velopack actually sends. This step used to run only the
-          # --velopack-*/--squirrel-* spellings the launcher invented, so it passed while
-          # every real install started a GUI the installer then killed.
-          $flags = @(
-            '--veloapp-install', '--veloapp-updated', '--veloapp-obsolete', '--veloapp-uninstall',
-            '--velopack-install', '--squirrel-install'
-          )
-          foreach ($flag in $flags) {
-            $process = Start-Process $exe -ArgumentList $flag, '1.0.0' -PassThru
-            if (-not $process.WaitForExit(10000)) {
-              $process.Kill()
-              throw "$flag did not exit: the installer hook was treated as a normal start."
-            }
-            $gui = @(Get-Process Hammer5ToolsGUI -ErrorAction SilentlyContinue)
-            if ($gui.Count -gt 0) {
-              $gui | Stop-Process -Force
-              throw "$flag started the GUI instead of exiting."
-            }
-          }
-          Pop-Location
-
-      - name: Validate three-root bundle
-        shell: pwsh
-        run: |
-          $required = @(
-            'Hammer5Tools\Hammer5Tools.exe',
-            'Hammer5Tools\app\Hammer5ToolsGUI.exe',
-            'Hammer5Tools\app\runtime'
-          )
-          foreach ($path in $required) {
-            if (-not (Test-Path $path)) { throw "Missing packaged runtime path: $path" }
-          }
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hammer5tools-bundle
-          path: Hammer5Tools/
-          # An empty upload would let the release job publish nothing at all.
-          if-no-files-found: error
-          retention-days: 1
+      - name: Check code formatting
+        run: dotnet format --verify-no-changes
