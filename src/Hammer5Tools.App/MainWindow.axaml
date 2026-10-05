@@ -16,8 +16,8 @@
         x:Class="Hammer5Tools.App.MainWindow"
         x:DataType="shell:ShellViewModel"
         Title="Hammer 5 Tools 7.0"
-        Width="1400"
-        Height="880"
+        Width="1440"
+        Height="900"
         WindowStartupLocation="CenterScreen">
 
   <Window.DataTemplates>
@@ -55,11 +55,16 @@
 
   <Grid RowDefinitions="Auto,Auto,*,Auto">
     <!-- Menu Bar -->
-    <Menu Grid.Row="0" Background="#272727">
+    <Menu Grid.Row="0">
       <MenuItem Header="_File">
         <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
         <Separator />
         <MenuItem Header="E_xit" />
+      </MenuItem>
+      <MenuItem Header="_Addon">
+        <MenuItem Header="Refresh Addon List" Command="{Binding RefreshAddonsCommand}" />
+        <MenuItem Header="Open Content Folder" Command="{Binding OpenContentFolderCommand}" />
+        <MenuItem Header="Open Game Folder" Command="{Binding OpenGameFolderCommand}" />
       </MenuItem>
       <MenuItem Header="_CS2">
         <MenuItem Header="Launch Workshop Tools" Command="{Binding LaunchCs2Command}" />
@@ -83,13 +88,17 @@
         <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
       </MenuItem>
       <MenuItem Header="_Help">
+        <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
+        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.gg/hammer5tools" />
+        <MenuItem Header="GitHub Repository" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
+        <Separator />
         <MenuItem Header="_About Hammer 5 Tools" />
       </MenuItem>
     </Menu>
 
     <!-- Toolbar -->
     <Border Grid.Row="1" Background="#2e2e2e" BorderBrush="#464649" BorderThickness="0,1" Padding="8,4">
-      <Grid ColumnDefinitions="Auto,240,Auto,Auto,Auto,Auto,*,Auto">
+      <Grid ColumnDefinitions="Auto,220,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
         <TextBlock Grid.Column="0" Text="Active Addon:" VerticalAlignment="Center" Margin="4,0,8,0" FontWeight="SemiBold" />
         <ComboBox Grid.Column="1"
                   ItemsSource="{Binding Addons}"
@@ -103,13 +112,17 @@
           </ComboBox.ItemTemplate>
         </ComboBox>
 
-        <Separator Grid.Column="2" Margin="12,4" />
+        <Button Grid.Column="2" Content="↻" ToolTip.Tip="Refresh Addons" Command="{Binding RefreshAddonsCommand}" Margin="4,0" Padding="6,4" />
+        <Button Grid.Column="3" Content="Content 📁" ToolTip.Tip="Open Addon Content Directory" Command="{Binding OpenContentFolderCommand}" Margin="2,0" Padding="8,4" />
+        <Button Grid.Column="4" Content="Game 📁" ToolTip.Tip="Open Addon Game Directory" Command="{Binding OpenGameFolderCommand}" Margin="2,0" Padding="8,4" />
 
-        <Button Grid.Column="3" Content="Launch CS2" Command="{Binding LaunchCs2Command}" Margin="3,0" Background="#2E7D32" />
-        <Button Grid.Column="4" Content="Restart CS2" Command="{Binding RestartCs2Command}" Margin="3,0" />
-        <Button Grid.Column="5" Content="Kill CS2" Command="{Binding KillCs2Command}" Margin="3,0" Background="#C62828" />
+        <Separator Grid.Column="5" Margin="8,4" />
 
-        <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,4,0">
+        <Button Grid.Column="6" Content="Edit Map (CS2)" Classes="success" Command="{Binding LaunchCs2Command}" Margin="3,0" FontWeight="Bold" />
+        <Button Grid.Column="7" Content="Restart" Command="{Binding RestartCs2Command}" Margin="3,0" />
+        <Button Grid.Column="8" Content="Kill" Classes="danger" Command="{Binding KillCs2Command}" Margin="3,0" />
+
+        <StackPanel Grid.Column="10" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,4,0">
           <Button Content="Hotkeys" Command="{Binding OpenHotkeyEditorCommand}" />
           <Button Content="DetailProps" Command="{Binding OpenDetailPropEditorCommand}" />
           <Button Content="Loading" Command="{Binding OpenLoadingEditorCommand}" />
@@ -131,12 +144,10 @@
       <TabControl.ItemTemplate>
         <DataTemplate x:DataType="vm:DocumentViewModel">
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding DisplayTitle}" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding DisplayTitle}" VerticalAlignment="Center" FontWeight="SemiBold" />
             <Button Content="✕"
+                    Classes="subtle"
                     Command="{Binding CloseCommand}"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Padding="2,0"
                     FontSize="10"
                     VerticalAlignment="Center" />
           </StackPanel>
@@ -146,10 +157,24 @@
 
     <!-- Status Bar -->
     <Border Grid.Row="3" Background="#272727" BorderBrush="#464649" BorderThickness="0,1" Padding="8,4">
-      <Grid ColumnDefinitions="*,Auto,Auto">
-        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#a5a5a5" />
-        <TextBlock Grid.Column="1" Text="{Binding SelectedAddon.Name, FallbackValue='No Addon Selected', StringFormat='Addon: {0}'}" Margin="16,0" Foreground="#80CBC4" VerticalAlignment="Center" />
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <TextBlock Text="▶" Foreground="#4a83c9" FontSize="10" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#a5a5a5" />
+        </StackPanel>
+        <Border Grid.Column="1" Background="#2f2f31" BorderBrush="#464649" BorderThickness="1" CornerRadius="3" Padding="8,2" Margin="8,0">
+          <TextBlock Text="{Binding SelectedAddon.Name, FallbackValue='No Addon Selected', StringFormat='Addon: {0}'}"
+                     Foreground="#80CBC4"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+        </Border>
+        <Border Grid.Column="2" Background="#2f2f31" BorderBrush="#464649" BorderThickness="1" CornerRadius="3" Padding="8,2" Margin="4,0">
+          <TextBlock Text="{Binding Cs2StatusText}"
+                     Foreground="{Binding Cs2StatusColor}"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="8,0,4,0">
           <TextBlock Text="Hammer 5 Tools 7.0 (.NET 10)" Foreground="#797979" FontSize="11" />
         </StackPanel>
       </Grid>

@@ -1,6 +1,8 @@
 namespace Hammer5Tools.App.Features.Shell;
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using CommunityToolkit.Mvvm.Input;
 using Hammer5Tools.App.Features.AssetTools;
 using Hammer5Tools.App.Features.Console;
@@ -81,8 +83,19 @@ public class ShellViewModel : ViewModelBase
     public bool IsCs2Running
     {
         get => IsCs2RunningValue;
-        private set => SetProperty(ref IsCs2RunningValue, value);
+        private set
+        {
+            if (SetProperty(ref IsCs2RunningValue, value))
+            {
+                OnPropertyChanged(nameof(Cs2StatusText));
+                OnPropertyChanged(nameof(Cs2StatusColor));
+            }
+        }
     }
+
+    public string Cs2StatusText => IsCs2Running ? "CS2: Running" : "CS2: Stopped";
+
+    public string Cs2StatusColor => IsCs2Running ? "#5ab55e" : "#797979";
 
     public IRelayCommand LaunchCs2Command { get; }
 
@@ -111,6 +124,14 @@ public class ShellViewModel : ViewModelBase
     public IRelayCommand OpenAssetToolsCommand { get; }
 
     public IRelayCommand OpenGitSyncCommand { get; }
+
+    public IRelayCommand OpenContentFolderCommand { get; }
+
+    public IRelayCommand OpenGameFolderCommand { get; }
+
+    public IRelayCommand RefreshAddonsCommand { get; }
+
+    public IRelayCommand<string> OpenUrlCommand { get; }
 
     public IRelayCommand<DocumentViewModel> CloseDocumentCommand { get; }
 
@@ -162,6 +183,11 @@ public class ShellViewModel : ViewModelBase
         OpenWorkshopManagerCommand = new RelayCommand(OpenWorkshopManager);
         OpenAssetToolsCommand = new RelayCommand(OpenAssetTools);
         OpenGitSyncCommand = new RelayCommand(OpenGitSync);
+
+        OpenContentFolderCommand = new RelayCommand(OnOpenContentFolder);
+        OpenGameFolderCommand = new RelayCommand(OnOpenGameFolder);
+        RefreshAddonsCommand = new RelayCommand(OnRefreshAddons);
+        OpenUrlCommand = new RelayCommand<string>(OnOpenUrl);
 
         CloseDocumentCommand = new RelayCommand<DocumentViewModel>(CloseDocument);
         SaveDocumentCommand = new RelayCommand(SaveCurrentDocument);
@@ -369,5 +395,64 @@ public class ShellViewModel : ViewModelBase
     {
         var cleared = Vrad3CacheService.ClearCache(SelectedAddon?.Name);
         StatusMessage = $"Cleared {cleared} VRAD3 cache file(s).";
+    }
+
+    private void OnOpenContentFolder()
+    {
+        if (SelectedAddon is not null && Directory.Exists(SelectedAddon.ContentPath))
+        {
+            OpenFolder(SelectedAddon.ContentPath);
+        }
+        else
+        {
+            StatusMessage = "No content folder found for selected addon";
+        }
+    }
+
+    private void OnOpenGameFolder()
+    {
+        if (SelectedAddon is not null && Directory.Exists(SelectedAddon.GamePath))
+        {
+            OpenFolder(SelectedAddon.GamePath);
+        }
+        else
+        {
+            StatusMessage = "No game folder found for selected addon";
+        }
+    }
+
+    private void OnRefreshAddons()
+    {
+        AddonService.RefreshAddons();
+        SyncAddons();
+        StatusMessage = $"Refreshed addons ({Addons.Count} discovered)";
+    }
+
+    private void OnOpenUrl(string? url)
+    {
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch
+            {
+                // Ignore failure
+            }
+        }
+    }
+
+    private void OpenFolder(string path)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            StatusMessage = $"Opened {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to open directory: {ex.Message}";
+        }
     }
 }
