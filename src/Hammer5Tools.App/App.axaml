@@ -1,7 +1,49 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:hotkeys="using:Hammer5Tools.App.Features.Hotkeys"
+             xmlns:detailprops="using:Hammer5Tools.App.Features.DetailProps"
+             xmlns:console="using:Hammer5Tools.App.Features.Console"
+             xmlns:loading="using:Hammer5Tools.App.Features.LoadingScreens"
+             xmlns:sound="using:Hammer5Tools.App.Features.SoundEvents"
+             xmlns:mapbuild="using:Hammer5Tools.App.Features.MapBuilder"
+             xmlns:navmesh="using:Hammer5Tools.App.Features.NavMesh"
+             xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
+             xmlns:assettools="using:Hammer5Tools.App.Features.AssetTools"
+             xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
              x:Class="Hammer5Tools.App.App"
              RequestedThemeVariant="Dark">
+  <Application.DataTemplates>
+    <DataTemplate DataType="{x:Type hotkeys:HotkeyEditorViewModel}">
+      <hotkeys:HotkeyEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type detailprops:DetailPropEditorViewModel}">
+      <detailprops:DetailPropEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type console:ConsoleViewModel}">
+      <console:ConsoleView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type loading:LoadingEditorViewModel}">
+      <loading:LoadingEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type sound:SoundEventEditorViewModel}">
+      <sound:SoundEventEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type mapbuild:MapBuilderViewModel}">
+      <mapbuild:MapBuilderView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type navmesh:NavMeshRadarViewModel}">
+      <navmesh:NavMeshRadarView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}">
+      <workshop:WorkshopManagerView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type assettools:AssetToolsViewModel}">
+      <assettools:AssetToolsView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type gitsync:GitSyncViewModel}">
+      <gitsync:GitSyncView />
+    </DataTemplate>
+  </Application.DataTemplates>
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://Hammer5Tools.App/Styles/HammerTheme.axaml" />

@@ -1,16 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="using:Hammer5Tools.App.Features.Shell"
-        xmlns:hotkeys="using:Hammer5Tools.App.Features.Hotkeys"
-        xmlns:detailprops="using:Hammer5Tools.App.Features.DetailProps"
-        xmlns:console="using:Hammer5Tools.App.Features.Console"
-        xmlns:loading="using:Hammer5Tools.App.Features.LoadingScreens"
-        xmlns:sound="using:Hammer5Tools.App.Features.SoundEvents"
-        xmlns:mapbuild="using:Hammer5Tools.App.Features.MapBuilder"
-        xmlns:navmesh="using:Hammer5Tools.App.Features.NavMesh"
-        xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
-        xmlns:assettools="using:Hammer5Tools.App.Features.AssetTools"
-        xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
         xmlns:vm="using:Hammer5Tools.App.ViewModels"
         xmlns:addons="using:Hammer5Tools.Core.Addons"
         x:Class="Hammer5Tools.App.MainWindow"
@@ -20,41 +10,8 @@
         Height="900"
         WindowStartupLocation="CenterScreen">
 
-  <Window.DataTemplates>
-    <DataTemplate DataType="{x:Type hotkeys:HotkeyEditorViewModel}">
-      <hotkeys:HotkeyEditorView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type detailprops:DetailPropEditorViewModel}">
-      <detailprops:DetailPropEditorView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type console:ConsoleViewModel}">
-      <console:ConsoleView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type loading:LoadingEditorViewModel}">
-      <loading:LoadingEditorView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type sound:SoundEventEditorViewModel}">
-      <sound:SoundEventEditorView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type mapbuild:MapBuilderViewModel}">
-      <mapbuild:MapBuilderView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type navmesh:NavMeshRadarViewModel}">
-      <navmesh:NavMeshRadarView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}">
-      <workshop:WorkshopManagerView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type assettools:AssetToolsViewModel}">
-      <assettools:AssetToolsView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type gitsync:GitSyncViewModel}">
-      <gitsync:GitSyncView />
-    </DataTemplate>
-  </Window.DataTemplates>
-
-  <Grid RowDefinitions="Auto,Auto,*,Auto">
-    <!-- Menu Bar -->
+  <Grid RowDefinitions="Auto,*,Auto">
+    <!-- Top Menu Bar -->
     <Menu Grid.Row="0">
       <MenuItem Header="_File">
         <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
@@ -72,20 +29,21 @@
         <MenuItem Header="Kill Workshop Tools" Command="{Binding KillCs2Command}" />
         <Separator />
         <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
-        <MenuItem Header="Open Console" Command="{Binding OpenConsoleCommand}" />
       </MenuItem>
       <MenuItem Header="_Editors">
-        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
-        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
         <MenuItem Header="Loading Screen Editor" Command="{Binding OpenLoadingEditorCommand}" />
         <MenuItem Header="SoundEvent Editor" Command="{Binding OpenSoundEventEditorCommand}" />
+        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
+        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
       </MenuItem>
-      <MenuItem Header="_Tools">
+      <MenuItem Header="_Utilities">
         <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
-        <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
         <MenuItem Header="Workshop Manager" Command="{Binding OpenWorkshopManagerCommand}" />
         <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
+        <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
+        <Separator />
         <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
+        <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
@@ -96,48 +54,8 @@
       </MenuItem>
     </Menu>
 
-    <!-- Toolbar -->
-    <Border Grid.Row="1" Background="#2e2e2e" BorderBrush="#464649" BorderThickness="0,1" Padding="8,4">
-      <Grid ColumnDefinitions="Auto,220,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
-        <TextBlock Grid.Column="0" Text="Active Addon:" VerticalAlignment="Center" Margin="4,0,8,0" FontWeight="SemiBold" />
-        <ComboBox Grid.Column="1"
-                  ItemsSource="{Binding Addons}"
-                  SelectedItem="{Binding SelectedAddon}"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Center">
-          <ComboBox.ItemTemplate>
-            <DataTemplate x:DataType="addons:Addon">
-              <TextBlock Text="{Binding Name}" />
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-
-        <Button Grid.Column="2" Content="↻" ToolTip.Tip="Refresh Addons" Command="{Binding RefreshAddonsCommand}" Margin="4,0" Padding="6,4" />
-        <Button Grid.Column="3" Content="Content 📁" ToolTip.Tip="Open Addon Content Directory" Command="{Binding OpenContentFolderCommand}" Margin="2,0" Padding="8,4" />
-        <Button Grid.Column="4" Content="Game 📁" ToolTip.Tip="Open Addon Game Directory" Command="{Binding OpenGameFolderCommand}" Margin="2,0" Padding="8,4" />
-
-        <Separator Grid.Column="5" Margin="8,4" />
-
-        <Button Grid.Column="6" Content="Edit Map (CS2)" Classes="success" Command="{Binding LaunchCs2Command}" Margin="3,0" FontWeight="Bold" />
-        <Button Grid.Column="7" Content="Restart" Command="{Binding RestartCs2Command}" Margin="3,0" />
-        <Button Grid.Column="8" Content="Kill" Classes="danger" Command="{Binding KillCs2Command}" Margin="3,0" />
-
-        <StackPanel Grid.Column="10" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,4,0">
-          <Button Content="Hotkeys" Command="{Binding OpenHotkeyEditorCommand}" />
-          <Button Content="DetailProps" Command="{Binding OpenDetailPropEditorCommand}" />
-          <Button Content="Loading" Command="{Binding OpenLoadingEditorCommand}" />
-          <Button Content="Sounds" Command="{Binding OpenSoundEventEditorCommand}" />
-          <Button Content="Builder" Command="{Binding OpenMapBuilderCommand}" />
-          <Button Content="Radar" Command="{Binding OpenNavMeshRadarCommand}" />
-          <Button Content="Workshop" Command="{Binding OpenWorkshopManagerCommand}" />
-          <Button Content="Git Sync" Command="{Binding OpenGitSyncCommand}" />
-          <Button Content="Console" Command="{Binding OpenConsoleCommand}" />
-        </StackPanel>
-      </Grid>
-    </Border>
-
-    <!-- Document Tabs -->
-    <TabControl Grid.Row="2"
+    <!-- Center Document Tabs for Main Editors (Loading, SoundEvent, Hotkey, DetailProp) -->
+    <TabControl Grid.Row="1"
                 ItemsSource="{Binding Documents}"
                 SelectedItem="{Binding ActiveDocument}"
                 Background="#272727">
@@ -155,28 +73,86 @@
       </TabControl.ItemTemplate>
     </TabControl>
 
-    <!-- Status Bar -->
-    <Border Grid.Row="3" Background="#272727" BorderBrush="#464649" BorderThickness="0,1" Padding="8,4">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-          <TextBlock Text="▶" Foreground="#4a83c9" FontSize="10" VerticalAlignment="Center" />
-          <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#a5a5a5" />
-        </StackPanel>
-        <Border Grid.Column="1" Background="#2f2f31" BorderBrush="#464649" BorderThickness="1" CornerRadius="3" Padding="8,2" Margin="8,0">
-          <TextBlock Text="{Binding SelectedAddon.Name, FallbackValue='No Addon Selected', StringFormat='Addon: {0}'}"
-                     Foreground="#80CBC4"
-                     FontWeight="SemiBold"
-                     VerticalAlignment="Center" />
+    <!-- Bottom Button Line with Console Line, Git Sync, Utilities, Actions, Addon Selector, Edit Map (Classic Hammer5Tools Layout) -->
+    <Border Grid.Row="2" Background="#272727" BorderBrush="#464649" BorderThickness="0,1" Padding="8,5">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto">
+        <!-- Left buttons: Git Sync, Console, About -->
+        <Button Grid.Column="0" Content="Git Sync" Command="{Binding OpenGitSyncCommand}" ToolTip.Tip="Open Git synchronization dialog" Margin="0,0,4,0" />
+        <Button Grid.Column="1" Content="Console" Command="{Binding OpenConsoleCommand}" ToolTip.Tip="Open Console and activity log dialog" Margin="0,0,4,0" />
+        <Button Grid.Column="2" Content="About" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" ToolTip.Tip="About Hammer 5 Tools" Margin="0,0,6,0" />
+
+        <!-- Center: Console Line showing status/logs and clickable to open console dialog -->
+        <Border Grid.Column="3" Background="#202020" BorderBrush="#3f3f42" BorderThickness="1" CornerRadius="3" Margin="4,0" Padding="8,2" ToolTip.Tip="Console activity — click to open full console window">
+          <Button Command="{Binding OpenConsoleCommand}" Classes="subtle" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Padding="0">
+            <Grid ColumnDefinitions="Auto,*">
+              <TextBlock Grid.Column="0" Text="▶ " Foreground="#4a83c9" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
+              <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="#a5a5a5" VerticalAlignment="Center" FontSize="12" />
+            </Grid>
+          </Button>
         </Border>
-        <Border Grid.Column="2" Background="#2f2f31" BorderBrush="#464649" BorderThickness="1" CornerRadius="3" Padding="8,2" Margin="4,0">
-          <TextBlock Text="{Binding Cs2StatusText}"
-                     Foreground="{Binding Cs2StatusColor}"
-                     FontWeight="SemiBold"
-                     VerticalAlignment="Center" />
-        </Border>
-        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="8,0,4,0">
-          <TextBlock Text="Hammer 5 Tools 7.0 (.NET 10)" Foreground="#797979" FontSize="11" />
-        </StackPanel>
+
+        <!-- Utilities Menu Button (Map Builder, Workshop Manager, Asset Tools, NavMesh Radar dialogs) -->
+        <Button Grid.Column="4" Content="Utilities ▾" Margin="4,0" ToolTip.Tip="Open standalone utility tools">
+          <Button.Flyout>
+            <MenuFlyout Placement="Top">
+              <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
+              <MenuItem Header="Workshop Manager" Command="{Binding OpenWorkshopManagerCommand}" />
+              <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
+              <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
+              <Separator />
+              <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
+              <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+
+        <!-- Actions Menu Button (Folder navigation, refresh, cache, CS2 controls) -->
+        <Button Grid.Column="5" Content="Actions ▾" Margin="4,0" ToolTip.Tip="Addon actions and tool settings">
+          <Button.Flyout>
+            <MenuFlyout Placement="Top">
+              <MenuItem Header="Open Content Folder" Command="{Binding OpenContentFolderCommand}" />
+              <MenuItem Header="Open Game Folder" Command="{Binding OpenGameFolderCommand}" />
+              <MenuItem Header="Refresh Addon List" Command="{Binding RefreshAddonsCommand}" />
+              <Separator />
+              <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
+              <MenuItem Header="Restart CS2 Tools" Command="{Binding RestartCs2Command}" />
+              <MenuItem Header="Kill CS2 Tools" Command="{Binding KillCs2Command}" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+
+        <!-- Addon Selector ComboBox -->
+        <ComboBox Grid.Column="6"
+                  ItemsSource="{Binding Addons}"
+                  SelectedItem="{Binding SelectedAddon}"
+                  Width="210"
+                  Margin="4,0"
+                  VerticalAlignment="Center"
+                  ToolTip.Tip="Selected Addon workspace">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="addons:Addon">
+              <TextBlock Text="{Binding Name}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <!-- Edit Map (CS2) Button (prominent green button launching CS2 Workshop Tools) -->
+        <Button Grid.Column="7"
+                Content="Edit map"
+                Classes="success"
+                Command="{Binding LaunchCs2Command}"
+                ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for selected addon"
+                Margin="4,0"
+                FontWeight="Bold"
+                Padding="16,5" />
+
+        <!-- MapBuilder Quick Launch Button -->
+        <Button Grid.Column="8"
+                Content="🗺️"
+                Command="{Binding OpenMapBuilderCommand}"
+                ToolTip.Tip="Open Map Builder dialog"
+                Margin="2,0,0,0"
+                Padding="8,5" />
       </Grid>
     </Border>
   </Grid>

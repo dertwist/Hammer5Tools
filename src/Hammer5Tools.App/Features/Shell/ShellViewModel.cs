@@ -45,6 +45,7 @@ public class ShellViewModel : ViewModelBase
     private readonly IWorkshopManagerService WorkshopManagerService;
     private readonly IAssetToolsService AssetToolsService;
     private readonly IGitSyncService GitSyncService;
+    private readonly Services.IDialogService DialogService;
 
     private DocumentViewModel? ActiveDocumentValue;
     private string StatusMessageValue = "Ready";
@@ -151,7 +152,8 @@ public class ShellViewModel : ViewModelBase
         INavMeshRadarService navMeshRadarService,
         IWorkshopManagerService workshopManagerService,
         IAssetToolsService assetToolsService,
-        IGitSyncService gitSyncService)
+        IGitSyncService gitSyncService,
+        Services.IDialogService dialogService)
     {
         AddonService = addonService;
         Cs2Launcher = cs2Launcher;
@@ -168,6 +170,7 @@ public class ShellViewModel : ViewModelBase
         WorkshopManagerService = workshopManagerService;
         AssetToolsService = assetToolsService;
         GitSyncService = gitSyncService;
+        DialogService = dialogService;
 
         LaunchCs2Command = new AsyncRelayCommand(OnLaunchCs2Async);
         KillCs2Command = new RelayCommand(OnKillCs2);
@@ -198,9 +201,12 @@ public class ShellViewModel : ViewModelBase
 
         SyncAddons();
 
-        // Default open the primary Hotkey and DetailProp editors
+        // Default open the 4 main editors in tabs
+        OpenLoadingEditor();
+        OpenSoundEventEditor();
         OpenHotkeyEditor();
         OpenDetailPropEditor();
+        ActiveDocument = Documents.FirstOrDefault();
     }
 
     private void SyncAddons()
@@ -242,15 +248,8 @@ public class ShellViewModel : ViewModelBase
 
     public void OpenConsole()
     {
-        var existing = Documents.OfType<ConsoleViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var console = new ConsoleViewModel(CommandService);
-        AddDocument(console);
+        DialogService.ShowUtility("Console", console, 880, 560);
     }
 
     public void OpenLoadingEditor()
@@ -281,67 +280,32 @@ public class ShellViewModel : ViewModelBase
 
     public void OpenMapBuilder()
     {
-        var existing = Documents.OfType<MapBuilderViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var builder = new MapBuilderViewModel(AddonService, MapBuilderService);
-        AddDocument(builder);
+        DialogService.ShowUtility("Map Builder", builder, 1020, 700);
     }
 
     public void OpenNavMeshRadar()
     {
-        var existing = Documents.OfType<NavMeshRadarViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var radar = new NavMeshRadarViewModel(AddonService, NavMeshRadarService);
-        AddDocument(radar);
+        DialogService.ShowUtility("NavMesh Radar", radar, 920, 640);
     }
 
     public void OpenWorkshopManager()
     {
-        var existing = Documents.OfType<WorkshopManagerViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var workshop = new WorkshopManagerViewModel(AddonService, WorkshopManagerService);
-        AddDocument(workshop);
+        DialogService.ShowUtility("Workshop Manager", workshop, 960, 680);
     }
 
     public void OpenAssetTools()
     {
-        var existing = Documents.OfType<AssetToolsViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var tools = new AssetToolsViewModel(AddonService, AssetToolsService);
-        AddDocument(tools);
+        DialogService.ShowUtility("Asset Tools", tools, 900, 600);
     }
 
     public void OpenGitSync()
     {
-        var existing = Documents.OfType<GitSyncViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
         var sync = new GitSyncViewModel(AddonService, GitSyncService);
-        AddDocument(sync);
+        DialogService.ShowUtility("Git Sync", sync, 920, 620);
     }
 
     private void AddDocument(DocumentViewModel doc)
