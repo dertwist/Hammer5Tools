@@ -8,6 +8,8 @@ using Hammer5Tools.Core.SoundEvents;
 
 public class SoundEventEditorViewModel : DocumentViewModel
 {
+    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/soundviewer.png";
+
     private readonly IAddonService AddonService;
     private readonly ISoundEventService SoundEventService;
 

@@ -9,6 +9,8 @@ using Hammer5Tools.Core.DetailProps;
 
 public class DetailPropEditorViewModel : DocumentViewModel
 {
+    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/detailprop_editor.png";
+
     private readonly IAddonService AddonService;
     private readonly string? FilePath;
     private DetailPropDocument Document;

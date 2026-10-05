@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:explorer="using:Hammer5Tools.App.Features.Explorer"
+             xmlns:conv="using:Hammer5Tools.App.Converters"
+             x:Class="Hammer5Tools.App.Features.Explorer.AssetExplorerView"
+             x:DataType="explorer:AssetExplorerViewModel">
+
+  <UserControl.Resources>
+    <conv:UriToBitmapConverter x:Key="UriToBitmapConverter" />
+  </UserControl.Resources>
+
+  <Grid RowDefinitions="Auto,Auto,*" Background="#272727">
+    <!-- Filter Search Box and Toolbar -->
+    <Border Grid.Row="0" Background="#2e2e2e" BorderBrush="#464649" BorderThickness="0,0,0,1" Padding="4,4">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+        <TextBox Grid.Column="0"
+                 Text="{Binding FilterText}"
+                 PlaceholderText="Filter files..."
+                 VerticalContentAlignment="Center"
+                 Margin="0,0,4,0"
+                 Padding="6,2"
+                 MinHeight="22"
+                 FontSize="11" />
+        <Button Grid.Column="1"
+                Content="📁"
+                ToolTip.Tip="Open in file manager"
+                Command="{Binding OpenDirectoryCommand}"
+                Classes="subtle"
+                Padding="4,2"
+                Margin="1,0" />
+        <Button Grid.Column="2"
+                Content="↻"
+                ToolTip.Tip="Refresh files"
+                Command="{Binding RefreshCommand}"
+                Classes="subtle"
+                Padding="4,2"
+                Margin="1,0" />
+        <Button Grid.Column="3"
+                Content="⊟"
+                ToolTip.Tip="Collapse all"
+                Command="{Binding CollapseAllCommand}"
+                Classes="subtle"
+                Padding="4,2"
+                Margin="1,0" />
+      </Grid>
+    </Border>
+
+    <!-- Header bar: Name | Size -->
+    <Border Grid.Row="1" Background="#242424" BorderBrush="#3f3f42" BorderThickness="0,0,0,1" Padding="8,3">
+      <Grid ColumnDefinitions="*,60">
+        <TextBlock Grid.Column="0" Text="Name" Foreground="#a5a5a5" FontSize="11" FontWeight="SemiBold" />
+        <TextBlock Grid.Column="1" Text="Size" Foreground="#a5a5a5" FontSize="11" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,8,0" />
+      </Grid>
+    </Border>
+
+    <!-- Tree View -->
+    <TreeView Grid.Row="2"
+              ItemsSource="{Binding RootItems}"
+              Background="#272727"
+              Padding="2,2">
+      <TreeView.ItemTemplate>
+        <TreeDataTemplate DataType="{x:Type explorer:FileItemViewModel}" ItemsSource="{Binding Children}">
+          <Button Background="Transparent"
+                  BorderThickness="0"
+                  Padding="2,2"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  Command="{Binding $parent[explorer:AssetExplorerView].((explorer:AssetExplorerViewModel)DataContext).FileActivatedCommand}"
+                  CommandParameter="{Binding}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Image Grid.Column="0"
+                     Source="{Binding IconUri, Converter={StaticResource UriToBitmapConverter}}"
+                     Width="15"
+                     Height="15"
+                     Margin="0,0,6,0"
+                     VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Name}"
+                         Foreground="#e5e5e5"
+                         FontSize="12"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="2"
+                         Text="{Binding FormattedSize}"
+                         Foreground="#797979"
+                         FontSize="11"
+                         VerticalAlignment="Center"
+                         Margin="8,0,4,0" />
+            </Grid>
+          </Button>
+        </TreeDataTemplate>
+      </TreeView.ItemTemplate>
+    </TreeView>
+  </Grid>
+</UserControl>

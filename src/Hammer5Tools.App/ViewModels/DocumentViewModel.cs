@@ -7,6 +7,8 @@ public abstract class DocumentViewModel : ViewModelBase
     private string TitleValue = "Untitled";
     private bool IsDirtyValue;
 
+    public virtual string IconUri => "avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png";
+
     public string Title
     {
         get => TitleValue;

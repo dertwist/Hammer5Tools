@@ -10,8 +10,12 @@
              xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
              xmlns:assettools="using:Hammer5Tools.App.Features.AssetTools"
              xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
+             xmlns:conv="using:Hammer5Tools.App.Converters"
              x:Class="Hammer5Tools.App.App"
              RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <conv:UriToBitmapConverter x:Key="UriToBitmapConverter" />
+  </Application.Resources>
   <Application.DataTemplates>
     <DataTemplate DataType="{x:Type hotkeys:HotkeyEditorViewModel}">
       <hotkeys:HotkeyEditorView />

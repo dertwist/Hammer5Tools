@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Hammer5Tools.App.Features.AssetTools;
 using Hammer5Tools.App.Features.Console;
 using Hammer5Tools.App.Features.DetailProps;
+using Hammer5Tools.App.Features.Explorer;
 using Hammer5Tools.App.Features.GitSync;
 using Hammer5Tools.App.Features.Hotkeys;
 using Hammer5Tools.App.Features.LoadingScreens;
@@ -54,6 +55,8 @@ public class ShellViewModel : ViewModelBase
     public ObservableCollection<DocumentViewModel> Documents { get; } = [];
 
     public ObservableCollection<Addon> Addons { get; } = [];
+
+    public AssetExplorerViewModel Explorer { get; }
 
     public DocumentViewModel? ActiveDocument
     {
@@ -171,6 +174,8 @@ public class ShellViewModel : ViewModelBase
         AssetToolsService = assetToolsService;
         GitSyncService = gitSyncService;
         DialogService = dialogService;
+
+        Explorer = new AssetExplorerViewModel(AddonService, OnOpenFileFromExplorer);
 
         LaunchCs2Command = new AsyncRelayCommand(OnLaunchCs2Async);
         KillCs2Command = new RelayCommand(OnKillCs2);
@@ -417,6 +422,38 @@ public class ShellViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Failed to open directory: {ex.Message}";
+        }
+    }
+
+    private void OnOpenFileFromExplorer(string filePath)
+    {
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        if (ext is ".vsndevts" or ".vsnd")
+        {
+            OpenSoundEventEditor();
+            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
+        }
+        else if (ext is ".vdata" or ".vsmart")
+        {
+            OpenDetailPropEditor();
+            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
+        }
+        else if (ext is ".vmap")
+        {
+            OpenLoadingEditor();
+            StatusMessage = $"Selected {Path.GetFileName(filePath)}";
+        }
+        else
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = filePath, UseShellExecute = true });
+                StatusMessage = $"Opened {Path.GetFileName(filePath)}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to open file: {ex.Message}";
+            }
         }
     }
 }
