@@ -15,6 +15,9 @@ public interface IResourceCompiler
     /// </summary>
     Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName = null, CancellationToken ct = default);
 
+    /// <summary>Compiles a source asset with additional map-build flags.</summary>
+    Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName, string? additionalArguments, CancellationToken ct = default);
+
     /// <summary>
     /// Recursively compiles all assets within a directory.
     /// </summary>

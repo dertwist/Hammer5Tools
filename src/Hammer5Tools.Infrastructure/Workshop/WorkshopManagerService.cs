@@ -1,83 +1,99 @@
 namespace Hammer5Tools.Infrastructure.Workshop;
 
+using CS2WorkshopManager;
 using Hammer5Tools.Core.Cs2;
 using Hammer5Tools.Core.Workshop;
-using Microsoft.Extensions.Logging;
 
+/// <summary>
+/// Uses CS2 Workshop Manager for packing rules, dependency analysis and chunked VPK output.
+/// </summary>
 public class WorkshopManagerService : IWorkshopManagerService
 {
     private readonly ICs2Locator Cs2Locator;
-    private readonly ILogger<WorkshopManagerService> Logger;
 
-    public WorkshopManagerService(ICs2Locator cs2Locator, ILogger<WorkshopManagerService> logger)
+    public WorkshopManagerService(ICs2Locator cs2Locator)
     {
         Cs2Locator = cs2Locator;
-        Logger = logger;
     }
 
     public async Task<IReadOnlyList<string>> AnalyzeAddonFilesAsync(string addonName, bool excludeUnused, CancellationToken cancellationToken = default)
     {
-        return await Task.Run(() =>
+        return await Task.Run<IReadOnlyList<string>>(() =>
         {
-            var files = new List<string>();
-            var cs2Root = Cs2Locator.FindCs2Path();
-            if (cs2Root is null)
-            {
-                return files;
-            }
-
-            var gameAddonDir = Cs2Paths.GetAddonGamePath(cs2Root, addonName);
-            if (!Directory.Exists(gameAddonDir))
-            {
-                return files;
-            }
-
-            foreach (var file in Directory.EnumerateFiles(gameAddonDir, "*.*", SearchOption.AllDirectories))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var rel = Path.GetRelativePath(gameAddonDir, file);
-
-                if (excludeUnused && (rel.EndsWith(".bak", StringComparison.OrdinalIgnoreCase) || rel.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)))
-                {
-                    continue;
-                }
-
-                files.Add(rel);
-            }
-
-            return files;
+            cancellationToken.ThrowIfCancellationRequested();
+            var manager = CreateManager();
+            var addonPath = GetAddonPath(manager, addonName);
+            var rules = GetPackingRules(manager, addonName, excludeUnused);
+            return AddonPackager.CollectFiles(addonPath, manager.GameInfoPath, rules)
+                .Select(file => AddonPackager.GetRelativePath(addonPath, file.FullName)).ToList();
         }, cancellationToken);
     }
 
     public async Task<bool> BuildWorkshopPackageAsync(WorkshopPackConfig config, CancellationToken cancellationToken = default)
     {
-        try
+        ArgumentNullException.ThrowIfNull(config);
+        return await Task.Run(() =>
         {
-            Logger.LogInformation("Packing workshop addon {Addon} to {Output}", config.AddonName, config.OutputVpkPath);
-
-            var files = await AnalyzeAddonFilesAsync(config.AddonName, config.ExcludeUnusedContent, cancellationToken);
-            if (files.Count == 0)
+            cancellationToken.ThrowIfCancellationRequested();
+            var manager = CreateManager();
+            var addonPath = GetAddonPath(manager, config.AddonName);
+            var output = Path.GetFullPath(config.OutputVpkPath);
+            // Packing into the input tree would include old packages in the next upload.
+            if (Path.GetRelativePath(addonPath, output) is var relative &&
+                !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
             {
-                Logger.LogWarning("No compiled addon files found to pack for {Addon}", config.AddonName);
-                return false;
+                throw new ArgumentException("Choose an output directory outside the compiled addon.", nameof(config));
             }
 
-            if (!string.IsNullOrEmpty(config.OutputVpkPath))
+            if (!output.EndsWith("_dir.vpk", StringComparison.OrdinalIgnoreCase))
             {
-                var dir = Path.GetDirectoryName(config.OutputVpkPath);
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                }
+                throw new ArgumentException("The package filename must end with _dir.vpk.", nameof(config));
             }
 
-            Logger.LogInformation("Workshop package prepared with {Count} files", files.Count);
-            return true;
-        }
-        catch (Exception ex)
+            Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+            var rules = GetPackingRules(manager, config.AddonName, config.ExcludeUnusedContent);
+            AddonPackager.Pack(addonPath, manager.GameInfoPath, output, rules);
+            return File.Exists(output);
+        }, cancellationToken);
+    }
+
+    private WorkshopManager CreateManager()
+    {
+        return new WorkshopManager(Cs2Locator.FindCs2Path() ?? throw new InvalidOperationException("CS2 installation not found."));
+    }
+
+    private static string GetAddonPath(WorkshopManager manager, string addonName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(addonName);
+        if (addonName is "." or ".." || addonName.IndexOfAny(['/', '\\']) >= 0 || Path.IsPathRooted(addonName))
         {
-            Logger.LogError(ex, "Failed to build workshop package for {Addon}", config.AddonName);
-            return false;
+            throw new ArgumentException("Select an addon folder name.", nameof(addonName));
         }
+
+        var path = Path.Combine(manager.AddonsRoot, addonName);
+        if (!Directory.Exists(path))
+        {
+            throw new DirectoryNotFoundException($"Compiled addon not found: {path}");
+        }
+
+        return path;
+    }
+
+    private static AddonRules GetPackingRules(WorkshopManager manager, string addonName, bool excludeUnused)
+    {
+        var own = manager.LoadRules(addonName);
+        var rules = CS2WorkshopManager.AppSettings.Load().GlobalRules.Then(own);
+        if (!excludeUnused)
+        {
+            return rules;
+        }
+
+        var unused = manager.BuildUnusedRules(addonName, own.ExcludeUnused, recrawl: true);
+        if (!unused.Found.HasCompiledMap)
+        {
+            throw new InvalidOperationException("Compile a map before excluding unused content, or turn that option off.");
+        }
+
+        return rules.Then(unused.Rules);
     }
 }

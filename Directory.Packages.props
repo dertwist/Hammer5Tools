@@ -23,6 +23,10 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
 
+    <PackageVersion Include="CS2WorkshopManager" Version="1.4.0" />
+    <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="12.1.0.6" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
+
     <!-- Source 2 & Valve formats -->
     <PackageVersion Include="ValveResourceFormat" Version="20.0.6980" />
     <PackageVersion Include="ValvePak" Version="6.0.0.182" />

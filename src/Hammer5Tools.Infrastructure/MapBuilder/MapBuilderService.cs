@@ -103,11 +103,12 @@ public class MapBuilderService : IMapBuilderService
                     _ => "-threads 0 -vrad"
                 };
 
-                var compileResult = await ResourceCompiler.CompileAssetAsync(vmapPath, addonName: job.AddonName, cts.Token);
+                var compileResult = await ResourceCompiler.CompileAssetAsync(vmapPath, addonName: job.AddonName, additionalArguments: extraArgs, ct: cts.Token);
                 job.Success = compileResult.Success;
                 job.Status = compileResult.Success ? "Finished" : "Failed";
                 var lines = compileResult.StandardOutput.Split(LineSeparators, StringSplitOptions.RemoveEmptyEntries);
                 job.OutputLogs.AddRange(lines);
+                job.OutputLogs.AddRange(compileResult.StandardError.Split(LineSeparators, StringSplitOptions.RemoveEmptyEntries));
 
                 if (job.Success && job.LaunchAfterBuild)
                 {

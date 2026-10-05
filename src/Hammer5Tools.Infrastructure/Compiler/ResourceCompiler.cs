@@ -37,11 +37,17 @@ public class ResourceCompiler : IResourceCompiler
     }
 
     /// <inheritdoc/>
-    public async Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName = null, CancellationToken ct = default)
+    public Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName = null, CancellationToken ct = default)
+    {
+        return CompileAssetAsync(assetFilePath, addonName, null, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<CompileResult> CompileAssetAsync(string assetFilePath, string? addonName, string? additionalArguments, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assetFilePath);
 
-        var args = BuildArguments($"-i \"{Path.GetFullPath(assetFilePath)}\"", addonName);
+        var args = BuildArguments($"-i \"{Path.GetFullPath(assetFilePath)}\" {additionalArguments}".TrimEnd(), addonName);
         return await ExecuteCompilerAsync(args, ct);
     }
 
@@ -162,7 +168,21 @@ public class ResourceCompiler : IResourceCompiler
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            await process.WaitForExitAsync(ct);
+            try
+            {
+                await process.WaitForExitAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+
+                await process.WaitForExitAsync(CancellationToken.None);
+                throw;
+            }
+
             stopwatch.Stop();
 
             return new CompileResult(process.ExitCode, stdout.ToString(), stderr.ToString(), stopwatch.Elapsed);
@@ -170,7 +190,7 @@ public class ResourceCompiler : IResourceCompiler
         catch (OperationCanceledException)
         {
             stopwatch.Stop();
-            return new CompileResult(-1, stdout.ToString(), "Compilation was cancelled.", stopwatch.Elapsed);
+            throw;
         }
         catch (Exception ex)
         {
