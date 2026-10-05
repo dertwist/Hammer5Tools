@@ -47,5 +47,6 @@
     <Using Include="System.Collections.Generic" />
     <Using Include="System.Threading" />
     <Using Include="System.Threading.Tasks" />
+    <Using Include="System.IO" />
   </ItemGroup>
 </Project>

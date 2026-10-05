@@ -1,0 +1,110 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Semantic Theme Palette from STYLESHEET.md and theme.py -->
+  <Styles.Resources>
+    <SolidColorBrush x:Key="H5TBackgroundBrush" Color="#2e2e2e" />
+    <SolidColorBrush x:Key="H5TSurfaceBrush" Color="#272727" />
+    <SolidColorBrush x:Key="H5TSurfaceRaisedBrush" Color="#2f2f31" />
+    <SolidColorBrush x:Key="H5TSurfaceInputBrush" Color="#363637" />
+    <SolidColorBrush x:Key="H5TTextBrush" Color="#e5e5e5" />
+    <SolidColorBrush x:Key="H5TTextMutedBrush" Color="#a5a5a5" />
+    <SolidColorBrush x:Key="H5TTextDisabledBrush" Color="#797979" />
+    <SolidColorBrush x:Key="H5TBorderBrush" Color="#464649" />
+    <SolidColorBrush x:Key="H5TBorderStrongBrush" Color="#5e5e5e" />
+    <SolidColorBrush x:Key="H5TAccentBrush" Color="#4a83c9" />
+    <SolidColorBrush x:Key="H5TAccentHoverBrush" Color="#586776" />
+    <SolidColorBrush x:Key="H5TAccentPressedBrush" Color="#6d7882" />
+    <SolidColorBrush x:Key="H5TSelectionBrush" Color="#515965" />
+    <SolidColorBrush x:Key="H5TSelectionTextBrush" Color="#ffffff" />
+    <SolidColorBrush x:Key="H5TErrorBrush" Color="#d1494a" />
+    <SolidColorBrush x:Key="H5TWarningBrush" Color="#e5a00d" />
+    <SolidColorBrush x:Key="H5TSuccessBrush" Color="#5ab55e" />
+  </Styles.Resources>
+
+  <!-- Window Default Styling -->
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{StaticResource H5TBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="FontFamily" Value="Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <!-- Button Styling -->
+  <Style Selector="Button">
+    <Setter Property="Background" Value="{StaticResource H5TSurfaceRaisedBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource H5TAccentHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderStrongBrush}" />
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource H5TAccentPressedBrush}" />
+  </Style>
+
+  <!-- TextBox Styling -->
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="{StaticResource H5TSurfaceInputBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="SelectionBrush" Value="{StaticResource H5TSelectionBrush}" />
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border">
+    <Setter Property="BorderBrush" Value="{StaticResource H5TAccentBrush}" />
+  </Style>
+
+  <!-- ComboBox Styling -->
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="{StaticResource H5TSurfaceInputBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="3" />
+  </Style>
+
+  <!-- ListBox Styling -->
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="3" />
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource H5TSelectionTextBrush}" />
+  </Style>
+
+  <!-- Menu & Menu Items -->
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{StaticResource H5TSurfaceBrush}" />
+  </Style>
+  <Style Selector="MenuItem">
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+  </Style>
+  <Style Selector="MenuItem:pointerover /template/ Border">
+    <Setter Property="Background" Value="{StaticResource H5TSelectionBrush}" />
+  </Style>
+
+  <!-- TabControl -->
+  <Style Selector="TabControl">
+    <Setter Property="Background" Value="{StaticResource H5TBackgroundBrush}" />
+  </Style>
+  <Style Selector="TabItem">
+    <Setter Property="Foreground" Value="{StaticResource H5TTextMutedBrush}" />
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TabItem:selected">
+    <Setter Property="Foreground" Value="{StaticResource H5TTextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource H5TAccentBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+</Styles>

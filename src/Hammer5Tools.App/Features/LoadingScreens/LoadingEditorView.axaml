@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.LoadingScreens"
+             xmlns:m="using:Hammer5Tools.Core.LoadingScreens"
+             x:Class="Hammer5Tools.App.Features.LoadingScreens.LoadingEditorView"
+             x:DataType="vm:LoadingEditorViewModel">
+  <Grid ColumnDefinitions="320,*" Margin="12">
+    <!-- Left Column: Camera List & Actions -->
+    <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="6" Padding="12" Margin="0,0,8,0">
+      <Grid RowDefinitions="Auto,*,Auto,Auto">
+        <TextBlock Grid.Row="0" Text="Map Cameras" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
+        
+        <ListBox Grid.Row="1" ItemsSource="{Binding Cameras}" SelectedItem="{Binding SelectedCamera}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="m:CameraInfo">
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Position, StringFormat='Pos: {0}'}" FontSize="11" Foreground="#9E9E9E" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Button Grid.Row="2" Content="Refresh Cameras" Command="{Binding RefreshCamerasCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,4" />
+        <Button Grid.Row="3" Content="Capture Camera View" Command="{Binding CaptureScreenshotCommand}" HorizontalAlignment="Stretch" Background="#2E7D32" />
+      </Grid>
+    </Border>
+
+    <!-- Right Column: Metadata & Generation -->
+    <Border Grid.Column="1" Background="#1E1E1E" CornerRadius="6" Padding="16">
+      <ScrollViewer>
+        <StackPanel Spacing="12">
+          <TextBlock Text="Loading Screen &amp; Addon Info" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
+
+          <Grid ColumnDefinitions="120,*">
+            <TextBlock Grid.Column="0" Text="Map Title:" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding MapTitle}" PlaceholderText="e.g. Dust II" />
+          </Grid>
+
+          <Grid ColumnDefinitions="120,*">
+            <TextBlock Grid.Column="0" Text="Author:" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding Author}" PlaceholderText="Creator name(s)" />
+          </Grid>
+
+          <Grid ColumnDefinitions="120,*">
+            <TextBlock Grid.Column="0" Text="Description:" VerticalAlignment="Top" Margin="0,6,0,0" />
+            <TextBox Grid.Column="1" Text="{Binding Description}" AcceptsReturn="True" Height="80" PlaceholderText="Map description, credits, or notes..." />
+          </Grid>
+
+          <Separator Margin="0,8" />
+
+          <TextBlock Text="Image Source" FontWeight="SemiBold" Foreground="#00E5FF" />
+          <Grid ColumnDefinitions="120,*,Auto">
+            <TextBlock Grid.Column="0" Text="Screenshot:" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding SelectedImagePath}" PlaceholderText="Path to 1920x1080 PNG or TGA..." />
+          </Grid>
+
+          <Button Content="Generate Loading Screen (.vtex &amp; AddonInfo)" Command="{Binding GenerateLoadingScreenCommand}" HorizontalAlignment="Left" Margin="0,12,0,0" Background="#1976D2" />
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

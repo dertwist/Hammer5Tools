@@ -4,5 +4,6 @@
              RequestedThemeVariant="Dark">
   <Application.Styles>
     <FluentTheme />
+    <StyleInclude Source="avares://Hammer5Tools.App/Styles/HammerTheme.axaml" />
   </Application.Styles>
 </Application>

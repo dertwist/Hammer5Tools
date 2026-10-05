@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.SoundEvents"
+             xmlns:m="using:Hammer5Tools.Core.SoundEvents"
+             x:Class="Hammer5Tools.App.Features.SoundEvents.SoundEventEditorView"
+             x:Name="RootControl"
+             x:DataType="vm:SoundEventEditorViewModel">
+  <Grid ColumnDefinitions="300,*,260" Margin="12">
+    <!-- Left Column: Events list -->
+    <Border Grid.Column="0" Background="#1E1E1E" CornerRadius="6" Padding="8" Margin="0,0,8,0">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <TextBlock Grid.Row="0" Text="Sound Events" FontWeight="Bold" Margin="4,0,0,8" />
+        <TextBox Grid.Row="1" Text="{Binding SearchFilter}" PlaceholderText="Filter events..." Margin="0,0,0,8" />
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding FilteredEvents}" SelectedItem="{Binding SelectedEvent}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="m:SoundEvent">
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Type}" FontSize="11" Foreground="#00E5FF" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,8,0,0">
+          <Button Grid.Column="0" Content="Add Event" Command="{Binding AddEventCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
+          <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteEventCommand}" HorizontalAlignment="Stretch" Margin="4,0,0,0" />
+        </Grid>
+      </Grid>
+    </Border>
+
+    <!-- Center Column: Event Property Inspector -->
+    <Border Grid.Column="1" Background="#1E1E1E" CornerRadius="6" Padding="16" Margin="0,0,8,0">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <TextBlock Grid.Row="0" Text="Event Properties" FontSize="16" FontWeight="Bold" Margin="0,0,0,8" />
+
+        <!-- Header properties -->
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,12">
+          <Grid ColumnDefinitions="120,*">
+            <TextBlock Grid.Column="0" Text="Event Name:" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding SelectedEvent.Name, FallbackValue=''}" />
+          </Grid>
+          <Grid ColumnDefinitions="120,*">
+            <TextBlock Grid.Column="0" Text="Type:" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding SelectedEvent.Type, FallbackValue=''}" />
+          </Grid>
+        </StackPanel>
+
+        <!-- Dynamic properties list -->
+        <ListBox Grid.Row="2" ItemsSource="{Binding SelectedEvent.Properties}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="m:SoundProperty">
+              <Grid ColumnDefinitions="160,*,Auto" Margin="0,2">
+                <TextBox Grid.Column="0" Text="{Binding Key}" Margin="0,0,4,0" />
+                <TextBox Grid.Column="1" Text="{Binding Value}" Margin="4,0" />
+                <Button Grid.Column="2" Content="✕"
+                        Command="{Binding #RootControl.((vm:SoundEventEditorViewModel)DataContext).DeletePropertyCommand}"
+                        CommandParameter="{Binding}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Margin="4,0,0,0" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Button Grid.Row="3" Content="Add Property" Command="{Binding AddPropertyCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" />
+      </Grid>
+    </Border>
+
+    <!-- Right Column: VPK Sound Explorer -->
+    <Border Grid.Column="2" Background="#1E1E1E" CornerRadius="6" Padding="12">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <TextBlock Grid.Row="0" Text="CS2 VPK Sounds" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
+        <Button Grid.Row="1" Content="Search Game VPK" Command="{Binding SearchVpkCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,8" />
+
+        <ListBox Grid.Row="2" ItemsSource="{Binding VpkSounds}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas, Menlo, Monospace" TextTrimming="CharacterEllipsis" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Grid.Row="3" Text="Select a sound to inspect or assign." FontSize="11" Foreground="#9E9E9E" Margin="0,6,0,0" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

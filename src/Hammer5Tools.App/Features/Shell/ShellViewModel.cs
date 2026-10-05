@@ -2,15 +2,28 @@ namespace Hammer5Tools.App.Features.Shell;
 
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
+using Hammer5Tools.App.Features.AssetTools;
 using Hammer5Tools.App.Features.Console;
 using Hammer5Tools.App.Features.DetailProps;
+using Hammer5Tools.App.Features.GitSync;
 using Hammer5Tools.App.Features.Hotkeys;
+using Hammer5Tools.App.Features.LoadingScreens;
+using Hammer5Tools.App.Features.MapBuilder;
+using Hammer5Tools.App.Features.NavMesh;
+using Hammer5Tools.App.Features.SoundEvents;
+using Hammer5Tools.App.Features.Workshop;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core.Addons;
 using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Compiler;
 using Hammer5Tools.Core.Cs2;
+using Hammer5Tools.Core.GitSync;
+using Hammer5Tools.Core.LoadingScreens;
+using Hammer5Tools.Core.MapBuilder;
+using Hammer5Tools.Core.NavMesh;
 using Hammer5Tools.Core.Settings;
+using Hammer5Tools.Core.SoundEvents;
+using Hammer5Tools.Core.Workshop;
 using Hammer5Tools.Infrastructure.Cs2;
 
 public class ShellViewModel : ViewModelBase
@@ -22,6 +35,14 @@ public class ShellViewModel : ViewModelBase
     private readonly IResourceCompiler ResourceCompiler;
     private readonly Vrad3CacheService Vrad3CacheService;
     private readonly ISettingsService SettingsService;
+
+    private readonly ILoadingScreenService LoadingScreenService;
+    private readonly ISoundEventService SoundEventService;
+    private readonly IMapBuilderService MapBuilderService;
+    private readonly INavMeshRadarService NavMeshRadarService;
+    private readonly IWorkshopManagerService WorkshopManagerService;
+    private readonly IAssetToolsService AssetToolsService;
+    private readonly IGitSyncService GitSyncService;
 
     private DocumentViewModel? ActiveDocumentValue;
     private string StatusMessageValue = "Ready";
@@ -77,6 +98,20 @@ public class ShellViewModel : ViewModelBase
 
     public IRelayCommand OpenConsoleCommand { get; }
 
+    public IRelayCommand OpenLoadingEditorCommand { get; }
+
+    public IRelayCommand OpenSoundEventEditorCommand { get; }
+
+    public IRelayCommand OpenMapBuilderCommand { get; }
+
+    public IRelayCommand OpenNavMeshRadarCommand { get; }
+
+    public IRelayCommand OpenWorkshopManagerCommand { get; }
+
+    public IRelayCommand OpenAssetToolsCommand { get; }
+
+    public IRelayCommand OpenGitSyncCommand { get; }
+
     public IRelayCommand<DocumentViewModel> CloseDocumentCommand { get; }
 
     public IRelayCommand SaveDocumentCommand { get; }
@@ -88,7 +123,14 @@ public class ShellViewModel : ViewModelBase
         ICommandService commandService,
         IResourceCompiler resourceCompiler,
         Vrad3CacheService vrad3CacheService,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        ILoadingScreenService loadingScreenService,
+        ISoundEventService soundEventService,
+        IMapBuilderService mapBuilderService,
+        INavMeshRadarService navMeshRadarService,
+        IWorkshopManagerService workshopManagerService,
+        IAssetToolsService assetToolsService,
+        IGitSyncService gitSyncService)
     {
         AddonService = addonService;
         Cs2Launcher = cs2Launcher;
@@ -98,6 +140,14 @@ public class ShellViewModel : ViewModelBase
         Vrad3CacheService = vrad3CacheService;
         SettingsService = settingsService;
 
+        LoadingScreenService = loadingScreenService;
+        SoundEventService = soundEventService;
+        MapBuilderService = mapBuilderService;
+        NavMeshRadarService = navMeshRadarService;
+        WorkshopManagerService = workshopManagerService;
+        AssetToolsService = assetToolsService;
+        GitSyncService = gitSyncService;
+
         LaunchCs2Command = new AsyncRelayCommand(OnLaunchCs2Async);
         KillCs2Command = new RelayCommand(OnKillCs2);
         RestartCs2Command = new AsyncRelayCommand(OnRestartCs2Async);
@@ -105,6 +155,14 @@ public class ShellViewModel : ViewModelBase
         OpenHotkeyEditorCommand = new RelayCommand(OpenHotkeyEditor);
         OpenDetailPropEditorCommand = new RelayCommand(OpenDetailPropEditor);
         OpenConsoleCommand = new RelayCommand(OpenConsole);
+        OpenLoadingEditorCommand = new RelayCommand(OpenLoadingEditor);
+        OpenSoundEventEditorCommand = new RelayCommand(OpenSoundEventEditor);
+        OpenMapBuilderCommand = new RelayCommand(OpenMapBuilder);
+        OpenNavMeshRadarCommand = new RelayCommand(OpenNavMeshRadar);
+        OpenWorkshopManagerCommand = new RelayCommand(OpenWorkshopManager);
+        OpenAssetToolsCommand = new RelayCommand(OpenAssetTools);
+        OpenGitSyncCommand = new RelayCommand(OpenGitSync);
+
         CloseDocumentCommand = new RelayCommand<DocumentViewModel>(CloseDocument);
         SaveDocumentCommand = new RelayCommand(SaveCurrentDocument);
 
@@ -114,7 +172,7 @@ public class ShellViewModel : ViewModelBase
 
         SyncAddons();
 
-        // Default open the Hotkey and DetailProp editors so everything is directly usable
+        // Default open the primary Hotkey and DetailProp editors
         OpenHotkeyEditor();
         OpenDetailPropEditor();
     }
@@ -167,6 +225,97 @@ public class ShellViewModel : ViewModelBase
 
         var console = new ConsoleViewModel(CommandService);
         AddDocument(console);
+    }
+
+    public void OpenLoadingEditor()
+    {
+        var existing = Documents.OfType<LoadingEditorViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var editor = new LoadingEditorViewModel(AddonService, LoadingScreenService);
+        AddDocument(editor);
+    }
+
+    public void OpenSoundEventEditor()
+    {
+        var existing = Documents.OfType<SoundEventEditorViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var editor = new SoundEventEditorViewModel(AddonService, SoundEventService);
+        AddDocument(editor);
+    }
+
+    public void OpenMapBuilder()
+    {
+        var existing = Documents.OfType<MapBuilderViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var builder = new MapBuilderViewModel(AddonService, MapBuilderService);
+        AddDocument(builder);
+    }
+
+    public void OpenNavMeshRadar()
+    {
+        var existing = Documents.OfType<NavMeshRadarViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var radar = new NavMeshRadarViewModel(AddonService, NavMeshRadarService);
+        AddDocument(radar);
+    }
+
+    public void OpenWorkshopManager()
+    {
+        var existing = Documents.OfType<WorkshopManagerViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var workshop = new WorkshopManagerViewModel(AddonService, WorkshopManagerService);
+        AddDocument(workshop);
+    }
+
+    public void OpenAssetTools()
+    {
+        var existing = Documents.OfType<AssetToolsViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var tools = new AssetToolsViewModel(AddonService, AssetToolsService);
+        AddDocument(tools);
+    }
+
+    public void OpenGitSync()
+    {
+        var existing = Documents.OfType<GitSyncViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveDocument = existing;
+            return;
+        }
+
+        var sync = new GitSyncViewModel(AddonService, GitSyncService);
+        AddDocument(sync);
     }
 
     private void AddDocument(DocumentViewModel doc)
