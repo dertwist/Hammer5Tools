@@ -1,5 +1,5 @@
-using System.Runtime.InteropServices;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Hammer5Tools.Core.Format.Materials;
 using Hammer5Tools.Core.Format.Resources;
@@ -38,8 +38,17 @@ public sealed class AutomationResourceTests
                 data.SaveTo(file);
             }
             var output = Path.Combine(root, "packed.png");
-            using var pack = JsonDocument.Parse(JsonSerializer.Serialize(new { path = output, channels = new {
-                r = new { path = source, channel = "b" }, g = 11, b = new { path = source, channel = "r" }, a = new { path = source, channel = "a" } } }));
+            using var pack = JsonDocument.Parse(JsonSerializer.Serialize(new
+            {
+                path = output,
+                channels = new
+                {
+                    r = new { path = source, channel = "b" },
+                    g = 11,
+                    b = new { path = source, channel = "r" },
+                    a = new { path = source, channel = "a" }
+                }
+            }));
             var result = TexturePreparation.Execute(pack.RootElement, "pack");
             await Assert.That(result["failed"]!.GetValue<int>()).IsEqualTo(0);
             using var inspect = JsonDocument.Parse(JsonSerializer.Serialize(new { input = output }));

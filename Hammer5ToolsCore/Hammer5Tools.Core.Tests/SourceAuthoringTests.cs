@@ -65,8 +65,12 @@ public sealed class SourceAuthoringTests
         {
             var first = Path.Combine(root, "first.vmat");
             var second = Path.Combine(root, "second.vmat");
-            using var invalid = JsonDocument.Parse(JsonSerializer.Serialize(new { addon_root = root, items = new object[] {
-                new { path = first, slots = new { TextureColor = "missing.png" } }, new { path = second } } }));
+            using var invalid = JsonDocument.Parse(JsonSerializer.Serialize(new
+            {
+                addon_root = root,
+                items = new object[] {
+                new { path = first, slots = new { TextureColor = "missing.png" } }, new { path = second } }
+            }));
             await Assert.That(() => SourceAssetAuthoring.Batch(invalid.RootElement, "vmat")).Throws<FileNotFoundException>();
             await Assert.That(File.Exists(first)).IsFalse();
             using var valid = JsonDocument.Parse(JsonSerializer.Serialize(new { items = new[] { new { path = first }, new { path = second } } }));

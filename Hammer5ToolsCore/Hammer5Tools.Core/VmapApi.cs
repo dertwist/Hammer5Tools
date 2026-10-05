@@ -40,12 +40,24 @@ internal static unsafe class VmapApi
     {
         bool Flag(string name, bool fallback) => root.TryGetProperty(name, out var value) ? value.GetBoolean() : fallback;
         string Text(string name) => root.TryGetProperty(name, out var value) ? value.GetString() ?? "" : "";
+        var overrides = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (root.TryGetProperty("selectionSetOverrides", out var states))
+            foreach (var property in states.EnumerateObject())
+            {
+                var state = property.Value.GetInt32();
+                if (state is < 0 or > 2)
+                    throw new ArgumentException("Selection set state must be 0, 1 or 2.");
+                overrides[property.Name] = state;
+            }
         return new()
         {
             ExpandPrefabs = Flag("expandPrefabs", true),
             EvaluateSmartProps = Flag("evaluateSmartProps", true),
             IncludeHidden = Flag("includeHidden", true),
             IgnoreToolMaterialObjects = Flag("ignoreToolMaterialObjects", false),
+            IgnoreStaticOverlays = Flag("ignoreStaticOverlays", false),
+            MetadataOnly = Flag("metadataOnly", false),
+            SelectionSetOverrides = overrides,
             IncludeEditorMetadata = Flag("includeEditorMetadata", true),
             SelectionSetMask = Text("selectionSetMask"),
             InvertSelectionSetMask = Flag("invertSelectionSetMask", false),

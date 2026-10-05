@@ -151,6 +151,10 @@ docs
 # inside SourcePorter.Core/.
 Hammer5ToolsCore/**/bin/
 Hammer5ToolsCore/**/obj/
+Hammer5ToolsAvalonia/**/bin/
+Hammer5ToolsAvalonia/**/obj/
+Hammer5ToolsAvalonia.Tests/**/bin/
+Hammer5ToolsAvalonia.Tests/**/obj/
 Hammer5ToolsCore/**/publish/
 Hammer5ToolsCore/**/build/
 TestResults/

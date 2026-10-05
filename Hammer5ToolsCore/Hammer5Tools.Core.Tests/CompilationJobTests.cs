@@ -55,8 +55,13 @@ public sealed class CompilationJobTests
             using var host = System.Diagnostics.Process.GetCurrentProcess();
             var foreignId = Guid.NewGuid().ToString("N");
             var foreignPath = Path.Combine(CompilerService.Storage, foreignId + ".job.json");
-            File.WriteAllText(foreignPath, JsonSerializer.Serialize(new { job_id = foreignId, state = "running",
-                host_process_id = Environment.ProcessId, host_process_start_utc = host.StartTime.ToUniversalTime().ToString("O") }));
+            File.WriteAllText(foreignPath, JsonSerializer.Serialize(new
+            {
+                job_id = foreignId,
+                state = "running",
+                host_process_id = Environment.ProcessId,
+                host_process_start_utc = host.StartTime.ToUniversalTime().ToString("O")
+            }));
             try
             {
                 var foreign = CompilationJobs.Status(foreignId);

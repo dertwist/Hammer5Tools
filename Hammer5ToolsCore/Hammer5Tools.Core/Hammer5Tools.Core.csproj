@@ -174,4 +174,7 @@
     <InternalsVisibleTo Include="SourcePorter.Core.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+  </ItemGroup>
 </Project>

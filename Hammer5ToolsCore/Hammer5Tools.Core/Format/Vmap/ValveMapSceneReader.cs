@@ -23,6 +23,7 @@ public sealed class ValveMapSceneReader
 
     /// <summary>Prefab files currently on the expansion stack, so a self-reference cannot recurse.</summary>
     private readonly HashSet<string> expanding = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<Guid> ancestors = [];
 
     private const int MaximumPrefabDepth = 8;
 
@@ -31,6 +32,7 @@ public sealed class ValveMapSceneReader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
+        ancestors.Clear();
         var document = VmapDocument.LoadInMemory(path);
         Visit(document.World, Matrix4x4.Identity, document.Path, 0);
         return new ValveMapScene(document.Path, [.. meshes], [.. props], [.. smartProps], [.. diagnostics]);
@@ -38,43 +40,64 @@ public sealed class ValveMapSceneReader
 
     private void Visit(Element node, Matrix4x4 parentTransform, string mapPath, int depth)
     {
-        // Hammer's per-node hide flag: a viewer that ignored it would show geometry
-        // the mapper deliberately took out of view.
-        if (Scalar<bool>(node, "force_hidden"))
+        if (!ancestors.Add(node.ID))
         {
+            diagnostics.Add($"Node cycle: {node.Name}");
             return;
         }
 
-        var transform = LocalTransform(node) * parentTransform;
-
-        switch (node.ClassName)
+        try
         {
-            case "CMapSmartProp":
-                AddSmartProp(node, transform);
-                break;
-            case "CMapEntity":
-                AddEntity(node, transform);
-                break;
-            case "CMapPrefab":
-                ExpandPrefab(node, transform, mapPath, depth);
-                break;
-        }
-
-        // Meshes hang off CMapMesh and CMapStaticOverlay alike, so key on the attribute.
-        if (Value(node, "meshData") is Element meshData)
-        {
-            AddMesh(node.Name ?? node.ClassName, meshData, transform);
-        }
-
-        if (Value(node, "children") is ElementArray children)
-        {
-            foreach (var child in children)
+            // Hammer's per-node hide flag: a viewer that ignored it would show geometry
+            // the mapper deliberately took out of view.
+            if (Scalar<bool>(node, "force_hidden"))
             {
-                if (child is not null)
+                return;
+            }
+
+            var transform = LocalTransform(node) * parentTransform;
+
+            switch (node.ClassName)
+            {
+                case "CMapSmartProp":
+                    AddSmartProp(node, transform);
+                    break;
+                case "CMapEntity":
+                    AddEntity(node, transform);
+                    break;
+                case "CMapPrefab":
+                    ExpandPrefab(node, transform, mapPath, depth);
+                    break;
+                case "CMapInstance":
+                    if (Value(node, "target") is Element target && depth < MaximumPrefabDepth
+                        && Matrix4x4.Invert(LocalTransform(target), out var inverseTarget))
+                        Visit(target, inverseTarget * transform, mapPath, depth + 1);
+                    else
+                        diagnostics.Add($"Instance target missing, singular or nesting limit reached: {node.Name}");
+                    break;
+            }
+
+            // Meshes hang off CMapMesh and CMapStaticOverlay alike, so key on the attribute.
+            if (Value(node, "meshData") is Element meshData)
+            {
+                AddMesh(node.Name ?? node.ClassName, meshData, transform);
+            }
+
+            if (Value(node, "children") is ElementArray children)
+            {
+                foreach (var child in children)
                 {
-                    Visit(child, transform, mapPath, depth);
+                    if (child is not null)
+                    {
+                        // Child origins are already in this map's space, independent of editor groups.
+                        Visit(child, parentTransform, mapPath, depth);
+                    }
                 }
             }
+        }
+        finally
+        {
+            ancestors.Remove(node.ID);
         }
     }
 

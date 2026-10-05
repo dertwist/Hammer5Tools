@@ -24,6 +24,7 @@ internal static class SmartPropJsonConverter
             JsonValueKind.Number => new KVObject(element.GetSingle()),
             JsonValueKind.True => new KVObject(true),
             JsonValueKind.False => new KVObject(false),
+            JsonValueKind.Null => KVObject.Null(),
             _ => new KVObject(string.Empty),
         };
     }

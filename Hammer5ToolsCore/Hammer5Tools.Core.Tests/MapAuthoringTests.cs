@@ -18,8 +18,14 @@ public sealed class MapAuthoringTests
             _ = UnrealMapWriter.Write(new UnrealMapWriteRequest([]), path);
             File.WriteAllText(Path.Combine(root, "models", "a.vmdl"), "fixture");
             File.WriteAllText(Path.Combine(root, "models", "b.vmdl"), "fixture");
-            var response = JsonNode.Parse(CoreApi.AuthorMap(JsonSerializer.Serialize(new { path, addon_root = root,
-                pattern = "models/*.vmdl", columns = 1, spacing = new[] { 100, 200, 0 } }), "zoo"))!;
+            var response = JsonNode.Parse(CoreApi.AuthorMap(JsonSerializer.Serialize(new
+            {
+                path,
+                addon_root = root,
+                pattern = "models/*.vmdl",
+                columns = 1,
+                spacing = new[] { 100, 200, 0 }
+            }), "zoo"))!;
             await Assert.That(response["box_count"]!.GetValue<int>()).IsEqualTo(2);
             var document = VmapDocument.LoadInMemory(path);
             await Assert.That(document.WorldChildren[1]["origin"]).IsEqualTo((object)new Vector3(0, 200, 0));

@@ -35,8 +35,8 @@ public sealed class ValveMapSceneReaderTests
             var prop = Assert.Single(scene.Props);
             Assert.Equal("prop_static", prop.ClassName);
             Assert.Equal("models/example.vmdl", prop.Model);
-            // Group at (100,0,0) times the entity's own (0,50,0): translation is the last row.
-            Assert.Equal<float>([100, 50, 0], prop.Transform[12..15].ToArray());
+            // Editor groups do not change their children's map-space origins.
+            Assert.Equal<float>([0, 50, 0], prop.Transform[12..15].ToArray());
 
             var smartProp = Assert.Single(scene.SmartProps);
             Assert.Equal("smartprops/example.vsmart", smartProp.File);
@@ -114,6 +114,35 @@ public sealed class ValveMapSceneReaderTests
         finally
         {
             Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Read_reports_node_cycles_without_overflowing_stack()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"h5t_vmap_cycle_{Guid.NewGuid():N}.vmap");
+        var model = new DM("vmap", 29);
+        var root = new Element(model, "", null, "CMapRootElement");
+        model.Root = root;
+        var world = new Element(model, "world", null, "CMapWorld");
+        root["world"] = world;
+        Place(world, Vector3.Zero);
+
+        var group = new Element(model, "group", null, "CMapGroup");
+        Place(group, Vector3.Zero);
+        var mesh = new Element(model, "brush", null, "CMapMesh") { ["meshData"] = Quad(model) };
+        world["children"] = new ElementArray { group };
+        group["children"] = new ElementArray { mesh, group };
+        model.Save(path, "binary", 9);
+
+        try
+        {
+            var scene = new ValveMapSceneReader().Read(path);
+            Assert.Contains(scene.Diagnostics, diagnostic => diagnostic.Contains("Node cycle"));
+        }
+        finally
+        {
+            File.Delete(path);
         }
     }
 

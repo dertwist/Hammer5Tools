@@ -1,8 +1,8 @@
 using System.Numerics;
 using System.Text.Json.Nodes;
 using Datamodel;
-using Hammer5Tools.Core.Format.Vmap;
 using Hammer5Tools.Core.Format.SmartProps;
+using Hammer5Tools.Core.Format.Vmap;
 using DM = Datamodel.Datamodel;
 
 namespace SourcePorter.Core.Tests;
@@ -56,7 +56,7 @@ public sealed class ValveMapImportReaderTests
             Assert.True(imported["hidden"]!.GetValue<bool>());
             Assert.Equal(scene["nodes"]![1]!["id"]!.GetValue<string>(), imported["parent"]!.GetValue<string>());
             Assert.Equal("18446744073709551615", imported["referenceId"]!.GetValue<string>());
-            Assert.Equal(10f, imported["transform"]![12]!.GetValue<float>());
+            Assert.Equal(0f, imported["transform"]![12]!.GetValue<float>());
             var face = Assert.Single(imported["mesh"]!["faces"]!.AsArray())!;
             Assert.Equal(4, face["indices"]!.AsArray().Count);
             Assert.Equal(4, face["uvs"]!.AsArray().Count);
@@ -105,11 +105,13 @@ public sealed class ValveMapImportReaderTests
             var group = new Element(document, "walls", null, "CMapGroup");
             var first = new Element(document, "first", null, "CMapPrefab")
             {
-                ["targetMapPath"] = "piece.vmap", ["origin"] = new Vector3(10, 0, 0),
+                ["targetMapPath"] = "piece.vmap",
+                ["origin"] = new Vector3(10, 0, 0),
             };
             var second = new Element(document, "second", null, "CMapPrefab")
             {
-                ["targetMapPath"] = "piece.vmap", ["origin"] = new Vector3(20, 0, 0),
+                ["targetMapPath"] = "piece.vmap",
+                ["origin"] = new Vector3(20, 0, 0),
             };
             group["children"] = new ElementArray { first, second };
             var other = new Element(document, "other", null, "CMapMesh") { ["meshData"] = Quad(document) };
@@ -225,6 +227,169 @@ public sealed class ValveMapImportReaderTests
             Assert.Null(nodes[1]!["mesh"]);
             Assert.Equal(3, nodes.Count(node => node!["mesh"] is not null));
             Assert.Equal(2, nodes[3]!["mesh"]!["faces"]!.AsArray().Count);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Groups_use_map_space_instances_rebase_target_pivots_and_overlays_can_be_excluded()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"h5t_instances_{Guid.NewGuid():N}.vmap");
+        var document = new DM("vmap", 29);
+        document.Root = new Element(document, "", null, "CMapRootElement");
+        var world = new Element(document, "world", null, "CMapWorld");
+        document.Root["world"] = world;
+        var group = new Element(document, "assembly", null, "CMapGroup")
+        {
+            ["origin"] = new Vector3(100, 200, 0),
+            ["angles"] = new QAngle(0, 90, 0),
+        };
+        var mesh = new Element(document, "brush", null, "CMapMesh")
+        {
+            ["origin"] = new Vector3(100, 210, 0),
+            ["meshData"] = Quad(document),
+        };
+        var prop = new Element(document, "model", null, "CMapEntity")
+        {
+            ["origin"] = new Vector3(100, 220, 0),
+            ["entity_properties"] = new Element(document, "", null, "EditGameClassProps")
+            {
+                ["model"] = "models/test.vmdl",
+            },
+        };
+        group["children"] = new ElementArray { mesh, prop };
+        var instance = new Element(document, "copy", null, "CMapInstance")
+        {
+            ["origin"] = new Vector3(300, 400, 0),
+            ["target"] = group,
+        };
+        var overlay = new Element(document, "decal", null, "CMapStaticOverlay") { ["meshData"] = Quad(document) };
+        world["children"] = new ElementArray { group, instance, overlay };
+        document.Root["rootSelectionSet"] = new Element(document, "", null, "CMapSelectionSet")
+        {
+            ["selectionSetName"] = "Copies",
+            ["selectionSetData"] = new Element(document, "", null, "CObjectSelectionSetDataElement")
+            {
+                ["selectedObjects"] = new ElementArray { instance },
+            },
+        };
+        document.Save(path, "binary", 9);
+        try
+        {
+            var reader = new ValveMapImportReader();
+            var scene = JsonNode.Parse(reader.Read(path, importOptions: new() { IgnoreStaticOverlays = true }))!;
+            var nodes = scene["nodes"]!.AsArray();
+            var brushes = nodes.Where(node => node!["mesh"] is not null).ToArray();
+            Assert.Equal(2, brushes.Length);
+            Assert.Equal(100f, brushes[0]!["transform"]![12]!.GetValue<float>());
+            Assert.Equal(210f, brushes[0]!["transform"]![13]!.GetValue<float>());
+            Assert.InRange(brushes[1]!["transform"]![12]!.GetValue<float>(), 309.99f, 310.01f);
+            Assert.InRange(brushes[1]!["transform"]![13]!.GetValue<float>(), 399.99f, 400.01f);
+            var models = nodes.Where(node => node!["model"] is not null).ToArray();
+            Assert.Equal(2, models.Length);
+            Assert.InRange(models[1]!["transform"]![12]!.GetValue<float>(), 319.99f, 320.01f);
+            Assert.False(nodes.Last()!["included"]!.GetValue<bool>());
+            scene = JsonNode.Parse(reader.Read(path, importOptions: new() { SelectionSetMask = "Copies" }))!;
+            Assert.Single(scene["nodes"]!.AsArray(), node => node!["mesh"] is not null);
+            var preview = new ValveMapSceneReader().Read(path);
+            Assert.Equal(2, preview.Props.Length);
+            Assert.InRange(preview.Props[1].Transform[12], 319.99f, 320.01f);
+            var setData = (Element)((Element)document.Root["rootSelectionSet"]!)["selectionSetData"]!;
+            setData["selectedObjects"] = new ElementArray { group };
+            document.Save(path, "binary", 9);
+            scene = JsonNode.Parse(reader.Read(path, importOptions: new() { SelectionSetMask = "Copies" }))!;
+            Assert.Single(scene["nodes"]!.AsArray(), node => node!["mesh"] is not null);
+
+            // A cyclic reference must produce diagnostics rather than overflow the stack.
+            group["children"] = new ElementArray { mesh, instance };
+            document.Save(path, "binary", 9);
+            scene = JsonNode.Parse(reader.Read(path))!;
+            Assert.Contains(scene["diagnostics"]!.AsArray(), value => value!.GetValue<string>().Contains("Node cycle"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Missing_nested_smartprop_keeps_valid_models_and_reports_dependency()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"h5t_nested_{Guid.NewGuid():N}.vsmart");
+        File.WriteAllText(path, SmartPropDocumentSerializer.SerializeJson("""
+            {"generic_data_type":"CSmartPropRoot", "m_Children":[
+                {"_class":"CSmartPropElement_Model", "m_nElementID":1, "m_sModelName":"models/test.vmdl"},
+                {"_class":"CSmartPropElement_SmartProp", "m_nElementID":2, "m_sSmartProp":"missing/child.vsmart"}]}
+            """));
+        try
+        {
+            var scene = JsonNode.Parse(new ValveMapImportReader().ReadSmartProp(path))!;
+            Assert.Single(scene["nodes"]![0]!["smartPropModels"]!.AsArray());
+            Assert.Contains(scene["diagnostics"]!.AsArray(), value => value!.GetValue<string>().Contains("missing/child.vsmart"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Hammer_visibility_and_selection_overrides_filter_before_building_geometry()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"h5t_visible_{Guid.NewGuid():N}.vmap");
+        var document = new DM("vmap", 29);
+        document.Root = new Element(document, "", null, "CMapRootElement");
+        var world = new Element(document, "world", null, "CMapWorld");
+        document.Root["world"] = world;
+        var hidden = new Element(document, "hidden", null, "CMapMesh") { ["meshData"] = Quad(document) };
+        var visible = new Element(document, "visible", null, "CMapMesh") { ["meshData"] = Quad(document) };
+        world["children"] = new ElementArray { hidden, visible };
+        document.Root["visbility"] = new Element(document, "", null, "CVisibilityMgr")
+        {
+            ["nodes"] = new ElementArray { hidden, visible },
+            ["hiddenFlags"] = new IntArray { 1, 0 },
+        };
+        Element Set(string name, Element node) => new(document, "", null, "CMapSelectionSet")
+        {
+            ["selectionSetName"] = name,
+            ["selectionSetData"] = new Element(document, "", null, "CObjectSelectionSetDataElement")
+            {
+                ["selectedObjects"] = new ElementArray { node },
+            },
+        };
+        document.Root["rootSelectionSet"] = new Element(document, "", null, "CMapSelectionSet")
+        {
+            ["children"] = new ElementArray { Set("Hidden", hidden), Set("Visible", visible), Set("Overlap", hidden) },
+        };
+        document.Save(path, "binary", 9);
+        try
+        {
+            var reader = new ValveMapImportReader();
+            var options = new ValveMapImportOptions { IncludeHidden = false, IncludeEditorMetadata = false };
+            var scene = JsonNode.Parse(reader.Read(path, importOptions: options))!;
+            Assert.Equal(2, scene["schemaVersion"]!.GetValue<int>());
+            Assert.Single(scene["nodes"]!.AsArray(), node => node!["mesh"] is not null);
+            Assert.True(scene["nodes"]![1]!["hidden"]!.GetValue<bool>());
+            var catalog = scene["selectionSetStates"]!.AsArray();
+            Assert.Equal("hidden", catalog[0]!["visibility"]!.GetValue<string>());
+            Assert.Equal("visible", catalog[1]!["visibility"]!.GetValue<string>());
+            var overrides = new Dictionary<string, int>
+            {
+                [catalog[0]!["key"]!.GetValue<string>()] = 1,
+                [catalog[1]!["key"]!.GetValue<string>()] = 2,
+            };
+            scene = JsonNode.Parse(reader.Read(path, importOptions: options with { SelectionSetOverrides = overrides }))!;
+            Assert.NotNull(scene["nodes"]![1]!["mesh"]);
+            Assert.Null(scene["nodes"]![2]!["mesh"]);
+            overrides[catalog[2]!["key"]!.GetValue<string>()] = 2;
+            scene = JsonNode.Parse(reader.Read(path, importOptions: options with { SelectionSetOverrides = overrides, IncludeHidden = true }))!;
+            Assert.DoesNotContain(scene["nodes"]!.AsArray(), node => node!["mesh"] is not null);
+            scene = JsonNode.Parse(reader.Read(path, importOptions: options with { MetadataOnly = true }))!;
+            Assert.DoesNotContain(scene["nodes"]!.AsArray(), node => node!["mesh"] is not null);
+            Assert.Equal(3, scene["selectionSetStates"]!.AsArray().Count);
         }
         finally
         {

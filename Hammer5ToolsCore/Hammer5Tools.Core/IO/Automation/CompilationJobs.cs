@@ -33,9 +33,15 @@ internal static class CompilationJobs
         if (!File.Exists(executable)) throw new FileNotFoundException("resourcecompiler.exe not found", executable);
         var id = Guid.NewGuid().ToString("N");
         using var host = Process.GetCurrentProcess();
-        var job = new Job(new JsonObject { ["job_id"] = id, ["state"] = "queued", ["total"] = paths.Count,
-            ["host_process_id"] = Environment.ProcessId, ["host_process_start_utc"] = host.StartTime.ToUniversalTime().ToString("O"),
-            ["created_utc"] = DateTimeOffset.UtcNow.ToString("O") });
+        var job = new Job(new JsonObject
+        {
+            ["job_id"] = id,
+            ["state"] = "queued",
+            ["total"] = paths.Count,
+            ["host_process_id"] = Environment.ProcessId,
+            ["host_process_start_utc"] = host.StartTime.ToUniversalTime().ToString("O"),
+            ["created_utc"] = DateTimeOffset.UtcNow.ToString("O")
+        });
         Jobs[id] = job;
         Persist(job);
         var snapshot = JsonNode.Parse(request.GetRawText())!.AsObject();

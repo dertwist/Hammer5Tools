@@ -67,6 +67,20 @@ textures. Source2Houdini consumes these exports through its external Core depend
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
 
+VMAP DCC import keeps child transforms in authored map space and rebases
+prefab/instance references in Core. The additive import JSON options include
+`ignoreStaticOverlays`; missing nested SmartProp resources remain diagnostics
+and do not discard valid placements.
+
+The additive managed `CoreApi` SmartProp editor methods create, validate, parse,
+serialize, edit and save source documents, locate CS2, load source/compiled
+resources and evaluate previews with nested dependencies and textured geometry.
+Core owns the editor component templates and assigns fresh IDs when adding or
+pasting components. Editor paths are arrays of object keys and
+array indices. These methods do not change the existing NativeAOT ABI. The C#
+preview keeps undo snapshots and pending input as presentation state; it does not
+replace the shipped Python editor or its packaging.
+
 Compiled-model JSON requests may opt into `collisionFallback` when render LoD0
 is absent. The response `geometrySource` distinguishes `render` and `collision`.
 Fallback defaults off for existing callers; collision geometry has flat normals
@@ -76,6 +90,11 @@ The additive `h5t_vmap_read_import_json` export returns schema-versioned DCC
 import data, preserving polygon corners, node identities, hierarchy and editor
 metadata. It is separate from the flattened binary VMAP preview contract.
 Increment its `schemaVersion` when changing existing fields or semantics.
+DCC import schema 2 includes the saved `CVisibilityMgr` hidden flags in node
+visibility and exposes a selection-set catalog with stable keys. Per-set
+overrides use 0 (Hammer state), 1 (enabled) or 2 (disabled); disabled wins on
+overlapping membership. `metadataOnly` omits mesh projection and evaluation for
+catalog refresh. Binary preview messages are unchanged.
 
 Assetgroup source-name normalization and template token expansion use
 `CoreBridge` and the Core `Format/AssetGroup/` implementation. The additive

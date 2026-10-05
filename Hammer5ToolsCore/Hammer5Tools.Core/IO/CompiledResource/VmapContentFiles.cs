@@ -13,6 +13,7 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot, stri
     private readonly Dictionary<string, JsonObject> documents = new(StringComparer.OrdinalIgnoreCase);
     private GameFileLoader? loader;
     public HashSet<string> Dependencies { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<string> Diagnostics { get; } = [];
 
     public void Dispose() => loader?.Dispose();
 
@@ -36,10 +37,20 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot, stri
 
     public JsonObject ReadSmartProp(string resource, out JsonObject nested)
     {
-        nested = [];
         var root = Load(resource);
+        nested = ReadSmartPropDependencies(root, resource);
+        return root;
+    }
+
+    public JsonObject ReadSmartPropDependencies(JsonObject root, string? rootResource = null)
+    {
+        JsonObject nested = [];
         var pending = new Queue<(JsonNode Document, int Depth)>();
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { resource };
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (rootResource is not null)
+        {
+            visited.Add(rootResource);
+        }
         pending.Enqueue((root, 0));
         while (pending.TryDequeue(out var item))
         {
@@ -53,12 +64,21 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot, stri
                 {
                     throw new InvalidDataException("SmartProp dependency nesting exceeds 32 levels.");
                 }
-                var child = Load(reference);
+                JsonObject child;
+                try
+                {
+                    child = Load(reference);
+                }
+                catch (Exception error) when (error is IOException or System.Text.Json.JsonException or InvalidDataException or KeyNotFoundException)
+                {
+                    Diagnostics.Add($"{reference}: {error.Message}");
+                    continue;
+                }
                 nested[reference.Replace('\\', '/')] = child;
                 pending.Enqueue((child, item.Depth + 1));
             }
         }
-        return root;
+        return nested;
     }
 
     private JsonObject Load(string resource)

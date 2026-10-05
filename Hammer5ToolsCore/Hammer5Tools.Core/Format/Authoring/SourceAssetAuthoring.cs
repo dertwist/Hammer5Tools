@@ -44,8 +44,13 @@ internal static class SourceAssetAuthoring
                 }
                 foreach (var item in prepared)
                 {
-                    var row = new JsonObject { ["path"] = item.Path.Replace('\\', '/'), ["fields"] = item.Fields.DeepClone(),
-                        ["field_count"] = item.FieldCount, ["fields_truncated"] = item.FieldCount > item.Fields.Count };
+                    var row = new JsonObject
+                    {
+                        ["path"] = item.Path.Replace('\\', '/'),
+                        ["fields"] = item.Fields.DeepClone(),
+                        ["field_count"] = item.FieldCount,
+                        ["fields_truncated"] = item.FieldCount > item.Fields.Count
+                    };
                     if (!item.Changed)
                     {
                         skipped++;
@@ -73,9 +78,17 @@ internal static class SourceAssetAuthoring
                     }
                     if (results.Count < 50) results.Add(row);
                 }
-                return new JsonObject { ["dry_run"] = dryRun, ["changed"] = changed, ["skipped"] = skipped,
-                    ["failed"] = failed, ["total"] = prepared.Length, ["results"] = results,
-                    ["truncated"] = prepared.Length > 50, ["atomicity"] = "per-file replacement; batch has no rollback" };
+                return new JsonObject
+                {
+                    ["dry_run"] = dryRun,
+                    ["changed"] = changed,
+                    ["skipped"] = skipped,
+                    ["failed"] = failed,
+                    ["total"] = prepared.Length,
+                    ["results"] = results,
+                    ["truncated"] = prepared.Length > 50,
+                    ["atomicity"] = "per-file replacement; batch has no rollback"
+                };
             }
             finally
             {
@@ -108,12 +121,20 @@ internal static class SourceAssetAuthoring
                     File.Delete(staged);
                 }
             }
-            var result = new JsonObject { ["path"] = prepared.Path.Replace('\\', '/'), ["dry_run"] = dryRun,
+            var result = new JsonObject
+            {
+                ["path"] = prepared.Path.Replace('\\', '/'),
+                ["dry_run"] = dryRun,
                 ["action"] = (action == "update" ? "edit_" : "write_") + format,
-                ["modified_keys"] = prepared.Fields.DeepClone(), ["modified_fields"] = prepared.Fields.DeepClone(),
-                ["modified_count"] = prepared.FieldCount, ["fields_truncated"] = prepared.FieldCount > prepared.Fields.Count,
-                ["content_length"] = prepared.Content.Length, ["content_utf8_bytes"] = Encoding.UTF8.GetByteCount(prepared.Content),
-                ["changed"] = prepared.Changed, ["backup"] = backup };
+                ["modified_keys"] = prepared.Fields.DeepClone(),
+                ["modified_fields"] = prepared.Fields.DeepClone(),
+                ["modified_count"] = prepared.FieldCount,
+                ["fields_truncated"] = prepared.FieldCount > prepared.Fields.Count,
+                ["content_length"] = prepared.Content.Length,
+                ["content_utf8_bytes"] = Encoding.UTF8.GetByteCount(prepared.Content),
+                ["changed"] = prepared.Changed,
+                ["backup"] = backup
+            };
             if (format == "vmat")
             {
                 using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(prepared.Content));
