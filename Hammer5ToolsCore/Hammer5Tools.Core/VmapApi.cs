@@ -22,8 +22,37 @@ internal static unsafe class VmapApi
             using var document = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength));
             var root = document.RootElement;
             var contentRoot = root.TryGetProperty("contentRoot", out var content) ? content.GetString() : null;
-            return System.Text.Encoding.UTF8.GetBytes(CoreApi.ReadValveMapImport(root.GetProperty("path").GetString()!, contentRoot));
+            return System.Text.Encoding.UTF8.GetBytes(CoreApi.ReadValveMapImport(root.GetProperty("path").GetString()!, contentRoot, ImportOptions(root)));
         });
+
+    [UnmanagedCallersOnly(EntryPoint = "h5t_smartprop_read_import_json", CallConvs = [typeof(CallConvCdecl)])]
+    public static int ReadSmartPropImportJson(byte* request, int requestLength, byte** output, int* outputLength) =>
+        NativeInterop.Invoke(output, outputLength, () =>
+        {
+            using var document = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength));
+            var root = document.RootElement;
+            var contentRoot = root.TryGetProperty("contentRoot", out var content) ? content.GetString() : null;
+            var variables = root.TryGetProperty("variablesJson", out var value) ? value.GetString() ?? "{}" : "{}";
+            return System.Text.Encoding.UTF8.GetBytes(CoreApi.ReadSmartPropImport(root.GetProperty("path").GetString()!, contentRoot, ImportOptions(root), variables));
+        });
+
+    private static ValveMapImportOptions ImportOptions(JsonElement root)
+    {
+        bool Flag(string name, bool fallback) => root.TryGetProperty(name, out var value) ? value.GetBoolean() : fallback;
+        string Text(string name) => root.TryGetProperty(name, out var value) ? value.GetString() ?? "" : "";
+        return new()
+        {
+            ExpandPrefabs = Flag("expandPrefabs", true),
+            EvaluateSmartProps = Flag("evaluateSmartProps", true),
+            IncludeHidden = Flag("includeHidden", true),
+            IgnoreToolMaterialObjects = Flag("ignoreToolMaterialObjects", false),
+            IncludeEditorMetadata = Flag("includeEditorMetadata", true),
+            SelectionSetMask = Text("selectionSetMask"),
+            InvertSelectionSetMask = Flag("invertSelectionSetMask", false),
+            GameDirectory = Text("gameDirectory"),
+            ActiveAddon = Text("activeAddon"),
+        };
+    }
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.Binary", "Datamodel.NET")]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, "Datamodel.Codecs.KeyValues2", "Datamodel.NET")]

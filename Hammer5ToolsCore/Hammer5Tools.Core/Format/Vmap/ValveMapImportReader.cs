@@ -3,7 +3,9 @@ using System.Globalization;
 using System.Numerics;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Datamodel;
+using Hammer5Tools.Core.Format.Materials;
 using Hammer5Tools.Core.Format.SmartProps;
 using Hammer5Tools.Core.IO.CompiledResource;
 
@@ -17,28 +19,61 @@ public sealed class ValveMapImportReader
     private readonly JsonArray diagnostics = [];
     private readonly HashSet<string> expanding = new(StringComparer.OrdinalIgnoreCase);
     private VmapContentFiles files = null!;
+    private ValveMapImportOptions options = new();
+    private readonly Dictionary<string, VmapDocument> documents = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<(string Path, Guid Id), JsonObject> meshes = [];
+    private Regex[] selectionPatterns = [];
+    private int matchingSets;
+    private readonly Dictionary<string, JsonArray> smartPropModels = new(StringComparer.Ordinal);
 
     /// <summary>Returns schema version 1 JSON. Create a reader for each import.</summary>
-    public string Read(string path, string? contentRoot = null)
+    public string Read(string path, string? contentRoot = null, ValveMapImportOptions? importOptions = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         nodes.Clear();
         selectionSets.Clear();
         diagnostics.Clear();
         expanding.Clear();
-        files = new VmapContentFiles(path, contentRoot);
-        VisitMap(path, Matrix4x4.Identity, "", false, 0);
-        return new JsonObject
+        documents.Clear();
+        meshes.Clear();
+        smartPropModels.Clear();
+        matchingSets = 0;
+        options = importOptions ?? new();
+        selectionPatterns = options.SelectionSetMask.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(pattern => new Regex($"^{Regex.Escape(pattern).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal)}$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1))).ToArray();
+        using var contentFiles = new VmapContentFiles(path, contentRoot, options.GameDirectory, options.ActiveAddon);
+        files = contentFiles;
+        VisitMap(path, Matrix4x4.Identity, "", false, 0, false);
+        if (selectionPatterns.Length > 0 && matchingSets == 0)
+            diagnostics.Add(ConvertValue($"No Hammer selection sets match '{options.SelectionSetMask}'."));
+        return SceneJson(path);
+    }
+
+    private string SceneJson(string path, JsonObject? smartPropDocument = null)
+    {
+        var result = new JsonObject
         {
             ["schemaVersion"] = ConvertValue(1),
             ["path"] = ConvertValue(Path.GetFullPath(path)),
-            ["nodes"] = nodes.DeepClone(),
-            ["selectionSets"] = selectionSets.DeepClone(),
-            ["diagnostics"] = diagnostics.DeepClone(),
-        }.ToJsonString(VmapImportJsonContext.Default.Options);
+            ["nodes"] = nodes,
+            ["selectionSets"] = selectionSets,
+            ["diagnostics"] = diagnostics,
+            ["dependencies"] = ConvertValue(files.Dependencies),
+        };
+        if (smartPropDocument is not null)
+            result["smartPropDocument"] = smartPropDocument;
+        try
+        {
+            return result.ToJsonString(VmapImportJsonContext.Default.Options);
+        }
+        finally
+        {
+            result.Clear();
+        }
     }
 
-    private void VisitMap(string path, Matrix4x4 transform, string parent, bool hidden, int depth)
+    private void VisitMap(string path, Matrix4x4 transform, string parent, bool hidden, int depth, bool parentSelected)
     {
         path = Path.GetFullPath(path);
         if (depth >= 32 || !expanding.Add(path))
@@ -48,13 +83,17 @@ public sealed class ValveMapImportReader
         }
         try
         {
-            var document = VmapDocument.LoadInMemory(path);
+            if (!documents.TryGetValue(path, out var document))
+                documents[path] = document = VmapDocument.LoadInMemory(path);
+            files.Dependencies.Add(path);
             var scope = parent;
+            var selected = new HashSet<Guid>();
             if (Value(document.Root, "rootSelectionSet") is Element rootSets)
             {
                 selectionSets.Add(new JsonObject { ["scope"] = ConvertValue(scope), ["data"] = Metadata(rootSets) });
+                Select(rootSets, selected);
             }
-            Visit(document.World, transform, parent, hidden, path, depth, scope, new HashSet<Guid>());
+            Visit(document.World, transform, parent, hidden, path, depth, scope, new HashSet<Guid>(), selected, parentSelected);
         }
         finally
         {
@@ -63,7 +102,7 @@ public sealed class ValveMapImportReader
     }
 
     private void Visit(Element node, Matrix4x4 parentTransform, string parent, bool parentHidden,
-        string mapPath, int depth, string scope, HashSet<Guid> ancestors)
+        string mapPath, int depth, string scope, HashSet<Guid> ancestors, HashSet<Guid> selected, bool parentSelected)
     {
         if (!ancestors.Add(node.ID))
         {
@@ -75,6 +114,14 @@ public sealed class ValveMapImportReader
             var id = $"{parent}/{nodes.Count}";
             var transform = ValveMapSceneReader.LocalTransform(node) * parentTransform;
             var hidden = parentHidden || Value(node, "force_hidden") is true;
+            var isSelected = parentSelected || selected.Contains(node.ID);
+            var included = (selectionPatterns.Length == 0 || isSelected != options.InvertSelectionSetMask)
+                && (options.IncludeHidden || !hidden);
+            if (included && options.IgnoreToolMaterialObjects && Value(node, "meshData") is Element toolMesh
+                && UsesOnlyToolMaterials(toolMesh))
+            {
+                included = false;
+            }
             var properties = Value(node, "entity_properties") as Element;
             var item = new JsonObject
             {
@@ -88,16 +135,26 @@ public sealed class ValveMapImportReader
                 ["name"] = ConvertValue(node.Name ?? ""),
                 ["type"] = ConvertValue(node.ClassName),
                 ["hidden"] = ConvertValue(hidden),
+                ["included"] = ConvertValue(included),
                 ["transform"] = Matrix(transform),
                 ["properties"] = properties is null ? new JsonObject() : Metadata(properties),
-                ["metadata"] = Metadata(node, omit: ["children", "meshData", "entity_properties"]),
+                ["metadata"] = options.IncludeEditorMetadata ? Metadata(node, omit: ["children", "meshData", "entity_properties"]) : new JsonObject(),
             };
             nodes.Add(item);
-            if (Value(node, "meshData") is Element mesh)
+            if (included && Value(node, "meshData") is Element mesh)
             {
                 try
                 {
-                    item["mesh"] = ReadMesh(mesh);
+                    var meshKey = (mapPath, mesh.ID);
+                    if (meshes.TryGetValue(meshKey, out var projection))
+                    {
+                        item["mesh"] = projection.DeepClone();
+                    }
+                    else
+                    {
+                        meshes[meshKey] = projection = ReadMesh(mesh, options.IncludeEditorMetadata);
+                        item["mesh"] = projection;
+                    }
                     if (HasSubdivision(mesh))
                     {
                         diagnostics.Add(ConvertValue($"{node.Name}: subdivision/displacement data retained as metadata; only the control mesh is imported."));
@@ -115,32 +172,18 @@ public sealed class ValveMapImportReader
             if (node.ClassName == "CMapSmartProp" && Value(node, "smartPropFilename") is string smartProp)
             {
                 item["smartProp"] = ConvertValue(smartProp);
-                try
+                if (included && options.EvaluateSmartProps)
                 {
-                    var document = files.ReadSmartProp(smartProp, out var nested);
-                    var overrides = ValveMapSceneReader.ReadParameters(node);
-                    item["variables"] = ConvertValue(overrides);
-                    if (document["m_Variables"] is JsonArray variables)
+                    try
                     {
-                        foreach (var variable in variables.OfType<JsonObject>())
-                        {
-                            var name = variable["m_VariableName"]?.GetValue<string>();
-                            if (name is not null && overrides.TryGetValue(name, out var value))
-                            {
-                                variable["m_DefaultValue"] = ConvertValue(value);
-                            }
-                        }
+                        var overrides = (JsonObject)ConvertValue(ValveMapSceneReader.ReadParameters(node))!;
+                        item["variables"] = overrides;
+                        item["smartPropModels"] = EvaluateSmartProp(smartProp, overrides, out _);
                     }
-                    var result = SmartPropEvaluator.EvaluateJson(document.ToJsonString(VmapImportJsonContext.Default.Options), nested.ToJsonString());
-                    item["smartPropModels"] = new JsonArray(result.Models.Select(Model).ToArray());
-                    foreach (var diagnostic in result.Diagnostics)
+                    catch (Exception error) when (error is IOException or System.Text.Json.JsonException or InvalidOperationException)
                     {
-                        diagnostics.Add(ConvertValue($"{smartProp}: {diagnostic.Code}: {diagnostic.Message}"));
+                        diagnostics.Add(ConvertValue($"{smartProp}: {error.Message}"));
                     }
-                }
-                catch (Exception error) when (error is IOException or System.Text.Json.JsonException or InvalidOperationException)
-                {
-                    diagnostics.Add(ConvertValue($"{smartProp}: {error.Message}"));
                 }
             }
             if (Value(node, "children") is ElementArray children)
@@ -149,12 +192,15 @@ public sealed class ValveMapImportReader
                 {
                     if (child is not null)
                     {
-                        Visit(child, transform, id, hidden, mapPath, depth, scope, ancestors);
+                        Visit(child, transform, id, hidden, mapPath, depth, scope, ancestors, selected, isSelected);
                     }
                 }
             }
             if (node.ClassName == "CMapPrefab" && Value(node, "targetMapPath") is string target)
             {
+                item["prefabPath"] = ConvertValue(target);
+                if (!options.ExpandPrefabs || (hidden && !options.IncludeHidden))
+                    return;
                 var resolved = files.Resolve(target, mapPath);
                 if (resolved is null)
                 {
@@ -164,7 +210,7 @@ public sealed class ValveMapImportReader
                 {
                     try
                     {
-                        VisitMap(resolved, transform, id, hidden, depth + 1);
+                        VisitMap(resolved, transform, id, hidden, depth + 1, isSelected);
                     }
                     catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException)
                     {
@@ -179,7 +225,116 @@ public sealed class ValveMapImportReader
         }
     }
 
-    private static JsonObject ReadMesh(Element mesh)
+    private void Select(Element set, HashSet<Guid> selected)
+    {
+        if (Value(set, "selectionSetName") is string name && selectionPatterns.Any(pattern => pattern.IsMatch(name)))
+        {
+            matchingSets++;
+            var visited = new HashSet<Guid>();
+            void References(object? value)
+            {
+                if (value is Element element)
+                {
+                    if (!visited.Add(element.ID))
+                        return;
+                    if (element.ClassName is "CMapWorld" or "CMapGroup" or "CMapPrefab" or "CMapMesh"
+                        or "CMapEntity" or "CMapSmartProp" or "CMapStaticOverlay")
+                    {
+                        selected.Add(element.ID);
+                        return;
+                    }
+                    foreach (var (_, child) in element)
+                        References(child);
+                }
+                else if (value is IEnumerable array && value is not string)
+                {
+                    foreach (var child in array)
+                        References(child);
+                }
+            }
+            References(Value(set, "selectionSetData"));
+        }
+        if (Value(set, "children") is ElementArray children)
+            foreach (var child in children)
+                if (child is not null)
+                    Select(child, selected);
+    }
+
+    /// <summary>Deserializes a source or compiled SmartProp and evaluates it as a DCC scene.</summary>
+    public string ReadSmartProp(string path, string? contentRoot = null, ValveMapImportOptions? importOptions = null,
+        string variablesJson = "{}")
+    {
+        nodes.Clear();
+        selectionSets.Clear();
+        diagnostics.Clear();
+        smartPropModels.Clear();
+        options = importOptions ?? new();
+        using var contentFiles = new VmapContentFiles(path, contentRoot, options.GameDirectory, options.ActiveAddon);
+        files = contentFiles;
+        var variables = JsonNode.Parse(variablesJson) as JsonObject
+            ?? throw new InvalidDataException("SmartProp variable overrides must be a JSON object.");
+        var models = EvaluateSmartProp(path, variables, out var document);
+        nodes.Add(new JsonObject
+        {
+            ["id"] = ConvertValue("/0"),
+            ["parent"] = ConvertValue(""),
+            ["scope"] = ConvertValue(""),
+            ["sourceId"] = ConvertValue("/0"),
+            ["sourceMap"] = ConvertValue(path),
+            ["name"] = ConvertValue(Path.GetFileNameWithoutExtension(path)),
+            ["type"] = ConvertValue("CMapSmartProp"),
+            ["hidden"] = ConvertValue(false),
+            ["included"] = ConvertValue(true),
+            ["transform"] = Matrix(Matrix4x4.Identity),
+            ["properties"] = new JsonObject(),
+            ["metadata"] = new JsonObject(),
+            ["smartProp"] = ConvertValue(path),
+            ["smartPropModels"] = models,
+            ["variables"] = variables,
+        });
+        return SceneJson(path, document);
+    }
+
+    private JsonArray EvaluateSmartProp(string resource, JsonObject overrides, out JsonObject document)
+    {
+        document = files.ReadSmartProp(resource, out var nested);
+        var key = resource + "\n" + overrides.ToJsonString(VmapImportJsonContext.Default.Options);
+        if (smartPropModels.TryGetValue(key, out var cached))
+            return (JsonArray)cached.DeepClone();
+        if (document["m_Variables"] is JsonArray variables)
+            foreach (var variable in variables.OfType<JsonObject>())
+                if (variable["m_VariableName"]?.GetValue<string>() is { } name && overrides.TryGetPropertyValue(name, out var value))
+                    variable["m_DefaultValue"] = value?.DeepClone();
+        var result = SmartPropEvaluator.EvaluateJson(document.ToJsonString(VmapImportJsonContext.Default.Options),
+            nested.ToJsonString(VmapImportJsonContext.Default.Options));
+        foreach (var diagnostic in result.Diagnostics)
+            diagnostics.Add(ConvertValue($"{resource}: {diagnostic.Code}: {diagnostic.Message}"));
+        var models = new JsonArray(result.Models.Select(Model).ToArray());
+        smartPropModels[key] = models;
+        return (JsonArray)models.DeepClone();
+    }
+
+    private static bool UsesOnlyToolMaterials(Element mesh)
+    {
+        if (Value(mesh, "faceEdgeIndices") is not IntArray edges)
+            return false;
+        var materials = Value(mesh, "materials") as StringArray;
+        var faceData = Value(mesh, "faceDataIndices") as IntArray;
+        var materialIndices = ValveMapSceneReader.StreamData(mesh, "faceData", "materialindex") as IntArray;
+        var hasFace = false;
+        for (var face = 0; face < edges.Count; face++)
+        {
+            if (edges[face] == -1)
+                continue;
+            hasFace = true;
+            var material = ValveMapSceneReader.MaterialOf(face, faceData, materialIndices, materials);
+            if (!VmtFile.IsToolMaterialPath("/" + material))
+                return false;
+        }
+        return hasFace;
+    }
+
+    private static JsonObject ReadMesh(Element mesh, bool includeMetadata)
     {
         var positions = ValveMapSceneReader.StreamData(mesh, "vertexData", "position") as Vector3Array;
         var vertexData = Value(mesh, "vertexDataIndices") as IntArray;
@@ -245,7 +400,7 @@ public sealed class ValveMapImportReader
                 ["material"] = ConvertValue(ValveMapSceneReader.MaterialOf(face, faceData, materialIndices, materials)),
             });
         }
-        return new JsonObject { ["points"] = points, ["faces"] = faces, ["metadata"] = Metadata(mesh) };
+        return new JsonObject { ["points"] = points, ["faces"] = faces, ["metadata"] = includeMetadata ? Metadata(mesh) : new JsonObject() };
     }
 
     private static bool HasSubdivision(Element mesh) => Value(mesh, "subdivisionData") is Element data

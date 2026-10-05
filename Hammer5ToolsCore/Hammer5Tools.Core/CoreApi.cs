@@ -81,6 +81,10 @@ public static class CoreApi
         Format.AssetGroup.AssetGroupTemplate.Render(requestJson);
 
     /// <summary>Reads a VMAP as versioned DCC import JSON, retaining polygons and editor metadata.</summary>
-    public static string ReadValveMapImport(string path, string? contentRoot = null) =>
-        new Format.Vmap.ValveMapImportReader().Read(path, contentRoot);
+    public static string ReadValveMapImport(string path, string? contentRoot = null, Format.Vmap.ValveMapImportOptions? options = null) =>
+        new Format.Vmap.ValveMapImportReader().Read(path, contentRoot, options);
+
+    /// <summary>Deserializes and evaluates a source or compiled SmartProp for DCC import.</summary>
+    public static string ReadSmartPropImport(string path, string? contentRoot = null, Format.Vmap.ValveMapImportOptions? options = null, string variablesJson = "{}") =>
+        new Format.Vmap.ValveMapImportReader().ReadSmartProp(path, contentRoot, options, variablesJson);
 }

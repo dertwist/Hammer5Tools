@@ -56,8 +56,21 @@ readers/writers in `Hammer5Tools.Core/` or the relevant `Format/` area, use
 explicit little-endian fields and bounds checks, and bump the ABI version when
 changing an existing binary message.
 
+The additive DCC import exports `h5t_vmap_read_import_json` and
+`h5t_smartprop_read_import_json` share `ValveMapImportOptions` for prefab expansion,
+object selection-set masks, hidden nodes, tool-material-only mesh exclusion,
+SmartProp evaluation and metadata.
+SmartProp source/compiled deserialization and dependency resolution stay in Core.
+Compiled model `geometryOnly` requests retain material paths without decoding
+textures. Source2Houdini consumes these exports through its external Core dependency.
+
 The Core owns SmartProp evaluation results. The GUI only adapts those results
 for display.
+
+Compiled-model JSON requests may opt into `collisionFallback` when render LoD0
+is absent. The response `geometrySource` distinguishes `render` and `collision`.
+Fallback defaults off for existing callers; collision geometry has flat normals
+and zero UVs. Houdini opts in through its external Core dependency.
 
 The additive `h5t_vmap_read_import_json` export returns schema-versioned DCC
 import data, preserving polygon corners, node identities, hierarchy and editor

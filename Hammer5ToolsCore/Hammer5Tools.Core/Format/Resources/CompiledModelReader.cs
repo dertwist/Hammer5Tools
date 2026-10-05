@@ -98,7 +98,9 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         string? contextAddon = null,
         int maximumTextureDimension = 1024,
         bool baseColorOnly = false,
-        int skin = 0)
+        int skin = 0,
+        bool collisionFallback = false,
+        bool geometryOnly = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(resourcePath);
         try
@@ -120,9 +122,16 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                 var indices = new List<uint>();
                 var subMeshes = new List<CompiledSubMesh>();
                 var materialCache = new Dictionary<string, CompiledMaterial>(StringComparer.Ordinal);
+                var geometrySource = "render";
                 foreach (var mesh in ReadMeshes(loader, model))
                     AppendMesh(loader, mesh, skinMap, vertices, normals, uvs, indices, subMeshes,
-                        materialCache, maximumTextureDimension, baseColorOnly);
+                        materialCache, maximumTextureDimension, baseColorOnly, geometryOnly);
+
+                if (indices.Count == 0 && collisionFallback)
+                {
+                    AppendCollision(loader, model, resource, vertices, normals, uvs, indices, subMeshes);
+                    geometrySource = "collision";
+                }
 
                 if (vertices.Count == 0 || indices.Count == 0)
                     return CoreResult.Failure<CompiledModel>("compiled_model_empty", $"'{relativePath}' has no LoD0 geometry.");
@@ -130,7 +139,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                 var (minimum, maximum) = Bounds(vertices);
                 return CoreResult.Success(new CompiledModel(
                     [.. vertices], [.. normals], [.. uvs], [.. indices], minimum, maximum,
-                    [.. subMeshes], []));
+                    [.. subMeshes], [])
+                { GeometrySource = geometrySource });
             }
         }
         catch (Exception exception)
@@ -287,7 +297,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
         List<CompiledSubMesh> subMeshes,
         Dictionary<string, CompiledMaterial> materialCache,
         int maximumTextureDimension,
-        bool baseColorOnly)
+        bool baseColorOnly,
+        bool geometryOnly)
     {
         var vbib = mesh.VBIB;
         var positions = new Dictionary<int, Vector3[]>();
@@ -334,7 +345,8 @@ public sealed partial class CompiledModelReader(string gameDirectory, string act
                     materialPath = replacement;
                 if (!materialCache.TryGetValue(materialPath, out var material))
                 {
-                    material = ReadMaterial(loader, materialPath, maximumTextureDimension, baseColorOnly);
+                    material = geometryOnly ? DefaultMaterial with { Name = materialPath }
+                        : ReadMaterial(loader, materialPath, maximumTextureDimension, baseColorOnly);
                     materialCache[materialPath] = material;
                 }
 

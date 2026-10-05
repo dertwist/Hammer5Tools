@@ -9,7 +9,9 @@ public interface ICompiledModelReader
         string? contextAddon = null,
         int maximumTextureDimension = 1024,
         bool baseColorOnly = false,
-        int skin = 0);
+        int skin = 0,
+        bool collisionFallback = false,
+        bool geometryOnly = false);
 
     /// <summary>Gets the material-group names exposed by a model.</summary>
     CoreResult<IReadOnlyList<string>> ReadMaterialGroups(string resourcePath, string? contextAddon = null);

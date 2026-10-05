@@ -1,12 +1,21 @@
 using System.Text.Json.Nodes;
 using Hammer5Tools.Core.Format.SmartProps;
 using Hammer5Tools.Core.Format.Vmap;
+using ValveResourceFormat;
+using ValveResourceFormat.IO;
+using ValveResourceFormat.ResourceTypes;
 
 namespace Hammer5Tools.Core.IO.CompiledResource;
 
 /// <summary>Resolves uncompiled map dependencies against an explicit content root or the map's ancestors.</summary>
-internal sealed class VmapContentFiles(string mapPath, string? contentRoot)
+internal sealed class VmapContentFiles(string mapPath, string? contentRoot, string gameDirectory = "", string activeAddon = "") : IDisposable
 {
+    private readonly Dictionary<string, JsonObject> documents = new(StringComparer.OrdinalIgnoreCase);
+    private GameFileLoader? loader;
+    public HashSet<string> Dependencies { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public void Dispose() => loader?.Dispose();
+
     public string? Resolve(string resource, string? referringMap = null)
     {
         if (Path.IsPathFullyQualified(resource) && File.Exists(resource))
@@ -54,9 +63,57 @@ internal sealed class VmapContentFiles(string mapPath, string? contentRoot)
 
     private JsonObject Load(string resource)
     {
-        var path = Resolve(resource) ?? throw new FileNotFoundException($"SmartProp source not found: {resource}");
-        return JsonNode.Parse(SmartPropDocumentSerializer.DeserializeText(File.ReadAllText(path))) as JsonObject
+        if (documents.TryGetValue(resource, out var cached))
+            return (JsonObject)cached.DeepClone();
+        var path = Resolve(resource);
+        string json;
+        if (path is not null && !path.EndsWith("_c", StringComparison.OrdinalIgnoreCase))
+        {
+            Dependencies.Add(path);
+            json = SmartPropDocumentSerializer.DeserializeText(File.ReadAllText(path));
+        }
+        else
+        {
+            using var compiled = ReadCompiled(path ?? resource);
+            if (compiled?.DataBlock is not SmartProp smartProp)
+                throw new FileNotFoundException($"SmartProp source or compiled resource not found: {resource}");
+            json = SmartPropDocumentSerializer.DeserializeRoot(smartProp.Data.Root);
+        }
+        var document = JsonNode.Parse(json) as JsonObject
             ?? throw new InvalidDataException($"SmartProp source is not an object: {resource}");
+        documents[resource] = document;
+        return (JsonObject)document.DeepClone();
+    }
+
+    private Resource? ReadCompiled(string resource)
+    {
+        var compiledPath = resource.EndsWith("_c", StringComparison.OrdinalIgnoreCase) ? resource : resource + "_c";
+        var path = Resolve(compiledPath);
+        if (path is not null)
+        {
+            Dependencies.Add(path);
+            var result = new Resource();
+            try
+            {
+                result.Read(path);
+                return result;
+            }
+            catch
+            {
+                result.Dispose();
+                throw;
+            }
+        }
+        if (string.IsNullOrWhiteSpace(gameDirectory))
+            return null;
+        if (loader is null)
+        {
+            loader = new GameFileLoader(null, Path.Combine(gameDirectory, "csgo", "pak01_dir.vpk"));
+            var addon = Path.Combine(gameDirectory, "csgo_addons", activeAddon);
+            if (Directory.Exists(addon))
+                loader.AddDiskPathToSearch(addon);
+        }
+        return loader.LoadFileCompiled(resource.Replace('\\', '/'));
     }
 
     private static IEnumerable<string> References(JsonNode node)

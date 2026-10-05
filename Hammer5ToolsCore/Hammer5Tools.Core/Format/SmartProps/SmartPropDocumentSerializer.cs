@@ -30,10 +30,15 @@ public static class SmartPropDocumentSerializer
 
         using var input = new MemoryStream(Encoding.UTF8.GetBytes(text));
         var document = KVDocumentExtensions.ParseKV3(input);
+        return DeserializeRoot(document.Root);
+    }
+
+    internal static string DeserializeRoot(KVObject root)
+    {
         using var output = new MemoryStream();
         using (var writer = new Utf8JsonWriter(output))
         {
-            WriteValue(writer, document.Root);
+            WriteValue(writer, root);
         }
         return Encoding.UTF8.GetString(output.ToArray());
     }

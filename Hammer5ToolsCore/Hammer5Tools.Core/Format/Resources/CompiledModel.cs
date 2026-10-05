@@ -11,4 +11,8 @@ public sealed record CompiledModel(
     Vector3 BoundsMinimum,
     Vector3 BoundsMaximum,
     ImmutableArray<CompiledSubMesh> SubMeshes,
-    ImmutableArray<CoreDiagnostic> Diagnostics);
+    ImmutableArray<CoreDiagnostic> Diagnostics)
+{
+    /// <summary>Identifies render geometry or an explicitly requested collision fallback.</summary>
+    public string GeometrySource { get; init; } = "render";
+}

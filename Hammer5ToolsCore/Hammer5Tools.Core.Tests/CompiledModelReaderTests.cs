@@ -5,6 +5,37 @@ namespace Hammer5Tools.Core.Tests;
 public sealed class CompiledModelReaderTests
 {
     [Test]
+    [Arguments("placeholder_box_step_clip.vmdl_c")]
+    [Arguments("placeholder_collision_concrete.vmdl_c")]
+    public async Task CollisionOnlyModelsRequireExplicitFallback(string name)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"h5t-collision-{Guid.NewGuid():N}");
+        var models = Path.Combine(directory, "csgo_addons", "fixture", "models");
+        Directory.CreateDirectory(models);
+        try
+        {
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Models", name), Path.Combine(models, name));
+            using var reader = new CompiledModelReader(directory, "fixture");
+            var render = reader.Read($"models/{name}");
+            await Assert.That(render.IsSuccess).IsFalse();
+            await Assert.That(render.Diagnostics[0].Code).IsEqualTo("compiled_model_empty");
+
+            var collision = reader.Read($"models/{name}", collisionFallback: true);
+            await Assert.That(collision.IsSuccess).IsTrue();
+            await Assert.That(collision.Value!.GeometrySource).IsEqualTo("collision");
+            await Assert.That(collision.Value.Indices).IsNotEmpty();
+            await Assert.That(collision.Value.Vertices.Length).IsEqualTo(collision.Value.Normals.Length);
+            await Assert.That(collision.Value.Uvs.Length).IsEqualTo(collision.Value.Vertices.Length / 3 * 2);
+            await Assert.That(collision.Value.SubMeshes[0].Material.Name).IsEqualTo("__source2_collision__");
+            await Assert.That(collision.Value.Normals.All(float.IsFinite)).IsTrue();
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task MissingModelReturnsStructuredDiagnostic()
     {
         using var reader = new CompiledModelReader(Path.GetTempPath(), "addon");

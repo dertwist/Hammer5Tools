@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Fixtures\Models\*.vmdl_c" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Hammer5Tools\SmartPropEditor\Presets\**\*.vsmart"
           Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

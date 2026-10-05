@@ -122,7 +122,7 @@ internal static unsafe class ResourcesApi
             return buffer.WrittenSpan.ToArray();
         });
 
-    /// <summary>Request: {gameDirectory, activeAddon, resourcePath, contextAddon?, maximumTextureDimension?, baseColorOnly?, skin?}.</summary>
+    /// <summary>Request: {gameDirectory, activeAddon, resourcePath, contextAddon?, maximumTextureDimension?, baseColorOnly?, skin?, collisionFallback?, geometryOnly?}.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_compiled_model_read_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int CompiledModelReadJson(byte* request, int requestLength, byte** output, int* outputLength) =>
         NativeInterop.Invoke(output, outputLength, () =>
@@ -138,7 +138,9 @@ internal static unsafe class ResourcesApi
                 GetOptionalString(root, "contextAddon"),
                 GetInt32(root, "maximumTextureDimension", 1024),
                 GetBoolean(root, "baseColorOnly", false),
-                GetInt32(root, "skin", 0));
+                GetInt32(root, "skin", 0),
+                GetBoolean(root, "collisionFallback", false),
+                GetBoolean(root, "geometryOnly", false));
             return WriteCompiledModelResult(result);
         });
 
@@ -307,6 +309,7 @@ internal static unsafe class ResourcesApi
     private static void WriteCompiledModel(Utf8JsonWriter writer, CompiledModel model)
     {
         writer.WriteStartObject();
+        writer.WriteString("geometrySource", model.GeometrySource);
         writer.WriteBase64String("verticesBytes", MemoryMarshal.AsBytes(model.Vertices.AsSpan()));
         writer.WriteBase64String("normalsBytes", MemoryMarshal.AsBytes(model.Normals.AsSpan()));
         writer.WriteBase64String("uvsBytes", MemoryMarshal.AsBytes(model.Uvs.AsSpan()));
