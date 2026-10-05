@@ -17,6 +17,7 @@ public static class Program
 
         builder.Services.AddHammer5ToolsCore();
         builder.Services.AddInfrastructure();
+        builder.Services.AddSingleton<Features.Shell.ShellViewModel>();
         builder.Services.AddSingleton<MainWindow>();
 
         var host = builder.Build();

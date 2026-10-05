@@ -42,8 +42,10 @@
   <!-- Explicit global usings -->
   <ItemGroup>
     <Using Include="System" />
+    <Using Include="System.Linq" />
     <Using Include="System.Numerics" />
     <Using Include="System.Collections.Generic" />
+    <Using Include="System.Threading" />
     <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 </Project>

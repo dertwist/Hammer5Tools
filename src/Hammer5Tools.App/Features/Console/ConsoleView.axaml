@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.Console"
+             x:Class="Hammer5Tools.App.Features.Console.ConsoleView"
+             x:DataType="vm:ConsoleViewModel">
+  <Grid RowDefinitions="*,Auto" Margin="12">
+    <!-- Log Output -->
+    <Border Grid.Row="0" Background="#141414" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+      <ListBox ItemsSource="{Binding OutputLines}" Background="Transparent">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, Monospace" FontSize="12" />
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <!-- Command Input -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto">
+      <TextBox Grid.Column="0" Text="{Binding InputCommand}" PlaceholderText="Enter console command (e.g. sv_cheats 1, bot_kick)..." />
+      <Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}" Margin="8,0,0,0" />
+      <Button Grid.Column="2" Content="Clear" Command="{Binding ClearCommand}" Margin="8,0,0,0" />
+    </Grid>
+  </Grid>
+</UserControl>

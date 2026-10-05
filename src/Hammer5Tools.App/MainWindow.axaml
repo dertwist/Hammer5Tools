@@ -1,15 +1,110 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="using:Hammer5Tools.App.Features.Shell"
+        xmlns:hotkeys="using:Hammer5Tools.App.Features.Hotkeys"
+        xmlns:detailprops="using:Hammer5Tools.App.Features.DetailProps"
+        xmlns:console="using:Hammer5Tools.App.Features.Console"
+        xmlns:vm="using:Hammer5Tools.App.ViewModels"
+        xmlns:addons="using:Hammer5Tools.Core.Addons"
         x:Class="Hammer5Tools.App.MainWindow"
-        Title="Hammer 5 Tools"
-        Width="1280"
-        Height="800"
+        x:DataType="shell:ShellViewModel"
+        Title="Hammer 5 Tools 7.0"
+        Width="1360"
+        Height="860"
         WindowStartupLocation="CenterScreen">
-  <Grid RowDefinitions="Auto,*">
-    <TextBlock Grid.Row="1"
-               Text="Hammer 5 Tools 7.0"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               FontSize="24" />
+
+  <Window.DataTemplates>
+    <DataTemplate DataType="{x:Type hotkeys:HotkeyEditorViewModel}">
+      <hotkeys:HotkeyEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type detailprops:DetailPropEditorViewModel}">
+      <detailprops:DetailPropEditorView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type console:ConsoleViewModel}">
+      <console:ConsoleView />
+    </DataTemplate>
+  </Window.DataTemplates>
+
+  <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <!-- Menu Bar -->
+    <Menu Grid.Row="0" Background="#181818">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Save" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
+        <Separator />
+        <MenuItem Header="E_xit" />
+      </MenuItem>
+      <MenuItem Header="_Tools">
+        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
+        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
+        <MenuItem Header="CS2 Console" Command="{Binding OpenConsoleCommand}" />
+        <Separator />
+        <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_About Hammer 5 Tools" />
+      </MenuItem>
+    </Menu>
+
+    <!-- Toolbar -->
+    <Border Grid.Row="1" Background="#222222" BorderBrush="#333333" BorderThickness="0,1" Padding="8,4">
+      <Grid ColumnDefinitions="Auto,240,Auto,Auto,Auto,Auto,*,Auto">
+        <TextBlock Grid.Column="0" Text="Active Addon:" VerticalAlignment="Center" Margin="4,0,8,0" FontWeight="SemiBold" />
+        <ComboBox Grid.Column="1"
+                  ItemsSource="{Binding Addons}"
+                  SelectedItem="{Binding SelectedAddon}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="addons:Addon">
+              <TextBlock Text="{Binding Name}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <Separator Grid.Column="2" Margin="12,4" />
+
+        <Button Grid.Column="3" Content="Launch CS2" Command="{Binding LaunchCs2Command}" Margin="4,0" Background="#2E7D32" />
+        <Button Grid.Column="4" Content="Restart CS2" Command="{Binding RestartCs2Command}" Margin="4,0" />
+        <Button Grid.Column="5" Content="Kill CS2" Command="{Binding KillCs2Command}" Margin="4,0" Background="#C62828" />
+
+        <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,8,0">
+          <Button Content="Clear VRAD3" Command="{Binding ClearVrad3CacheCommand}" />
+          <Button Content="Console" Command="{Binding OpenConsoleCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Document Tabs -->
+    <TabControl Grid.Row="2"
+                ItemsSource="{Binding Documents}"
+                SelectedItem="{Binding ActiveDocument}"
+                Background="#121212">
+      <TabControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:DocumentViewModel">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding DisplayTitle}" VerticalAlignment="Center" />
+            <Button Content="✕"
+                    Command="{Binding CloseCommand}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="2,0"
+                    FontSize="10"
+                    VerticalAlignment="Center" />
+          </StackPanel>
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+    </TabControl>
+
+    <!-- Status Bar -->
+    <Border Grid.Row="3" Background="#181818" BorderBrush="#2A2A2A" BorderThickness="0,1" Padding="8,4">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#B0B0B0" />
+        <TextBlock Grid.Column="1" Text="{Binding SelectedAddon.Name, FallbackValue='No Addon Selected', StringFormat='Addon: {0}'}" Margin="16,0" Foreground="#80CBC4" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <Ellipse Width="8" Height="8" Fill="{Binding IsCs2Running, Converter={x:Null}}" />
+          <TextBlock Text="{Binding IsCs2Running, Converter={x:Null}, FallbackValue='CS2: Idle'}" Foreground="#9E9E9E" />
+        </StackPanel>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

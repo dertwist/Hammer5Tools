@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.Hotkeys"
+             xmlns:m="using:Hammer5Tools.Core.Hotkeys"
+             x:Class="Hammer5Tools.App.Features.Hotkeys.HotkeyEditorView"
+             x:DataType="vm:HotkeyEditorViewModel">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="12">
+    <!-- Top toolbar: Filter & Context selection -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,200,Auto,*,Auto" Margin="0,0,0,12">
+      <TextBlock Grid.Column="0" Text="Context:" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <ComboBox Grid.Column="1" ItemsSource="{Binding Contexts}" SelectedItem="{Binding SelectedContext}" HorizontalAlignment="Stretch" />
+
+      <TextBlock Grid.Column="2" Text="Search:" VerticalAlignment="Center" Margin="16,0,8,0" />
+      <TextBox Grid.Column="3" Text="{Binding FilterText}" PlaceholderText="Filter commands or shortcuts..." />
+
+      <Button Grid.Column="4" Content="Apply to CS2" Command="{Binding ApplyToCs2Command}" Margin="12,0,0,0" />
+    </Grid>
+
+    <!-- Bindings List -->
+    <ListBox Grid.Row="1" ItemsSource="{Binding FilteredBindings}" SelectedItem="{Binding SelectedBinding}">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="m:HotkeyBinding">
+          <Grid ColumnDefinitions="200,*,150">
+            <TextBlock Grid.Column="0" Text="{Binding Context}" Foreground="#9E9E9E" />
+            <TextBlock Grid.Column="1" Text="{Binding Command}" FontWeight="SemiBold" />
+            <Border Grid.Column="2" Background="#2A2A2A" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right">
+              <TextBlock Text="{Binding Input}" Foreground="#00E5FF" />
+            </Border>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <!-- Bottom: Key binding editor -->
+    <Border Grid.Row="2" Background="#1E1E1E" CornerRadius="6" Padding="12" Margin="0,12,0,0">
+      <Grid ColumnDefinitions="*,Auto,120,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding SelectedBinding.Command, FallbackValue='Select a command above'}" VerticalAlignment="Center" FontWeight="Bold" />
+        <TextBlock Grid.Column="1" Text="New Key:" VerticalAlignment="Center" Margin="12,0,8,0" />
+        <TextBox Grid.Column="2" Text="{Binding NewKeyInput}" PlaceholderText="e.g. Ctrl+Shift+K" />
+        <Button Grid.Column="3" Content="Change Binding" Command="{Binding ApplyBindingCommand}" Margin="8,0,0,0" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>
