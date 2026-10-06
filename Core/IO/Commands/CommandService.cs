@@ -13,43 +13,26 @@ public class CommandService : ICommandService, IDisposable
 {
     private readonly ICs2Locator Cs2Locator;
     private readonly ILogger<CommandService>? Logger;
-    private readonly Cs2CommandPipe Pipe;
-    private readonly VConsoleClient VConsole = new();
+    private readonly CommandPipeClient Pipe;
 
     private bool IsStarted;
 
     private ConsoleLogListener? LogListener;
 
-    public bool IsConnected => Pipe.IsConnected || VConsole.IsConnected;
+    public bool IsConnected => Pipe.IsConnected;
 
-    public string VConsoleStatus => VConsole.Status;
-    public int ConvarRevision => VConsole.Revision;
-    public IReadOnlyList<ConsoleVariable> Convars => VConsole.Convars;
-
-    /// <inheritdoc/>
-    public void SetVConsoleEnabled(bool enabled)
-    {
-        if (enabled)
-        {
-            VConsole.Start();
-        }
-        else
-        {
-            VConsole.Stop();
-        }
-    }
+    public IReadOnlyList<ConsoleHelperCommand> HelperCommands { get; private set; } = [];
 
     public event EventHandler<string>? OutputLineReceived;
 
     public CommandService(
         ICs2Locator cs2Locator,
-        ILogger<CommandService>? logger = null)
+        ILogger<CommandService>? logger = null,
+        CommandPipeClient? pipe = null)
     {
         Cs2Locator = cs2Locator;
         Logger = logger;
-        Pipe = new Cs2CommandPipe(logger);
-        Pipe.OutputReceived += OnOutputReceived;
-        VConsole.OutputReceived += OnOutputReceived;
+        Pipe = pipe ?? new CommandPipeClient(logger);
     }
 
     /// <inheritdoc/>
@@ -61,6 +44,7 @@ public class CommandService : ICommandService, IDisposable
         }
 
         IsStarted = true;
+        HelperCommands = ConvarHelperFiles.Load(Cs2Locator.ResolvedCs2Path, Logger);
         Pipe.Start();
 
         var cs2Path = Cs2Locator.ResolvedCs2Path;
@@ -77,7 +61,6 @@ public class CommandService : ICommandService, IDisposable
     public void Stop()
     {
         IsStarted = false;
-        VConsole.Stop();
         Pipe.Stop();
         LogListener?.Stop();
         LogListener?.Dispose();
@@ -85,11 +68,16 @@ public class CommandService : ICommandService, IDisposable
     }
 
     /// <inheritdoc/>
+    public async Task<bool> PrepareLaunchAsync(CancellationToken ct = default)
+    {
+        Start();
+        return await Pipe.WaitUntilReadyAsync(ct);
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> SendCommandAsync(string command, CancellationToken ct = default)
     {
-        return VConsole.IsConnected
-            ? await VConsole.SendCommandAsync(command, ct)
-            : await Pipe.SendCommandAsync(command, ct);
+        return await Pipe.SendCommandAsync(command, ct);
     }
 
     /// <inheritdoc/>
@@ -116,11 +104,6 @@ public class CommandService : ICommandService, IDisposable
 
     private void OnOutputReceived(object? sender, string line)
     {
-        if (sender != VConsole && VConsole.IsConnected)
-        {
-            return;
-        }
-
         OutputLineReceived?.Invoke(this, line);
     }
 
@@ -128,7 +111,6 @@ public class CommandService : ICommandService, IDisposable
     {
         Stop();
         Pipe.Dispose();
-        VConsole.Dispose();
         GC.SuppressFinalize(this);
     }
 }

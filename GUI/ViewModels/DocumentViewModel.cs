@@ -1,6 +1,8 @@
 namespace Hammer5Tools.App.ViewModels;
 
 using System.ComponentModel;
+using Avalonia;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 using Hammer5Tools.Core.Undo;
 
@@ -14,6 +16,23 @@ public abstract class DocumentViewModel : ViewModelBase, IDisposable
     private Action<string>? RestoreDocument;
     private bool IsRestoring;
     private readonly List<INotifyPropertyChanged> ObservedModels = [];
+    private Control? EditorViewValue;
+
+    public bool IsViewLoaded => EditorViewValue is not null;
+
+    public Control EditorView
+    {
+        get
+        {
+            if (EditorViewValue is null)
+            {
+                var template = Application.Current!.DataTemplates.First(template => template.Match(this));
+                EditorViewValue = template.Build(this) ?? throw new InvalidOperationException($"No view for {Title}.");
+                EditorViewValue.DataContext = this;
+            }
+            return EditorViewValue;
+        }
+    }
 
     public virtual string IconUri => "avares://Hammer5Tools/Assets/Icons/hammer_icon.png";
 

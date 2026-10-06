@@ -15,7 +15,9 @@ public class Cs2CommandPipe : IDisposable
 
     private readonly ILogger? Logger;
     private readonly Lock SyncLock = new();
-    private readonly CancellationTokenSource Cts = new();
+    private CancellationTokenSource? Cts;
+    private readonly string CommandName;
+    private readonly string OutputName;
 
     private NamedPipeServerStream? CommandPipeServer;
     private NamedPipeServerStream? OutputPipeServer;
@@ -34,9 +36,11 @@ public class Cs2CommandPipe : IDisposable
 
     public event EventHandler<string>? OutputReceived;
 
-    public Cs2CommandPipe(ILogger? logger = null)
+    public Cs2CommandPipe(ILogger? logger = null, string commandName = PipeNameIn, string outputName = PipeNameOut)
     {
         Logger = logger;
+        CommandName = commandName;
+        OutputName = outputName;
     }
 
     public void Start()
@@ -46,12 +50,15 @@ public class Cs2CommandPipe : IDisposable
             return;
         }
 
-        ListenTask = Task.Run(() => ServerLoopAsync(Cts.Token));
+        Cts = new CancellationTokenSource();
+        CreatePipes();
+        var token = Cts.Token;
+        ListenTask = Task.Run(() => ServerLoopAsync(token));
     }
 
     public void Stop()
     {
-        Cts.Cancel();
+        Cts?.Cancel();
         lock (SyncLock)
         {
             try
@@ -66,6 +73,28 @@ public class Cs2CommandPipe : IDisposable
 
             CommandPipeServer = null;
             OutputPipeServer = null;
+        }
+        try
+        {
+            ListenTask?.GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutdown cancels pending pipe work.
+        }
+        ListenTask = null;
+        Cts?.Dispose();
+        Cts = null;
+    }
+
+    private void CreatePipes()
+    {
+        lock (SyncLock)
+        {
+            CommandPipeServer?.Dispose();
+            OutputPipeServer?.Dispose();
+            CommandPipeServer = new NamedPipeServerStream(CommandName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            OutputPipeServer = new NamedPipeServerStream(OutputName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         }
     }
 
@@ -87,10 +116,12 @@ public class Cs2CommandPipe : IDisposable
 
         try
         {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(3));
             var line = command.TrimEnd() + "\n";
             var bytes = Encoding.UTF8.GetBytes(line);
-            await server.WriteAsync(bytes, ct);
-            await server.FlushAsync(ct);
+            await server.WriteAsync(bytes, timeout.Token);
+            await server.FlushAsync(timeout.Token);
             return true;
         }
         catch (Exception ex)
@@ -106,26 +137,12 @@ public class Cs2CommandPipe : IDisposable
         {
             try
             {
-                var cmdPipe = new NamedPipeServerStream(
-                    PipeNameIn,
-                    PipeDirection.InOut,
-                    1,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous);
-
-                var outPipe = new NamedPipeServerStream(
-                    PipeNameOut,
-                    PipeDirection.InOut,
-                    1,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous);
-
+                NamedPipeServerStream cmdPipe;
+                NamedPipeServerStream outPipe;
                 lock (SyncLock)
                 {
-                    CommandPipeServer?.Dispose();
-                    OutputPipeServer?.Dispose();
-                    CommandPipeServer = cmdPipe;
-                    OutputPipeServer = outPipe;
+                    cmdPipe = CommandPipeServer!;
+                    outPipe = OutputPipeServer!;
                 }
 
                 Logger?.LogInformation("Waiting for CS2 to connect to named pipes...");
@@ -142,6 +159,10 @@ public class Cs2CommandPipe : IDisposable
                 {
                     OutputReceived?.Invoke(this, line);
                 }
+                if (!ct.IsCancellationRequested)
+                {
+                    CreatePipes();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -151,6 +172,7 @@ public class Cs2CommandPipe : IDisposable
             {
                 Logger?.LogDebug(ex, "Pipe server loop cycle error or disconnect.");
                 await Task.Delay(500, ct);
+                CreatePipes();
             }
         }
     }
@@ -158,7 +180,6 @@ public class Cs2CommandPipe : IDisposable
     public void Dispose()
     {
         Stop();
-        Cts.Dispose();
         GC.SuppressFinalize(this);
     }
 }

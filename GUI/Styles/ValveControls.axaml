@@ -1,0 +1,81 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:dock="using:Dock.Avalonia.Controls">
+  <Style Selector="Button.editor-close">
+    <Setter Property="Width" Value="18" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="MinHeight" Value="18" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Image.editor-close-icon"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/tab-closebutton.png" /></Style>
+  <Style Selector="Button.editor-close:pointerover Image.editor-close-icon"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/tab-closebutton-hovered.png" /></Style>
+  <Style Selector="TabItem:selected Image.editor-close-icon"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/tab-closebutton-selected.png" /></Style>
+  <Style Selector="TabItem:selected Button.editor-close:pointerover Image.editor-close-icon"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/tab-closebutton-selected-hovered.png" /></Style>
+  <Style Selector="CheckBox">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="20,*" Background="Transparent">
+          <Border Name="PART_ValveFocus" Width="18" Height="18" BorderBrush="{DynamicResource H5TAccentBrush}" BorderThickness="0" VerticalAlignment="Center">
+            <Image Name="PART_ValveIndicator" Width="14" Height="14" />
+          </Border>
+          <ContentPresenter Grid.Column="1" Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="CheckBox /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_unchecked.png" /></Style>
+  <Style Selector="CheckBox:checked /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_checked.png" /></Style>
+  <Style Selector="CheckBox:indeterminate /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_indeterminate.png" /></Style>
+  <Style Selector="CheckBox:disabled /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_unchecked_disabled.png" /></Style>
+  <Style Selector="CheckBox:checked:disabled /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_checked_disabled.png" /></Style>
+  <Style Selector="CheckBox:indeterminate:disabled /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/checkbox_indeterminate_disabled.png" /></Style>
+  <Style Selector="CheckBox:focus-visible /template/ Border#PART_ValveFocus"><Setter Property="BorderThickness" Value="1" /></Style>
+  <Style Selector="RadioButton">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="20,*" Background="Transparent">
+          <Border Name="PART_ValveFocus" Width="18" Height="18" BorderBrush="{DynamicResource H5TAccentBrush}" BorderThickness="0" VerticalAlignment="Center">
+            <Image Name="PART_ValveIndicator" Width="14" Height="14" />
+          </Border>
+          <ContentPresenter Grid.Column="1" Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="RadioButton /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/radio_unselected.png" /></Style>
+  <Style Selector="RadioButton:checked /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/radio_selected.png" /></Style>
+  <Style Selector="RadioButton:disabled /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/radio_unselected_disabled.png" /></Style>
+  <Style Selector="RadioButton:checked:disabled /template/ Image#PART_ValveIndicator"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/radio_selected_disabled.png" /></Style>
+  <Style Selector="RadioButton:focus-visible /template/ Border#PART_ValveFocus"><Setter Property="BorderThickness" Value="1" /></Style>
+  <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron">
+    <Setter Property="Template">
+      <ControlTemplate><Image Name="PART_ValveArrow" Width="12" Height="12" Source="avares://Hammer5Tools/Assets/Icons/Valve/arrow_closed.png" /></ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:checked /template/ Image#PART_ValveArrow"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/arrow_open.png" /></Style>
+  <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:pointerover /template/ Image#PART_ValveArrow"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/arrow_closed_hover.png" /></Style>
+  <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron:checked:pointerover /template/ Image#PART_ValveArrow"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/arrow_open_hover.png" /></Style>
+  <Style Selector="ComboBox /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Template">
+      <ControlTemplate><Image Name="PART_ValveDropdown" Width="12" Height="12" Source="avares://Hammer5Tools/Assets/Icons/Valve/dropdown_menu_compact_closed.png" /></ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ComboBox:dropdownopen /template/ PathIcon#DropDownGlyph /template/ Image#PART_ValveDropdown"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/dropdown_menu_compact_open.png" /></Style>
+  <Style Selector="ComboBox:disabled /template/ PathIcon#DropDownGlyph /template/ Image#PART_ValveDropdown"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/dropdown_menu_compact_closed_dim.png" /></Style>
+  <Style Selector="ComboBox:dropdownopen:disabled /template/ PathIcon#DropDownGlyph /template/ Image#PART_ValveDropdown"><Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/dropdown_menu_compact_open_dim.png" /></Style>
+  <Style Selector="ButtonSpinner /template/ RepeatButton#PART_IncreaseButton">
+    <Setter Property="Template"><ControlTemplate><Image Width="8" Height="8" Source="avares://Hammer5Tools/Assets/Icons/Valve/arrow_up.png" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="ButtonSpinner /template/ RepeatButton#PART_DecreaseButton">
+    <Setter Property="Template"><ControlTemplate><Image Width="8" Height="8" Source="avares://Hammer5Tools/Assets/Icons/Valve/arrow_down.png" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="dock|ToolChromeControl /template/ Button#PART_CloseButton">
+    <Setter Property="Template"><ControlTemplate><Image Name="PART_ValveClose" Width="12" Height="12" Source="avares://Hammer5Tools/Assets/Icons/Valve/dock_close_button_dim.png" /></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="dock|ToolChromeControl:active /template/ Button#PART_CloseButton /template/ Image#PART_ValveClose, dock|ToolChromeControl /template/ Button#PART_CloseButton:pointerover /template/ Image#PART_ValveClose">
+    <Setter Property="Source" Value="avares://Hammer5Tools/Assets/Icons/Valve/dock_close_button.png" />
+  </Style>
+  <Style Selector="dock|ToolChromeControl /template/ Button#PART_MenuButton">
+    <Setter Property="Template"><ControlTemplate><Image Width="12" Height="12" Source="avares://Hammer5Tools/Assets/Icons/Valve/dropdown_menu_closed.png" /></ControlTemplate></Setter>
+  </Style>
+</Styles>

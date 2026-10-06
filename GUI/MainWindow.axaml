@@ -23,6 +23,23 @@
       <Setter Property="ItemsSource" Value="{Binding Children}" />
       <Setter Property="ItemContainerTheme" Value="{DynamicResource EditorMenuItemTheme}" />
       <Setter Property="Padding" Value="6,1" />
+      <Setter Property="Tag" Value="{Binding Kind}" />
+      <Setter Property="Icon">
+        <Template>
+          <Image Source="{Binding IconUri, Converter={StaticResource UriToBitmapConverter}}" Width="16" Height="16" />
+        </Template>
+      </Setter>
+      <Style Selector="^[Tag=separator]">
+        <Setter Property="IsEnabled" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="6,4" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="MinHeight" Value="1" />
+        <Setter Property="Template">
+          <ControlTemplate><Separator /></ControlTemplate>
+        </Setter>
+      </Style>
     </ControlTheme>
   </Window.Resources>
 
@@ -42,12 +59,18 @@
                          VerticalAlignment="Center"
                          FontWeight="SemiBold"
                          FontSize="12" />
+              <Button Classes="editor-close" Command="{Binding CloseCommand}" ToolTip.Tip="Close editor"
+                      AutomationProperties.Name="Close editor">
+                <Image Classes="editor-close-icon" Width="12" Height="12" />
+              </Button>
             </StackPanel>
           </DataTemplate>
         </TabControl.ItemTemplate>
         <TabControl.Template>
           <ControlTemplate>
-            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+            </ScrollViewer>
           </ControlTemplate>
         </TabControl.Template>
       </TabControl>
@@ -59,6 +82,7 @@
       <MenuItem Classes="menu-bar-item" Header="Element" IsVisible="{Binding ElementMenu.IsVisible}" ItemsSource="{Binding ElementMenu.Items}" ItemContainerTheme="{StaticResource EditorMenuItemTheme}" />
       <MenuItem Classes="menu-bar-item" Header="{Binding EditorMenu.Header}" IsVisible="{Binding EditorMenu.IsVisible}" ItemsSource="{Binding EditorMenu.Items}" ItemContainerTheme="{StaticResource EditorMenuItemTheme}" />
       <MenuItem Classes="menu-bar-item" Header="Tools" ItemsSource="{Binding ToolsMenu.Items}" ItemContainerTheme="{StaticResource EditorMenuItemTheme}" />
+      <MenuItem Classes="menu-bar-item" Header="Editors" ItemsSource="{Binding EditorsMenu.Items}" ItemContainerTheme="{StaticResource EditorMenuItemTheme}" />
       <MenuItem Classes="menu-bar-item" Header="Help" ItemsSource="{Binding HelpMenu.Items}" ItemContainerTheme="{StaticResource EditorMenuItemTheme}" />
     </Menu>
 
@@ -67,15 +91,15 @@
         <explorer:AssetExplorerView DataContext="{Binding Explorer}" />
       </workspace:WorkspaceView.LeftContent>
       <workspace:WorkspaceView.CenterContent>
-        <ContentControl Content="{Binding ActiveDocument}" />
+        <workspace:EditorHost ActiveDocument="{Binding ActiveDocument}" Documents="{Binding Documents}" />
       </workspace:WorkspaceView.CenterContent>
     </workspace:WorkspaceView>
 
     <!-- Legacy shell shortcuts and addon actions. -->
     <Border Grid.Row="3" Name="BottomBar" Classes="shell-bottom" Background="{DynamicResource H5TSurfaceBrush}">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto">
         <!-- Recent activity opens the console. -->
-        <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity â€” click to open full console window">
+        <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity — click to open Console">
           <Button Command="{Binding OpenConsoleCommand}" Classes="subtle shell-status" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
             <Grid ColumnDefinitions="Auto,*">
               <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource H5TTextMutedBrush}" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
@@ -83,8 +107,8 @@
           </Button>
         </Border>
 
-        <!-- Utilities Menu Button (Map Builder, Workshop Manager, Asset Tools, NavMesh Radar dialogs) -->
-        <Button Grid.Column="1" Width="90" ToolTip.Tip="Open standalone utility tools">
+        <!-- Utilities open dialogs and Workshop opens its editor tab. -->
+        <Button Grid.Column="1" Width="90" ToolTip.Tip="Open tools">
           <Button.Content>
             <StackPanel Orientation="Horizontal" Spacing="4">
               <Path Classes="shell-icon" Data="{StaticResource H5TShellUtilitiesIcon}" />
@@ -99,7 +123,7 @@
               <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
               <Separator />
               <MenuItem Header="Git Sync" Command="{Binding OpenGitSyncCommand}" />
-              <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
+              <MenuItem Header="Console" Command="{Binding OpenConsoleCommand}" />
             </MenuFlyout>
           </Button.Flyout>
         </Button>
@@ -143,17 +167,7 @@
           <Path Classes="shell-icon" Data="{StaticResource H5TShellSyncIcon}" />
         </Button>
 
-        <!-- Launch Workshop Tools for the selected addon. -->
-        <Button Grid.Column="5" Width="104"
-                Command="{Binding LaunchCs2Command}"
-                ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for selected addon">
-          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-            <Image Source="avares://Hammer5Tools/Assets/Icons/hammer_icon.png" Width="16" Height="16" VerticalAlignment="Center" />
-            <TextBlock Text="Edit map" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
-
-        <Button Grid.Column="6" Name="MapBuilderButton" Classes="shell-icon"
+        <Button Grid.Column="5" Name="MapBuilderButton" Classes="shell-icon"
                 Command="{Binding OpenMapBuilderCommand}" ToolTip.Tip="Map Builder: compile VMAP files">
           <Image Source="avares://Hammer5Tools/Assets/Icons/emoji_objects_24dp.png" Width="16" Height="16" />
         </Button>

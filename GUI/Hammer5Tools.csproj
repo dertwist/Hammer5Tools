@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="../legacy/Hammer5ToolsGUI/gui/assets/icons/valve_style/*.png" Link="Assets/Icons/Valve/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Features/SmartProps/SmartPropPresentation.json" />
     <EmbeddedResource Include="Assets/SmartProps/model_sm.png" LogicalName="Hierarchy.model" />
     <EmbeddedResource Include="Assets/SmartProps/vsmart_sm.png" LogicalName="Hierarchy.smartprop" />

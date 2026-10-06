@@ -8,6 +8,8 @@ using Hammer5Tools.Core.GitSync;
 
 public class GitSyncViewModel : DocumentViewModel
 {
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/folder_sm.png";
+
     private readonly IAddonService AddonService;
     private readonly IGitSyncService GitSyncService;
     private readonly Core.Settings.ISettingsService? SettingsService;

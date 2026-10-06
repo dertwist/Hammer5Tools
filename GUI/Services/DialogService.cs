@@ -9,7 +9,12 @@ using Hammer5Tools.App.ViewModels;
 
 public interface IDialogService
 {
+    IReadOnlyList<DocumentViewModel> UtilityDocuments => [];
+
     void ShowUtility(string title, object viewModel, double width = 960, double height = 650);
+
+    void ShowDockableUtility(string title, DocumentViewModel document, Action<DocumentViewModel> dock,
+        double width = 960, double height = 650) => ShowUtility(title, document, width, height);
 
     Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents);
 
@@ -52,6 +57,9 @@ public partial class DialogService : IDialogService, IDisposable
     private bool CheckingContext;
     private bool IsDisposed;
 
+    public IReadOnlyList<DocumentViewModel> UtilityDocuments => OpenWindows.Values.OfType<ToolDialogWindow>()
+        .Select(window => window.Document).ToArray();
+
     public Func<IReadOnlyList<DocumentViewModel>>? ContextDocuments { get; set; }
 
     public Action? OpenWorkshop { get; set; }
@@ -66,17 +74,14 @@ public partial class DialogService : IDialogService, IDisposable
             return;
         }
 
-        var type = typeof(GUI.MainWindow);
-        if (OpenWindows.TryGetValue(type, out var existing))
+        var window = MainWindow;
+        if (window.DataContext is not Features.Shell.ShellViewModel shell)
         {
-            existing.Activate();
-            return;
+            throw new InvalidOperationException("The Workshop Manager requires the main editor window.");
         }
 
-        var window = new GUI.MainWindow { Title = "Workshop Manager - Hammer 5 Tools" };
-        window.Closed += (_, _) => OpenWindows.Remove(type);
-        OpenWindows[type] = window;
-        window.Show(MainWindow);
+        shell.OpenWorkshopManagerCommand.Execute(null);
+        window.Activate();
     }
 
     public void Dispose()
@@ -167,11 +172,32 @@ public partial class DialogService : IDialogService, IDisposable
         window.Show(MainWindow);
     }
 
+    public void ShowDockableUtility(string title, DocumentViewModel document, Action<DocumentViewModel> dock,
+        double width = 960, double height = 650)
+    {
+        var type = document.GetType();
+        if (OpenWindows.TryGetValue(type, out var existing))
+        {
+            document.Dispose();
+            existing.Activate();
+            return;
+        }
+        var window = new ToolDialogWindow(title, document, this, dock, width, height);
+        window.Closed += (_, _) =>
+        {
+            OpenWindows.Remove(type);
+            if (!window.IsDocked) document.Dispose();
+        };
+        OpenWindows[type] = window;
+        window.Show(MainWindow);
+    }
+
     public void CloseUtilities()
     {
         foreach (var window in OpenWindows.Values.ToArray())
         {
-            window.Close();
+            if (window is ToolDialogWindow tool) tool.CloseAfterConfirmation();
+            else window.Close();
         }
     }
 
@@ -233,7 +259,7 @@ public partial class DialogService : IDialogService, IDisposable
         CheckingContext = true;
         try
         {
-            return await ConfirmCloseAsync(documents.Concat(ContextDocuments?.Invoke() ?? []).Distinct().ToArray());
+            return await ConfirmCloseAsync(documents.Concat(ContextDocuments?.Invoke() ?? []).Concat(UtilityDocuments).Distinct().ToArray());
         }
         finally
         {

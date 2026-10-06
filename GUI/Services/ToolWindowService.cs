@@ -45,6 +45,13 @@ public sealed class ToolWindowService
 
     public Window Open(StartupTool tool)
     {
+        if (tool == StartupTool.Workshop)
+        {
+            var main = Open(StartupTool.Main);
+            ((ShellViewModel)main.DataContext!).OpenWorkshopManagerCommand.Execute(null);
+            return main;
+        }
+
         if (Windows.TryGetValue(tool, out var existing))
         {
             existing.Show();
@@ -56,7 +63,6 @@ public sealed class ToolWindowService
         var window = tool switch
         {
             StartupTool.Main => (Window)Services.GetRequiredService<MainWindow>(),
-            StartupTool.Workshop => new GUI.MainWindow { Title = "Workshop Manager - Hammer 5 Tools" },
             StartupTool.SoundEvents or StartupTool.MapBuilder or StartupTool.SmartProps => new StandaloneToolWindow(tool,
                 Dialogs, path => CreateDocument(tool, path),
                 OpenSettings, () => Open(StartupTool.Main)),

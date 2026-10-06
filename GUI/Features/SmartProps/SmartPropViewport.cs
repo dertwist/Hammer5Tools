@@ -151,7 +151,8 @@ public sealed class SmartPropViewport : Control
         }
         var text = placementCount == 0 ? "Open a SmartProp or add elements, then Evaluate."
             : $"{placementCount} placements{(sampled ? " · sampled wireframe" : "")}";
-        context.DrawText(new FormattedText(text, CultureInfo(), FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Brush("H5TTextBrush")), new Point(12, 12));
+        var font = this.TryFindResource("H5TFontFamily", out var family) && family is FontFamily sharedFont ? sharedFont : FontFamily.Default;
+        context.DrawText(new FormattedText(text, CultureInfo(), FlowDirection.LeftToRight, new Typeface(font), 12, Brush("H5TTextBrush")), new Point(12, 12));
     }
 
     private static System.Globalization.CultureInfo CultureInfo() => System.Globalization.CultureInfo.InvariantCulture;

@@ -1,7 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Style Selector="UserControl:is(UserControl).smartPropEditor">
-      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontFamily" Value="{StaticResource H5TFontFamily}" />
       <Setter Property="FontSize" Value="12" />
       <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
       <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />

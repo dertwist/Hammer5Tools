@@ -1,45 +1,45 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Hammer5Tools.App.Features.Console"
-             xmlns:commands="using:Hammer5Tools.Core.Commands"
              x:Class="Hammer5Tools.App.Features.Console.ConsoleView"
              x:DataType="vm:ConsoleViewModel">
-  <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="8">
-    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
-      <CheckBox Content="Send on Enter" IsChecked="{Binding SendOnEnter}" />
-      <CheckBox Content="Listen via VConsole" IsChecked="{Binding ListenViaVConsole}" />
-      <TextBlock Text="{Binding ConnectionStatus}" VerticalAlignment="Center" />
-    </StackPanel>
-    <!-- Log Output -->
-    <Border Grid.Row="1" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="8" Margin="0,0,0,8">
-      <ListBox ItemsSource="{Binding OutputLines}" Background="Transparent">
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="x:String">
-            <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, Monospace" FontSize="12" />
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-    </Border>
-
-    <!-- Command Input -->
-    <Expander x:Name="ConvarHelper" Grid.Row="2" Header="Convar Helper" Margin="0,0,0,8"
-              HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-              Background="{DynamicResource H5TSurfaceBrush}">
-      <StackPanel Spacing="4">
-        <TextBox Text="{Binding ConvarFilter}" PlaceholderText="Search live convars…" />
-        <ListBox Height="150" ItemsSource="{Binding Convars}" SelectedItem="{Binding SelectedConvar}">
+  <Grid ColumnDefinitions="*,5,360" Margin="8">
+    <Grid RowDefinitions="Auto,*,Auto" MinWidth="240">
+      <TextBlock Text="Console log" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,0,6" />
+      <Border Grid.Row="1" Background="{DynamicResource H5TConsoleBgBrush}"
+              BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="1" Padding="4" Margin="0,0,0,8">
+        <ListBox ItemsSource="{Binding OutputLines}" Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto">
           <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="commands:ConsoleVariable">
-              <TextBlock Text="{Binding Details}" FontFamily="Consolas, Menlo, Monospace" FontSize="12" />
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Text="{Binding}" FontFamily="Consolas, Menlo, Monospace" FontSize="12" />
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-      </StackPanel>
-    </Expander>
-    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto">
-      <TextBox x:Name="CommandInput" Grid.Column="0" Text="{Binding InputCommand}" KeyDown="OnCommandKeyDown" PlaceholderText="Enter console command (e.g. sv_cheats 1, bot_kick)..." />
-      <Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}" Margin="8,0,0,0" />
-      <Button Grid.Column="2" Content="Clear" Command="{Binding ClearCommand}" Margin="8,0,0,0" />
+      </Border>
+      <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+        <TextBlock Text="Command:" VerticalAlignment="Center" />
+        <TextBox x:Name="CommandInput" Grid.Column="1" Text="{Binding InputCommand}"
+                 KeyDown="OnCommandKeyDown" PlaceholderText="Enter console command…" />
+        <Button Grid.Column="2" Content="Send" Command="{Binding SendCommand}" />
+        <Button Grid.Column="3" Content="Clear" Command="{Binding ClearCommand}" />
+      </Grid>
     </Grid>
+    <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
+    <Border Grid.Column="2" Background="{DynamicResource H5TSurfaceBrush}" Padding="6,0,0,0">
+      <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="6">
+        <TextBlock x:Name="ConvarHelper" Text="ConVar Helper" FontWeight="SemiBold" />
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="6">
+          <TextBlock Text="Page" VerticalAlignment="Center" />
+          <ComboBox x:Name="HelperPage" Grid.Column="1" ItemsSource="{Binding Pages}"
+                    SelectedItem="{Binding SelectedPage}" HorizontalAlignment="Stretch" />
+        </Grid>
+        <TextBox Grid.Row="2" Text="{Binding ConvarFilter}" PlaceholderText="Search helper commands…" />
+        <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Disabled">
+          <Grid x:Name="HelperGrid" />
+        </ScrollViewer>
+        <TextBlock Grid.Row="4" Text="{Binding ConnectionStatus}" TextWrapping="Wrap" />
+      </Grid>
+    </Border>
   </Grid>
 </UserControl>

@@ -100,7 +100,7 @@ class PreferencesDialog(QDialog):
         layout.addWidget(label_paths_header)
         self.frame_paths = QFrame(general_tab_content)
         layout_paths = QHBoxLayout(self.frame_paths)
-        archive_label = QLabel("Archive path:", self.frame_paths)
+        archive_label = QLabel("Addon Export path:", self.frame_paths)
         archive_label.setMinimumWidth(130)
         layout_paths.addWidget(archive_label)
         self.preferences_lineedit_archive_path = QLineEdit(self.frame_paths)
@@ -443,7 +443,7 @@ class PreferencesDialog(QDialog):
             button.clicked.connect(lambda _=False, ext=ext: self.force_file_association(ext))
 
     def browse_archive(self):
-        selected_dir = QFileDialog.getExistingDirectory(self, "Select Archive Path", os.getcwd())
+        selected_dir = QFileDialog.getExistingDirectory(self, "Select Addon Export Path", os.getcwd())
         if selected_dir:
             self.preferences_lineedit_archive_path.setText(selected_dir)
             set_settings_value('PATHS', 'archive', selected_dir)

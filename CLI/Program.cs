@@ -2,6 +2,7 @@ namespace Hammer5Tools.Cli;
 
 using Hammer5Tools.Cli.Commands;
 using Hammer5Tools.Core;
+using Hammer5Tools.Core.IO.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
@@ -10,6 +11,12 @@ public static class Program
 {
     public static int Main(string[] args)
     {
+        if (args.Length == 1 && args[0] == CommandPipeHost.StartupArgument)
+        {
+            CommandPipeHost.Run();
+            return 0;
+        }
+
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         services.AddHammer5ToolsCore();

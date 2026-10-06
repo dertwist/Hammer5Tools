@@ -15,6 +15,7 @@ using Hammer5Tools.App.Features.Preferences;
 using Hammer5Tools.App.Features.Shell;
 using Hammer5Tools.App.Features.SmartProps;
 using Hammer5Tools.App.Features.SoundEvents;
+using Hammer5Tools.App.Features.Workshop;
 using Hammer5Tools.App.Services;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core;
@@ -95,6 +96,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenDetailPropEditor();
             var editor = shell.Documents.OfType<DetailPropEditorViewModel>().Single();
             var original = editor.SelectedType!.Density;
             var control = new Hammer5Tools.App.Controls.NumberSlider { Minimum = 0, Maximum = 10, Value = original };
@@ -159,6 +161,10 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenSoundEventEditor();
+            shell.OpenHotkeyEditor();
+            shell.OpenDetailPropEditor();
+            shell.OpenLoadingEditor();
             await shell.Documents.OfType<SoundEventEditorViewModel>().Single().Initialization;
             var views = new (string Name, Control View)[]
             {
@@ -220,7 +226,7 @@ public class MigrationUiTests
                     var sound = window.GetVisualDescendants().OfType<SoundEventEditorView>().Single();
                     await Assert.That(sound.DataContext).IsSameReferenceAs(shell.ActiveDocument);
                     await Assert.That(window.GetVisualDescendants().OfType<Features.Explorer.AssetExplorerView>().Any()).IsTrue();
-                    foreach (var document in shell.Documents)
+                    foreach (var document in shell.Documents.Where(document => document is not WorkshopManagerViewModel).ToArray())
                     {
                         shell.ActiveDocument = document;
                         Dispatcher.UIThread.RunJobs();
@@ -294,6 +300,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenDetailPropEditor();
             var original = shell.Documents.OfType<DetailPropEditorViewModel>().Single();
             original.SelectedType!.Density = 3.456789f;
             await Assert.That(original.IsDirty).IsTrue();
@@ -318,6 +325,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenDetailPropEditor();
             var editor = shell.Documents.OfType<DetailPropEditorViewModel>().Single();
             var originalDensity = editor.SelectedType!.Density;
             editor.SelectedType.Density = 7.123456f;
@@ -389,6 +397,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenDetailPropEditor();
             var editor = shell.Documents.OfType<DetailPropEditorViewModel>().Single();
             editor.SelectedType!.Density = 7;
             File.WriteAllText(Path.Combine(shell.SelectedAddon!.ContentPath, "scripts"), "blocks the destination directory");
@@ -400,23 +409,70 @@ public class MigrationUiTests
     }
 
     [Test]
-    public async Task WorkshopCommandOpensTheUpstreamApplication()
+    public async Task WorkshopCommandReusesATabAndPreservesItAcrossAddonChanges()
     {
         using var fixture = new Fixture();
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
             await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.OpenWorkshopManagerCommand).ExecuteAsync(null);
-            await Assert.That(fixture.Dialogs.WorkshopLaunchCount).IsEqualTo(1);
+            var workshop = shell.Documents.OfType<WorkshopManagerViewModel>().Single();
+            var view = workshop.View;
+            view.FindControl<TextBox>("SearchBox")!.Text = "test map";
+            await Assert.That(shell.ActiveDocument).IsSameReferenceAs(workshop);
+
+            shell.OpenSoundEventEditor();
+            shell.ActiveDocument = shell.Documents.First(document => document != workshop);
+            await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.OpenWorkshopManagerCommand).ExecuteAsync(null);
+            await Assert.That(shell.Documents.OfType<WorkshopManagerViewModel>().Count()).IsEqualTo(1);
+            await Assert.That(shell.ActiveDocument).IsSameReferenceAs(workshop);
+            await Assert.That(workshop.View).IsSameReferenceAs(view);
+            await Assert.That(view.FindControl<TextBox>("SearchBox")!.Text).IsEqualTo("test map");
+
+            await Assert.That(await shell.SwitchAddonAsync(shell.Addons.Single(addon => addon.Name == "second"))).IsTrue();
+            await Assert.That(shell.Documents.Contains(workshop)).IsTrue();
+            await shell.CloseDocumentAsync(workshop);
+            await Assert.That(shell.Documents.Contains(workshop)).IsFalse();
+            await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.OpenWorkshopManagerCommand).ExecuteAsync(null);
+            await Assert.That(shell.ActiveDocument).IsNotSameReferenceAs(workshop);
+            await Assert.That(fixture.Dialogs.WorkshopLaunchCount).IsEqualTo(0);
             await Assert.That(fixture.Dialogs.Errors).IsEmpty();
             return true;
         }, CancellationToken.None);
     }
 
     [Test]
-    public async Task WorkshopIsAnAvaloniaWindowInTheHostProcess()
+    public async Task WorkshopLaunchRequestsOpenTheTabInTheMainWindow()
     {
-        await Assert.That(typeof(GUI.MainWindow).IsSubclassOf(typeof(Avalonia.Controls.Window))).IsTrue();
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            // Keep Steam IO out of the navigation test by leaving the window content empty.
+            using var window = new MainWindow { DataContext = shell, Content = null };
+            using var services = new ServiceCollection().AddSingleton(window).BuildServiceProvider();
+            using var dialogs = new DialogService { OwnerWindow = () => window };
+            dialogs.ShowWorkshopManager();
+            await Assert.That(shell.ActiveDocument is WorkshopManagerViewModel).IsTrue();
+            var tools = new ToolWindowService(services, dialogs);
+            try
+            {
+                await Assert.That(tools.Open(Services.Lifecycle.StartupTool.Workshop)).IsSameReferenceAs(window);
+                var workshop = shell.Documents.OfType<WorkshopManagerViewModel>().Single();
+                shell.OpenSoundEventEditor();
+                shell.ActiveDocument = shell.Documents.First(document => document != workshop);
+                dialogs.ShowWorkshopManager();
+                await Assert.That(shell.ActiveDocument).IsSameReferenceAs(workshop);
+                await Assert.That(tools.Open(Services.Lifecycle.StartupTool.Main)).IsSameReferenceAs(window);
+                await Assert.That(shell.Documents.OfType<WorkshopManagerViewModel>().Count()).IsEqualTo(1);
+                await Assert.That(tools.GetDocuments().Contains(workshop)).IsTrue();
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
     }
 
     [Test]
@@ -453,9 +509,10 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenLoadingEditor();
             var window = new Hammer5Tools.App.MainWindow(shell);
             var menu = window.FindControl<Menu>("ApplicationMenu")!;
-            await Assert.That(menu.Items.OfType<MenuItem>().Select(item => item.Header).Contains("_Editors")).IsTrue();
+            await Assert.That(menu.Items.OfType<MenuItem>().Select(item => item.Header).Contains("Editors")).IsTrue();
             window.Show();
             Avalonia.Threading.Dispatcher.UIThread.RunJobs();
             window.UpdateLayout();
@@ -503,6 +560,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenLoadingEditor();
             var editor = shell.Documents.OfType<LoadingEditorViewModel>().Single();
             await editor.Initialization;
             await Assert.That(editor.Author).IsEqualTo("Author");
@@ -564,6 +622,7 @@ public class MigrationUiTests
         await TestAppBuilder.Session.Dispatch(async () =>
         {
             using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenLoadingEditor();
             var window = new MainWindow(shell);
             try
             {
@@ -580,6 +639,7 @@ public class MigrationUiTests
                 Dispatcher.UIThread.RunJobs();
                 await Assert.That(fixture.Dialogs.OpenCount).IsEqualTo(1);
 
+                shell.OpenSoundEventEditor();
                 var sound = shell.Documents.OfType<SoundEventEditorViewModel>().Single();
                 await sound.Initialization;
                 shell.ActiveDocument = sound;
@@ -602,6 +662,235 @@ public class MigrationUiTests
         }, CancellationToken.None);
     }
 
+    [Test]
+    public async Task StartupOpensDefaultEditorsAndUtilitiesStayInDialogsUntilDocked()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var workshop = shell.ActiveDocument;
+            await Assert.That(workshop is WorkshopManagerViewModel).IsTrue();
+            await Assert.That(shell.Documents.Count).IsEqualTo(5);
+            await Assert.That(shell.Documents.Select(document => document.GetType()).ToArray()).IsEquivalentTo(new[]
+            {
+                typeof(WorkshopManagerViewModel), typeof(LoadingEditorViewModel), typeof(HotkeyEditorViewModel),
+                typeof(SoundEventEditorViewModel), typeof(SmartPropEditorViewModel),
+            });
+            await Assert.That(shell.Documents.All(document => !document.IsViewLoaded)).IsTrue();
+            shell.OpenMapBuilder();
+            shell.OpenConsole();
+            shell.OpenNavMeshRadar();
+            shell.OpenGitSync();
+            await Assert.That(shell.Documents.Count).IsEqualTo(5);
+            await Assert.That(shell.ActiveDocument).IsSameReferenceAs(workshop);
+            await Assert.That(fixture.Dialogs.Utilities.Count).IsEqualTo(4);
+            await Assert.That(shell.EditorsMenu.Items.Any(item => item.Header == "Map Builder" || item.Header == "Console"
+                || item.Header == "NavMesh Radar" || item.Header == "Git Sync")).IsFalse();
+
+            var map = (Features.MapBuilder.MapBuilderViewModel)fixture.Dialogs.Utilities[0];
+            var host = new Hammer5Tools.App.Controls.EditorHost { Documents = shell.Documents };
+            var owner = new Window { Content = host };
+            var dialog = new ToolDialogWindow("Map Builder", map, fixture.Dialogs, document =>
+            {
+                shell.DockTool(document);
+                host.ActiveDocument = document;
+            }, 960, 650);
+            owner.Show();
+            dialog.Show(owner);
+            Dispatcher.UIThread.RunJobs();
+            map.SelectedMap = "current-map.vmap";
+            dialog.DockIntoTabs();
+            Dispatcher.UIThread.RunJobs();
+            await Assert.That(host.Children.Contains(map.EditorView)).IsTrue();
+            await Assert.That(dialog.IsDocked).IsTrue();
+            await Assert.That(shell.ActiveDocument).IsSameReferenceAs(map);
+            await Assert.That(map.SelectedMap).IsEqualTo("current-map.vmap");
+            shell.OpenMapBuilder();
+            await Assert.That(shell.ActiveDocument).IsSameReferenceAs(map);
+            await Assert.That(fixture.Dialogs.Utilities.Count).IsEqualTo(4);
+            shell.OpenSoundEventEditor();
+            await Assert.That(shell.Documents.Count).IsEqualTo(6);
+            await shell.CloseDocumentAsync(map);
+            await shell.SwitchAddonAsync(shell.Addons.Single(addon => addon.Name == "second"));
+            await Assert.That(shell.Documents.Count).IsEqualTo(4);
+            owner.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task TabCloseButtonsRespectCancellationAndEditorsMenuReopensClosedTools()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenDetailPropEditor();
+            var document = shell.ActiveDocument!;
+            document.IsDirty = true;
+            using var window = new MainWindow { DataContext = shell };
+            try
+            {
+                window.Show();
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                var close = window.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("editor-close") && button.DataContext == document);
+                await Assert.That(((Image)close.Content!).Source).IsNotNull();
+                fixture.Dialogs.CloseResult = false;
+                close.Focus();
+                window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+                Dispatcher.UIThread.RunJobs();
+                await Assert.That(shell.Documents.Contains(document)).IsTrue();
+
+                fixture.Dialogs.CloseResult = true;
+                close.Focus();
+                window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+                Dispatcher.UIThread.RunJobs();
+                await Assert.That(shell.Documents.Contains(document)).IsFalse();
+                shell.EditorsMenu.Items.Single(item => item.Header == "DetailProp Editor").Command!.Execute(null);
+                await Assert.That(shell.ActiveDocument is DetailPropEditorViewModel).IsTrue();
+                await Assert.That(shell.ActiveDocument).IsNotSameReferenceAs(document);
+
+                var tools = window.FindControl<Menu>("ApplicationMenu")!.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "Tools"));
+                tools.IsSubMenuOpen = true;
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                var separatorIndex = shell.ToolsMenu.Items.IndexOf(shell.ToolsMenu.Items.First(item => item.IsSeparator));
+                var separator = (MenuItem)tools.ContainerFromIndex(separatorIndex)!;
+                await Assert.That(separator.IsEnabled).IsFalse();
+                await Assert.That(separator.GetVisualDescendants().OfType<Separator>().Any()).IsTrue();
+                await Assert.That(shell.ToolsMenu.Items.Any(item => item.Header == "Console")).IsTrue();
+                await Assert.That(window.GetVisualDescendants().OfType<Button>().Any(button => button.Command == shell.LaunchCs2Command)).IsFalse();
+                await Assert.That(window.GetVisualDescendants().OfType<Button>().Any(button => button.Command == shell.RestartSteamCommand)).IsFalse();
+            }
+            finally
+            {
+                document.IsDirty = false;
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task CachedEditorViewsPreserveDockLayoutsAndUnsavedFieldsAcrossTabSwitches()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenLoadingEditor();
+            var loading = (LoadingEditorViewModel)shell.ActiveDocument!;
+            await loading.Initialization;
+            loading.MapTitle = "Unsaved title";
+            using var window = new MainWindow { DataContext = shell };
+            try
+            {
+                window.Show();
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                var dock = loading.EditorView.GetVisualDescendants().OfType<DockControl>().Single();
+                var root = (global::Dock.Model.Mvvm.Controls.RootDock)dock.Layout!;
+                shell.OpenSoundEventEditor();
+                Dispatcher.UIThread.RunJobs();
+                await Assert.That(loading.EditorView.IsVisible).IsFalse();
+                shell.ActiveDocument = loading;
+                Dispatcher.UIThread.RunJobs();
+                await Assert.That(loading.EditorView.IsVisible).IsTrue();
+                await Assert.That(loading.MapTitle).IsEqualTo("Unsaved title");
+                await Assert.That(loading.IsDirty).IsTrue();
+                await Assert.That(loading.EditorView.GetVisualDescendants().OfType<DockControl>().Single()).IsSameReferenceAs(dock);
+                await Assert.That(dock.Layout).IsSameReferenceAs(root);
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task ValveIconsAndWorkshopFontAreAvailableInSharedControls()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            var root = new Uri("avares://Hammer5Tools/Assets/Icons/Valve/");
+            var icons = Avalonia.Platform.AssetLoader.GetAssets(root, null).ToArray();
+            await Assert.That(icons.Length).IsEqualTo(43);
+            foreach (var icon in icons)
+            {
+                using var stream = Avalonia.Platform.AssetLoader.Open(icon);
+                using var bitmap = new Avalonia.Media.Imaging.Bitmap(stream);
+                await Assert.That(bitmap.PixelSize.Width > 0).IsTrue();
+            }
+
+            var check = new CheckBox { Content = "Check", IsChecked = true, Classes = { "map-option" } };
+            var radio = new RadioButton { Content = "Radio", IsChecked = true };
+            var combo = new ComboBox { ItemsSource = (string[])["one", "two"], SelectedIndex = 0 };
+            var window = new Window { Content = new StackPanel { Children = { check, radio, combo } } };
+            try
+            {
+                window.Show();
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                await Assert.That(window.FontFamily.Name).Contains("Inter");
+                await Assert.That(check.GetVisualDescendants().OfType<Image>().Single(image => image.Name == "PART_ValveIndicator").Source).IsNotNull();
+                await Assert.That(radio.GetVisualDescendants().OfType<Image>().Single(image => image.Name == "PART_ValveIndicator").Source).IsNotNull();
+                await Assert.That(combo.GetVisualDescendants().OfType<Image>().Single(image => image.Name == "PART_ValveDropdown").Source).IsNotNull();
+                check.IsEnabled = false;
+                radio.IsEnabled = false;
+                using var frame = window.CaptureRenderedFrame();
+                await Assert.That(frame).IsNotNull();
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SteamRestartCommandUsesTheSharedLauncherAndReportsFailures()
+    {
+        var launcher = new TestSteamLauncher();
+        using var fixture = new Fixture(launcher);
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            await Assert.That(launcher.RestartCount).IsEqualTo(0);
+            await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.RestartSteamCommand).ExecuteAsync(null);
+            await Assert.That(launcher.RestartCount).IsEqualTo(1);
+            await Assert.That(shell.StatusMessage).IsEqualTo("Steam restarted");
+            launcher.Success = false;
+            await ((CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)shell.RestartSteamCommand).ExecuteAsync(null);
+            await Assert.That(launcher.RestartCount).IsEqualTo(2);
+            await Assert.That(shell.StatusMessage).IsEqualTo("Steam could not be restarted");
+            await Assert.That(fixture.Dialogs.Errors.Count).IsEqualTo(1);
+            return true;
+        }, CancellationToken.None);
+    }
+
+    private sealed class TestSteamLauncher : ICs2Launcher
+    {
+        public bool IsRunning => false;
+        public int? ProcessId => null;
+        public event EventHandler<bool>? ProcessStateChanged { add { } remove { } }
+        public int RestartCount { get; private set; }
+        public bool Success { get; set; } = true;
+        public string BuildLaunchArguments(string? additionalArgs = null, bool ncmMode = false) => string.Empty;
+        public Task<bool> LaunchAsync(string? additionalArgs = null, bool ncmMode = false, CancellationToken ct = default) => Task.FromResult(false);
+        public bool Kill() => false;
+        public Task<bool> RestartAsync(string? additionalArgs = null, bool ncmMode = false, CancellationToken ct = default) => Task.FromResult(false);
+        public Task<bool> RestartSteamAsync(CancellationToken ct = default)
+        {
+            RestartCount++;
+            return Task.FromResult(Success);
+        }
+    }
+
     private sealed class Fixture : IDisposable
     {
         public string Root { get; } = Path.Combine(Path.GetTempPath(), $"h5t-ui-{Guid.NewGuid():N}");
@@ -609,7 +898,7 @@ public class MigrationUiTests
         public TestDialogs Dialogs { get; } = new();
         public ServiceProvider Services { get; }
 
-        public Fixture()
+        public Fixture(ICs2Launcher? launcher = null)
         {
             Directory.CreateDirectory(Path.Combine(Root, "game", "csgo"));
             File.WriteAllText(Path.Combine(Root, "game", "csgo", "gameinfo.gi"), "\"GameInfo\" {} ");
@@ -626,6 +915,7 @@ public class MigrationUiTests
             services.AddHammer5ToolsCore();
             services.AddSingleton<ISettingsService>(Settings);
             services.AddSingleton<IDialogService>(Dialogs);
+            if (launcher is not null) services.AddSingleton(launcher);
             services.AddTransient<ShellViewModel>();
             Services = services.BuildServiceProvider();
         }
@@ -643,7 +933,8 @@ public class MigrationUiTests
         public int OpenCount { get; private set; }
         public string? SavePath { get; set; }
         public bool CloseResult { get; set; } = true;
-        public void ShowUtility(string title, object viewModel, double width = 960, double height = 650) { }
+        public List<object> Utilities { get; } = [];
+        public void ShowUtility(string title, object viewModel, double width = 960, double height = 650) { Utilities.Add(viewModel); }
         public Task<bool> ConfirmCloseAsync(IReadOnlyList<DocumentViewModel> documents) { return Task.FromResult(CloseResult); }
         public Task<string?> OpenFileAsync(string title, string pattern) { OpenCount++; return Task.FromResult<string?>(null); }
         public Task<string?> SaveFileAsync(string title, string filename) { return Task.FromResult(SavePath); }

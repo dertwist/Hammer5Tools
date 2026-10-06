@@ -2,6 +2,7 @@ namespace Hammer5Tools.App;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Hammer5Tools.App.Controls;
 using Hammer5Tools.App.Features.Shell;
 using Hammer5Tools.Core.Settings;
@@ -20,6 +21,22 @@ public partial class MainWindow : Window, IDisposable
         MinWidth = 800;
         MinHeight = 500;
         Closing += OnClosing;
+        var tabs = this.FindControl<TabControl>("EditorTabs")!;
+        DragDrop.SetAllowDrop(tabs, true);
+        DragDrop.AddDragOverHandler(tabs, (_, args) =>
+        {
+            args.DragEffects = args.DataTransfer.TryGetValue(Services.ToolDialogWindow.DragFormat) is not null
+                ? DragDropEffects.Move : DragDropEffects.None;
+            args.Handled = true;
+        });
+        DragDrop.AddDropHandler(tabs, (_, args) =>
+        {
+            if (args.DataTransfer.TryGetValue(Services.ToolDialogWindow.DragFormat) is { } dialog)
+            {
+                dialog.DockIntoTabs();
+                args.Handled = true;
+            }
+        });
     }
 
     public MainWindow(ShellViewModel viewModel) : this()

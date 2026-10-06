@@ -49,6 +49,8 @@ public partial class WorkshopManagerView : UserControl
     /// <summary>The game install, found when the first publish form needs it.</summary>
     private WorkshopManager? manager;
 
+    private bool initialized;
+
     private Window WorkshopWindow => Window.GetTopLevel(this) as Window ?? throw new InvalidOperationException("The Workshop Manager must be hosted in a window.");
 
     public WorkshopManagerView()
@@ -163,6 +165,12 @@ public partial class WorkshopManagerView : UserControl
 
     private async void OnLoaded(object? sender, RoutedEventArgs e)
     {
+        if (initialized)
+        {
+            return;
+        }
+
+        initialized = true;
         await WarnOfNewerSettingsAsync();
         await LoadItemsAsync();
     }

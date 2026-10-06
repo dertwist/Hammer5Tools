@@ -62,6 +62,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
     public EditorMenuGroup ElementMenu { get; } = new("Element", false);
     public EditorMenuGroup EditorMenu { get; } = new(string.Empty, false);
     public EditorMenuGroup ToolsMenu { get; } = new("Tools");
+    public EditorMenuGroup EditorsMenu { get; } = new("Editors");
     public EditorMenuGroup HelpMenu { get; } = new("Help");
 
     public ObservableCollection<DocumentViewModel> Documents { get; } = [];
@@ -84,7 +85,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
     }
 
     public bool IsAssetExplorerVisible => ActiveDocument is not
-        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel);
+        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel or SmartPropEditorViewModel or WorkshopManagerViewModel);
 
     public Addon? SelectedAddon
     {
@@ -104,6 +105,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         {
             new("Open...", OpenFileCommand),
             new("Save current", SaveDocumentCommand),
+            new("Close editor", new RelayCommand(() => ActiveDocument?.CloseCommand.Execute(null))),
             new("Exit", ExitCommand),
         };
         var edit = new List<EditorMenuAction>
@@ -135,18 +137,31 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     private void InitializeMainMenuGroups()
     {
+        SetMenuItems(EditorsMenu,
+        [
+            new("Workshop Manager", OpenWorkshopManagerCommand, IconUri: WorkshopIcon),
+            new("SmartProp Editor", OpenSmartPropEditorCommand, IconUri: Icon("smartprop_editor")),
+            new("SoundEvent Editor", OpenSoundEventEditorCommand, IconUri: Icon("soundviewer")),
+            EditorMenuAction.Separator,
+            new("Loading Screen Editor", OpenLoadingEditorCommand, IconUri: Icon("loading_editor")),
+            new("DetailProp Editor", OpenDetailPropEditorCommand, IconUri: Icon("detailprop_editor")),
+            new("Hotkey Editor", OpenHotkeyEditorCommand, IconUri: Icon("hotkey_editor")),
+        ]);
         SetMenuItems(ToolsMenu,
         [
             new("Launch Workshop Tools", LaunchCs2Command),
             new("Restart Workshop Tools", RestartCs2Command),
             new("Kill Workshop Tools", KillCs2Command),
+            EditorMenuAction.Separator,
+            new("Restart Steam", RestartSteamCommand),
             new("Clear VRAD3 Cache", ClearVrad3CacheCommand),
+            EditorMenuAction.Separator,
             new("Map Builder", OpenMapBuilderCommand),
             new("Workshop Manager", OpenWorkshopManagerCommand),
             new("Asset Tools", OpenAssetToolsCommand),
             new("NavMesh Radar", OpenNavMeshRadarCommand),
             new("Git Sync", OpenGitSyncCommand),
-            new("Console Log", OpenConsoleCommand),
+            new("Console", OpenConsoleCommand),
         ]);
         SetMenuItems(HelpMenu,
         [
@@ -167,7 +182,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         IsChangingDocuments = true;
         try
         {
-            if (!await DialogService.ConfirmCloseAsync(Documents.Where(IsAddonDocument).ToArray()))
+            if (!await DialogService.ConfirmCloseAsync(Documents.Where(IsAddonDocument).Concat(DialogService.UtilityDocuments).ToArray()))
             {
                 OnPropertyChanged(nameof(SelectedAddon));
                 return false;
@@ -183,7 +198,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             }
 
             DisposeAddonDocuments();
-            OpenDefaultEditors();
+            ActiveDocument ??= Documents.FirstOrDefault();
             StatusMessage = $"Active addon: {addon.Name}";
             OnPropertyChanged(nameof(SelectedAddon));
             return true;
@@ -245,6 +260,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
     public IRelayCommand KillCs2Command { get; }
 
     public IRelayCommand RestartCs2Command { get; }
+    public IRelayCommand RestartSteamCommand { get; }
 
     public IRelayCommand ClearVrad3CacheCommand { get; }
 
@@ -326,6 +342,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         LaunchCs2Command = new AsyncRelayCommand(OnLaunchCs2Async);
         KillCs2Command = new RelayCommand(OnKillCs2);
         RestartCs2Command = new AsyncRelayCommand(OnRestartCs2Async);
+        RestartSteamCommand = new AsyncRelayCommand(OnRestartSteamAsync);
         ClearVrad3CacheCommand = new RelayCommand(OnClearVrad3Cache);
         OpenHotkeyEditorCommand = new RelayCommand(OpenHotkeyEditor);
         OpenSmartPropEditorCommand = new RelayCommand(OpenSmartPropEditor);
@@ -371,13 +388,38 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     private void OpenDefaultEditors()
     {
-        var active = ActiveDocument;
+        if (Documents.Count != 0) return;
+        OpenEditor(() => new WorkshopManagerViewModel());
+        var workshop = ActiveDocument;
         OpenLoadingEditor();
-        OpenSoundEventEditor();
         OpenHotkeyEditor();
-        OpenDetailPropEditor();
+        OpenSoundEventEditor();
         OpenSmartPropEditor();
-        ActiveDocument = active ?? Documents.FirstOrDefault();
+        ActiveDocument = workshop;
+    }
+
+    private const string WorkshopIcon = "avares://CS2WorkshopManager-GUI/assets/icon.png";
+
+    private static string Icon(string name) => $"avares://Hammer5Tools/Assets/Icons/{name}.png";
+
+    private void OpenEditor<T>(Func<T> create) where T : DocumentViewModel
+    {
+        var existing = Documents.OfType<T>().FirstOrDefault();
+        if (existing is not null) ActiveDocument = existing;
+        else AddDocument(create());
+    }
+
+    private void OpenUtility<T>(string title, Func<T> create, double width = 960, double height = 650) where T : DocumentViewModel
+    {
+        var existing = Documents.OfType<T>().FirstOrDefault();
+        if (existing is not null) ActiveDocument = existing;
+        else DialogService.ShowDockableUtility(title, create(), DockTool, width, height);
+    }
+
+    public void DockTool(DocumentViewModel document)
+    {
+        if (!Documents.Contains(document)) AddDocument(document);
+        else ActiveDocument = document;
     }
 
     private void SyncAddons()
@@ -393,15 +435,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public void OpenHotkeyEditor()
     {
-        var existing = Documents.OfType<HotkeyEditorViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
-        var editor = new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher);
-        AddDocument(editor);
+        OpenEditor(() => new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher));
     }
 
     public void NewSmartPropDocument()
@@ -420,90 +454,44 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public void OpenSmartPropEditor()
     {
-        var existing = Documents.OfType<SmartPropEditorViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-        AddDocument(new SmartPropEditorViewModel(Cs2Locator, null, DialogService));
+        OpenEditor(() => new SmartPropEditorViewModel(Cs2Locator, null, DialogService));
     }
 
     public void OpenDetailPropEditor()
     {
-        var existing = Documents.OfType<DetailPropEditorViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
-        var editor = new DetailPropEditorViewModel(AddonService, DialogService);
-        AddDocument(editor);
+        OpenEditor(() => new DetailPropEditorViewModel(AddonService, DialogService));
     }
 
     public void OpenConsole()
     {
-        var console = new ConsoleViewModel(CommandService);
-        DialogService.ShowUtility("Console", console, 880, 560);
+        OpenUtility("Console", () => new ConsoleViewModel(CommandService), 880, 560);
     }
 
     public void OpenLoadingEditor()
     {
-        var existing = Documents.OfType<LoadingEditorViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
-        var editor = new LoadingEditorViewModel(AddonService, LoadingScreenService, DialogService);
-        AddDocument(editor);
+        OpenEditor(() => new LoadingEditorViewModel(AddonService, LoadingScreenService, DialogService));
     }
 
     public void OpenSoundEventEditor()
     {
-        var existing = Documents.OfType<SoundEventEditorViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
-        var editor = new SoundEventEditorViewModel(null, SoundEventService, DialogService, cs2Locator: Cs2Locator);
-        AddDocument(editor);
+        OpenEditor(() => new SoundEventEditorViewModel(null, SoundEventService, DialogService, cs2Locator: Cs2Locator));
     }
 
     public void OpenMapBuilder()
     {
-        var existing = Documents.OfType<MapBuilderViewModel>().FirstOrDefault();
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-        AddDocument(new MapBuilderViewModel(null, MapBuilderService, SettingsService, DialogService, SystemUsageService, Cs2Locator));
+        OpenUtility("Map Builder", () => new MapBuilderViewModel(null, MapBuilderService, SettingsService, DialogService, SystemUsageService, Cs2Locator));
     }
 
     public void OpenNavMeshRadar()
     {
-        var radar = new NavMeshRadarViewModel(AddonService, NavMeshRadarService);
-        DialogService.ShowUtility("NavMesh Radar", radar, 920, 640);
+        OpenUtility("NavMesh Radar", () => new NavMeshRadarViewModel(AddonService, NavMeshRadarService), 920, 640);
     }
 
     private async Task OpenWorkshopManagerAsync()
     {
         try
         {
-            var existing = Documents.OfType<WorkshopManagerViewModel>().FirstOrDefault();
-            if (existing is not null)
-            {
-                ActiveDocument = existing;
-            }
-            else
-            {
-                AddDocument(new WorkshopManagerViewModel());
-            }
+            OpenEditor(() => new WorkshopManagerViewModel());
             StatusMessage = "CS2 Workshop Manager opened";
         }
         catch (Exception ex)
@@ -515,14 +503,12 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public void OpenAssetTools()
     {
-        var tools = new AssetToolsViewModel(AddonService, AssetToolsService);
-        DialogService.ShowUtility("Asset Tools", tools, 900, 600);
+        OpenUtility("Asset Tools", () => new AssetToolsViewModel(AddonService, AssetToolsService), 900, 600);
     }
 
     public void OpenGitSync()
     {
-        var sync = new GitSyncViewModel(AddonService, GitSyncService, SettingsService);
-        DialogService.ShowUtility("Git Sync", sync, 920, 620);
+        OpenUtility("Git Sync", () => new GitSyncViewModel(AddonService, GitSyncService, SettingsService), 920, 620);
     }
 
     private void AddDocument(DocumentViewModel doc)
@@ -563,11 +549,11 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public async Task<bool> CanExitAsync()
     {
-        return !IsChangingDocuments && await DialogService.ConfirmCloseAsync(Documents.ToArray());
+        return !IsChangingDocuments && await DialogService.ConfirmCloseAsync(Documents.Concat(DialogService.UtilityDocuments).ToArray());
     }
 
     private static bool IsAddonDocument(DocumentViewModel document) =>
-        document is LoadingEditorViewModel or DetailPropEditorViewModel;
+        document is LoadingEditorViewModel or DetailPropEditorViewModel or AssetToolsViewModel or NavMeshRadarViewModel or GitSyncViewModel;
 
     private void DisposeAddonDocuments()
     {
@@ -628,6 +614,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
                 Controls.WorkspaceView.SaveAllLayouts();
                 Cs2Locator.FindCs2Path();
                 AddonService.RefreshAddons();
+                DialogService.CloseUtilities();
                 DisposeDocuments();
                 OpenDefaultEditors();
             }
@@ -684,6 +671,22 @@ public class ShellViewModel : ViewModelBase, IDisposable
         StatusMessage = success ? "CS2 restarted" : "Failed to restart CS2";
     }
 
+    private async Task OnRestartSteamAsync()
+    {
+        StatusMessage = "Restarting Steam...";
+        try
+        {
+            var success = await Cs2Launcher.RestartSteamAsync();
+            StatusMessage = success ? "Steam restarted" : "Steam could not be restarted";
+            if (!success) await DialogService.ShowErrorAsync("Steam could not be restarted. Close it and try again.");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Steam could not be restarted";
+            await DialogService.ShowErrorAsync(ex.Message);
+        }
+    }
+
     private void OnClearVrad3Cache()
     {
         var cleared = Vrad3CacheService.ClearCache(SelectedAddon?.Name);
@@ -731,7 +734,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             await Task.Run(() => AddonService.CreateAddon(request.Name, request.PresetPath));
             SettingsService.Update(settings => settings.SelectedAddonPreset = request.PresetName);
             DisposeAddonDocuments();
-            OpenDefaultEditors();
+            ActiveDocument ??= Documents.FirstOrDefault();
             OnRefreshAddons();
         }
         catch (Exception ex)
@@ -743,7 +746,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
     private async Task RemoveAddonAsync()
     {
         var addon = SelectedAddon;
-        if (addon is null || !await DialogService.ConfirmCloseAsync(Documents.ToArray())
+        if (addon is null || !await DialogService.ConfirmCloseAsync(Documents.Concat(DialogService.UtilityDocuments).ToArray())
             || !await DialogService.ConfirmAsync("Remove addon", $"Remove {addon.Name}? Both its source content and compiled game files will be deleted."))
         {
             return;
@@ -757,7 +760,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             }
             DialogService.CloseUtilities();
             DisposeAddonDocuments();
-            OpenDefaultEditors();
+            ActiveDocument ??= Documents.FirstOrDefault();
             OnRefreshAddons();
         }
         catch (Exception ex)
@@ -893,7 +896,12 @@ public class ShellViewModel : ViewModelBase, IDisposable
     }
 }
 
-public sealed record EditorMenuAction(string Header, ICommand? Command = null, IReadOnlyList<EditorMenuAction>? Children = null);
+public sealed record EditorMenuAction(string Header, ICommand? Command = null, IReadOnlyList<EditorMenuAction>? Children = null,
+    string? IconUri = null, bool IsSeparator = false)
+{
+    public static EditorMenuAction Separator { get; } = new(string.Empty, IsSeparator: true);
+    public string Kind => IsSeparator ? "separator" : "action";
+}
 
 public sealed class EditorMenuGroup : ViewModelBase
 {

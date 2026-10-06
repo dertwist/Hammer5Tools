@@ -39,4 +39,7 @@ public interface ICs2Launcher
     /// Kills the running CS2 process (if any) and restarts it.
     /// </summary>
     Task<bool> RestartAsync(string? additionalArgs = null, bool ncmMode = false, CancellationToken ct = default);
+
+    /// <summary>Requests a graceful Steam shutdown, waits for it to exit, and starts Steam again.</summary>
+    Task<bool> RestartSteamAsync(CancellationToken ct = default) => Task.FromResult(false);
 }

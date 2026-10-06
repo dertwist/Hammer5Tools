@@ -12,7 +12,6 @@
              xmlns:preferences="using:Hammer5Tools.App.Features.Preferences"
              xmlns:smartprops="using:Hammer5Tools.App.Features.SmartProps"
              xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
-             xmlns:workshopgui="using:GUI"
              xmlns:dock="using:Dock.Model.Mvvm.Controls"
              xmlns:dockthemes="using:Dock.Avalonia.Themes.Fluent"
              xmlns:conv="using:Hammer5Tools.App.Converters"
@@ -24,8 +23,8 @@
   </Application.Resources>
   <Application.DataTemplates>
     <DataTemplate DataType="{x:Type smartprops:SmartPropEditorViewModel}" x:DataType="smartprops:SmartPropEditorViewModel"><ContentControl Content="{Binding View}" /></DataTemplate>
-    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}">
-      <workshopgui:WorkshopManagerView />
+    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}" x:DataType="workshop:WorkshopManagerViewModel">
+      <ContentControl Content="{Binding View}" />
     </DataTemplate>
     <DataTemplate DataType="{x:Type preferences:PreferencesViewModel}"><preferences:PreferencesView /></DataTemplate>
     <DataTemplate DataType="{x:Type dock:Tool}" x:DataType="dock:Tool">
@@ -68,5 +67,6 @@
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
     <StyleInclude Source="avares://Hammer5Tools/Styles/HammerTheme.axaml" />
+    <StyleInclude Source="avares://Hammer5Tools/Styles/ValveControls.axaml" />
   </Application.Styles>
 </Application>

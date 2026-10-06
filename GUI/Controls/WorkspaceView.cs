@@ -114,6 +114,20 @@ public class WorkspaceView : UserControl
         VisitWorkspaces(workspace => workspace.CloseFloatingWindows());
     }
 
+    internal static void UpdateEditorFloatingWindows(EditorHost editorHost)
+    {
+        VisitWorkspaces(workspace =>
+        {
+            if (workspace.FindAncestorOfType<EditorHost>() != editorHost) return;
+            foreach (var window in workspace.Layout?.Windows ?? [])
+            {
+                if (window.Host is not Window host) continue;
+                if (workspace.DataContext == editorHost.ActiveDocument) host.Show();
+                else host.Hide();
+            }
+        });
+    }
+
     public static void ResetAllLayouts()
     {
         var settings = Program.Services?.GetService<ISettingsService>();

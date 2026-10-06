@@ -249,7 +249,7 @@ public class PreferencesViewModel : ViewModelBase
         AssetGroupMonitorPaths = settings.Editor.AssetGroupMonitorPaths;
         ApplyCommand = new AsyncRelayCommand(ApplyAsync);
         BrowseCs2Command = new AsyncRelayCommand(async () => Cs2Path = await DialogService.PickFolderAsync("CS2 installation") ?? Cs2Path);
-        BrowseArchiveCommand = new AsyncRelayCommand(async () => ArchivePath = await DialogService.PickFolderAsync("Archive folder") ?? ArchivePath);
+        BrowseArchiveCommand = new AsyncRelayCommand(async () => ArchivePath = await DialogService.PickFolderAsync("Addon Export folder") ?? ArchivePath);
         ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
     }
 

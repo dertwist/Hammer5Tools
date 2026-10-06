@@ -101,6 +101,7 @@ public class StandaloneToolTests
             try
             {
                 var shell = (ShellViewModel)main.DataContext!;
+                shell.OpenSmartPropEditor();
                 await shell.Documents.OfType<Features.SmartProps.SmartPropEditorViewModel>().Single().InitialLoadTask;
                 await Assert.That(ReferenceEquals(tools.Open(StartupTool.Main), main)).IsTrue();
                 main.Close();
@@ -179,6 +180,8 @@ public class StandaloneToolTests
             var tools = fixture.Services.GetRequiredService<ToolWindowService>();
             var main = (MainWindow)tools.Open(StartupTool.Main);
             var shell = (ShellViewModel)main.DataContext!;
+            shell.OpenSmartPropEditor();
+            shell.OpenSoundEventEditor();
             var smartProp = shell.Documents.OfType<Features.SmartProps.SmartPropEditorViewModel>().Single();
             var sound = shell.Documents.OfType<SoundEventEditorViewModel>().Single();
             try
@@ -187,8 +190,11 @@ public class StandaloneToolTests
                 await sound.Initialization;
                 smartProp.IsDirty = true;
                 sound.IsDirty = true;
-                shell.OpenMapBuilder();
-                var map = shell.ActiveDocument;
+                var map = new Features.MapBuilder.MapBuilderViewModel(null,
+                    fixture.Services.GetRequiredService<Core.MapBuilder.IMapBuilderService>(),
+                    fixture.Services.GetRequiredService<Core.Settings.ISettingsService>(),
+                    fixture.Services.GetRequiredService<IDialogService>(), cs2Locator: fixture.Services.GetRequiredService<Core.Cs2.ICs2Locator>());
+                shell.DockTool(map);
                 await Assert.That(map is Features.MapBuilder.MapBuilderViewModel).IsTrue();
                 await Assert.That(shell.FileMenu.Items.Any(item => item.Header == "Add VMAP...")).IsTrue();
                 var second = fixture.Services.GetRequiredService<IAddonService>().Addons.Single(addon => addon.Name == "second");

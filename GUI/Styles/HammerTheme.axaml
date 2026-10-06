@@ -78,7 +78,7 @@
     <CornerRadius x:Key="H5TRadius">2</CornerRadius>
     <Thickness x:Key="H5TBorderThickness">2</Thickness>
     <x:Double x:Key="H5TControlHeight">22</x:Double>
-    <FontFamily x:Key="H5TFontFamily">Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif</FontFamily>
+    <FontFamily x:Key="H5TFontFamily">avares://Avalonia.Fonts.Inter/Assets#Inter</FontFamily>
     <FontFamily x:Key="H5TMonospaceFont">Consolas, Menlo, Monaco, Courier New, monospace</FontFamily>
   </Styles.Resources>
 
@@ -484,19 +484,7 @@
   </Style>
   <Style Selector="CheckBox.map-option"><Setter Property="FontWeight" Value="Normal" />
     <Setter Property="Padding" Value="0" /><Setter Property="MinHeight" Value="22" />
-    <Setter Property="Template">
-      <ControlTemplate>
-        <Grid ColumnDefinitions="18,*" Background="Transparent">
-          <Border Name="PART_OptionBox" Width="12" Height="12" BorderThickness="1" BorderBrush="{DynamicResource H5TBorderStrongBrush}" VerticalAlignment="Center">
-            <Path Name="PART_OptionCheck" Data="M 1,5 L 4,8 L 10,1" Stroke="{DynamicResource H5TTextBrush}" StrokeThickness="1.5" IsVisible="False" />
-          </Border>
-          <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" RecognizesAccessKey="True" />
-        </Grid>
-      </ControlTemplate>
-    </Setter>
   </Style>
-  <Style Selector="CheckBox.map-option:checked /template/ Path#PART_OptionCheck"><Setter Property="IsVisible" Value="True" /></Style>
-  <Style Selector="CheckBox.map-option:focus-visible /template/ Border#PART_OptionBox"><Setter Property="BorderBrush" Value="{DynamicResource H5TAccentBrush}" /></Style>
   <Style Selector="CheckBox.map-option:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
   <Style Selector="ListBox.map-list"><Setter Property="Background" Value="{DynamicResource H5TSurfaceRaisedBrush}" /></Style>
   <Style Selector="ListBox.build-output"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="0" /></Style>

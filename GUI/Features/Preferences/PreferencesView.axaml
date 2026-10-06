@@ -8,7 +8,7 @@
           <StackPanel Spacing="8" Margin="10">
             <TextBlock Text="Paths" Classes="section" />
             <Grid ColumnDefinitions="130,*,Auto">
-              <TextBlock Text="Archive path:" VerticalAlignment="Center" />
+              <TextBlock Text="Addon Export path:" VerticalAlignment="Center" />
               <TextBox Grid.Column="1" Text="{Binding ArchivePath}" />
               <Button Grid.Column="2" Content="Browse" Command="{Binding BrowseArchiveCommand}" Margin="6,0,0,0" />
             </Grid>

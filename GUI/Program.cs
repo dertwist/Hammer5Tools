@@ -6,6 +6,7 @@ using Hammer5Tools.App.Services;
 using Hammer5Tools.App.Services.Lifecycle;
 using Hammer5Tools.App.Services.Updates;
 using Hammer5Tools.Core;
+using Hammer5Tools.Core.IO.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Velopack;
@@ -28,6 +29,18 @@ public static class Program
         try
         {
             VelopackApp.Build().Run();
+            if (args.Length == 1 && args[0] == CommandPipeHost.StartupArgument)
+            {
+                try
+                {
+                    CommandPipeHost.Run();
+                }
+                catch (IOException)
+                {
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
             Startup = StartupArguments.Parse(args);
         }
         catch (Exception ex)

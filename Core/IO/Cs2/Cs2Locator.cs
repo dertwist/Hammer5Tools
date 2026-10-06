@@ -130,7 +130,7 @@ public class Cs2Locator : ICs2Locator
     /// <inheritdoc/>
     public bool IsValidCs2Path(string? path) => Cs2Paths.IsValidCs2Path(path);
 
-    private static string? GetSteamInstallPath()
+    internal static string? GetSteamInstallPath()
     {
         var candidates = new List<string>();
 

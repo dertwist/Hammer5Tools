@@ -7,6 +7,8 @@ using Hammer5Tools.Core.NavMesh;
 
 public class NavMeshRadarViewModel : DocumentViewModel
 {
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/map_sm.png";
+
     private readonly IAddonService AddonService;
     private readonly INavMeshRadarService RadarService;
 

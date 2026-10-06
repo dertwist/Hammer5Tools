@@ -10,17 +10,20 @@ public interface ICommandService
     /// </summary>
     bool IsConnected { get; }
 
-    /// <summary>Gets the VConsole connection status.</summary>
-    string VConsoleStatus { get; }
+    /// <summary>Gets shared workshop and current-user Convar Helper command presets.</summary>
+    IReadOnlyList<ConsoleHelperCommand> HelperCommands { get; }
 
-    /// <summary>Gets the current live convar catalog revision.</summary>
-    int ConvarRevision { get; }
+    /// <summary>Compatibility status for older application assemblies. VConsole is unused.</summary>
+    string VConsoleStatus => "Command pipe console";
 
-    /// <summary>Gets a snapshot of convars learned from VConsole.</summary>
-    IReadOnlyList<ConsoleVariable> Convars { get; }
+    /// <summary>Compatibility revision for the retired live catalog.</summary>
+    int ConvarRevision => 0;
 
-    /// <summary>Enables or releases the local game's VConsole connection.</summary>
-    void SetVConsoleEnabled(bool enabled);
+    /// <summary>Compatibility live catalog for older application assemblies.</summary>
+    IReadOnlyList<ConsoleVariable> Convars => [];
+
+    /// <summary>Retains binary compatibility; the command service never connects to VConsole.</summary>
+    void SetVConsoleEnabled(bool enabled) { }
 
     /// <summary>
     /// Event raised when a line is output to the console log or pipe.
@@ -31,6 +34,13 @@ public interface ICommandService
     /// Starts the command pipe servers and log listener.
     /// </summary>
     void Start();
+
+    /// <summary>Ensures that persistent command pipes exist before the game starts.</summary>
+    Task<bool> PrepareLaunchAsync(CancellationToken ct = default)
+    {
+        Start();
+        return Task.FromResult(true);
+    }
 
     /// <summary>
     /// Stops the command pipe servers and log listener.

@@ -32,11 +32,23 @@ workers append through `AppendOutput`. The legacy enum build overload remains
 available. App owns option presentation and usage charts; unavailable counters
 are null, never simulated percentages.
 
-The managed console uses Core `IO/Commands/` for command pipes, the console log
-under `game/csgo/`, and the optional local VConsole connection. Core parses
-VConsole output and convar/config packets and exposes catalog snapshots through
-`ICommandService`; App owns Enter-to-send and the searchable Convar Helper.
-VConsole serves one client; disabling it releases the slot to `vconsole2.exe`.
+The managed console uses Core `IO/Commands/` for command pipes and the console log
+under `game/csgo/`. It leaves VConsole's client slot available for `vconsole2.exe`.
+Core loads shared Convar Helper INI pages from `game/core/tools/convarhelper/workshop`
+and user pages from `HKCU/Software/Valve/ConVarHelper/Tabs`, exposing command presets
+through `ICommandService.HelperCommands`, including authored page dimensions, cell positions
+and section headings. App presents a resizable right-hand page/button grid and owns Enter-to-send, helper search,
+bounded batched output and pausing display. The standalone VConsole protocol client
+remains available for its regression tests; the application console does not use it.
+Legacy VConsole interface members remain inert for older application assembly compatibility.
+`CommandPipeHost` runs in a hidden `--command-pipe-host` invocation of the managed
+executable, bypassing GUI/single-instance startup. It retains CS2's command pipe handles
+across UI exits/restarts; `CommandPipeClient` reconnects through a current-user control
+pipe. The host exits after 30 seconds without an app client or connected game.
+GUI and CLI recognize this internal mode. CS2 launch waits for host readiness before
+starting the engine. App service shutdown detaches its client and log listener only;
+it does not terminate the host or CS2. Pipe output is drained by the host; the app
+receives game output through its independently restarted console log listener.
 
 ## Mandatory Workflow
 
@@ -252,7 +264,9 @@ Keep the managed Core and integrated Workshop library on that same
 version and retain the Workshop chunking/CRC/checksum regression tests when
 updating these dependencies.
 
-The Python application is archived in `legacy/`. Workshop UI is referenced as a library and hosted in-process by the managed application; do not launch a separate Workshop executable.
+The Python application is archived in `legacy/`. Workshop UI is referenced as a library and hosted in-process in a shell editor tab; `--tool workshop` and the Workshop launcher open or focus that tab in the main window. Workshop is the initial active shell tab. The tab retains its view and submission state across editor and addon switches. Do not launch a separate Workshop executable.
+
+Shell startup opens Workshop Manager, Loading Screen, Hotkey, SoundEvent and SmartProp editor tabs, with Workshop active. Editor views load when selected; additional editors open from the Editors menu; utility tools (Map Builder, Console, Asset Tools, NavMesh Radar and Git Sync) open as dialogs and can be dragged into the editor tab strip. Dialog-to-tab transfer preserves the document and its state. `Controls/EditorHost` retains loaded editor trees attached but hidden, preserving Dock contexts. Editors can be closed with dirty-document confirmation and reopened from the Editors menu; addon changes do not reopen closed tools. Core `ICs2Launcher.RestartSteamAsync` owns graceful Steam shutdown and restart, with cancellation and a bounded wait. App exposes it in Tools and reports status. Shared managed typography uses Workshop's bundled Inter font; `Styles/ValveControls.axaml` uses the linked legacy Valve icon set for control states. The bottom bar retains its original icons.
 
 `build.ps1` owns the shared local/GitHub Actions managed build, validation, publish and Velopack packaging workflow. `.config/dotnet-tools.json` pins vpk to the App's Velopack package version. App `Program.Main` runs Velopack before argument parsing and single-instance startup. `installer/Hammer5Tools.iss` optionally wraps installation/portable extraction; Velopack owns installed-mode uninstallation. The managed package ID is separate from legacy until migration parity is verified. Packaging does not implement profile migration or portable data paths.
 

@@ -3,7 +3,9 @@ namespace Hammer5Tools.Core.IO.Cs2;
 using System.Diagnostics;
 using System.IO;
 using Hammer5Tools.Core.Addons;
+using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Cs2;
+using Hammer5Tools.Core.IO.Commands;
 using Hammer5Tools.Core.Settings;
 using Microsoft.Extensions.Logging;
 
@@ -17,6 +19,7 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
     public const string LogFileName = "hammer5tools_console.log";
 
     private readonly ICs2Locator Cs2Locator;
+    private readonly ICommandService? CommandService;
     private readonly IAddonService AddonService;
     private readonly ISettingsService SettingsService;
     private readonly ILogger<Cs2Launcher>? Logger;
@@ -76,13 +79,50 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
 
     public event EventHandler<bool>? ProcessStateChanged;
 
+    /// <inheritdoc/>
+    public async Task<bool> RestartSteamAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        if (!OperatingSystem.IsWindows()) return false;
+        var processes = Process.GetProcessesByName("steam");
+        try
+        {
+            var executable = processes.FirstOrDefault()?.MainModule?.FileName;
+            executable ??= IO.Cs2.Cs2Locator.GetSteamInstallPath() is { } path ? Path.Combine(path, "steam.exe") : null;
+            if (executable is null || !File.Exists(executable)) return false;
+
+            if (processes.Length > 0)
+            {
+                using var shutdown = Process.Start(new ProcessStartInfo(executable, "-shutdown") { UseShellExecute = true });
+                if (shutdown is null) return false;
+                await Task.WhenAll(processes.Select(process => process.WaitForExitAsync(ct)))
+                    .WaitAsync(TimeSpan.FromSeconds(30), ct);
+            }
+
+            ct.ThrowIfCancellationRequested();
+            using var restarted = Process.Start(new ProcessStartInfo(executable) { UseShellExecute = true });
+            return restarted is not null;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException or TimeoutException)
+        {
+            Logger?.LogWarning(ex, "Could not restart Steam.");
+            return false;
+        }
+        finally
+        {
+            foreach (var process in processes) process.Dispose();
+        }
+    }
+
     public Cs2Launcher(
         ICs2Locator cs2Locator,
         IAddonService addonService,
         ISettingsService settingsService,
-        ILogger<Cs2Launcher>? logger = null)
+        ILogger<Cs2Launcher>? logger = null,
+        ICommandService? commandService = null)
     {
         Cs2Locator = cs2Locator;
+        CommandService = commandService;
         AddonService = addonService;
         SettingsService = settingsService;
         Logger = logger;
@@ -98,20 +138,20 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
     }
 
     /// <inheritdoc/>
-    public Task<bool> LaunchAsync(string? additionalArgs = null, bool ncmMode = false, CancellationToken ct = default)
+    public async Task<bool> LaunchAsync(string? additionalArgs = null, bool ncmMode = false, CancellationToken ct = default)
     {
         var cs2Path = Cs2Locator.ResolvedCs2Path;
         if (string.IsNullOrWhiteSpace(cs2Path))
         {
             Logger?.LogError("Cannot launch CS2: Installation path not found.");
-            return Task.FromResult(false);
+            return false;
         }
 
         var exePath = Cs2Paths.GetCs2ExePath(cs2Path);
         if (!File.Exists(exePath))
         {
             Logger?.LogError("Cannot launch CS2: Executable not found at {Path}", exePath);
-            return Task.FromResult(false);
+            return false;
         }
 
         var launchArgs = BuildLaunchArguments(additionalArgs, ncmMode);
@@ -125,6 +165,15 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
             {
                 PrepareNcmFiles(cs2Path);
             }
+            using var temporaryPipe = CommandService is null ? new CommandPipeClient(Logger) : null;
+            var ready = CommandService is not null
+                ? await CommandService.PrepareLaunchAsync(ct)
+                : await temporaryPipe!.WaitUntilReadyAsync(ct);
+            if (!ready)
+            {
+                Logger?.LogError("Cannot launch CS2: Command pipe host is unavailable.");
+                return false;
+            }
             var startInfo = new ProcessStartInfo
             {
                 FileName = exePath,
@@ -137,7 +186,7 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
             if (process is null)
             {
                 Logger?.LogError("Failed to start CS2 process.");
-                return Task.FromResult(false);
+                return false;
             }
 
             lock (SyncLock)
@@ -149,12 +198,12 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
             }
 
             ProcessStateChanged?.Invoke(this, true);
-            return Task.FromResult(true);
+            return true;
         }
         catch (Exception ex)
         {
             Logger?.LogError(ex, "Exception while launching CS2 process.");
-            return Task.FromResult(false);
+            return false;
         }
     }
 
