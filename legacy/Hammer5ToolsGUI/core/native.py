@@ -722,8 +722,8 @@ class SmartPropNativeClient:
                 return candidate.resolve()
 
         dev_candidates = [
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
-            paths.install_root / "Hammer5ToolsCore" / "Hammer5Tools.Core" / "publish" / cls.LIBRARY_NAME,
+            paths.install_root / "Core" / "NativeAot" / "bin" / "Release" / "win-x64" / "native" / cls.LIBRARY_NAME,
+            paths.install_root / "Core" / "NativeAot" / "publish" / cls.LIBRARY_NAME,
         ]
         existing_dev = [candidate.resolve() for candidate in dev_candidates if candidate.is_file()]
         if existing_dev:

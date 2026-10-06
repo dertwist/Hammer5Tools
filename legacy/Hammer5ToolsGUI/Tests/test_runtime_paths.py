@@ -8,6 +8,21 @@ import pytest
 from core.runtime_paths import resolve_runtime_paths
 
 
+@pytest.mark.parametrize("output", ["bin/Release/win-x64/native", "publish"])
+def test_native_library_discovery_uses_the_integrated_core_folder(monkeypatch, tmp_path, output):
+    from core import native
+    from core.runtime_paths import RuntimePaths
+
+    paths = RuntimePaths(tmp_path, tmp_path, tmp_path / "runtime", tmp_path / "userdata")
+    library = tmp_path / "Core" / "NativeAot" / output / native.SmartPropNativeClient.LIBRARY_NAME
+    library.parent.mkdir(parents=True)
+    library.write_bytes(b"fixture")
+    monkeypatch.delenv("H5T_SMARTPROP_NATIVE", raising=False)
+    monkeypatch.setattr(native, "resolve_runtime_paths", lambda: paths)
+
+    assert native.SmartPropNativeClient._find_library() == library.resolve()
+
+
 def test_development_presets_use_the_repository_asset_folder(monkeypatch):
     monkeypatch.delenv("H5T_INSTALL_ROOT", raising=False)
     monkeypatch.setattr(sys, "frozen", False, raising=False)

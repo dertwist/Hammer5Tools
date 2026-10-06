@@ -175,6 +175,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+    <EmbeddedResource Include="../Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Format/SmartProps/*.cs" />
+    <Compile Include="../Format/Resources/Compiled*.cs" />
+    <Compile Include="../Format/Resources/ICompiledModelReader.cs" />
+    <Compile Include="../CoreApi.SmartProps.cs" />
+    <Compile Include="../CoreResult.cs" />
+    <Compile Include="../CoreDiagnostic.cs" />
+    <Compile Include="../IO/SmartPropPreviewService.cs" />
+    <Compile Include="../IO/SmartPropDocumentFile.cs" />
+    <Compile Include="../IO/SmartPropHierarchyFiles.cs" />
+    <Compile Include="../IO/CompiledResource/VmapContentFiles.cs" />
+    <Compile Include="../IO/Automation/SafeAssetWrites.cs" />
+    <Compile Include="../IO/Domain/Cs2InstallLocator.cs" />
+    <Compile Include="../IO/ContentPathResolver.cs" />
+    <Compile Include="../SmartPropPreviewJsonContext.cs" />
   </ItemGroup>
 </Project>

@@ -39,7 +39,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Hammer5ToolsLegacyProject Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Hammer5ToolsCore')) Or $([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Hammer5Tools.SmartProp.Tests'))">true</Hammer5ToolsLegacyProject>
+    <Hammer5ToolsLegacyProject Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('Hammer5Tools.SmartProp.Tests'))">true</Hammer5ToolsLegacyProject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Hammer5ToolsLegacyProject)' == 'true'">
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>

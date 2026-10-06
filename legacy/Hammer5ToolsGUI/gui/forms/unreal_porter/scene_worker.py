@@ -211,7 +211,7 @@ class SceneModelsWorker(CancellableWorker):
                 self._log(
                     f"Import {label} is enabled but the scene read returned no such actors. "
                     f"Either the maps have none, or the CUE4Parse bridge predates this feature "
-                    f"and needs rebuilding (Hammer5ToolsCore/Hammer5Tools.Core/UNREAL_BRIDGE.md).",
+                    f"and needs rebuilding (Core/NativeAot/UNREAL_BRIDGE.md).",
                     "warn",
                 )
 

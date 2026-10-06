@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hammer5Tools.Core\Hammer5Tools.Core.csproj" />
+    <ProjectReference Include="..\..\Core\NativeAot\Hammer5Tools.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Fixtures\Models\*.vmdl_c" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\..\Hammer5Tools\SmartPropEditor\Presets\**\*.vsmart"
+    <None Include="..\..\Presets\SmartPropEditor\Presets\**\*.vsmart"
           Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

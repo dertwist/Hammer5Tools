@@ -1,9 +1,9 @@
 <Project>
 
-  <!-- Shared settings for every managed Core project. -->
+  <!-- Shared settings for the NativeAOT project and its regression suites. -->
   <PropertyGroup>
     <Hammer5ToolsLegacyProject>true</Hammer5ToolsLegacyProject>
-    <VersionManifest>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\version.json'))</VersionManifest>
+    <VersionManifest>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\version.json'))</VersionManifest>
     <VersionManifestText>$([System.IO.File]::ReadAllText('$(VersionManifest)'))</VersionManifestText>
     <Version>$([System.Text.RegularExpressions.Regex]::Match('$(VersionManifestText)', '&quot;version&quot;\s*:\s*&quot;([^&quot;]+)&quot;').Groups[1].Value)</Version>
     <LangVersion>latest</LangVersion>

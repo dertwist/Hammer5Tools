@@ -17,7 +17,7 @@ The replacement application uses `GUI/CLI -> Core` dependencies:
 - App startup accepts `--tool soundevents`, `--tool mapbuilder`, `--tool smartprops` and `--tool workshop`. `Services/ToolWindowService.cs` creates only the requested UI and reuses existing tool windows; all modes share the same process and Core services. `Services/Lifecycle/SingleInstanceGuard.cs` forwards launch requests over a current-user named pipe. The process exits on its last window closing. Standalone windows use the existing editor views, preserve dirty documents on cancellation, and confirm all open documents before shared installation changes. Addon selection does not affect independent editor documents. Optional Windows shortcuts use the thin editor launchers, sharing one managed application through `CreateToolShortcuts.ps1`.
 - `Core/CS2WorkshopManager/`, `Core/Steamworks/`, and `GUI/CS2WorkshopManager/`: pinned upstream library, Steamworks and GUI projects. Core references the library; App hosts the GUI in-process, including standalone startup. `Misc/CS2WorkshopManager/` retains shared upstream build settings, provenance and licenses. Local build imports and `.editorconfig` files preserve upstream settings; parent Core and GUI projects exclude nested project sources. Run `dotnet format --exclude Core/Steamworks Core/CS2WorkshopManager GUI/CS2WorkshopManager` for owned code.
 - `Presets/`: immutable shipped addon, editor and hotkey assets; addon presets live under `Presets/Addons/`. Published preset paths remain `presets/addons`, `presets/soundeventeditor`, and `presets/smartpropeditor`.
-- The application project is `GUI/Hammer5Tools.csproj`, producing `Hammer5Tools.dll`; its existing `Hammer5Tools.App` namespaces are retained. The shared library remains `Core/Hammer5Tools.Core.csproj`. The NativeAOT workspace remains `Hammer5ToolsCore/`.
+- The application project is `GUI/Hammer5Tools.csproj`, producing `Hammer5Tools.dll`; its existing `Hammer5Tools.App` namespaces are retained. The shared library remains `Core/Hammer5Tools.Core.csproj`. The NativeAOT workspace remains `Core/NativeAot/`.
 - `Tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
 
 Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm affected dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
@@ -65,7 +65,7 @@ before moving behavior that has no coverage.
   and response shaping. Compilation, source-asset mutation, map authoring,
   model bounds, and texture-channel preparation run in Core through CoreBridge.
 - `legacy/Hammer5ToolsGUI/keyvalues3/`: the standalone KV3 library.
-- `Hammer5ToolsCore/`: all domain logic. This includes Source 2 parsing,
+- `Core/NativeAot/`: native exports and the remaining NativeAOT domain logic. This includes Source 2 parsing,
   VPK/resource access, SmartProp evaluation, VMAP work, conversions, Source
   porting, and Unreal extraction.
 - `legacy/Hammer5ToolsGUI/Tests/`: Python regression and characterization tests.
@@ -238,9 +238,12 @@ hierarchy interactions, presentation and OpenGL rendering. `Tests/Hammer5Tools.S
 owns its headless and native GPU regression host. The editor participates in the shell's
 document tabs, dirty-file prompts and save/undo commands.
 
-`Core/` compiles the existing SmartProp domain/resource sources
-from `Hammer5ToolsCore/Hammer5Tools.Core/` into its single managed Core assembly.
-Keep those sources shared with the NativeAOT bridge; do not duplicate evaluators,
+`Core/Format/`, `Core/IO/` and the root Core API files own the shared SmartProp
+domain/resource sources. The managed Core compiles them directly; the project in
+`Core/NativeAot/` links the same files into its native DLL. NativeAOT regression
+projects live under `Tests/Hammer5Tools.NativeAot.Tests/` and
+`Tests/SourcePorter.Core.Tests/`, with a separate solution at
+`Core/NativeAot/Hammer5Tools.NativeAot.slnx`. Keep these sources shared; do not duplicate evaluators,
 hierarchy mutations or source serialization in the App. `CoreApi.SmartProps.cs`
 is the shared public editor contract.
 

@@ -63,7 +63,7 @@ Settings includes the legacy launch switches, addon-map opening, custom argument
 
 Fresh launch settings use the legacy defaults: open the addon map in Hammer with Workshop Tools, Steam, retail and GPU ray tracing enabled, plus `+install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0`. Insecure mode uses the working `-insecure` flag. Saved launch choices are preserved; NCM remains optional.
 
-The previous Python/PySide6 application, its tests and bridge are preserved under `legacy/Hammer5ToolsGUI`. Run legacy scripts from `legacy/` (for example, `python Hammer5ToolsGUI/gui/main.py`). The native Core remains under `Hammer5ToolsCore`.
+The previous Python/PySide6 application, its tests and bridge are preserved under `legacy/Hammer5ToolsGUI`. Run legacy scripts from `legacy/` (for example, `python Hammer5ToolsGUI/gui/main.py`). The native Core remains under `Core/NativeAot`.
 
 Editing `.vsmart` files manually is no longer necessary. The editor provides a visual way to manage position, rotation, and scaling in real-time. It is fully compatible with Valve's formats and includes presets to help build complex scenes efficiently.
 
@@ -92,12 +92,29 @@ The managed GUI and CLI reference one shared Core library. The C# application st
 *   `GUI/CS2WorkshopManager/`: Workshop UI hosted in-process by the main application.
 *   `Misc/CS2WorkshopManager/`: Upstream build settings, provenance and licenses.
 *   `Presets/`: Shipped addon presets under `Addons/`, editor presets and hotkey assets.
-*   `Tests/`: Managed Core, integration, App and SmartProp regression tests.
+*   `Tests/`: Managed Core, integration, App, SmartProp and NativeAOT regression tests.
 *   `legacy/Hammer5ToolsGUI/`: Archived PySide6 application, editors, widgets, styles, and resources.
-*   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL â€” Source 2 parsing, porting, and Unreal bridge logic.
+*   `Core/NativeAot/`: Native exports and domain code for Python and Houdini, built as one native DLL. Shared SmartProp/resource sources live directly in `Core/Format/`, `Core/IO/` and the root Core API files and are compiled by both projects.
 *   `legacy/Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
-*   `Hammer5ToolsCore/external/`: External libraries and .NET resources.
+*   `Core/external/`: External libraries and .NET resources.
 *   `legacy/Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
+
+The optional NativeAOT solution is `Core/NativeAot/Hammer5Tools.NativeAot.slnx`.
+Its regression projects are `Tests/Hammer5Tools.NativeAot.Tests/Hammer5Tools.Core.Tests.csproj`
+(TUnit) and `Tests/SourcePorter.Core.Tests/SourcePorter.Core.Tests.csproj` (xUnit).
+Native builds require the pinned, patched CUE4Parse dependency configured in
+`.github/actions/setup-project/action.yml`; pass its checkout with
+`-p:CUE4ParsePath=<checkout>` or set `CUE4ParsePathEnv`. The main managed build
+continues to use `Hammer5Tools.slnx`.
+
+After building the NativeAOT solution, run its TUnit suite with
+`dotnet run --project Tests/Hammer5Tools.NativeAot.Tests -c Release --no-build`.
+The legacy xUnit suite uses
+`dotnet vstest Tests/SourcePorter.Core.Tests/bin/Release/SourcePorter.Core.Tests.dll`,
+because the repository's `dotnet test` runner is Microsoft.Testing.Platform.
+Native DLL filenames and exports are unchanged. External consumers can point
+`H5T_SMARTPROP_NATIVE` at a published DLL; Source2Houdini's installer also accepts
+`--core-library <published-dll>` when its default still points at the old layout.
 
 ### Getting Started
 1.  **Environment**: Requires Python 3.11+. Install dependencies via `pip install -r requirements.txt`.

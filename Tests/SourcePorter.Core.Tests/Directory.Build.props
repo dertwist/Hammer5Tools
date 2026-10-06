@@ -1,0 +1,3 @@
+<Project>
+  <Import Project="../../Core/NativeAot/Directory.Build.props" />
+</Project>
