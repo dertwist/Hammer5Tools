@@ -1,0 +1,211 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Hammer5Tools: Build",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Hammer5Tools: Check",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Check"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Hammer5Tools: Check with GPU and CS2",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Check",
+        "-Gpu",
+        "-GameAssets"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "Hammer5Tools: Publish ZIP",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Publish"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "Hammer5Tools: Package installer and portable",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Package",
+        "-Version",
+        "${input:packageVersion}",
+        "-Channel",
+        "${input:packageChannel}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "Hammer5Tools: Package custom wizard",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "Package",
+        "-Wizard",
+        "-Version",
+        "${input:packageVersion}",
+        "-Channel",
+        "${input:packageChannel}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "Hammer5Tools: Validate and package everything",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "All",
+        "-Wizard",
+        "-Version",
+        "${input:packageVersion}",
+        "-Channel",
+        "${input:packageChannel}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "Hammer5Tools: Preview workflow commands",
+      "type": "process",
+      "command": "${config:hammer5tools.powerShellPath}",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build.ps1",
+        "-Task",
+        "All",
+        "-Wizard",
+        "-Gpu",
+        "-GameAssets",
+        "-DryRun"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "description": "Package version (SemVer)",
+      "default": "7.0.0-dev.3",
+      "type": "promptString",
+      "id": "packageVersion"
+    },
+    {
+      "options": [
+        "dev",
+        "stable"
+      ],
+      "description": "Update channel",
+      "default": "dev",
+      "type": "pickString",
+      "id": "packageChannel"
+    }
+  ]
+}

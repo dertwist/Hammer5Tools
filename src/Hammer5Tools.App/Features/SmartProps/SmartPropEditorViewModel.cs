@@ -27,6 +27,21 @@ public sealed class SmartPropEditorViewModel : DocumentViewModel
         ReportSaveFailure = dialogs.ShowErrorAsync;
         UndoCommand = new AsyncRelayCommand(() => View.UndoDocumentAsync(), () => view?.CanUndo == true);
         RedoCommand = new AsyncRelayCommand(() => View.RedoDocumentAsync(), () => view?.CanRedo == true);
+        SaveAsCommand = new AsyncRelayCommand(async () => await View.SaveAsAsync());
+        LoadCargoVanCommand = new AsyncRelayCommand(() => View.LoadCargoVanAsync());
+        LoadExampleCommand = new AsyncRelayCommand(() => View.LoadExampleAsync());
+        CutCommand = new AsyncRelayCommand(() => View.HierarchyAction("cut"));
+        CopyCommand = new AsyncRelayCommand(() => View.HierarchyAction("copy"));
+        PasteCommand = new AsyncRelayCommand(() => View.HierarchyAction("paste"));
+        PasteWithReplacementCommand = new AsyncRelayCommand(() => View.HierarchyAction("paste-replace"));
+        GroupSelectedCommand = new AsyncRelayCommand(() => View.HierarchyAction("group"));
+        AddGroupCommand = new AsyncRelayCommand(() => View.HierarchyAction("add", "CSmartPropElement_Group"));
+        AddModelCommand = new AsyncRelayCommand(() => View.HierarchyAction("add", "CSmartPropElement_Model"));
+        DuplicateCommand = new AsyncRelayCommand(() => View.HierarchyAction("duplicate"));
+        DeleteCommand = new AsyncRelayCommand(() => View.HierarchyAction("remove"));
+        MoveUpCommand = new AsyncRelayCommand(() => View.HierarchyAction("up"));
+        MoveDownCommand = new AsyncRelayCommand(() => View.HierarchyAction("down"));
+        FrameAllCommand = new RelayCommand(() => View.FrameScene());
     }
 
     public SmartPropEditorView View
@@ -50,6 +65,21 @@ public sealed class SmartPropEditorViewModel : DocumentViewModel
 
     public override IRelayCommand UndoCommand { get; }
     public override IRelayCommand RedoCommand { get; }
+    public IRelayCommand SaveAsCommand { get; }
+    public IRelayCommand LoadCargoVanCommand { get; }
+    public IRelayCommand LoadExampleCommand { get; }
+    public IRelayCommand CutCommand { get; }
+    public IRelayCommand CopyCommand { get; }
+    public IRelayCommand PasteCommand { get; }
+    public IRelayCommand PasteWithReplacementCommand { get; }
+    public IRelayCommand GroupSelectedCommand { get; }
+    public IRelayCommand AddGroupCommand { get; }
+    public IRelayCommand AddModelCommand { get; }
+    public IRelayCommand DuplicateCommand { get; }
+    public IRelayCommand DeleteCommand { get; }
+    public IRelayCommand MoveUpCommand { get; }
+    public IRelayCommand MoveDownCommand { get; }
+    public IRelayCommand FrameAllCommand { get; }
 
     private async Task OpenInitialDocumentAsync(string path)
     {

@@ -137,13 +137,6 @@ public sealed partial class SmartPropEditorView
     }
 
     private static JsonArray Segments(string[] path) => new(path.Select(segment => (JsonNode?)JsonValue.Create(segment)).ToArray());
-    private async void HierarchyCommandClicked(object? sender, RoutedEventArgs args)
-    {
-        if (sender is MenuItem { Tag: string action })
-        {
-            await HierarchyAction(action);
-        }
-    }
     private static JsonArray Paths(string[][] paths) => new(paths.Select(path => (JsonNode?)Segments(path)).ToArray());
     private static string RowKey(HierarchyRow row) => row.ElementId.Length > 0 ? "id:" + row.ElementId : "path:" + string.Join('/', row.Path);
 

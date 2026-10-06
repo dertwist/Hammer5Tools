@@ -39,8 +39,18 @@
             <CheckBox Content="Use saved editor cameras instead of point_camera" IsChecked="{Binding LoadingUseSavedCameras}" />
             <Separator />
             <TextBlock Text="Launch options" Classes="section" />
+            <CheckBox Content="Open Workshop Tools" IsChecked="{Binding LaunchOpenTools}" />
+            <CheckBox Content="Open addon map in Hammer" IsChecked="{Binding LaunchOpenMap}" />
+            <CheckBox Content="Steam mode" IsChecked="{Binding LaunchSteam}" />
+            <CheckBox Content="GPU ray tracing" IsChecked="{Binding LaunchGpuRayTracing}" />
+            <CheckBox Content="Retail mode" IsChecked="{Binding LaunchRetail}" />
+            <CheckBox Content="Insecure mode" IsChecked="{Binding LaunchInsecure}" />
+            <CheckBox Content="No customer machine" IsChecked="{Binding LaunchNoCustomerMachine}" />
+            <CheckBox Content="NCM mode (prepare internal tool files)" IsChecked="{Binding LaunchNcmMode}" />
+            <TextBlock Text="Custom arguments (addon_name is replaced with the selected addon):" />
             <TextBox Text="{Binding CustomLaunchArgs}" />
-            <CheckBox Content="NCM mode" IsChecked="{Binding LaunchNcmMode}" />
+            <TextBlock Text="Command preview" />
+            <TextBox Text="{Binding LaunchPreview}" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" />
           </StackPanel>
         </ScrollViewer>
       </TabItem>

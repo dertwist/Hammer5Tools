@@ -11,6 +11,8 @@
              xmlns:gitsync="using:Hammer5Tools.App.Features.GitSync"
              xmlns:preferences="using:Hammer5Tools.App.Features.Preferences"
              xmlns:smartprops="using:Hammer5Tools.App.Features.SmartProps"
+             xmlns:workshop="using:Hammer5Tools.App.Features.Workshop"
+             xmlns:workshopgui="using:GUI"
              xmlns:dock="using:Dock.Model.Mvvm.Controls"
              xmlns:dockthemes="using:Dock.Avalonia.Themes.Fluent"
              xmlns:conv="using:Hammer5Tools.App.Converters"
@@ -22,6 +24,9 @@
   </Application.Resources>
   <Application.DataTemplates>
     <DataTemplate DataType="{x:Type smartprops:SmartPropEditorViewModel}" x:DataType="smartprops:SmartPropEditorViewModel"><ContentControl Content="{Binding View}" /></DataTemplate>
+    <DataTemplate DataType="{x:Type workshop:WorkshopManagerViewModel}">
+      <workshopgui:WorkshopManagerView />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type preferences:PreferencesViewModel}"><preferences:PreferencesView /></DataTemplate>
     <DataTemplate DataType="{x:Type dock:Tool}" x:DataType="dock:Tool">
       <ContentControl Content="{Binding Context}" />

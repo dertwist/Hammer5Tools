@@ -1,11 +1,11 @@
 using Avalonia;
-using Vector = Avalonia.Vector;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Vector = Avalonia.Vector;
 
 namespace Hammer5Tools.App.Features.SmartProps;
 

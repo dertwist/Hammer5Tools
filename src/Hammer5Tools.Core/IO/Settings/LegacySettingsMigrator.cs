@@ -86,6 +86,10 @@ internal class LegacySettingsMigrator
                 settings.ArchivePath = value;
                 break;
 
+            case "PRESETS/preset_name":
+                settings.SelectedAddonPreset = value;
+                break;
+
             case "LAUNCH/addon":
             case "General/SelectedAddon":
             case "APP/SelectedAddon":
@@ -111,6 +115,12 @@ internal class LegacySettingsMigrator
                 {
                     settings.Editor.MinimizeToTray = minimizeToTray;
                 }
+                break;
+
+            case "LAUNCH/commands":
+                var launch = Core.Cs2.LaunchOptions.FromLegacy(value);
+                settings.Editor.LaunchOptions = launch.Options;
+                settings.Editor.CustomLaunchArgs = launch.CustomArgs;
                 break;
 
             case "LAUNCH/ncm_mode":

@@ -60,7 +60,7 @@ public class Cs2LaunchArgumentTests
             var args = launcher.BuildLaunchArguments(additionalArgs: "-dev");
 
             await Assert.That(args).Contains("-addon de_inferno_cs2");
-            await Assert.That(args).Contains("-noworkshoppreview");
+            await Assert.That(args).Contains("-nocustomermachine");
             await Assert.That(args).Contains("-vconsole");
             await Assert.That(args).Contains("-dev");
         }

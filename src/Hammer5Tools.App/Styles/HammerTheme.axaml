@@ -230,13 +230,21 @@
   <!-- ========================================================================= -->
   <Style Selector="Menu">
     <Setter Property="Background" Value="{DynamicResource H5TSurfaceBrush}" />
-    <Setter Property="Height" Value="26" />
-    <Setter Property="Padding" Value="2,0" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="0" />
   </Style>
   <Style Selector="MenuItem">
     <Setter Property="Foreground" Value="{DynamicResource H5TTextBrush}" />
     <Setter Property="FontSize" Value="12" />
-    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="MinHeight" Value="20" />
+  </Style>
+  <Style Selector="MenuItem.menu-bar-item">
+    <Setter Property="Padding" Value="7,1" />
+  </Style>
+  <Style Selector="MenuItem.menu-popup-item">
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="MinHeight" Value="20" />
   </Style>
   <Style Selector="MenuItem:pointerover /template/ Border">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />

@@ -3,6 +3,8 @@ namespace Hammer5Tools.App.Controls;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 /// <summary>Pairs a precise numeric input with a compact slider without clamping authored values.</summary>
 public sealed class NumberSlider : UserControl
@@ -19,6 +21,7 @@ public sealed class NumberSlider : UserControl
     private readonly NumericUpDown Number = new() { FormatString = "0.#######", ShowButtonSpinner = false, Classes = { "compact" } };
     private readonly Slider Slider = new() { Margin = new Thickness(6, 0, 0, 0), MinHeight = 26, Classes = { "h5-slider" } };
     private bool Updating;
+    private bool Dragging;
 
     public double Value
     {
@@ -63,10 +66,52 @@ public sealed class NumberSlider : UserControl
         {
             if (!Updating && change.Property == Slider.ValueProperty)
             {
-                SetCurrentValue(ValueProperty, Slider.Value);
+                if (Dragging)
+                {
+                    Updating = true;
+                    try
+                    {
+                        Number.Value = (decimal)Slider.Value;
+                    }
+                    finally
+                    {
+                        Updating = false;
+                    }
+                }
+                else
+                {
+                    SetCurrentValue(ValueProperty, Slider.Value);
+                }
             }
         };
+        // Begin before track clicks change the value, and commit after the final movement.
+        Slider.AddHandler(PointerPressedEvent, (_, args) =>
+        {
+            if (args.GetCurrentPoint(Slider).Properties.IsLeftButtonPressed)
+            {
+                Dragging = true;
+            }
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+        Slider.AddHandler(PointerReleasedEvent, (_, args) =>
+        {
+            if (args.InitialPressMouseButton == MouseButton.Left)
+            {
+                CommitDrag();
+            }
+        }, RoutingStrategies.Bubble, handledEventsToo: true);
+        Slider.PointerCaptureLost += (_, _) => CommitDrag();
         Refresh();
+    }
+
+    private void CommitDrag()
+    {
+        if (!Dragging)
+        {
+            return;
+        }
+
+        Dragging = false;
+        SetCurrentValue(ValueProperty, Slider.Value);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

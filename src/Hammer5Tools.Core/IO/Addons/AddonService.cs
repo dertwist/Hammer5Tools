@@ -172,7 +172,10 @@ public class AddonService : IAddonService, IDisposable
     }
 
     /// <inheritdoc/>
-    public Addon CreateAddon(string addonName)
+    public Addon CreateAddon(string addonName) => CreateAddon(addonName, null);
+
+    /// <inheritdoc/>
+    public Addon CreateAddon(string addonName, string? presetPath)
     {
         AddonArchive.ValidateName(addonName);
 
@@ -185,13 +188,7 @@ public class AddonService : IAddonService, IDisposable
         var contentPath = Cs2Paths.GetAddonContentPath(cs2Path, addonName);
         var gamePath = Cs2Paths.GetAddonGamePath(cs2Path, addonName);
 
-        string[] subdirs = ["maps", "materials", "models", "sounds", "particles", "scripts"];
-        foreach (var sub in subdirs)
-        {
-            Directory.CreateDirectory(Path.Combine(contentPath, sub));
-        }
-
-        Directory.CreateDirectory(gamePath);
+        AddonPresetFiles.Create(cs2Path, addonName, presetPath);
 
         RefreshAddons();
         SetActiveAddon(addonName);

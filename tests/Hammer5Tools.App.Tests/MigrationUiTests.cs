@@ -2,7 +2,9 @@ namespace Hammer5Tools.App.Tests;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Dock.Avalonia.Controls;
@@ -84,6 +86,58 @@ public class MigrationUiTests
         await Assert.That(control.Value).IsEqualTo(0.75);
         grid.Children.OfType<Slider>().Single().Value = 0.5;
         await Assert.That(control.Value).IsEqualTo(0.5);
+    }
+
+    [Test]
+    public async Task NumberSliderCommitsOneUndoEntryOnRelease()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var editor = shell.Documents.OfType<DetailPropEditorViewModel>().Single();
+            var original = editor.SelectedType!.Density;
+            var control = new Hammer5Tools.App.Controls.NumberSlider { Minimum = 0, Maximum = 10, Value = original };
+            control.Bind(Hammer5Tools.App.Controls.NumberSlider.ValueProperty,
+                new Binding("SelectedType.Density") { Source = editor, Mode = BindingMode.TwoWay });
+            var window = new Window { Content = control, Width = 400, Height = 100 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var grid = (Grid)control.Content!;
+            var slider = grid.Children.OfType<Slider>().Single();
+            var number = grid.Children.OfType<NumericUpDown>().Single();
+            var thumb = slider.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Thumb>().Single();
+            var start = thumb.TranslatePoint(new Point(thumb.Bounds.Width / 2, thumb.Bounds.Height / 2), window)!.Value;
+            var end = slider.TranslatePoint(new Point(slider.Bounds.Width * 0.8, slider.Bounds.Height / 2), window)!.Value;
+            window.MouseDown(start, MouseButton.Left);
+            window.MouseMove(end);
+            await Assert.That(control.Value).IsEqualTo((double)original);
+            await Assert.That(editor.Undo.CanUndo).IsFalse();
+            await Assert.That(number.Value).IsEqualTo((decimal)slider.Value);
+            window.MouseUp(end, MouseButton.Left);
+            var committed = (float)slider.Value;
+            await Assert.That(committed != original).IsTrue();
+            await Assert.That(editor.SelectedType!.Density).IsEqualTo(committed);
+            editor.Undo.Undo();
+            await Assert.That(editor.SelectedType!.Density).IsEqualTo(original);
+            await Assert.That(editor.Undo.CanUndo).IsFalse();
+            editor.Undo.Redo();
+            await Assert.That(editor.SelectedType!.Density).IsEqualTo(committed);
+            editor.Undo.Undo();
+            Dispatcher.UIThread.RunJobs();
+            start = thumb.TranslatePoint(new Point(thumb.Bounds.Width / 2, thumb.Bounds.Height / 2), window)!.Value;
+            window.MouseDown(start, MouseButton.Left);
+            window.MouseUp(start, MouseButton.Left);
+            await Assert.That(editor.Undo.CanUndo).IsFalse();
+            slider.Focus();
+            window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+            window.KeyRelease(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+            await Assert.That(editor.Undo.CanUndo).IsTrue();
+            editor.Undo.Undo();
+            await Assert.That(editor.SelectedType!.Density).IsEqualTo(original);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
     }
 
     [Test]

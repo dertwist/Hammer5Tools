@@ -30,9 +30,23 @@ public interface IDialogService
     Task<string?> PromptAsync(string title, string label) => Task.FromResult<string?>(null);
 
     Task<bool> ConfirmAsync(string title, string message) => Task.FromResult(false);
+
+    async Task<AddonCreationRequest?> ConfigureAddonAsync(string? selectedPreset)
+    {
+        var name = await PromptAsync("Create addon", "Addon name");
+        return string.IsNullOrWhiteSpace(name) ? null : new(name, null, null);
+    }
+
+    async Task<bool> ExportAddonAsync(Core.Addons.Addon addon, string? archiveDirectory = null)
+    {
+        var destination = await SaveFileAsync("Export addon", $"{addon.Name}.zip");
+        if (destination is null) return false;
+        await Task.Run(() => Core.Addons.AddonArchive.Export(addon, destination));
+        return true;
+    }
 }
 
-public class DialogService : IDialogService, IDisposable
+public partial class DialogService : IDialogService, IDisposable
 {
     private readonly Dictionary<Type, Window> OpenWindows = [];
     private bool CheckingContext;
@@ -240,10 +254,14 @@ public class DialogService : IDialogService, IDisposable
 
     public async Task<string?> SaveFileAsync(string title, string filename)
     {
+        var provider = MainWindow.StorageProvider;
+        var directory = Path.GetDirectoryName(filename);
         var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = title,
-            SuggestedFileName = filename,
+            SuggestedFileName = Path.GetFileName(filename),
+            SuggestedStartLocation = Path.IsPathFullyQualified(filename) && Directory.Exists(directory)
+                ? await provider.TryGetFolderFromPathAsync(directory) : null,
             ShowOverwritePrompt = true,
         });
         return file?.TryGetLocalPath();

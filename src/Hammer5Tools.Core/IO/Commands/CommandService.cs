@@ -14,12 +14,30 @@ public class CommandService : ICommandService, IDisposable
     private readonly ICs2Locator Cs2Locator;
     private readonly ILogger<CommandService>? Logger;
     private readonly Cs2CommandPipe Pipe;
+    private readonly VConsoleClient VConsole = new();
 
     private bool IsStarted;
 
     private ConsoleLogListener? LogListener;
 
-    public bool IsConnected => Pipe.IsConnected;
+    public bool IsConnected => Pipe.IsConnected || VConsole.IsConnected;
+
+    public string VConsoleStatus => VConsole.Status;
+    public int ConvarRevision => VConsole.Revision;
+    public IReadOnlyList<ConsoleVariable> Convars => VConsole.Convars;
+
+    /// <inheritdoc/>
+    public void SetVConsoleEnabled(bool enabled)
+    {
+        if (enabled)
+        {
+            VConsole.Start();
+        }
+        else
+        {
+            VConsole.Stop();
+        }
+    }
 
     public event EventHandler<string>? OutputLineReceived;
 
@@ -31,6 +49,7 @@ public class CommandService : ICommandService, IDisposable
         Logger = logger;
         Pipe = new Cs2CommandPipe(logger);
         Pipe.OutputReceived += OnOutputReceived;
+        VConsole.OutputReceived += OnOutputReceived;
     }
 
     /// <inheritdoc/>
@@ -47,7 +66,7 @@ public class CommandService : ICommandService, IDisposable
         var cs2Path = Cs2Locator.ResolvedCs2Path;
         if (!string.IsNullOrWhiteSpace(cs2Path))
         {
-            var logPath = Path.Combine(Cs2Paths.GetBinWin64Path(cs2Path), Cs2Launcher.LogFileName);
+            var logPath = Path.Combine(cs2Path, "game", "csgo", Cs2Launcher.LogFileName);
             LogListener = new ConsoleLogListener(logPath, Logger);
             LogListener.LineReceived += OnOutputReceived;
             LogListener.Start();
@@ -58,6 +77,7 @@ public class CommandService : ICommandService, IDisposable
     public void Stop()
     {
         IsStarted = false;
+        VConsole.Stop();
         Pipe.Stop();
         LogListener?.Stop();
         LogListener?.Dispose();
@@ -67,7 +87,9 @@ public class CommandService : ICommandService, IDisposable
     /// <inheritdoc/>
     public async Task<bool> SendCommandAsync(string command, CancellationToken ct = default)
     {
-        return await Pipe.SendCommandAsync(command, ct);
+        return VConsole.IsConnected
+            ? await VConsole.SendCommandAsync(command, ct)
+            : await Pipe.SendCommandAsync(command, ct);
     }
 
     /// <inheritdoc/>
@@ -83,7 +105,7 @@ public class CommandService : ICommandService, IDisposable
                 return false;
             }
 
-            if (!await Pipe.SendCommandAsync(cmd, ct))
+            if (!await SendCommandAsync(cmd, ct))
             {
                 allSuccess = false;
             }
@@ -94,6 +116,11 @@ public class CommandService : ICommandService, IDisposable
 
     private void OnOutputReceived(object? sender, string line)
     {
+        if (sender != VConsole && VConsole.IsConnected)
+        {
+            return;
+        }
+
         OutputLineReceived?.Invoke(this, line);
     }
 
@@ -101,6 +128,7 @@ public class CommandService : ICommandService, IDisposable
     {
         Stop();
         Pipe.Dispose();
+        VConsole.Dispose();
         GC.SuppressFinalize(this);
     }
 }

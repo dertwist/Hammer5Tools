@@ -3,6 +3,7 @@ namespace Hammer5Tools.App.Features.Shell;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Hammer5Tools.App.Features.AssetTools;
 using Hammer5Tools.App.Features.Console;
@@ -15,6 +16,7 @@ using Hammer5Tools.App.Features.MapBuilder;
 using Hammer5Tools.App.Features.NavMesh;
 using Hammer5Tools.App.Features.SmartProps;
 using Hammer5Tools.App.Features.SoundEvents;
+using Hammer5Tools.App.Features.Workshop;
 using Hammer5Tools.App.ViewModels;
 using Hammer5Tools.Core.Addons;
 using Hammer5Tools.Core.Commands;
@@ -54,6 +56,14 @@ public class ShellViewModel : ViewModelBase, IDisposable
     private string StatusMessageValue = "Ready";
     private bool IsCs2RunningValue;
 
+    public EditorMenuGroup FileMenu { get; } = new("File");
+    public EditorMenuGroup EditMenu { get; } = new("Edit");
+    public EditorMenuGroup ViewMenu { get; } = new("View");
+    public EditorMenuGroup ElementMenu { get; } = new("Element", false);
+    public EditorMenuGroup EditorMenu { get; } = new(string.Empty, false);
+    public EditorMenuGroup ToolsMenu { get; } = new("Tools");
+    public EditorMenuGroup HelpMenu { get; } = new("Help");
+
     public ObservableCollection<DocumentViewModel> Documents { get; } = [];
 
     public ObservableCollection<Addon> Addons { get; } = [];
@@ -68,12 +78,13 @@ public class ShellViewModel : ViewModelBase, IDisposable
             if (SetProperty(ref ActiveDocumentValue, value))
             {
                 OnPropertyChanged(nameof(IsAssetExplorerVisible));
+                UpdateActiveEditorMenu();
             }
         }
     }
 
     public bool IsAssetExplorerVisible => ActiveDocument is not
-        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel or SmartPropEditorViewModel);
+        (LoadingEditorViewModel or HotkeyEditorViewModel or DetailPropEditorViewModel);
 
     public Addon? SelectedAddon
     {
@@ -85,6 +96,129 @@ public class ShellViewModel : ViewModelBase, IDisposable
                 _ = SwitchAddonAsync(value);
             }
         }
+    }
+
+    private void UpdateActiveEditorMenu()
+    {
+        var file = new List<EditorMenuAction>
+        {
+            new("Open...", OpenFileCommand),
+            new("Save current", SaveDocumentCommand),
+            new("Exit", ExitCommand),
+        };
+        var edit = new List<EditorMenuAction>
+        {
+            new("Undo", UndoDocumentCommand),
+            new("Redo", RedoDocumentCommand),
+            new("Preferences", OpenPreferencesCommand),
+        };
+        var view = new List<EditorMenuAction> { new("Reset dock layouts", ResetLayoutCommand) };
+        (string Header, List<EditorMenuAction> Items)? editorMenu = null;
+        List<EditorMenuAction>? elements = null;
+
+        switch (ActiveDocument)
+        {
+            case SmartPropEditorViewModel smartProp:
+                file.Add(new("Load cargo van", smartProp.LoadCargoVanCommand));
+                file.Add(new("Example", smartProp.LoadExampleCommand));
+                edit.Add(new("Cut", smartProp.CutCommand));
+                edit.Add(new("Copy", smartProp.CopyCommand));
+                edit.Add(new("Paste", smartProp.PasteCommand));
+                edit.Add(new("Paste with replacement...", smartProp.PasteWithReplacementCommand));
+                edit.Add(new("Group selected", smartProp.GroupSelectedCommand));
+                view.Add(new("Frame all", smartProp.FrameAllCommand));
+                elements =
+                [
+                    new("Add group", smartProp.AddGroupCommand),
+                    new("Add model", smartProp.AddModelCommand),
+                    new("Duplicate", smartProp.DuplicateCommand),
+                    new("Delete", smartProp.DeleteCommand),
+                    new("Move up", smartProp.MoveUpCommand),
+                    new("Move down", smartProp.MoveDownCommand),
+                ];
+                break;
+            case LoadingEditorViewModel loading:
+                editorMenu = ("Loading Screens",
+                [
+                    new("Refresh screenshots", loading.RefreshScreenshotsCommand),
+                    new("Capture screenshot", loading.CaptureScreenshotCommand),
+                    new("Generate loading screen", loading.GenerateLoadingScreenCommand),
+                    new("Refresh cameras", loading.RefreshCamerasCommand),
+                    new("Browse map icon...", loading.BrowseIconCommand),
+                    new("Apply map icon", loading.ApplyIconCommand),
+                ]);
+                break;
+            case SoundEventEditorViewModel soundEvents:
+                editorMenu = ("Sound Events",
+                [
+                    new("Add event", soundEvents.AddEventCommand),
+                    new("Delete event", soundEvents.DeleteEventCommand),
+                    new("Add property", soundEvents.AddPropertyCommand),
+                    new("Search VPK sounds...", soundEvents.SearchVpkCommand),
+                    new("Reload", soundEvents.ReloadCommand),
+                ]);
+                break;
+            case HotkeyEditorViewModel hotkeys:
+                editorMenu = ("Hotkeys",
+                [
+                    new("New preset", hotkeys.NewPresetCommand),
+                    new("Open preset...", hotkeys.OpenPresetCommand),
+                    new("Apply binding", hotkeys.ApplyBindingCommand),
+                    new("Apply to CS2", hotkeys.ApplyToCs2Command),
+                    new("Apply and restart CS2", hotkeys.ApplyAndRestartCommand),
+                ]);
+                break;
+            case DetailPropEditorViewModel detailProps:
+                editorMenu = ("Detail Props",
+                [
+                    new("Add type", detailProps.AddTypeCommand),
+                    new("Delete type", detailProps.DeleteTypeCommand),
+                    new("Add model", detailProps.AddModelCommand),
+                    new("Delete model", detailProps.DeleteModelCommand),
+                ]);
+                break;
+        }
+
+        SetMenuItems(FileMenu, file);
+        SetMenuItems(EditMenu, edit);
+        SetMenuItems(ViewMenu, view);
+        ElementMenu.IsVisible = elements is not null;
+        SetMenuItems(ElementMenu, elements ?? []);
+        EditorMenu.Header = editorMenu?.Header ?? string.Empty;
+        EditorMenu.IsVisible = editorMenu is not null;
+        SetMenuItems(EditorMenu, editorMenu?.Items ?? []);
+    }
+
+    private static void SetMenuItems(EditorMenuGroup group, IEnumerable<EditorMenuAction> items)
+    {
+        group.Items.Clear();
+        foreach (var item in items)
+        {
+            group.Items.Add(item);
+        }
+    }
+
+    private void InitializeMainMenuGroups()
+    {
+        SetMenuItems(ToolsMenu,
+        [
+            new("Launch Workshop Tools", LaunchCs2Command),
+            new("Restart Workshop Tools", RestartCs2Command),
+            new("Kill Workshop Tools", KillCs2Command),
+            new("Clear VRAD3 Cache", ClearVrad3CacheCommand),
+            new("Map Builder", OpenMapBuilderCommand),
+            new("Workshop Manager", OpenWorkshopManagerCommand),
+            new("Asset Tools", OpenAssetToolsCommand),
+            new("NavMesh Radar", OpenNavMeshRadarCommand),
+            new("Git Sync", OpenGitSyncCommand),
+            new("Console Log", OpenConsoleCommand),
+        ]);
+        SetMenuItems(HelpMenu,
+        [
+            new("Documentation", new RelayCommand(() => OnOpenUrl("https://github.com/dertwist/Hammer5Tools"))),
+            new("Discord Community", new RelayCommand(() => OnOpenUrl("https://discord.com/invite/DvCXEyhssd"))),
+            new("GitHub Repository", new RelayCommand(() => OnOpenUrl("https://github.com/dertwist/Hammer5Tools"))),
+        ]);
     }
 
     public async Task<bool> SwitchAddonAsync(Addon addon)
@@ -155,6 +289,10 @@ public class ShellViewModel : ViewModelBase, IDisposable
     public IRelayCommand OpenPreferencesCommand { get; }
 
     public IRelayCommand OpenFileCommand { get; }
+
+    public IRelayCommand NewSmartPropDocumentCommand { get; }
+
+    public IRelayCommand OpenSmartPropDocumentCommand { get; }
 
     public IRelayCommand UndoDocumentCommand { get; }
 
@@ -278,10 +416,13 @@ public class ShellViewModel : ViewModelBase, IDisposable
         SaveDocumentCommand = new AsyncRelayCommand(SaveCurrentDocumentAsync);
         OpenPreferencesCommand = new RelayCommand(OpenPreferences);
         OpenFileCommand = new AsyncRelayCommand(OpenFileAsync);
+        NewSmartPropDocumentCommand = new RelayCommand(NewSmartPropDocument);
+        OpenSmartPropDocumentCommand = new AsyncRelayCommand(OpenSmartPropDocumentAsync);
         UndoDocumentCommand = new RelayCommand(() => ActiveDocument?.UndoCommand.Execute(null));
         RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.RedoCommand.Execute(null));
         ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
+        InitializeMainMenuGroups();
 
         AddonService.AddonsChanged += OnAddonsChanged;
         AddonService.ActiveAddonChanged += OnActiveAddonChanged;
@@ -324,6 +465,20 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
         var editor = new HotkeyEditorViewModel(Cs2Locator, DialogService, Cs2Launcher);
         AddDocument(editor);
+    }
+
+    public void NewSmartPropDocument()
+    {
+        AddDocument(new SmartPropEditorViewModel(Cs2Locator, AddonService, DialogService));
+    }
+
+    private async Task OpenSmartPropDocumentAsync()
+    {
+        var path = await DialogService.OpenFileAsync("Open source SmartProp", "*.vsmart");
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            OnOpenFileFromExplorer(path);
+        }
     }
 
     public void OpenSmartPropEditor()
@@ -398,7 +553,15 @@ public class ShellViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            DialogService.ShowWorkshopManager();
+            var existing = Documents.OfType<WorkshopManagerViewModel>().FirstOrDefault();
+            if (existing is not null)
+            {
+                ActiveDocument = existing;
+            }
+            else
+            {
+                AddDocument(new WorkshopManagerViewModel());
+            }
             StatusMessage = "CS2 Workshop Manager opened";
         }
         catch (Exception ex)
@@ -598,19 +761,20 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     private async Task CreateAddonAsync()
     {
-        var name = await DialogService.PromptAsync("Create addon", "Addon name");
-        if (string.IsNullOrWhiteSpace(name) || !await DialogService.ConfirmCloseAsync(Documents.ToArray()))
+        var request = await DialogService.ConfigureAddonAsync(SettingsService.Settings.SelectedAddonPreset);
+        if (request is null || !await DialogService.ConfirmContextChangeAsync(Documents.ToArray()))
         {
             return;
         }
         try
         {
-            AddonArchive.ValidateName(name);
-            if (Addons.Any(addon => addon.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            AddonArchive.ValidateName(request.Name);
+            if (Addons.Any(addon => addon.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new InvalidOperationException("An addon with that name already exists.");
             }
-            AddonService.CreateAddon(name);
+            await Task.Run(() => AddonService.CreateAddon(request.Name, request.PresetPath));
+            SettingsService.Update(settings => settings.SelectedAddonPreset = request.PresetName);
             DisposeDocuments();
             OpenDefaultEditors();
             OnRefreshAddons();
@@ -654,15 +818,9 @@ public class ShellViewModel : ViewModelBase, IDisposable
         {
             return;
         }
-        var destination = await DialogService.SaveFileAsync("Export addon", $"{addon.Name}.zip");
-        if (destination is null)
-        {
-            return;
-        }
         try
         {
-            await Task.Run(() => AddonArchive.Export(addon, destination));
-            StatusMessage = $"Exported {addon.Name}";
+            if (await DialogService.ExportAddonAsync(addon, SettingsService.Settings.ArchivePath)) StatusMessage = $"Exported {addon.Name}";
         }
         catch (Exception ex)
         {
@@ -777,5 +935,33 @@ public class ShellViewModel : ViewModelBase, IDisposable
         Explorer.Dispose();
         DisposeDocuments();
         GC.SuppressFinalize(this);
+    }
+}
+
+public sealed record EditorMenuAction(string Header, ICommand? Command = null, IReadOnlyList<EditorMenuAction>? Children = null);
+
+public sealed class EditorMenuGroup : ViewModelBase
+{
+    private string HeaderValue;
+    private bool IsVisibleValue;
+
+    public ObservableCollection<EditorMenuAction> Items { get; } = [];
+
+    public string Header
+    {
+        get => HeaderValue;
+        set => SetProperty(ref HeaderValue, value);
+    }
+
+    public bool IsVisible
+    {
+        get => IsVisibleValue;
+        set => SetProperty(ref IsVisibleValue, value);
+    }
+
+    public EditorMenuGroup(string header, bool isVisible = true)
+    {
+        HeaderValue = header;
+        IsVisibleValue = isVisible;
     }
 }

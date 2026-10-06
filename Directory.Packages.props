@@ -42,6 +42,7 @@
     <!-- CLI -->
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
+    <PackageVersion Include="Velopack" Version="1.2.161" />
 
     <!-- Testing -->
     <PackageVersion Include="TUnit" Version="1.72.16" />

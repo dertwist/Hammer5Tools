@@ -25,7 +25,7 @@ public static class Program
             config.AddCommand<CompileCommand>("compile")
                 .WithDescription("Compile assets or maps headlessly");
             config.AddCommand<SyncCommand>("sync")
-                .WithDescription("Prototype Git sync operations for addons");
+                .WithDescription("Git sync operations for addons");
             config.AddCommand<SoundCommand>("sound")
                 .WithDescription("Query VPK sound assets or soundevent documents");
             config.AddCommand<Cs2Command>("cs2")

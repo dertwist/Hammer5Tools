@@ -1,0 +1,429 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="using:GUI"
+        mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="900"
+        x:Class="GUI.WorkshopManagerView"
+Background="{DynamicResource AppBrush}"
+>
+    <UserControl.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceInclude Source="avares://CS2WorkshopManager-GUI/Theme.axaml" />
+        </ResourceDictionary.MergedDictionaries>
+        <!-- the visibility pills: a tint of the accent for public, of amber for unlisted and of the heading blue for friends, private stays the plain control tint -->
+        <SolidColorBrush x:Key="PublicPillBrush" Color="{DynamicResource AccentColor}" Opacity="0.45" />
+        <SolidColorBrush x:Key="UnlistedPillBrush" Color="{DynamicResource WarningAccentColor}" Opacity="0.35" />
+        <SolidColorBrush x:Key="FriendsPillBrush" Color="{DynamicResource HeadingColor}" Opacity="0.35" />
+        <!-- on a selected row or tile the accent is the background, so pills switch to a tint of the text colour -->
+        <SolidColorBrush x:Key="SelectedPillBrush" Color="{DynamicResource ContrastColor}" Opacity="0.2" />
+
+        <!-- the toolbar's actions on an item again, on a right click over one -->
+        <ContextMenu x:Key="ItemMenu">
+            <ContextMenu.Styles>
+                <Style Selector="Separator">
+                    <Setter Property="Margin" Value="8,2" />
+                    <Setter Property="Background" Value="{DynamicResource OutlineBrush}" />
+                    <Setter Property="Opacity" Value="0.5" />
+                </Style>
+            </ContextMenu.Styles>
+            <MenuItem Header="Re-Upload" Click="OnReUpload">
+                <MenuItem.Icon>
+                    <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/reupload.png" Width="18" Height="18" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Edit" Click="OnEdit">
+                <MenuItem.Icon>
+                    <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/edit.png" Width="18" Height="18" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="View" Click="OnView">
+                <MenuItem.Icon>
+                    <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/view.png" Width="18" Height="18" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Delete" Click="OnDelete">
+                <MenuItem.Icon>
+                    <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/delete.png" Width="18" Height="18" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+          </ResourceDictionary>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- toolbar buttons and the view toggles: icon over label, like the workshop manager's -->
+        <Style Selector=":is(Button).tool">
+            <Setter Property="Padding" Value="6,3" />
+            <Setter Property="MinWidth" Value="52" />
+            <Setter Property="Background" Value="{DynamicResource ShadeBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+        <Style Selector=":is(Button).tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BorderSoftBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSoftBrush}" />
+        </Style>
+        <Style Selector=":is(Button).tool:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector=":is(Button).tool StackPanel">
+            <Setter Property="Spacing" Value="4" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style Selector=":is(Button).tool Image">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+        </Style>
+        <Style Selector=":is(Button).tool TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource ContrastBrush}" />
+        </Style>
+
+        <!-- pills: tags, dimmed for the two every map carries, and the visibility -->
+        <Style Selector="Border.pill">
+            <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="Margin" Value="0,0,6,4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.pill TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource ContrastBrush}" />
+        </Style>
+        <Style Selector="Border.pill.standard">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="Border.pill.public">
+            <Setter Property="Background" Value="{DynamicResource PublicPillBrush}" />
+        </Style>
+        <Style Selector="Border.pill.unlisted">
+            <Setter Property="Background" Value="{DynamicResource UnlistedPillBrush}" />
+        </Style>
+        <Style Selector="Border.pill.friends">
+            <Setter Property="Background" Value="{DynamicResource FriendsPillBrush}" />
+        </Style>
+        <Style Selector="DataGridRow:selected Border.pill, ListBox#TileItems ListBoxItem:selected Border.pill">
+            <Setter Property="Background" Value="{DynamicResource SelectedPillBrush}" />
+        </Style>
+        <!-- text on the accent, of a selected row or tile, a checked toggle and a pressed tool button, in what reads on that accent -->
+        <Style Selector="DataGridRow:selected TextBlock, DataGridRow:selected SelectableTextBlock, ListBox#TileItems ListBoxItem:selected TextBlock, ListBox#TileItems ListBoxItem:selected SelectableTextBlock, ToggleButton.tool:checked TextBlock, :is(Button).tool:pressed TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+
+        <!-- tiles are list items so one can be selected, shown by an accent halo in the tile margin -->
+        <Style Selector="ListBox#TileItems ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <!-- a tile fills the height the row gives it, instead of floating in the middle of it -->
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="ListBox#TileItems ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BorderSoftBrush}" />
+        </Style>
+        <Style Selector="ListBox#TileItems ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <!-- the theme's clear button, put in whenever there is a search rather than only while the box has the focus -->
+        <Style Selector="TextBox#SearchBox:not(:empty)">
+            <Setter Property="InnerRightContent">
+                <Template>
+                    <Button Theme="{DynamicResource FluentTextBoxButton}" Command="{Binding $parent[TextBox].Clear}" ClipToBounds="True" Width="20" Height="20" MinWidth="0" Padding="0" Margin="0,0,4,0" VerticalAlignment="Center">
+                        <PathIcon Data="{DynamicResource TextBoxClearButtonData}" Height="10" Width="10" />
+                    </Button>
+                </Template>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <!-- window background: a subtle glow of the accent fading to the main colour, dithered so it does not band -->
+        <local:DitheredGradient CenterColor="{DynamicResource AppAccentColor}" EdgeColor="{DynamicResource AppColor}" GradientOrigin="90%,0%" />
+
+    <!-- the item list with its toolbar, or the publish form in its place -->
+    <DockPanel Name="Main">
+        <TextBlock Name="Status" DockPanel.Dock="Bottom" Margin="12,4,12,8" Foreground="{DynamicResource ContrastBrush}" />
+
+        <!-- the buttons, a spacer that gives way first, the search box and the view toggles -->
+        <Grid DockPanel.Dock="Top" Margin="8,6" ColumnDefinitions="Auto,*,Auto,Auto">
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
+                <ToggleButton Name="ListToggle" Classes="tool" IsChecked="True" Click="OnViewToggle">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/list.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="List" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton Name="TilesToggle" Classes="tool" Click="OnViewToggle">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/grid.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Tiles" />
+                    </StackPanel>
+                </ToggleButton>
+                <Button Classes="tool" Click="OnSettings">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/settings.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <TextBox Name="SearchBox" Grid.Column="2" Width="260" Margin="12,0" VerticalAlignment="Center" PlaceholderText="Search submissions" TextChanged="OnSearchChanged" />
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                <Button Classes="tool" Click="OnNew">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/new.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="New" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="tool" Click="OnReUpload">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/reupload.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Re-Upload" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="tool" Click="OnEdit">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/edit.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Edit" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="tool" Click="OnView">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/view.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="View" />
+                    </StackPanel>
+                </Button>
+                <Button Name="DeleteButton" Classes="tool" Click="OnDelete">
+                    <StackPanel Margin="2">
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/delete.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Delete" />
+                    </StackPanel>
+                </Button>
+                <Button Name="RefreshButton" Classes="tool" Click="OnRefresh">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/reload.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Refresh" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="tool" Click="OnFiles">
+                    <StackPanel>
+                        <Image Source="avares://CS2WorkshopManager-GUI/assets/buttons/filter.png" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                        <TextBlock Text="Pack Filter" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- the two views share the space left by the bars, only one is visible -->
+        <Panel>
+        <ScrollViewer Name="Tiles" IsVisible="False" Background="{DynamicResource ShadeBrush}">
+            <!-- this panel is always the viewport width, which sizes the tiles to whole columns, see SizeTiles, and the tiles are scaled whole by the zoom -->
+            <Panel SizeChanged="OnTilesViewportSizeChanged">
+                <LayoutTransformControl Name="TileZoom" HorizontalAlignment="Center">
+                <ListBox Name="TileItems" Margin="4" HorizontalAlignment="Center" Background="Transparent" BorderThickness="0" SelectionMode="Single" ContextMenu="{StaticResource ItemMenu}" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:WorkshopItemRow">
+                        <!-- tiles take the height they need, and the wrap panel gives every tile in a row the height of the tallest -->
+                        <Border Width="256" Margin="4" Padding="8" CornerRadius="5" Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <DockPanel>
+                                <local:PreviewImage DockPanel.Dock="Top" Width="240" Height="135" Source="{Binding Thumbnail}" />
+                                <SelectableTextBlock Text="{Binding Title}" DockPanel.Dock="Top" Margin="0,10,0,0" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" />
+                                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,6,0,0" ToolTip.Tip="{Binding RatingText}">
+                                    <local:StarRating Value="{Binding Stars}" Fill="{DynamicResource StarBrush}" Outline="{DynamicResource ContrastSoftBrush}" StarSize="13" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding RatingValue}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                </StackPanel>
+                                <!-- the details follow the title, so tiles of different height in a row still line up -->
+                                <StackPanel Spacing="10" Margin="0,10,0,0" VerticalAlignment="Top">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Classes="pill" Classes.public="{Binding IsPublic}" Classes.unlisted="{Binding IsUnlisted}" Classes.friends="{Binding IsFriendsOnly}" Margin="0">
+                                        <TextBlock Text="{Binding VisibilityText}" />
+                                    </Border>
+                                    <SelectableTextBlock Text="{Binding SizeText}" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding StatsParts}" ToolTip.Tip="{Binding StatsExact}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <local:CountsPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:StatPart">
+                                            <SelectableTextBlock Text="{Binding Text}" Margin="0,0,4,2" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding GameModePills}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:TagPill">
+                                            <Border Classes="pill" Classes.standard="{Binding Standard}">
+                                                <TextBlock Text="{Binding Name}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+                </LayoutTransformControl>
+            </Panel>
+        </ScrollViewer>
+
+        <DataGrid Name="PublishedItems"
+                  x:DataType="local:WorkshopItemRow"
+                  ContextMenu="{StaticResource ItemMenu}"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  RowHeight="104"
+                  ClipboardCopyMode="None"
+                  Background="{DynamicResource ShadeBrush}"
+                  BorderThickness="0">
+            <DataGrid.Styles>
+                <!-- cell text can be selected and copied, so it is wrapped and padded like the plain text cells would be -->
+                <Style Selector="DataGridCell SelectableTextBlock">
+                    <Setter Property="TextWrapping" Value="Wrap" />
+                    <Setter Property="Margin" Value="12,0" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+                <Style Selector="DataGridColumnHeader TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                </Style>
+                <!-- rows are selected as a whole, so the outline the theme draws around the focused cell is only noise -->
+                <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+                <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+            </DataGrid.Styles>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="172" CanUserSort="False" CanUserResize="False" CanUserReorder="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <!-- widescreen like the previews, so the row is no taller than it needs to be -->
+                            <local:PreviewImage Width="160" Height="90" Margin="6,4" Source="{Binding Thumbnail}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Title" Width="320" MinWidth="120" SortMemberPath="Title">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <SelectableTextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxLines="2" />
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="12,0" ToolTip.Tip="{Binding RatingText}">
+                                    <local:StarRating Value="{Binding Stars}" Fill="{DynamicResource StarBrush}" Outline="{DynamicResource ContrastSoftBrush}" StarSize="12" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding RatingValue}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding StatsParts}" ToolTip.Tip="{Binding StatsExact}" Margin="12,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <local:CountsPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:StatPart">
+                                            <SelectableTextBlock Text="{Binding Text}" Margin="0,0,4,0" Foreground="{DynamicResource ContrastSoftBrush}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Tags" Width="200" MinWidth="100" SortMemberPath="Tags">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <ItemsControl ItemsSource="{Binding Pills}" Margin="4,0" VerticalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="local:TagPill">
+                                        <Border Classes="pill" Classes.standard="{Binding Standard}">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Description" Width="*" MinWidth="200" SortMemberPath="Summary">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <SelectableTextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" MaxLines="3" Foreground="{DynamicResource ContrastSoftBrush}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Visibility" Width="120" MinWidth="100" SortMemberPath="Visibility">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <Border Classes="pill" Classes.public="{Binding IsPublic}" Classes.unlisted="{Binding IsUnlisted}" Classes.friends="{Binding IsFriendsOnly}" HorizontalAlignment="Left" Margin="4,0">
+                                <TextBlock Text="{Binding VisibilityText}" />
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Dates" Width="240" MinWidth="180" SortMemberPath="DateCreated">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <SelectableTextBlock Text="{Binding UpdatedText}" />
+                                <SelectableTextBlock Text="{Binding CreatedText}" Foreground="{DynamicResource ContrastSoftBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Size" Width="110" MinWidth="80" SortMemberPath="SizeMegabytes">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <SelectableTextBlock Text="{Binding SizeText}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Published ID" Width="130" MinWidth="110" SortMemberPath="PublishedFileId">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="local:WorkshopItemRow">
+                            <SelectableTextBlock Text="{Binding PublishedFileId}" Foreground="{DynamicResource ContrastSoftBrush}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+        </Panel>
+    </DockPanel>
+
+    <local:SubmissionView Name="Submission" IsVisible="False" />
+    </Panel>
+</UserControl>

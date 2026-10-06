@@ -65,6 +65,16 @@ public class JsonSettingsService : ISettingsService
                     var deserialized = JsonSerializer.Deserialize(stream, SettingsJsonContext.Default.AppSettings);
                     if (deserialized is not null)
                     {
+                        stream.Position = 0;
+                        using var document = JsonDocument.Parse(stream);
+                        if (document.RootElement.TryGetProperty("editor", out var editor) && !editor.TryGetProperty("launchOptions", out _))
+                        {
+                            var launch = Core.Cs2.LaunchOptions.FromLegacy(deserialized.Editor.CustomLaunchArgs);
+                            launch.Options.OpenTools = true;
+                            launch.Options.Insecure = true;
+                            deserialized.Editor.LaunchOptions = launch.Options;
+                            deserialized.Editor.CustomLaunchArgs = launch.CustomArgs;
+                        }
                         CurrentSettings = deserialized;
                         return;
                     }

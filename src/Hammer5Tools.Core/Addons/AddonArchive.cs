@@ -18,16 +18,41 @@ public static class AddonArchive
 
     /// <summary>Writes source and compiled files into a ZIP, replacing it only after completion.</summary>
     public static void Export(Addon addon, string destination)
+        => Export(addon, destination, new AddonExportOptions { IgnoreVersionControl = false, IgnoredExtensions = string.Empty, IncludeOtherCompiledFolders = true, IncludeThumbnailCache = true });
+
+    /// <summary>Exports filtered, selected files with cancellation and completed-file progress.</summary>
+    public static void Export(Addon addon, string destination, AddonExportOptions options, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         ValidateName(addon.Name);
+        var files = ListFiles(addon, options).Where(file => options.SelectedFiles is null || options.SelectedFiles.Contains(file.ArchivePath)).ToArray();
+        if (files.Length == 0) throw new InvalidOperationException("Select at least one file to export.");
+        var destinationPath = Path.GetFullPath(destination);
+        if (files.Any(file => string.Equals(Path.GetFullPath(file.SourcePath), destinationPath, StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("Choose an archive destination outside the files being exported.");
         var temporary = destination + $".{Guid.NewGuid():N}.tmp";
         try
         {
             using (var zip = ZipFile.Open(temporary, ZipArchiveMode.Create))
             {
-                AddFolder(zip, addon.ContentPath, $"content/csgo_addons/{addon.Name}");
-                AddFolder(zip, addon.GamePath, $"game/csgo_addons/{addon.Name}");
+                var buffer = new byte[81920];
+                for (var i = 0; i < files.Length; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var file = files[i];
+                    if ((File.GetAttributes(file.SourcePath) & FileAttributes.ReparsePoint) != 0) throw new IOException("Addon archives cannot include symbolic links.");
+                    var entry = zip.CreateEntry(file.ArchivePath, options.Compression);
+                    using var input = File.OpenRead(file.SourcePath);
+                    using var output = entry.Open();
+                    int read;
+                    while ((read = input.Read(buffer)) > 0)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        output.Write(buffer, 0, read);
+                    }
+                    progress?.Report(i + 1);
+                }
             }
+            cancellationToken.ThrowIfCancellationRequested();
             File.Move(temporary, destination, overwrite: true);
         }
         finally
@@ -36,20 +61,36 @@ public static class AddonArchive
         }
     }
 
-    private static void AddFolder(ZipArchive zip, string folder, string prefix)
+    /// <summary>Lists the files allowed by export filters, excluding linked directories.</summary>
+    public static IReadOnlyList<AddonExportFile> ListFiles(Addon addon, AddonExportOptions options)
     {
-        if (!Directory.Exists(folder))
+        ValidateName(addon.Name);
+        var result = new List<AddonExportFile>();
+        var ignored = options.IgnoredExtensions.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(extension => extension.StartsWith('.') ? extension : "." + extension).ToArray();
+        string[] defaultFolders = ["maps", "models", "materials", "postprocess", "smartprops", "soundevents", "sounds", "particles", "scripts"];
+        foreach (var (area, folder) in new[] { ("content", addon.ContentPath), ("game", addon.GamePath) })
         {
-            return;
-        }
-        foreach (var file in Directory.EnumerateFiles(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = false }))
-        {
-            if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0)
+            if (!Directory.Exists(folder)) continue;
+            if ((File.GetAttributes(folder) & FileAttributes.ReparsePoint) != 0) throw new IOException("Addon archives cannot include symbolic links.");
+            foreach (var file in Directory.EnumerateFiles(folder, "*", new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = false }))
             {
-                throw new IOException("Addon archives cannot include symbolic links.");
+                var relative = Path.GetRelativePath(folder, file).Replace('\\', '/');
+                var parts = relative.Split('/');
+                if (options.IgnoreVersionControl && parts.Any(part => part is ".git" or ".gitignore" or ".gitattributes" or ".diversion" or ".hg" or ".svn")) continue;
+                if (ignored.Any(extension => file.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) || (!options.IncludeThumbnailCache && parts[^1] == "tools_thumbnail_cache.bin")) continue;
+                if (area == "content" && options.SkipNonDefaultContentFolders && parts.Length > 1 && !defaultFolders.Contains(parts[0], StringComparer.OrdinalIgnoreCase)) continue;
+                if (area == "game" && parts.Length > 1 && !(parts[0].ToLowerInvariant() switch
+                {
+                    "maps" => options.IncludeCompiledMaps,
+                    "materials" => options.IncludeCompiledMaterials,
+                    "models" => options.IncludeCompiledModels,
+                    _ => options.IncludeOtherCompiledFolders,
+                })) continue;
+                result.Add(new(file, $"{area}/csgo_addons/{addon.Name}/{relative}", new FileInfo(file).Length));
             }
-            zip.CreateEntryFromFile(file, $"{prefix}/{Path.GetRelativePath(folder, file).Replace('\\', '/')}", CompressionLevel.Optimal);
         }
+        return result.OrderBy(file => file.ArchivePath, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     /// <summary>Imports a single addon without overwriting existing content or game folders.</summary>

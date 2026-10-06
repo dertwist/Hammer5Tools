@@ -10,6 +10,18 @@ public interface ICommandService
     /// </summary>
     bool IsConnected { get; }
 
+    /// <summary>Gets the VConsole connection status.</summary>
+    string VConsoleStatus { get; }
+
+    /// <summary>Gets the current live convar catalog revision.</summary>
+    int ConvarRevision { get; }
+
+    /// <summary>Gets a snapshot of convars learned from VConsole.</summary>
+    IReadOnlyList<ConsoleVariable> Convars { get; }
+
+    /// <summary>Enables or releases the local game's VConsole connection.</summary>
+    void SetVConsoleEnabled(bool enabled);
+
     /// <summary>
     /// Event raised when a line is output to the console log or pipe.
     /// </summary>

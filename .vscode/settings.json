@@ -1,3 +1,5 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe"
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "dotnet.defaultSolution": "Hammer5Tools.slnx",
+  "hammer5tools.powerShellPath": "C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe"
 }

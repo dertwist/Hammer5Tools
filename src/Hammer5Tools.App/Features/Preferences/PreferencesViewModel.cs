@@ -56,7 +56,7 @@ public class PreferencesViewModel : ViewModelBase
     public string CustomLaunchArgs
     {
         get => CustomLaunchArgsValue;
-        set => SetProperty(ref CustomLaunchArgsValue, value);
+        set { if (SetProperty(ref CustomLaunchArgsValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
     }
 
     private bool LaunchNcmModeValue;
@@ -64,8 +64,70 @@ public class PreferencesViewModel : ViewModelBase
     public bool LaunchNcmMode
     {
         get => LaunchNcmModeValue;
-        set => SetProperty(ref LaunchNcmModeValue, value);
+        set { if (SetProperty(ref LaunchNcmModeValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
     }
+
+    private bool LaunchOpenToolsValue;
+    public bool LaunchOpenTools
+    {
+        get => LaunchOpenToolsValue;
+        set { if (SetProperty(ref LaunchOpenToolsValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchOpenMapValue;
+    public bool LaunchOpenMap
+    {
+        get => LaunchOpenMapValue;
+        set { if (SetProperty(ref LaunchOpenMapValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchSteamValue;
+    public bool LaunchSteam
+    {
+        get => LaunchSteamValue;
+        set { if (SetProperty(ref LaunchSteamValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchRetailValue;
+    public bool LaunchRetail
+    {
+        get => LaunchRetailValue;
+        set { if (SetProperty(ref LaunchRetailValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchGpuRayTracingValue;
+    public bool LaunchGpuRayTracing
+    {
+        get => LaunchGpuRayTracingValue;
+        set { if (SetProperty(ref LaunchGpuRayTracingValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchInsecureValue;
+    public bool LaunchInsecure
+    {
+        get => LaunchInsecureValue;
+        set { if (SetProperty(ref LaunchInsecureValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private bool LaunchNoCustomerMachineValue;
+    public bool LaunchNoCustomerMachine
+    {
+        get => LaunchNoCustomerMachineValue;
+        set { if (SetProperty(ref LaunchNoCustomerMachineValue, value)) OnPropertyChanged(nameof(LaunchPreview)); }
+    }
+
+    private Core.Cs2.LaunchOptions GetLaunchOptions() => new()
+    {
+        OpenTools = LaunchOpenTools,
+        OpenMap = LaunchOpenMap,
+        Steam = LaunchSteam,
+        Retail = LaunchRetail,
+        GpuRayTracing = LaunchGpuRayTracing,
+        Insecure = LaunchInsecure,
+        NoCustomerMachine = LaunchNoCustomerMachine,
+    };
+
+    public string LaunchPreview => GetLaunchOptions().BuildArguments(SettingsService.Settings.SelectedAddon, CustomLaunchArgs, ncmMode: LaunchNcmMode);
 
     private bool MinimizeToTrayValue;
 
@@ -166,6 +228,14 @@ public class PreferencesViewModel : ViewModelBase
         UpdateChannel = settings.UpdateChannel;
         CustomLaunchArgs = settings.Editor.CustomLaunchArgs;
         LaunchNcmMode = settings.Editor.LaunchNcmMode;
+        LaunchOpenTools = settings.Editor.LaunchOptions.OpenTools;
+        LaunchOpenMap = settings.Editor.LaunchOptions.OpenMap;
+        LaunchSteam = settings.Editor.LaunchOptions.Steam;
+        LaunchRetail = settings.Editor.LaunchOptions.Retail;
+        LaunchGpuRayTracing = settings.Editor.LaunchOptions.GpuRayTracing;
+        LaunchInsecure = settings.Editor.LaunchOptions.Insecure;
+        LaunchNoCustomerMachine = settings.Editor.LaunchOptions.NoCustomerMachine;
+
         MinimizeToTray = settings.Editor.MinimizeToTray;
         GenerateGitCommitMessages = settings.Editor.GenerateGitCommitMessages;
         LoadingUseSavedCameras = settings.Editor.LoadingUseSavedCameras;
@@ -204,6 +274,7 @@ public class PreferencesViewModel : ViewModelBase
             settings.UpdateChannel = UpdateChannel;
             settings.Editor.CustomLaunchArgs = CustomLaunchArgs;
             settings.Editor.LaunchNcmMode = LaunchNcmMode;
+            settings.Editor.LaunchOptions = GetLaunchOptions();
             settings.Editor.MinimizeToTray = MinimizeToTray;
             settings.Editor.GenerateGitCommitMessages = GenerateGitCommitMessages;
             settings.Editor.LoadingUseSavedCameras = LoadingUseSavedCameras;

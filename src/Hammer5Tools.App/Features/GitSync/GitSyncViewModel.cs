@@ -56,7 +56,7 @@ public class GitSyncViewModel : DocumentViewModel
         AddonService = addonService;
         GitSyncService = gitSyncService;
         SettingsService = settingsService;
-        Title = "Git Sync (Prototype)";
+        Title = "Git Sync";
 
         RefreshStatusCommand = new AsyncRelayCommand(OnRefreshStatusAsync);
         PullCommand = new AsyncRelayCommand(OnPullAsync);

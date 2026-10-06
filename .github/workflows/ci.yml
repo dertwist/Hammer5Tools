@@ -5,6 +5,30 @@ on:
     branches: [ main, csharp ]
   pull_request:
     branches: [ main, csharp ]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Build, validate, or publish the managed app
+        type: choice
+        options: [ Check, All, Build, Publish, Package ]
+        default: Check
+      version:
+        description: Package version (SemVer)
+        type: string
+        default: '7.0.0'
+      channel:
+        description: Update channel
+        type: choice
+        options: [ dev, stable ]
+        default: dev
+      wizard:
+        description: Also build the custom installed/portable wizard (Package or All)
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -22,14 +46,33 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props', '.config/dotnet-tools.json', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
 
-      - name: Build solution
-        run: dotnet build --no-restore -c Release
+      - name: Run shared build workflow
+        shell: pwsh
+        env:
+          BUILD_TASK: ${{ inputs.task || 'Check' }}
+          BUILD_VERSION: ${{ inputs.version || '7.0.0' }}
+          BUILD_CHANNEL: ${{ inputs.channel || 'dev' }}
+          BUILD_WIZARD: ${{ inputs.wizard || false }}
+        run: |
+          if ($env:BUILD_WIZARD -eq 'true') {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed.' }
+          }
+          ./build.ps1 -Task $env:BUILD_TASK -Version $env:BUILD_VERSION -Channel $env:BUILD_CHANNEL -Wizard:($env:BUILD_WIZARD -eq 'true')
 
-      - name: Run tests
-        run: dotnet test --no-build -c Release
-
-      - name: Check code formatting
-        run: dotnet format --verify-no-changes --exclude third_party
+      - name: Upload published application
+        if: inputs.task == 'All' || inputs.task == 'Publish' || inputs.task == 'Package'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hammer5Tools-win-x64
+          path: |
+            .build/Hammer5Tools-win-x64.zip
+            .build/releases/
+          if-no-files-found: error

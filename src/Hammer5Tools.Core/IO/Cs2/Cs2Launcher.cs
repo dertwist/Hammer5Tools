@@ -91,50 +91,10 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
     /// <inheritdoc/>
     public string BuildLaunchArguments(string? additionalArgs = null, bool ncmMode = false)
     {
-        var args = new List<string>
-        {
-            "-tools",
-            "-insecure",
-            $"-concommandpipe {PipeIn},{PipeOut}",
-            $"-con_logfile {LogFileName}",
-            "-disable_workshop_command_filtering",
-        };
-
-        var activeAddon = AddonService.ActiveAddon?.Name ?? SettingsService.Settings.SelectedAddon;
-        if (!string.IsNullOrWhiteSpace(activeAddon))
-        {
-            args.Add($"-addon {activeAddon}");
-        }
-
-        if (ncmMode || SettingsService.Settings.Editor.LaunchNcmMode)
-        {
-            args.Add("-noworkshoppreview");
-        }
-
-        var customArgs = SettingsService.Settings.Editor.CustomLaunchArgs;
-        if (!string.IsNullOrWhiteSpace(customArgs))
-        {
-            foreach (var part in customArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (!args.Contains(part, StringComparer.OrdinalIgnoreCase))
-                {
-                    args.Add(part);
-                }
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(additionalArgs))
-        {
-            foreach (var part in additionalArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (!args.Contains(part, StringComparer.OrdinalIgnoreCase))
-                {
-                    args.Add(part);
-                }
-            }
-        }
-
-        return string.Join(" ", args);
+        var editor = SettingsService.Settings.Editor;
+        return editor.LaunchOptions.BuildArguments(
+            AddonService.ActiveAddon?.Name ?? SettingsService.Settings.SelectedAddon,
+            editor.CustomLaunchArgs, additionalArgs, ncmMode || editor.LaunchNcmMode);
     }
 
     /// <inheritdoc/>
@@ -161,6 +121,10 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
 
         try
         {
+            if (ncmMode || SettingsService.Settings.Editor.LaunchNcmMode || SettingsService.Settings.Editor.LaunchOptions.NoCustomerMachine)
+            {
+                PrepareNcmFiles(cs2Path);
+            }
             var startInfo = new ProcessStartInfo
             {
                 FileName = exePath,
@@ -252,6 +216,17 @@ public class Cs2Launcher : ICs2Launcher, IDisposable
     {
         Logger?.LogInformation("CS2 process exited.");
         ProcessStateChanged?.Invoke(this, false);
+    }
+
+    /// <summary>Creates missing internal tool files for no-customer-machine launches, preserving existing files.</summary>
+    public static void PrepareNcmFiles(string cs2Path)
+    {
+        var bin = Path.Combine(cs2Path, "game", "bin");
+        foreach (var (source, target) in new[] { ("assettypes_common.txt", "assettypes_internal.txt"), ("sdkenginetools.txt", "enginetools.txt") })
+        {
+            var destination = Path.Combine(bin, target);
+            if (!File.Exists(destination)) File.Copy(Path.Combine(bin, source), destination);
+        }
     }
 
     public void Dispose()

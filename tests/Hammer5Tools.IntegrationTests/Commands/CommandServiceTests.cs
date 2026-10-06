@@ -8,6 +8,29 @@ using Hammer5Tools.Core.IO.Settings;
 public class CommandServiceTests
 {
     [Test]
+    public async Task CommandServiceListensInTheGameDirectory()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"h5t-console-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "game", "csgo"));
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(root, "game", "csgo", "gameinfo.gi"), "GameInfo {}");
+            var settings = new JsonSettingsService(Path.Combine(root, "settings.json"));
+            settings.Update(value => value.Cs2PathOverride = root);
+            using var service = new CommandService(new Cs2Locator(settings));
+            var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            service.OutputLineReceived += (_, line) => received.TrySetResult(line);
+            service.Start();
+            await File.WriteAllTextAsync(Path.Combine(root, "game", "csgo", Cs2Launcher.LogFileName), "Live output\n");
+            await Assert.That(await received.Task.WaitAsync(TimeSpan.FromSeconds(5))).IsEqualTo("Live output");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task ConsoleLogListenerTailsAppendedLines()
     {
         var tempFile = Path.Combine(Path.GetTempPath(), "H5T_LogTest_" + Guid.NewGuid().ToString("N") + ".log");

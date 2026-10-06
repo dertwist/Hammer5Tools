@@ -7,6 +7,7 @@ using Hammer5Tools.App.Services.Lifecycle;
 using Hammer5Tools.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Velopack;
 
 public static class Program
 {
@@ -19,6 +20,8 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        VelopackApp.Build().Run();
+
         try
         {
             Startup = StartupArguments.Parse(args);

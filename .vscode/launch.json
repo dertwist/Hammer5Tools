@@ -1,63 +1,79 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "main",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/legacy/Hammer5ToolsGUI/gui/main.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI",
-                "PYTHONUNBUFFERED": "1"
-            }
-        },
-        {
-            "name": "makefile",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/makefile.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/Hammer5ToolsGUI",
-                "PYTHONUNBUFFERED": "1"
-            },
-            "args": [
-                "--build-all",
-                "--dev",
-                "--package"
-            ]
-        },
-        {
-            "name": "build-core",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/makefile.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONUNBUFFERED": "1"
-            },
-            "args": [
-                "--build-libs"
-            ]
-        },
-        {
-            "name": "compile_ui",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/compile_ui.py",
-            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONUNBUFFERED": "1"
-            }
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Hammer 5 Tools",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "SoundEvent Editor",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "args": [
+        "--tool",
+        "soundevents"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Map Builder",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "args": [
+        "--tool",
+        "mapbuilder"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Workshop Manager",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "args": [
+        "--tool",
+        "workshop"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Hammer5Tools CLI",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/src/Hammer5Tools.Cli/bin/Release/Hammer5Tools.Cli.dll",
+      "args": [
+        "--help"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Legacy Python app (archived)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/legacy/Hammer5ToolsGUI/gui/main.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/legacy",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/legacy/Hammer5ToolsGUI",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  ]
 }

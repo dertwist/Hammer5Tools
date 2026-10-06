@@ -134,8 +134,6 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
     private void UpdateTitle()
     {
         DocumentStateChanged?.Invoke(this, EventArgs.Empty);
-        UndoButton.IsEnabled = undo.Count > 0;
-        RedoButton.IsEnabled = redo.Count > 0;
     }
 
     private void Refresh()
@@ -515,15 +513,6 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
 
     private void ApplySourceClicked(object? sender, RoutedEventArgs args) => Apply(() => CoreApi.ParseSmartPropDocument(SourceKv3.Text ?? ""), "SourceKv3");
 
-    private Task EditHierarchy(string operation) => HierarchyAction(operation);
-
-    private async void AddGroupClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("add", "CSmartPropElement_Group");
-    private async void AddModelClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("add", "CSmartPropElement_Model");
-    private async void DuplicateClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("duplicate");
-    private async void DeleteClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("remove");
-    private async void MoveUpClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("up");
-    private async void MoveDownClicked(object? sender, RoutedEventArgs args) => await HierarchyAction("down");
-
     private async Task<bool> AskDiscard(string message)
     {
         if (prompting)
@@ -610,46 +599,7 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
         Status.Text = "Ready. Select an element to edit its properties.";
     }
 
-    private async void NewClicked(object? sender, RoutedEventArgs args)
-    {
-        if (!fileOperation && await LeaveDocument())
-        {
-            SetDocument(CoreApi.CreateSmartPropDocument(), null);
-        }
-    }
-
     private static FilePickerFileType SmartPropFiles { get; } = new("Source SmartProp") { Patterns = ["*.vsmart", "*.vdata"] };
-
-    private async void OpenClicked(object? sender, RoutedEventArgs args)
-    {
-        if (fileOperation || !await LeaveDocument())
-        {
-            return;
-        }
-        try
-        {
-            fileOperation = true;
-            var files = await HostWindow.StorageProvider.OpenFilePickerAsync(new() { Title = "Open source SmartProp", AllowMultiple = false, FileTypeFilter = [SmartPropFiles] });
-            if (files.Count == 0)
-            {
-                return;
-            }
-            var path = files[0].TryGetLocalPath() ?? throw new IOException("Select a local source file.");
-            IsEnabled = false;
-            var json = await Task.Run(() => CoreApi.ParseSmartPropDocument(File.ReadAllText(path)));
-            SetDocument(json, path);
-            await Evaluate();
-        }
-        catch (Exception exception)
-        {
-            Report(exception);
-        }
-        finally
-        {
-            fileOperation = false;
-            IsEnabled = true;
-        }
-    }
 
     private async Task<bool> Save(bool saveAs)
     {
@@ -703,8 +653,8 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
         }
     }
 
-    private async void SaveClicked(object? sender, RoutedEventArgs args) => await Save(false);
-    private async void SaveAsClicked(object? sender, RoutedEventArgs args) => await Save(true);
+    public Task<bool> SaveAsAsync() => Save(true);
+
 
     private async Task UndoRedo(bool isUndo)
     {
@@ -727,9 +677,7 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
         }
     }
 
-    private async void UndoClicked(object? sender, RoutedEventArgs args) => await UndoRedo(true);
-    private async void RedoClicked(object? sender, RoutedEventArgs args) => await UndoRedo(false);
-    private void FrameClicked(object? sender, RoutedEventArgs args)
+    public void FrameScene()
     {
         Viewport.FrameScene();
         GpuViewport.FrameScene();
@@ -811,7 +759,7 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
         }
     }
 
-    private async void ExampleClicked(object? sender, RoutedEventArgs args)
+    public async Task LoadExampleAsync()
     {
         if (fileOperation || !await LeaveDocument())
         {
@@ -882,7 +830,7 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
         }
     }
 
-    private async void DefaultResourceClicked(object? sender, RoutedEventArgs args) => await LoadResource("models/vehicles/cargovan_01/cargovan_01.vsmart");
+    public Task LoadCargoVanAsync() => LoadResource("models/vehicles/cargovan_01/cargovan_01.vsmart");
     private readonly TextBox GameDirectory = new() { PlaceholderText = "Folder containing csgo and csgo_addons" };
     private readonly TextBox AddonName = new() { PlaceholderText = "Optional" };
     private readonly TextBox Diagnostics = new() { IsReadOnly = true, AcceptsReturn = true, MinHeight = 180, Classes = { "code" } };

@@ -40,6 +40,10 @@ public interface IAddonService
     /// </summary>
     Addon CreateAddon(string addonName);
 
+    /// <summary>Creates an addon from a preset; null creates an empty addon.</summary>
+    Addon CreateAddon(string addonName, string? presetPath) => presetPath is null
+        ? CreateAddon(addonName) : throw new NotSupportedException("Preset creation is unavailable.");
+
     /// <summary>
     /// Deletes an addon's content and game directories.
     /// </summary>

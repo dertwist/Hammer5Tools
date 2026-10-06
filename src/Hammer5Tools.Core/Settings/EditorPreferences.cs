@@ -29,5 +29,7 @@ public class EditorPreferences
 
     public bool MinimizeToTray { get; set; }
 
-    public string CustomLaunchArgs { get; set; } = "-tools";
+    public string CustomLaunchArgs { get; set; } = "+install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0";
+
+    public Cs2.LaunchOptions LaunchOptions { get; set; } = new();
 }

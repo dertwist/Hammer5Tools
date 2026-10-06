@@ -28,6 +28,7 @@
     <EmbeddedResource Include="Assets/SmartProps/grid.frag" LogicalName="Shaders.grid.frag" />
     <None Update="Features/SmartProps/Example.vsmart" Link="Example.vsmart" CopyToOutputDirectory="PreserveNewest" />
     <None Update="CreateToolShortcuts.ps1" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../Hammer5Tools/Presets/**/*" Link="Presets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Hammer5Tools.SmartProp.Tests" />
     <InternalsVisibleTo Include="Hammer5Tools.App.Tests" />
 
@@ -46,6 +47,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Velopack" />
   </ItemGroup>
 
 </Project>

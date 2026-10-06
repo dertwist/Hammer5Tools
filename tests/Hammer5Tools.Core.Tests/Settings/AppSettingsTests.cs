@@ -20,7 +20,12 @@ public class AppSettingsTests
         await Assert.That(settings.WindowState.Height).IsEqualTo(800.0);
         await Assert.That(settings.WindowState.IsMaximized).IsFalse();
         await Assert.That(settings.Editor.SoundEventPlayOnClick).IsTrue();
-        await Assert.That(settings.Editor.CustomLaunchArgs).IsEqualTo("-tools");
+        await Assert.That(settings.Editor.CustomLaunchArgs).IsEqualTo("+install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0");
+        await Assert.That(settings.Editor.LaunchOptions.OpenTools).IsTrue();
+        var args = settings.Editor.LaunchOptions.BuildArguments("de_example", settings.Editor.CustomLaunchArgs);
+        await Assert.That(args).Contains("-addon de_example -tool hammer -asset maps/de_example.vmap -tools -steam -retail -gpuraytracing -insecure");
+        await Assert.That(args).Contains("+install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0");
+        await Assert.That(args.Contains("-nocustomermachine", StringComparison.Ordinal)).IsFalse();
     }
 
     [Test]

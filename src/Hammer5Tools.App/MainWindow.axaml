@@ -15,6 +15,11 @@
         MinWidth="800"
         MinHeight="500"
         WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <DataTemplate x:Key="EditorMenuItemTemplate" x:DataType="shell:EditorMenuAction">
+      <MenuItem Classes="menu-popup-item" Header="{Binding Header}" Command="{Binding Command}" />
+    </DataTemplate>
+  </Window.Resources>
 
   <Grid RowDefinitions="Auto,Auto,*,Auto">
       <TabControl Grid.Row="1" Name="EditorTabs"
@@ -43,48 +48,13 @@
       </TabControl>
 
     <Menu Grid.Row="0" Name="ApplicationMenu">
-      <MenuItem Header="_File">
-        <MenuItem Header="_Open" Command="{Binding OpenFileCommand}" HotKey="Ctrl+O" />
-        <MenuItem Header="_Save Current" Command="{Binding SaveDocumentCommand}" HotKey="Ctrl+S" InputGesture="Ctrl+S" />
-        <Separator />
-        <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Edit">
-        <MenuItem Header="Undo" Command="{Binding UndoDocumentCommand}" HotKey="Ctrl+Z" />
-        <MenuItem Header="Redo" Command="{Binding RedoDocumentCommand}" HotKey="Ctrl+Shift+Z" />
-        <MenuItem Header="Preferences" Command="{Binding OpenPreferencesCommand}" />
-      </MenuItem>
-      <MenuItem Header="_View"><MenuItem Header="Reset dock layouts" Command="{Binding ResetLayoutCommand}" /></MenuItem>
-      <MenuItem Header="_CS2">
-        <MenuItem Header="Launch Workshop Tools" Command="{Binding LaunchCs2Command}" />
-        <MenuItem Header="Restart Workshop Tools" Command="{Binding RestartCs2Command}" />
-        <MenuItem Header="Kill Workshop Tools" Command="{Binding KillCs2Command}" />
-        <Separator />
-        <MenuItem Header="Clear VRAD3 Cache" Command="{Binding ClearVrad3CacheCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Editors">
-        <MenuItem Header="SmartProp Editor" Command="{Binding OpenSmartPropEditorCommand}" />
-        <MenuItem Header="Loading Screen Editor" Command="{Binding OpenLoadingEditorCommand}" />
-        <MenuItem Header="SoundEvent Editor" Command="{Binding OpenSoundEventEditorCommand}" />
-        <MenuItem Header="Hotkey Editor" Command="{Binding OpenHotkeyEditorCommand}" />
-        <MenuItem Header="DetailProp Editor" Command="{Binding OpenDetailPropEditorCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Utilities">
-        <MenuItem Header="Map Builder" Command="{Binding OpenMapBuilderCommand}" />
-        <MenuItem Header="Workshop Manager" Command="{Binding OpenWorkshopManagerCommand}" />
-        <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
-        <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
-        <Separator />
-        <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
-        <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
-      </MenuItem>
-      <MenuItem Header="_Help">
-        <MenuItem Header="Documentation" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
-        <MenuItem Header="Discord Community" Command="{Binding OpenUrlCommand}" CommandParameter="https://discord.com/invite/DvCXEyhssd" />
-        <MenuItem Header="GitHub Repository" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/dertwist/Hammer5Tools" />
-        <Separator />
-        <MenuItem Header="_About Hammer 5 Tools" />
-      </MenuItem>
+      <MenuItem Classes="menu-bar-item" Header="File" ItemsSource="{Binding FileMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="Edit" ItemsSource="{Binding EditMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="View" ItemsSource="{Binding ViewMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="Element" IsVisible="{Binding ElementMenu.IsVisible}" ItemsSource="{Binding ElementMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="{Binding EditorMenu.Header}" IsVisible="{Binding EditorMenu.IsVisible}" ItemsSource="{Binding EditorMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="Tools" ItemsSource="{Binding ToolsMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
+      <MenuItem Classes="menu-bar-item" Header="Help" ItemsSource="{Binding HelpMenu.Items}" ItemTemplate="{StaticResource EditorMenuItemTemplate}" />
     </Menu>
 
     <workspace:WorkspaceView Grid.Row="2" LayoutKey="Shell" LeftTitle="Explorer" ShowLeft="{Binding IsAssetExplorerVisible}">
@@ -123,7 +93,7 @@
               <MenuItem Header="Asset Tools (Rename / Relink)" Command="{Binding OpenAssetToolsCommand}" />
               <MenuItem Header="NavMesh Radar" Command="{Binding OpenNavMeshRadarCommand}" />
               <Separator />
-              <MenuItem Header="Git Sync (Prototype)" Command="{Binding OpenGitSyncCommand}" />
+              <MenuItem Header="Git Sync" Command="{Binding OpenGitSyncCommand}" />
               <MenuItem Header="Console Log" Command="{Binding OpenConsoleCommand}" />
             </MenuFlyout>
           </Button.Flyout>

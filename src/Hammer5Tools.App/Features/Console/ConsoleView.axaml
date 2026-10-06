@@ -1,11 +1,17 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Hammer5Tools.App.Features.Console"
+             xmlns:commands="using:Hammer5Tools.Core.Commands"
              x:Class="Hammer5Tools.App.Features.Console.ConsoleView"
              x:DataType="vm:ConsoleViewModel">
-  <Grid RowDefinitions="*,Auto" Margin="8">
+  <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="8">
+    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+      <CheckBox Content="Send on Enter" IsChecked="{Binding SendOnEnter}" />
+      <CheckBox Content="Listen via VConsole" IsChecked="{Binding ListenViaVConsole}" />
+      <TextBlock Text="{Binding ConnectionStatus}" VerticalAlignment="Center" />
+    </StackPanel>
     <!-- Log Output -->
-    <Border Grid.Row="0" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="8" Margin="0,0,0,8">
+    <Border Grid.Row="1" Background="{DynamicResource H5TConsoleBgBrush}" CornerRadius="2" Padding="8" Margin="0,0,0,8">
       <ListBox ItemsSource="{Binding OutputLines}" Background="Transparent">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="x:String">
@@ -16,8 +22,22 @@
     </Border>
 
     <!-- Command Input -->
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto">
-      <TextBox Grid.Column="0" Text="{Binding InputCommand}" PlaceholderText="Enter console command (e.g. sv_cheats 1, bot_kick)..." />
+    <Expander x:Name="ConvarHelper" Grid.Row="2" Header="Convar Helper" Margin="0,0,0,8"
+              HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+              Background="{DynamicResource H5TSurfaceBrush}">
+      <StackPanel Spacing="4">
+        <TextBox Text="{Binding ConvarFilter}" PlaceholderText="Search live convars…" />
+        <ListBox Height="150" ItemsSource="{Binding Convars}" SelectedItem="{Binding SelectedConvar}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="commands:ConsoleVariable">
+              <TextBlock Text="{Binding Details}" FontFamily="Consolas, Menlo, Monospace" FontSize="12" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </Expander>
+    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto">
+      <TextBox x:Name="CommandInput" Grid.Column="0" Text="{Binding InputCommand}" KeyDown="OnCommandKeyDown" PlaceholderText="Enter console command (e.g. sv_cheats 1, bot_kick)..." />
       <Button Grid.Column="1" Content="Send" Command="{Binding SendCommand}" Margin="8,0,0,0" />
       <Button Grid.Column="2" Content="Clear" Command="{Binding ClearCommand}" Margin="8,0,0,0" />
     </Grid>

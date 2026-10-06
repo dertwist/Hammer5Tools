@@ -30,6 +30,12 @@ workers append through `AppendOutput`. The legacy enum build overload remains
 available. App owns option presentation and usage charts; unavailable counters
 are null, never simulated percentages.
 
+The managed console uses Core `IO/Commands/` for command pipes, the console log
+under `game/csgo/`, and the optional local VConsole connection. Core parses
+VConsole output and convar/config packets and exposes catalog snapshots through
+`ICommandService`; App owns Enter-to-send and the searchable Convar Helper.
+VConsole serves one client; disabling it releases the slot to `vconsole2.exe`.
+
 ## Mandatory Workflow
 
 Before changing code:
@@ -240,3 +246,7 @@ version and retain the Workshop chunking/CRC/checksum regression tests when
 updating these dependencies.
 
 The Python application is archived in `legacy/`. Workshop UI is referenced as a library and hosted in-process by the managed application; do not launch a separate Workshop executable.
+
+`build.ps1` owns the shared local/GitHub Actions managed build, validation, publish and Velopack packaging workflow. `.config/dotnet-tools.json` pins vpk to the App's Velopack package version. App `Program.Main` runs Velopack before argument parsing and single-instance startup. `installer/Hammer5Tools.iss` optionally wraps installation/portable extraction; Velopack owns installed-mode uninstallation. The managed package ID is separate from legacy until migration parity is verified. Packaging does not implement profile migration, portable data paths or the managed update UI.
+
+Managed addon creation uses Core `IO/Addons/AddonPresetFiles` for preset discovery, thumbnail reading and staged content/game copying with legacy filename-token substitution. App `Services/AddonDialogs.cs` owns the creation/export dialogs. `AddonArchive` retains its original export overload and adds filtered selection, compression, cancellation and progress through `AddonExportOptions`; cancelled exports retain the previous archive. Bundled presets come from `Hammer5Tools/Presets`, with user presets taking precedence. Core `Cs2/LaunchOptions` owns launch argument construction and legacy command migration; Settings presents its switches and preview. NCM launches prepare missing internal configuration files and use `-nocustomermachine`.

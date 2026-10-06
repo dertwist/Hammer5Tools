@@ -17,6 +17,8 @@ public class AppSettings
 
     public string ArchivePath { get; set; } = string.Empty;
 
+    public string? SelectedAddonPreset { get; set; }
+
     public List<MapBuilder.MapBuildConfiguration> MapBuildPresets { get; set; } = [];
 
     public WindowStateSettings WindowState { get; set; } = new();

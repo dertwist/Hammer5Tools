@@ -1,12 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:Hammer5Tools.App.Features.SmartProps" x:Class="Hammer5Tools.App.Features.SmartProps.SmartPropEditorView" x:CompileBindings="False" Classes="smartPropEditor">
   <UserControl.Styles><StyleInclude Source="avares://Hammer5Tools.App/Styles/SmartPropEditor.axaml" /></UserControl.Styles>
   <DockPanel>
-    <Menu DockPanel.Dock="Top">
-      <MenuItem Header="File"><MenuItem Header="New" Click="NewClicked" /><MenuItem Header="Open…" Click="OpenClicked" /><MenuItem x:Name="SaveButton" Header="Save" Click="SaveClicked" /><MenuItem Header="Save As…" Click="SaveAsClicked" /><Separator /><MenuItem Header="Load cargo van" Click="DefaultResourceClicked" /><MenuItem Header="Example" Click="ExampleClicked" /></MenuItem>
-      <MenuItem Header="Edit"><MenuItem x:Name="UndoButton" Header="Undo" Click="UndoClicked" /><MenuItem x:Name="RedoButton" Header="Redo" Click="RedoClicked" /><Separator /><MenuItem Header="Cut" Tag="cut" Click="HierarchyCommandClicked" /><MenuItem Header="Copy" Tag="copy" Click="HierarchyCommandClicked" /><MenuItem Header="Paste" Tag="paste" Click="HierarchyCommandClicked" /><MenuItem Header="Paste with replacement…" Tag="paste-replace" Click="HierarchyCommandClicked" /><MenuItem Header="Group selected" Tag="group" Click="HierarchyCommandClicked" /></MenuItem>
-      <MenuItem Header="Element"><MenuItem Header="Add group" Click="AddGroupClicked" /><MenuItem Header="Add model" Click="AddModelClicked" /><MenuItem Header="Duplicate" Click="DuplicateClicked" /><MenuItem Header="Delete" Click="DeleteClicked" /><MenuItem Header="Move up" Click="MoveUpClicked" /><MenuItem Header="Move down" Click="MoveDownClicked" /></MenuItem>
-      <MenuItem Header="View"><MenuItem Header="Frame all" Click="FrameClicked" /></MenuItem>
-    </Menu>
     <Border DockPanel.Dock="Bottom" Classes="toolbar" Padding="4,2"><TextBlock x:Name="Status" Text="Ready" FontSize="11" TextTrimming="CharacterEllipsis" /></Border>
     <Grid Margin="2,0" ColumnDefinitions="1.65*,4,3*,4,3.05*,4,2.15*">
       <Border Classes="panel">
