@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Threading;
 using Hammer5Tools.App.Services;
 using Hammer5Tools.App.Services.Lifecycle;
+using Hammer5Tools.App.Services.Updates;
 using Hammer5Tools.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,22 +18,26 @@ public static class Program
 
     public static string? StartupError { get; private set; }
 
+    private static ToolWindowService? Tools;
+    private static UpdateWindow? UpdatesWindow;
+    private static bool OwnsInstance;
+
     [STAThread]
     public static void Main(string[] args)
     {
-        VelopackApp.Build().Run();
-
         try
         {
+            VelopackApp.Build().Run();
             Startup = StartupArguments.Parse(args);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             ShowStartupError(ex.Message, args);
             return;
         }
 
         using var singleInstance = new SingleInstanceGuard();
+        OwnsInstance = singleInstance.IsFirstInstance;
         if (!singleInstance.IsFirstInstance)
         {
             try
@@ -47,6 +52,26 @@ public static class Program
             return;
         }
 
+        IHost? host = null;
+        try
+        {
+            host = CreateHost();
+            Services = host.Services;
+        }
+        catch (Exception ex)
+        {
+            StartupError = ex.Message;
+        }
+
+        using (host)
+        {
+            singleInstance.StartListening(tool => Dispatcher.UIThread.Post(() => OpenTool(tool)));
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+    }
+
+    private static IHost CreateHost()
+    {
         var builder = Host.CreateApplicationBuilder();
 
         builder.Services.AddHammer5ToolsCore();
@@ -57,12 +82,80 @@ public static class Program
         builder.Services.AddTransient<Features.Shell.ShellViewModel>();
         builder.Services.AddTransient<MainWindow>();
 
-        using var host = builder.Build();
-        Services = host.Services;
-        singleInstance.StartListening(tool => Dispatcher.UIThread.Post(() => Services.GetRequiredService<ToolWindowService>().Open(tool)));
+        return builder.Build();
+    }
 
-        BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+    public static void OpenTool(StartupTool tool)
+    {
+        if (StartupError is not null || Services is null)
+        {
+            OpenUpdates(StartupError ?? "Application services could not start. Check for an update or download a fresh installer.");
+            return;
+        }
+        OpenToolOrRecovery(() =>
+        {
+            Tools ??= Services.GetRequiredService<ToolWindowService>();
+            return Tools.Open(tool);
+        });
+    }
+
+    internal static Avalonia.Controls.Window OpenToolOrRecovery(Func<Avalonia.Controls.Window> openTool)
+    {
+        try
+        {
+            return openTool();
+        }
+        catch (Exception ex)
+        {
+            return OpenUpdates(ex.Message);
+        }
+    }
+
+    public static UpdateWindow OpenUpdates(string? error = null)
+    {
+        if (UpdatesWindow is { } existing)
+        {
+            existing.Show();
+            existing.Activate();
+            return existing;
+        }
+
+        IUpdateService updates;
+        try
+        {
+            updates = Services?.GetService<IUpdateService>() ?? new VelopackUpdateService();
+            if (Services?.GetService<Core.Settings.ISettingsService>() is { } settings)
+            {
+                updates.Channel = settings.Settings.UpdateChannel;
+            }
+        }
+        catch
+        {
+            updates = new VelopackUpdateService();
+        }
+        var window = new UpdateWindow(updates, ConfirmUpdateRestartAsync, error);
+        UpdatesWindow = window;
+        window.Closed += (_, _) => UpdatesWindow = null;
+        if (Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.MainWindow ??= window;
+            window.Closed += (_, _) =>
+            {
+                if (desktop.MainWindow == window) desktop.MainWindow = desktop.Windows.FirstOrDefault(other => other != window);
+            };
+        }
+        window.Show();
+        return window;
+    }
+
+    private static Task<bool> ConfirmUpdateRestartAsync()
+    {
+        if (Tools is not null) return Tools.ConfirmUpdateRestartAsync();
+        if (OwnsInstance) return Task.FromResult(true);
+
+        // A failed launch forward must not restart another instance with unsaved documents.
+        using var guard = new SingleInstanceGuard();
+        return Task.FromResult(guard.IsFirstInstance);
     }
 
     private static void ShowStartupError(string message, string[] args)

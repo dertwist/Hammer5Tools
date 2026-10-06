@@ -8,6 +8,19 @@ import pytest
 from core.runtime_paths import resolve_runtime_paths
 
 
+def test_development_presets_use_the_repository_asset_folder(monkeypatch):
+    monkeypatch.delenv("H5T_INSTALL_ROOT", raising=False)
+    monkeypatch.setattr(sys, "frozen", False, raising=False)
+
+    import gui.common
+    importlib.reload(gui.common)
+
+    presets = resolve_runtime_paths().install_root / "Presets"
+    assert gui.common.Internal_Presets_Path == presets / "Addons"
+    assert gui.common.SoundEventEditor_Internal_Preset_Path == presets / "SoundEventEditor" / "Presets"
+    assert gui.common.SmartPropEditor_Internal_Preset_Path == presets / "SmartPropEditor" / "Presets"
+
+
 def test_launcher_roots_are_authoritative(monkeypatch, tmp_path):
     install = tmp_path / "installed"
     monkeypatch.setenv("H5T_INSTALL_ROOT", str(install))

@@ -2,11 +2,12 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefaultItemExcludes>$(DefaultItemExcludes);CS2WorkshopManager/**;Steamworks/**</DefaultItemExcludes>
     <Description>Hammer5Tools domain logic, file formats, filesystem and process services</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Workshop/CS2WorkshopManager/CS2WorkshopManager.csproj" />
+    <ProjectReference Include="CS2WorkshopManager/CS2WorkshopManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>

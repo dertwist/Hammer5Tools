@@ -15,7 +15,7 @@ public sealed class MapBuilderViewModel : DocumentViewModel
     private readonly IMapBuilderService MapBuilderService;
     private readonly ICs2Locator? Cs2Locator;
 
-    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/map_sm.png";
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/map_sm.png";
     private readonly ISettingsService? SettingsService;
     private readonly IDialogService? DialogService;
     private MapBuildConfiguration? SelectedConfigurationValue;

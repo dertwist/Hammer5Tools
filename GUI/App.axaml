@@ -67,6 +67,6 @@
     <dockthemes:DockFluentTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
-    <StyleInclude Source="avares://Hammer5Tools.App/Styles/HammerTheme.axaml" />
+    <StyleInclude Source="avares://Hammer5Tools/Styles/HammerTheme.axaml" />
   </Application.Styles>
 </Application>

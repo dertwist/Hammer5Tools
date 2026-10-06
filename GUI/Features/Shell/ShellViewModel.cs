@@ -150,6 +150,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         ]);
         SetMenuItems(HelpMenu,
         [
+            new("Check for updates...", new RelayCommand(() => Program.OpenUpdates())),
             new("Documentation", new RelayCommand(() => OnOpenUrl("https://github.com/dertwist/Hammer5Tools"))),
             new("Discord Community", new RelayCommand(() => OnOpenUrl("https://discord.com/invite/DvCXEyhssd"))),
             new("GitHub Repository", new RelayCommand(() => OnOpenUrl("https://github.com/dertwist/Hammer5Tools"))),

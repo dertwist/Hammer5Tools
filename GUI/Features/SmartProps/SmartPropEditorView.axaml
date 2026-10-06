@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:Hammer5Tools.App.Features.SmartProps" x:Class="Hammer5Tools.App.Features.SmartProps.SmartPropEditorView" x:CompileBindings="False" Classes="smartPropEditor">
-  <UserControl.Styles><StyleInclude Source="avares://Hammer5Tools.App/Styles/SmartPropEditor.axaml" /></UserControl.Styles>
+  <UserControl.Styles><StyleInclude Source="avares://Hammer5Tools/Styles/SmartPropEditor.axaml" /></UserControl.Styles>
   <DockPanel>
     <Border DockPanel.Dock="Bottom" Classes="toolbar" Padding="4,2"><TextBlock x:Name="Status" Text="Ready" FontSize="11" TextTrimming="CharacterEllipsis" /></Border>
     <Grid Margin="2,0" ColumnDefinitions="1.65*,4,3*,4,3.05*,4,2.15*">

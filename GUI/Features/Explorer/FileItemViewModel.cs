@@ -43,7 +43,7 @@ public class FileItemViewModel : ViewModelBase
 
         if (isDirectory)
         {
-            IconUri = "avares://Hammer5Tools.App/Assets/Icons/folder_sm.png";
+            IconUri = "avares://Hammer5Tools/Assets/Icons/folder_sm.png";
             FileSizeBytes = 0;
         }
         else
@@ -51,13 +51,13 @@ public class FileItemViewModel : ViewModelBase
             var ext = Path.GetExtension(fullPath).ToLowerInvariant();
             IconUri = ext switch
             {
-                ".vmap" => "avares://Hammer5Tools.App/Assets/Icons/map_sm.png",
-                ".vmdl" => "avares://Hammer5Tools.App/Assets/Icons/model_sm.png",
-                ".vmat" => "avares://Hammer5Tools.App/Assets/Icons/material_sm.png",
-                ".vtex" => "avares://Hammer5Tools.App/Assets/Icons/texture_sm.png",
-                ".vsndevts" or ".vsnd" or ".wav" or ".mp3" => "avares://Hammer5Tools.App/Assets/Icons/vmix_sm.png",
-                ".vdata" or ".vsmart" => "avares://Hammer5Tools.App/Assets/Icons/detailprop_editor.png",
-                _ => "avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png"
+                ".vmap" => "avares://Hammer5Tools/Assets/Icons/map_sm.png",
+                ".vmdl" => "avares://Hammer5Tools/Assets/Icons/model_sm.png",
+                ".vmat" => "avares://Hammer5Tools/Assets/Icons/material_sm.png",
+                ".vtex" => "avares://Hammer5Tools/Assets/Icons/texture_sm.png",
+                ".vsndevts" or ".vsnd" or ".wav" or ".mp3" => "avares://Hammer5Tools/Assets/Icons/vmix_sm.png",
+                ".vdata" or ".vsmart" => "avares://Hammer5Tools/Assets/Icons/detailprop_editor.png",
+                _ => "avares://Hammer5Tools/Assets/Icons/hammer_icon.png"
             };
 
             try

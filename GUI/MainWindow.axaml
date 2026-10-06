@@ -9,7 +9,7 @@
         x:Class="Hammer5Tools.App.MainWindow"
         x:DataType="shell:ShellViewModel"
         Title="Hammer 5 Tools"
-        Icon="avares://Hammer5Tools.App/Assets/Icons/appicon.ico"
+        Icon="avares://Hammer5Tools/Assets/Icons/appicon.ico"
         Width="1440"
         Height="900"
         MinWidth="800"
@@ -148,14 +148,14 @@
                 Command="{Binding LaunchCs2Command}"
                 ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for selected addon">
           <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-            <Image Source="avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png" Width="16" Height="16" VerticalAlignment="Center" />
+            <Image Source="avares://Hammer5Tools/Assets/Icons/hammer_icon.png" Width="16" Height="16" VerticalAlignment="Center" />
             <TextBlock Text="Edit map" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
 
         <Button Grid.Column="6" Name="MapBuilderButton" Classes="shell-icon"
                 Command="{Binding OpenMapBuilderCommand}" ToolTip.Tip="Map Builder: compile VMAP files">
-          <Image Source="avares://Hammer5Tools.App/Assets/Icons/emoji_objects_24dp.png" Width="16" Height="16" />
+          <Image Source="avares://Hammer5Tools/Assets/Icons/emoji_objects_24dp.png" Width="16" Height="16" />
         </Button>
       </Grid>
     </Border>

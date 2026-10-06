@@ -15,7 +15,7 @@ public abstract class DocumentViewModel : ViewModelBase, IDisposable
     private bool IsRestoring;
     private readonly List<INotifyPropertyChanged> ObservedModels = [];
 
-    public virtual string IconUri => "avares://Hammer5Tools.App/Assets/Icons/hammer_icon.png";
+    public virtual string IconUri => "avares://Hammer5Tools/Assets/Icons/hammer_icon.png";
 
     public string? DocumentPath { get; protected set; }
 

@@ -124,6 +124,7 @@ public sealed class StandaloneToolWindow : Window
         if (elements is not null) AddMenu("_Element", elements);
         if (editorMenu is { } menu) AddMenu(menu.Header, menu.Items);
         AddMenu("_Tools", [new("Hammer 5 Tools", new RelayCommand(OpenMain))]);
+        AddMenu("_Help", [new("Check for updates...", new RelayCommand(() => Program.OpenUpdates()))]);
     }
 
     private void AddMenu(string header, IEnumerable<EditorMenuAction> actions)

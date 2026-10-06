@@ -7,5 +7,17 @@ public interface IUpdateService
 {
     bool IsChecking { get; }
 
+    string Channel { get; set; }
+
+    string Status { get; }
+
+    string? AvailableVersion { get; }
+
+    bool IsDownloaded { get; }
+
     Task<bool> CheckForUpdatesAsync(bool silent = true, CancellationToken ct = default);
+
+    Task DownloadUpdateAsync(Action<int>? progress = null, CancellationToken ct = default);
+
+    void ApplyUpdateAndRestart();
 }

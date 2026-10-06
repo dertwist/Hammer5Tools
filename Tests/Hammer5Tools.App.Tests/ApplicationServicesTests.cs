@@ -115,6 +115,7 @@ public class ApplicationServicesTests
         await Assert.That(cancelled).IsTrue();
         await Assert.That(service.IsChecking).IsFalse();
         await Assert.That(await service.CheckForUpdatesAsync()).IsFalse();
+        await Assert.That(service.Status.Contains("not a Velopack installation", StringComparison.Ordinal)).IsTrue();
         await Assert.That(service.IsChecking).IsFalse();
     }
 }

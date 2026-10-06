@@ -73,17 +73,17 @@ try {
                 Invoke-Check @('run', '--project', $smartProp, '--no-build', '--no-restore', '-c', 'Release', '--', $mode, $capture)
             }
         }
-        Invoke-Check @('format', $solution, '--verify-no-changes', '--no-restore', '--exclude', 'Workshop')
+        Invoke-Check @('format', $solution, '--verify-no-changes', '--no-restore', '--exclude', 'Core/Steamworks', 'Core/CS2WorkshopManager', 'GUI/CS2WorkshopManager')
         if ($checkFailures.Count -gt 0) { throw "Validation failed:`n$($checkFailures -join "`n")" }
     }
 
     if ($Task -in @('Publish', 'Package', 'All')) {
         $buildId = [Guid]::NewGuid().ToString('N')
         $output = Join-Path $PSScriptRoot ".build/publish/$buildId/win-x64"
-        Invoke-DotNet @('publish', 'GUI/Hammer5Tools.App.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true', "-p:Version=$Version", '-o', $output)
+        Invoke-DotNet @('publish', 'GUI/Hammer5Tools.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true', "-p:Version=$Version", '-o', $output)
         if (-not $DryRun) {
             foreach ($required in @('Hammer5Tools.exe', 'SoundEventEditor.exe', 'MapBuilder.exe', 'SmartPropEditor.exe',
-                'WorkshopManager.exe', 'bin/Hammer5Tools.App.dll', 'icons/SoundEventEditor.ico', 'icons/MapBuilder.ico',
+                'WorkshopManager.exe', 'bin/Hammer5Tools.dll', 'icons/SoundEventEditor.ico', 'icons/MapBuilder.ico',
                 'icons/SmartPropEditor.ico', 'icons/WorkshopManager.ico', 'presets/addons', 'presets/soundeventeditor', 'presets/smartpropeditor')) {
                 if (-not (Test-Path -LiteralPath (Join-Path $output $required))) { throw "Published application is missing $required." }
             }
@@ -111,7 +111,7 @@ try {
                 $payload = [IO.Compression.ZipFile]::OpenRead($portableZip)
                 try {
                     foreach ($required in @('.portable', 'Hammer5Tools.exe', 'Update.exe', 'current/sq.version',
-                        'current/Hammer5Tools.exe', 'current/bin/Hammer5Tools.App.dll', 'current/SoundEventEditor.exe',
+                        'current/Hammer5Tools.exe', 'current/bin/Hammer5Tools.dll', 'current/SoundEventEditor.exe',
                         'current/MapBuilder.exe', 'current/SmartPropEditor.exe', 'current/WorkshopManager.exe',
                         'current/icons/SoundEventEditor.ico', 'current/icons/MapBuilder.ico',
                         'current/icons/SmartPropEditor.ico', 'current/icons/WorkshopManager.ico')) {

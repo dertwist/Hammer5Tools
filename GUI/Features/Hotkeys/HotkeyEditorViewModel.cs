@@ -9,7 +9,7 @@ using Hammer5Tools.Core.Hotkeys;
 
 public class HotkeyEditorViewModel : DocumentViewModel
 {
-    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/hotkey_editor.png";
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/hotkey_editor.png";
 
     private readonly ICs2Locator Cs2Locator;
     private readonly Services.IDialogService DialogService;

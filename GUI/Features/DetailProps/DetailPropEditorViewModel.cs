@@ -9,7 +9,7 @@ using Hammer5Tools.Core.DetailProps;
 
 public class DetailPropEditorViewModel : DocumentViewModel
 {
-    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/detailprop_editor.png";
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/detailprop_editor.png";
 
     private readonly IAddonService AddonService;
     private readonly Services.IDialogService DialogService;

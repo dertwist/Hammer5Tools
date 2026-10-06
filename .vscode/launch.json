@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.dll",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
@@ -16,7 +16,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.dll",
       "args": [
         "--tool",
         "soundevents"
@@ -29,7 +29,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.dll",
       "args": [
         "--tool",
         "mapbuilder"
@@ -42,7 +42,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.dll",
       "args": [
         "--tool",
         "workshop"
@@ -80,7 +80,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.dll",
       "args": [
         "--tool",
         "smartprops"

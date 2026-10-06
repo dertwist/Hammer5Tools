@@ -13,7 +13,7 @@ public sealed class SmartPropEditorViewModel : DocumentViewModel
     private SmartPropEditorView? view;
     private readonly string? initialPath;
     private readonly IDialogService dialogs;
-    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/smartprop_editor.png";
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/smartprop_editor.png";
     public Task InitialLoadTask { get; private set; } = Task.CompletedTask;
 
     public SmartPropEditorViewModel(ICs2Locator locator, IAddonService? addons, IDialogService dialogs, string? path = null)

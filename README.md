@@ -17,7 +17,7 @@ presets/
   smartpropeditor/
 ```
 
-The executable aliases are small .NET hosts loading the same `bin/Hammer5Tools.App.dll`; local publication uses hard links where supported, while ZIPs contain equivalent host files. The executable name selects the editor, and explicit `--tool` arguments override it. All launches share the existing single-instance process. DLLs, the .NET runtime and `CreateToolShortcuts.ps1` live in `bin`. Bundled presets are immutable application content replaced by updates, separate from user presets. Velopack adds its required updater files outside `current`; this layout is the application payload inside `current`, or the root of the plain Publish ZIP.
+The executable aliases are small .NET hosts loading the same `bin/Hammer5Tools.dll`; local publication uses hard links where supported, while ZIPs contain equivalent host files. The executable name selects the editor, and explicit `--tool` arguments override it. All launches share the existing single-instance process. DLLs, the .NET runtime and `CreateToolShortcuts.ps1` live in `bin`. Bundled presets are immutable application content replaced by updates, separate from user presets. Velopack adds its required updater files outside `current`; this layout is the application payload inside `current`, or the root of the plain Publish ZIP.
 
 Use PowerShell 7 and the .NET 10 SDK to run the same workflow locally as GitHub Actions:
 
@@ -36,7 +36,7 @@ The checks run the Core, integration and App TUnit suites, plus the SmartProp he
 
 Published files use a fresh directory under `.build/publish/` on each run to avoid stale files. Publish creates `.build/Hammer5Tools-win-x64.zip`. Package/All create a Velopack Setup.exe, Portable.zip, full update package and release index under `.build/releases/<channel>/<version>/<build-id>/`. Fresh output directories let you rebuild the same version without mixing artifacts from earlier builds. Defaults are version `7.0.0` and channel `dev`; use `-Version` and `-Channel stable` explicitly for releases. The NuGet package and repository-local `vpk` tool are pinned to the same version. Packages are unsigned local test artifacts; the script does not upload releases or install the application.
 
-`-Wizard` requires Inno Setup 6 (or `-InnoCompiler <path to ISCC.exe>`). It produces `Hammer5Tools-Wizard.exe`, offering installed/portable mode and destination selection. Velopack owns installed-mode uninstallation; the wrapper registers no second uninstaller. Portable mode extracts the generated portable payload. Shortcut/extension selection, legacy profile import, portable profile storage and the app's update-check/download UI remain separate application work; settings currently stay in AppData even in portable mode. Use the published `CreateToolShortcuts.ps1` for editor shortcuts.
+`-Wizard` requires Inno Setup 6 (or `-InnoCompiler <path to ISCC.exe>`). It produces `Hammer5Tools-Wizard.exe`, offering installed/portable mode and destination selection. Velopack owns installed-mode uninstallation; the wrapper registers no second uninstaller. Portable mode extracts the generated portable payload. Shortcut/extension selection, legacy profile import and portable profile storage remain separate application work; settings currently stay in AppData even in portable mode. Use the published `CreateToolShortcuts.ps1` for editor shortcuts.
 
 GitHub Actions runs Check on pushes and pull requests. **Run workflow** offers the same tasks, version/channel inputs and optional wizard compilation, with artifact upload for Publish/Package/All. All runs every selected check before reporting failures and only packages if validation passes. Reuse your local incremental builds with Check/Build instead of waiting for cloud runners.
 
@@ -55,7 +55,7 @@ For source builds, use `dotnet run --project GUI -- --tool soundevents` (or anot
 
 Published Windows builds include `bin/CreateToolShortcuts.ps1`. Run `pwsh -File .\bin\CreateToolShortcuts.ps1` from the application payload folder to add optional Start-menu shortcuts. Editor shortcuts target the corresponding thin launcher and use its embedded icon; all launchers load the same DLLs. The icon files are also shipped in `icons/` and copied into normal build outputs. Standalone SoundEvent, SmartProp and Map Builder windows have their own menu bars and do not follow the shell's selected addon. SoundEvent and SmartProp can open arbitrary source files; Map Builder derives the compiler addon from each selected VMAP under the configured CS2 installation. In the shell these editors share its dynamic menus, and addon changes preserve their tabs and unsaved edits. Use `-Destination <folder>` to place shortcuts elsewhere.
 
-Create addon offers the bundled presets, previews their saved map thumbnails and renames `xxx_mapname_xxx` filenames to the new addon name. User presets under `~/Hammer5Tools/Presets` take precedence over bundled presets. Empty addons are also supported; existing addons are never overwritten.
+Create addon offers the bundled presets, previews their saved map thumbnails and renames `xxx_mapname_xxx` filenames to the new addon name. User presets under `~/Presets/Addons` take precedence over bundled presets. Empty addons are also supported; existing addons are never overwritten.
 
 Export addon offers content-folder and compiled-resource filters, version-control and extension exclusions, individual file selection, compression choices and cancellable progress. Exports retain the content/game ZIP layout used by legacy imports and replace the destination only after completion.
 
@@ -88,7 +88,10 @@ The managed GUI and CLI reference one shared Core library. The C# application st
 *   `GUI/`: Avalonia application, editors, presentation and application lifecycle.
 *   `CLI/`: Command-line presentation and headless operations.
 *   `Core/`: Shared documents, domain logic and services; filesystem/process integrations live in `IO/`.
-*   `Workshop/`: Pinned upstream library and GUI; Core uses the library and App hosts the GUI in-process.
+*   `Core/CS2WorkshopManager/` and `Core/Steamworks/`: Separate pinned Workshop library projects.
+*   `GUI/CS2WorkshopManager/`: Workshop UI hosted in-process by the main application.
+*   `Misc/CS2WorkshopManager/`: Upstream build settings, provenance and licenses.
+*   `Presets/`: Shipped addon presets under `Addons/`, editor presets and hotkey assets.
 *   `Tests/`: Managed Core, integration, App and SmartProp regression tests.
 *   `legacy/Hammer5ToolsGUI/`: Archived PySide6 application, editors, widgets, styles, and resources.
 *   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL â€” Source 2 parsing, porting, and Unreal bridge logic.
@@ -105,7 +108,9 @@ The managed GUI and CLI reference one shared Core library. The C# application st
     ```
 
 ### Distribution & Updates
-The managed application bootstraps **Velopack** before normal startup. `build.ps1` and the manually dispatched GitHub Actions workflow produce installer/portable/update artifacts. The managed update service is still a placeholder; package creation does not implement its update UI or publish a feed. The separate package ID `Hammer5Tools.Managed` avoids replacing legacy installs before migration parity is verified. Tags do not currently trigger releases.
+The managed application bootstraps **Velopack** before normal startup. Use **Help > Check for updates** in the toolkit or standalone editors to check, download and install updates. Installation confirms unsaved documents before restarting. Missing CS2 does not prevent startup. Recoverable startup failures automatically open an independent recovery/update window on normal launch, without a special command. Failed application UI resources fall back to basic controls so updates remain accessible. If the executable, managed runtime or Avalonia framework cannot load, download a fresh installer from [GitHub Releases](https://github.com/dertwist/Hammer5Tools/releases).
+
+`build.ps1` and the manually dispatched GitHub Actions workflow produce installer/portable/update artifacts. Publish the generated `releases.stable.json` or `releases.dev.json` and matching `.nupkg` files as GitHub Release assets in this repository for in-app updates to work. The `dev` channel includes prereleases; `stable` uses published stable releases. CI artifact uploads alone do not publish an update feed. Plain development/Publish builds provide a link to download an installer instead of installing updates in place. The separate package ID `Hammer5Tools.Managed` avoids replacing legacy installs before migration parity is verified. Tags do not currently trigger releases.
 
 ### CLI and agent automation
 

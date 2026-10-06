@@ -8,7 +8,7 @@ using Hammer5Tools.Core.LoadingScreens;
 
 public class LoadingEditorViewModel : DocumentViewModel
 {
-    public override string IconUri => "avares://Hammer5Tools.App/Assets/Icons/loading_editor.png";
+    public override string IconUri => "avares://Hammer5Tools/Assets/Icons/loading_editor.png";
 
     private readonly IAddonService AddonService;
     private readonly ILoadingScreenService LoadingScreenService;

@@ -41,6 +41,8 @@ public sealed class ToolWindowService
         _ => Array.Empty<DocumentViewModel>(),
     }).ToArray();
 
+    public Task<bool> ConfirmUpdateRestartAsync() => Dialogs.ConfirmContextChangeAsync([]);
+
     public Window Open(StartupTool tool)
     {
         if (Windows.TryGetValue(tool, out var existing))

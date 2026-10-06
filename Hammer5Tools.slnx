@@ -1,11 +1,13 @@
 <Solution>
   <Project Path="CLI/Hammer5Tools.Cli.csproj" />
-  <Project Path="Core/Hammer5Tools.Core.csproj" />
-  <Project Path="GUI/Hammer5Tools.App.csproj" />
-  <Folder Name="/Workshop/">
-    <Project Path="Workshop/Steamworks/Steamworks.csproj" />
-    <Project Path="Workshop/CS2WorkshopManager/CS2WorkshopManager.csproj" />
-    <Project Path="Workshop/GUI/GUI.csproj" />
+  <Folder Name="/Core/">
+    <Project Path="Core/Hammer5Tools.Core.csproj" />
+    <Project Path="Core/Steamworks/Steamworks.csproj" />
+    <Project Path="Core/CS2WorkshopManager/CS2WorkshopManager.csproj" />
+  </Folder>
+  <Folder Name="/GUI/">
+    <Project Path="GUI/Hammer5Tools.csproj" />
+    <Project Path="GUI/CS2WorkshopManager/GUI.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj" />

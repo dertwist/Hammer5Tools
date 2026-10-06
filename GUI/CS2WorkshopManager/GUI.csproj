@@ -35,9 +35,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CS2WorkshopManager\CS2WorkshopManager.csproj" />
+    <ProjectReference Include="..\..\Core\CS2WorkshopManager\CS2WorkshopManager.csproj" />
     <!-- the library keeps Steamworks to itself for its package, so the Steam errors it throws are referenced directly -->
-    <ProjectReference Include="..\Steamworks\Steamworks.csproj" />
+    <ProjectReference Include="..\..\Core\Steamworks\Steamworks.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- the window icon, the exe icon above is only used by Windows -->
@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- the licence and the notices ship next to the executable -->
-    <None Include="..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <None Include="..\THIRD_PARTY_NOTICES.txt" Link="THIRD_PARTY_NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\Misc\CS2WorkshopManager\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\Misc\CS2WorkshopManager\THIRD_PARTY_NOTICES.txt" Link="THIRD_PARTY_NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

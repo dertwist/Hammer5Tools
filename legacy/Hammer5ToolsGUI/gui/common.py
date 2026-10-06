@@ -263,11 +263,15 @@ if getattr(sys, 'frozen', False):
     if not internal_base.exists():
         internal_base = runtime_paths.runtime_root
 else:
-    internal_base = app_dir / "Hammer5Tools"
+    internal_base = app_dir / "Presets"
     if not internal_base.exists():
-        internal_base = app_dir
+        internal_base = app_dir / "Hammer5Tools"
+        if not internal_base.exists():
+            internal_base = app_dir
 
-Internal_Presets_Path = internal_base / "Presets"
+Internal_Presets_Path = internal_base / "Addons"
+if not Internal_Presets_Path.exists():
+    Internal_Presets_Path = internal_base / "Presets"
 SoundEventEditor_Internal_Preset_Path = internal_base / "SoundEventEditor" / "Presets"
 SmartPropEditor_Internal_Preset_Path = internal_base / "SmartPropEditor" / "Presets"
 

@@ -54,8 +54,8 @@ ehthumbs.db
 settings.ini
 settings.cfg
 /userdata_dev/
-/Hammer5Tools/userdata/
-/Hammer5Tools/Hammer5Tools.exe
-/Hammer5Tools/SoundEventEditor/soundevents_cache/
-/Hammer5Tools/SoundEventEditor/sounds/
+/Presets/userdata/
+/Presets/Hammer5Tools.exe
+/Presets/SoundEventEditor/soundevents_cache/
+/Presets/SoundEventEditor/sounds/
 *.log

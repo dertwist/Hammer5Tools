@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- the licence text and the readme go into the package, the licence expression in Directory.Build.props stays what NuGet lists -->
-    <None Include="..\LICENSE" Pack="true" PackagePath="" Visible="false" />
-    <None Include="..\README.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\..\Misc\CS2WorkshopManager\LICENSE" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\..\Misc\CS2WorkshopManager\README.md" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 </Project>
