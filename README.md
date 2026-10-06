@@ -1,6 +1,23 @@
 # Hammer 5 Tools
 
-The managed Avalonia application is `src/Hammer5Tools.App`. Build with `dotnet build Hammer5Tools.slnx -c Release` and run with `dotnet run --project src/Hammer5Tools.App`.
+The managed Avalonia application is `GUI`. Build with `dotnet build Hammer5Tools.slnx -c Release` and run with `dotnet run --project GUI`.
+
+Published Windows application content has this layout:
+
+```text
+Hammer5Tools.exe
+SoundEventEditor.exe
+MapBuilder.exe
+SmartPropEditor.exe
+WorkshopManager.exe
+bin/
+presets/
+  addons/
+  soundeventeditor/
+  smartpropeditor/
+```
+
+The executable aliases are small .NET hosts loading the same `bin/Hammer5Tools.App.dll`; local publication uses hard links where supported, while ZIPs contain equivalent host files. The executable name selects the editor, and explicit `--tool` arguments override it. All launches share the existing single-instance process. DLLs, the .NET runtime and `CreateToolShortcuts.ps1` live in `bin`. Bundled presets are immutable application content replaced by updates, separate from user presets. Velopack adds its required updater files outside `current`; this layout is the application payload inside `current`, or the root of the plain Publish ZIP.
 
 Use PowerShell 7 and the .NET 10 SDK to run the same workflow locally as GitHub Actions:
 
@@ -23,19 +40,20 @@ Published files use a fresh directory under `.build/publish/` on each run to avo
 
 GitHub Actions runs Check on pushes and pull requests. **Run workflow** offers the same tasks, version/channel inputs and optional wizard compilation, with artifact upload for Publish/Package/All. All runs every selected check before reporting failures and only packages if validation passes. Reuse your local incremental builds with Check/Build instead of waiting for cloud runners.
 
-SmartProp is integrated into the main application. Workshop Manager runs in its own window in the same process. Application commands use the menu bar; the menu beside the addon selector contains addon lifecycle and folder actions. The old standalone SmartProp preview was removed; its regression host lives in `tests/Hammer5Tools.SmartProp.Tests`.
+SmartProp is integrated into the main application. Workshop Manager runs in its own window in the same process. Application commands use the menu bar; the menu beside the addon selector contains addon lifecycle and folder actions. The old standalone SmartProp preview was removed; its regression host lives in `Tests/Hammer5Tools.SmartProp.Tests`.
 
-SoundEvent Editor, Map Builder and Workshop Manager can also open independently from the same installation:
+SoundEvent Editor, Map Builder, SmartProp Editor and Workshop Manager can also open independently from the same installation:
 
 ```powershell
-Hammer5Tools.App.exe --tool soundevents
-Hammer5Tools.App.exe --tool mapbuilder
-Hammer5Tools.App.exe --tool workshop
+Hammer5Tools.exe --tool soundevents
+Hammer5Tools.exe --tool mapbuilder
+Hammer5Tools.exe --tool smartprops
+Hammer5Tools.exe --tool workshop
 ```
 
-For source builds, use `dotnet run --project src/Hammer5Tools.App -- --tool soundevents` (or another tool name). Without `--tool`, the full toolkit opens. Launches reuse the running process and activate an existing tool window when possible. Closing a standalone tool leaves other windows open; the process exits when its last window closes. SoundEvent and Map Builder windows include addon selection and Settings, with unsaved-document confirmation before changing addons or installations.
+For source builds, use `dotnet run --project GUI -- --tool soundevents` (or another tool name). Without `--tool`, the full toolkit opens. Launches reuse the running process and activate an existing tool window when possible. Closing a standalone tool leaves other windows open; the process exits when its last window closes. SoundEvent and Map Builder windows include addon selection and Settings, with unsaved-document confirmation before changing addons or installations.
 
-Published Windows builds include `CreateToolShortcuts.ps1`. Run `powershell -File .\CreateToolShortcuts.ps1` from the installation folder to add optional Start-menu shortcuts. All four shortcuts target the same executable and reuse its DLLs; no extra application copies are installed. Use `-Destination <folder>` to place shortcuts elsewhere.
+Published Windows builds include `bin/CreateToolShortcuts.ps1`. Run `pwsh -File .\bin\CreateToolShortcuts.ps1` from the application payload folder to add optional Start-menu shortcuts. Editor shortcuts target the corresponding thin launcher and use its embedded icon; all launchers load the same DLLs. The icon files are also shipped in `icons/` and copied into normal build outputs. Standalone SoundEvent, SmartProp and Map Builder windows have their own menu bars and do not follow the shell's selected addon. SoundEvent and SmartProp can open arbitrary source files; Map Builder derives the compiler addon from each selected VMAP under the configured CS2 installation. In the shell these editors share its dynamic menus, and addon changes preserve their tabs and unsaved edits. Use `-Destination <folder>` to place shortcuts elsewhere.
 
 Create addon offers the bundled presets, previews their saved map thumbnails and renames `xxx_mapname_xxx` filenames to the new addon name. User presets under `~/Hammer5Tools/Presets` take precedence over bundled presets. Empty addons are also supported; existing addons are never overwritten.
 
@@ -67,13 +85,13 @@ Want to contribute or build your own version? Here's the lowdown on the project 
 ### Project Architecture
 The managed GUI and CLI reference one shared Core library. The C# application starts directly and owns single-instance startup and update checks; the C++ launcher has been removed.
 
-*   `src/Hammer5Tools.App/`: Avalonia application, editors, presentation and application lifecycle.
-*   `src/Hammer5Tools.Cli/`: Command-line presentation and headless operations.
-*   `src/Hammer5Tools.Core/`: Shared documents, domain logic and services; filesystem/process integrations live in `IO/`.
-*   `third_party/CS2WorkshopManager/`: Pinned upstream library and GUI; Core uses the library and App hosts the GUI in-process.
-*   `tests/`: Managed Core, integration, App and SmartProp regression tests.
+*   `GUI/`: Avalonia application, editors, presentation and application lifecycle.
+*   `CLI/`: Command-line presentation and headless operations.
+*   `Core/`: Shared documents, domain logic and services; filesystem/process integrations live in `IO/`.
+*   `Workshop/`: Pinned upstream library and GUI; Core uses the library and App hosts the GUI in-process.
+*   `Tests/`: Managed Core, integration, App and SmartProp regression tests.
 *   `legacy/Hammer5ToolsGUI/`: Archived PySide6 application, editors, widgets, styles, and resources.
-*   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL — Source 2 parsing, porting, and Unreal bridge logic.
+*   `Hammer5ToolsCore/`: one C# project, one NativeAOT native DLL â€” Source 2 parsing, porting, and Unreal bridge logic.
 *   `legacy/Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
 *   `Hammer5ToolsCore/external/`: External libraries and .NET resources.
 *   `legacy/Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.

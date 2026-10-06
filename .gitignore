@@ -1,18 +1,30 @@
 # Build and output directories
 .build/
+build/
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+[Rr]eleases/
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
 publish/
 dist/
-TestResults/
+[Tt]est[Rr]esult*/
+*.nupkg
+*.snupkg
+*.tmp
 *.sublime-project
 *.sublime-workspace
 
 # User-specific files
+.vs/
 *.rsuser
 *.suo
 *.user
@@ -24,6 +36,7 @@ TestResults/
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea/
+.claude/
 
 # Operating system files
 .DS_Store
@@ -31,15 +44,18 @@ Thumbs.db
 ehthumbs.db
 
 # Documentation / Scratch (kept out of git history per user request)
-docs
-scratch
-.zcode
-.codiumai
-.qodo
+/docs/
+/scratch/
+.zcode/
+.codiumai/
+.qodo/
 
 # App runtime & cache files
 settings.ini
 settings.cfg
-userdata_dev
-Hammer5Tools/userdata
+/userdata_dev/
+/Hammer5Tools/userdata/
+/Hammer5Tools/Hammer5Tools.exe
+/Hammer5Tools/SoundEventEditor/soundevents_cache/
+/Hammer5Tools/SoundEventEditor/sounds/
 *.log

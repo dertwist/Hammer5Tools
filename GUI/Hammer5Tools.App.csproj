@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Icons/appicon.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Hammer5Tools.Core.csproj" />
+    <ProjectReference Include="../Workshop/GUI/GUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+    <EmbeddedResource Include="Features/SmartProps/SmartPropPresentation.json" />
+    <EmbeddedResource Include="Assets/SmartProps/model_sm.png" LogicalName="Hierarchy.model" />
+    <EmbeddedResource Include="Assets/SmartProps/vsmart_sm.png" LogicalName="Hierarchy.smartprop" />
+    <EmbeddedResource Include="Assets/SmartProps/generic_sm.png" LogicalName="Hierarchy.generic" />
+    <EmbeddedResource Include="Assets/SmartProps/animation_group_sm.png" LogicalName="Hierarchy.group" />
+    <EmbeddedResource Include="Assets/SmartProps/model.vert" LogicalName="Shaders.model.vert" />
+    <EmbeddedResource Include="Assets/SmartProps/model.frag" LogicalName="Shaders.model.frag" />
+    <EmbeddedResource Include="Assets/SmartProps/grid.vert" LogicalName="Shaders.grid.vert" />
+    <EmbeddedResource Include="Assets/SmartProps/grid.frag" LogicalName="Shaders.grid.frag" />
+    <None Update="Features/SmartProps/Example.vsmart" Link="Example.vsmart" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets/Icons/*Editor.ico;Assets/Icons/MapBuilder.ico;Assets/Icons/WorkshopManager.ico" Link="icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="CreateToolShortcuts.ps1" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../Hammer5Tools/Presets/**/*" Link="presets/addons/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../Hammer5Tools/SoundEventEditor/Presets/**/*" Link="presets/soundeventeditor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../Hammer5Tools/SmartPropEditor/Presets/**/*" Link="presets/smartpropeditor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <InternalsVisibleTo Include="Hammer5Tools.SmartProp.Tests" />
+    <InternalsVisibleTo Include="Hammer5Tools.App.Tests" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="Dock.Model.Mvvm" />
+    <PackageReference Include="Dock.Serializer.SystemTextJson" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Velopack" />
+  </ItemGroup>
+
+  <Import Project="LauncherIcons.targets" />
+
+  <Target Name="ArrangeWindowsPublish" AfterTargets="Publish" Condition="'$(RuntimeIdentifier)' == 'win-x64' and '$(SelfContained)' == 'true'">
+    <ItemGroup>
+      <_RuntimePayload Include="$(PublishDir)**/*" Exclude="$(PublishDir)presets/**/*;$(PublishDir)icons/**/*;$(PublishDir)bin/**/*" />
+      <_EditorLauncher Include="SoundEventEditor;MapBuilder;SmartPropEditor;WorkshopManager" />
+    </ItemGroup>
+    <Move SourceFiles="@(_RuntimePayload)" DestinationFiles="@(_RuntimePayload->'$(PublishDir)bin/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <CreateAppHost AppHostSourcePath="$(AppHostSourcePath)"
+                   AppHostDestinationPath="$(PublishDir)Hammer5Tools.exe"
+                   AppBinaryName="bin/$(AssemblyName).dll"
+                   IntermediateAssembly="@(IntermediateAssembly->'%(FullPath)')"
+                   WindowsGraphicalUserInterface="true" />
+    <Copy SourceFiles="$(PublishDir)Hammer5Tools.exe" DestinationFiles="$(PublishDir)%(_EditorLauncher.Identity).exe" />
+    <SetLauncherIcon Executable="$(PublishDir)%(_EditorLauncher.Identity).exe"
+                     IconFile="$(MSBuildProjectDirectory)/Assets/Icons/%(_EditorLauncher.Identity).ico" />
+  </Target>
+</Project>

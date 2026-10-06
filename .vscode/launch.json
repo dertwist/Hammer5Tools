@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
@@ -16,7 +16,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
       "args": [
         "--tool",
         "soundevents"
@@ -29,7 +29,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
       "args": [
         "--tool",
         "mapbuilder"
@@ -42,7 +42,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/src/Hammer5Tools.App/bin/Release/Hammer5Tools.App.dll",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
       "args": [
         "--tool",
         "workshop"
@@ -55,7 +55,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "Hammer5Tools: Build",
-      "program": "${workspaceFolder}/src/Hammer5Tools.Cli/bin/Release/Hammer5Tools.Cli.dll",
+      "program": "${workspaceFolder}/CLI/bin/Release/Hammer5Tools.Cli.dll",
       "args": [
         "--help"
       ],
@@ -74,6 +74,19 @@
         "PYTHONPATH": "${workspaceFolder}/legacy/Hammer5ToolsGUI",
         "PYTHONUNBUFFERED": "1"
       }
+    },
+    {
+      "name": "SmartProp Editor",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Hammer5Tools: Build",
+      "program": "${workspaceFolder}/GUI/bin/Release/Hammer5Tools.App.dll",
+      "args": [
+        "--tool",
+        "smartprops"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
     }
   ]
 }

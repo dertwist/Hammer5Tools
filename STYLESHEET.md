@@ -141,8 +141,8 @@ Application startup applies the selected theme from
 
 ## C# migration styling
 
-The Avalonia preview uses `src/Hammer5Tools.App/Styles/HammerTheme.axaml` for shared control rules and `ThemeService.cs` for the exact Standard, Bright and Vintage Steam colors from Python's `theme.py`. Keep these values synchronized with the Python baseline; do not substitute the default Fluent palette. Qt point sizes convert to Avalonia device-independent pixels at 96/72 (10pt = 13.333, 9pt = 12). Shared buttons and inputs use the QSS two-pixel border, compact padding and two-pixel radius; tabs retain the top accent stripe. Docking headers use the same semantic colors and nine-point title typography.
+The Avalonia preview uses `GUI/Styles/HammerTheme.axaml` for shared control rules and `ThemeService.cs` for the exact Standard, Bright and Vintage Steam colors from Python's `theme.py`. Keep these values synchronized with the Python baseline; do not substitute the default Fluent palette. Qt point sizes convert to Avalonia device-independent pixels at 96/72 (10pt = 13.333, 9pt = 12). Shared buttons and inputs use the QSS two-pixel border, compact padding and two-pixel radius; tabs retain the top accent stripe. Docking headers use the same semantic colors and nine-point title typography.
 
 Fluent remains the underlying control implementation. Feature views must consume shared semantic resources. Preserve baseline editor/dialog layouts, keep viewport/data colors separate, and verify palette changes with `Hammer5Tools.App.Tests` plus rendered snapshots.
 
-The managed shell uses the SmartProp editor’s compact 12px text and 22px control height. `Styles/SmartPropEditor.axaml` preserves its scoped editor templates and property/hierarchy styles. Workshop theme resources stay local to Workshop windows; never replace the host Application theme.
+The managed shell uses the SmartProp editorï¿½s compact 12px text and 22px control height. `Styles/SmartPropEditor.axaml` preserves its scoped editor templates and property/hierarchy styles. Workshop theme resources stay local to Workshop windows; never replace the host Application theme.

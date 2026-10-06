@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>Hammer5Tools domain logic, file formats, filesystem and process services</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Workshop/CS2WorkshopManager/CS2WorkshopManager.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ValveResourceFormat">
+      <HintPath>../Hammer5ToolsCore/external/ValveResourceFormat.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Content Include="../Hammer5ToolsCore/external/ValveResourceFormat.dll" Link="ValveResourceFormat.dll" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <PackageReference Include="ValveResourceFormat" ExcludeAssets="compile;runtime" />
+    <PackageReference Include="ValvePak" />
+    <PackageReference Include="ValveKeyValue" />
+    <PackageReference Include="KeyValues2" />
+    <PackageReference Include="Sledge.Formats.Map" />
+    <PackageReference Include="Sledge.Formats.Texture" />
+    <PackageReference Include="Sledge.Formats.GameData" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/Format/SmartProps/*.cs" Link="Format/SmartProps/%(Filename)%(Extension)" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/Format/Resources/Compiled*.cs" Link="Format/Resources/%(Filename)%(Extension)" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/Format/Resources/ICompiledModelReader.cs" Link="Format/Resources/ICompiledModelReader.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/CoreApi.SmartProps.cs" Link="CoreApi.SmartProps.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/CoreResult.cs" Link="CoreResult.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/CoreDiagnostic.cs" Link="CoreDiagnostic.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/SmartPropPreviewService.cs" Link="IO/SmartPropPreviewService.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/SmartPropDocumentFile.cs" Link="IO/SmartPropDocumentFile.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/SmartPropHierarchyFiles.cs" Link="IO/SmartPropHierarchyFiles.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/CompiledResource/VmapContentFiles.cs" Link="IO/CompiledResource/VmapContentFiles.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/Automation/SafeAssetWrites.cs" Link="IO/Automation/SafeAssetWrites.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/Domain/Cs2InstallLocator.cs" Link="IO/Domain/Cs2InstallLocator.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/IO/ContentPathResolver.cs" Link="IO/ContentPathResolver.cs" />
+    <Compile Include="../Hammer5ToolsCore/Hammer5Tools.Core/SmartPropPreviewJsonContext.cs" Link="SmartPropPreviewJsonContext.cs" />
+    <EmbeddedResource Include="../Hammer5ToolsCore/Hammer5Tools.Core/Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+</Project>

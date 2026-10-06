@@ -59,10 +59,10 @@ try {
 
     if ($Task -in @('Check', 'All')) {
         foreach ($suite in @('Hammer5Tools.Core.Tests', 'Hammer5Tools.IntegrationTests', 'Hammer5Tools.App.Tests', 'Hammer5Tools.SmartProp.Tests')) {
-            $project = "tests/$suite/$suite.csproj"
+            $project = "Tests/$suite/$suite.csproj"
             Invoke-Check @('run', '--project', $project, '--no-build', '--no-restore', '-c', 'Release')
         }
-        $smartProp = 'tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj'
+        $smartProp = 'Tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj'
         if ($GameAssets) {
             Invoke-Check @('run', '--project', $smartProp, '--no-build', '--no-restore', '-c', 'Release', '--', '--game-assets')
         }
@@ -73,25 +73,36 @@ try {
                 Invoke-Check @('run', '--project', $smartProp, '--no-build', '--no-restore', '-c', 'Release', '--', $mode, $capture)
             }
         }
-        Invoke-Check @('format', $solution, '--verify-no-changes', '--no-restore', '--exclude', 'third_party')
+        Invoke-Check @('format', $solution, '--verify-no-changes', '--no-restore', '--exclude', 'Workshop')
         if ($checkFailures.Count -gt 0) { throw "Validation failed:`n$($checkFailures -join "`n")" }
     }
 
     if ($Task -in @('Publish', 'Package', 'All')) {
         $buildId = [Guid]::NewGuid().ToString('N')
         $output = Join-Path $PSScriptRoot ".build/publish/$buildId/win-x64"
-        Invoke-DotNet @('publish', 'src/Hammer5Tools.App/Hammer5Tools.App.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true', "-p:Version=$Version", '-o', $output)
+        Invoke-DotNet @('publish', 'GUI/Hammer5Tools.App.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true', "-p:Version=$Version", '-o', $output)
+        if (-not $DryRun) {
+            foreach ($required in @('Hammer5Tools.exe', 'SoundEventEditor.exe', 'MapBuilder.exe', 'SmartPropEditor.exe',
+                'WorkshopManager.exe', 'bin/Hammer5Tools.App.dll', 'icons/SoundEventEditor.ico', 'icons/MapBuilder.ico',
+                'icons/SmartPropEditor.ico', 'icons/WorkshopManager.ico', 'presets/addons', 'presets/soundeventeditor', 'presets/smartpropeditor')) {
+                if (-not (Test-Path -LiteralPath (Join-Path $output $required))) { throw "Published application is missing $required." }
+            }
+        }
         if ($Task -eq 'Publish') {
             $archive = Join-Path $PSScriptRoot '.build/Hammer5Tools-win-x64.zip'
             Write-Host "Archive: $archive"
-            if (-not $DryRun) { Compress-Archive -Path "$output/*" -DestinationPath $archive -Force }
+            if (-not $DryRun) {
+                $stagedArchive = Join-Path $PSScriptRoot ".build/$buildId.zip"
+                [IO.Compression.ZipFile]::CreateFromDirectory($output, $stagedArchive)
+                [IO.File]::Move($stagedArchive, $archive, $true)
+            }
         }
         if ($Task -in @('Package', 'All')) {
             Invoke-DotNet @('tool', 'restore')
             $releaseDir = Join-Path $PSScriptRoot ".build/releases/$Channel/$Version/$buildId"
             Invoke-DotNet @('tool', 'run', 'vpk', '--', 'pack', '--packId', 'Hammer5Tools.Managed', '--packVersion', $Version,
-                '--packDir', $output, '--mainExe', 'Hammer5Tools.App.exe', '--packTitle', 'Hammer 5 Tools',
-                '--channel', $Channel, '--runtime', 'win-x64', '--shortcuts', 'None', '--icon', 'src/Hammer5Tools.App/Assets/Icons/appicon.ico',
+                '--packDir', $output, '--mainExe', 'Hammer5Tools.exe', '--packTitle', 'Hammer5Tools',
+                '--channel', $Channel, '--runtime', 'win-x64', '--shortcuts', 'None', '--icon', 'GUI/Assets/Icons/appicon.ico',
                 '--outputDir', $releaseDir)
             Write-Host "Installer, portable ZIP and update feed: $releaseDir"
             $portableZip = Join-Path $releaseDir "Hammer5Tools.Managed-$Channel-Portable.zip"
@@ -99,7 +110,11 @@ try {
             if (-not $DryRun) {
                 $payload = [IO.Compression.ZipFile]::OpenRead($portableZip)
                 try {
-                    foreach ($required in @('.portable', 'Hammer 5 Tools.exe', 'Update.exe', 'current/sq.version', 'current/Hammer5Tools.App.exe')) {
+                    foreach ($required in @('.portable', 'Hammer5Tools.exe', 'Update.exe', 'current/sq.version',
+                        'current/Hammer5Tools.exe', 'current/bin/Hammer5Tools.App.dll', 'current/SoundEventEditor.exe',
+                        'current/MapBuilder.exe', 'current/SmartPropEditor.exe', 'current/WorkshopManager.exe',
+                        'current/icons/SoundEventEditor.ico', 'current/icons/MapBuilder.ico',
+                        'current/icons/SmartPropEditor.ico', 'current/icons/WorkshopManager.ico')) {
                         if ($null -eq $payload.GetEntry($required)) { throw "Portable package is missing $required." }
                     }
                 }

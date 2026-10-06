@@ -1,0 +1,175 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- the dark and light palettes, from https://github.com/Angel-foxxo/RadGen, on top of the Fluent theme's resource keys -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <Color x:Key="AppColor">#D7D7D7</Color>
+            <Color x:Key="AppSoftColor">#D0D0D0</Color>
+            <Color x:Key="BorderColor">#ACACAC</Color>
+            <Color x:Key="BorderSoftColor">#919191</Color>
+            <Color x:Key="ContrastColor">#000000</Color>
+            <Color x:Key="ContrastSoftColor">#6E6E6E</Color>
+            <Color x:Key="AccentColor">#2EACD4</Color>
+            <!-- the accents of warnings and destructive prompts: a window derives its gradient and highlights from whichever accent it is given, see WindowAccent -->
+            <Color x:Key="WarningAccentColor">#DFA71F</Color>
+            <Color x:Key="DangerAccentColor">#DF1F1F</Color>
+            <!-- the warning accent as text, dark enough to read on the light window -->
+            <Color x:Key="WarningTextColor">#7A5A00</Color>
+            <!-- what the main views lay over the gradient: light theme lightens, dark theme darkens -->
+            <Color x:Key="ShadeColor">#FFFFFF</Color>
+            <!-- popups need a solid panel to read over content, and the outlines of fields and check boxes lean towards the accent. Both are derived again from each window's accent, see WindowAccent -->
+            <Color x:Key="PopupColor">#E4EBF1</Color>
+            <Color x:Key="OutlineColor">#8FA3B6</Color>
+            <!-- headings in rendered descriptions, the blue Steam gives them -->
+            <Color x:Key="HeadingColor">#1B6AA8</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <Color x:Key="AppColor">#1A1B1E</Color>
+            <Color x:Key="AppSoftColor">#232628</Color>
+            <Color x:Key="BorderColor">#26292B</Color>
+            <Color x:Key="BorderSoftColor">#2D3033</Color>
+            <Color x:Key="ContrastColor">#EAEAEA</Color>
+            <Color x:Key="ContrastSoftColor">#C4C7CE</Color>
+            <Color x:Key="AccentColor">#3A558C</Color>
+            <!-- the accents of warnings and destructive prompts: a window derives its gradient and highlights from whichever accent it is given, see WindowAccent -->
+            <Color x:Key="WarningAccentColor">#DA9B1E</Color>
+            <Color x:Key="DangerAccentColor">#EA373A</Color>
+            <!-- the warning accent as text, which reads on the dark window as it is -->
+            <Color x:Key="WarningTextColor">#DA9B1E</Color>
+            <!-- what the main views lay over the gradient: light theme lightens, dark theme darkens -->
+            <Color x:Key="ShadeColor">#000000</Color>
+            <!-- popups need a solid panel to read over content, and the outlines of fields and check boxes lean towards the accent -->
+            <Color x:Key="PopupColor">#202735</Color>
+            <Color x:Key="OutlineColor">#3E4B66</Color>
+            <!-- headings in rendered descriptions, the blue Steam gives them -->
+            <Color x:Key="HeadingColor">#67C1F5</Color>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <SolidColorBrush x:Key="AppBrush" Color="{DynamicResource AppColor}" />
+    <SolidColorBrush x:Key="AppSoftBrush" Color="{DynamicResource AppSoftColor}" />
+    <!-- the main views shade the window gradient instead of painting over it -->
+    <SolidColorBrush x:Key="ShadeBrush" Color="{DynamicResource ShadeColor}" Opacity="0.2" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}" />
+    <SolidColorBrush x:Key="BorderSoftBrush" Color="{DynamicResource BorderSoftColor}" />
+    <SolidColorBrush x:Key="ContrastBrush" Color="{DynamicResource ContrastColor}" />
+    <SolidColorBrush x:Key="ContrastSoftBrush" Color="{DynamicResource ContrastSoftColor}" />
+    <!-- this brush and every Fluent key pointed at it are repainted in each window's own accent by WindowAccent -->
+    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}" />
+    <!-- button faces and the wells of fields are see-through tints, so they take on whatever gradient is behind them like the panels do -->
+    <SolidColorBrush x:Key="ControlBrush" Color="{DynamicResource ContrastColor}" Opacity="0.08" />
+    <SolidColorBrush x:Key="ControlHoverBrush" Color="{DynamicResource ContrastColor}" Opacity="0.16" />
+    <SolidColorBrush x:Key="FieldBrush" Color="{DynamicResource ShadeColor}" Opacity="0.35" />
+    <!-- the accent as a see-through tint, for the chosen item of a dropdown, which reads with the theme's text whatever the accent -->
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="{DynamicResource AccentColor}" Opacity="0.35" />
+    <SolidColorBrush x:Key="PopupBrush" Color="{DynamicResource PopupColor}" />
+    <SolidColorBrush x:Key="OutlineBrush" Color="{DynamicResource OutlineColor}" />
+    <SolidColorBrush x:Key="HeadingBrush" Color="{DynamicResource HeadingColor}" />
+    <!-- the stars of a rating: the accent, which each window boosts off its background, see WindowAccent -->
+    <SolidColorBrush x:Key="StarBrush" Color="{DynamicResource AccentColor}" />
+    <!-- text on the accent, which each window sets to black or white by its own accent, see WindowAccent -->
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{DynamicResource ContrastColor}" />
+    <!-- text that warns, in the warning prompts' accent -->
+    <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource WarningTextColor}" />
+    <SolidColorBrush x:Key="TransparentBrush" Color="Transparent" />
+
+
+    <!-- windows: main colour with contrast text -->
+    <SolidColorBrush x:Key="SystemRegionBrush" Color="{DynamicResource AppColor}" />
+    <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="{DynamicResource ContrastColor}" />
+    <StaticResource x:Key="SystemAccentColor" ResourceKey="AccentColor" />
+
+    <!-- buttons: a tinted face that brightens under the pointer and turns accent when pressed -->
+    <StaticResource x:Key="ButtonBackground" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="ButtonBackgroundDisabled" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="ToggleButtonBackground" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="ToggleButtonBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="ToggleButtonBackgroundPressed" ResourceKey="AccentBrush" />
+    <!-- a checked toggle keeps the accent under the pointer, instead of Fluent brightening it with the system accent -->
+    <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="AccentBrush" />
+    <!-- the button inside a text box, like the search's clear, only tints when pressed instead of flashing the system accent -->
+    <StaticResource x:Key="TextControlButtonBackgroundPressed" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="TextControlButtonForegroundPressed" ResourceKey="ContrastBrush" />
+    <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="AccentBrush" />
+    <!-- the highlighted button of a dialog: the dialog gives it its own face, the text stays the theme's -->
+    <StaticResource x:Key="AccentButtonForeground" ResourceKey="ContrastBrush" />
+    <StaticResource x:Key="AccentButtonForegroundPointerOver" ResourceKey="ContrastBrush" />
+    <StaticResource x:Key="AccentButtonForegroundPressed" ResourceKey="ContrastBrush" />
+
+    <!-- text boxes and combo boxes: a dark well with a tinted outline, accent when focused -->
+    <StaticResource x:Key="TextControlBackground" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="TextControlBorderBrush" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="TextControlBorderBrushPointerOver" ResourceKey="ContrastSoftBrush" />
+    <StaticResource x:Key="TextControlBorderBrushFocused" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="ComboBoxBackground" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="ComboBoxBorderBrush" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="ComboBoxBorderBrushPointerOver" ResourceKey="ContrastSoftBrush" />
+    <StaticResource x:Key="ComboBoxBorderBrushPressed" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="ComboBoxDropDownBackground" ResourceKey="PopupBrush" />
+    <StaticResource x:Key="ComboBoxDropDownBorderBrush" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="ComboBoxItemBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="ComboBoxItemBackgroundPressed" ResourceKey="AccentSoftBrush" />
+    <StaticResource x:Key="ComboBoxItemBackgroundSelected" ResourceKey="AccentSoftBrush" />
+    <StaticResource x:Key="ComboBoxItemBackgroundSelectedPointerOver" ResourceKey="AccentSoftBrush" />
+    <StaticResource x:Key="ComboBoxItemBackgroundSelectedPressed" ResourceKey="AccentSoftBrush" />
+
+    <!-- check boxes: the same well and outline as the fields -->
+    <StaticResource x:Key="CheckBoxCheckBackgroundFillUnchecked" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="CheckBoxCheckBackgroundFillUncheckedPressed" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUnchecked" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" ResourceKey="ContrastSoftBrush" />
+    <StaticResource x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" ResourceKey="AccentBrush" />
+
+    <!-- popups: flyouts and menus on a tinted panel with the outline colour around them -->
+    <StaticResource x:Key="FlyoutPresenterBackground" ResourceKey="PopupBrush" />
+    <StaticResource x:Key="FlyoutBorderThemeBrush" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="PopupBrush" />
+    <StaticResource x:Key="MenuFlyoutPresenterBorderBrush" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="MenuFlyoutItemBackgroundPointerOver" ResourceKey="ControlHoverBrush" />
+    <StaticResource x:Key="MenuFlyoutItemBackgroundPressed" ResourceKey="AccentBrush" />
+
+    <!-- scroll bars and progress: tinted thumbs and a field coloured track -->
+    <StaticResource x:Key="ScrollBarThumbFill" ResourceKey="OutlineBrush" />
+    <StaticResource x:Key="ScrollBarThumbFillPointerOver" ResourceKey="ContrastSoftBrush" />
+    <StaticResource x:Key="ScrollBarThumbFillPressed" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="ProgressBarBackground" ResourceKey="FieldBrush" />
+    <StaticResource x:Key="ProgressBarForeground" ResourceKey="AccentBrush" />
+
+    <!-- tree rows: a tinted face under the pointer and no colour for being selected, since the trees here are ticked rather than selected -->
+    <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="TreeViewItemBackgroundPressed" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="TreeViewItemBackgroundSelected" ResourceKey="TransparentBrush" />
+    <StaticResource x:Key="TreeViewItemBackgroundSelectedPointerOver" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="TreeViewItemBackgroundSelectedPressed" ResourceKey="ControlBrush" />
+    <StaticResource x:Key="TreeViewItemForegroundSelected" ResourceKey="ContrastBrush" />
+    <StaticResource x:Key="TreeViewItemForegroundSelectedPointerOver" ResourceKey="ContrastBrush" />
+    <StaticResource x:Key="TreeViewItemForegroundSelectedPressed" ResourceKey="ContrastBrush" />
+
+    <!-- data grid: soft main colour panel, faded soft contrast grid lines, accent selection -->
+    <SolidColorBrush x:Key="DataGridColumnHeaderBackgroundBrush" Color="{DynamicResource ShadeColor}" Opacity="0.1" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderForegroundBrush" Color="{DynamicResource ContrastSoftColor}" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="{DynamicResource BorderColor}" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="{DynamicResource BorderSoftColor}" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderDraggedBackgroundBrush" Color="{DynamicResource BorderSoftColor}" />
+    <SolidColorBrush x:Key="DataGridRowHoveredBackgroundColor" Color="{DynamicResource BorderColor}" />
+    <StaticResource x:Key="DataGridRowSelectedBackgroundBrush" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="DataGridRowSelectedHoveredBackgroundBrush" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="DataGridRowSelectedUnfocusedBackgroundBrush" ResourceKey="AccentBrush" />
+    <StaticResource x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundBrush" ResourceKey="AccentBrush" />
+    <SolidColorBrush x:Key="DataGridGridLinesBrush" Opacity="0.4" Color="{DynamicResource ContrastSoftColor}" />
+    <SolidColorBrush x:Key="DataGridFillerColumnGridLinesBrush" Color="{DynamicResource BorderSoftColor}" />
+    <!-- headers keep no room for a sort arrow until a column is sorted, so labels get the whole column -->
+    <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+    <x:Double x:Key="DataGridRowSelectedBackgroundOpacity">1</x:Double>
+    <x:Double x:Key="DataGridRowSelectedHoveredBackgroundOpacity">1</x:Double>
+    <x:Double x:Key="DataGridRowSelectedUnfocusedBackgroundOpacity">1</x:Double>
+    <x:Double x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundOpacity">1</x:Double>
+</ResourceDictionary>

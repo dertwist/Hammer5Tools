@@ -9,16 +9,16 @@ Archived Python/PySide6 GUI -> NativeAOT Core
 
 ## C# migration workspace
 
-The replacement application under `src/` uses `App/Cli -> Core` dependencies:
+The replacement application uses `GUI/CLI -> Core` dependencies:
 
-- `src/Hammer5Tools.Core/`: typed domain documents, contracts, settings, undo and shared services; no Avalonia dependencies. `IO/` owns filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the pinned upstream library; do not duplicate its packing rules. `AddHammer5ToolsCore` registers shared services for App and Cli.
-- `src/Hammer5Tools.App/`: Avalonia views, presentation state, editor lifecycle, update checks and single-instance startup. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources. The managed executable starts directly; the C++ launcher has been removed.
-- `src/Hammer5Tools.Cli/`: command-line presentation.
-- App startup accepts `--tool soundevents`, `--tool mapbuilder` and `--tool workshop`. `Services/ToolWindowService.cs` creates only the requested UI and reuses existing tool windows; all modes share the same process and Core services. `Services/Lifecycle/SingleInstanceGuard.cs` forwards launch requests over a current-user named pipe. The process exits on its last window closing. Standalone windows use the existing editor views, preserve dirty documents on cancellation, and confirm all open documents before shared addon/installation changes. Optional Windows shortcuts reuse the one installed executable through `CreateToolShortcuts.ps1`.
-- `third_party/CS2WorkshopManager/`: pinned upstream GUI, library and Steamworks sources with licenses and original build settings. Core references the library; App hosts the upstream GUI in-process in its own window, also available through standalone startup. Preserve its upstream source formatting and license notices when updating; run `dotnet format --exclude third_party` for owned code.
-- `tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
+- `Core/`: typed domain documents, contracts, settings, undo and shared services; no Avalonia dependencies. `IO/` owns filesystem/process integrations and the CS2WorkshopManager adapter. Workshop selection and VPK packing use the pinned upstream library; do not duplicate its packing rules. `AddHammer5ToolsCore` registers shared services for App and Cli.
+- `GUI/`: Avalonia views, presentation state, editor lifecycle, update checks and single-instance startup. `Controls/WorkspaceView.cs` owns Dock layouts and persistence; preferences use the shared settings service and semantic theme resources. The managed executable starts directly; the C++ launcher has been removed.
+- `CLI/`: command-line presentation.
+- App startup accepts `--tool soundevents`, `--tool mapbuilder`, `--tool smartprops` and `--tool workshop`. `Services/ToolWindowService.cs` creates only the requested UI and reuses existing tool windows; all modes share the same process and Core services. `Services/Lifecycle/SingleInstanceGuard.cs` forwards launch requests over a current-user named pipe. The process exits on its last window closing. Standalone windows use the existing editor views, preserve dirty documents on cancellation, and confirm all open documents before shared installation changes. Addon selection does not affect independent editor documents. Optional Windows shortcuts use the thin editor launchers, sharing one managed application through `CreateToolShortcuts.ps1`.
+- `Workshop/`: pinned upstream GUI, library and Steamworks sources with licenses and original build settings. Core references the library; App hosts the upstream GUI in-process in its own window, also available through standalone startup. Preserve its upstream source formatting and license notices when updating; run `dotnet format --exclude Workshop` for owned code.
+- `Tests/Hammer5Tools.App.Tests/`: headless Avalonia render and lifecycle regression tests.
 
-Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
+Python views remain the layout and lifecycle baseline. Preserve panel placement and dialog field order when porting them, while allowing the Explorer and editor panels to dock and float. Confirm affected dirty documents before closing, changing addons or changing installations. A cancelled or failed save must retain dirty state. Source-document writes validate, stage, retain `.bak` files and replace atomically.
 
 `IResourceCompiler` retains its existing asset compile overload and adds an overload for map-build arguments, with cancellation terminating the process tree. `ILoadingScreenService` includes addon-description loading and SVG map-icon application; parsing and IO are kept out of views. The legacy ownership rules below apply to the existing Python/NativeAOT application, not the replacement managed application. Neither application is removed until migration parity is verified.
 
@@ -52,7 +52,7 @@ before moving behavior that has no coverage.
 
 ## Ownership Boundaries
 
-- `src/Hammer5Tools.App/Services/`: managed application startup, single-instance
+- `GUI/Services/`: managed application startup, single-instance
   ownership and update checks; shared filesystem/process services stay in Core.
 - `legacy/Hammer5ToolsGUI/gui/`: PySide6 views, input, presentation state, and OpenGL
   drawing only.
@@ -182,7 +182,7 @@ replacement with retained backups; batches have no rollback.
 ### Background work
 
 Pick the mechanism by the shape of the job, and never touch a widget off the GUI
-thread — build data in the worker and emit it to a slot that builds the widgets.
+thread â€” build data in the worker and emit it to a slot that builds the widgets.
 
 - Long-running, cancellable jobs that report progress: subclass `QThread` and
   communicate with signals. Compiles, exports, VPK loads, and porting use this.
@@ -229,12 +229,12 @@ GitHub.
 
 ## Managed SmartProp editor
 
-`src/Hammer5Tools.App/Features/SmartProps/` owns the integrated Avalonia view,
-hierarchy interactions, presentation and OpenGL rendering. `tests/Hammer5Tools.SmartProp.Tests/`
+`GUI/Features/SmartProps/` owns the integrated Avalonia view,
+hierarchy interactions, presentation and OpenGL rendering. `Tests/Hammer5Tools.SmartProp.Tests/`
 owns its headless and native GPU regression host. The editor participates in the shell's
 document tabs, dirty-file prompts and save/undo commands.
 
-`src/Hammer5Tools.Core/` compiles the existing SmartProp domain/resource sources
+`Core/` compiles the existing SmartProp domain/resource sources
 from `Hammer5ToolsCore/Hammer5Tools.Core/` into its single managed Core assembly.
 Keep those sources shared with the NativeAOT bridge; do not duplicate evaluators,
 hierarchy mutations or source serialization in the App. `CoreApi.SmartProps.cs`
@@ -249,4 +249,8 @@ The Python application is archived in `legacy/`. Workshop UI is referenced as a 
 
 `build.ps1` owns the shared local/GitHub Actions managed build, validation, publish and Velopack packaging workflow. `.config/dotnet-tools.json` pins vpk to the App's Velopack package version. App `Program.Main` runs Velopack before argument parsing and single-instance startup. `installer/Hammer5Tools.iss` optionally wraps installation/portable extraction; Velopack owns installed-mode uninstallation. The managed package ID is separate from legacy until migration parity is verified. Packaging does not implement profile migration, portable data paths or the managed update UI.
 
+Self-contained Windows publishing places shared assemblies/runtime in `bin`, with `Hammer5Tools.exe`, `SoundEventEditor.exe`, `MapBuilder.exe`, `SmartPropEditor.exe` and `WorkshopManager.exe` as .NET apphosts loading the same managed assembly. The executable basename chooses the default tool; explicit `--tool` arguments override it. SmartProps participates in the existing standalone lifecycle and dirty-document checks. Immutable shipped presets live in `presets/addons`, `presets/soundeventeditor` and `presets/smartpropeditor`; Core `IO/BundledPresetFiles` resolves them from both development and published runtime locations. User preset roots remain separate and retain priority. Velopack's mandatory outer layout remains unchanged.
+
 Managed addon creation uses Core `IO/Addons/AddonPresetFiles` for preset discovery, thumbnail reading and staged content/game copying with legacy filename-token substitution. App `Services/AddonDialogs.cs` owns the creation/export dialogs. `AddonArchive` retains its original export overload and adds filtered selection, compression, cancellation and progress through `AddonExportOptions`; cancelled exports retain the previous archive. Bundled presets come from `Hammer5Tools/Presets`, with user presets taking precedence. Core `Cs2/LaunchOptions` owns launch argument construction and legacy command migration; Settings presents its switches and preview. NCM launches prepare missing internal configuration files and use `-nocustomermachine`.
+
+Standalone SoundEvent, SmartProp and Map Builder windows own document menus and file selection, without subscribing to the shared addon selection. `Features/Shell/EditorMenus.cs` supplies editor actions for standalone menus and shell dynamic menus. Independent shell editor tabs survive addon changes; only Loading Screen and Detail Prop documents are reset. Core `Cs2Paths.GetContentAddonName` resolves file context for SmartProp resources and Map Builder compilation. Editor icons ship in `icons/` and are embedded into each thin launcher by `GUI/LauncherIcons.targets`. Editor shortcuts target those launchers, which all load the same managed application.

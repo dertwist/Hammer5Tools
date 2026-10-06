@@ -1,0 +1,70 @@
+<Project>
+  <UsingTask TaskName="SetLauncherIcon" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Executable ParameterType="System.String" Required="true" />
+      <IconFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="$(NETCoreSdkDir)Sdks/Microsoft.NET.Sdk/tools/net472/Microsoft.NET.HostModel.dll" />
+      <Reference Include="$(NETCoreSdkDir)Sdks/Microsoft.NET.Sdk/tools/net472/System.Reflection.Metadata.dll" />
+      <Reference Include="$(NETCoreSdkDir)Sdks/Microsoft.NET.Sdk/tools/net472/System.Collections.Immutable.dll" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Reflection.PortableExecutable" />
+      <Using Namespace="Microsoft.NET.HostModel" />
+      <Using Namespace="Microsoft.NET.HostModel.Win32Resources" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var icon = File.ReadAllBytes(IconFile);
+        using var input = new BinaryReader(new MemoryStream(icon));
+        if (input.ReadUInt16() != 0 || input.ReadUInt16() != 1)
+        {
+            throw new InvalidDataException("Invalid launcher icon: " + IconFile);
+        }
+        var count = input.ReadUInt16();
+        if (count == 0 || icon.Length < 6 + count * 16)
+        {
+            throw new InvalidDataException("Empty or truncated launcher icon: " + IconFile);
+        }
+        ushort groupId;
+        using (var stream = File.OpenRead(Executable))
+        using (var reader = new PEReader(stream))
+        {
+            var group = new ResourceData(reader).GetAllResources()
+                .Single(resource => resource.Item2 is ushort type && type == 14);
+            if (group.Item3 != 0 || !(group.Item1 is ushort))
+            {
+                throw new InvalidDataException("Expected a neutral numeric launcher icon resource.");
+            }
+            groupId = (ushort)group.Item1;
+        }
+        using var output = new MemoryStream();
+        using var writer = new BinaryWriter(output);
+        writer.Write((ushort)0);
+        writer.Write((ushort)1);
+        writer.Write(count);
+        using var updater = new ResourceUpdater(Executable);
+        for (ushort index = 0; index < count; index++)
+        {
+            var entry = input.ReadBytes(12);
+            var length = BitConverter.ToUInt32(entry, 8);
+            var offset = input.ReadUInt32();
+            if (length == 0 || (ulong)offset + length > (ulong)icon.Length)
+            {
+                throw new InvalidDataException("Truncated launcher icon image: " + IconFile);
+            }
+            var image = new byte[checked((int)length)];
+            Buffer.BlockCopy(icon, checked((int)offset), image, 0, image.Length);
+            var id = checked((ushort)(index + 1));
+            updater.AddResource(image, new IntPtr(3), new IntPtr(id));
+            writer.Write(entry);
+            writer.Write(id);
+        }
+        writer.Flush();
+        updater.AddResource(output.ToArray(), new IntPtr(14), new IntPtr(groupId));
+        updater.Update();
+      ]]></Code>
+    </Task>
+  </UsingTask>
+</Project>

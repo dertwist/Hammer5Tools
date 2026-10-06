@@ -1,18 +1,16 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Hammer5Tools.Core/Hammer5Tools.Core.csproj" />
-    <Project Path="src/Hammer5Tools.App/Hammer5Tools.App.csproj" />
-    <Project Path="src/Hammer5Tools.Cli/Hammer5Tools.Cli.csproj" />
+  <Project Path="CLI/Hammer5Tools.Cli.csproj" />
+  <Project Path="Core/Hammer5Tools.Core.csproj" />
+  <Project Path="GUI/Hammer5Tools.App.csproj" />
+  <Folder Name="/Workshop/">
+    <Project Path="Workshop/Steamworks/Steamworks.csproj" />
+    <Project Path="Workshop/CS2WorkshopManager/CS2WorkshopManager.csproj" />
+    <Project Path="Workshop/GUI/GUI.csproj" />
   </Folder>
-  <Folder Name="/third_party/">
-    <Project Path="third_party/CS2WorkshopManager/Steamworks/Steamworks.csproj" />
-    <Project Path="third_party/CS2WorkshopManager/CS2WorkshopManager/CS2WorkshopManager.csproj" />
-    <Project Path="third_party/CS2WorkshopManager/GUI/GUI.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj" />
-    <Project Path="tests/Hammer5Tools.App.Tests/Hammer5Tools.App.Tests.csproj" />
-    <Project Path="tests/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
-    <Project Path="tests/Hammer5Tools.IntegrationTests/Hammer5Tools.IntegrationTests.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Hammer5Tools.SmartProp.Tests/Hammer5Tools.SmartProp.Tests.csproj" />
+    <Project Path="Tests/Hammer5Tools.App.Tests/Hammer5Tools.App.Tests.csproj" />
+    <Project Path="Tests/Hammer5Tools.Core.Tests/Hammer5Tools.Core.Tests.csproj" />
+    <Project Path="Tests/Hammer5Tools.IntegrationTests/Hammer5Tools.IntegrationTests.csproj" />
   </Folder>
 </Solution>
