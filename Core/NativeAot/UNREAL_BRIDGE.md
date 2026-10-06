@@ -39,7 +39,7 @@ dependency for a full build/publish (see `Hammer5Tools.Core.csproj`'s
 2. Clone CUE4Parse somewhere and apply the NativeAOT patch:
    ```
    git clone --depth 1 https://github.com/FabianFG/CUE4Parse.git
-   git -C CUE4Parse apply <path-to-Hammer5Tools>/Core/external/cue4parse_nativeaot.patch
+   git -C CUE4Parse apply <path-to-Hammer5Tools>/Misc/CUE4Parse/cue4parse_nativeaot.patch
    ```
 3. Point `CUE4ParsePath` (an MSBuild property, or the `CUE4ParsePathEnv`
    environment variable) at the clone. `CUE4PARSE_SKIP_NATIVE=true` skips

@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Text.Json.Nodes;
 
 using ValveKeyValue;
-using ValveResourceFormat.ResourceTypes.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps.Evaluation;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
 

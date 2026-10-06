@@ -247,8 +247,8 @@ projects live under `Tests/Hammer5Tools.NativeAot.Tests/` and
 hierarchy mutations or source serialization in the App. `CoreApi.SmartProps.cs`
 is the shared public editor contract.
 
-The SmartProp-capable bundled ValveResourceFormat DLL requires ValvePak 5.
-Keep the managed Core and bundled Workshop library on that same
+SmartProp evaluation is shared source in `Core/Format/SmartProps/Evaluation/`, compiled into both managed Core and NativeAOT. Preserve its upstream license and pinned provenance in `Misc/Source2Viewer/`; evaluator regression tests live in `Tests/Hammer5Tools.Core.Tests/SmartProps/`. ValveResourceFormat comes from NuGet and requires ValvePak 5.
+Keep the managed Core and integrated Workshop library on that same
 version and retain the Workshop chunking/CRC/checksum regression tests when
 updating these dependencies.
 

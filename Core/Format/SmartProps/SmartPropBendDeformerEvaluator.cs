@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Text.Json.Nodes;
 
 using ValveResourceFormat.ResourceTypes;
-using ValveResourceFormat.ResourceTypes.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps.Evaluation;
 using ValveResourceFormat.Utils;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
@@ -67,7 +67,7 @@ internal static class SmartPropBendDeformerEvaluator
             if (deformerFrame is not { } frame || !Matrix4x4.Invert(frame, out var invFrame))
                 continue;
 
-            var volumeFrame = EntityTransformHelper.EulerAnglesToRotationMatrix(bend.Angles) * Matrix4x4.CreateTranslation(bend.Origin);
+            var volumeFrame = SmartPropTransformMath.EulerAnglesToRotationMatrix(bend.Angles) * Matrix4x4.CreateTranslation(bend.Origin);
             if (!Matrix4x4.Invert(volumeFrame, out var invVolumeFrame))
                 continue;
 
@@ -246,10 +246,10 @@ internal static class SmartPropBendDeformerEvaluator
         var cp = cage.ControlPoints;
         var mp = cage.Midpoints;
         return (
-            MathUtils.CubicBezier(cp[0], mp[0], mp[1], cp[4], xFrac),
-            MathUtils.CubicBezier(cp[1], mp[2], mp[3], cp[5], xFrac),
-            MathUtils.CubicBezier(cp[2], mp[4], mp[5], cp[6], xFrac),
-            MathUtils.CubicBezier(cp[3], mp[6], mp[7], cp[7], xFrac));
+            SmartPropTransformMath.CubicBezier(cp[0], mp[0], mp[1], cp[4], xFrac),
+            SmartPropTransformMath.CubicBezier(cp[1], mp[2], mp[3], cp[5], xFrac),
+            SmartPropTransformMath.CubicBezier(cp[2], mp[4], mp[5], cp[6], xFrac),
+            SmartPropTransformMath.CubicBezier(cp[3], mp[6], mp[7], cp[7], xFrac));
     }
 
     private static (Vector3 Edge00, Vector3 Edge10, Vector3 Edge01, Vector3 Edge11) EvaluateEdgeTangents(BendCage cage, float xFrac)

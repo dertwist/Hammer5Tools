@@ -96,7 +96,7 @@ The managed GUI and CLI reference one shared Core library. The C# application st
 *   `legacy/Hammer5ToolsGUI/`: Archived PySide6 application, editors, widgets, styles, and resources.
 *   `Core/NativeAot/`: Native exports and domain code for Python and Houdini, built as one native DLL. Shared SmartProp/resource sources live directly in `Core/Format/`, `Core/IO/` and the root Core API files and are compiled by both projects.
 *   `legacy/Hammer5ToolsGUI/gui/forms/`: Minor dialogs and UI helpers.
-*   `Core/external/`: External libraries and .NET resources.
+*   `Misc/Source2Viewer/`: SmartProp evaluator provenance and upstream license. External libraries are restored through NuGet; CUE4Parse uses its pinned patched source checkout.
 *   `legacy/Hammer5ToolsGUI/gui/common.py`: Shared logic and utility functions.
 
 The optional NativeAOT solution is `Core/NativeAot/Hammer5Tools.NativeAot.slnx`.

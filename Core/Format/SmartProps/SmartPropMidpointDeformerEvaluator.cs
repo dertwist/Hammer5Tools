@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Text.Json.Nodes;
 
 using ValveResourceFormat.ResourceTypes;
-using ValveResourceFormat.ResourceTypes.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps.Evaluation;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
 
@@ -62,7 +62,7 @@ internal static class SmartPropMidpointDeformerEvaluator
                 continue;
 
             var midpoint = (deform.Start + deform.End) / 2f;
-            var fullRotation = Quaternion.CreateFromRotationMatrix(EntityTransformHelper.EulerAnglesToRotationMatrix(deform.Angles));
+            var fullRotation = Quaternion.CreateFromRotationMatrix(SmartPropTransformMath.EulerAnglesToRotationMatrix(deform.Angles));
 
             for (var i = 0; i < corrected.Count; i++)
             {

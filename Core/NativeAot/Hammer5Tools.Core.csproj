@@ -139,10 +139,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ValveResourceFormat">
-      <HintPath>..\external\ValveResourceFormat.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+    <PackageReference Include="ValveResourceFormat" Version="20.0.6980" />
   </ItemGroup>
 
   <!-- Unreal content extraction (Format/Unreal) — thin wrapper over CUE4Parse. -->
@@ -176,9 +173,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="../Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+    <Content Include="../../Misc/Source2Viewer/LICENSE" Link="licenses/ValveResourceFormat-SmartProps.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../Format/SmartProps/*.cs" />
+    <Compile Include="../Format/SmartProps/**/*.cs" />
     <Compile Include="../Format/Resources/Compiled*.cs" />
     <Compile Include="../Format/Resources/ICompiledModelReader.cs" />
     <Compile Include="../CoreApi.SmartProps.cs" />

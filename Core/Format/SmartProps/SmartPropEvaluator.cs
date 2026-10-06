@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-using ValveResourceFormat.ResourceTypes.SmartProps;
+using Hammer5Tools.Core.Format.SmartProps.Evaluation;
 using ValveResourceFormat.Serialization.KeyValues;
 
 namespace Hammer5Tools.Core.Format.SmartProps;

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefaultItemExcludes>$(DefaultItemExcludes);CS2WorkshopManager/**;Steamworks/**;NativeAot/**;external/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);CS2WorkshopManager/**;Steamworks/**;NativeAot/**</DefaultItemExcludes>
     <Description>Hammer5Tools domain logic, file formats, filesystem and process services</Description>
   </PropertyGroup>
 
@@ -11,12 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ValveResourceFormat">
-      <HintPath>external/ValveResourceFormat.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Content Include="external/ValveResourceFormat.dll" Link="ValveResourceFormat.dll" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
-    <PackageReference Include="ValveResourceFormat" ExcludeAssets="compile;runtime" />
+    <PackageReference Include="ValveResourceFormat" />
     <PackageReference Include="ValvePak" />
     <PackageReference Include="ValveKeyValue" />
     <PackageReference Include="KeyValues2" />
@@ -31,5 +26,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
     <PackageReference Include="SkiaSharp" />
+    <InternalsVisibleTo Include="Hammer5Tools.Core.Tests" />
+    <Content Include="../Misc/Source2Viewer/LICENSE" Link="licenses/ValveResourceFormat-SmartProps.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
