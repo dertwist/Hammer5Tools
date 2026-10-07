@@ -135,6 +135,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings = settings
         self.undo_stack = QUndoStack(self)
         self.update_title = update_title
+        self._preview_event_name = None
 
         # Variables
         cs2_path = get_cs2_path()
@@ -149,6 +150,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Variables debug
 
         # Init Hierarchy
+        self.ui.addon_soundevents_tab.layout().removeWidget(self.ui.hierarchy_widget)
+        self.ui.hierarchy_widget.hide()
         self.ui.hierarchy_widget.deleteLater()
         self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
         self.ui.hierarchy_widget.soundevent_document = SoundEventDocument()
@@ -157,6 +160,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
+        self.ui.hierarchy_widget.itemClicked.connect(self._return_to_addon_event)
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.hierarchy_widget.itemDoubleClicked.connect(self._on_item_edit_start)
@@ -167,7 +171,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         from gui.editors.soundevent_editor.soundevent_player import SoundEventPlayerWidget
         self.soundevent_player_widget = SoundEventPlayerWidget(self)
-        self.soundevent_player_widget.set_event_resolver(lambda: self.ui.hierarchy_widget.currentItem().text(0) if self.ui.hierarchy_widget.currentItem() else None)
+        self.soundevent_player_widget.set_event_resolver(self.current_event_name)
         # Docked under the property editor; see init_properties_window().
 
         # Init Property Browser Dock
@@ -182,7 +186,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.property_browser_dock.setMinimumWidth(260)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
         self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Horizontal)
-        self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [220, 360], Qt.Horizontal)
+        self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [320, 260], Qt.Horizontal)
 
         # Property Browser connections
         self.property_browser_widget.add_property_requested.connect(self.on_property_added_from_browser)
@@ -247,12 +251,13 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Explorer
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
+        self.mini_explorer.layout.setAlignment(Qt.AlignTop)
         self.mini_explorer.tree.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         self.internal_explorer = InternalSoundFileExplorer()
-        self.internal_explorer.setProperty("h5Component", "soundeventBorderlessExplorer")
+        self.internal_explorer.setProperty("h5Component", "soundeventAssetTree")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
         self.internal_explorer.play_audio_data.connect(self.play_sound_data)
@@ -276,6 +281,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         )
 
         self._setup_history_dock()
+        self.undo_stack.indexChanged.connect(self._restore_addon_after_history_change)
+        self.resizeDocks([self.ui.dockWidget_4], [320], Qt.Horizontal)
         set_qdock_tab_style(self.findChildren)
 
         # Audio player init
@@ -291,6 +298,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         )
         self._history_dock.setMinimumWidth(180)
         history_view = QUndoView(self.undo_stack, self._history_dock)
+        history_view.setProperty("h5Component", "soundeventHistoryList")
         self._history_dock.setWidget(history_view)
         # Stack Soundevents (70%) and History (30%) on the right, no tabs
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
@@ -493,6 +501,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.update_placeholder_visibility()
 
     def update_properties_window(self):
+        if self._preview_event_name is not None:
+            return
         item = self.ui.hierarchy_widget.currentItem()
         if item is None:
             return
@@ -510,10 +520,10 @@ class SoundEventEditorMainWindow(QMainWindow):
     def update_properties_label(self):
         """Refresh the Properties header label with the active event name and property count."""
         item = self.ui.hierarchy_widget.currentItem()
-        if item is None:
+        if item is None and self._preview_event_name is None:
             self.ui.label.setText("Properties")
             return
-        event_name = item.text(0)
+        event_name = self.current_event_name()
         value = self.PropertiesWindow.value
         if not isinstance(value, dict):
             self.ui.label.setText(f"Properties: {event_name}")
@@ -525,6 +535,21 @@ class SoundEventEditorMainWindow(QMainWindow):
             and not (isinstance(k, str) and (k == 'comment' or k.startswith('comment_')))
         )
         self.ui.label.setText(f"Properties: {event_name}    |    {prop_count} properties")
+
+    def current_event_name(self) -> str | None:
+        """Resolve the event displayed in the properties panel for playback."""
+        if self._preview_event_name is not None:
+            return self._preview_event_name
+        item = self.ui.hierarchy_widget.currentItem()
+        return item.text(0) if item is not None else None
+
+    def _return_to_addon_event(self, item: QTreeWidgetItem, column: int = 0) -> None:
+        if self._preview_event_name is not None:
+            self.on_changed_hierarchy_item(item)
+
+    def _restore_addon_after_history_change(self, index: int) -> None:
+        if self._preview_event_name is not None:
+            self.on_changed_hierarchy_item(self.ui.hierarchy_widget.currentItem())
 
     # Filter
     def eventFilter(self, source, event):
@@ -602,6 +627,8 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def on_property_added_from_browser(self, name: str, val_dict: dict):
         """Add property selected from Property Browser to currently active soundevent."""
+        if self._preview_event_name is not None:
+            return
         item = self.ui.hierarchy_widget.currentItem()
         if item is None:
             QMessageBox.information(self, "Property Browser", "Please select a sound event in the hierarchy to add this property.")
@@ -638,11 +665,11 @@ class SoundEventEditorMainWindow(QMainWindow):
     def save_current_soundevent_as_template(self):
         """Save selected soundevent as a template KV3 file."""
         item = self.ui.hierarchy_widget.currentItem()
-        if item is None:
+        if item is None and self._preview_event_name is None:
             QMessageBox.information(self, "Save as Template", "Please select a sound event to save as a template.")
             return
         
-        event_name = item.text(0)
+        event_name = self.current_event_name()
         template_name, ok = QInputDialog.getText(
             self, "Save as Template", "Enter Template Name:", QLineEdit.Normal, event_name
         )
@@ -650,7 +677,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             return
         
         template_name = template_name.strip()
-        data = self.ui.hierarchy_widget.soundevent_document.events.get(event_name, {})
+        data = fast_deepcopy(self.PropertiesWindow.value or {})
             
         from gui.common import SoundEventEditor_Preset_Path, JsonToKv3
         os.makedirs(SoundEventEditor_Preset_Path, exist_ok=True)
@@ -696,29 +723,19 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def filter_editor_properties(self, text: str):
         """Filter active property frames in Property Editor by property name."""
-        search = text.strip().lower()
         if not hasattr(self, 'PropertiesWindow') or not self.PropertiesWindow:
             return
-        layout = self.PropertiesWindow.ui.properties_layout
-        for index in range(layout.count()):
-            item = layout.itemAt(index)
-            if not item:
-                continue
-            widget = item.widget()
-            from gui.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
-            if isinstance(widget, SoundEventEditorPropertyFrame):
-                prop_name = str(getattr(widget, 'name', '') or '').lower()
-                display_label = str(getattr(widget, 'display_name', '') or '').lower()
-
-
-                match = (search in prop_name) or (search in display_label)
-                widget.setHidden(bool(search and not match))
+        self.PropertiesWindow.filter_properties(text)
 
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
         # Delegate switching logic to PropertiesWindow so it can suppress undo pushes
         try:
+            self._preview_event_name = None
+            self.PropertiesWindow.set_readonly_mode(False)
+            self.property_browser_widget.prop_tree_widget.setEnabled(True)
             self.PropertiesWindow.switch_to_item(current_item)
+            self.update_placeholder_visibility()
             # Update the header label to reflect the currently selected element.
             # Skip during undo/redo — the label will be refreshed when _restore_state
             # emits 'edited' and PropertiesWindowUpdate runs.
@@ -1031,9 +1048,19 @@ class SoundEventEditorMainWindow(QMainWindow):
         data = self.internal_soundevents_explorer.get_event_data(name)
         if not data:
             return
+        self._preview_event_name = name
+        self.PropertiesWindow._undo_enabled = False
+        self.PropertiesWindow.set_readonly_mode(True)
         self.PropertiesWindow.properties_clear()
         self.PropertiesWindow.properties_groups_show()
         self.PropertiesWindow.populate_properties(data)
+        self.property_browser_widget.prop_tree_widget.setEnabled(False)
+        self.update_properties_label()
+        self.filter_editor_properties(self.editor_prop_filter_edit.text())
+        self.empty_state_widget.hide()
+        self.PropertiesWindow.show()
+        self.editor_header_frame.show()
+        self.ui.label.show()
 
     def _copy_internal_soundevent_to_addon(self, name: str, data: dict) -> None:
         """

@@ -415,7 +415,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
 
         if isinstance(value, list):
-            for item in reversed(value):
+            for item in value:
                 self.add_element(item)
         else:
             self.add_element(value)
@@ -425,7 +425,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         """Adding float widget instance using given name"""
         widget_instance = ListElement(value=value)
         widget_instance.edited.connect(self.on_property_update)
-        self.vertical_layout.addWidget(widget_instance)
+        self.vertical_layout.insertWidget(self.vertical_layout.indexOf(self.button), widget_instance)
         self.on_property_update()
 
     def init_button(self):
@@ -495,7 +495,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         if isinstance(value, list):
             values = value
         elif value in (None, ""):
-            values = []
+            values = [""]
         else:
             values = [value]
         elements = self._elements()
@@ -563,7 +563,7 @@ class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
         """Adding float widget instance using given name"""
         widget_instance = FileElement(value=value)
         widget_instance.edited.connect(self.on_property_update)
-        self.vertical_layout.insertWidget(0, widget_instance)
+        self.vertical_layout.insertWidget(self.vertical_layout.indexOf(self.button), widget_instance)
         self.on_property_update()
 class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
     def __init__(self, parent=None, label_text: str = None, value: list = None, tree: QTreeWidget = None):
@@ -576,8 +576,7 @@ class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
         """Adding float widget instance using given name"""
         widget_instance = SoundEventElement(value=value, tree=self.tree)
         widget_instance.edited.connect(self.on_property_update)
-        self.vertical_layout.addWidget(widget_instance)
-        self.vertical_layout.insertWidget(0, widget_instance)
+        self.vertical_layout.insertWidget(self.vertical_layout.indexOf(self.button), widget_instance)
         self.on_property_update()
 class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
@@ -827,7 +826,7 @@ class ListElement(QWidget):
 
     def set_value(self, value: str = None):
         """Sets editline value"""
-        self.editline.setText(str(value))
+        self.editline.setText("" if value is None else str(value))
 
     def call_search_popup_menu(self):
         elements = []

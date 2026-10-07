@@ -320,6 +320,10 @@ class AudioPlayer(QWidget):
 
         self.setProperty("h5Component", "soundeventAudioPlayerRoot")
         self.ui.content.setProperty("h5Component", "soundeventAudioPlayerContent")
+        self.ui.time.setProperty("h5Component", "soundeventTimeLabel")
+        self.ui.time.setMinimumWidth(0)
+        self.ui.time.setMaximumWidth(16777215)
+        self.ui.time.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
 
         self.audio_player = QMediaPlayer()
         self.audio_output = QAudioOutput()

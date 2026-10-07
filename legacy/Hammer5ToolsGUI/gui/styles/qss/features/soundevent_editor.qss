@@ -95,6 +95,11 @@ QFrame[h5Component="soundeventAudioPlayerContent"] {
     background-color: @surface_raised;
     border: none;
 }
+QLabel[h5Component="soundeventTimeLabel"] {
+    color: @text;
+    font: 400 9pt "Segoe UI";
+    padding: 0px 6px;
+}
 QToolButton[h5Component="soundeventInfoButton"] {
     background-color: @surface_raised;
     border: 1px solid @hex_434346;
@@ -110,17 +115,17 @@ QToolButton[h5Component="soundeventInfoButton"]:hover {
 QLabel[h5Component="soundeventBrowserHeaderLabel"] {
     font-weight: bold;
     font-size: 11px;
-    color: @hex_d0d0d0;
+    color: @text;
     padding-left: 2px;
 }
 QListWidget[h5Component="soundeventBrowserList"],
 QTreeWidget[h5Component="soundeventBrowserList"] {
     background-color: @background;
-    alternate-background-color: @hex_363636;
-    border: 1px solid @hex_434343;
+    alternate-background-color: @surface_raised;
+    border: 1px solid @border;
     border-radius: 2px;
-    color: @hex_e2e2e2;
-    font: 580 10pt "Segoe UI";
+    color: @text;
+    font: 400 10pt "Segoe UI";
 }
 QListWidget[h5Component="soundeventBrowserList"]::item,
 QTreeWidget[h5Component="soundeventBrowserList"]::item {
@@ -128,11 +133,30 @@ QTreeWidget[h5Component="soundeventBrowserList"]::item {
 }
 QListWidget[h5Component="soundeventBrowserList"]::item:hover,
 QTreeWidget[h5Component="soundeventBrowserList"]::item:hover {
-    background-color: @hex_3e434b;
+    background-color: @accent_hover;
 }
 QListWidget[h5Component="soundeventBrowserList"]::item:selected,
 QTreeWidget[h5Component="soundeventBrowserList"]::item:selected {
-    background-color: @hex_4d596b;
+    background-color: @selection;
+    color: @selection_text;
+}
+
+QTreeWidget[h5Component="soundeventAssetTree"],
+QUndoView[h5Component="soundeventHistoryList"] {
+    color: @text;
+    background-color: @background;
+    alternate-background-color: @surface_raised;
+    border: 2px solid @border;
+    font: 400 10pt "Segoe UI";
+}
+QTreeWidget[h5Component="soundeventAssetTree"]::item,
+QUndoView[h5Component="soundeventHistoryList"]::item {
+    min-height: 20px;
+    padding: 1px 4px;
+}
+QTreeWidget[h5Component="soundeventAssetTree"]::item:selected,
+QUndoView[h5Component="soundeventHistoryList"]::item:selected {
+    background-color: @selection;
     color: @selection_text;
 }
 
