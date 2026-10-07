@@ -62,6 +62,7 @@ class PropertyGroupHeader(QFrame):
         self.group_index = GROUP_ORDER[group]
         self.display_order = (self.group_index, -1)
         self._layout = layout
+        self.refresh_visibility = None
 
         self.setProperty("h5Component", "soundeventGroupHeader")
         self.setFrameShape(QFrame.NoFrame)
@@ -82,6 +83,9 @@ class PropertyGroupHeader(QFrame):
 
     def apply(self):
         """Show or hide every property that follows this header in its group."""
+        if self.refresh_visibility is not None:
+            self.refresh_visibility()
+            return
         visible = self.show_child.isChecked()
         start = self._layout.indexOf(self)
         if start < 0:
@@ -219,6 +223,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._frames_by_key: dict = {}
         self._frames_by_entry: dict = {}
         self._group_headers: dict = {}
+        self._property_filter = ""
         #: The row copy/delete hotkeys and the context menu act on.
         self._selected_frame = None
         #: Event values as last loaded or saved, so an edited property can show
@@ -292,6 +297,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
     def new_property_popup(self):
         """Call popup menu with all properties"""
+        if self.readonly_mode:
+            return
         existing_items = set()
         __properties = self.get_properties_value()
         for item in __properties:
@@ -311,6 +318,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
     def new_property(self, name:str = None, value:dict  = None):
         """Creates new property in Properties Window"""
+        if self.readonly_mode:
+            return
         if name is None:
             name = 'Name'
         if value is None:
@@ -359,6 +368,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
     def paste_property(self):
         """Create properties from whatever the clipboard holds."""
+        if self.readonly_mode:
+            return
         data = self.parse_clipboard(QApplication.clipboard().text())
         if data is None:
             ErrorInfo("Error parsing clipboard content").exec()
@@ -655,6 +666,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Sync self.value so callers can read it immediately after populate_properties()
         self.update_value()
         self.refresh_modified_states()
+        self.filter_properties(self._property_filter)
 
     def _current_element_name(self):
         item = self.tree.currentItem() if self.tree is not None else None
@@ -761,7 +773,27 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._register_frame(tuple(keys), widget_instance)
         if header is not None and not header.show_child.isChecked():
             widget_instance.setVisible(False)
+        self.filter_properties(self._property_filter)
         return widget_instance
+
+    def filter_properties(self, text: str) -> None:
+        """Reveal matching rows while retaining each group's collapse state."""
+        self._property_filter = text.strip().lower()
+        search = self._property_filter
+        for group, header in self._group_headers.items():
+            members = [
+                frame for frame in self._frames_by_entry.values()
+                if get_spec(frame.name).group == group
+            ]
+            group_matches = bool(search and search in GROUP_TITLES[group].lower())
+            matches = []
+            for frame in members:
+                match = not search or group_matches or any(
+                    search in key.lower() for key in frame.value or {}
+                ) or search in frame.display_name.lower()
+                matches.append(match)
+                frame.setVisible(match and (bool(search) or header.show_child.isChecked()))
+            header.setVisible(not search or any(matches))
 
     def _insert_index_for(self, order: tuple) -> int:
         """Layout index that keeps the grouped display order."""
@@ -785,6 +817,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             expanded=group not in COLLAPSED_BY_DEFAULT,
             parent=self.ui.scrollAreaWidgetContents,
         )
+        header.refresh_visibility = lambda: self.filter_properties(self._property_filter)
         self.ui.properties_layout.insertWidget(self._insert_index_for(header.display_order), header)
         self._group_headers[group] = header
         return header
@@ -959,9 +992,11 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         menu.addSeparator()
         new_property = menu.addAction("New Property")
+        new_property.setEnabled(not self.readonly_mode)
         new_property.triggered.connect(self.new_property_popup)
         new_property.setShortcut(QKeySequence("Ctrl+F"))
         paste = menu.addAction("Paste")
+        paste.setEnabled(not self.readonly_mode)
         paste.triggered.connect(self.paste_property)
         paste.setShortcut(QKeySequence("Ctrl+V"))
         

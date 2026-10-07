@@ -34,6 +34,7 @@ class PropertyBrowserWidget(QWidget):
         main_layout.setSpacing(4)
 
         splitter = QSplitter(Qt.Vertical, self)
+        splitter.setChildrenCollapsible(False)
         main_layout.addWidget(splitter)
 
         # -------------------------------------------------------------
@@ -120,12 +121,11 @@ class PropertyBrowserWidget(QWidget):
         self.tmpl_list_widget = QListWidget(templates_container)
         self.tmpl_list_widget.setAlternatingRowColors(True)
         self.tmpl_list_widget.setProperty("h5Component", "soundeventBrowserList")
-        self.tmpl_list_widget.itemClicked.connect(self._on_template_clicked)
         self.tmpl_list_widget.itemDoubleClicked.connect(self._on_template_clicked)
         tmpl_layout.addWidget(self.tmpl_list_widget)
 
         splitter.addWidget(templates_container)
-        splitter.setSizes([450, 180])
+        splitter.setSizes([600, 240])
 
     def load_properties(self):
         """Populate property tree grouped by schema categories."""
@@ -243,6 +243,7 @@ class PropertyBrowserWidget(QWidget):
                 item.setData(Qt.UserRole, (display_name, file_path))
                 item.setToolTip(file_path)
                 self.tmpl_list_widget.addItem(item)
+        self.filter_templates(self.tmpl_filter_edit.text())
 
     def filter_templates(self, text: str):
         search = text.strip().lower()
