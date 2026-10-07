@@ -81,6 +81,40 @@ public class StartupRecoveryTests
     }
 
     [Test]
+    public async Task ReleaseNotesRenderInsideUpdateWindow()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var window = new UpdateWindow(new FakeUpdates(), () => Task.FromResult(true));
+            window.Show();
+            try
+            {
+                window.UpdateLayout();
+                await Assert.That(window.GetVisualDescendants().OfType<TextBlock>()
+                    .Any(text => text.Text == "Version: 2.0.0")).IsTrue();
+                await Assert.That(window.Width).IsEqualTo(600);
+                await Assert.That(window.Height).IsEqualTo(700);
+                var buttons = window.GetVisualDescendants().OfType<Button>().ToArray();
+                await Assert.That(buttons.Any(button => Equals(button.Content, "Update"))).IsTrue();
+                await Assert.That(buttons.Any(button => Equals(button.Content, "ReleaseNotes"))).IsTrue();
+                await Assert.That(buttons.Any(button => Equals(button.Content, "OK"))).IsTrue();
+                await Assert.That(window.GetVisualDescendants().OfType<SelectableTextBlock>()
+                    .Any(text => text.Inlines?.Text?.Contains("Preserves dirty documents") == true)).IsTrue();
+                using var frame = window.CaptureRenderedFrame();
+                await Assert.That(frame).IsNotNull();
+                var output = Path.Combine(AppContext.BaseDirectory, "snapshots", "update-notes.png");
+                Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+                frame!.Save(output, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
     public async Task RecoveryRendersAndCancelledRestartDoesNotApplyTheUpdate()
     {
         await TestAppBuilder.Session.Dispatch(async () =>
@@ -210,6 +244,12 @@ public class StartupRecoveryTests
             IsDownloaded = true;
             return Task.CompletedTask;
         }
+
+        public Task<IReadOnlyList<ReleaseNotes>> LoadReleaseNotesAsync(CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<ReleaseNotes>>([
+                new("2.0.0", "## Editors\n- **Preserves dirty documents** when a save is cancelled.\n- Standalone tools share the same application.\n\n## Updates\nDownload progress stays inside the updater.\n[Release details](https://github.com/dertwist/Hammer5Tools/releases)", new Uri("https://github.com/dertwist/Hammer5Tools/releases")),
+                new("1.9.0", "## Workshop\n- Submission state is retained across editor switches.\n- Shared compact controls and typography.", new Uri("https://github.com/dertwist/Hammer5Tools/releases")),
+            ]);
 
         public void ApplyUpdateAndRestart() => Applied = true;
     }

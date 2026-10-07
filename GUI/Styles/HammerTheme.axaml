@@ -715,4 +715,8 @@
   <Style Selector="Button.hotkey-key-button:pressed">
     <Setter Property="Background" Value="{DynamicResource H5TBackgroundBrush}" />
   </Style>
+  <Style Selector="Button.update-action /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource H5TWarningBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource H5TSelectionTextBrush}" />
+  </Style>
 </Styles>

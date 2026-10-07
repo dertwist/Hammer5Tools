@@ -290,3 +290,5 @@ the open document. Event playback uses `ICommandService`; `Core/IO/SoundEvents/S
 Windows loose/compiled audio preview. `Core/SoundEvents/SoundCurve` owns the shared
 legacy tangent evaluation; App owns graph interaction and point presentation. Original Python icons
 are linked into `Assets/LegacyIcons`; `Controls/LegacyIcon` displays PNG/SVG assets.
+
+Managed update notes load published GitHub release history independently of Velopack installation status through `IUpdateService.LoadReleaseNotesAsync`. App owns the scrollable notes presentation, channel filtering and download progress; notes failures do not prevent package updates or recovery.

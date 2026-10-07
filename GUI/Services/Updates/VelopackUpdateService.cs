@@ -52,6 +52,9 @@ public sealed class VelopackUpdateService : IUpdateService
         Logger = logger;
     }
 
+    public Task<IReadOnlyList<ReleaseNotes>> LoadReleaseNotesAsync(CancellationToken ct = default)
+        => GithubReleaseNotes.LoadAsync(Channel, ct);
+
     public async Task<bool> CheckForUpdatesAsync(bool silent = true, CancellationToken ct = default)
     {
         if (IsChecking)
