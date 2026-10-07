@@ -97,7 +97,7 @@
 
     <!-- Legacy shell shortcuts and addon actions. -->
     <Border Grid.Row="3" Name="BottomBar" Classes="shell-bottom" Background="{DynamicResource H5TSurfaceBrush}">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
         <!-- Recent activity opens the console. -->
         <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity — click to open Console">
           <Button Command="{Binding OpenConsoleCommand}" Classes="subtle shell-status" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
@@ -162,12 +162,21 @@
           </ComboBox.ItemTemplate>
         </ComboBox>
 
-        <Button Grid.Column="4" Name="GitSyncButton" Classes="shell-icon"
+        <Button Grid.Column="4" Name="LaunchAddonButton" MinWidth="128"
+                Command="{Binding LaunchCs2Command}" ToolTip.Tip="Launch Hammer / CS2 Workshop Tools for the selected addon"
+                AutomationProperties.Name="Edit map">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Image Source="avares://Hammer5Tools/Assets/Icons/hammer_icon.png" Width="20" Height="20" />
+            <TextBlock Text="Edit map" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Grid.Column="5" Name="GitSyncButton" Classes="shell-icon"
                 Command="{Binding OpenGitSyncCommand}" ToolTip.Tip="Git Sync">
           <Path Classes="shell-icon" Data="{StaticResource H5TShellSyncIcon}" />
         </Button>
 
-        <Button Grid.Column="5" Name="MapBuilderButton" Classes="shell-icon"
+        <Button Grid.Column="6" Name="MapBuilderButton" Classes="shell-icon"
                 Command="{Binding OpenMapBuilderCommand}" ToolTip.Tip="Map Builder: compile VMAP files">
           <Image Source="avares://Hammer5Tools/Assets/Icons/emoji_objects_24dp.png" Width="16" Height="16" />
         </Button>

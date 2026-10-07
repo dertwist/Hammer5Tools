@@ -835,7 +835,11 @@ public class MigrationUiTests
                 await Assert.That(separator.IsEnabled).IsFalse();
                 await Assert.That(separator.GetVisualDescendants().OfType<Separator>().Any()).IsTrue();
                 await Assert.That(shell.ToolsMenu.Items.Any(item => item.Header == "Console")).IsTrue();
-                await Assert.That(window.GetVisualDescendants().OfType<Button>().Any(button => button.Command == shell.LaunchCs2Command)).IsFalse();
+                var launchAddon = window.FindControl<Button>("LaunchAddonButton")!;
+                await Assert.That(launchAddon.Command).IsSameReferenceAs(shell.LaunchCs2Command);
+                await Assert.That(launchAddon.IsEffectivelyVisible).IsTrue();
+                await Assert.That(launchAddon.GetVisualAncestors().Contains(window.FindControl<Border>("BottomBar"))).IsTrue();
+                await Assert.That(launchAddon.GetVisualDescendants().OfType<Image>().Single().Source).IsNotNull();
                 await Assert.That(window.GetVisualDescendants().OfType<Button>().Any(button => button.Command == shell.RestartSteamCommand)).IsFalse();
             }
             finally
