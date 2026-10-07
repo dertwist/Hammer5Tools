@@ -4,6 +4,7 @@ namespace Hammer5Tools.Core.Tests.SmartProps;
 
 public sealed class SmartPropEvaluatorTests
 {
+    private static readonly float[] ExpectedLinePositions = [0f, 50f, 100f, 150f];
     [Test]
     public async Task DeserializedTextPreservesNumericLookingStringsAsStrings()
     {
@@ -978,7 +979,7 @@ public sealed class SmartPropEvaluatorTests
         await Assert.That(result.Diagnostics).IsEmpty();
         await Assert.That(result.Models).Count().IsEqualTo(4);
         var positions = result.Models.Select(model => model.Transform.M43).OrderBy(z => z).ToArray();
-        await Assert.That(positions).IsEquivalentTo(new[] { 0f, 50f, 100f, 150f });
+        await Assert.That(positions).IsEquivalentTo(ExpectedLinePositions);
     }
 
     [Test]

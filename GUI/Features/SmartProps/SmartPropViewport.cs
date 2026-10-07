@@ -7,7 +7,7 @@ using Hammer5Tools.Core.Format.Resources;
 
 namespace Hammer5Tools.App.Features.SmartProps;
 
-public sealed record ViewportInstance(int ElementId, string ModelName, Matrix4x4 Transform, IReadOnlyList<float> Vertices, IReadOnlyList<uint> Indices, CompiledModel? Geometry = null, Vector4? Tint = null);
+public sealed record ViewportInstance(int ElementId, string ModelName, Matrix4x4 Transform, IReadOnlyList<float> Vertices, IReadOnlyList<uint> Indices, CompiledModel? Geometry = null, Vector4? Tint = null, string? MaterialGroup = null);
 
 public sealed class SmartPropViewport : Control
 {

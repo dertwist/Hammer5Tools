@@ -707,7 +707,8 @@ public sealed partial class SmartPropEditorView : UserControl, IDisposable
                 return;
             }
             var instances = scene.Instances.Select(item => new ViewportInstance(item.Placement.ElementId, item.Placement.ModelName, item.Placement.Transform,
-                item.Geometry?.Vertices.ToArray() ?? [], item.Geometry?.Indices.ToArray() ?? [], item.Geometry, item.Placement.TintColor)).ToList();
+                item.Geometry?.Vertices.ToArray() ?? [], item.Geometry?.Indices.ToArray() ?? [], item.Geometry, item.Placement.TintColor, item.Placement.MaterialGroup)).ToList();
+            GpuViewport.SetResourceContext(game, addon);
             hierarchyScene = instances;
             ShowHierarchyScene(frameNextScene);
             frameNextScene = false;

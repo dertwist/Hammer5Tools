@@ -7,17 +7,6 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 /// Seeds <c>CSmartPropOperation_CreateSizer</c>-driven variable defaults from the sizer's own
 /// initial extent, before VRF evaluates any geometry that reads those variables.
 /// </summary>
-/// <remarks>
-/// Hammer's editor always leaves a sizer-driven variable's own <c>m_DefaultValue</c> at 0 (or
-/// <c>""</c>) — the sizer's <c>m_flInitial*</c> fields are the only place the real starting value
-/// lives, normally supplied live by the interactive handle. <see cref="SmartPropWidgetEvaluator"/>
-/// already reads that initial value, but only to position the editor's sizer gizmo; it never
-/// feeds it back into <c>m_Variables</c>, so a headless evaluation (this tool's viewport preview)
-/// sees the variable's raw 0 default instead — collapsing e.g. a FitOnLine line built from a
-/// sizer-driven length down to zero. Every shipped preset that uses CreateSizer follows this same
-/// authoring convention, so the override below always applies rather than only filling in an
-/// already-zero value.
-/// </remarks>
 internal static class SmartPropSizerVariableEvaluator
 {
     private static readonly (string Output, string Initial)[] Axes =

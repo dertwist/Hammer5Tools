@@ -20,8 +20,17 @@ internal sealed class SmartPropEvaluationContext
         Variables = CopyValues(variables);
         Overrides = CopyValues(overrides);
         PickOneSelections = pickOneSelections is null ? [] : new Dictionary<int, int>(pickOneSelections);
-        Placement = placement == default ? new SmartPropPlacement() : placement;
+        Placement = placement == default ? new SmartPropPlacement(0, 1, 1f) : placement;
         Seed = seed;
+    }
+
+    private SmartPropEvaluationContext(SmartPropEvaluationContext parent, SmartPropPlacement placement)
+    {
+        Variables = parent.Variables;
+        Overrides = parent.Overrides;
+        PickOneSelections = parent.PickOneSelections;
+        Placement = placement;
+        Seed = unchecked(parent.Seed ^ (parent.InstanceIndex * 1_664_525));
     }
 
     public SmartPropPlacement Placement { get; }
@@ -43,7 +52,7 @@ internal sealed class SmartPropEvaluationContext
     }
 
     public SmartPropEvaluationContext WithPlacement(SmartPropPlacement placement)
-        => new(Variables, Overrides, placement, Seed, PickOneSelections);
+        => new(this, placement);
 
     public SmartPropEvaluationContext WithOverride(string name, SmartPropValue value)
     {

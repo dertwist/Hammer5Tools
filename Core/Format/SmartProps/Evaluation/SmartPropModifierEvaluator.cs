@@ -17,7 +17,8 @@ internal static class SmartPropModifierEvaluator
         SmartPropEvaluationContext context,
         Matrix4x4 parentTransform,
         Vector4? inheritedTint = null,
-        string? inheritedMaterialGroup = null)
+        string? inheritedMaterialGroup = null,
+        List<EvaluatedSmartPropWidget>? widgets = null)
     {
         var elementId = ReadInt32(element, "m_nElementID");
         var localTransform = Matrix4x4.Identity;
@@ -34,6 +35,12 @@ internal static class SmartPropModifierEvaluator
                 }
 
                 var className = SmartPropClass.Read(modifier);
+                if (widgets is not null && className is "CreateSizer" or "CreateLocator" or "CreateRotator")
+                {
+                    var type = className switch { "CreateSizer" => "sizer", "CreateLocator" => "locator", _ => "rotator" };
+                    var widgetId = modifier.ContainsKey("m_nElementID") ? ReadInt32(modifier, "m_nElementID") : elementId;
+                    widgets.Add(SmartPropEvaluator.CreateWidget(modifier, type, widgetId, localTransform * parentTransform, context));
+                }
                 if (IsFilter(className) && !EvaluateFilter(modifier, className, context, elementId))
                 {
                     return new SmartPropModifierResult(localTransform, parentTransform, parentTransform, true, tint, materialGroup);
@@ -247,7 +254,8 @@ internal static class SmartPropModifierEvaluator
             return context.ResolveVector3(vectorScale, Vector3.One);
         }
 
-        if (element.TryGetValue("m_flModelScale", out var uniformScale))
+        if (element.TryGetValue("m_flUniformModelScale", out var uniformScale)
+            || element.TryGetValue("m_flModelScale", out uniformScale))
         {
             return new Vector3(context.ResolveScalar(uniformScale, 1f));
         }

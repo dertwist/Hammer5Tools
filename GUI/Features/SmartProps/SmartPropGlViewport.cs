@@ -24,6 +24,10 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
     private readonly HashSet<Key> keys = [];
     private IReadOnlyList<ViewportInstance> instances = [];
     private GlSceneRenderer? renderer;
+    private VrfSceneRenderer? vrfRenderer;
+    private string gameDirectory = "";
+    private string addon = "";
+    private bool resourceContextChanged;
     private Point? drag;
     private Point press;
     private bool fly;
@@ -41,6 +45,7 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
     public int MeshCount => instances.Count(instance => instance.Geometry is not null);
     internal Vector3 CameraPosition => camera.Position;
     public bool IsRendererReady => renderer is not null;
+    internal bool IsUsingVrf => vrfRenderer is not null;
 
     public SmartPropGlViewport()
     {
@@ -116,6 +121,18 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
         }
     }
 
+    public void SetResourceContext(string game, string activeAddon)
+    {
+        if (gameDirectory == game && addon == activeAddon)
+        {
+            return;
+        }
+        gameDirectory = game;
+        addon = activeAddon;
+        resourceContextChanged = true;
+        sceneChanged = true;
+    }
+
     public void ClearScene() => SetScene([]);
 
     public void FrameScene()
@@ -137,6 +154,7 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
         try
         {
             renderer = new GlSceneRenderer(gl, GlVersion.Type == GlProfileType.OpenGLES);
+            resourceContextChanged = true;
             sceneChanged = true;
         }
         catch (Exception exception)
@@ -154,15 +172,43 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
         }
         try
         {
+            if (resourceContextChanged)
+            {
+                vrfRenderer?.Dispose();
+                vrfRenderer = null;
+                if (VrfSceneRenderer.IsSupported(GlVersion) && !string.IsNullOrWhiteSpace(gameDirectory))
+                {
+                    renderer.SetScene([]);
+                    vrfRenderer = new VrfSceneRenderer(gl, gameDirectory, addon);
+                    vrfRenderer.ElementPicked += element => ElementClicked?.Invoke(element);
+                }
+                resourceContextChanged = false;
+            }
             if (sceneChanged)
             {
-                renderer.SetScene(instances);
+                if (vrfRenderer is not null)
+                {
+                    vrfRenderer.SetScene(instances);
+                }
+                else
+                {
+                    renderer.SetScene(instances);
+                }
                 sceneChanged = false;
             }
             var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
             var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * scaling));
             var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * scaling));
-            renderer.Render(fb, width, height, camera, shadingMode, showGrid, gridStep, selectedElementId);
+            if (vrfRenderer is not null)
+            {
+                var background = ((ISolidColorBrush)Application.Current!.Resources["H5TBackgroundBrush"]!).Color;
+                vrfRenderer.Render(fb, width, height, camera, shadingMode, showGrid, gridStep, selectedElementId,
+                    new OpenTK.Mathematics.Color4(background.R / 255f, background.G / 255f, background.B / 255f, 1));
+            }
+            else
+            {
+                renderer.Render(fb, width, height, camera, shadingMode, showGrid, gridStep, selectedElementId);
+            }
             if (capture is { } request)
             {
                 renderer.Capture(request.Path, width, height);
@@ -180,13 +226,18 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
 
     protected override void OnOpenGlDeinit(GlInterface gl)
     {
+        vrfRenderer?.Dispose();
+        vrfRenderer = null;
         renderer?.Dispose();
         renderer = null;
+        resourceContextChanged = true;
         flyTimer.Stop();
     }
 
     protected override void OnOpenGlLost()
     {
+        vrfRenderer = null;
+        resourceContextChanged = true;
         renderer = null;
         sceneChanged = true;
         flyTimer.Stop();
@@ -238,10 +289,19 @@ public sealed class SmartPropGlViewport : OpenGlControlBase
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        if (e.InitialPressMouseButton == MouseButton.Left && Math.Abs(e.GetPosition(this).X - press.X) + Math.Abs(e.GetPosition(this).Y - press.Y) < 4
-            && camera.Pick(e.GetPosition(this), Bounds.Size, instances) is { } element)
+        if (e.InitialPressMouseButton == MouseButton.Left && Math.Abs(e.GetPosition(this).X - press.X) + Math.Abs(e.GetPosition(this).Y - press.Y) < 4)
         {
-            ElementClicked?.Invoke(element);
+            if (vrfRenderer is not null)
+            {
+                var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+                var point = e.GetPosition(this);
+                vrfRenderer.RequestPick(Math.Max(0, (int)(point.X * scaling)), Math.Max(1, (int)(point.Y * scaling)));
+                RequestNextFrameRendering();
+            }
+            else if (camera.Pick(e.GetPosition(this), Bounds.Size, instances) is { } element)
+            {
+                ElementClicked?.Invoke(element);
+            }
         }
         StopNavigation();
         e.Pointer.Capture(null);

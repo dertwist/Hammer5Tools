@@ -1,4 +1,5 @@
-using System.Text.Json.Nodes;
+using Hammer5Tools.Core.Format.SmartProps.Evaluation;
+using ValveKeyValue;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
 
@@ -6,48 +7,8 @@ namespace Hammer5Tools.Core.Format.SmartProps;
 /// Resolves the SmartProp material and tint operations, which VRF's evaluator either ignores
 /// outright or handles only partially.
 /// </summary>
-/// <remarks>
-/// VRF reads <c>CSmartPropOperation_SetTintColor</c>'s <c>m_ColorChoices</c> but not its
-/// <c>m_SelectionMode</c>, <c>m_ColorSelection</c> or <c>m_Mode</c>, so a document that picks a
-/// specific swatch by variable, or multiplies rather than replaces, previewed with the wrong
-/// colour. It has no notion of <c>MaterialTint</c> or <c>MaterialOverride</c> at all. This pass
-/// re-derives all three by walking the document itself and inheriting each element's operations
-/// down to the models beneath it, exactly as the modifier stack does, then rewrites the affected
-/// placements. It runs last, after the multiplicity passes, so cloned placements pick up the same
-/// state as the model they were cloned from.
-///
-/// Material names are matched by path, so an operation whose <c>m_Material</c> (or replacement
-/// pair) is a variable reference rather than a literal string is skipped: resolving a *string*
-/// variable is not something <see cref="SmartPropContext"/> can do — it carries scalars and
-/// vectors only.
-/// </remarks>
 internal static class SmartPropMaterialEvaluator
 {
-    public static IReadOnlyList<EvaluatedSmartPropModel> ApplyMaterialOperations(
-        string json,
-        IReadOnlyList<EvaluatedSmartPropModel> models,
-        SmartPropEvaluationOptions options)
-    {
-        if (models.Count == 0 || JsonNode.Parse(json) is not JsonObject root)
-            return models;
-
-        var context = SmartPropWidgetEvaluator.CreateContext(root);
-        var states = new Dictionary<int, MaterialState>();
-        Collect(root, MaterialState.Empty, context, states, options);
-        if (states.Count == 0)
-            return models;
-
-        var corrected = new List<EvaluatedSmartPropModel>(models.Count);
-        foreach (var model in models)
-        {
-            options.CancellationToken.ThrowIfCancellationRequested();
-            corrected.Add(ResolveState(states, model.ElementId) is { IsEmpty: false } state
-                ? state.ApplyTo(model)
-                : model);
-        }
-        return corrected;
-    }
-
     /// <summary>
     /// Lowercases a material path and normalizes its separators so an authored
     /// <c>m_Material</c> can be compared against the path a compiled model reports for its
@@ -62,59 +23,18 @@ internal static class SmartPropMaterialEvaluator
         return normalized.ToLowerInvariant();
     }
 
-    /// <summary>
-    /// Finds the state authored for a placement, falling back to the element it was cloned from.
-    /// The multiplicity passes number their copies <c>id + k * stride</c>, and a copy inherits the
-    /// original's materials.
-    /// </summary>
-    private static MaterialState? ResolveState(Dictionary<int, MaterialState> states, int elementId)
-    {
-        if (states.TryGetValue(elementId, out var state))
-            return state;
-        var originalId = (int)(elementId % SmartPropWidgetEvaluator.ElementIdStride);
-        return states.TryGetValue(originalId, out state) ? state : null;
-    }
-
-    private static void Collect(
-        JsonNode? node,
-        MaterialState inherited,
-        SmartPropContext context,
-        Dictionary<int, MaterialState> states,
-        SmartPropEvaluationOptions options)
-    {
-        options.CancellationToken.ThrowIfCancellationRequested();
-
-        if (node is JsonArray array)
-        {
-            foreach (var item in array)
-                Collect(item, inherited, context, states, options);
-            return;
-        }
-
-        if (node is not JsonObject obj)
-            return;
-
-        var state = Fold(inherited, obj, context);
-        var className = SmartPropWidgetEvaluator.ReadString(obj, "_class");
-        if (SmartPropWidgetEvaluator.IsModelClass(className) && !state.IsEmpty)
-            states[SmartPropWidgetEvaluator.ReadInt32(obj, "m_nElementID")] = state;
-
-        foreach (var property in obj)
-            Collect(property.Value, state, context, states, options);
-    }
-
     /// <summary>Folds one element's own enabled material modifiers onto the inherited state.</summary>
-    private static MaterialState Fold(MaterialState state, JsonObject node, SmartPropContext context)
+    internal static MaterialState Fold(MaterialState state, KVObject node, SmartPropEvaluationContext context)
     {
-        if (node["m_Modifiers"] is not JsonArray modifiers)
+        if (!node.TryGetValue("m_Modifiers", out var modifiers) || !modifiers.IsArray)
             return state;
 
-        foreach (var modifier in modifiers.OfType<JsonObject>())
+        foreach (var modifier in modifiers.AsArraySpan())
         {
             if (!IsEnabled(modifier, context))
                 continue;
 
-            var className = SmartPropWidgetEvaluator.ReadString(modifier, "_class");
+            var className = SmartPropClass.Read(modifier);
             if (IsOperation(className, "SetTintColor"))
                 state = state with { Tint = ResolveTint(modifier, context, state.Tint) };
             else if (IsOperation(className, "MaterialTint"))
@@ -133,14 +53,14 @@ internal static class SmartPropMaterialEvaluator
     /// <c>m_bEnabled</c> is not always a literal: real documents gate a modifier on an expression
     /// or a variable, so it is resolved rather than read.
     /// </summary>
-    private static bool IsEnabled(JsonObject node, SmartPropContext context)
-        => node["m_bEnabled"] is not { } enabled
-            || SmartPropWidgetEvaluator.ResolveScalar(enabled, context, 1f) != 0f;
+    private static bool IsEnabled(KVObject node, SmartPropEvaluationContext context)
+        => ReadValue(node, "m_bEnabled") is not { } enabled
+            || context.ResolveScalar(enabled, 1f) != 0f;
 
-    private static Vector4 ResolveTint(JsonObject modifier, SmartPropContext context, Vector4 current)
+    private static Vector4 ResolveTint(KVObject modifier, SmartPropEvaluationContext context, Vector4 current)
     {
         var color = SelectColor(modifier, context);
-        return SmartPropWidgetEvaluator.ReadString(modifier, "m_Mode", "MULTIPLY_OBJECT") switch
+        return ReadString(modifier, "m_Mode", "MULTIPLY_OBJECT") switch
         {
             "REPLACE" => color,
             "MULTIPLY_CURRENT" => current * color,
@@ -151,31 +71,31 @@ internal static class SmartPropMaterialEvaluator
         };
     }
 
-    private static Vector4 SelectColor(JsonObject modifier, SmartPropContext context)
+    private static Vector4 SelectColor(KVObject modifier, SmartPropEvaluationContext context)
     {
-        if (modifier["m_ColorChoices"] is not JsonArray choices || choices.Count == 0)
+        if (!modifier.TryGetValue("m_ColorChoices", out var choices) || !choices.IsArray || choices.AsArraySpan().Length == 0)
             return Vector4.One;
 
-        var index = SmartPropWidgetEvaluator.ReadString(modifier, "m_SelectionMode", "RANDOM") switch
+        var index = ReadString(modifier, "m_SelectionMode", "RANDOM") switch
         {
-            "SPECIFIC" => (int)SmartPropWidgetEvaluator.ResolveScalar(modifier["m_ColorSelection"], context),
-            _ => (int)(Salt(SmartPropWidgetEvaluator.ReadInt32(modifier, "m_nElementID")) % (uint)choices.Count),
+            "SPECIFIC" => (int)context.ResolveScalar(ReadValue(modifier, "m_ColorSelection")),
+            _ => (int)(Salt((int)context.ResolveScalar(ReadValue(modifier, "m_nElementID"))) % (uint)choices.AsArraySpan().Length),
         };
 
-        var choice = choices[Math.Clamp(index, 0, choices.Count - 1)] as JsonObject;
-        return new(SmartPropWidgetEvaluator.ResolveColor(choice?["m_Color"], context, Vector3.One), 1f);
+        var choice = choices.AsArraySpan()[Math.Clamp(index, 0, choices.AsArraySpan().Length - 1)];
+        return new(ResolveColor(ReadValue(choice, "m_Color"), context, Vector3.One), 1f);
     }
 
-    private static MaterialState ApplyMaterialTint(MaterialState state, JsonObject modifier, SmartPropContext context)
+    private static MaterialState ApplyMaterialTint(MaterialState state, KVObject modifier, SmartPropEvaluationContext context)
     {
-        var material = SmartPropWidgetEvaluator.ReadString(modifier, "m_Material");
+        var material = ReadString(modifier, "m_Material");
         if (material.Length == 0)
             return state;
 
         // Only SPECIFIC_COLOR is resolvable: the gradient selection modes read a colour ramp
         // whose authored shape this editor does not model, and m_Color is the one field every
         // mode carries.
-        var color = SmartPropWidgetEvaluator.ResolveColor(modifier["m_Color"], context, Vector3.One);
+        var color = ResolveColor(ReadValue(modifier, "m_Color"), context, Vector3.One);
         return state with
         {
             MaterialTints = [.. state.MaterialTints,
@@ -183,20 +103,20 @@ internal static class SmartPropMaterialEvaluator
         };
     }
 
-    private static MaterialState ApplyMaterialOverride(MaterialState state, JsonObject modifier)
+    private static MaterialState ApplyMaterialOverride(MaterialState state, KVObject modifier)
     {
-        var cleared = modifier["m_bClearCurrentOverrides"] is JsonValue clear
-            && clear.TryGetValue<bool>(out var value) && value;
+        var cleared = modifier.TryGetValue("m_bClearCurrentOverrides", out var clear)
+            && clear.ValueType == KVValueType.Boolean && (bool)clear;
         var overrides = cleared
             ? new List<EvaluatedSmartPropMaterialReplacement>()
             : [.. state.MaterialOverrides];
 
-        if (modifier["m_MaterialReplacements"] is JsonArray replacements)
+        if (modifier.TryGetValue("m_MaterialReplacements", out var replacements) && replacements.IsArray)
         {
-            foreach (var replacement in replacements.OfType<JsonObject>())
+            foreach (var replacement in replacements.AsArraySpan())
             {
-                var original = SmartPropWidgetEvaluator.ReadString(replacement, "m_OriginalMaterial");
-                var target = SmartPropWidgetEvaluator.ReadString(replacement, "m_ReplacementMaterial");
+                var original = ReadString(replacement, "m_OriginalMaterial");
+                var target = ReadString(replacement, "m_ReplacementMaterial");
                 if (original.Length == 0 || target.Length == 0)
                     continue;
                 overrides.Add(new(NormalizeMaterialName(original), NormalizeMaterialName(target)));
@@ -206,11 +126,27 @@ internal static class SmartPropMaterialEvaluator
         return state with { MaterialOverrides = overrides };
     }
 
-    /// <summary>One LCG step, matching <see cref="SmartPropContext"/>'s own generator, so a
+    private static KVObject? ReadValue(KVObject node, string name)
+        => node.TryGetValue(name, out var value) ? value : null;
+
+    private static string ReadString(KVObject node, string name, string fallback = "")
+        => node.TryGetValue(name, out var value) && value.ValueType == KVValueType.String ? (string)value : fallback;
+
+    private static Vector3 ResolveColor(KVObject? value, SmartPropEvaluationContext context, Vector3 fallback)
+    {
+        var color = context.ResolveVector3(value, fallback);
+        if (color.X > 1f || color.Y > 1f || color.Z > 1f)
+        {
+            color /= 255f;
+        }
+        return Vector3.Clamp(color, Vector3.Zero, Vector3.One);
+    }
+
+    /// <summary>One LCG step, retaining the legacy preview generator, so a
     /// RANDOM swatch pick is stable for an element instead of changing on every redraw.</summary>
     private static uint Salt(int elementId) => ((uint)elementId * 1_664_525u) + 1_013_904_223u;
 
-    private sealed record MaterialState(
+    internal sealed record MaterialState(
         Vector4 Tint,
         IReadOnlyList<EvaluatedSmartPropMaterialTint> MaterialTints,
         List<EvaluatedSmartPropMaterialReplacement> MaterialOverrides)

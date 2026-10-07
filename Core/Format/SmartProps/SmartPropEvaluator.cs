@@ -29,8 +29,7 @@ public static class SmartPropEvaluator
         {
             var root = SmartPropJsonConverter.Convert(json);
             var result = Evaluate(root, null, options);
-            var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, null, options) };
-            return withWidgets with { Models = ApplyCorrectionPasses(json, null, withWidgets.Models, options) };
+            return result;
         }
         catch (JsonException exception)
         {
@@ -67,11 +66,7 @@ public static class SmartPropEvaluator
                 SmartPropJsonConverter.Convert(json),
                 path => nestedDocuments.GetValueOrDefault(NormalizeResourcePath(path)),
                 options);
-            var withWidgets = result with { Widgets = SmartPropWidgetEvaluator.EvaluateJson(json, nestedDocumentsJson, options) };
-            return withWidgets with
-            {
-                Models = ApplyCorrectionPasses(json, nestedDocumentsJson, withWidgets.Models, options),
-            };
+            return result;
         }
         catch (JsonException exception)
         {
@@ -129,21 +124,16 @@ public static class SmartPropEvaluator
                     return nestedPropResolver(path);
                 };
             SmartPropSizerVariableEvaluator.SeedSizerVariableDefaults(root);
-            var result = SmartPropEvaluation.Evaluate(root, cancellableResolver, options.MaximumDepth);
+            var result = SmartPropEvaluation.Evaluate(root, cancellableResolver, options.MaximumDepth, options.MaximumModels, options.CancellationToken);
             options.CancellationToken.ThrowIfCancellationRequested();
-            var models = result.Models.Take(options.MaximumModels).Select(model => new EvaluatedSmartPropModel(
-                model.ElementId,
-                model.ModelName,
-                model.Transform,
-                model.MaterialGroup,
-                model.TintColor)).ToArray();
+            var models = result.Models.Take(options.MaximumModels).ToArray();
             var diagnostics = result.Models.Count > options.MaximumModels
                 ? new[] { new CoreDiagnostic(
                     CoreDiagnosticSeverity.Error,
                     "smartprop.model_limit_reached",
                     $"Evaluation produced more than {options.MaximumModels} model placements.") }
                 : [];
-            return new SmartPropEvaluationResult(models, [], diagnostics);
+            return new SmartPropEvaluationResult(models, result.Widgets, diagnostics);
         }
         catch (OperationCanceledException)
         {
@@ -159,28 +149,6 @@ public static class SmartPropEvaluator
                 "smartprop.evaluation_failed",
                 exception.Message)]);
         }
-    }
-
-    /// <summary>
-    /// Runs the correction passes that patch elements VRF's evaluator treats as transparent
-    /// pass-throughs — see each pass's own remarks for what it fixes and why.
-    /// </summary>
-    private static IReadOnlyList<EvaluatedSmartPropModel> ApplyCorrectionPasses(
-        string json,
-        string? nestedDocumentsJson,
-        IReadOnlyList<EvaluatedSmartPropModel> models,
-        SmartPropEvaluationOptions options)
-    {
-        models = SmartPropBendDeformerEvaluator.ApplyBendDeformers(json, nestedDocumentsJson, models, options);
-        models = SmartPropMidpointDeformerEvaluator.ApplyMidpointDeformers(json, nestedDocumentsJson, models, options);
-        models = SmartPropLayout2DGridEvaluator.ApplyGrids(json, nestedDocumentsJson, models, options);
-        models = SmartPropFitOnLineEvaluator.ApplyFitOnLine(json, nestedDocumentsJson, models, options);
-        models = SmartPropPlaceInSphereEvaluator.ApplyPlaceInSphere(json, nestedDocumentsJson, models, options);
-        models = SmartPropPlaceMultipleEvaluator.ApplyPlaceMultiple(json, nestedDocumentsJson, models, options);
-        // Last: the material pass reads placements back by element id, and the multiplicity
-        // passes above are what create the cloned ids it has to resolve.
-        models = SmartPropMaterialEvaluator.ApplyMaterialOperations(json, models, options);
-        return models;
     }
 
     private static Dictionary<string, ValveKeyValue.KVObject> ReadNestedDocuments(string json)

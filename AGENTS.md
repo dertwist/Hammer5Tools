@@ -292,3 +292,12 @@ legacy tangent evaluation; App owns graph interaction and point presentation. Or
 are linked into `Assets/LegacyIcons`; `Controls/LegacyIcon` displays PNG/SVG assets.
 
 Managed update notes load published GitHub release history independently of Velopack installation status through `IUpdateService.LoadReleaseNotesAsync`. App owns the scrollable notes presentation, channel filtering and download progress; notes failures do not prevent package updates or recovery.
+
+SmartProp traversal now owns multiplicity, widgets, inherited material operations
+and deformer application in the shared evaluator. Placements retain authored
+IDs; do not manufacture IDs for repeated instances or reintroduce probe documents.
+The public JSON contracts remain for legacy/NativeAOT and editor compatibility.
+Managed SmartProp GPU rendering uses the matching VRF Renderer NuGet package on
+desktop OpenGL 4.6; Core `IO/SmartPropRenderFiles` owns game/addon mounts. Retain the
+compatibility renderer for older GL/GLES until supported-GPU parity is verified.
+Renderer provenance and limitations live in `Misc/Source2Viewer/RENDERER.md`.

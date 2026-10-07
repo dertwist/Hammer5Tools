@@ -36,6 +36,7 @@
 
     <!-- Source 2 & Valve formats -->
     <PackageVersion Include="ValveResourceFormat" Version="20.0.6980" />
+    <PackageVersion Include="ValveResourceFormat.Renderer" Version="20.0.6980" />
     <PackageVersion Include="ValvePak" Version="5.0.2.177" />
     <PackageVersion Include="ValveKeyValue" Version="0.71.0.528" />
     <PackageVersion Include="KeyValues2" Version="1.0.0" />

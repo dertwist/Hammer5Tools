@@ -1,23 +1,11 @@
-using System.Linq;
-
 using ValveKeyValue;
 
 namespace Hammer5Tools.Core.Format.SmartProps.Evaluation;
 
 /// <summary>
-/// Describes one model produced by SmartProp evaluation.
-/// </summary>
-internal readonly record struct EvaluatedSmartPropModel(
-    int ElementId,
-    string ModelName,
-    Matrix4x4 Transform,
-    string? MaterialGroup,
-    Vector4? TintColor);
-
-/// <summary>
 /// Contains the models produced by SmartProp evaluation.
 /// </summary>
-internal sealed record EvaluatedSmartProp(IReadOnlyList<EvaluatedSmartPropModel> Models);
+internal sealed record EvaluatedSmartProp(IReadOnlyList<EvaluatedSmartPropModel> Models, IReadOnlyList<EvaluatedSmartPropWidget> Widgets);
 
 /// <summary>
 /// Evaluates SmartProp element data without renderer dependencies.
@@ -30,18 +18,14 @@ internal static class SmartPropEvaluation
     public static EvaluatedSmartProp Evaluate(
         KVObject root,
         Func<string, KVObject?>? nestedPropResolver = null,
-        int maxDepth = SmartPropEvaluator.DefaultMaxDepth)
+        int maxDepth = SmartPropEvaluator.DefaultMaxDepth,
+        int maxModels = SmartPropEvaluator.DefaultMaxModels,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxDepth);
 
-        var result = SmartPropEvaluator.Evaluate(root, nestedPropResolver: nestedPropResolver, maxDepth: maxDepth);
-        var models = result.Models.Select(model => new EvaluatedSmartPropModel(
-            model.ElementId,
-            model.ModelName,
-            model.Transform,
-            model.MaterialGroup,
-            model.TintColor)).ToArray();
-        return new EvaluatedSmartProp(models);
+        var result = SmartPropEvaluator.Evaluate(root, nestedPropResolver: nestedPropResolver, maxDepth: maxDepth, maxModels: maxModels, cancellationToken: cancellationToken);
+        return new EvaluatedSmartProp(result.Models, result.Widgets);
     }
 }

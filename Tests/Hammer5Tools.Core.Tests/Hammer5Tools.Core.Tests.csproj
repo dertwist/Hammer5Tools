@@ -10,6 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="../../Presets/SmartPropEditor/Presets/**/*.vsmart" Link="Fixtures/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../Hammer5Tools.NativeAot.Tests/SmartProps/SmartPropEvaluatorTests.cs" Link="SmartProps/SmartPropEvaluatorTests.cs" />
     <PackageReference Include="TUnit" />
   </ItemGroup>
 

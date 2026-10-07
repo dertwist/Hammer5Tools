@@ -15,9 +15,17 @@ using Hammer5Tools.SmartProp.Tests;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-if (args.Length > 0 && args[0] is "--gpu" or "--main-gpu")
+if (args.Length > 0 && args[0] is "--gpu" or "--main-gpu" or "--vrf-gpu")
 {
     var nativeApp = args[0] == "--main-gpu" ? AppBuilder.Configure<IntegratedGpuApp>() : AppBuilder.Configure<App>();
+    if (args[0] == "--vrf-gpu")
+    {
+        nativeApp.With(new Win32PlatformOptions
+        {
+            RenderingMode = [Win32RenderingMode.Wgl, Win32RenderingMode.Software],
+            WglProfiles = [new Avalonia.OpenGL.GlVersion(Avalonia.OpenGL.GlProfileType.OpenGL, 4, 6)],
+        });
+    }
     nativeApp.UsePlatformDetect().AfterSetup(_ => Dispatcher.UIThread.Post(async () =>
     {
         var lifetime = (IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!;
@@ -38,6 +46,10 @@ if (args.Length > 0 && args[0] is "--gpu" or "--main-gpu")
             if (!gpu.IsRendererReady || gpu.MeshCount != 10)
             {
                 throw new InvalidOperationException($"{editor.FindControl<TextBlock>("Status")!.Text}\n{editor.PreviewDiagnostics}");
+            }
+            if (args[0] == "--vrf-gpu" && !gpu.IsUsingVrf)
+            {
+                throw new InvalidOperationException("VRF GPU validation requires a desktop OpenGL 4.6 context and a CS2 mount.");
             }
             var capturePath = args.Length > 1 ? args[1] : Path.Combine(Path.GetTempPath(), "h5t-cargovan-textured.png");
             var viewportPoint = gpu.TranslatePoint(new Point(gpu.Bounds.Width / 2, gpu.Bounds.Height / 2), desktopWindow)!.Value;

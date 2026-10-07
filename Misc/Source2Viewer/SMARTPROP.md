@@ -13,8 +13,10 @@ adapted from the same revision's SmartProp tests, excluding map integration.
 
 Adaptations use the Core namespace, file-scoped namespaces, internal visibility
 and project formatting. The managed and NativeAOT projects compile the same
-evaluator sources. Existing Core adapters still own cancellation, limits,
-diagnostics, widgets and correction passes. Evaluation behavior is retained.
+evaluator sources. Traversal now owns multiplicity, widget emission, inherited materials and
+deformer application, including cancellation and bounded model generation.
+Models and widgets retain authored element IDs. Core adapters retain the
+public JSON/KV3 contracts and diagnostic shaping.
 
 ValveResourceFormat parsing uses NuGet version `20.0.6980`; evaluation no longer
 requires a custom ValveResourceFormat DLL. The upstream license is included in
