@@ -54,8 +54,10 @@ internal static class EditorMenus
                 editorMenu = ("Loading Screens",
                 [
                     new("Refresh screenshots", loading.RefreshScreenshotsCommand),
-                    new("Capture screenshot", loading.CaptureScreenshotCommand),
-                    new("Generate loading screen", loading.GenerateLoadingScreenCommand),
+                    new("Take history screenshots", loading.CaptureHistoryShotsCommand),
+                    new("Take loading screen screenshots", loading.CaptureScreenshotCommand),
+                    new("Set loading images", loading.GenerateLoadingScreenCommand),
+                    new("Create animations", loading.ExportAnimationsCommand),
                     new("Refresh cameras", loading.RefreshCamerasCommand),
                     new("Browse map icon...", loading.BrowseIconCommand),
                     new("Apply map icon", loading.ApplyIconCommand),

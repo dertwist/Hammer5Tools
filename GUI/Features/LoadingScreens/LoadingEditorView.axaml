@@ -1,51 +1,179 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Hammer5Tools.App.Features.LoadingScreens" xmlns:m="using:Hammer5Tools.Core.LoadingScreens"
+             xmlns:vm="using:Hammer5Tools.App.Features.LoadingScreens"
              xmlns:workspace="using:Hammer5Tools.App.Controls"
              x:Class="Hammer5Tools.App.Features.LoadingScreens.LoadingEditorView" x:DataType="vm:LoadingEditorViewModel">
-  <workspace:WorkspaceView LayoutKey="LoadingScreens" LeftTitle="Screenshots" RightTitle="Map icon" RightBottomTitle="Description">
+  <workspace:WorkspaceView LayoutKey="LoadingScreens" LeftTitle="Screenshots" RightTitle="Icon" RightBottomTitle="Description">
     <workspace:WorkspaceView.LeftContent>
-      <Grid RowDefinitions="*,Auto,Auto,Auto" Margin="8">
-        <TabControl>
+      <Grid RowDefinitions="*,Auto,Auto" Margin="4" RowSpacing="4">
+        <TabControl Classes="loading-tabs">
           <TabItem Header="Explorer">
-            <Grid RowDefinitions="Auto,*">
-              <Button Content="Refresh" Command="{Binding RefreshScreenshotsCommand}" HorizontalAlignment="Left" />
-              <ListBox Grid.Row="1" ItemsSource="{Binding Screenshots}" SelectedItem="{Binding SelectedImagePath}" />
+            <Grid RowDefinitions="*,*" RowSpacing="4">
+              <Expander Header="LoadingShots  &#x1F4C2;" IsExpanded="True" Classes="loading-section">
+                <Grid RowDefinitions="Auto,*">
+                  <Border Classes="loading-header"><TextBlock Text="Name" Margin="22,4" /></Border>
+                  <TreeView Grid.Row="1" x:Name="LoadingShotsTree" ItemsSource="{Binding LoadingShotItems}" SelectedItem="{Binding SelectedExplorerItem}" Classes="loading-tree" DragDrop.AllowDrop="True">
+                  <TreeView.ContextMenu>
+                    <ContextMenu x:DataType="vm:LoadingEditorViewModel" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                      <MenuItem Header="Open Folder" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding SelectedExplorerItem.FullPath}" />
+                      <MenuItem Header="Remove Image or Folder" Command="{Binding RemoveItemCommand}" CommandParameter="{Binding SelectedExplorerItem}" />
+                    </ContextMenu>
+                  </TreeView.ContextMenu>
+                  <TreeView.ItemTemplate>
+                    <TreeDataTemplate DataType="{x:Type vm:LoadingTreeItem}" ItemsSource="{Binding Children}">
+                      <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                        <Image Source="{Binding Thumbnail}" Width="32" Height="22" Stretch="UniformToFill" IsVisible="{Binding IsImage}" />
+                        <TextBlock Text="&#x1F4C1;" IsVisible="{Binding !IsImage}" Foreground="{DynamicResource H5TTextMutedBrush}" />
+                        <TextBlock Text="{Binding Name}" />
+                      </StackPanel>
+                    </TreeDataTemplate>
+                  </TreeView.ItemTemplate>
+                </TreeView>
+                </Grid>
+              </Expander>
+              <Expander Grid.Row="1" Header="History  &#x1F4C2;" IsExpanded="True" Classes="loading-section">
+                <Grid RowDefinitions="Auto,*">
+                  <Border Classes="loading-header"><TextBlock Text="Name" Margin="22,4" /></Border>
+                  <TreeView Grid.Row="1" x:Name="HistoryTree" ItemsSource="{Binding HistoryItems}" SelectedItem="{Binding SelectedExplorerItem}" Classes="loading-tree" DragDrop.AllowDrop="True">
+                  <TreeView.ContextMenu>
+                    <ContextMenu x:DataType="vm:LoadingEditorViewModel" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                      <MenuItem Header="Open Folder" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding SelectedExplorerItem.FullPath}" />
+                      <MenuItem Header="Remove Image or Folder" Command="{Binding RemoveItemCommand}" CommandParameter="{Binding SelectedExplorerItem}" />
+                    </ContextMenu>
+                  </TreeView.ContextMenu>
+                  <TreeView.ItemTemplate>
+                    <TreeDataTemplate DataType="{x:Type vm:LoadingTreeItem}" ItemsSource="{Binding Children}">
+                      <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                        <Image Source="{Binding Thumbnail}" Width="32" Height="22" Stretch="UniformToFill" IsVisible="{Binding IsImage}" />
+                        <TextBlock Text="&#x1F4C1;" IsVisible="{Binding !IsImage}" Foreground="{DynamicResource H5TTextMutedBrush}" />
+                        <TextBlock Text="{Binding Name}" />
+                      </StackPanel>
+                    </TreeDataTemplate>
+                  </TreeView.ItemTemplate>
+                </TreeView>
+                </Grid>
+              </Expander>
             </Grid>
           </TabItem>
           <TabItem Header="Timeline">
-            <Grid RowDefinitions="Auto,*">
-              <Button Content="Refresh cameras" Command="{Binding RefreshCamerasCommand}" HorizontalAlignment="Left" />
-              <ListBox Grid.Row="1" ItemsSource="{Binding Cameras}" SelectedItem="{Binding SelectedCamera}">
-                <ListBox.ItemTemplate><DataTemplate x:DataType="m:CameraInfo"><TextBlock Text="{Binding Name}" /></DataTemplate></ListBox.ItemTemplate>
-              </ListBox>
+            <Grid RowDefinitions="Auto,*" RowSpacing="4">
+              <Grid ColumnDefinitions="Auto,*,*,Auto" ColumnSpacing="4">
+                <Button Content="Refresh" Command="{Binding RefreshScreenshotsCommand}" Classes="loading-action" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding AnimationFormats}" SelectedItem="{Binding SelectedFormat}" />
+                <ComboBox Grid.Column="2" ItemsSource="{Binding AnimationQualities}" SelectedItem="{Binding SelectedQuality}" />
+                <Button Grid.Column="3" Content="▶ Create animation" Command="{Binding ExportAnimationsCommand}" Classes="loading-action" />
+              </Grid>
+              <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                  <Border Classes="loading-header"><TextBlock Text="Timeline" Margin="4" /></Border>
+                  <TreeView Grid.Row="1" x:Name="TimelineTree" ItemsSource="{Binding TimelineItems}" SelectedItem="{Binding SelectedTimelineItem}" Classes="loading-tree">
+                <TreeView.ContextMenu>
+                  <ContextMenu x:DataType="vm:LoadingEditorViewModel" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="Open Folder" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding SelectedTimelineItem.FullPath}" />
+                    <MenuItem Header="Export Animation..." Command="{Binding ExportCameraAnimationCommand}" CommandParameter="{Binding SelectedTimelineItem}" />
+                  </ContextMenu>
+                </TreeView.ContextMenu>
+                <TreeView.ItemTemplate>
+                  <TreeDataTemplate DataType="{x:Type vm:LoadingTreeItem}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="2">
+                      <Image Source="{Binding Thumbnail}" Width="32" Height="22" Stretch="UniformToFill" IsVisible="{Binding IsImage}" />
+                      <TextBlock Text="&#x1F4C1;" IsVisible="{Binding !IsImage}" Foreground="{DynamicResource H5TTextMutedBrush}" />
+                      <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                  </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+              </TreeView>
+                </Grid>
             </Grid>
           </TabItem>
         </TabControl>
-        <Button Grid.Row="1" Content="Take loading screen shot" Command="{Binding CaptureScreenshotCommand}" Margin="0,6" />
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto"><TextBox Text="{Binding SelectedImagePath}" PlaceholderText="Screenshot path" /><Button Grid.Column="1" Content="Browse" Command="{Binding BrowseImageCommand}" /></Grid>
-        <Button Grid.Row="3" Content="Apply screenshots" Command="{Binding GenerateLoadingScreenCommand}" Margin="0,6" />
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="4">
+          <Button Content="◷ Take History Shots" Command="{Binding CaptureHistoryShotsCommand}" Classes="loading-action" />
+          <Button Grid.Column="1" Content="▧ Take Loading Screen Shots" Command="{Binding CaptureScreenshotCommand}" Classes="loading-action" />
+        </Grid>
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="4">
+          <CheckBox Content="Delete existing" IsChecked="{Binding DeleteExisting}" VerticalAlignment="Center" />
+          <CheckBox Grid.Column="1" Content="Camera Name" IsChecked="{Binding IncludeCameraName}" VerticalAlignment="Center" />
+          <Button Grid.Column="2" Content="✓ Set loading images" Command="{Binding GenerateLoadingScreenCommand}" Classes="loading-action" />
+        </Grid>
       </Grid>
     </workspace:WorkspaceView.LeftContent>
+
     <workspace:WorkspaceView.CenterContent>
-      <Grid RowDefinitions="*,Auto" Margin="8">
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"><Image Source="{Binding ImagePreview}" Stretch="Uniform" /></ScrollViewer>
-        <TextBlock Grid.Row="1" Text="{Binding Status}" Margin="0,4" TextWrapping="Wrap" />
+      <Grid RowDefinitions="*,Auto" RowSpacing="4">
+        <Border x:Name="PreviewViewport" Background="{DynamicResource H5TSurfaceBrush}" ClipToBounds="True"
+                ToolTip.Tip="Mouse wheel: zoom � Right drag: pan � Double click: fit">
+          <Grid>
+            <Viewbox x:Name="PreviewScene" Stretch="Uniform" Margin="20" RenderTransformOrigin="0%,0%">
+              <Grid Width="{Binding PreviewWidth}" Height="1080" IsVisible="{Binding ImagePreview, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <Image Source="{Binding ImagePreview}" Stretch="Fill" />
+                <Grid IsVisible="{Binding IsLoadingShotPreview}" Width="302" Height="1012" Margin="0,49,19,19" HorizontalAlignment="Right" VerticalAlignment="Top">
+                  <Border ClipToBounds="True">
+                    <Image Source="{Binding ImagePreview}" Width="{Binding PreviewWidth}" Height="1080" Stretch="Fill"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-49,-19,0">
+                      <Image.Effect><BlurEffect Radius="45" /></Image.Effect>
+                    </Image>
+                  </Border>
+                  <Border Background="#40000000" />
+                  <Canvas>
+                    <Canvas.Styles><Style Selector="TextBlock"><Setter Property="Foreground" Value="#E6E7E9" /><Setter Property="FontFamily" Value="Bahnschrift SemiCondensed, Bahnschrift, Noto Sans" /><Setter Property="FontWeight" Value="Light" /><Setter Property="FontStretch" Value="Condensed" /><Setter Property="LineHeight" Value="18" /></Style></Canvas.Styles>
+                    <Image Source="{Binding MapIconPreview}" Canvas.Left="68" Canvas.Top="0" Width="166" Height="203" Stretch="Uniform" />
+                    <TextBlock Text="{Binding PreviewMapName}" Canvas.Top="195" Width="302" Height="36" LineHeight="36" FontSize="36" FontWeight="SemiBold" TextAlignment="Center" />
+                    <StackPanel Canvas.Top="255" Width="302" Orientation="Horizontal" HorizontalAlignment="Center">
+                      <Grid Width="302">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                          <Image Source="avares://Hammer5Tools/Assets/LoadingScreens/cs2_icon.png" Width="28" Height="29" />
+                          <TextBlock Text="Competitive" LineHeight="29" FontSize="25" FontWeight="Light" />
+                        </StackPanel>
+                      </Grid>
+                    </StackPanel>
+                    <Image Source="avares://Hammer5Tools/Assets/LoadingScreens/divider.png" Canvas.Left="21" Canvas.Top="308" Width="260" Height="2" Stretch="Fill" />
+                    <TextBlock Text="Bomb Scenario Mission" Canvas.Left="43" Canvas.Top="333" FontSize="15" />
+                    <TextBlock Text="Buy new weapons at the beginning&#10;of each round with money earned." Canvas.Left="44" Canvas.Top="370" FontSize="15" Width="240" TextWrapping="Wrap" />
+                    <TextBlock Text="Settings:&#10; - Friendly fire is ON&#10; - Team collision is ON&#10; - Armor and defuse kits are&#10; purchasable" Canvas.Left="45" Canvas.Top="426" FontSize="15" Width="226" TextWrapping="Wrap" />
+                    <TextBlock Text="A community map created by:" Canvas.Left="43" Canvas.Top="535" FontSize="13" />
+                    <TextBlock Text="{Binding PreviewDescription}" Canvas.Left="44" Canvas.Top="557" FontSize="13" Width="226" MaxHeight="350" TextWrapping="Wrap" />
+                    <TextBlock Text="Making friends..." Canvas.Left="21" Canvas.Top="949" FontSize="17" />
+                    <Border Canvas.Left="21" Canvas.Top="987" Width="260" Height="8" Background="#AB000000" />
+                    <Border Canvas.Left="21" Canvas.Top="987" Width="169" Height="8">
+                      <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%"><GradientStop Offset="0" Color="#134F87" /><GradientStop Offset="1" Color="#1AB8E0" /></LinearGradientBrush></Border.Background>
+                    </Border>
+                  </Canvas>
+                </Grid>
+                <TextBlock Text="{Binding PreviewCameraName}" IsVisible="{Binding IsLoadingShotPreview}" Margin="46,1010,0,0" VerticalAlignment="Top" FontFamily="Bahnschrift, Noto Sans" FontSize="42" Foreground="#E6E7E9" />
+              </Grid>
+            </Viewbox>
+            <TextBlock Text="Select an image to preview" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       IsVisible="{Binding ImagePreview, Converter={x:Static ObjectConverters.IsNull}}" Foreground="{DynamicResource H5TTextMutedBrush}" />
+          </Grid>
+        </Border>
+        <TextBlock Grid.Row="1" Text="{Binding Status}" Foreground="{DynamicResource H5TTextMutedBrush}" TextWrapping="Wrap" />
       </Grid>
     </workspace:WorkspaceView.CenterContent>
+
     <workspace:WorkspaceView.RightContent>
-      <StackPanel Spacing="6" Margin="8">
-        <TextBlock Text="Map icon" Classes="section" />
-        <TextBox Text="{Binding MapIconPath}" PlaceholderText="SVG path" />
-        <Button Content="Browse SVG" Command="{Binding BrowseIconCommand}" />
-        <Button Content="Apply icon" Command="{Binding ApplyIconCommand}" />
-      </StackPanel>
+      <Grid RowDefinitions="*,Auto,Auto,Auto" Margin="6" RowSpacing="6">
+        <Border x:Name="IconDropArea" Grid.Row="0" MinHeight="240" ToolTip.Tip="Drop an SVG or double click to browse" BorderBrush="{DynamicResource H5TBorderStrongBrush}"
+                BorderThickness="1" Background="{DynamicResource H5TSurfaceRaisedBrush}" DragDrop.AllowDrop="True">
+          <Grid>
+          <Image Source="{Binding MapIconPreview}" Margin="12" Stretch="Uniform" />
+          <StackPanel IsVisible="{Binding MapIconPreview, Converter={x:Static ObjectConverters.IsNull}}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+            <TextBlock Text="⇧" FontSize="28" HorizontalAlignment="Center" Foreground="{DynamicResource H5TTextMutedBrush}" />
+            <TextBlock Text="{Binding MapIconPreviewText}" TextWrapping="Wrap" MaxWidth="230" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource H5TTextMutedBrush}" />
+          </StackPanel>
+          </Grid>
+        </Border>
+        <TextBlock Grid.Row="1" Text="Tips: Convert text to paths. Avoid rasterized layers." FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource H5TTextMutedBrush}" />
+
+        <CheckBox Grid.Row="2" Content="Fit content to viewbox" IsChecked="{Binding FitIconToViewBox}" />
+        <Button Grid.Row="3" Content="✓ Apply Icon" Command="{Binding ApplyIconCommand}" Classes="loading-action" />
+      </Grid>
     </workspace:WorkspaceView.RightContent>
+
     <workspace:WorkspaceView.RightBottomContent>
-      <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="8">
-        <TextBox Text="{Binding MapTitle}" PlaceholderText="Map title" />
-        <TextBox Grid.Row="1" Text="{Binding Author}" PlaceholderText="Author" Margin="0,6" />
-        <TextBox Grid.Row="2" Text="{Binding Description}" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="Map description and credits" />
-        <Button Grid.Row="3" Content="Apply description" Command="{Binding SaveCommand}" Margin="0,6" />
+      <Grid RowDefinitions="*,Auto" Margin="6" RowSpacing="6">
+        <TextBox Text="{Binding Description}" AcceptsReturn="True" TextWrapping="Wrap" VerticalAlignment="Stretch"
+                 PlaceholderText="A community map created by:" />
+        <Button Grid.Row="1" Content="✓ Apply description" Command="{Binding ApplyDescriptionCommand}" Classes="loading-action" />
       </Grid>
     </workspace:WorkspaceView.RightBottomContent>
   </workspace:WorkspaceView>

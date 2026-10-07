@@ -225,7 +225,7 @@ public class WorkspaceView : UserControl
         };
         if (LeftContent is not null)
         {
-            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, 0.23));
+            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, LayoutKey == "LoadingScreens" ? 0.25 : 0.23));
             main.VisibleDockables.Add(new ProportionalDockSplitter());
         }
 
@@ -233,17 +233,17 @@ public class WorkspaceView : UserControl
         if (RightContent is not null)
         {
             main.VisibleDockables.Add(new ProportionalDockSplitter());
-            var right = CreateToolDock("Right", RightTitle, Alignment.Right, 0.15);
+            var right = CreateToolDock("Right", RightTitle, Alignment.Right, LayoutKey == "LoadingScreens" ? 0.175 : 0.15);
             if (RightBottomContent is null)
             {
                 main.VisibleDockables.Add(right);
             }
             else
             {
-                right.Proportion = 0.5;
+                right.Proportion = LayoutKey == "LoadingScreens" ? 0.65 : 0.5;
                 main.VisibleDockables.Add(new ProportionalDock
                 {
-                    Proportion = 0.15,
+                    Proportion = LayoutKey == "LoadingScreens" ? 0.175 : 0.15,
                     Orientation = Orientation.Vertical,
                     VisibleDockables = Factory.CreateList<IDockable>(right, new ProportionalDockSplitter(),
                         CreateToolDock("RightBottom", RightBottomTitle, Alignment.Right, double.NaN)),

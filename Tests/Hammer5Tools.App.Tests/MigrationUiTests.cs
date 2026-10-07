@@ -29,6 +29,80 @@ using Microsoft.Extensions.DependencyInjection;
 public class MigrationUiTests
 {
     [Test]
+    public async Task LoadingViewportZoomAnchorsPanAndFitsAgain()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var fixture = new Fixture();
+            var shots = Path.Combine(fixture.Root, "game", "csgo_addons", "screenshots", "Hammer5Tools", "LoadingScreen");
+            Directory.CreateDirectory(shots);
+            var imagePath = Path.Combine(shots, "A Site_0000.png");
+            using (var raster = new SkiaSharp.SKBitmap(1920, 1080))
+            using (var canvas = new SkiaSharp.SKCanvas(raster))
+            {
+                canvas.Clear(new SkiaSharp.SKColor(105, 95, 85));
+                using var paint = new SkiaSharp.SKPaint { Color = new SkiaSharp.SKColor(155, 130, 95) };
+                canvas.DrawRect(600, 100, 1100, 800, paint);
+                using var data = raster.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+                using var file = File.Create(imagePath);
+                data.SaveTo(file);
+            }
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            shell.OpenLoadingEditor();
+            var model = shell.Documents.OfType<LoadingEditorViewModel>().Single();
+            await model.Initialization;
+            model.SelectedImagePath = imagePath;
+            for (var attempt = 0; attempt < 100 && model.ImagePreview is null; attempt++) await Task.Delay(10);
+            await Assert.That(model.ImagePreview).IsNotNull();
+            await Assert.That(model.IsLoadingShotPreview).IsTrue();
+            var iconPath = Path.Combine(fixture.Root, "icon.svg");
+            await File.WriteAllTextAsync(iconPath, "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='200'><rect width='120' height='200' fill='#c08030'/></svg>");
+            model.SetDroppedIcon(iconPath);
+            for (var attempt = 0; attempt < 100 && model.MapIconPreview is null; attempt++) await Task.Delay(10);
+            await Assert.That(model.MapIconPreview).IsNotNull();
+            model.IncludeCameraName = true;
+            await Assert.That(model.PreviewCameraName).IsEqualTo("A Site");
+            var view = new LoadingEditorView { DataContext = model };
+            var window = new Window { Content = view, Width = 1906, Height = 977 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var viewport = view.FindControl<Border>("PreviewViewport")!;
+            var scene = view.FindControl<Viewbox>("PreviewScene")!;
+            var anchor = new Point(200, 150);
+            view.ZoomAt(anchor, 1.2);
+            await Assert.That(view.ViewportZoom).IsEqualTo(1.2);
+            var offset = anchor - scene.Bounds.Position;
+            await Assert.That(Math.Abs(view.Pan.X - offset.X * -0.2) < 0.001).IsTrue();
+            var start = viewport.TranslatePoint(new Point(100, 100), window)!.Value;
+            window.MouseDown(start, MouseButton.Right);
+            var before = view.Pan;
+            window.MouseMove(start + new Vector(30, 25));
+            window.MouseUp(start + new Vector(30, 25), MouseButton.Right);
+            await Assert.That(view.Pan).IsEqualTo(before + new Vector(30, 25));
+            var historyPath = Path.Combine(fixture.Root, "history.png");
+            File.Copy(imagePath, historyPath);
+            model.SelectedImagePath = historyPath;
+            await Assert.That(model.IsLoadingShotPreview).IsFalse();
+            await Assert.That(view.ViewportZoom).IsEqualTo(1.2);
+            model.SelectedImagePath = imagePath;
+            view.ZoomAt(anchor, 1000);
+            await Assert.That(view.ViewportZoom).IsEqualTo(10);
+            view.ZoomAt(anchor, 0.00001);
+            await Assert.That(view.ViewportZoom).IsEqualTo(0.03);
+            view.ResetViewport();
+            await Assert.That(view.ViewportZoom).IsEqualTo(1);
+            await Assert.That(view.Pan).IsEqualTo(default(Vector));
+            var output = Path.Combine(AppContext.BaseDirectory, "UiSnapshots");
+            Directory.CreateDirectory(output);
+            using var frame = window.CaptureRenderedFrame();
+            frame!.Save(Path.Combine(output, "loading-legacy-layout.png"), Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
     public async Task SmartPropFilesOpenInTheShellAndTrackSaveUndoAndUnsavedEdits()
     {
         using var fixture = new Fixture();

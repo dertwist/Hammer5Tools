@@ -1,5 +1,6 @@
 namespace Hammer5Tools.Core.IO.LoadingScreens;
 
+using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -147,6 +148,277 @@ public partial class LoadingScreenService : ILoadingScreenService
         }
     }
 
+    public async Task<bool> CaptureAddonScreenshotsAsync(string vmapPath, string gamePath, string contentPath, bool history, CancellationToken cancellationToken = default)
+    {
+        var cameras = await ExtractCamerasFromVmapAsync(vmapPath, cancellationToken);
+        if (cameras.Count == 0 || !CommandService.IsConnected)
+        {
+            return false;
+        }
+
+        var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
+        var relativeDirectory = history
+            ? Path.Combine("screenshots", "Hammer5Tools", "History", timestamp)
+            : Path.Combine("screenshots", "Hammer5Tools", "LoadingScreen");
+        var screenshotDirectory = Path.Combine(gamePath, relativeDirectory);
+        if (!history && Directory.Exists(screenshotDirectory))
+        {
+            Directory.Delete(screenshotDirectory, recursive: true);
+        }
+
+        Directory.CreateDirectory(screenshotDirectory);
+        var commands = new List<string>
+        {
+            "cl_firstperson_legs 0", "sv_cheats 1", "bot_kick", "noclip 1",
+            "ent_fire cmd kill", "ent_create point_servercommand {targetname cmd}",
+            $"screenshot_subdir {relativeDirectory}"
+        };
+
+        const float eyeHeight = 70f;
+        var tick = 1f / 64f;
+        for (var index = 0; index < cameras.Count; index++)
+        {
+            var camera = cameras[index];
+            var delay = index * tick * 10 + 0.1f;
+            var name = Regex.Replace(camera.Name, "[^A-Za-z0-9_.-]", "_").Trim('_');
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = $"{Path.GetFileNameWithoutExtension(vmapPath)}_cam{index}";
+            }
+
+            var pos = $"{camera.Position.X.ToString("0.####", CultureInfo.InvariantCulture)} {camera.Position.Y.ToString("0.####", CultureInfo.InvariantCulture)} {(camera.Position.Z - eyeHeight).ToString("0.####", CultureInfo.InvariantCulture)}";
+            var angles = $"{camera.Angles.X.ToString("0.####", CultureInfo.InvariantCulture)} {camera.Angles.Y.ToString("0.####", CultureInfo.InvariantCulture)} {camera.Angles.Z.ToString("0.####", CultureInfo.InvariantCulture)}";
+            commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>screenshot_prefix {name}>{delay:0.####}>1\"");
+            commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>setpos {pos}>{delay:0.####}>1\"");
+            commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>setang {angles}>{delay:0.####}>1\"");
+            commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>r_always_render_all_windows true>{delay:0.####}>1\"");
+            commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>png_screenshot>{delay + tick * 2:0.####}>1\"");
+        }
+
+        var finalDelay = (cameras.Count - 1) * tick * 10 + 1;
+        commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>r_drawviewmodel 1;cl_drawhud 1;r_drawpanorama 1;noclip 0>{finalDelay:0.####}>1\"");
+        commands.Add("r_drawviewmodel 0");
+        commands.Add("cl_drawhud 0");
+        commands.Add("r_drawpanorama 0");
+        commands.Add($"ent_fire worldent addoutput \"OnUser1>cmd>command>r_always_render_all_windows false>{finalDelay:0.####}>1\"");
+        commands.Add("ent_fire worldent FireUser1");
+        if (!await CommandService.SendCommandsAsync(commands, cancellationToken))
+        {
+            return false;
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(Math.Max(3, cameras.Count * (10d / 64) + 2)), cancellationToken);
+        if (history)
+        {
+            var source = screenshotDirectory;
+            var destination = Path.Combine(contentPath, "panorama", "history_screenshots", timestamp);
+            Directory.CreateDirectory(destination);
+            foreach (var file in Directory.EnumerateFiles(source))
+            {
+                File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
+            }
+        }
+
+        return true;
+    }
+
+    public async Task<bool> ApplyLoadingScreenImagesAsync(string addonName, string sourceDirectory, bool deleteExisting, bool includeCameraName, CancellationToken cancellationToken = default)
+    {
+        var cs2Root = Cs2Locator.FindCs2Path();
+        if (string.IsNullOrWhiteSpace(cs2Root) || !Directory.Exists(sourceDirectory))
+        {
+            return false;
+        }
+
+        var addonContentPath = Core.Cs2.Cs2Paths.GetAddonContentPath(cs2Root, addonName);
+        var sourceRoot = Path.Combine(addonContentPath, "panorama", "images", "map_icons", "screenshots");
+        var gameRoot = Path.Combine(Core.Cs2.Cs2Paths.GetAddonGamePath(cs2Root, addonName), "panorama", "images", "map_icons", "screenshots");
+        var resolutions = new[] { (Name: "1080p", Height: 1080), (Name: "720p", Height: 720), (Name: "360p", Height: 360) };
+        var files = Directory.EnumerateFiles(sourceDirectory)
+            .Where(file => Path.GetExtension(file).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".tga")
+            .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (files.Length == 0) return false;
+        if (deleteExisting)
+        {
+            foreach (var resolution in resolutions)
+            {
+                var sourceDirectoryPath = Path.Combine(sourceRoot, resolution.Name);
+                if (Directory.Exists(sourceDirectoryPath)) Directory.Delete(sourceDirectoryPath, recursive: true);
+                var gameDirectoryPath = Path.Combine(gameRoot, resolution.Name);
+                if (Directory.Exists(gameDirectoryPath)) Directory.Delete(gameDirectoryPath, recursive: true);
+            }
+        }
+
+        var success = true;
+        var compiledCount = 0;
+        for (var index = 0; index < files.Length; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var file = files[index];
+            var outputName = index == 0 ? $"{addonName}_png" : $"{addonName}_{index}_png";
+            var cameraName = includeCameraName ? GetCameraName(file, addonName) : string.Empty;
+            using var bitmap = SkiaSharp.SKBitmap.Decode(file);
+            if (bitmap is null) continue;
+            foreach (var resolution in resolutions)
+            {
+                var targetDirectory = Path.Combine(sourceRoot, resolution.Name);
+                Directory.CreateDirectory(targetDirectory);
+                var output = Path.Combine(targetDirectory, $"{outputName}.vtex");
+                if (!deleteExisting && File.Exists(output)) continue;
+                var imageWidth = Math.Max(1, (int)MathF.Round(bitmap.Width * (resolution.Height / (float)bitmap.Height)));
+                using var scaled = bitmap.Resize(new SkiaSharp.SKImageInfo(imageWidth, resolution.Height), new SkiaSharp.SKSamplingOptions(SkiaSharp.SKFilterMode.Linear, SkiaSharp.SKMipmapMode.Linear));
+                if (scaled is null) continue;
+                if (!string.IsNullOrWhiteSpace(cameraName))
+                {
+                    using var canvas = new SkiaSharp.SKCanvas(scaled);
+                    using var paint = new SkiaSharp.SKPaint { Color = SkiaSharp.SKColors.White, IsAntialias = true };
+                    using var font = new SkiaSharp.SKFont { Size = Math.Max(8, resolution.Height * 31f / 1080f) };
+                    canvas.DrawText(cameraName, resolution.Height * 46f / 1080f, resolution.Height * 1010f / 1080f, SkiaSharp.SKTextAlign.Left, font, paint);
+                }
+                var imagePath = Path.Combine(targetDirectory, $"{outputName}.png");
+                using var image = SkiaSharp.SKImage.FromBitmap(scaled);
+                using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+                await WriteAtomicallyAsync(imagePath, data.ToArray(), cancellationToken);
+                var relativeImagePath = Path.GetRelativePath(addonContentPath, imagePath).Replace('\\', '/');
+                var vtex = $$"""
+                    <!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
+                    "CDmeVtex"
+                    {
+                        "m_inputTextureArray" "element_array"
+                        [
+                            "CDmeInputTexture"
+                            {
+                                "m_name" "string" "SheetTexture"
+                                "m_fileName" "string" "{{relativeImagePath}}"
+                                "m_colorSpace" "string" "linear"
+                                "m_typeString" "string" "2D"
+                            }
+                        ]
+                        "m_outputTypeString" "string" "2D"
+                        "m_outputFormat" "string" "BC7"
+                        "m_bNoLod" "bool" "1"
+                    }
+                    """;
+                await WriteAtomicallyAsync(output, Encoding.UTF8.GetBytes(vtex), cancellationToken);
+                var result = await ResourceCompiler.CompileAssetAsync(output, addonName: addonName, cancellationToken);
+                success &= result.Success;
+                compiledCount++;
+            }
+        }
+
+        return compiledCount > 0 && success;
+    }
+
+    private static string GetCameraName(string path, string addonName)
+    {
+        var stem = Path.GetFileNameWithoutExtension(path);
+        stem = Regex.Replace(stem, @"_\d+$", string.Empty);
+        var cameraMatch = Regex.Match(stem, @"cam(?:era)?[\s_]*\d+", RegexOptions.IgnoreCase);
+        if (cameraMatch.Success)
+        {
+            var camera = cameraMatch.Value.Replace("_", string.Empty);
+            return Regex.IsMatch(camera, @"^cam(?:era)?\d*$", RegexOptions.IgnoreCase) ? string.Empty : camera;
+        }
+        foreach (var prefix in new[] { $"{addonName}_", $"de_{addonName}_", $"cs_{addonName}_", $"ar_{addonName}_" })
+        {
+            if (stem.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                stem = stem[prefix.Length..];
+                break;
+            }
+        }
+
+        stem = Regex.Replace(stem, @"^(?:de|cs|ar|cp)_[A-Za-z0-9]+_", string.Empty, RegexOptions.IgnoreCase);
+        return Regex.IsMatch(stem, @"^cam(?:era)?[\s_]*\d*$", RegexOptions.IgnoreCase) ? string.Empty : stem;
+    }
+
+    private static async Task WriteAtomicallyAsync(string path, byte[] content, CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var stagedPath = $"{path}.h5t-{Guid.NewGuid():N}.tmp";
+        try
+        {
+            await File.WriteAllBytesAsync(stagedPath, content, cancellationToken);
+            if (File.Exists(path)) File.Copy(path, $"{path}.bak", overwrite: true);
+            File.Move(stagedPath, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(stagedPath)) File.Delete(stagedPath);
+        }
+    }
+
+    public async Task<string> ExportTimelineAsync(IReadOnlyList<string> imagePaths, string outputDirectory, string baseName, string format, string quality, CancellationToken cancellationToken = default)
+    {
+        if (imagePaths.Count == 0)
+        {
+            throw new InvalidOperationException("No images are available for export.");
+        }
+
+        var executable = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
+        var listPath = Path.Combine(Path.GetTempPath(), $"h5t-timeline-{Guid.NewGuid():N}.txt");
+        Directory.CreateDirectory(outputDirectory);
+        var extension = format.ToLowerInvariant() switch { "webp" => ".webp", "mp4" => ".mp4", _ => ".gif" };
+        var output = Path.Combine(outputDirectory, $"{baseName}_timeline{extension}");
+        try
+        {
+            var lines = imagePaths.Select(path => $"file '{Path.GetFullPath(path).Replace('\\', '/').Replace("'", "'\\''")}'\nduration 0.5").ToList();
+            lines.Add($"file '{Path.GetFullPath(imagePaths[^1]).Replace('\\', '/').Replace("'", "'\\''")}'");
+            await File.WriteAllLinesAsync(listPath, lines, cancellationToken);
+            var start = new ProcessStartInfo(executable) { UseShellExecute = false, RedirectStandardError = true, CreateNoWindow = true };
+            start.ArgumentList.Add("-y");
+            start.ArgumentList.Add("-f");
+            start.ArgumentList.Add("concat");
+            start.ArgumentList.Add("-safe");
+            start.ArgumentList.Add("0");
+            start.ArgumentList.Add("-i");
+            start.ArgumentList.Add(listPath);
+            start.ArgumentList.Add("-vf");
+            start.ArgumentList.Add("fps=2,scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos");
+            if (extension == ".mp4")
+            {
+                start.ArgumentList.Add("-c:v"); start.ArgumentList.Add("libx264");
+                start.ArgumentList.Add("-crf"); start.ArgumentList.Add(quality switch { "Low" => "32", "Medium" => "23", _ => "18" });
+                start.ArgumentList.Add("-pix_fmt"); start.ArgumentList.Add("yuv420p");
+            }
+            else if (extension == ".webp")
+            {
+                start.ArgumentList.Add("-c:v"); start.ArgumentList.Add("libwebp");
+                start.ArgumentList.Add("-q:v"); start.ArgumentList.Add(quality switch { "Low" => "50", "Medium" => "75", _ => "95" });
+                start.ArgumentList.Add("-loop"); start.ArgumentList.Add("0");
+            }
+            else
+            {
+                start.ArgumentList.Add("-loop"); start.ArgumentList.Add("0");
+            }
+            start.ArgumentList.Add(output);
+            using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start ffmpeg.");
+            using var cancellationRegistration = cancellationToken.Register(() =>
+            {
+                try
+                {
+                    if (!process.HasExited) process.Kill(entireProcessTree: true);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            });
+            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken);
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException((await errorTask).Trim());
+            }
+
+            return output;
+        }
+        finally
+        {
+            if (File.Exists(listPath)) File.Delete(listPath);
+        }
+    }
+
     public async Task<bool> GenerateLoadingScreenAssetsAsync(LoadingScreenConfig config, string sourceImagePath, CancellationToken cancellationToken = default)
     {
         try
@@ -240,7 +512,10 @@ public partial class LoadingScreenService : ILoadingScreenService
         }
     }
 
-    public async Task<bool> ApplyMapIconAsync(string addonContentPath, string addonName, string svgPath, CancellationToken cancellationToken = default)
+    public Task<bool> ApplyMapIconAsync(string addonContentPath, string addonName, string svgPath, CancellationToken cancellationToken = default) =>
+        ApplyMapIconAsync(addonContentPath, addonName, svgPath, true, cancellationToken);
+
+    public async Task<bool> ApplyMapIconAsync(string addonContentPath, string addonName, string svgPath, bool fitContent, CancellationToken cancellationToken = default)
     {
         var text = await File.ReadAllTextAsync(svgPath, cancellationToken);
         using var reader = System.Xml.XmlReader.Create(new StringReader(text), new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Prohibit });
@@ -249,6 +524,8 @@ public partial class LoadingScreenService : ILoadingScreenService
         {
             throw new InvalidDataException("Select an SVG document.");
         }
+
+        if (fitContent) FitSvgContent(document.Root);
 
         var target = Path.Combine(addonContentPath, "panorama", "images", "map_icons", $"map_icon_{addonName}.svg");
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
@@ -262,6 +539,105 @@ public partial class LoadingScreenService : ILoadingScreenService
         File.Move(staged, target, overwrite: true);
         return true;
     }
+
+    private static void FitSvgContent(System.Xml.Linq.XElement root)
+    {
+        var rawViewBox = root.Attribute("viewBox")?.Value;
+        var viewBox = (rawViewBox ?? "0 0 32 32").Split([' ', ','], StringSplitOptions.RemoveEmptyEntries);
+        var x = 0f;
+        var y = 0f;
+        var width = 32f;
+        var height = 32f;
+        if (rawViewBox is null && float.TryParse((root.Attribute("width")?.Value ?? string.Empty).Replace("px", string.Empty, StringComparison.OrdinalIgnoreCase), CultureInfo.InvariantCulture, out var legacyWidth) && legacyWidth > 0)
+        {
+            width = height = legacyWidth;
+        }
+        if (viewBox.Length != 4 || !float.TryParse(viewBox[0], CultureInfo.InvariantCulture, out x) ||
+            !float.TryParse(viewBox[1], CultureInfo.InvariantCulture, out y) ||
+            !float.TryParse(viewBox[2], CultureInfo.InvariantCulture, out width) ||
+            !float.TryParse(viewBox[3], CultureInfo.InvariantCulture, out height) || width <= 0 || height <= 0)
+        {
+            x = y = 0;
+            width = height = 32;
+        }
+
+        var sx = 32 / width;
+        var sy = 32 / height;
+        var ns = root.Name.Namespace;
+        var group = new System.Xml.Linq.XElement(ns + "g", new System.Xml.Linq.XAttribute("transform", FormattableString.Invariant($"matrix({sx:0.######},0,0,{sy:0.######},{-x * sx:0.######},{-y * sy:0.######})")));
+        var structural = new HashSet<string>(["defs", "style", "title", "desc", "metadata", "script"], StringComparer.OrdinalIgnoreCase);
+        foreach (var hidden in root.Descendants().Where(element => element.Attribute("display")?.Value == "none" || (element.Attribute("style")?.Value ?? string.Empty).Replace(" ", string.Empty).Contains("display:none", StringComparison.OrdinalIgnoreCase)).ToArray())
+        {
+            hidden.Remove();
+        }
+
+        foreach (var element in root.Elements().ToArray())
+        {
+            if (structural.Contains(element.Name.LocalName)) continue;
+            element.Remove();
+            group.Add(element);
+        }
+
+        root.Add(group);
+        root.SetAttributeValue("width", "32");
+        root.SetAttributeValue("height", "32");
+        root.SetAttributeValue("viewBox", "0 0 32 32");
+        root.SetAttributeValue("version", "1.1");
+    }
+
+    public async Task<string> LoadMapDescriptionAsync(string addonGamePath, string mapName, CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(addonGamePath, "maps", $"{mapName}.txt");
+        if (!File.Exists(path)) return string.Empty;
+        var lines = await File.ReadAllLinesAsync(path, cancellationToken);
+        return lines.Length > 1 ? string.Join(Environment.NewLine, lines.Skip(1)).Trim() : string.Empty;
+    }
+
+    public async Task<bool> SaveMapDescriptionAsync(string addonGamePath, string mapName, string description, CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(addonGamePath, "maps", $"{mapName}.txt");
+        var directory = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(directory);
+        var staged = $"{path}.tmp";
+        try
+        {
+            await File.WriteAllTextAsync(staged, $"COMMUNITYMAPCREDITS:{Environment.NewLine}{description}", cancellationToken);
+            if (File.Exists(path)) File.Copy(path, $"{path}.bak", overwrite: true);
+            File.Move(staged, path, overwrite: true);
+            return true;
+        }
+        catch
+        {
+            if (File.Exists(staged)) File.Delete(staged);
+            throw;
+        }
+    }
+
+    public async Task<int> ImportScreenshotsAsync(string targetDirectory, IReadOnlyList<string> sourcePaths, CancellationToken cancellationToken = default)
+    {
+        Directory.CreateDirectory(targetDirectory);
+        var count = 0;
+        foreach (var source in sourcePaths.Where(IsImageFile))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!File.Exists(source)) continue;
+            var destination = Path.Combine(targetDirectory, Path.GetFileName(source));
+            var suffix = 1;
+            while (File.Exists(destination))
+            {
+                destination = Path.Combine(targetDirectory, $"{Path.GetFileNameWithoutExtension(source)} ({suffix++}){Path.GetExtension(source)}");
+            }
+
+            await using var input = File.OpenRead(source);
+            await using var output = File.Create(destination);
+            await input.CopyToAsync(output, cancellationToken);
+            count++;
+        }
+
+        return count;
+    }
+
+    private static bool IsImageFile(string path) => Path.GetExtension(path).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".tga";
 
     private static Vector3 ParseVector(string str)
     {
