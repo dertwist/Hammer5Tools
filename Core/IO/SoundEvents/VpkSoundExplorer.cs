@@ -46,15 +46,11 @@ public class VpkSoundExplorer
                         if (filter is null || fullName.Contains(filter, StringComparison.OrdinalIgnoreCase))
                         {
                             results.Add(fullName);
-                            if (results.Count >= 500)
-                            {
-                                break;
-                            }
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Logger.LogError(ex, "Failed to read CS2 VPK sounds from {Path}", pakDir);
             }
@@ -62,4 +58,55 @@ public class VpkSoundExplorer
             return results;
         }, cancellationToken);
     }
+    /// <summary>Reads game sound-event definitions without mutating the source resources.</summary>
+    public Task<IReadOnlyList<Hammer5Tools.Core.SoundEvents.SoundEvent>> ReadInternalEventsAsync(CancellationToken cancellationToken = default)
+        => Task.Run<IReadOnlyList<Hammer5Tools.Core.SoundEvents.SoundEvent>>(() =>
+        {
+            var events = new Dictionary<string, Hammer5Tools.Core.SoundEvents.SoundEvent>(StringComparer.Ordinal);
+            var root = Cs2Locator.FindCs2Path();
+            if (root is null) return [];
+            var looseRoot = Path.Combine(root, "game", "csgo", "soundevents");
+            if (Directory.Exists(looseRoot))
+            {
+                foreach (var path in Directory.EnumerateFiles(looseRoot, "*.vsndevts", SearchOption.AllDirectories))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Add(File.ReadAllText(path));
+                }
+            }
+            var archive = Path.Combine(root, "game", "csgo", "pak01_dir.vpk");
+            if (File.Exists(archive))
+            {
+                using var package = new Package();
+                package.Read(archive);
+                if (package.Entries?.TryGetValue("vsndevts_c", out var entries) == true)
+                {
+                    foreach (var entry in entries)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        try
+                        {
+                            package.ReadEntry(entry, out var bytes);
+                            using var stream = new MemoryStream(bytes);
+                            using var resource = new ValveResourceFormat.Resource();
+                            resource.Read(stream);
+                            using var content = ValveResourceFormat.IO.FileExtract.Extract(resource, null!);
+                            if (content.Data is { } data) Add(System.Text.Encoding.UTF8.GetString(data));
+                        }
+                        catch (Exception ex) when (ex is not OperationCanceledException)
+                        {
+                            Logger.LogWarning(ex, "Could not read built-in sound events {Entry}", entry.FileName);
+                        }
+                    }
+                }
+            }
+            return events.Values.OrderBy(item => item.Name, StringComparer.Ordinal).ToArray();
+
+            void Add(string text)
+            {
+                foreach (var item in Hammer5Tools.Core.SoundEvents.SoundEventDocument.Parse(text).Events)
+                    events.TryAdd(item.Name, item);
+            }
+        }, cancellationToken);
+
 }

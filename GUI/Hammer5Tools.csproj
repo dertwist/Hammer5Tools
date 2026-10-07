@@ -22,6 +22,8 @@
     <AvaloniaResource Include="../legacy/Hammer5ToolsGUI/gui/editors/loading_editor/assets/*.png" Link="Assets/LoadingScreens/%(Filename)%(Extension)" />
     <AvaloniaResource Include="../legacy/Hammer5ToolsGUI/gui/assets/icons/valve_style/*.png" Link="Assets/Icons/Valve/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Features/SmartProps/SmartPropPresentation.json" />
+    <EmbeddedResource Include="Features/SoundEvents/SoundEventPresentation.json" />
+    <AvaloniaResource Include="../legacy/Hammer5ToolsGUI/gui/assets/icons/**/*" Exclude="../legacy/Hammer5ToolsGUI/gui/assets/icons/valve_style/*.png" Link="Assets/LegacyIcons/%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="Assets/SmartProps/model_sm.png" LogicalName="Hierarchy.model" />
     <EmbeddedResource Include="Assets/SmartProps/vsmart_sm.png" LogicalName="Hierarchy.smartprop" />
     <EmbeddedResource Include="Assets/SmartProps/generic_sm.png" LogicalName="Hierarchy.generic" />

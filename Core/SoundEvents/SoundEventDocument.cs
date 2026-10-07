@@ -13,6 +13,14 @@ public partial class SoundEventDocument
 
     public ObservableCollection<SoundEvent> Events { get; } = [];
 
+    /// <summary>Validates a KV3 source before parsing editable sound-event definitions.</summary>
+    public static SoundEventDocument ParseValidated(string kv3Text)
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(kv3Text));
+        Kv3Serializer.Deserialize(stream);
+        return Parse(kv3Text);
+    }
+
     public static SoundEventDocument Parse(string kv3Text)
     {
         var doc = new SoundEventDocument();
@@ -29,7 +37,7 @@ public partial class SoundEventDocument
 
             foreach (var (eventName, eventObj) in kv.Root.Children)
             {
-                var soundEvent = new SoundEvent(eventName);
+                var soundEvent = new SoundEvent(eventName) { HasExplicitType = false };
 
                 foreach (var (propKey, propVal) in eventObj.Children)
                 {
@@ -114,7 +122,7 @@ public partial class SoundEventDocument
 
     private static SoundEvent ParseEventBody(string name, string body)
     {
-        var soundEvent = new SoundEvent(name);
+        var soundEvent = new SoundEvent(name) { HasExplicitType = false };
         var lines = body.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var line in lines)
@@ -162,7 +170,10 @@ public partial class SoundEventDocument
         {
             sb.AppendLine($"\t\"{ev.Name}\" =");
             sb.AppendLine("\t{");
-            sb.AppendLine($"\t\ttype = \"{ev.Type}\"");
+            if (ev.HasExplicitType)
+            {
+                sb.AppendLine($"\t\ttype = \"{ev.Type}\"");
+            }
 
             foreach (var prop in ev.Properties)
             {

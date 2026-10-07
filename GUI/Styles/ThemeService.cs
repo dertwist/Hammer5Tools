@@ -39,6 +39,14 @@ public static class ThemeService
         // Values copied from the Python theme.py semantic tokens and explicit palettes.
         var colors = new Dictionary<string, string>
         {
+            ["SoundPropertyFloat"] = light ? "#206255" : vintage ? "#84c7b7" : "#73d1bf",
+            ["SoundPropertyBool"] = light ? "#a82a2b" : vintage ? "#c0625f" : "#d1494a",
+            ["SoundPropertyComment"] = light ? "#415e34" : vintage ? "#71965f" : "#6a9955",
+            ["SoundPropertyVector"] = light ? "#2c6416" : vintage ? "#88cb6d" : "#7dda58",
+            ["SoundPropertyList"] = light ? "#774b08" : vintage ? "#e5c187" : "#f6c273",
+            ["SoundPropertyCombo"] = light ? "#96109a" : vintage ? "#ebb5eb" : "#f4a9f6",
+            ["SoundPropertyBase"] = light ? "#54528e" : vintage ? "#8f90b1" : "#8684b8",
+            ["SoundPropertyCustom"] = light ? "#6b5417" : vintage ? "#c7ae62" : "#d9b34c",
             ["PropertyFloat"] = light ? "#00634e" : vintage ? "#c0f5e9" : "#b5ffef",
             ["PropertyBool"] = light ? "#b30003" : vintage ? "#f6c7c7" : "#ffbdbe",
             ["PropertyString"] = light ? "#854900" : vintage ? "#f1d1a8" : "#ffd199",

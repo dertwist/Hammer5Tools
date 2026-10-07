@@ -58,16 +58,68 @@ public class SoundEventService : ISoundEventService
         }
     }
 
-    public IReadOnlyList<string> GetPredefinedTemplates() =>
-    [
-        "Spatial 3D Sound (csgo_mega)",
-        "Ambient Loop (csgo_ambient)",
-        "UI 2D Sound (csgo_ui)",
-        "Music Track (csgo_music)",
-    ];
+    public IReadOnlyList<SoundAudioFile> GetAddonSounds(string contentRoot)
+    {
+        var root = Path.Combine(contentRoot, "sounds");
+        if (!Directory.Exists(root)) return [];
+        return Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Where(path => Path.GetExtension(path).ToLowerInvariant() is ".wav" or ".mp3" or ".vsnd" or ".vsnd_c")
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .Select(path => new SoundAudioFile(Path.GetRelativePath(contentRoot, path), new FileInfo(path).Length)).ToArray();
+    }
+
+    public void OpenTemplateDirectory()
+    {
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hammer5Tools", "userdata", "SoundEventEditor", "Presets");
+        Directory.CreateDirectory(root);
+        using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(root) { UseShellExecute = true });
+    }
+
+    private static Dictionary<string, string> DiscoverTemplates()
+    {
+        var templates = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string[] roots = [
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Hammer5Tools", "userdata", "SoundEventEditor", "Presets"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Hammer5Tools", "SoundEventEditor", "Presets"),
+            BundledPresetFiles.GetDirectory("soundeventeditor"),
+            Path.Combine(AppContext.BaseDirectory, "Presets", "SoundEventEditor", "Presets")];
+        foreach (var root in roots.Where(Directory.Exists))
+        {
+            foreach (var path in Directory.EnumerateFiles(root, "*.kv3"))
+            {
+                templates.TryAdd(Path.GetFileNameWithoutExtension(path), path);
+            }
+        }
+        return templates;
+    }
+
+    public IReadOnlyList<string> GetPredefinedTemplates() => DiscoverTemplates().Keys.Order(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    public Task SaveTemplateAsync(string path, SoundEvent soundEvent, CancellationToken cancellationToken = default)
+    {
+        var document = new SoundEventDocument();
+        var template = new SoundEvent("template", soundEvent.Type) { HasExplicitType = soundEvent.HasExplicitType };
+        foreach (var property in soundEvent.Properties) template.Properties.Add(new SoundProperty(property.Key, property.Value));
+        document.Events.Add(template);
+        var text = document.Serialize();
+        var start = text.IndexOf('=', text.IndexOf("-->", StringComparison.Ordinal) + 3) + 1;
+        text = SoundEventDocument.DefaultHeader + "\n" + text[start..text.LastIndexOf('}')].Trim() + "\n";
+        cancellationToken.ThrowIfCancellationRequested();
+        Hammer5Tools.Core.Formats.DocumentFile.Write(path, text);
+        return Task.CompletedTask;
+    }
 
     public SoundEvent CreateFromTemplate(string eventName, string templateName)
     {
+        if (DiscoverTemplates().TryGetValue(templateName, out var path))
+        {
+            var text = File.ReadAllText(path);
+            var headerEnd = text.IndexOf("-->", StringComparison.Ordinal) + 3;
+            var document = SoundEventDocument.Parse(SoundEventDocument.DefaultHeader + "\n{\n\"template\" = " + text[headerEnd..] + "\n}");
+            var template = document.Events.Single();
+            template.Name = eventName;
+            return template;
+        }
         var soundEvent = new SoundEvent(eventName);
 
         if (templateName.Contains("csgo_ambient", StringComparison.OrdinalIgnoreCase))
@@ -102,6 +154,9 @@ public class SoundEventService : ISoundEventService
 
         return soundEvent;
     }
+
+    public Task<IReadOnlyList<SoundEvent>> QueryInternalEventsAsync(CancellationToken cancellationToken = default)
+        => VpkExplorer.ReadInternalEventsAsync(cancellationToken);
 
     public Task<IReadOnlyList<string>> QueryVpkSoundsAsync(string? filter = null, CancellationToken cancellationToken = default)
     {

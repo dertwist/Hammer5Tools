@@ -951,6 +951,89 @@ public class MigrationUiTests
         }, CancellationToken.None);
     }
 
+    [Test]
+    public async Task SoundEditorRenderingDoesNotModifyLoadedValues()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var fixture = new Fixture();
+            using var editor = new SoundEventEditorViewModel(null, fixture.Services.GetRequiredService<Core.SoundEvents.ISoundEventService>(), fixture.Dialogs);
+            await editor.Initialization;
+            var before = editor.CopySelectedEvent();
+            var window = new Window { Content = new SoundEventEditorView { DataContext = editor }, Width = 1906, Height = 977 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            await Assert.That(editor.IsDirty).IsFalse();
+            await Assert.That(editor.CopySelectedEvent()).IsEqualTo(before);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SoundEditorUsesLegacyPanelsAndTypedPropertiesWithUndo()
+    {
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var fixture = new Fixture();
+            using var editor = new SoundEventEditorViewModel(null, fixture.Services.GetRequiredService<Core.SoundEvents.ISoundEventService>(), fixture.Dialogs);
+            await editor.Initialization;
+            editor.AddNamedProperty("enable_child_events");
+            editor.AddNamedProperty("soundevent_01");
+            editor.AddNamedProperty("volume");
+            editor.AddNamedProperty("position");
+            var view = new SoundEventEditorView { DataContext = editor };
+            var window = new Window { Content = view, Width = 1906, Height = 977 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var workspace = view.GetVisualDescendants().OfType<Hammer5Tools.App.Controls.WorkspaceView>().Single();
+            await Assert.That(workspace.LeftTitle).IsEqualTo("Audio Explorer");
+            await Assert.That(workspace.RightTitle).IsEqualTo("Soundevents");
+            await Assert.That(workspace.BrowserContent).IsNotNull();
+            await Assert.That(workspace.RightBottomContent).IsNotNull();
+            var properties = view.FindControl<StackPanel>("PropertyEditors")!;
+            await Assert.That(properties.GetVisualDescendants().OfType<NumericUpDown>().Count() >= 4).IsTrue();
+            var toggle = properties.GetVisualDescendants().OfType<Grid>().Single(item => item.Tag as string == "enable_child_events").GetVisualDescendants().OfType<CheckBox>().Single();
+            toggle.IsChecked = false;
+            await Assert.That(editor.SelectedEvent!.GetValue("enable_child_events")).IsEqualTo("false");
+            var childRow = properties.GetVisualDescendants().OfType<Grid>().Single(item => item.Tag as string == "soundevent_01");
+            await Assert.That(childRow.Children[2].IsEnabled).IsFalse();
+            editor.UndoCommand.Execute(null);
+            await Assert.That(editor.SelectedEvent!.GetValue("enable_child_events")).IsEqualTo("true");
+            var count = editor.SelectedEvent.Properties.Count;
+            editor.AddNamedProperty("volume");
+            await Assert.That(editor.SelectedEvent.Properties.Count).IsEqualTo(count);
+            editor.AddNamedProperty("comment");
+            editor.AddNamedProperty("comment");
+            await Assert.That(editor.SelectedEvent.GetValue("comment_2")).IsNotNull();
+            await editor.PastePropertiesAsync("pitch = 1.25");
+            await Assert.That(editor.SelectedEvent.GetValue("pitch")).IsEqualTo("1.25");
+            var sourceName = editor.SelectedEvent.Name;
+            editor.DuplicateSelectedEvent();
+            await Assert.That(editor.SelectedEvent.Name).IsEqualTo(sourceName + "_2");
+            editor.UndoCommand.Execute(null);
+            await Assert.That(editor.FilteredEvents.Count).IsEqualTo(1);
+            await editor.PastePropertiesAsync("volume = [ broken");
+            await Assert.That(fixture.Dialogs.Errors.Count).IsEqualTo(1);
+            editor.AddNamedProperty("use_distance_volume_mapping_curve");
+            editor.AddNamedProperty("distance_volume_mapping_curve");
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            var graph = properties.GetVisualDescendants().OfType<SoundCurveGraph>().Single();
+            await Assert.That(graph.Bounds.Height).IsEqualTo(170.0);
+            var output = Path.Combine(AppContext.BaseDirectory, "UiSnapshots");
+            Directory.CreateDirectory(output);
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+            using var frame = window.CaptureRenderedFrame();
+            frame!.Save(Path.Combine(output, "soundevent-legacy-layout.png"), Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+            window.Close();
+            return true;
+        }, CancellationToken.None);
+    }
+
     private sealed class TestSteamLauncher : ICs2Launcher
     {
         public bool IsRunning => false;

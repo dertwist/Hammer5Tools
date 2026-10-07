@@ -474,7 +474,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public void OpenSoundEventEditor()
     {
-        OpenEditor(() => new SoundEventEditorViewModel(null, SoundEventService, DialogService, cs2Locator: Cs2Locator));
+        OpenEditor(() => new SoundEventEditorViewModel(null, SoundEventService, DialogService, cs2Locator: Cs2Locator, commandService: CommandService));
     }
 
     public void OpenMapBuilder()
@@ -859,7 +859,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             DocumentViewModel? document = extension switch
             {
                 ".vsmart" => new SmartPropEditorViewModel(Cs2Locator, null, DialogService, fullPath),
-                ".vsndevts" => new SoundEventEditorViewModel(null, SoundEventService, DialogService, fullPath, Cs2Locator),
+                ".vsndevts" => new SoundEventEditorViewModel(null, SoundEventService, DialogService, fullPath, Cs2Locator, CommandService),
                 ".vdata" when Path.GetFileName(fullPath).Equals("detail_prop_types.vdata", StringComparison.OrdinalIgnoreCase)
                     => new DetailPropEditorViewModel(AddonService, DialogService, fullPath),
                 ".txt" when Path.GetFileName(fullPath).StartsWith("keybindings", StringComparison.OrdinalIgnoreCase)

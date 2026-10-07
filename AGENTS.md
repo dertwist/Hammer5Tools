@@ -279,3 +279,14 @@ Managed addon creation uses Core `IO/Addons/AddonPresetFiles` for preset discove
 Standalone SoundEvent, SmartProp and Map Builder windows own document menus and file selection, without subscribing to the shared addon selection. `Features/Shell/EditorMenus.cs` supplies editor actions for standalone menus and shell dynamic menus. Independent shell editor tabs survive addon changes; only Loading Screen and Detail Prop documents are reset. Core `Cs2Paths.GetContentAddonName` resolves file context for SmartProp resources and Map Builder compilation. Editor icons ship in `icons/` and are embedded into each thin launcher by `GUI/LauncherIcons.targets`. Editor shortcuts target those launchers, which all load the same managed application.
 
 Managed Loading Editor timeline exports use ImageSharp 3.1.12 in Core for GIF and animated WebP (0.5 seconds per frame, infinite looping); Windows x64 MP4 uses FFMediaToolkit 4.8.1 and the pinned FFmpeg.LGPL shared runtime (OpenH264), without a subprocess or system FFmpeg installation. Encoding runs off the UI thread, normalizes mixed image sizes to the first frame with aspect-preserving padding, and stages output before replacement with retained backups.
+
+Managed SoundEvent presentation lives in `GUI/Features/SoundEvents/`, with the legacy
+property schema, defaults and help text in `SoundEventPresentation.json`. Its four
+dock panels preserve Audio Explorer, Property Browser, properties, and Soundevents
+with History below. `SoundEvent.HasExplicitType` preserves base-only definitions
+without adding a type during load/save. `Core/IO/SoundEvents/` owns KV3 template discovery/saving and
+loose/VPK built-in event loading; internal previews are read-only until copied into
+the open document. Event playback uses `ICommandService`; `Core/IO/SoundEvents/SoundPreview` owns
+Windows loose/compiled audio preview. `Core/SoundEvents/SoundCurve` owns the shared
+legacy tangent evaluation; App owns graph interaction and point presentation. Original Python icons
+are linked into `Assets/LegacyIcons`; `Controls/LegacyIcon` displays PNG/SVG assets.

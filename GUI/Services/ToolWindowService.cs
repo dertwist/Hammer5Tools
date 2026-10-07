@@ -91,7 +91,7 @@ public sealed class ToolWindowService
     {
         return tool switch
         {
-            StartupTool.SoundEvents => new SoundEventEditorViewModel(null, Services.GetRequiredService<ISoundEventService>(), Dialogs, path, Services.GetRequiredService<ICs2Locator>()),
+            StartupTool.SoundEvents => new SoundEventEditorViewModel(null, Services.GetRequiredService<ISoundEventService>(), Dialogs, path, Services.GetRequiredService<ICs2Locator>(), Services.GetRequiredService<Hammer5Tools.Core.Commands.ICommandService>()),
             StartupTool.SmartProps => new SmartPropEditorViewModel(Services.GetRequiredService<ICs2Locator>(), null, Dialogs, path),
             StartupTool.MapBuilder => new MapBuilderViewModel(null, Services.GetRequiredService<IMapBuilderService>(),
                 Services.GetRequiredService<ISettingsService>(), Dialogs, Services.GetRequiredService<ISystemUsageService>(), Services.GetRequiredService<ICs2Locator>()),

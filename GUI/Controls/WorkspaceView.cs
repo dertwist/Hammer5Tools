@@ -40,6 +40,10 @@ public class WorkspaceView : UserControl
 
     public Control? RightBottomContent { get; set; }
 
+    public Control? BrowserContent { get; set; }
+
+    public string BrowserTitle { get; set; } = "Property Browser";
+
     public static readonly StyledProperty<bool> ShowLeftProperty =
         AvaloniaProperty.Register<WorkspaceView, bool>(nameof(ShowLeft), true);
 
@@ -159,6 +163,7 @@ public class WorkspaceView : UserControl
             ["Left"] = () => LeftContent,
             ["Right"] = () => RightContent,
             ["RightBottom"] = () => RightBottomContent,
+            ["Browser"] = () => BrowserContent,
         };
         Factory.HostWindowLocator = new Dictionary<string, Func<IHostWindow?>>
         {
@@ -225,7 +230,13 @@ public class WorkspaceView : UserControl
         };
         if (LeftContent is not null)
         {
-            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, LayoutKey == "LoadingScreens" ? 0.25 : 0.23));
+            main.VisibleDockables.Add(CreateToolDock("Left", LeftTitle, Alignment.Left, LayoutKey == "LoadingScreens" ? 0.25 : BrowserContent is not null ? 0.17 : 0.23));
+            main.VisibleDockables.Add(new ProportionalDockSplitter());
+        }
+
+        if (BrowserContent is not null)
+        {
+            main.VisibleDockables.Add(CreateToolDock("Browser", BrowserTitle, Alignment.Left, 0.135));
             main.VisibleDockables.Add(new ProportionalDockSplitter());
         }
 
@@ -233,17 +244,17 @@ public class WorkspaceView : UserControl
         if (RightContent is not null)
         {
             main.VisibleDockables.Add(new ProportionalDockSplitter());
-            var right = CreateToolDock("Right", RightTitle, Alignment.Right, LayoutKey == "LoadingScreens" ? 0.175 : 0.15);
+            var right = CreateToolDock("Right", RightTitle, Alignment.Right, LayoutKey == "LoadingScreens" ? 0.175 : BrowserContent is not null ? 0.17 : 0.15);
             if (RightBottomContent is null)
             {
                 main.VisibleDockables.Add(right);
             }
             else
             {
-                right.Proportion = LayoutKey == "LoadingScreens" ? 0.65 : 0.5;
+                right.Proportion = LayoutKey == "LoadingScreens" ? 0.65 : BrowserContent is not null ? 0.75 : 0.5;
                 main.VisibleDockables.Add(new ProportionalDock
                 {
-                    Proportion = LayoutKey == "LoadingScreens" ? 0.175 : 0.15,
+                    Proportion = LayoutKey == "LoadingScreens" ? 0.175 : BrowserContent is not null ? 0.17 : 0.15,
                     Orientation = Orientation.Vertical,
                     VisibleDockables = Factory.CreateList<IDockable>(right, new ProportionalDockSplitter(),
                         CreateToolDock("RightBottom", RightBottomTitle, Alignment.Right, double.NaN)),
@@ -275,7 +286,7 @@ public class WorkspaceView : UserControl
 
     private void UpdateContexts()
     {
-        foreach (var control in new[] { CenterContent, LeftContent, RightContent, RightBottomContent })
+        foreach (var control in new[] { CenterContent, LeftContent, BrowserContent, RightContent, RightBottomContent })
         {
             if (control is not null)
             {

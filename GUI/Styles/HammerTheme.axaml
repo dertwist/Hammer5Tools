@@ -41,6 +41,14 @@
     <Color x:Key="H5TSelectionTextColor">#ffffff</Color>
 
     <!-- Status Accents -->
+    <SolidColorBrush x:Key="H5TSoundPropertyFloatBrush" Color="#73d1bf" />
+    <SolidColorBrush x:Key="H5TSoundPropertyBoolBrush" Color="#d1494a" />
+    <SolidColorBrush x:Key="H5TSoundPropertyCommentBrush" Color="#6a9955" />
+    <SolidColorBrush x:Key="H5TSoundPropertyVectorBrush" Color="#7dda58" />
+    <SolidColorBrush x:Key="H5TSoundPropertyListBrush" Color="#f6c273" />
+    <SolidColorBrush x:Key="H5TSoundPropertyComboBrush" Color="#f4a9f6" />
+    <SolidColorBrush x:Key="H5TSoundPropertyBaseBrush" Color="#8684b8" />
+    <SolidColorBrush x:Key="H5TSoundPropertyCustomBrush" Color="#d9b34c" />
     <Color x:Key="H5TErrorColor">#d1494a</Color>
     <Color x:Key="H5TWarningColor">#e5a00d</Color>
     <Color x:Key="H5TSuccessColor">#5ab55e</Color>
@@ -641,5 +649,37 @@
   </Style>
   <Style Selector="TreeView.loading-tree TreeViewItem:selected /template/ Border#PART_LayoutRoot">
     <Setter Property="Background" Value="{DynamicResource H5TSelectionBrush}" />
+  </Style>
+  <Style Selector="Expander.sound-section">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel>
+          <ToggleButton Name="PART_Header" Classes="sound-heading" IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="6,0" Height="22" MinHeight="22" Background="{DynamicResource H5TSurfaceRaisedBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="6"><Image Width="10" Height="10" Source="avares://Hammer5Tools/Assets/Icons/Valve/arrow_down.png"/><ContentPresenter Content="{TemplateBinding Header}" /></StackPanel>
+          </ToggleButton>
+          <ContentPresenter IsVisible="{TemplateBinding IsExpanded}" Content="{TemplateBinding Content}" HorizontalContentAlignment="Stretch" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Button.sound-browser-property">
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Height" Value="22"/>
+    <Setter Property="MinHeight" Value="22"/>
+  </Style>
+  <Style Selector="UserControl.sound-editor NumericUpDown.compact">
+    <Setter Property="Height" Value="22"/>
+  </Style>
+  <Style Selector="ToggleButton.sound-heading">
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource H5TSurfaceRaisedBrush}" BorderBrush="{DynamicResource H5TBorderBrush}" BorderThickness="0,1">
+          <ContentPresenter Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
   </Style>
 </Styles>

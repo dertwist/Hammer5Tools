@@ -13,11 +13,23 @@ public class SoundEvent : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
     }
 
     private string TypeValue = "csgo_mega";
+    private bool HasExplicitTypeValue = true;
+
+    /// <summary>Whether the source contains an explicit type rather than inheriting its base event.</summary>
+    public bool HasExplicitType
+    {
+        get => HasExplicitTypeValue;
+        set => SetProperty(ref HasExplicitTypeValue, value);
+    }
 
     public string Type
     {
         get => TypeValue;
-        set => SetProperty(ref TypeValue, value);
+        set
+        {
+            SetProperty(ref TypeValue, value);
+            HasExplicitType = true;
+        }
     }
 
     public ObservableCollection<SoundProperty> Properties { get; } = [];

@@ -4,88 +4,106 @@
              xmlns:workspace="using:Hammer5Tools.App.Controls"
              xmlns:m="using:Hammer5Tools.Core.SoundEvents"
              x:Class="Hammer5Tools.App.Features.SoundEvents.SoundEventEditorView"
-             x:Name="RootControl"
-             x:DataType="vm:SoundEventEditorViewModel">
-  <workspace:WorkspaceView LayoutKey="SoundEvents" LeftTitle="Soundevents" RightTitle="Audio Explorer">
+             x:Name="RootControl" Classes="sound-editor" x:DataType="vm:SoundEventEditorViewModel">
+  <workspace:WorkspaceView LayoutKey="SoundEvents.Legacy" LeftTitle="Audio Explorer" BrowserTitle="Property Browser" RightTitle="Soundevents" RightBottomTitle="History">
     <workspace:WorkspaceView.LeftContent>
-<Border  Background="{DynamicResource H5TBackgroundBrush}" CornerRadius="2" Padding="8" Margin="0,0,8,0">
-      <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Sound Events" FontWeight="Bold" Margin="4,0,0,8" />
-        <TextBox Grid.Row="1" Text="{Binding SearchFilter}" PlaceholderText="Filter events..." Margin="0,0,0,8" />
-
-        <ListBox Grid.Row="2" ItemsSource="{Binding FilteredEvents}" SelectedItem="{Binding SelectedEvent}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:SoundEvent">
-              <StackPanel Spacing="2">
-                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                <TextBlock Text="{Binding Type}" FontSize="11" Foreground="{DynamicResource H5TAccentBrush}" />
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-
-        <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="0,8,0,0">
-          <Button Grid.Column="0" Content="Add Event" Command="{Binding AddEventCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-          <Button Grid.Column="1" Content="Delete" Command="{Binding DeleteEventCommand}" HorizontalAlignment="Stretch" Margin="4,0,0,0" />
+      <Grid RowDefinitions="*,Auto,Auto" Margin="4">
+        <TabControl>
+          <TabItem Header="Addon">
+            <Grid RowDefinitions="Auto,*">
+              <TextBox x:Name="AddonAudioFilter" PlaceholderText="Filter files..." TextChanged="AudioFilterChanged" />
+              <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,90" Margin="4"><TextBlock Text="Name"/><TextBlock Grid.Column="1" Text="Size" HorizontalAlignment="Right"/></Grid>
+                <ListBox x:Name="AddonAudioList" Grid.Row="1" SelectionChanged="AddonSoundSelected">
+                  <ListBox.ItemTemplate><DataTemplate x:DataType="vm:SoundAudioRow"><Grid ColumnDefinitions="Auto,*,90"><workspace:LegacyIcon Path="tools/assettypes/vmix_sm.png"/><TextBlock Grid.Column="1" Text="{Binding Name}" Margin="4,0"/><TextBlock Grid.Column="2" Text="{Binding Size}" HorizontalAlignment="Right"/></Grid></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+              </Grid>
+            </Grid>
+          </TabItem>
+          <TabItem Header="Internal">
+            <Grid RowDefinitions="Auto,Auto,*">
+              <TextBox Text="{Binding AudioFilter}" PlaceholderText="Search..." />
+              <Button Grid.Row="1" Command="{Binding SearchVpkCommand}" HorizontalAlignment="Stretch"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="search_24dp.svg"/><TextBlock Text="Search Game VPK"/></StackPanel></Button>
+              <TreeView x:Name="InternalAudioList" Grid.Row="2" SelectionChanged="InternalSoundSelected">
+                <TreeView.ItemTemplate><TreeDataTemplate x:DataType="vm:SoundAudioFolder" ItemsSource="{Binding Children}"><TextBlock Text="{Binding Name}"/></TreeDataTemplate></TreeView.ItemTemplate>
+              </TreeView>
+            </Grid>
+          </TabItem>
+        </TabControl>
+        <StackPanel Grid.Row="1" Spacing="4" Margin="0,4">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <TextBlock Text="{Binding AudioTime}" VerticalAlignment="Center"/>
+            <Slider Grid.Column="1" Minimum="0" Maximum="{Binding AudioDuration}" Value="{Binding AudioPosition}" Margin="4,0"/>
+            <Button Grid.Column="2" Command="{Binding PlayAudioCommand}"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/common/control_play.png"/><TextBlock Text="Play"/></StackPanel></Button>
+            <CheckBox Grid.Column="3" Content="Loop" IsChecked="{Binding LoopAudio}" Margin="4,0"/>
+          </Grid>
+          <Button Command="{Binding StopAudioCommand}" HorizontalAlignment="Stretch"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/common/control_stop.png"/><TextBlock Text="Stop preview"/></StackPanel></Button>
+        </StackPanel>
+        <Grid Grid.Row="2" ColumnDefinitions="*,*">
+          <Button Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" Margin="0,0,2,0"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="save_16dp.svg"/><TextBlock Text="Save"/></StackPanel></Button>
+          <Button Grid.Column="1" Command="{Binding LoadCommand}" HorizontalAlignment="Stretch" Margin="2,0,0,0"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="description_24dp.png"/><TextBlock Text="Load"/></StackPanel></Button>
         </Grid>
       </Grid>
-    </Border>
     </workspace:WorkspaceView.LeftContent>
-    <workspace:WorkspaceView.CenterContent>
-<Border  Background="{DynamicResource H5TBackgroundBrush}" CornerRadius="2" Padding="8" Margin="0,0,8,0">
-      <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <TextBlock Grid.Row="0" Text="Event Properties" FontSize="14.667" FontWeight="Bold" Margin="0,0,0,8" />
-
-        <!-- Header properties -->
-        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,12">
-          <Grid ColumnDefinitions="120,*">
-            <TextBlock Grid.Column="0" Text="Event Name:" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding SelectedEvent.Name, FallbackValue=''}" />
-          </Grid>
-          <Grid ColumnDefinitions="120,*">
-            <TextBlock Grid.Column="0" Text="Type:" VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Text="{Binding SelectedEvent.Type, FallbackValue=''}" />
-          </Grid>
-        </StackPanel>
-
-        <!-- Dynamic properties list -->
-        <ListBox Grid.Row="2" ItemsSource="{Binding SelectedEvent.Properties}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="m:SoundProperty">
-              <Grid ColumnDefinitions="160,*,Auto" Margin="0,2">
-                <TextBox Grid.Column="0" Text="{Binding Key}" Margin="0,0,4,0" />
-                <TextBox Grid.Column="1" Text="{Binding Value}" Margin="4,0" />
-                <Button Grid.Column="2" Content="✕"
-                        Command="{Binding #RootControl.((vm:SoundEventEditorViewModel)DataContext).DeletePropertyCommand}"
-                        CommandParameter="{Binding}"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Margin="4,0,0,0" />
-              </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
-          <Button Content="Add Property" Command="{Binding AddPropertyCommand}" />
-          <Button Content="Save" Command="{Binding SaveCommand}" />
-          <Button Content="Load" Command="{Binding ReloadCommand}" />
-        </StackPanel>
+    <workspace:WorkspaceView.BrowserContent>
+      <Grid RowDefinitions="Auto,Auto,3*,Auto,Auto,*" Margin="4">
+        <TextBlock Text="Properties" Margin="4,0,0,4" />
+        <TextBox Grid.Row="1" x:Name="BrowserFilter" PlaceholderText="Filter properties..." TextChanged="BrowserFilterChanged" />
+        <ScrollViewer Grid.Row="2"><StackPanel x:Name="PropertyBrowser"/></ScrollViewer>
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" Margin="0,4">
+          <TextBlock Text="Templates" VerticalAlignment="Center"/>
+          <Button Grid.Column="1" Command="{Binding OpenTemplatesCommand}" ToolTip.Tip="Open templates folder"><workspace:LegacyIcon Path="tools/common/open.png"/></Button>
+          <Button Grid.Column="2" Click="RefreshTemplatesClicked" ToolTip.Tip="Refresh templates"><workspace:LegacyIcon Path="tools/common/refresh.png"/></Button>
+        </Grid>
+        <TextBox Grid.Row="4" x:Name="TemplateFilter" PlaceholderText="Filter templates..." TextChanged="TemplateFilterChanged"/>
+        <ListBox Grid.Row="5" x:Name="TemplateList" ItemsSource="{Binding Templates}" DoubleTapped="TemplateDoubleTapped"/>
       </Grid>
-    </Border>
+    </workspace:WorkspaceView.BrowserContent>
+    <workspace:WorkspaceView.CenterContent>
+      <Grid RowDefinitions="Auto,*,Auto" Margin="2">
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="4">
+          <TextBlock Text="{Binding PropertiesTitle}" MaxWidth="400" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
+          <TextBox Grid.Column="1" x:Name="PropertyFilter" PlaceholderText="Filter properties..." TextChanged="PropertyFilterChanged"/>
+          <Button Grid.Column="2" Content="Save as Template" Command="{Binding SaveTemplateCommand}" Margin="4,0,0,0"/>
+        </Grid>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="PropertyEditors"/></ScrollViewer>
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,4,0,0">
+          <Button Command="{Binding PlayEventCommand}" HorizontalAlignment="Stretch" Margin="0,0,2,0"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/common/control_play.png"/><TextBlock Text="Play current event"/></StackPanel></Button>
+          <Button Grid.Column="1" Command="{Binding StopEventCommand}" HorizontalAlignment="Stretch" Margin="2,0,0,0"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/common/control_stop.png"/><TextBlock Text="Stop"/></StackPanel></Button>
+        </Grid>
+      </Grid>
     </workspace:WorkspaceView.CenterContent>
     <workspace:WorkspaceView.RightContent>
       <TabControl>
         <TabItem Header="Addon">
-          <ListBox ItemsSource="{Binding AddonSounds}" />
+          <Grid RowDefinitions="Auto,*,Auto" Margin="4">
+        <TextBox Text="{Binding SearchFilter}" PlaceholderText="Search..."/>
+        <ListBox x:Name="AddonEventList" Grid.Row="1" ItemsSource="{Binding FilteredEvents}" SelectedItem="{Binding SelectedEvent}">
+          <ListBox.ItemTemplate><DataTemplate x:DataType="m:SoundEvent"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/assettypes/generic_sm.png"/><TextBlock Text="{Binding Name}"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,4,0,0">
+          <Button Command="{Binding AddEventCommand}" HorizontalAlignment="Stretch"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/common/new.png"/><TextBlock Text="Add Event"/></StackPanel></Button>
+          <Button Grid.Column="1" Command="{Binding DeleteEventCommand}" HorizontalAlignment="Stretch"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="delete_24dp.svg"/><TextBlock Text="Delete"/></StackPanel></Button>
+        </Grid>
+      </Grid>
         </TabItem>
         <TabItem Header="Internal">
-          <Grid RowDefinitions="Auto,*">
-            <Button Content="Search Game VPK" Command="{Binding SearchVpkCommand}" HorizontalAlignment="Stretch" Margin="4" />
-            <ListBox Grid.Row="1" ItemsSource="{Binding VpkSounds}" />
+          <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="4">
+            <TextBox x:Name="InternalEventFilter" PlaceholderText="Filter..." TextChanged="InternalEventFilterChanged"/>
+            <Button Grid.Row="1" Content="Load game events" Command="{Binding SearchInternalEventsCommand}" HorizontalAlignment="Stretch"/>
+            <ListBox x:Name="InternalEventList" Grid.Row="2" ItemsSource="{Binding InternalEvents}" SelectionChanged="InternalEventSelected">
+              <ListBox.ItemTemplate><DataTemplate x:DataType="m:SoundEvent"><StackPanel Orientation="Horizontal" Spacing="4"><workspace:LegacyIcon Path="tools/assettypes/vmix_sm.png"/><TextBlock Text="{Binding Name}"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+            </ListBox>
+            <Button Grid.Row="3" Content="Copy to Addon" Command="{Binding CopyInternalEventCommand}" HorizontalAlignment="Stretch"/>
           </Grid>
         </TabItem>
       </TabControl>
     </workspace:WorkspaceView.RightContent>
+    <workspace:WorkspaceView.RightBottomContent>
+      <Grid RowDefinitions="*,Auto" Margin="4">
+        <ListBox ItemsSource="{Binding UndoHistory}"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4"><Button Content="Undo" Command="{Binding UndoCommand}"/><Button Content="Redo" Command="{Binding RedoCommand}"/></StackPanel>
+      </Grid>
+    </workspace:WorkspaceView.RightBottomContent>
   </workspace:WorkspaceView>
 </UserControl>
