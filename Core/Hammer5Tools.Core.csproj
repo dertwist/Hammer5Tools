@@ -26,6 +26,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
     <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SixLabors.ImageSharp" />
     <InternalsVisibleTo Include="Hammer5Tools.Core.Tests" />
     <Content Include="../Misc/Source2Viewer/LICENSE" Link="licenses/ValveResourceFormat-SmartProps.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

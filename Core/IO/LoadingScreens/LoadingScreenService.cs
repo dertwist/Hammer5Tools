@@ -10,6 +10,13 @@ using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Compiler;
 using Hammer5Tools.Core.LoadingScreens;
 using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Quantization;
 using ValveKeyValue;
 
 public partial class LoadingScreenService : ILoadingScreenService
@@ -351,49 +358,93 @@ public partial class LoadingScreenService : ILoadingScreenService
 
     public async Task<string> ExportTimelineAsync(IReadOnlyList<string> imagePaths, string outputDirectory, string baseName, string format, string quality, CancellationToken cancellationToken = default)
     {
-        if (imagePaths.Count == 0)
+        if (imagePaths.Count == 0) throw new InvalidOperationException("No images are available for export.");
+        if (string.IsNullOrWhiteSpace(baseName) || baseName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || baseName != Path.GetFileName(baseName))
         {
-            throw new InvalidOperationException("No images are available for export.");
+            throw new ArgumentException("The animation name must be a file name without a directory.", nameof(baseName));
         }
+        cancellationToken.ThrowIfCancellationRequested();
+        var extension = format.ToLowerInvariant() switch { "webp" => ".webp", "mp4" => ".mp4", _ => ".gif" };
+        Directory.CreateDirectory(outputDirectory);
+        var output = Path.Combine(outputDirectory, $"{baseName}_timeline{extension}");
+        var staged = Path.Combine(outputDirectory, $".{Guid.NewGuid():N}{extension}");
+        try
+        {
+            if (extension == ".mp4")
+            {
+                await ExportVideoTimelineAsync(imagePaths, staged, quality, cancellationToken);
+            }
+            else
+            {
+                await Task.Run(() => ExportImageTimelineAsync(imagePaths, staged, extension, quality, cancellationToken), cancellationToken);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            if (File.Exists(output)) File.Copy(output, $"{output}.bak", overwrite: true);
+            File.Move(staged, output, overwrite: true);
+            return output;
+        }
+        finally
+        {
+            if (File.Exists(staged)) File.Delete(staged);
+        }
+    }
 
+    private static async Task ExportImageTimelineAsync(IReadOnlyList<string> imagePaths, string output, string extension, string quality, CancellationToken cancellationToken)
+    {
+        var options = new SixLabors.ImageSharp.Formats.DecoderOptions { MaxFrames = 1 };
+        using var animation = await Image.LoadAsync<Rgba32>(options, imagePaths[0], cancellationToken);
+        animation.Metadata.GetGifMetadata().RepeatCount = 0;
+        animation.Metadata.GetWebpMetadata().RepeatCount = 0;
+        SetFrameTiming(animation.Frames.RootFrame);
+        foreach (var path in imagePaths.Skip(1))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using var frame = await Image.LoadAsync<Rgba32>(options, path, cancellationToken);
+            if (frame.Size != animation.Size)
+            {
+                frame.Mutate(context => context.Resize(new ResizeOptions
+                {
+                    Size = animation.Size,
+                    Mode = ResizeMode.Pad,
+                    PadColor = SixLabors.ImageSharp.Color.Black,
+                }));
+            }
+            SetFrameTiming(frame.Frames.RootFrame);
+            animation.Frames.AddFrame(frame.Frames.RootFrame);
+        }
+        IImageEncoder encoder = extension == ".webp"
+            ? new WebpEncoder { Quality = quality switch { "Low" => 50, "Medium" => 75, _ => 95 } }
+            : new GifEncoder
+            {
+                ColorTableMode = GifColorTableMode.Local,
+                Quantizer = new WuQuantizer(new QuantizerOptions { MaxColors = quality switch { "Low" => 64, "Medium" => 128, _ => 256 } }),
+            };
+        await animation.SaveAsync(output, encoder, cancellationToken);
+    }
+
+    private static void SetFrameTiming(ImageFrame<Rgba32> frame)
+    {
+        frame.Metadata.GetGifMetadata().FrameDelay = 50;
+        frame.Metadata.GetGifMetadata().DisposalMethod = GifDisposalMethod.RestoreToBackground;
+        frame.Metadata.GetWebpMetadata().FrameDelay = 500;
+        frame.Metadata.GetWebpMetadata().BlendMethod = WebpBlendMethod.Source;
+    }
+
+    private static async Task ExportVideoTimelineAsync(IReadOnlyList<string> imagePaths, string output, string quality, CancellationToken cancellationToken)
+    {
         var executable = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
         var listPath = Path.Combine(Path.GetTempPath(), $"h5t-timeline-{Guid.NewGuid():N}.txt");
-        Directory.CreateDirectory(outputDirectory);
-        var extension = format.ToLowerInvariant() switch { "webp" => ".webp", "mp4" => ".mp4", _ => ".gif" };
-        var output = Path.Combine(outputDirectory, $"{baseName}_timeline{extension}");
         try
         {
             var lines = imagePaths.Select(path => $"file '{Path.GetFullPath(path).Replace('\\', '/').Replace("'", "'\\''")}'\nduration 0.5").ToList();
             lines.Add($"file '{Path.GetFullPath(imagePaths[^1]).Replace('\\', '/').Replace("'", "'\\''")}'");
             await File.WriteAllLinesAsync(listPath, lines, cancellationToken);
             var start = new ProcessStartInfo(executable) { UseShellExecute = false, RedirectStandardError = true, CreateNoWindow = true };
-            start.ArgumentList.Add("-y");
-            start.ArgumentList.Add("-f");
-            start.ArgumentList.Add("concat");
-            start.ArgumentList.Add("-safe");
-            start.ArgumentList.Add("0");
-            start.ArgumentList.Add("-i");
-            start.ArgumentList.Add(listPath);
-            start.ArgumentList.Add("-vf");
-            start.ArgumentList.Add("fps=2,scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos");
-            if (extension == ".mp4")
+            foreach (var argument in new[] { "-y", "-f", "concat", "-safe", "0", "-i", listPath, "-vf", "fps=2,scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos", "-c:v", "libx264", "-crf", quality switch { "Low" => "32", "Medium" => "23", _ => "18" }, "-pix_fmt", "yuv420p", output })
             {
-                start.ArgumentList.Add("-c:v"); start.ArgumentList.Add("libx264");
-                start.ArgumentList.Add("-crf"); start.ArgumentList.Add(quality switch { "Low" => "32", "Medium" => "23", _ => "18" });
-                start.ArgumentList.Add("-pix_fmt"); start.ArgumentList.Add("yuv420p");
+                start.ArgumentList.Add(argument);
             }
-            else if (extension == ".webp")
-            {
-                start.ArgumentList.Add("-c:v"); start.ArgumentList.Add("libwebp");
-                start.ArgumentList.Add("-q:v"); start.ArgumentList.Add(quality switch { "Low" => "50", "Medium" => "75", _ => "95" });
-                start.ArgumentList.Add("-loop"); start.ArgumentList.Add("0");
-            }
-            else
-            {
-                start.ArgumentList.Add("-loop"); start.ArgumentList.Add("0");
-            }
-            start.ArgumentList.Add(output);
-            using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start ffmpeg.");
+            using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start FFmpeg. MP4 export requires FFmpeg; GIF and WebP export do not.");
             using var cancellationRegistration = cancellationToken.Register(() =>
             {
                 try
@@ -406,12 +457,8 @@ public partial class LoadingScreenService : ILoadingScreenService
             });
             var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
             await process.WaitForExitAsync(cancellationToken);
-            if (process.ExitCode != 0)
-            {
-                throw new InvalidOperationException((await errorTask).Trim());
-            }
-
-            return output;
+            var error = await errorTask;
+            if (process.ExitCode != 0) throw new InvalidOperationException(error.Trim());
         }
         finally
         {

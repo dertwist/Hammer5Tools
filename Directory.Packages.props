@@ -30,6 +30,8 @@
 
     <PackageVersion Include="SkiaSharp" Version="4.151.1" />
 
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
+
     <!-- Source 2 & Valve formats -->
     <PackageVersion Include="ValveResourceFormat" Version="20.0.6980" />
     <PackageVersion Include="ValvePak" Version="5.0.2.177" />

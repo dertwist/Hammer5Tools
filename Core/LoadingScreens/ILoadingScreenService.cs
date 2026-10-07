@@ -21,6 +21,7 @@ public interface ILoadingScreenService
 
     Task<bool> ApplyLoadingScreenImagesAsync(string addonName, string sourceDirectory, bool deleteExisting, bool includeCameraName, CancellationToken cancellationToken = default);
 
+    /// <summary>Exports ordered frames at two frames per second; GIF/WebP use ImageSharp and MP4 requires FFmpeg.</summary>
     Task<string> ExportTimelineAsync(IReadOnlyList<string> imagePaths, string outputDirectory, string baseName, string format, string quality, CancellationToken cancellationToken = default);
 
     Task<string> LoadMapDescriptionAsync(string addonGamePath, string mapName, CancellationToken cancellationToken = default);
