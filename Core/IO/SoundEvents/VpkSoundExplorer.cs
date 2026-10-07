@@ -90,8 +90,16 @@ public class VpkSoundExplorer
                             using var stream = new MemoryStream(bytes);
                             using var resource = new ValveResourceFormat.Resource();
                             resource.Read(stream);
-                            using var content = ValveResourceFormat.IO.FileExtract.Extract(resource, null!);
-                            if (content.Data is { } data) Add(System.Text.Encoding.UTF8.GetString(data));
+                            if (resource.DataBlock is ValveResourceFormat.ResourceTypes.SoundStackScript soundStack)
+                            {
+                                foreach (var soundEntry in soundStack.SoundStackScriptValue)
+                                    Add(soundEntry.Value);
+                            }
+                            else
+                            {
+                                using var content = ValveResourceFormat.IO.FileExtract.Extract(resource, null!);
+                                if (content.Data is { } data) Add(System.Text.Encoding.UTF8.GetString(data));
+                            }
                         }
                         catch (Exception ex) when (ex is not OperationCanceledException)
                         {

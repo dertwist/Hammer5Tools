@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using Hammer5Tools.Core.IO.Vpk;
 using ValveResourceFormat;
 using ValveResourceFormat.IO;
@@ -31,11 +30,6 @@ public sealed class CompiledResourceReader(VpkIndex index)
         };
     }
 
-    // FileExtract.Extract's return type is resolved dynamically below (its concrete
-    // subtype varies by resource kind), so the trimmer/ILC cannot see the Data/FileName
-    // property reads that follow. Without this, NativeAOT publish can strip them and the
-    // reflection silently returns null instead of throwing.
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ContentFile))]
     private CoreResult<CompiledResourceContent> Read(string path, string failureCode)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -47,18 +41,10 @@ public sealed class CompiledResourceReader(VpkIndex index)
             using var stream = new MemoryStream(bytes, writable: false);
             using var resource = new Resource();
             resource.Read(stream);
-            var method = typeof(FileExtract).GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(candidate => candidate.Name == "Extract");
-            if (method is null)
-                return CoreResult.Failure<CompiledResourceContent>(failureCode, "The VRF extraction operation is unavailable.");
-            var arguments = new object?[method.GetParameters().Length];
-            arguments[0] = resource;
-            var content = method.Invoke(null, arguments);
-            var data = content?.GetType().GetProperty("Data")?.GetValue(content) as byte[];
-            if (data is null)
+            var content = FileExtract.Extract(resource);
+            if (content.Data is null)
                 return CoreResult.Failure<CompiledResourceContent>(failureCode, $"Could not decode '{path}'.");
-            var fileName = content?.GetType().GetProperty("FileName")?.GetValue(content)?.ToString();
-            return CoreResult.Success(new CompiledResourceContent([.. data], DetectFormat(data, fileName)));
+            return CoreResult.Success(new CompiledResourceContent([.. content.Data], DetectFormat(content.Data, content.FileName)));
         }
         catch (Exception exception)
         {

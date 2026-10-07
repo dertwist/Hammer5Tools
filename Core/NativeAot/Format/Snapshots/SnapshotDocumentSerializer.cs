@@ -1,6 +1,4 @@
-using System.Text.Json;
-
-using Hammer5Tools.Core.Format.SmartProps;
+using System.Text;
 
 using ValveKeyValue;
 using ValveResourceFormat.Serialization.KeyValues;
@@ -15,25 +13,38 @@ public static class SnapshotDocumentSerializer
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        using var json = JsonDocument.Parse(SmartPropDocumentSerializer.DeserializeText(text));
-        var root = json.RootElement.GetProperty("stream_data");
-        var declaredCount = root.GetProperty("num_values").GetInt32();
-        var streams = new List<SnapshotChannel>();
-        foreach (var stream in root.GetProperty("streams").EnumerateArray())
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
+        var root = KVDocumentExtensions.ParseKV3(ms).Root["stream_data"];
+        if (root is null)
         {
-            var name = stream.GetProperty("name").GetString() ?? string.Empty;
-            var type = stream.GetProperty("type").GetString() ?? string.Empty;
-            var width = GetWidth(type);
-            var values = new List<float[]>();
-            foreach (var value in stream.GetProperty("values").EnumerateArray())
+            throw new InvalidDataException("Missing 'stream_data' section in particle snapshot.");
+        }
+
+        var declaredCount = Convert.ToInt32(root["num_values"].Value);
+        var streams = new List<SnapshotChannel>();
+        var streamsNode = root["streams"];
+        if (streamsNode is not null && streamsNode.IsArray)
+        {
+            foreach (var stream in streamsNode.AsArraySpan())
             {
-                values.Add(ReadValue(value, width));
+                var name = stream["name"]?.ToString() ?? string.Empty;
+                var type = stream["type"]?.ToString() ?? string.Empty;
+                var width = GetWidth(type);
+                var values = new List<float[]>();
+                var valuesNode = stream["values"];
+                if (valuesNode is not null && valuesNode.IsArray)
+                {
+                    foreach (var value in valuesNode.AsArraySpan())
+                    {
+                        values.Add(ReadValue(value, width));
+                    }
+                }
+                if (width != 0 && values.Count != declaredCount)
+                {
+                    throw new InvalidDataException($"Snapshot stream '{name}' contains {values.Count} values; expected {declaredCount}.");
+                }
+                streams.Add(new SnapshotChannel(name, type, values));
             }
-            if (width != 0 && values.Count != declaredCount)
-            {
-                throw new InvalidDataException($"Snapshot stream '{name}' contains {values.Count} values; expected {declaredCount}.");
-            }
-            streams.Add(new SnapshotChannel(name, type, values));
         }
 
         if (streams.Where(stream => stream.Type != "bone_index_and_weight")
@@ -93,20 +104,25 @@ public static class SnapshotDocumentSerializer
         return root.ToKV3String();
     }
 
-    private static float[] ReadValue(JsonElement value, int width)
+    private static float[] ReadValue(KVObject value, int width)
     {
         if (width == 1)
         {
-            return [value.GetSingle()];
+            return [Convert.ToSingle(value.Value)];
         }
-        if (value.ValueKind != JsonValueKind.Array)
+        if (!value.IsArray)
         {
             throw new InvalidDataException($"Expected an array with {width} components.");
         }
-        var result = value.EnumerateArray().Select(component => component.GetSingle()).ToArray();
-        if (result.Length != width)
+        var span = value.AsArraySpan();
+        if (span.Length != width)
         {
-            throw new InvalidDataException($"Expected {width} components, found {result.Length}.");
+            throw new InvalidDataException($"Expected {width} components, found {span.Length}.");
+        }
+        var result = new float[width];
+        for (var i = 0; i < width; i++)
+        {
+            result[i] = Convert.ToSingle(span[i].Value);
         }
         return result;
     }

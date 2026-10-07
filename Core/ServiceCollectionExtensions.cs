@@ -30,7 +30,7 @@ public static class ServiceCollectionExtensions
     /// <summary>Registers shared domain, filesystem and process services for GUI and CLI hosts.</summary>
     public static IServiceCollection AddHammer5ToolsCore(this IServiceCollection services)
     {
-        services.AddSingleton<ISettingsService, JsonSettingsService>();
+        services.AddSingleton<ISettingsService, Kv3SettingsService>();
         services.AddSingleton<ICs2Locator, Cs2Locator>();
         services.AddSingleton<IAddonService, AddonService>();
         services.AddSingleton<ICs2Launcher, Cs2Launcher>();
