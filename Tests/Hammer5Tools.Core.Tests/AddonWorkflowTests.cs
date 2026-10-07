@@ -160,4 +160,34 @@ public sealed class AddonWorkflowTests
         }
         finally { Directory.Delete(root, recursive: true); }
     }
+
+    [Test]
+    public async Task DefaultLaunchOptionsOpenAddonMapInHammerAndHealMigrationFingerprint()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"h5t-heal-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var (emptyOptions, custom) = LaunchOptions.FromLegacy(string.Empty);
+            await Assert.That(emptyOptions.OpenMap).IsTrue();
+            await Assert.That(emptyOptions.OpenTools).IsTrue();
+            await Assert.That(custom).IsEmpty();
+
+            var (namedOptions, _) = LaunchOptions.FromLegacy(" -addon de_dust2 -tool hammer -asset maps/de_dust2.vmap -tools");
+            await Assert.That(namedOptions.OpenMap).IsTrue();
+            await Assert.That(namedOptions.OpenTools).IsTrue();
+
+            var path = Path.Combine(root, "settings.json");
+            File.WriteAllText(path, "{\"editor\":{\"customLaunchArgs\":\"+install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0\",\"launchOptions\":{\"openTools\":true,\"openMap\":false,\"steam\":false,\"retail\":false,\"gpuRayTracing\":false,\"insecure\":true,\"noCustomerMachine\":false}}}");
+            var settings = new JsonSettingsService(path).Settings;
+            await Assert.That(settings.Editor.LaunchOptions.OpenMap).IsTrue();
+            await Assert.That(settings.Editor.LaunchOptions.Steam).IsTrue();
+            await Assert.That(settings.Editor.LaunchOptions.Retail).IsTrue();
+            await Assert.That(settings.Editor.LaunchOptions.GpuRayTracing).IsTrue();
+
+            var launchArgs = settings.Editor.LaunchOptions.BuildArguments("de_nuke", settings.Editor.CustomLaunchArgs);
+            await Assert.That(launchArgs).Contains("-tool hammer -asset maps/de_nuke.vmap");
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
 }

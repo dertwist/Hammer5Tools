@@ -28,6 +28,8 @@ public interface IDialogService
 
     Task ShowErrorAsync(string message);
 
+    Task ShowWarningAsync(string title, string message) => ShowErrorAsync(message);
+
     void CloseUtilities();
 
     void ShowWorkshopManager();
@@ -307,6 +309,43 @@ public partial class DialogService : IDialogService, IDisposable
         var close = new Button { Content = "Close", HorizontalAlignment = HorizontalAlignment.Right };
         close.Click += (_, _) => window.Close();
         panel.Children.Add(close);
+        window.Content = panel;
+        await window.ShowDialog(MainWindow);
+    }
+
+    public async Task ShowWarningAsync(string title, string message)
+    {
+        var window = CreateDialog(title, 640, 460);
+        var panel = new Grid
+        {
+            Margin = new Thickness(16),
+            RowDefinitions = new RowDefinitions("*,Auto")
+        };
+
+        var scrollViewer = new ScrollViewer
+        {
+            Content = new SelectableTextBlock
+            {
+                Text = message,
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                FontSize = 12,
+                LineHeight = 18
+            }
+        };
+        Grid.SetRow(scrollViewer, 0);
+        panel.Children.Add(scrollViewer);
+
+        var close = new Button
+        {
+            Content = "Close",
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 12, 0, 0),
+            MinWidth = 80
+        };
+        close.Click += (_, _) => window.Close();
+        Grid.SetRow(close, 1);
+        panel.Children.Add(close);
+
         window.Content = panel;
         await window.ShowDialog(MainWindow);
     }

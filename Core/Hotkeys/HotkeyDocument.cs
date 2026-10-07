@@ -16,7 +16,7 @@ public partial class HotkeyDocument
     [GeneratedRegex(@"\{\s*m_Name\s*=\s*""([^""]*)""\s+m_Input\s*=\s*""([^""]*)""\s*\}", RegexOptions.IgnoreCase)]
     private static partial Regex MacroRegex();
 
-    [GeneratedRegex(@"\{\s*m_Context\s*=\s*""([^""]*)""\s+m_Command\s*=\s*""([^""]*)""\s+m_Input\s*=\s*""([^""]*)""\s*\}", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"\{\s*m_CO?ntext\s*=\s*""([^""]*)""\s+m_Command\s*=\s*""([^""]*)""\s+m_Input\s*=\s*""([^""]*)""\s*\}", RegexOptions.IgnoreCase)]
     private static partial Regex BindingRegex();
 
     private KVObject Original = new();
@@ -65,7 +65,8 @@ public partial class HotkeyDocument
             {
                 foreach (var item in bindingsObj.Children)
                 {
-                    var ctx = item.Value.TryGetValue("m_Context", out var c) ? c.ToString() : string.Empty;
+                    var ctx = item.Value.TryGetValue("m_Context", out var c) ? c.ToString()
+                        : item.Value.TryGetValue("m_COntext", out var c2) ? c2.ToString() : string.Empty;
                     var cmd = item.Value.TryGetValue("m_Command", out var cm) ? cm.ToString() : string.Empty;
                     var inp = item.Value.TryGetValue("m_Input", out var i) ? i.ToString() : string.Empty;
                     if (!string.IsNullOrEmpty(cmd))
@@ -154,12 +155,33 @@ public partial class HotkeyDocument
         return copy;
     }
 
-    public void SetBinding(string context, string command, string input)
-    {
-        var existing = Bindings.FirstOrDefault(b =>
+    public HotkeyBinding? FindBinding(string context, string command) =>
+        Bindings.FirstOrDefault(b =>
             string.Equals(b.Context, context, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(b.Command, command, StringComparison.OrdinalIgnoreCase));
 
+    public HotkeyBinding EnsureBinding(string context, string command)
+    {
+        var existing = FindBinding(context, command);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        var binding = new HotkeyBinding(context, command, string.Empty);
+        Bindings.Add(binding);
+        return binding;
+    }
+
+    public bool RemoveBinding(string context, string command)
+    {
+        var existing = FindBinding(context, command);
+        return existing is not null && Bindings.Remove(existing);
+    }
+
+    public void SetBinding(string context, string command, string input)
+    {
+        var existing = FindBinding(context, command);
         if (existing is not null)
         {
             existing.Input = input;

@@ -36,7 +36,7 @@ public class ApplicationServicesTests
     [Test]
     public async Task LaunchRequestsAreForwardedAndInvalidClientsDoNotStopTheListener()
     {
-        var instanceName = $"h5t-forward-test-{Guid.NewGuid():N}";
+        var instanceName = $"h5t-fwd-{Random.Shared.Next():x8}";
         var received = new ConcurrentQueue<StartupTool>();
         using (var owner = new SingleInstanceGuard(instanceName))
         {

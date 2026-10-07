@@ -1,46 +1,134 @@
-<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Hammer5Tools.App.Features.Hotkeys" xmlns:m="using:Hammer5Tools.Core.Hotkeys"
-             x:Class="Hammer5Tools.App.Features.Hotkeys.HotkeyEditorView" x:DataType="vm:HotkeyEditorViewModel">
-  <Grid ColumnDefinitions="1*,3,2*" Margin="8,0">
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="0,0,4,0">
-      <TextBlock Text="Keybindings presets" Classes="section" />
-      <ComboBox Grid.Row="1" ItemsSource="{Binding Contexts}" SelectedItem="{Binding SelectedContext}"
-                HorizontalAlignment="Stretch" ToolTip.Tip="Keybinding context" />
-      <Border Grid.Row="2" Classes="editor-panel" Margin="0,6,0,4">
-        <StackPanel>
-          <TextBlock Text="Name" Classes="column-header" />
-          <TextBlock Text="{Binding Title}" Margin="8,4" TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-      <Grid Grid.Row="3" ColumnDefinitions="*,*,*">
-        <Button Content="Set current" Command="{Binding ApplyToCs2Command}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-        <Button Grid.Column="1" Content="New preset" Command="{Binding NewPresetCommand}" HorizontalAlignment="Stretch" Margin="0,0,4,0" />
-        <Button Grid.Column="2" Content="Open preset" Command="{Binding OpenPresetCommand}" HorizontalAlignment="Stretch" />
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Hammer5Tools.App.Features.Hotkeys"
+             xmlns:controls="using:Hammer5Tools.App.Controls"
+             x:Class="Hammer5Tools.App.Features.Hotkeys.HotkeyEditorView"
+             x:DataType="vm:HotkeyEditorViewModel">
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Ctrl+O" Command="{Binding SetCurrentCommand}" />
+    <KeyBinding Gesture="Ctrl+N" Command="{Binding NewPresetCommand}" />
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SetSaveRestartCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid ColumnDefinitions="1*,4,2.2*" Margin="8,4">
+    <!-- Left panel: Keybindings presets -->
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="0,0,4,0">
+      <TextBlock Text="Keybindings presets" Classes="section" Margin="0,0,0,6" />
+      <ComboBox Grid.Row="1" ItemsSource="{x:Static vm:HotkeyEditorViewModel.EditorDisplayNames}" SelectedItem="{Binding SelectedEditorName}"
+                HorizontalAlignment="Stretch" Margin="0,0,0,6" ToolTip.Tip="Select editor tool" />
+
+      <!-- Presets filter bar and action icons -->
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,6">
+        <TextBox Text="{Binding PresetFilterText}" PlaceholderText="Filter files..." Height="26" />
+        <Button Grid.Column="1" Command="{Binding OpenFolderCommand}" Width="26" Height="26" ToolTip.Tip="Open presets folder" Margin="2,0,0,0" Padding="4">
+          <controls:LegacyIcon Path="folder_open.svg" Width="16" Height="16" />
+        </Button>
+        <Button Grid.Column="2" Command="{Binding ToggleRecentCommand}" Width="26" Height="26" ToolTip.Tip="Show recent files" Margin="2,0,0,0" Padding="4">
+          <controls:LegacyIcon Path="acute_24dp.svg" Width="16" Height="16" />
+        </Button>
+        <Button Grid.Column="3" Command="{Binding ToggleFavoritesCommand}" Width="26" Height="26" ToolTip.Tip="Show favorites" Margin="2,0,0,0" Padding="4">
+          <controls:LegacyIcon Path="bookmark_24dp.svg" Width="16" Height="16" />
+        </Button>
+      </Grid>
+
+      <!-- Presets Table -->
+      <Grid Grid.Row="3" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,90" Background="{DynamicResource H5TSurfaceRaisedBrush}" Height="24">
+          <TextBlock Text="Name" Classes="column-header" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+          <TextBlock Grid.Column="1" Text="Size" Classes="column-header" Margin="0,0,8,0" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold" />
+        </Grid>
+        <Border Grid.Row="1" Classes="editor-panel" BorderThickness="1" BorderBrush="{DynamicResource H5TBorderBrush}" Margin="0,0,0,6">
+          <ListBox ItemsSource="{Binding FilteredPresets}" SelectedItem="{Binding SelectedPreset}" DoubleTapped="OnPresetDoubleTapped" Background="Transparent">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:HotkeyPresetItemViewModel">
+                <Grid ColumnDefinitions="Auto,*,90">
+                  <controls:LegacyIcon Path="tools/assettypes/generic_sm.png" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding DisplayName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Grid.Column="2" Text="{Binding DisplaySize}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource H5TTextMutedBrush}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Border>
+      </Grid>
+
+      <!-- Presets Action Buttons -->
+      <Grid Grid.Row="4" ColumnDefinitions="*,*,*" Margin="0,0,0,4">
+        <Button Command="{Binding SetCurrentCommand}" HorizontalAlignment="Stretch" Margin="0,0,3,0" ToolTip.Tip="Apply selected preset as current keybindings (Ctrl+O)">
+          <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+            <controls:LegacyIcon Path="check_24dp.svg" Width="16" Height="16" />
+            <TextBlock Text="Set current" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="1" Command="{Binding NewPresetCommand}" HorizontalAlignment="Stretch" Margin="3,0,3,0" ToolTip.Tip="Create a new keybinding preset (Ctrl+N)">
+          <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+            <controls:LegacyIcon Path="add_24dp.svg" Width="16" Height="16" />
+            <TextBlock Text="New preset" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="2" Command="{Binding OpenPresetCommand}" HorizontalAlignment="Stretch" Margin="3,0,0,0" ToolTip.Tip="Open an existing keybinding preset from disk">
+          <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+            <controls:LegacyIcon Path="file_open_16dp.svg" Width="16" Height="16" />
+            <TextBlock Text="Open preset" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
       </Grid>
     </Grid>
-    <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
+
+    <!-- Splitter -->
+    <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" Background="{DynamicResource H5TBorderBrush}" />
+
+    <!-- Right panel: Keybindings editor -->
     <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto" Margin="4,0,0,0">
-      <TextBlock Text="Keybindings editor" Classes="section" />
-      <Grid Grid.Row="1" ColumnDefinitions="240,*" Background="{DynamicResource H5TSurfaceRaisedBrush}">
-        <TextBlock Text="Command" Classes="column-header" />
-        <TextBlock Grid.Column="1" Text="Input" Classes="column-header" />
+      <TextBlock Text="Keybindings editor" Classes="section" Margin="0,0,0,6" />
+
+      <!-- Columns Header -->
+      <Grid Grid.Row="1" ColumnDefinitions="320,*" Background="{DynamicResource H5TSurfaceRaisedBrush}" Height="24" Margin="0,0,0,1">
+        <TextBlock Text="Command" Classes="column-header" Margin="26,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+        <TextBlock Grid.Column="1" Text="Input" Classes="column-header" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
       </Grid>
-      <ListBox Grid.Row="2" Classes="bindings" ItemsSource="{Binding FilteredBindings}" SelectedItem="{Binding SelectedBinding}">
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="m:HotkeyBinding">
-            <Grid ColumnDefinitions="240,*">
-              <TextBlock Text="{Binding Command}" Margin="8,0" VerticalAlignment="Center" ToolTip.Tip="{Binding Context}" />
-              <TextBlock Grid.Column="1" Text="{Binding Input}" Margin="8,0" VerticalAlignment="Center" />
-            </Grid>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-      <Grid Grid.Row="3" ColumnDefinitions="*,150,Auto,Auto,Auto" Margin="0,4,0,0">
-        <TextBox Text="{Binding FilterText}" PlaceholderText="Command filter" Margin="0,0,4,0" />
-        <TextBox Grid.Column="1" Text="{Binding NewKeyInput}" PlaceholderText="Key binding" Margin="0,0,4,0" />
-        <Button Grid.Column="2" Content="Change Binding" Command="{Binding ApplyBindingCommand}" Margin="0,0,4,0" />
-        <Button Grid.Column="3" Content="Save preset" Command="{Binding SaveCommand}" Margin="0,0,4,0" />
-        <Button Grid.Column="4" Content="Set and restart" Command="{Binding ApplyAndRestartCommand}" />
+
+      <!-- Keybindings Tree -->
+      <Border Grid.Row="2" Classes="editor-panel" BorderThickness="1" BorderBrush="{DynamicResource H5TBorderBrush}">
+        <TreeView ItemsSource="{Binding FilteredContextGroups}" Background="Transparent">
+          <TreeView.Styles>
+            <Style Selector="TreeViewItem" x:DataType="vm:HotkeyContextGroupViewModel">
+              <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+              <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+            </Style>
+          </TreeView.Styles>
+          <TreeView.DataTemplates>
+            <TreeDataTemplate DataType="vm:HotkeyContextGroupViewModel" ItemsSource="{Binding Commands}">
+              <TextBlock Text="{Binding ContextName}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,4" />
+            </TreeDataTemplate>
+            <DataTemplate DataType="vm:HotkeyCommandRowViewModel">
+              <Grid ColumnDefinitions="296,*" IsVisible="{Binding IsVisible}" Margin="0,2">
+                <TextBlock Text="{Binding Command}" VerticalAlignment="Center" Margin="4,0" TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" Classes="hotkey-key-button" Content="{Binding DisplayInput}"
+                        Command="{Binding EditKeyCommand}" Width="220" HorizontalAlignment="Left" ToolTip.Tip="Click to edit keybinding" />
+              </Grid>
+            </DataTemplate>
+          </TreeView.DataTemplates>
+        </TreeView>
+      </Border>
+
+      <!-- Bottom Toolbar -->
+      <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,6,0,4">
+        <TextBox Text="{Binding CommandFilterText}" PlaceholderText="Command filter" Height="26" Margin="0,0,6,0" />
+        <Button Grid.Column="1" Command="{Binding FilterKeyCommand}" Classes="hotkey-key-button" Content="{Binding KeyFilterButtonText}" Width="220" Height="26" Margin="0,0,6,0" ToolTip.Tip="Filter by key input" />
+        <Button Grid.Column="2" Command="{Binding SaveCommand}" Width="160" Height="26" Margin="0,0,6,0" ToolTip.Tip="Save keybinding preset to file (Ctrl+S)">
+          <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+            <controls:LegacyIcon Path="save_16dp.svg" Width="16" Height="16" />
+            <TextBlock Text="Save preset" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="3" Command="{Binding SetSaveRestartCommand}" Width="160" Height="26" ToolTip.Tip="Save keybindings and restart CS2 tools (Ctrl+Shift+S)">
+          <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+            <controls:LegacyIcon Path="all_match_24dp.svg" Width="16" Height="16" />
+            <TextBlock Text="Set and restart" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
       </Grid>
     </Grid>
   </Grid>

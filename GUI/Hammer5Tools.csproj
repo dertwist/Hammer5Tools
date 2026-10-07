@@ -38,6 +38,7 @@
     <Content Include="../Presets/Addons/**/*" Link="presets/addons/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../Presets/SoundEventEditor/Presets/**/*" Link="presets/soundeventeditor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../Presets/SmartPropEditor/Presets/**/*" Link="presets/smartpropeditor/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../Presets/Hotkeys/**/*" Link="presets/hotkeys/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Hammer5Tools.SmartProp.Tests" />
     <InternalsVisibleTo Include="Hammer5Tools.App.Tests" />
 

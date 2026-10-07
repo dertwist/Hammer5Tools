@@ -663,6 +663,43 @@ public class MigrationUiTests
     }
 
     [Test]
+    public async Task KeyDialogModifiersAndChordsAreComposed()
+    {
+        var vm = new KeyDialogViewModel();
+        vm.IsCtrl = true;
+        vm.KeyText = "K";
+        vm.RecomputeResult();
+        await Assert.That(vm.ResultValue).IsEqualTo("Ctrl+K");
+
+        vm.IsSelectFromList = true;
+        vm.IsCtrl = false;
+        vm.SelectedSpecialInput = "N+MWheelUp";
+        vm.RecomputeResult();
+        await Assert.That(vm.ResultValue).IsEqualTo("N+MWheelUp");
+
+        vm.IsCtrl = true;
+        vm.SelectedSpecialInput = "Ctrl+Shift+K";
+        vm.RecomputeResult();
+        await Assert.That(vm.ResultValue).IsEqualTo("Ctrl+Shift+K");
+    }
+
+    [Test]
+    public async Task HotkeyEditorDiscoversPresetsAndSwitchesEditors()
+    {
+        using var fixture = new Fixture();
+        using var editor = new HotkeyEditorViewModel(fixture.Services.GetRequiredService<ICs2Locator>(), fixture.Dialogs);
+
+        await Assert.That(editor.SelectedEditorName).IsEqualTo("Hammer");
+        await Assert.That(editor.SelectedEditorStem).IsEqualTo("hammer");
+        await Assert.That(editor.Presets.Any(p => p.DisplayName == "twist")).IsTrue();
+        await Assert.That(editor.ContextGroups.Count).IsGreaterThan(0);
+
+        editor.SelectedEditorName = "ModelDoc Editor";
+        await Assert.That(editor.SelectedEditorStem).IsEqualTo("modeldoc_editor");
+        await Assert.That(editor.ContextGroups.Count).IsGreaterThan(0);
+    }
+
+    [Test]
     public async Task MapBuilderPresetsPersistEditsWithoutChangingOtherPresets()
     {
         using var fixture = new Fixture();
@@ -1034,6 +1071,65 @@ public class MigrationUiTests
         }, CancellationToken.None);
     }
 
+    [Test]
+    public async Task WrongAddonStructureShowsBottomBarWarningAndOpensLegacyWarningDialog()
+    {
+        using var fixture = new Fixture();
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var window = new MainWindow(shell);
+            window.Show();
+            try
+            {
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                // 1. Initial state: 'first' addon has no maps/first.vmap -> HasWrongAddonStructure is true
+                await Assert.That(shell.HasWrongAddonStructure).IsTrue();
+
+                var warningButton = window.FindControl<Button>("StructureWarningButton")!;
+                await Assert.That(warningButton).IsNotNull();
+                await Assert.That(warningButton.IsVisible).IsTrue();
+
+                // 2. Click warning button -> triggers ShowWrongAddonStructureWarningCommand and shows legacy dialog
+                shell.ShowWrongAddonStructureWarningCommand.Execute(null);
+                await Assert.That(fixture.Dialogs.Warnings.Count).IsEqualTo(1);
+                var (title, message) = fixture.Dialogs.Warnings[0];
+                await Assert.That(title).IsEqualTo("Incorrect Project Structure");
+                await Assert.That(message).Contains("The correct structure — as used by Valve — includes only one map file in the addon.");
+                await Assert.That(message).Contains("first/maps/first.vmap");
+
+                // 3. Create primary map maps/first.vmap -> HasWrongAddonStructure becomes false
+                var mapPath = Path.Combine(fixture.Root, "content", "csgo_addons", "first", "maps", "first.vmap");
+                Directory.CreateDirectory(Path.GetDirectoryName(mapPath)!);
+                File.WriteAllText(mapPath, "vmap content");
+
+                // Refresh addon selection
+                shell.RefreshAddonsCommand.Execute(null);
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                await Assert.That(shell.HasWrongAddonStructure).IsFalse();
+                await Assert.That(warningButton.IsVisible).IsFalse();
+
+                // 4. Update button visibility
+                var updateButton = window.FindControl<Button>("BottomUpdateButton")!;
+                await Assert.That(updateButton).IsNotNull();
+                await Assert.That(updateButton.IsVisible).IsFalse();
+                shell.IsUpdateAvailable = true;
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                await Assert.That(updateButton.IsVisible).IsTrue();
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
     private sealed class TestSteamLauncher : ICs2Launcher
     {
         public bool IsRunning => false;
@@ -1091,6 +1187,7 @@ public class MigrationUiTests
     private sealed class TestDialogs : IDialogService
     {
         public List<string> Errors { get; } = [];
+        public List<(string Title, string Message)> Warnings { get; } = [];
         public int OpenCount { get; private set; }
         public string? SavePath { get; set; }
         public bool CloseResult { get; set; } = true;
@@ -1101,6 +1198,7 @@ public class MigrationUiTests
         public Task<string?> SaveFileAsync(string title, string filename) { return Task.FromResult(SavePath); }
         public Task<string?> PickFolderAsync(string title) { return Task.FromResult<string?>(null); }
         public Task ShowErrorAsync(string message) { Errors.Add(message); return Task.CompletedTask; }
+        public Task ShowWarningAsync(string title, string message) { Warnings.Add((title, message)); return Task.CompletedTask; }
         public void CloseUtilities() { }
         public int WorkshopLaunchCount { get; private set; }
         public void ShowWorkshopManager() { WorkshopLaunchCount++; }

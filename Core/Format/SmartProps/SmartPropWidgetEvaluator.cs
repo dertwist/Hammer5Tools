@@ -1,9 +1,8 @@
 using System.Globalization;
 using System.Numerics;
 using System.Text.Json.Nodes;
-
-using ValveKeyValue;
 using Hammer5Tools.Core.Format.SmartProps.Evaluation;
+using ValveKeyValue;
 
 namespace Hammer5Tools.Core.Format.SmartProps;
 

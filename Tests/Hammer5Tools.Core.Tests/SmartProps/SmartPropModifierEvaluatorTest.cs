@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using ValveKeyValue;
 using Hammer5Tools.Core.Format.SmartProps.Evaluation;
+using ValveKeyValue;
 
 namespace Hammer5Tools.Core.Tests.SmartProps;
 

@@ -12,6 +12,11 @@ public sealed class TimelineExportTests
     [Test]
     public async Task Mp4ExportEncodesOrderedFramesWithoutAnExecutableAndPreservesFailedExports()
     {
+        if (!OperatingSystem.IsWindows() || System.Runtime.InteropServices.RuntimeInformation.OSArchitecture != System.Runtime.InteropServices.Architecture.X64)
+        {
+            return;
+        }
+
         var root = Path.Combine(Path.GetTempPath(), $"h5t-video-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
         try

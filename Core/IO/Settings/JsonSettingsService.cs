@@ -67,13 +67,42 @@ public class JsonSettingsService : ISettingsService
                     {
                         stream.Position = 0;
                         using var document = JsonDocument.Parse(stream);
-                        if (document.RootElement.TryGetProperty("editor", out var editor) && !editor.TryGetProperty("launchOptions", out _))
+                        if (document.RootElement.TryGetProperty("editor", out var editor))
                         {
-                            var launch = Core.Cs2.LaunchOptions.FromLegacy(deserialized.Editor.CustomLaunchArgs);
-                            launch.Options.OpenTools = true;
-                            launch.Options.Insecure = true;
-                            deserialized.Editor.LaunchOptions = launch.Options;
-                            deserialized.Editor.CustomLaunchArgs = launch.CustomArgs;
+                            if (!editor.TryGetProperty("launchOptions", out _))
+                            {
+                                var launch = Core.Cs2.LaunchOptions.FromLegacy(deserialized.Editor.CustomLaunchArgs);
+                                launch.Options.OpenTools = true;
+                                launch.Options.Insecure = true;
+                                if (string.Equals(launch.CustomArgs, deserialized.Editor.CustomLaunchArgs?.Trim(), StringComparison.Ordinal))
+                                {
+                                    launch.Options.OpenMap = true;
+                                    launch.Options.Steam = true;
+                                    launch.Options.Retail = true;
+                                    launch.Options.GpuRayTracing = true;
+                                }
+                                deserialized.Editor.LaunchOptions = launch.Options;
+                                deserialized.Editor.CustomLaunchArgs = launch.CustomArgs;
+                            }
+                            else if (editor.TryGetProperty("launchOptions", out var lo))
+                            {
+                                if (!lo.TryGetProperty("openMap", out _) && !lo.TryGetProperty("OpenMap", out _))
+                                {
+                                    deserialized.Editor.LaunchOptions.OpenMap = true;
+                                }
+                                else if (!deserialized.Editor.LaunchOptions.OpenMap
+                                         && !deserialized.Editor.LaunchOptions.Steam
+                                         && !deserialized.Editor.LaunchOptions.Retail
+                                         && !deserialized.Editor.LaunchOptions.GpuRayTracing
+                                         && deserialized.Editor.LaunchOptions.OpenTools
+                                         && deserialized.Editor.LaunchOptions.Insecure)
+                                {
+                                    deserialized.Editor.LaunchOptions.OpenMap = true;
+                                    deserialized.Editor.LaunchOptions.Steam = true;
+                                    deserialized.Editor.LaunchOptions.Retail = true;
+                                    deserialized.Editor.LaunchOptions.GpuRayTracing = true;
+                                }
+                            }
                         }
                         CurrentSettings = deserialized;
                         return;

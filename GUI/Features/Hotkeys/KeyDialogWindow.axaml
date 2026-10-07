@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Hammer5Tools.App.Features.Hotkeys"
+        x:Class="Hammer5Tools.App.Features.Hotkeys.KeyDialogWindow"
+        x:DataType="vm:KeyDialogViewModel"
+        Title="Change keybinding"
+        Icon="avares://Hammer5Tools/Assets/LegacyIcons/tools/common/help_keybinding_list.png"
+        Width="420" Height="130"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource H5TBackgroundBrush}">
+  <Grid RowDefinitions="Auto,Auto,Auto" Margin="12" VerticalAlignment="Center">
+    <!-- Top row: Select from list checkbox and Key input / ComboBox -->
+    <Grid ColumnDefinitions="Auto,*" Height="28">
+      <CheckBox Content="Select from list" IsChecked="{Binding IsSelectFromList}" VerticalAlignment="Center" Margin="0,0,10,0" />
+      <TextBox Grid.Column="1" x:Name="KeyLineBox" Text="{Binding KeyText}" PlaceholderText="Press a key"
+               IsReadOnly="True" IsVisible="{Binding !IsSelectFromList}" VerticalAlignment="Center" Height="26" />
+      <ComboBox Grid.Column="1" x:Name="SpecialInputCombo" ItemsSource="{x:Static vm:KeyDialogViewModel.SpecialInputs}"
+                SelectedItem="{Binding SelectedSpecialInput}"
+                IsVisible="{Binding IsSelectFromList}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="26" />
+    </Grid>
+
+    <!-- Middle row: Modifiers checkboxes -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" Margin="0,10,0,10">
+      <CheckBox Content="Ctrl" IsChecked="{Binding IsCtrl}" />
+      <CheckBox Content="Shift" IsChecked="{Binding IsShift}" />
+      <CheckBox Content="Alt" IsChecked="{Binding IsAlt}" />
+    </StackPanel>
+
+    <!-- Bottom row: OK / Cancel buttons -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button Content="Cancel" Width="80" Click="OnCancelClick" />
+      <Button Content="OK" Classes="accent" Width="80" Click="OnOkClick" />
+    </StackPanel>
+  </Grid>
+</Window>

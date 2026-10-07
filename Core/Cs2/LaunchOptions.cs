@@ -40,6 +40,11 @@ public sealed class LaunchOptions
     /// <summary>Extracts legacy checkboxes and leaves unknown arguments intact.</summary>
     public static (LaunchOptions Options, string CustomArgs) FromLegacy(string arguments)
     {
+        if (string.IsNullOrWhiteSpace(arguments))
+        {
+            return (new LaunchOptions(), string.Empty);
+        }
+
         var options = new LaunchOptions
         {
             OpenTools = false,
@@ -56,8 +61,9 @@ public sealed class LaunchOptions
             custom = Regex.Replace(custom, pattern, "", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
             apply();
         }
-        Take(@"(?<!\S)-tool\s+hammer\s+-asset\s+maps/addon_name\.vmap(?=\s|$)", () => options.OpenMap = true);
-        Take(@"(?<!\S)-addon\s+addon_name(?=\s|$)", () => { });
+        Take(@"(?<!\S)-tool\s+hammer(?:\s+-asset\s+""?maps/(?:addon_name|[^\s""]+)\.vmap""?)?(?=\s|$)", () => options.OpenMap = true);
+        Take(@"(?<!\S)-asset\s+""?maps/(?:addon_name|[^\s""]+)\.vmap""?(?=\s|$)", () => options.OpenMap = true);
+        Take(@"(?<!\S)-addon\s+(?:""[^""]+""|\S+)(?=\s|$)", () => { });
         Take(@"(?<!\S)-tools(?=\s|$)", () => options.OpenTools = true);
         Take(@"(?<!\S)-steam(?=\s|$)", () => options.Steam = true);
         Take(@"(?<!\S)-retail(?=\s|$)", () => options.Retail = true);

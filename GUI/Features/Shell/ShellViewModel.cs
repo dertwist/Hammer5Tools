@@ -303,6 +303,26 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public IRelayCommand SaveDocumentCommand { get; }
 
+    public bool HasWrongAddonStructure => SelectedAddon is not null && !SelectedAddon.HasPrimaryMap;
+
+    public IAsyncRelayCommand ShowWrongAddonStructureWarningCommand { get; }
+
+    private bool IsUpdateAvailableValue;
+    public bool IsUpdateAvailable
+    {
+        get => IsUpdateAvailableValue;
+        set => SetProperty(ref IsUpdateAvailableValue, value);
+    }
+
+    private string UpdateToolTipValue = "An update is available";
+    public string UpdateToolTip
+    {
+        get => UpdateToolTipValue;
+        set => SetProperty(ref UpdateToolTipValue, value);
+    }
+
+    public IRelayCommand OpenUpdateCommand { get; }
+
     public ShellViewModel(
         IAddonService addonService,
         ICs2Launcher cs2Launcher,
@@ -318,7 +338,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
         IAssetToolsService assetToolsService,
         IGitSyncService gitSyncService,
         Services.IDialogService dialogService,
-        ISystemUsageService? systemUsageService = null)
+        ISystemUsageService? systemUsageService = null,
+        Services.Updates.IUpdateService? updateService = null)
     {
         AddonService = addonService;
         Cs2Launcher = cs2Launcher;
@@ -375,7 +396,34 @@ public class ShellViewModel : ViewModelBase, IDisposable
         RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.RedoCommand.Execute(null));
         ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
+        ShowWrongAddonStructureWarningCommand = new AsyncRelayCommand(ShowWrongAddonStructureWarningAsync);
+        OpenUpdateCommand = new RelayCommand(() => Program.OpenUpdates());
         InitializeMainMenuGroups();
+
+        if (updateService is not null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var hasUpdate = await updateService.CheckForUpdatesAsync(silent: true);
+                    if (hasUpdate)
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            IsUpdateAvailable = true;
+                            UpdateToolTip = string.IsNullOrWhiteSpace(updateService.AvailableVersion)
+                                ? "An update is available"
+                                : $"Update to version {updateService.AvailableVersion}";
+                        });
+                    }
+                }
+                catch
+                {
+                    // Non-intrusive background check
+                }
+            });
+        }
 
         AddonService.AddonsChanged += OnAddonsChanged;
         AddonService.ActiveAddonChanged += OnActiveAddonChanged;
@@ -431,6 +479,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         }
 
         OnPropertyChanged(nameof(SelectedAddon));
+        OnPropertyChanged(nameof(HasWrongAddonStructure));
     }
 
     public void OpenHotkeyEditor()
@@ -638,7 +687,32 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     private void OnActiveAddonChanged(object? sender, Addon? addon)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(SelectedAddon)));
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            OnPropertyChanged(nameof(SelectedAddon));
+            OnPropertyChanged(nameof(HasWrongAddonStructure));
+        });
+    }
+
+    private async Task ShowWrongAddonStructureWarningAsync()
+    {
+        var addonName = SelectedAddon?.Name ?? "addon";
+        var message =
+            "Your current project structure is incorrect.\n\n" +
+            "The correct structure — as used by Valve — includes only one map file in the addon.\n" +
+            "Hammer5Tools follows this convention. All tools work based on the main vmap file " +
+            "which must match the addon name.\n\n" +
+            "If the addon name and root vmap file don't match, you will see this warning repeatedly.\n\n" +
+            "But what if you want to create different versions of your map?\n" +
+            "Use a version control system like Git, Perforce, or Diversion. It's highly recommended and not as hard as it might seem.\n\n" +
+            "If you don't want to use VCS tools, you can work with map versions through prefabs. The recommended structure would be:\n" +
+            $"  {addonName}/maps/{addonName}.vmap\n" +
+            $"  {addonName}/maps/versions/version_01.vmap\n" +
+            $"  {addonName}/maps/versions/version_02.vmap\n\n" +
+            $"In this setup, 'version_02.vmap' would be added to '{addonName}.vmap' as a prefab. " +
+            "This structure is valid, but version control is still recommended for clean iteration.";
+
+        await DialogService.ShowWarningAsync("Incorrect Project Structure", message);
     }
 
     private void OnProcessStateChanged(object? sender, bool running)

@@ -98,14 +98,40 @@
     <!-- Legacy shell shortcuts and addon actions. -->
     <Border Grid.Row="3" Name="BottomBar" Classes="shell-bottom" Background="{DynamicResource H5TSurfaceBrush}">
       <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
-        <!-- Recent activity opens the console. -->
-        <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity — click to open Console">
-          <Button Command="{Binding OpenConsoleCommand}" Classes="subtle shell-status" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
-            <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource H5TTextMutedBrush}" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
-            </Grid>
+        <!-- Bottom left: structure warning (if wrong), update button (if available), and console line status. -->
+        <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
+          <Button Grid.Column="0" Name="StructureWarningButton"
+                  Command="{Binding ShowWrongAddonStructureWarningCommand}"
+                  IsVisible="{Binding HasWrongAddonStructure}"
+                  Classes="warning-badge"
+                  ToolTip.Tip="Incorrect Project Structure — click for details"
+                  Margin="4,0,4,0">
+            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+              <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource H5TWarningBrush}" Data="{StaticResource H5TShellWarningIcon}" VerticalAlignment="Center" />
+              <TextBlock Text="Structure Warning" Foreground="{DynamicResource H5TWarningBrush}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+            </StackPanel>
           </Button>
-        </Border>
+
+          <Button Grid.Column="1" Name="BottomUpdateButton"
+                  Command="{Binding OpenUpdateCommand}"
+                  IsVisible="{Binding IsUpdateAvailable}"
+                  ToolTip.Tip="{Binding UpdateToolTip}"
+                  Margin="0,0,4,0">
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+              <Path Classes="shell-icon" Data="{StaticResource H5TShellSyncIcon}" Fill="#4caf50" Width="14" Height="14" />
+              <TextBlock Text="Update" Foreground="#4caf50" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+
+          <!-- Recent activity opens the console. -->
+          <Border Grid.Column="2" Background="Transparent" BorderThickness="0" Padding="8,0" ToolTip.Tip="Console activity — click to open Console">
+            <Button Command="{Binding OpenConsoleCommand}" Classes="subtle shell-status" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
+              <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource H5TTextMutedBrush}" VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource H5TFontFamily}" />
+              </Grid>
+            </Button>
+          </Border>
+        </Grid>
 
         <!-- Utilities open dialogs and Workshop opens its editor tab. -->
         <Button Grid.Column="1" Width="90" ToolTip.Tip="Open tools">

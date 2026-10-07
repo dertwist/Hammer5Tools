@@ -3,16 +3,16 @@ namespace Hammer5Tools.App.Features.SoundEvents;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
-using System.Text.Json;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Hammer5Tools.App.Controls;
 using Hammer5Tools.Core.SoundEvents;
 
@@ -29,7 +29,9 @@ public partial class SoundEventEditorView : UserControl
         DataContextChanged += (_, _) => AttachModel();
         AddonAudioList.DoubleTapped += (_, _) => AddSound((AddonAudioList.SelectedItem as SoundAudioRow)?.Path);
         InternalAudioList.DoubleTapped += (_, _) => AddSound((InternalAudioList.SelectedItem as SoundAudioFolder)?.SoundPath);
-        AddonEventList.ContextMenu = new ContextMenu { ItemsSource = new[]
+        AddonEventList.ContextMenu = new ContextMenu
+        {
+            ItemsSource = new[]
         {
             MenuAction("New", () => { Model?.AddEventCommand.Execute(null); return Task.CompletedTask; }),
             MenuAction("Rename", () => { Model?.RenameEventCommand.Execute(null); return Task.CompletedTask; }),
@@ -38,7 +40,8 @@ public partial class SoundEventEditorView : UserControl
             MenuAction("Paste", PasteEventAsync),
             MenuAction("Save as Template...", () => { Model?.SaveTemplateCommand.Execute(null); return Task.CompletedTask; }),
             MenuAction("Remove", () => { Model?.DeleteEventCommand.Execute(null); return Task.CompletedTask; }),
-        } };
+        }
+        };
         AddonEventList.KeyDown += async (_, e) =>
         {
             if (e.Key == Key.F2) Model?.RenameEventCommand.Execute(null);
@@ -217,8 +220,14 @@ public partial class SoundEventEditorView : UserControl
         var label = new TextBlock { Text = title, MinWidth = 120, MaxWidth = 170, TextWrapping = Avalonia.Media.TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 8, 0) };
         var color = kind switch
         {
-            "float" => "Float", "bool" or "string_bool" => "Bool", "comment" => "Comment", "vector3" => "Vector",
-            "files" or "soundevent" => "List", "combobox" => "Combo", "base" => "Base", _ => "Custom",
+            "float" => "Float",
+            "bool" or "string_bool" => "Bool",
+            "comment" => "Comment",
+            "vector3" => "Vector",
+            "files" or "soundevent" => "List",
+            "combobox" => "Combo",
+            "base" => "Base",
+            _ => "Custom",
         };
         label.Bind(TextBlock.ForegroundProperty, new DynamicResourceExtension($"H5TSoundProperty{color}Brush"));
         Grid.SetColumn(label, 1);

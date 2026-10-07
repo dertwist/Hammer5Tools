@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
+    <EmbeddedResource Include="Hotkeys/HotkeyDefinitions.json" LogicalName="HotkeyDefinitions" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SixLabors.ImageSharp" />
     <PackageReference Include="FFMediaToolkit" />

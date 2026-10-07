@@ -203,15 +203,15 @@ internal static class SmartPropSelectionCriteria
                 return !isStart && !isEnd;
 
             case "NTH":
-            {
-                var step = MathF.Max(1f, context.ResolveScalar(GetOrDefault(criteria, "m_nPlaceEveryNthPosition"), 1f));
-                var offset = context.ResolveScalar(GetOrDefault(criteria, "m_nNthPositionIndexOffset"));
+                {
+                    var step = MathF.Max(1f, context.ResolveScalar(GetOrDefault(criteria, "m_nPlaceEveryNthPosition"), 1f));
+                    var offset = context.ResolveScalar(GetOrDefault(criteria, "m_nNthPositionIndexOffset"));
 
-                // Normalize to a non-negative remainder so negative offsets behave
-                // the same as the engine's modulo
-                var remainder = ((int)(instanceIndex - offset) % (int)step + (int)step) % (int)step;
-                return remainder == 0;
-            }
+                    // Normalize to a non-negative remainder so negative offsets behave
+                    // the same as the engine's modulo
+                    var remainder = ((int)(instanceIndex - offset) % (int)step + (int)step) % (int)step;
+                    return remainder == 0;
+                }
 
             default:
                 return true;
