@@ -101,14 +101,14 @@
         <!-- Bottom left: structure warning (if wrong), update button (if available), and console line status. -->
         <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
           <Button Grid.Column="0" Name="StructureWarningButton"
-                  Command="{Binding ShowWrongAddonStructureWarningCommand}"
-                  IsVisible="{Binding HasWrongAddonStructure}"
+                  Command="{Binding ShowWarningsCommand}"
+                  IsVisible="{Binding HasActiveWarnings}"
                   Classes="warning-badge"
-                  ToolTip.Tip="Incorrect Project Structure — click for details"
+                  ToolTip.Tip="{Binding WarningToolTip}"
                   Margin="4,0,4,0">
             <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
               <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource H5TWarningBrush}" Data="{StaticResource H5TShellWarningIcon}" VerticalAlignment="Center" />
-              <TextBlock Text="Structure Warning" Foreground="{DynamicResource H5TWarningBrush}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding WarningButtonText}" Foreground="{DynamicResource H5TWarningBrush}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 

@@ -23,6 +23,7 @@ using Hammer5Tools.Core.Addons;
 using Hammer5Tools.Core.Cs2;
 using Hammer5Tools.Core.IO.Settings;
 using Hammer5Tools.Core.Settings;
+using Hammer5Tools.Core.Warnings;
 using Microsoft.Extensions.DependencyInjection;
 
 [NotInParallel]
@@ -1084,6 +1085,7 @@ public class MigrationUiTests
             {
                 Dispatcher.UIThread.RunJobs();
                 window.UpdateLayout();
+                shell.WarningService.RemoveWarning("steam_not_running");
 
                 // 1. Initial state: 'first' addon has no maps/first.vmap -> HasWrongAddonStructure is true
                 await Assert.That(shell.HasWrongAddonStructure).IsTrue();
@@ -1121,6 +1123,86 @@ public class MigrationUiTests
                 Dispatcher.UIThread.RunJobs();
                 window.UpdateLayout();
                 await Assert.That(updateButton.IsVisible).IsTrue();
+            }
+            finally
+            {
+                window.Close();
+            }
+            return true;
+        }, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task GenericApplicationWarningsShowInBottomBarAndWorkshopSteamWarningIsRouted()
+    {
+        var steamLauncher = new TestSteamLauncher();
+        using var fixture = new Fixture(steamLauncher);
+        await TestAppBuilder.Session.Dispatch(async () =>
+        {
+            using var shell = fixture.Services.GetRequiredService<ShellViewModel>();
+            var window = new MainWindow(shell);
+            window.Show();
+            try
+            {
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                var warningButton = window.FindControl<Button>("StructureWarningButton")!;
+                await Assert.That(warningButton).IsNotNull();
+
+                // 1. Initial state: both structure warning and Workshop Steam warning are active
+                await Assert.That(shell.HasWrongAddonStructure).IsTrue();
+                await Assert.That(shell.HasActiveWarnings).IsTrue();
+                await Assert.That(shell.WarningService.Warnings.Count).IsEqualTo(2);
+                await Assert.That(shell.WarningButtonText).IsEqualTo("Warnings (2)");
+                await Assert.That(shell.WarningToolTip).Contains("Multiple active warnings");
+                await Assert.That(warningButton.IsVisible).IsTrue();
+
+                // 2. Click warning button -> triggers ShowWarningsCommand
+                shell.ShowWarningsCommand.Execute(null);
+                await Assert.That(fixture.Dialogs.Warnings.Count).IsEqualTo(1);
+                await Assert.That(fixture.Dialogs.Warnings[0].Title).IsEqualTo("Application Warnings (2)");
+
+                // 3. Resolve structure warning by creating primary map
+                var mapPath = Path.Combine(fixture.Root, "content", "csgo_addons", "first", "maps", "first.vmap");
+                Directory.CreateDirectory(Path.GetDirectoryName(mapPath)!);
+                File.WriteAllText(mapPath, "vmap content");
+                shell.RefreshAddonsCommand.Execute(null);
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                // Structure warning is resolved, but Steam warning remains active
+                await Assert.That(shell.HasWrongAddonStructure).IsFalse();
+                await Assert.That(shell.HasActiveWarnings).IsTrue();
+                await Assert.That(shell.WarningService.Warnings.Count).IsEqualTo(1);
+                await Assert.That(shell.WarningButtonText).IsEqualTo("Steam Warning");
+                await Assert.That(warningButton.IsVisible).IsTrue();
+
+                // 4. Test warning action execution (e.g. Restart Steam)
+                var steamWarning = shell.WarningService.PrimaryWarning!;
+                await Assert.That(steamWarning.ActionTitle).IsEqualTo("Restart Steam");
+                var initialRestarts = steamLauncher.RestartCount;
+                await steamWarning.Action!();
+                await Assert.That(steamLauncher.RestartCount).IsEqualTo(initialRestarts + 1);
+
+                // 5. When Workshop Manager connects to Steam, Steam warning is cleared
+                GUI.WorkshopManagerView.SteamConnected?.Invoke();
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                await Assert.That(shell.HasActiveWarnings).IsFalse();
+                await Assert.That(shell.WarningService.Warnings.Count).IsEqualTo(0);
+                await Assert.That(warningButton.IsVisible).IsFalse();
+
+                // 6. Test routing a subsequent Workshop warning
+                var handled = GUI.MessageDialog.WarningHandler?.Invoke("Steam Not Running", "Lost connection to Steam") ?? false;
+                await Assert.That(handled).IsTrue();
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                await Assert.That(shell.HasActiveWarnings).IsTrue();
+                await Assert.That(shell.WarningButtonText).IsEqualTo("Steam Warning");
+                await Assert.That(warningButton.IsVisible).IsTrue();
             }
             finally
             {
@@ -1199,6 +1281,18 @@ public class MigrationUiTests
         public Task<string?> PickFolderAsync(string title) { return Task.FromResult<string?>(null); }
         public Task ShowErrorAsync(string message) { Errors.Add(message); return Task.CompletedTask; }
         public Task ShowWarningAsync(string title, string message) { Warnings.Add((title, message)); return Task.CompletedTask; }
+        public Task ShowWarningsAsync(IReadOnlyList<AppWarning> warnings)
+        {
+            if (warnings.Count == 1)
+            {
+                Warnings.Add((warnings[0].Title, warnings[0].Message));
+            }
+            else
+            {
+                Warnings.Add(($"Application Warnings ({warnings.Count})", string.Join("\n\n", warnings.Select(w => w.Title))));
+            }
+            return Task.CompletedTask;
+        }
         public void CloseUtilities() { }
         public int WorkshopLaunchCount { get; private set; }
         public void ShowWorkshopManager() { WorkshopLaunchCount++; }

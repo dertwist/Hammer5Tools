@@ -22,6 +22,7 @@ using Hammer5Tools.Core.NavMesh;
 using Hammer5Tools.Core.Settings;
 using Hammer5Tools.Core.SoundEvents;
 using Hammer5Tools.Core.Undo;
+using Hammer5Tools.Core.Warnings;
 using Hammer5Tools.Core.Workshop;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,6 +32,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddHammer5ToolsCore(this IServiceCollection services)
     {
         services.AddSingleton<ISettingsService, Kv3SettingsService>();
+        services.AddSingleton<IWarningService, WarningService>();
         services.AddSingleton<ICs2Locator, Cs2Locator>();
         services.AddSingleton<IAddonService, AddonService>();
         services.AddSingleton<ICs2Launcher, Cs2Launcher>();

@@ -29,6 +29,7 @@ using Hammer5Tools.Core.MapBuilder;
 using Hammer5Tools.Core.NavMesh;
 using Hammer5Tools.Core.Settings;
 using Hammer5Tools.Core.SoundEvents;
+using Hammer5Tools.Core.Warnings;
 using Hammer5Tools.Core.Workshop;
 
 public class ShellViewModel : ViewModelBase, IDisposable
@@ -201,6 +202,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
             ActiveDocument ??= Documents.FirstOrDefault();
             StatusMessage = $"Active addon: {addon.Name}";
             OnPropertyChanged(nameof(SelectedAddon));
+            UpdateProjectStructureWarning();
             return true;
         }
         catch (Exception ex)
@@ -303,7 +305,44 @@ public class ShellViewModel : ViewModelBase, IDisposable
 
     public IRelayCommand SaveDocumentCommand { get; }
 
+    private const string WrongAddonStructureWarningId = "wrong_addon_structure";
+    private const string SteamNotRunningWarningId = "steam_not_running";
+
+    public IWarningService WarningService { get; }
+
+    public bool HasActiveWarnings => WarningService.HasWarnings;
+
     public bool HasWrongAddonStructure => SelectedAddon is not null && !SelectedAddon.HasPrimaryMap;
+
+    public string WarningButtonText
+    {
+        get
+        {
+            var warnings = WarningService.Warnings;
+            return warnings.Count switch
+            {
+                0 => "Warning",
+                1 => warnings[0].ShortTitle ?? warnings[0].Title,
+                _ => $"Warnings ({warnings.Count})"
+            };
+        }
+    }
+
+    public string WarningToolTip
+    {
+        get
+        {
+            var warnings = WarningService.Warnings;
+            return warnings.Count switch
+            {
+                0 => string.Empty,
+                1 => warnings[0].ToolTip ?? warnings[0].Message,
+                _ => "Multiple active warnings — click to view details"
+            };
+        }
+    }
+
+    public IAsyncRelayCommand ShowWarningsCommand { get; }
 
     public IAsyncRelayCommand ShowWrongAddonStructureWarningCommand { get; }
 
@@ -339,7 +378,8 @@ public class ShellViewModel : ViewModelBase, IDisposable
         IGitSyncService gitSyncService,
         Services.IDialogService dialogService,
         ISystemUsageService? systemUsageService = null,
-        Services.Updates.IUpdateService? updateService = null)
+        Services.Updates.IUpdateService? updateService = null,
+        IWarningService? warningService = null)
     {
         AddonService = addonService;
         Cs2Launcher = cs2Launcher;
@@ -396,7 +436,14 @@ public class ShellViewModel : ViewModelBase, IDisposable
         RedoDocumentCommand = new RelayCommand(() => ActiveDocument?.RedoCommand.Execute(null));
         ResetLayoutCommand = new RelayCommand(Controls.WorkspaceView.ResetAllLayouts);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
+        WarningService = warningService ?? new WarningService();
+        WarningService.WarningsChanged += OnWarningsChanged;
+        ShowWarningsCommand = new AsyncRelayCommand(ShowWarningsAsync);
         ShowWrongAddonStructureWarningCommand = new AsyncRelayCommand(ShowWrongAddonStructureWarningAsync);
+
+        GUI.MessageDialog.WarningHandler = OnWorkshopWarning;
+        GUI.WorkshopManagerView.SteamConnected = OnWorkshopSteamConnected;
+
         OpenUpdateCommand = new RelayCommand(() => Program.OpenUpdates());
         InitializeMainMenuGroups();
 
@@ -479,7 +526,7 @@ public class ShellViewModel : ViewModelBase, IDisposable
         }
 
         OnPropertyChanged(nameof(SelectedAddon));
-        OnPropertyChanged(nameof(HasWrongAddonStructure));
+        UpdateProjectStructureWarning();
     }
 
     public void OpenHotkeyEditor()
@@ -690,14 +737,44 @@ public class ShellViewModel : ViewModelBase, IDisposable
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             OnPropertyChanged(nameof(SelectedAddon));
-            OnPropertyChanged(nameof(HasWrongAddonStructure));
+            UpdateProjectStructureWarning();
         });
     }
 
-    private async Task ShowWrongAddonStructureWarningAsync()
+    private void OnWarningsChanged(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            OnPropertyChanged(nameof(HasActiveWarnings));
+            OnPropertyChanged(nameof(WarningButtonText));
+            OnPropertyChanged(nameof(WarningToolTip));
+        });
+    }
+
+    private void UpdateProjectStructureWarning()
+    {
+        if (HasWrongAddonStructure)
+        {
+            WarningService.SetWarning(new AppWarning(
+                Id: WrongAddonStructureWarningId,
+                Title: "Incorrect Project Structure",
+                Message: GetWrongAddonStructureMessage(),
+                ShortTitle: "Structure Warning",
+                ToolTip: "Incorrect Project Structure — click for details"
+            ));
+        }
+        else
+        {
+            WarningService.RemoveWarning(WrongAddonStructureWarningId);
+        }
+
+        OnPropertyChanged(nameof(HasWrongAddonStructure));
+    }
+
+    private string GetWrongAddonStructureMessage()
     {
         var addonName = SelectedAddon?.Name ?? "addon";
-        var message =
+        return
             "Your current project structure is incorrect.\n\n" +
             "The correct structure — as used by Valve — includes only one map file in the addon.\n" +
             "Hammer5Tools follows this convention. All tools work based on the main vmap file " +
@@ -711,8 +788,58 @@ public class ShellViewModel : ViewModelBase, IDisposable
             $"  {addonName}/maps/versions/version_02.vmap\n\n" +
             $"In this setup, 'version_02.vmap' would be added to '{addonName}.vmap' as a prefab. " +
             "This structure is valid, but version control is still recommended for clean iteration.";
+    }
 
-        await DialogService.ShowWarningAsync("Incorrect Project Structure", message);
+    private async Task ShowWarningsAsync()
+    {
+        var warnings = WarningService.Warnings;
+        if (warnings.Count == 0) return;
+        await DialogService.ShowWarningsAsync(warnings);
+    }
+
+    private async Task ShowWrongAddonStructureWarningAsync()
+    {
+        await DialogService.ShowWarningAsync("Incorrect Project Structure", GetWrongAddonStructureMessage());
+    }
+
+    private bool OnWorkshopWarning(string title, string message)
+    {
+        var isSteam = title.Contains("Steam", StringComparison.OrdinalIgnoreCase)
+                   || message.Contains("Steam", StringComparison.OrdinalIgnoreCase);
+
+        if (isSteam)
+        {
+            WarningService.SetWarning(new AppWarning(
+                Id: SteamNotRunningWarningId,
+                Title: title,
+                Message: message,
+                ShortTitle: "Steam Warning",
+                ToolTip: $"{title}: {message} — click to view or restart Steam",
+                ActionTitle: "Restart Steam",
+                Action: async () =>
+                {
+                    StatusMessage = "Restarting Steam...";
+                    var ok = await Cs2Launcher.RestartSteamAsync();
+                    StatusMessage = ok ? "Steam restarted" : "Failed to restart Steam";
+                }
+            ));
+            return true;
+        }
+
+        var id = $"workshop_{title.ToLowerInvariant().Replace(' ', '_')}";
+        WarningService.SetWarning(new AppWarning(
+            Id: id,
+            Title: title,
+            Message: message,
+            ShortTitle: title,
+            ToolTip: $"{title} — click for details"
+        ));
+        return true;
+    }
+
+    private void OnWorkshopSteamConnected()
+    {
+        WarningService.RemoveWarning(SteamNotRunningWarningId);
     }
 
     private void OnProcessStateChanged(object? sender, bool running)
@@ -962,6 +1089,15 @@ public class ShellViewModel : ViewModelBase, IDisposable
         AddonService.AddonsChanged -= OnAddonsChanged;
         AddonService.ActiveAddonChanged -= OnActiveAddonChanged;
         Cs2Launcher.ProcessStateChanged -= OnProcessStateChanged;
+        WarningService.WarningsChanged -= OnWarningsChanged;
+        if (GUI.MessageDialog.WarningHandler == OnWorkshopWarning)
+        {
+            GUI.MessageDialog.WarningHandler = null;
+        }
+        if (GUI.WorkshopManagerView.SteamConnected == OnWorkshopSteamConnected)
+        {
+            GUI.WorkshopManagerView.SteamConnected = null;
+        }
         DialogService.CloseUtilities();
         Controls.WorkspaceView.CloseAllFloatingWindows();
         Explorer.Dispose();

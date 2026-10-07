@@ -30,6 +30,20 @@ public interface IDialogService
 
     Task ShowWarningAsync(string title, string message) => ShowErrorAsync(message);
 
+    Task ShowWarningAsync(string title, string message, string? actionTitle, Func<Task>? action) => ShowWarningAsync(title, message);
+
+    Task ShowWarningsAsync(IReadOnlyList<Hammer5Tools.Core.Warnings.AppWarning> warnings)
+    {
+        if (warnings.Count == 0) return Task.CompletedTask;
+        if (warnings.Count == 1)
+        {
+            return ShowWarningAsync(warnings[0].Title, warnings[0].Message, warnings[0].ActionTitle, warnings[0].Action);
+        }
+
+        var aggregatedMessage = string.Join("\n\n---\n\n", warnings.Select(w => $"[{w.Title}]\n{w.Message}"));
+        return ShowWarningAsync($"Application Warnings ({warnings.Count})", aggregatedMessage);
+    }
+
     void CloseUtilities();
 
     void ShowWorkshopManager();
@@ -313,7 +327,9 @@ public partial class DialogService : IDialogService, IDisposable
         await window.ShowDialog(MainWindow);
     }
 
-    public async Task ShowWarningAsync(string title, string message)
+    public Task ShowWarningAsync(string title, string message) => ShowWarningAsync(title, message, null, null);
+
+    public async Task ShowWarningAsync(string title, string message, string? actionTitle, Func<Task>? action)
     {
         var window = CreateDialog(title, 640, 460);
         var panel = new Grid
@@ -332,6 +348,114 @@ public partial class DialogService : IDialogService, IDisposable
                 LineHeight = 18
             }
         };
+        Grid.SetRow(scrollViewer, 0);
+        panel.Children.Add(scrollViewer);
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 8,
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+
+        if (!string.IsNullOrWhiteSpace(actionTitle) && action != null)
+        {
+            var actionBtn = new Button
+            {
+                Content = actionTitle,
+                MinWidth = 80
+            };
+            actionBtn.Click += async (_, _) =>
+            {
+                window.Close();
+                try
+                {
+                    await action();
+                }
+                catch (Exception ex)
+                {
+                    await ShowErrorAsync(ex.Message);
+                }
+            };
+            buttons.Children.Add(actionBtn);
+        }
+
+        var close = new Button
+        {
+            Content = "Close",
+            MinWidth = 80
+        };
+        close.Click += (_, _) => window.Close();
+        buttons.Children.Add(close);
+
+        Grid.SetRow(buttons, 1);
+        panel.Children.Add(buttons);
+
+        window.Content = panel;
+        await window.ShowDialog(MainWindow);
+    }
+
+    public async Task ShowWarningsAsync(IReadOnlyList<Hammer5Tools.Core.Warnings.AppWarning> warnings)
+    {
+        if (warnings.Count == 0) return;
+        if (warnings.Count == 1)
+        {
+            await ShowWarningAsync(warnings[0].Title, warnings[0].Message, warnings[0].ActionTitle, warnings[0].Action);
+            return;
+        }
+
+        var window = CreateDialog($"Application Warnings ({warnings.Count})", 680, 480);
+        var panel = new Grid
+        {
+            Margin = new Thickness(16),
+            RowDefinitions = new RowDefinitions("*,Auto")
+        };
+
+        var contentPanel = new StackPanel { Spacing = 16 };
+        foreach (var warning in warnings)
+        {
+            var card = new StackPanel { Spacing = 6 };
+            card.Children.Add(new TextBlock
+            {
+                Text = warning.Title,
+                FontWeight = Avalonia.Media.FontWeight.Bold,
+                FontSize = 14
+            });
+            card.Children.Add(new SelectableTextBlock
+            {
+                Text = warning.Message,
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                FontSize = 12,
+                LineHeight = 18
+            });
+
+            if (!string.IsNullOrWhiteSpace(warning.ActionTitle) && warning.Action != null)
+            {
+                var actionBtn = new Button
+                {
+                    Content = warning.ActionTitle,
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                actionBtn.Click += async (_, _) =>
+                {
+                    window.Close();
+                    try
+                    {
+                        await warning.Action();
+                    }
+                    catch (Exception ex)
+                    {
+                        await ShowErrorAsync(ex.Message);
+                    }
+                };
+                card.Children.Add(actionBtn);
+            }
+
+            contentPanel.Children.Add(card);
+        }
+
+        var scrollViewer = new ScrollViewer { Content = contentPanel };
         Grid.SetRow(scrollViewer, 0);
         panel.Children.Add(scrollViewer);
 

@@ -46,6 +46,9 @@ public partial class WorkshopManagerView : UserControl
     /// <summary>The rows the search leaves, which is what both views show.</summary>
     private readonly ObservableCollection<WorkshopItemRow> shown = [];
 
+    /// <summary>Invoked when Steam items are loaded successfully.</summary>
+    public static Action? SteamConnected { get; set; }
+
     /// <summary>The game install, found when the first publish form needs it.</summary>
     private WorkshopManager? manager;
 
@@ -423,6 +426,8 @@ public partial class WorkshopManagerView : UserControl
 
                 thumbnails.Add(LoadThumbnailAsync(row));
             }
+
+            SteamConnected?.Invoke();
         }
         catch (SteamUnavailableException exception)
         {

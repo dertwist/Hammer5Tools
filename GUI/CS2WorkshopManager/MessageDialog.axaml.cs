@@ -82,9 +82,17 @@ public partial class MessageDialog : Window
         }
     }
 
+    /// <summary>Optional warning interception handler: (title, message) -> bool indicating handled.</summary>
+    public static Func<string, string, bool>? WarningHandler { get; set; }
+
     /// <summary>Shows a message over <paramref name="owner"/> until it is acknowledged.</summary>
     public static Task ShowAsync(Window owner, MessageKind kind, string title, string message)
     {
+        if (kind == MessageKind.Warning && WarningHandler?.Invoke(title, message) == true)
+        {
+            return Task.CompletedTask;
+        }
+
         return new MessageDialog(kind, title, message, null).ShowDialog(owner);
     }
 
