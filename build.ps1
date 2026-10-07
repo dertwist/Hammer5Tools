@@ -83,7 +83,9 @@ try {
         Invoke-DotNet @('publish', 'GUI/Hammer5Tools.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true', "-p:Version=$Version", '-o', $output)
         if (-not $DryRun) {
             foreach ($required in @('Hammer5Tools.exe', 'SoundEventEditor.exe', 'MapBuilder.exe', 'SmartPropEditor.exe',
-                'WorkshopManager.exe', 'bin/Hammer5Tools.dll', 'icons/SoundEventEditor.ico', 'icons/MapBuilder.ico',
+                'WorkshopManager.exe', 'bin/Hammer5Tools.dll', 'bin/ffmpeg/win-x64/avcodec-61.dll', 'bin/ffmpeg/win-x64/avformat-61.dll',
+                'bin/ffmpeg/win-x64/avutil-59.dll', 'bin/ffmpeg/win-x64/swscale-8.dll', 'bin/ffmpeg/win-x64/swresample-5.dll',
+                'bin/licenses/FFmpeg-LGPL.txt', 'bin/licenses/FFMediaToolkit/LICENSE.txt', 'icons/SoundEventEditor.ico', 'icons/MapBuilder.ico',
                 'icons/SmartPropEditor.ico', 'icons/WorkshopManager.ico', 'presets/addons', 'presets/soundeventeditor', 'presets/smartpropeditor')) {
                 if (-not (Test-Path -LiteralPath (Join-Path $output $required))) { throw "Published application is missing $required." }
             }
@@ -111,7 +113,10 @@ try {
                 $payload = [IO.Compression.ZipFile]::OpenRead($portableZip)
                 try {
                     foreach ($required in @('.portable', 'Hammer5Tools.exe', 'Update.exe', 'current/sq.version',
-                        'current/Hammer5Tools.exe', 'current/bin/Hammer5Tools.dll', 'current/SoundEventEditor.exe',
+                        'current/Hammer5Tools.exe', 'current/bin/Hammer5Tools.dll', 'current/bin/ffmpeg/win-x64/avcodec-61.dll',
+                        'current/bin/ffmpeg/win-x64/avformat-61.dll', 'current/bin/ffmpeg/win-x64/avutil-59.dll',
+                        'current/bin/ffmpeg/win-x64/swscale-8.dll', 'current/bin/ffmpeg/win-x64/swresample-5.dll',
+                        'current/bin/licenses/FFmpeg-LGPL.txt', 'current/bin/licenses/FFMediaToolkit/LICENSE.txt', 'current/SoundEventEditor.exe',
                         'current/MapBuilder.exe', 'current/SmartPropEditor.exe', 'current/WorkshopManager.exe',
                         'current/icons/SoundEventEditor.ico', 'current/icons/MapBuilder.ico',
                         'current/icons/SmartPropEditor.ico', 'current/icons/WorkshopManager.ico')) {

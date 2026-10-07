@@ -27,6 +27,11 @@
     <EmbeddedResource Include="Format/SmartProps/SmartPropEditorTemplates.json" LogicalName="SmartPropEditorTemplates" />
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="FFMediaToolkit" />
+    <PackageReference Include="FFmpeg.LGPL" GeneratePathProperty="true" ExcludeAssets="build;buildTransitive;runtime" />
+    <Content Include="$(PkgFFmpeg_LGPL)/build/native/bin/*.dll" Link="ffmpeg/win-x64/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="$(PkgFFmpeg_LGPL)/build/native/LICENSE.txt" Link="licenses/FFmpeg-LGPL.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../Misc/FFMediaToolkit/*" Link="licenses/FFMediaToolkit/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Hammer5Tools.Core.Tests" />
     <Content Include="../Misc/Source2Viewer/LICENSE" Link="licenses/ValveResourceFormat-SmartProps.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

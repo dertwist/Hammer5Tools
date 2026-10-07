@@ -1,11 +1,13 @@
 namespace Hammer5Tools.Core.IO.LoadingScreens;
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Datamodel;
+using FFMediaToolkit;
+using FFMediaToolkit.Encoding;
+using FFMediaToolkit.Graphics;
 using Hammer5Tools.Core.Commands;
 using Hammer5Tools.Core.Compiler;
 using Hammer5Tools.Core.LoadingScreens;
@@ -372,7 +374,7 @@ public partial class LoadingScreenService : ILoadingScreenService
         {
             if (extension == ".mp4")
             {
-                await ExportVideoTimelineAsync(imagePaths, staged, quality, cancellationToken);
+                await Task.Run(() => ExportVideoTimelineAsync(imagePaths, staged, quality, cancellationToken), cancellationToken);
             }
             else
             {
@@ -430,40 +432,54 @@ public partial class LoadingScreenService : ILoadingScreenService
         frame.Metadata.GetWebpMetadata().BlendMethod = WebpBlendMethod.Source;
     }
 
+    private static readonly Lazy<bool> VideoRuntime = new(() =>
+    {
+        if (!OperatingSystem.IsWindows() || System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X64)
+        {
+            throw new PlatformNotSupportedException("MP4 export requires Windows x64.");
+        }
+        FFmpegLoader.FFmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg", "win-x64");
+        FFmpegLoader.LoadFFmpeg();
+        return true;
+    });
+
     private static async Task ExportVideoTimelineAsync(IReadOnlyList<string> imagePaths, string output, string quality, CancellationToken cancellationToken)
     {
-        var executable = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
-        var listPath = Path.Combine(Path.GetTempPath(), $"h5t-timeline-{Guid.NewGuid():N}.txt");
-        try
+        _ = VideoRuntime.Value;
+        var options = new SixLabors.ImageSharp.Formats.DecoderOptions { MaxFrames = 1 };
+        using var first = await Image.LoadAsync<Rgba32>(options, imagePaths[0], cancellationToken);
+        var size = new Size(Math.Max(2, first.Width / 2 * 2), Math.Max(2, first.Height / 2 * 2));
+        var settings = new VideoEncoderSettings(size.Width, size.Height, framerate: 2)
         {
-            var lines = imagePaths.Select(path => $"file '{Path.GetFullPath(path).Replace('\\', '/').Replace("'", "'\\''")}'\nduration 0.5").ToList();
-            lines.Add($"file '{Path.GetFullPath(imagePaths[^1]).Replace('\\', '/').Replace("'", "'\\''")}'");
-            await File.WriteAllLinesAsync(listPath, lines, cancellationToken);
-            var start = new ProcessStartInfo(executable) { UseShellExecute = false, RedirectStandardError = true, CreateNoWindow = true };
-            foreach (var argument in new[] { "-y", "-f", "concat", "-safe", "0", "-i", listPath, "-vf", "fps=2,scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos", "-c:v", "libx264", "-crf", quality switch { "Low" => "32", "Medium" => "23", _ => "18" }, "-pix_fmt", "yuv420p", output })
-            {
-                start.ArgumentList.Add(argument);
-            }
-            using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start FFmpeg. MP4 export requires FFmpeg; GIF and WebP export do not.");
-            using var cancellationRegistration = cancellationToken.Register(() =>
-            {
-                try
-                {
-                    if (!process.HasExited) process.Kill(entireProcessTree: true);
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            });
-            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-            await process.WaitForExitAsync(cancellationToken);
-            var error = await errorTask;
-            if (process.ExitCode != 0) throw new InvalidOperationException(error.Trim());
-        }
-        finally
+            CodecName = "libopenh264",
+            Bitrate = quality switch { "Low" => 2_000_000, "Medium" => 5_000_000, _ => 10_000_000 },
+        };
+        using var video = MediaBuilder.CreateContainer(output).WithVideo(settings).Create();
+        var pixels = new byte[checked(size.Width * size.Height * 4)];
+        AddVideoFrame(video, first, size, pixels, cancellationToken);
+        foreach (var path in imagePaths.Skip(1))
         {
-            if (File.Exists(listPath)) File.Delete(listPath);
+            cancellationToken.ThrowIfCancellationRequested();
+            using var frame = await Image.LoadAsync<Rgba32>(options, path, cancellationToken);
+            AddVideoFrame(video, frame, size, pixels, cancellationToken);
         }
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static void AddVideoFrame(MediaOutput video, Image<Rgba32> frame, Size size, byte[] pixels, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (frame.Size != size)
+        {
+            frame.Mutate(context => context.Resize(new ResizeOptions
+            {
+                Size = size,
+                Mode = ResizeMode.Pad,
+                PadColor = SixLabors.ImageSharp.Color.Black,
+            }));
+        }
+        frame.CopyPixelDataTo(pixels);
+        video.Video.AddFrame(new ImageData(pixels, ImagePixelFormat.Rgba32, size.Width, size.Height));
     }
 
     public async Task<bool> GenerateLoadingScreenAssetsAsync(LoadingScreenConfig config, string sourceImagePath, CancellationToken cancellationToken = default)
