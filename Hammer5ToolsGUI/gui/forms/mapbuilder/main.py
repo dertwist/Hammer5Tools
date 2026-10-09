@@ -445,7 +445,8 @@ class BuildCubemapsThread(QThread):
 
 class CompilationThread(QThread):
     outputReceived = Signal(str)
-    finished = Signal(int, float)
+    # Windows crash exit codes can exceed Qt's signed 32-bit int range.
+    finished = Signal(object, float)
 
     def __init__(self, command: str, working_dir: str):
         super().__init__()
