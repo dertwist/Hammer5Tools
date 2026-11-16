@@ -108,7 +108,27 @@ def format_crash_report(exc_type, exc, tb, thread_name=None):
     return "\n".join(lines)
 
 
+def _crash_logs_dir():
+    try:
+        from core.runtime_paths import resolve_runtime_paths
+        logs_dir = resolve_runtime_paths().user_data_root / "logs"
+    except Exception:
+        from pathlib import Path
+        logs_dir = Path.home() / "Hammer5Tools" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    return logs_dir
+
+
 def _install_crash_handler():
+    # Native crashes (access violation inside Qt, qFatal) never reach the
+    # excepthook below, so have faulthandler leave the Python stacks on disk.
+    # The file object is kept on the function: faulthandler only holds its fd.
+    try:
+        _install_crash_handler.native_log = open(_crash_logs_dir() / "native_crash.log", "a", encoding="utf-8")
+        faulthandler.enable(file=_install_crash_handler.native_log)
+    except Exception:
+        pass
+
     def hook(exc_type, exc, tb):
         try:
             details = format_crash_report(exc_type, exc, tb)
@@ -118,15 +138,7 @@ def _install_crash_handler():
 
         # 1. Write to persistent crash log files
         try:
-            from core.runtime_paths import resolve_runtime_paths
-            paths = resolve_runtime_paths()
-            logs_dir = paths.user_data_root / "logs"
-        except Exception:
-            from pathlib import Path
-            logs_dir = Path.home() / "Hammer5Tools" / "logs"
-
-        try:
-            logs_dir.mkdir(parents=True, exist_ok=True)
+            logs_dir = _crash_logs_dir()
             with open(logs_dir / "crash.log", "a", encoding="utf-8") as f:
                 f.write(details + "\n\n" + "=" * 80 + "\n\n")
             with open(logs_dir / "last_crash.txt", "w", encoding="utf-8") as f:
