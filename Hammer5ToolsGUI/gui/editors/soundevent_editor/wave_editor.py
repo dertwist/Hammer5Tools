@@ -28,9 +28,11 @@ from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize, QEvent
 from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
-from gui.editors.soundevent_editor.audio_convert import decode_to_pcm16
+from gui.editors.soundevent_editor.audio_convert import (
+    decode_to_float, float_to_pcm16, pcm_to_float, peak_envelope,
+)
 from gui.editors.soundevent_editor.audio_player import (
-    compute_peak_envelope, DBInfoOverlay, apply_meter_gradient, meter_peak_color,
+    DBInfoOverlay, apply_meter_gradient, meter_peak_color,
 )
 from gui.widgets.explorer.main import Explorer
 from gui.settings.common import get_cs2_path, get_addon_name
@@ -94,47 +96,22 @@ def _read_cue_positions(path):
 
 def load_audio(path):
     """Load any supported audio file → (samples float32 (N,ch), sample_rate, cue_positions)."""
-    ext = os.path.splitext(path)[1].lower()
-    src = path
-    tmp = None
-    if ext != ".wav":
-        samples, sr = decode_to_pcm16(path)
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-        tmp.close()
-        with wave.open(tmp.name, "wb") as w:
-            w.setnchannels(samples.shape[1])
-            w.setsampwidth(2)
-            w.setframerate(sr)
-            w.writeframes(samples.astype("<i2").tobytes())
-        src = tmp.name
+    cue = _read_cue_positions(path)
     try:
-        with wave.open(src, "rb") as w:
+        with wave.open(path, "rb") as w:
             sr, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
             raw = w.readframes(w.getnframes())
-        dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sw)
-        if dtype is None:
-            raise ValueError(f"Unsupported sample width: {sw} bytes")
-        arr = np.frombuffer(raw, dtype=dtype).astype(np.float32)
-        if sw == 1:
-            arr = (arr - 128.0) / 128.0
-        else:
-            arr /= float(np.iinfo(dtype).max)
-        arr = arr.reshape(-1, ch)
-        cue = _read_cue_positions(src) if ext == ".wav" else []
-        return arr, sr, cue
-    finally:
-        if tmp is not None:
-            try:
-                os.remove(tmp.name)
-            except OSError:
-                pass
+        return pcm_to_float(raw, sw).reshape(-1, ch), sr, cue
+    except (wave.Error, KeyError, EOFError):
+        # mp3, or a WAV the wave module can't read (float, compressed): let Qt decode it
+        samples, sr = decode_to_float(path)
+        return samples, sr, cue
 
 
 def save_wav(path, samples, sr, cue_positions=None):
     """Write float32 (N,ch) samples as 16-bit PCM WAV, with an optional cue chunk."""
     ch = samples.shape[1] if samples.ndim > 1 else 1
-    int16 = (np.clip(samples, -1.0, 1.0) * 32767.0).astype("<i2")
-    data = int16.tobytes()
+    data = float_to_pcm16(samples)
     fmt = struct.pack("<HHIIHH", 1, ch, sr, sr * ch * 2, ch * 2, 16)
     chunks = [(b"fmt ", fmt), (b"data", data)]
     if cue_positions:
@@ -730,7 +707,7 @@ class AudioDocument(QWidget):
             self._temp_wav = tf.name
         save_wav(self._temp_wav, self.samples, self.sr)
         self._render_dirty = False
-        self._env, self._env_dur = compute_peak_envelope(self._temp_wav)
+        self._env, self._env_dur = peak_envelope(self.samples, self.sr)
 
     def toggle_play(self):
         if self.player.playbackState() == QMediaPlayer.PlayingState:
