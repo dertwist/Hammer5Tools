@@ -5,10 +5,11 @@ import wave
 import numpy as np
 from PySide6.QtWidgets import QLabel, QWidget, QSizePolicy, QToolButton, QFrame, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import QTimer, QUrl, Signal, Qt, QPoint, QBuffer, QByteArray, QIODevice
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QAudioDecoder
 from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFont
 from gui.settings.common import set_settings_bool, get_settings_bool
 from gui.editors.soundevent_editor.ui_audio_player import Ui_Form
+from gui.editors.soundevent_editor.audio_convert import pcm_to_float, peak_envelope, start_decode
 from gui.styles import theme
 from gui.other.audio_device import bind_audio_output_monitoring, ensure_valid_audio_output, log_audio_playback
 
@@ -16,57 +17,13 @@ log = logging.getLogger(__name__)
 
 
 def compute_peak_envelope(file_or_path, frame_ms=30):
-    """Return (envelope, frame_seconds) where envelope is a 0..1 linear peak per
-    time frame, computed from a PCM WAV or estimated for MP3/other audio streams."""
+    """Return (envelope, frame_seconds) for a PCM WAV, or (None, 0.0) if the
+    wave module can't read it (mp3, float WAV) and it needs a real decoder."""
     try:
         with wave.open(file_or_path, 'rb') as w:
             sr, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
             raw = w.readframes(w.getnframes())
-        dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sw)
-        if dtype is not None and raw:
-            samples = np.frombuffer(raw, dtype=dtype).astype(np.float32)
-            if sw == 1:  # 8-bit PCM is unsigned, centred at 128
-                samples = (samples - 128.0) / 128.0
-            else:
-                samples /= float(np.iinfo(dtype).max)
-            if ch > 1:
-                samples = samples.reshape(-1, ch).mean(axis=1)
-            frame_len = max(1, int(sr * frame_ms / 1000))
-            n = len(samples) // frame_len
-            if n > 0:
-                env = np.abs(samples[:n * frame_len].reshape(n, frame_len)).max(axis=1)
-                return env, frame_ms / 1000.0
-    except Exception:
-        pass
-
-    # Fallback envelope for MP3 or non-PCM WAV files
-    try:
-        if isinstance(file_or_path, io.BytesIO):
-            data = file_or_path.getvalue()
-        elif hasattr(file_or_path, 'read'):
-            file_or_path.seek(0)
-            data = file_or_path.read()
-        elif isinstance(file_or_path, (str, bytes, os.PathLike)):
-            with open(file_or_path, 'rb') as f:
-                data = f.read()
-        else:
-            return None, 0.0
-
-        if not data or len(data) < 100:
-            return None, 0.0
-
-        frame_count = 200
-        chunk_size = len(data) // frame_count
-        if chunk_size < 1:
-            return None, 0.0
-
-        arr = np.frombuffer(data[:frame_count * chunk_size], dtype=np.uint8).astype(np.float32)
-        chunks = arr.reshape(frame_count, chunk_size)
-        peaks = np.mean(np.abs(chunks - chunks.mean(axis=1, keepdims=True)), axis=1)
-        max_p = peaks.max()
-        if max_p > 0:
-            peaks = peaks / max_p
-        return peaks, frame_ms / 1000.0
+        return peak_envelope(pcm_to_float(raw, sw).reshape(-1, ch), sr, frame_ms)
     except Exception:
         return None, 0.0
 
@@ -331,6 +288,7 @@ class AudioPlayer(QWidget):
 
         self._env = None
         self._env_frame_dur = 0.0
+        self._env_decoder = None
 
         # Replace timeline_slider with WaveformWidget
         self.ui.timeline_slider.hide()
@@ -488,11 +446,40 @@ class AudioPlayer(QWidget):
 
             self._env, self._env_frame_dur = compute_peak_envelope(io.BytesIO(data))
             self.waveform_widget.set_waveform(self._env)
+            self._decode_envelope(data if self._env is None else None)
         except Exception as e:
             log.error(f"Error loading audio bytes: {e}")
             self.filepath = None
             self._env, self._env_frame_dur = None, 0.0
             self.waveform_widget.set_waveform(None)
+
+    def _decode_envelope(self, data):
+        """Decode mp3 / non-PCM WAV bytes in the background so the meter and
+        waveform show real levels. ``None`` just cancels a running decode."""
+        stale, self._env_decoder = self._env_decoder, None  # cleared first: stop() may still emit
+        if stale is not None:
+            stale.stop()
+            stale.deleteLater()
+        if data is None:
+            return
+        # shortcut: holds the whole decoded clip in RAM (~20 MB per stereo minute)
+        # until the envelope is built; reduce per buffer if long music gets slow.
+        decoder = self._env_decoder = QAudioDecoder(self)
+        source = QBuffer(decoder)
+        source.setData(data)
+        source.open(QIODevice.ReadOnly)
+        decoder.setSourceDevice(source)
+
+        def _done(samples, rate, error):
+            if decoder is not self._env_decoder:
+                return  # another file was loaded meanwhile
+            if error:
+                log.warning(f"Could not decode audio for the level meter: {error}")
+                return
+            self._env, self._env_frame_dur = peak_envelope(samples, rate)
+            self.waveform_widget.set_waveform(self._env)
+
+        start_decode(decoder, _done)
 
     def set_audiopath(self, path):
         try:
