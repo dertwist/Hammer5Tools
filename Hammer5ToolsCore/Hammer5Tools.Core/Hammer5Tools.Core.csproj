@@ -149,6 +149,9 @@
   <ItemGroup Condition="Exists('$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj')">
     <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj" />
     <ProjectReference Include="$(CUE4ParsePath)\CUE4Parse-Conversion\CUE4Parse-Conversion.csproj" />
+    <!-- Pins CUE4Parse-Conversion's transitive ImageSharp 3.1.12 past the TIFF/ICC
+         advisories (GHSA-j3p4-wp97-rph4 and five more), all patched at 3.2.0. -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.2.0" />
   </ItemGroup>
 
   <ItemGroup Condition="!Exists('$(CUE4ParsePath)\CUE4Parse\CUE4Parse.csproj')">
