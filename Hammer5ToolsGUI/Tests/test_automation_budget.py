@@ -163,26 +163,6 @@ def test_vdata_summary_lists_names_without_bodies(tmp_path):
     assert "entries" not in payload
 
 
-def test_server_instructions_stay_within_their_budget():
-    from automation.mcp.server import _instructions
-
-    # This text is in every session's context window, so it is capped. Deep
-    # knowledge belongs in hammer5tools.guide, which is fetched on demand.
-    assert len(_instructions()) // 4 <= 700
-
-
-def test_instructions_do_not_restate_the_tool_list():
-    from automation.mcp.server import _instructions
-    from automation.tools import TOOLS
-
-    text = _instructions()
-    named = [tool.name for tool in TOOLS if tool.name in text]
-
-    # tools/list already carries every name and schema; repeating them here
-    # pays for the same information twice in every session.
-    assert len(named) <= 4, f"instructions restate {len(named)} tool names"
-
-
 def test_every_guide_topic_loads_and_stays_readable():
     from automation.guides.loader import TOPICS, guide
 
@@ -202,12 +182,15 @@ def test_unknown_guide_topic_lists_the_real_ones():
         guide("how-do-i-source-2")
 
 
-def test_every_tool_is_documented_in_a_guide_or_the_instructions():
+def test_every_tool_is_documented_in_a_guide_or_skill():
+    from pathlib import Path
     from automation.guides.loader import TOPICS, guide
-    from automation.mcp.server import _instructions
     from automation.tools import TOOLS
 
-    corpus = _instructions() + "".join(guide(topic)["content"] for topic in TOPICS)
+    repo_root = Path(__file__).resolve().parents[2]
+    skill_text = (repo_root / "SKILL.md").read_text(encoding="utf-8")
+    automation_text = (repo_root / "AUTOMATION.md").read_text(encoding="utf-8")
+    corpus = skill_text + automation_text + "".join(guide(topic)["content"] for topic in TOPICS)
     # A tool nobody documents is one an agent has to discover by trial.
     undocumented = sorted(
         tool.name for tool in TOOLS

@@ -276,9 +276,9 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--noconfirm',
 
         '--onedir',
-        # The same executable hosts GUI, CLI, and MCP stdio modes. The native
-        # GUI launcher starts it with CREATE_NO_WINDOW, while direct CLI/MCP
-        # launches retain real stdin/stdout/stderr handles.
+        # The same executable hosts GUI and CLI modes. The native GUI launcher
+        # starts it with CREATE_NO_WINDOW, while direct CLI launches retain real
+        # stdin/stdout/stderr handles.
         '--console',
 
         f'--paths={gui_python_root}',
@@ -301,7 +301,6 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         f'--add-data={os.path.join(gui_root, "assets", "images")};images/',
         f'--add-data={os.path.join(gui_root, "styles")};styles/',
         f'--add-data={os.path.join(gui_root, "editors", "smartprop_editor", "viewport_3d", "glsl")};gui/editors/smartprop_editor/viewport_3d/glsl/',
-        f'--add-data={os.path.join(gui_python_root, "automation", "mcp", "instructions.md")};automation/mcp/',
         f'--add-data={os.path.join(gui_python_root, "automation", "guides")};automation/guides/',
         f'--add-data={os.path.join(cur_dir, "version.json")};.',
         *[
@@ -402,12 +401,14 @@ def stage_three_root_bundle(pyi_output: str, bundle_root: str) -> None:
         raise RuntimeError("Staged bundle does not contain app/Hammer5ToolsGUI.exe and app/runtime")
 
 
-def stage_automation_documentation(documentation_path: str, bundle_root: str) -> None:
-    """Place the human-readable MCP setup guide beside the public launcher."""
-    if not os.path.isfile(documentation_path):
-        raise FileNotFoundError(f"MCP setup guide is missing: '{documentation_path}'")
+def stage_automation_documentation(documentation_paths: list[str] | str, bundle_root: str) -> None:
+    """Place the agent skill and CLI/DLL automation guide beside the public launcher."""
+    paths = [documentation_paths] if isinstance(documentation_paths, str) else list(documentation_paths)
     os.makedirs(bundle_root, exist_ok=True)
-    shutil.copy2(documentation_path, os.path.join(bundle_root, 'MCP_SETUP.md'))
+    for doc_path in paths:
+        if not os.path.isfile(doc_path):
+            raise FileNotFoundError(f"Automation documentation is missing: '{doc_path}'")
+        shutil.copy2(doc_path, os.path.join(bundle_root, os.path.basename(doc_path)))
 
 
 
@@ -455,7 +456,10 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
         _safe_rmtree(pyinstaller_dist)
 
     stage_automation_documentation(
-        os.path.join(cur_dir, 'MCP_SETUP.md'),
+        [
+            os.path.join(cur_dir, 'SKILL.md'),
+            os.path.join(cur_dir, 'AUTOMATION.md'),
+        ],
         bundle_root,
     )
 

@@ -18,11 +18,14 @@ def test_stages_pyinstaller_payload_under_application_root(tmp_path):
     assert not output.exists()
 
 
-def test_stages_mcp_setup_guide_beside_launcher(tmp_path):
-    source = tmp_path / "AUTOMATION.md"
-    source.write_text("# MCP setup\n", encoding="utf-8")
+def test_stages_automation_docs_beside_launcher(tmp_path):
+    skill = tmp_path / "SKILL.md"
+    skill.write_text("# Skill\n", encoding="utf-8")
+    guide = tmp_path / "AUTOMATION.md"
+    guide.write_text("# Automation\n", encoding="utf-8")
     bundle = tmp_path / "bundle"
 
-    stage_automation_documentation(str(source), str(bundle))
+    stage_automation_documentation([str(skill), str(guide)], str(bundle))
 
-    assert (bundle / "MCP_SETUP.md").read_text(encoding="utf-8") == "# MCP setup\n"
+    assert (bundle / "SKILL.md").read_text(encoding="utf-8") == "# Skill\n"
+    assert (bundle / "AUTOMATION.md").read_text(encoding="utf-8") == "# Automation\n"

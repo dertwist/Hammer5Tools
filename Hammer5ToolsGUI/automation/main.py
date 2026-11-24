@@ -8,7 +8,6 @@ import sys
 from collections.abc import Sequence
 from typing import Any
 
-from automation.mcp.server import run_stdio
 from automation.tools import capabilities, invoke_tool
 
 
@@ -17,9 +16,8 @@ def _force_utf8_streams() -> None:
 
     Frozen PyInstaller builds run isolated and ignore PYTHONUTF8 and
     PYTHONIOENCODING, so a spawned Hammer5ToolsGUI.exe gets the Windows ANSI
-    codepage on stdout. Both transports serialize with ensure_ascii=False, so
-    one asset containing non-ASCII text would raise UnicodeEncodeError and kill
-    the process, which makes an MCP client treat the server as dead.
+    codepage on stdout. Responses serialize with ensure_ascii=False, so
+    one asset containing non-ASCII text would otherwise raise UnicodeEncodeError.
     """
     for stream in (sys.stdin, sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
@@ -35,10 +33,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the requested headless Hammer5Tools mode."""
     _force_utf8_streams()
     arguments = list(argv if argv is not None else sys.argv[1:])
-    if arguments[:2] == ["mcp", "serve"]:
-        return run_stdio()
     if not arguments or arguments[0] != "cli":
-        _write_error("Expected 'cli <command>' or 'mcp serve'")
+        _write_error("Expected 'cli <command>'")
         return 2
     return _run_cli(arguments[1:])
 

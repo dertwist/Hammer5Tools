@@ -1,4 +1,4 @@
-"""Tool definitions shared by the Hammer5Tools CLI and MCP server."""
+"""Tool definitions for the Hammer5Tools CLI."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ JsonObject = dict[str, Any]
 
 @dataclass(frozen=True)
 class AutomationTool:
-    """One automation operation and its MCP metadata."""
+    """One automation operation exposed by the CLI."""
 
     name: str
     description: str
@@ -45,32 +45,6 @@ class AutomationTool:
     read_only: bool = True
     destructive: bool = False
     idempotent: bool = True
-
-    def mcp_definition(self) -> JsonObject:
-        """Return this tool's MCP tools/list representation."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": self.input_schema,
-            "annotations": self._annotations(),
-        }
-
-
-    def _annotations(self) -> JsonObject:
-        """MCP annotations, omitting the hints that carry no meaning.
-
-        destructiveHint and idempotentHint are defined only when readOnlyHint is
-        false, so a read-only tool that emits them pays for nothing.
-        """
-        annotations: JsonObject = {
-            "title": self.name.replace("hammer5tools.", "Hammer5Tools ").replace("_", " ").title(),
-            "readOnlyHint": self.read_only,
-            "openWorldHint": False,
-        }
-        if not self.read_only:
-            annotations["destructiveHint"] = self.destructive
-            annotations["idempotentHint"] = self.idempotent
-        return annotations
 
 
 def _object_schema(properties: JsonObject, required: tuple[str, ...] = ()) -> JsonObject:

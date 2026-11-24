@@ -16,10 +16,10 @@ if not getattr(sys, "frozen", False):
     if source not in sys.path:
         sys.path.insert(0, source)
 
-# CLI and MCP modes must dispatch before OpenGL, COM, PySide6, logging, and the
+# CLI mode must dispatch before OpenGL, COM, PySide6, logging, and the
 # single-instance GUI lifecycle are initialized. This keeps one shipped
 # Hammer5ToolsGUI.exe while retaining real headless startup behavior.
-if __name__ == "__main__" and sys.argv[1:2] in (["cli"], ["mcp"]):
+if __name__ == "__main__" and sys.argv[1:2] == ["cli"]:
     from automation.main import main as automation_main
 
     sys.exit(automation_main(sys.argv[1:]))

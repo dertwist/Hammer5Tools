@@ -76,9 +76,10 @@ The project utilizes **Velopack** for delta-based updates. The GitHub Actions pi
 
 ### CLI and agent automation
 
-The existing `Hammer5ToolsGUI.exe` also hosts headless CLI and MCP stdio modes.
-See [MCP_SETUP.md](MCP_SETUP.md) for source-build commands, agent
-configuration, and the currently implemented read-only tools.
+`Hammer5ToolsGUI.exe` also hosts a headless CLI mode (`Hammer5ToolsGUI.exe cli ...`)
+and ships `Hammer5Tools.Core.dll` for direct NativeAOT C ABI calls from Python.
+See [SKILL.md](SKILL.md) and [AUTOMATION.md](AUTOMATION.md) for CLI commands,
+direct DLL usage, and Source 2 format guides.
 
 </details>
 
