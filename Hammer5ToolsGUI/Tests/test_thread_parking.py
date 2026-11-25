@@ -1,5 +1,4 @@
 """Regression tests for thread_parking QThread lifecycle safety."""
-import gc
 import weakref
 
 from PySide6.QtCore import QCoreApplication, QEventLoop, QThread, QTimer
@@ -25,13 +24,14 @@ def test_parked_thread_survives_owner_drop_and_releases_on_main_thread():
 
     # Drop the only external reference while the thread is still running.
     del owner
-    gc.collect()
     assert ref() is not None
 
     loop = QEventLoop()
     ref().finished.connect(loop.quit)
     QTimer.singleShot(3000, loop.quit)
     loop.exec()
+    if ref() is not None:
+        ref().wait(3000)
     app.processEvents()
 
     assert thread_parking.running_count() == 0

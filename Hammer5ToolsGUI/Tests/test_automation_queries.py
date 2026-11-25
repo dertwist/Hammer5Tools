@@ -3,7 +3,18 @@ import json
 import pytest
 
 from automation.tools import invoke_tool
-from test_mcp_feedback_baseline import FeedbackBridge, MAP_PATH, REFERENCES
+from test_automation_vmap_io import _Bridge as MapBridge
+
+MAP_PATH = "C:/addon/maps/基準.vmap"
+REFERENCES = tuple(f"models/props/基準_{index:03d}.vmdl" for index in range(500))
+
+
+class FeedbackBridge(MapBridge):
+    """Reuse the existing small entity/group/scene projection fixture."""
+
+    def read_valve_map_asset_references(self, path: str) -> tuple[str, ...]:
+        assert path == MAP_PATH
+        return REFERENCES
 
 
 def test_all_references_recoverable_with_filters_and_pages():

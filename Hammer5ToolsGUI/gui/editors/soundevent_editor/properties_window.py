@@ -599,6 +599,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             widget = self.ui.properties_layout.itemAt(i).widget()
             if isinstance(widget, (SoundEventEditorPropertyFrame, PropertyGroupHeader)):
                 self.ui.properties_layout.takeAt(i)
+                widget.setParent(None)
                 widget.deleteLater()
             else:
                 i += 1

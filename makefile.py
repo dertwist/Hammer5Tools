@@ -49,9 +49,10 @@ def kill_processes() -> None:
     try:
         import psutil
         current_pid = os.getpid()
+        parent_pid = os.getppid()
         normalized_cur_dir = os.path.normcase(os.path.abspath(cur_dir))
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-            if proc.info['pid'] == current_pid:
+            if proc.info['pid'] in (current_pid, parent_pid):
                 continue
             name = (proc.info.get('name') or '').lower()
             if 'python' not in name and 'hammer5tools' not in name:

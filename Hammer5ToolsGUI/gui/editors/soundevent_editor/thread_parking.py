@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import threading
 import weakref
-from PySide6.QtCore import QCoreApplication, QObject, QThread, Qt
+from PySide6.QtCore import QCoreApplication, QObject, QThread, Qt, Slot
 
 _LOCK = threading.Lock()
 _RUNNING: set[QThread] = set()
@@ -33,18 +33,24 @@ _QUIESCE_MS = 5000
 class _ThreadReaper(QObject):
     """Releases finished parked QThreads on the main Qt thread."""
 
-    def release(self, thread: QThread) -> None:
+    @Slot()
+    def reap_finished(self) -> None:
         with _LOCK:
-            _RUNNING.discard(thread)
+            candidates = [t for t in _RUNNING if t.isFinished()]
+        for t in candidates:
+            # Ensure QThreadPrivate::finish() has fully returned on the OS thread
+            # before dropping the last Python reference.
+            if t.wait(50):
+                with _LOCK:
+                    _RUNNING.discard(t)
 
 
 def _ensure_reaper(app: QCoreApplication | None) -> _ThreadReaper | None:
     global _REAPER
     if app is None:
         return None
-    if _REAPER is None or _REAPER.thread() is not app.thread():
-        _REAPER = _ThreadReaper()
-        _REAPER.moveToThread(app.thread())
+    if _REAPER is None or _REAPER.parent() is not app:
+        _REAPER = _ThreadReaper(app)
     if app not in _HOOKED_APPS:
         app.aboutToQuit.connect(quiesce_all)
         _HOOKED_APPS.add(app)
@@ -61,28 +67,17 @@ def park(thread: QThread) -> QThread:
 
     app = QCoreApplication.instance()
     reaper = _ensure_reaper(app)
-
-    def _on_finished() -> None:
-        with _LOCK:
-            _RUNNING.discard(thread)
-
     if reaper is not None:
-        # QueuedConnection with a main-thread QObject receiver guarantees
-        # _on_finished runs on the main thread after QThreadPrivate::finish.
         thread.finished.connect(
-            _on_finished,
-            Qt.ConnectionType.QueuedConnection,
-        )
-        # Keep reaper as receiver context via QObject.destroyed? No: in PySide6,
-        # connecting to a plain function ignores QueuedConnection unless a QObject
-        # receiver is used or the slot is bound to a QObject. Bind via reaper.
-        thread.finished.disconnect(_on_finished)
-        thread.finished.connect(
-            lambda t=thread: reaper.release(t),
+            reaper.reap_finished,
             Qt.ConnectionType.QueuedConnection,
         )
     else:
-        thread.finished.connect(_on_finished)
+        def _fallback_reap() -> None:
+            with _LOCK:
+                _RUNNING.discard(thread)
+
+        thread.finished.connect(_fallback_reap)
 
     return thread
 
