@@ -20,6 +20,9 @@ public sealed class CompiledResourceReader(VpkIndex index)
     {
         if (data.AsSpan().StartsWith("RIFF"u8))
             return "wav";
+        // AAC ADTS syncword (0xFFFx where layer bits == 00) must be checked before MP3
+        if (data.Length >= 2 && data[0] == 0xff && (data[1] & 0xf6) == 0xf0)
+            return "aac";
         if (data.AsSpan().StartsWith("ID3"u8) || data.Length >= 2 && data[0] == 0xff && (data[1] & 0xe0) == 0xe0)
             return "mp3";
         var extension = Path.GetExtension(fileName);
@@ -27,6 +30,7 @@ public sealed class CompiledResourceReader(VpkIndex index)
         {
             ".WAV" => "wav",
             ".MP3" => "mp3",
+            ".AAC" => "aac",
             _ => "kv3",
         };
     }
@@ -45,7 +49,7 @@ public sealed class CompiledResourceReader(VpkIndex index)
             if (bytes is null)
                 return CoreResult.Failure<CompiledResourceContent>("compiled_resource_missing", $"Could not find '{path}'.");
             using var stream = new MemoryStream(bytes, writable: false);
-            using var resource = new Resource();
+            using var resource = new Resource { FileName = path };
             resource.Read(stream);
             var method = typeof(FileExtract).GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .FirstOrDefault(candidate => candidate.Name == "Extract");
@@ -55,14 +59,18 @@ public sealed class CompiledResourceReader(VpkIndex index)
             arguments[0] = resource;
             var content = method.Invoke(null, arguments);
             var data = content?.GetType().GetProperty("Data")?.GetValue(content) as byte[];
-            if (data is null)
+            if (data is null || data.Length == 0)
                 return CoreResult.Failure<CompiledResourceContent>(failureCode, $"Could not decode '{path}'.");
             var fileName = content?.GetType().GetProperty("FileName")?.GetValue(content)?.ToString();
-            return CoreResult.Success(new CompiledResourceContent([.. data], DetectFormat(data, fileName)));
+            var format = DetectFormat(data, fileName);
+            if (failureCode == "compiled_sound_read_failed" && format == "kv3")
+                return CoreResult.Failure<CompiledResourceContent>(failureCode, $"'{path}' is a compound or non-audio sound container.");
+            return CoreResult.Success(new CompiledResourceContent([.. data], format));
         }
         catch (Exception exception)
         {
-            return CoreResult.Failure<CompiledResourceContent>(failureCode, $"Could not decode '{path}': {exception.Message}");
+            var inner = exception is TargetInvocationException tie ? tie.InnerException ?? exception : exception;
+            return CoreResult.Failure<CompiledResourceContent>(failureCode, $"Could not decode '{path}': {inner.Message}");
         }
     }
 }

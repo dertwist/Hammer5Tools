@@ -100,9 +100,11 @@ def format_crash_report(exc_type, exc, tb, thread_name=None):
     lines.append("".join(traceback.format_exception(exc_type, exc, tb)))
     lines.append("--- All threads ---")
     try:
-        sio = io.StringIO()
-        faulthandler.dump_traceback(file=sio)
-        lines.append(sio.getvalue())
+        import tempfile
+        with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as tmp:
+            faulthandler.dump_traceback(file=tmp)
+            tmp.seek(0)
+            lines.append(tmp.read())
     except Exception:
         pass
     return "\n".join(lines)
@@ -124,14 +126,41 @@ def _install_crash_handler():
     # excepthook below, so have faulthandler leave the Python stacks on disk.
     # The file object is kept on the function: faulthandler only holds its fd.
     try:
-        _install_crash_handler.native_log = open(_crash_logs_dir() / "native_crash.log", "a", encoding="utf-8")
+        native_log_path = _crash_logs_dir() / "native_crash.log"
+        # Truncate oversized logs (> 2 MB) on startup instead of growing unbounded.
+        mode = "w" if native_log_path.exists() and native_log_path.stat().st_size > 2 * 1024 * 1024 else "a"
+        _install_crash_handler.native_log = open(native_log_path, mode, encoding="utf-8")
         faulthandler.enable(file=_install_crash_handler.native_log)
     except Exception:
         pass
 
-    def hook(exc_type, exc, tb):
+    try:
+        from PySide6.QtCore import QtMsgType, qInstallMessageHandler
+
+        def _qt_message_handler(msg_type, context, message):
+            if msg_type == QtMsgType.QtFatalMsg:
+                try:
+                    logs_dir = _crash_logs_dir()
+                    with open(logs_dir / "last_crash.txt", "w", encoding="utf-8") as f:
+                        f.write(f"QtFatal: {message}\n")
+                except Exception:
+                    pass
+                log.critical("QtFatal: %s", message)
+            elif msg_type == QtMsgType.QtCriticalMsg:
+                log.error("QtCritical: %s", message)
+            elif msg_type == QtMsgType.QtWarningMsg:
+                log.warning("QtWarning: %s", message)
+
+        qInstallMessageHandler(_qt_message_handler)
+    except Exception:
+        pass
+
+    _in_hook = False
+
+    def hook(exc_type, exc, tb, thread_name=None):
+        nonlocal _in_hook
         try:
-            details = format_crash_report(exc_type, exc, tb)
+            details = format_crash_report(exc_type, exc, tb, thread_name=thread_name)
         except Exception:
             import traceback
             details = f"Fatal unhandled exception: {exc_type}: {exc}\n{''.join(traceback.format_exception(exc_type, exc, tb))}"
@@ -154,39 +183,49 @@ def _install_crash_handler():
         except Exception:
             pass
 
-        # 3. Show dialog to user
-        dialog_shown = False
+        if _in_hook:
+            return
+        _in_hook = True
         try:
-            from PySide6.QtWidgets import QApplication
-            app = QApplication.instance()
-            if app is None:
-                app = QApplication(sys.argv)
-            if app is not None:
-                from gui.widgets.common import ErrorInfo
-                dialog = ErrorInfo(
-                    text=f"An unhandled error occurred: {exc_type.__name__}: {exc}",
-                    details=details,
-                    title="Crash Report",
-                )
-                dialog.exec()
-                dialog_shown = True
-        except Exception:
-            pass
-
-        if not dialog_shown and sys.platform == "win32":
+            # 3. Show dialog to user (only on the Qt GUI thread; never construct QWidgets off-thread)
+            dialog_shown = False
             try:
-                import ctypes
-                summary = f"Hammer 5 Tools encountered an unhandled error:\n\n{exc_type.__name__}: {exc}\n\n{details}"
-                if len(summary) > 2048:
-                    summary = summary[:2000] + "\n\n... [truncated, see crash.log for full details]"
-                ctypes.windll.user32.MessageBoxW(None, summary, "Hammer 5 Tools Crash", 0x10)
+                from PySide6.QtCore import QThread
+                from PySide6.QtWidgets import QApplication
+                app = QApplication.instance()
+                if app is not None and QThread.currentThread() == app.thread():
+                    from gui.widgets.common import ErrorInfo
+                    dialog = ErrorInfo(
+                        text=f"An unhandled error occurred: {exc_type.__name__}: {exc}",
+                        details=details,
+                        title="Crash Report",
+                    )
+                    dialog.exec()
+                    dialog_shown = True
             except Exception:
                 pass
+
+            if not dialog_shown and sys.platform == "win32":
+                try:
+                    import ctypes
+                    summary = f"Hammer 5 Tools encountered an unhandled error:\n\n{exc_type.__name__}: {exc}\n\n{details}"
+                    if len(summary) > 2048:
+                        summary = summary[:2000] + "\n\n... [truncated, see crash.log for full details]"
+                    ctypes.windll.user32.MessageBoxW(None, summary, "Hammer 5 Tools Crash", 0x10)
+                except Exception:
+                    pass
+        finally:
+            _in_hook = False
 
     sys.excepthook = hook
 
     import threading
-    threading.excepthook = lambda a: hook(a.exc_type, a.exc_value, a.exc_traceback)
+    threading.excepthook = lambda a: hook(
+        a.exc_type,
+        a.exc_value,
+        a.exc_traceback,
+        thread_name=getattr(a.thread, "name", None),
+    )
 
 
 

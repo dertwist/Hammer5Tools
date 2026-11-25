@@ -254,9 +254,12 @@ std::wstring ReadFileAsString(const fs::path& filePath)
 std::wstring ReadErrorDetails(const fs::path& directory)
 {
     const auto lastCrash = directory / "last_crash.txt";
+    const auto nativeCrash = directory / "native_crash.log";
     const auto stderrLog = directory / "gui_stderr.log";
 
     auto content = ReadFileAsString(lastCrash);
+    if (content.empty())
+        content = ReadFileAsString(nativeCrash);
     if (content.empty())
         content = ReadFileAsString(stderrLog);
 
@@ -271,6 +274,7 @@ int RunGuiOnce(const fs::path& executable, const std::vector<std::wstring>& argu
     {
         fs::create_directories(logsDirectory);
         fs::remove(logsDirectory / "last_crash.txt");
+        fs::remove(logsDirectory / "native_crash.log");
         fs::remove(logsDirectory / "gui_stderr.log");
     }
     catch (...) {}

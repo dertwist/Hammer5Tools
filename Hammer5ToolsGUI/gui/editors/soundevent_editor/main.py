@@ -246,7 +246,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.audio_player = None
 
         # Explorer
-        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
+        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self, use_internal_player=True)
         self.mini_explorer.tree.setProperty("h5Component", "soundeventBorderlessExplorer")
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
@@ -309,9 +309,8 @@ class SoundEventEditorMainWindow(QMainWindow):
     def _prepare_player(self):
         if not get_settings_bool('SoundEventEditor', 'play_on_click'):
             return False
-        if hasattr(self, 'audio_player_widget') and self.audio_player_widget:
-            self.audio_player_widget.deleteLater()
-        self.add_player()
+        if not hasattr(self, 'audio_player_widget') or self.audio_player_widget is None:
+            self.add_player()
         return True
 
     def play_sound(self, file_path):
@@ -1012,9 +1011,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
-        # Stop the background VPK scanners before this editor is destroyed on an
-        # addon switch, else the process aborts on a still-running QThread.
+        if hasattr(self, 'audio_player_widget') and self.audio_player_widget:
+            self.audio_player_widget.cleanup()
+        # Stop the background VPK scanners and decode threads before this editor
+        # is destroyed on an addon switch, else the process aborts on a still-running QThread.
         _quiesce_thread(getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None))
+        _quiesce_thread(getattr(getattr(self, 'internal_explorer', None), '_decode_thread', None))
         _quiesce_thread(getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None))
 
     # File actions
@@ -1034,6 +1036,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindow.properties_clear()
         self.PropertiesWindow.properties_groups_show()
         self.PropertiesWindow.populate_properties(data)
+        self.PropertiesWindow.readonly_mode = True
+        self.PropertiesWindow.apply_readonly_mode()
 
     def _copy_internal_soundevent_to_addon(self, name: str, data: dict) -> None:
         """

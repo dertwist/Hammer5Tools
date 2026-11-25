@@ -856,6 +856,8 @@ class CoreBridge:
         })
         content = result["value"]
         if content is None:
+            for item in result.get("diagnostics", ()):
+                log.warning("Core compiled resource read failed (%s): %s", item.get("code"), item.get("message"))
             return None
         diagnostics = tuple(f"{item['code']}: {item['message']}" for item in result["diagnostics"])
         return CompiledResourceData(base64.b64decode(content["data"]), content["format"], diagnostics)

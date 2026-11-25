@@ -312,12 +312,14 @@ class SoundEventEditorPropertyFrame(QWidget):
         QApplication.clipboard().setText(kv3_snippet(self.serialize_properties()))
 
     def delete_action(self):
-        """Set value to None, then send signal that updates value then delete self"""
+        """Set value to None, detach from layout, emit signal, and delete self."""
         self.deleted.emit(self.name)
         for widget_instance in self._property_widgets:
             widget_instance.deleteLater()
         self._property_widgets = []
         self.value = None
+        if getattr(self, 'widget_list', None) is not None and self.widget_list.layout() is not None:
+            self.widget_list.layout().removeWidget(self)
         self.edited.emit()
         self.deleteLater()
 
@@ -348,23 +350,30 @@ class SoundEventEditorPropertyFrame(QWidget):
         mime_data = event.mimeData()
         if mime_data.hasText():
             if event.source() != self:
-                source_index = self.widget_list.layout().indexOf(event.source())
-                target_index = self.widget_list.layout().indexOf(self)
+                layout = self.widget_list.layout()
+                source_index = layout.indexOf(event.source())
+                target_index = layout.indexOf(self)
+                if target_index == -1:
+                    return
 
-                widget: SoundEventEditorPropertyFrame = self.widget_list.layout().itemAt(target_index).widget()
+                widget: SoundEventEditorPropertyFrame = layout.itemAt(target_index).widget()
                 widget_property = widget._property_widgets[0] if widget._property_widgets else None
                 if isinstance(widget_property, SoundEventEditorPropertyList):
                     urls = mime_data.urls()
                     url_set = set(url.toString() for url in urls)
                     for url in url_set:
                         __value = url.replace("file:///", "")
-                        __value = vsnd_filepath_convert(__value)
+                        try:
+                            __value = vsnd_filepath_convert(__value)
+                        except (TypeError, ValueError):
+                            pass
                         widget_property.add_element(__value)
 
-                elif source_index != -1 and target_index != -1:
-                    if source_index < self.widget_list.layout().count():
-                        source_widget = self.widget_list.layout().takeAt(source_index).widget()
+                elif source_index != -1:
+                    if source_index < layout.count():
+                        source_widget = layout.takeAt(source_index).widget()
                         if source_widget:
-                            self.widget_list.layout().insertWidget(target_index, source_widget)
+                            layout.insertWidget(target_index, source_widget)
+                            self.edited.emit()
 
         event.accept()

@@ -20,7 +20,6 @@ from gui.editors.soundevent_editor.thread_parking import park
 _VSND_FOLDERS_CACHE = None
 
 
-@exception_handler
 class VPKLoaderThread(QThread):
     vpk_loaded = Signal(list)
     vpk_load_failed = Signal(str)
@@ -35,8 +34,13 @@ class VPKLoaderThread(QThread):
     def run(self):
         try:
             cs2_path = get_cs2_path()
+            if not cs2_path:
+                self.vpk_load_failed.emit(
+                    "CS2 installation not configured.\nSet the CS2 path in Preferences."
+                )
+                return
             path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk')
-            if not cs2_path or not os.path.isfile(path):
+            if not os.path.isfile(path):
                 self.vpk_load_failed.emit(
                     f"CS2 installation not found (looked for {path}).\n"
                     "Set the CS2 path in Preferences."
@@ -46,7 +50,7 @@ class VPKLoaderThread(QThread):
                 index.mount(path)
                 folders = []
                 for filepath, _ in index.entries((".vsnd",)):
-                    if self._stopped:
+                    if self._stopped or self.isInterruptionRequested():
                         return
                     if 'sounds' in filepath:
                         element = filepath.split('/')[1:]
@@ -56,27 +60,32 @@ class VPKLoaderThread(QThread):
             self.vpk_load_failed.emit(str(e))
 
 
-@exception_handler
 class VSNDDecodeThread(QThread):
-    decoded = Signal(object, str)
+    decoded = Signal(int, object, str)
 
-    def __init__(self, pak_path: str, internal_path: str, parent=None):
+    def __init__(self, pak_path: str, internal_path: str, generation: int = 0, parent=None):
         super().__init__(parent)
         self.pak_path = pak_path
         self.internal_path = internal_path
+        self.generation = generation
+        self._stopped = False
+
+    def stop(self):
+        self._stopped = True
 
     def run(self):
         try:
+            if self._stopped or self.isInterruptionRequested():
+                return
             result = CoreBridge.instance().read_compiled_resource(self.pak_path, self.internal_path)
-            if result is not None:
-                self.decoded.emit(result.data, result.format)
-            else:
-                pass
-        except Exception as e:
+            if self._stopped or self.isInterruptionRequested():
+                return
+            if result is not None and result.format in ('wav', 'mp3'):
+                self.decoded.emit(self.generation, result.data, result.format)
+        except Exception:
             pass
 
 
-@exception_handler
 class InternalSoundFileExplorer(QTreeWidget):
     play_audio_data = Signal(object, str)
 
@@ -93,6 +102,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.audio_player = audio_player
         self.vpk_loader_thread = None
         self._decode_thread = None
+        self._decode_generation = 0
         if _VSND_FOLDERS_CACHE is not None:
             self.populate_tree(_VSND_FOLDERS_CACHE)
         else:
@@ -148,19 +158,31 @@ class InternalSoundFileExplorer(QTreeWidget):
 
     #  Audio playback helpers
 
-    def play_audio_file(self, path):
-        if self._decode_thread is not None and self._decode_thread.isRunning():
-            self._decode_thread.quit()
-            self._decode_thread.wait()
-            self._decode_thread = None
+    def _to_compiled_vsnd_path(self, rel_path: str) -> str:
+        compiled = rel_path[:-5] + '.vsnd_c' if rel_path.lower().endswith('.vsnd') else rel_path
+        return os.path.join('sounds', compiled).replace('/', '\\')
 
-        internal_audiopath = os.path.join(
-            'sounds', path.replace('vsnd', 'vsnd_c')
-        ).replace('/', '\\')
-        pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-        self._decode_thread = park(VSNDDecodeThread(pak1, internal_audiopath))
-        self._decode_thread.decoded.connect(self.play_audio_data.emit)
-        self._decode_thread.start()
+    def _on_decoded(self, generation: int, data: object, fmt: str) -> None:
+        if generation != self._decode_generation:
+            return
+        self.play_audio_data.emit(data, fmt)
+
+    def play_audio_file(self, path):
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            return
+        if self._decode_thread is not None and self._decode_thread.isRunning():
+            self._decode_thread.stop()
+            self._decode_thread.requestInterruption()
+
+        self._decode_generation += 1
+        gen = self._decode_generation
+        internal_audiopath = self._to_compiled_vsnd_path(path)
+        pak1 = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk')
+        thread = park(VSNDDecodeThread(pak1, internal_audiopath, generation=gen))
+        self._decode_thread = thread
+        thread.decoded.connect(self._on_decoded)
+        thread.start()
 
     #  Path helpers
 
@@ -175,7 +197,7 @@ class InternalSoundFileExplorer(QTreeWidget):
 
     def _is_vsnd_item(self, item):
         """Return True if the item represents a .vsnd leaf file."""
-        return 'vsnd' in self.assemble_path(item)
+        return self.assemble_path(item).lower().endswith('.vsnd')
 
     def _get_selected_vsnd_items(self):
         """Return only the selected items that are actual .vsnd leaf files."""
@@ -233,18 +255,21 @@ class InternalSoundFileExplorer(QTreeWidget):
         if not dest:
             QMessageBox.warning(self, "Decompile to Addon", "No active addon directory set.")
             return
-        pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            return
+        pak1 = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk')
         QApplication.setOverrideCursor(Qt.WaitCursor)
         done = 0
         try:
             for item in items:
                 rel = self.assemble_path(item)
-                internal_path = os.path.join(
-                    'sounds', rel.replace('vsnd', 'vsnd_c')
-                ).replace('/', '\\')
+                internal_path = self._to_compiled_vsnd_path(rel)
                 result = CoreBridge.instance().read_compiled_resource(pak1, internal_path)
                 if result is not None:
-                    output_path = os.path.join(dest, internal_path.replace('\\', os.sep))[:-2]
+                    output_path = os.path.join(dest, internal_path.replace('\\', os.sep))
+                    if output_path.lower().endswith('_c'):
+                        output_path = output_path[:-2]
                     output_path = os.path.splitext(output_path)[0] + '.' + result.format
                     os.makedirs(os.path.dirname(output_path), exist_ok=True)
                     with open(output_path, 'wb') as stream:

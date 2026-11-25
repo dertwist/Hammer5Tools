@@ -12,85 +12,101 @@ no Python traceback. Both ways a widget can take its thread down apply here:
     the thread even without a parent.
 
 park() closes both: the thread is unparented and held here until it emits
-finished. Nothing else has to change at the call site, because Qt already
-disconnects a signal when its receiver is destroyed — a scan that completes
-after teardown just has nowhere to deliver, which is exactly right.
+finished on the main Qt thread.
 """
-from PySide6.QtCore import QCoreApplication, QThread
+from __future__ import annotations
 
-_RUNNING = set()
-_HOOKED = False
+import threading
+import weakref
+from PySide6.QtCore import QCoreApplication, QObject, QThread, Qt
+
+_LOCK = threading.Lock()
+_RUNNING: set[QThread] = set()
+_HOOKED_APPS: weakref.WeakSet[QCoreApplication] = weakref.WeakSet()
+_REAPER: "_ThreadReaper | None" = None
 
 # Long enough for a scan loop to notice the stop flag between VPK entries, short
 # enough that quitting never looks hung.
 _QUIESCE_MS = 5000
 
 
+class _ThreadReaper(QObject):
+    """Releases finished parked QThreads on the main Qt thread."""
+
+    def release(self, thread: QThread) -> None:
+        with _LOCK:
+            _RUNNING.discard(thread)
+
+
+def _ensure_reaper(app: QCoreApplication | None) -> _ThreadReaper | None:
+    global _REAPER
+    if app is None:
+        return None
+    if _REAPER is None or _REAPER.thread() is not app.thread():
+        _REAPER = _ThreadReaper()
+        _REAPER.moveToThread(app.thread())
+    if app not in _HOOKED_APPS:
+        app.aboutToQuit.connect(quiesce_all)
+        _HOOKED_APPS.add(app)
+    return _REAPER
+
+
 def park(thread: QThread) -> QThread:
     """Hold `thread` until it finishes. Returns it, so it can wrap a call."""
-    global _HOOKED
-    _RUNNING.add(thread)
-    thread.finished.connect(lambda: _RUNNING.discard(thread))
-    if not _HOOKED:
-        app = QCoreApplication.instance()
-        if app is not None:
-            # Surviving widget teardown is only half of it: a parked thread still
-            # running when Qt tears the app down is destroyed there instead, and
-            # aborts on the way out. Quitting is the one point where waiting is
-            # both safe and required.
-            app.aboutToQuit.connect(quiesce_all)
-            _HOOKED = True
+    if thread.parent() is not None:
+        thread.setParent(None)
+
+    with _LOCK:
+        _RUNNING.add(thread)
+
+    app = QCoreApplication.instance()
+    reaper = _ensure_reaper(app)
+
+    def _on_finished() -> None:
+        with _LOCK:
+            _RUNNING.discard(thread)
+
+    if reaper is not None:
+        # QueuedConnection with a main-thread QObject receiver guarantees
+        # _on_finished runs on the main thread after QThreadPrivate::finish.
+        thread.finished.connect(
+            _on_finished,
+            Qt.ConnectionType.QueuedConnection,
+        )
+        # Keep reaper as receiver context via QObject.destroyed? No: in PySide6,
+        # connecting to a plain function ignores QueuedConnection unless a QObject
+        # receiver is used or the slot is bound to a QObject. Bind via reaper.
+        thread.finished.disconnect(_on_finished)
+        thread.finished.connect(
+            lambda t=thread: reaper.release(t),
+            Qt.ConnectionType.QueuedConnection,
+        )
+    else:
+        thread.finished.connect(_on_finished)
+
     return thread
 
 
 def quiesce_all() -> None:
     """Stop every parked thread and block until it has actually exited."""
-    for thread in list(_RUNNING):
+    with _LOCK:
+        threads = list(_RUNNING)
+    for thread in threads:
         if not thread.isRunning():
+            with _LOCK:
+                _RUNNING.discard(thread)
             continue
         stop = getattr(thread, "stop", None)
         if callable(stop):
             stop()
         thread.requestInterruption()
-        thread.wait(_QUIESCE_MS)
+        thread.quit()
+        if thread.wait(_QUIESCE_MS):
+            with _LOCK:
+                _RUNNING.discard(thread)
 
 
 def running_count() -> int:
-    """Parked threads not yet finished — for the self-check below."""
-    return len(_RUNNING)
-
-
-if __name__ == "__main__":   # python -m src.editors.soundevent_editor.thread_parking
-    import gc
-    from PySide6.QtCore import QCoreApplication, QEventLoop, QTimer
-
-    app = QCoreApplication([])
-
-    class _Slow(QThread):
-        def run(self):
-            self.msleep(300)
-
-    class _Owner:
-        """Stands in for an explorer widget that is dropped mid-scan."""
-        def __init__(self):
-            self.thread = park(_Slow())
-            self.thread.start()
-
-    owner = _Owner()
-    assert running_count() == 1
-    thread = owner.thread
-    assert thread.parent() is None, "a parented thread dies with its owner"
-
-    # The widget goes away mid-scan, as an addon switch does.
-    del owner
-    gc.collect()
-    assert thread.isRunning(), "thread must survive its owner being dropped"
-
-    loop = QEventLoop()
-    thread.finished.connect(loop.quit)
-    QTimer.singleShot(5000, loop.quit)
-    loop.exec()
-
-    assert not thread.isRunning()
-    assert running_count() == 0, "finished threads must be released"
-    print("thread parking self-check OK")
+    """Parked threads not yet finished — for tests and diagnostics."""
+    with _LOCK:
+        return len(_RUNNING)

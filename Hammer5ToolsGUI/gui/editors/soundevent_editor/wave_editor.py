@@ -71,27 +71,34 @@ def _read_cue_positions(path):
     """Return a list of cue-point sample offsets from a RIFF WAV, or []."""
     try:
         with open(path, "rb") as f:
-            data = f.read()
-    except Exception:
-        return []
-    if data[0:4] != b"RIFF" or data[8:12] != b"WAVE":
-        return []
-    pos, out = 12, []
-    while pos + 8 <= len(data):
-        cid = data[pos:pos + 4]
-        size = struct.unpack("<I", data[pos + 4:pos + 8])[0]
-        if cid == b"cue ":
-            chunk = data[pos + 8:pos + 8 + size]
-            n = struct.unpack("<I", chunk[0:4])[0]
-            off = 4
-            for _ in range(n):
-                if off + 24 > len(chunk):
+            header = f.read(12)
+            if len(header) < 12 or header[0:4] != b"RIFF" or header[8:12] != b"WAVE":
+                return []
+            out = []
+            while True:
+                chunk_hdr = f.read(8)
+                if len(chunk_hdr) < 8:
                     break
-                sample_offset = struct.unpack("<I", chunk[off + 20:off + 24])[0]
-                out.append(sample_offset)
-                off += 24
-        pos += 8 + size + (size % 2)
-    return out
+                cid = chunk_hdr[0:4]
+                size = struct.unpack("<I", chunk_hdr[4:8])[0]
+                if cid == b"cue ":
+                    chunk = f.read(size)
+                    if len(chunk) >= 4:
+                        n = struct.unpack("<I", chunk[0:4])[0]
+                        off = 4
+                        for _ in range(n):
+                            if off + 24 > len(chunk):
+                                break
+                            sample_offset = struct.unpack("<I", chunk[off + 20:off + 24])[0]
+                            out.append(sample_offset)
+                            off += 24
+                    if size % 2:
+                        f.seek(1, os.SEEK_CUR)
+                else:
+                    f.seek(size + (size % 2), os.SEEK_CUR)
+            return out
+    except (OSError, struct.error):
+        return []
 
 
 def load_audio(path):
@@ -100,9 +107,13 @@ def load_audio(path):
     try:
         with wave.open(path, "rb") as w:
             sr, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
+            if sr <= 0 or ch <= 0:
+                raise wave.Error("Invalid WAV header")
             raw = w.readframes(w.getnframes())
-        return pcm_to_float(raw, sw).reshape(-1, ch), sr, cue
-    except (wave.Error, KeyError, EOFError):
+        samples = pcm_to_float(raw, sw)
+        usable = (len(samples) // ch) * ch
+        return samples[:usable].reshape(-1, ch), sr, cue
+    except (wave.Error, KeyError, ValueError, EOFError):
         # mp3, or a WAV the wave module can't read (float, compressed): let Qt decode it
         samples, sr = decode_to_float(path)
         return samples, sr, cue
@@ -119,13 +130,24 @@ def save_wav(path, samples, sr, cue_positions=None):
         for i, p in enumerate(cue_positions, 1):
             cue += struct.pack("<II4sIII", i, p, b"data", 0, 0, p)
         chunks.append((b"cue ", cue))
-    body = b""
-    for cid, cdata in chunks:
-        body += cid + struct.pack("<I", len(cdata)) + cdata
-        if len(cdata) % 2:
-            body += b"\x00"
-    with open(path, "wb") as f:
-        f.write(b"RIFF" + struct.pack("<I", 4 + len(body)) + b"WAVE" + body)
+    total_body = sum(8 + len(c) + (len(c) % 2) for _, c in chunks)
+    dst_dir = os.path.dirname(os.path.abspath(path)) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=dst_dir, suffix=".wav.tmp")
+    os.close(fd)
+    try:
+        with open(tmp_path, "wb") as f:
+            f.write(b"RIFF" + struct.pack("<I", 4 + total_body) + b"WAVE")
+            for cid, cdata in chunks:
+                f.write(cid + struct.pack("<I", len(cdata)) + cdata)
+                if len(cdata) % 2:
+                    f.write(b"\x00")
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
 
 
@@ -182,6 +204,11 @@ class VerticalVUMeter(QWidget):
         self.setMinimumHeight(80)
         self._level = 0.0
         self._peak = 0.0
+
+    def reset(self):
+        self._level = 0.0
+        self._peak = 0.0
+        self.update()
 
     def set_level(self, level):
         level = max(0.0, min(1.0, level))
@@ -252,8 +279,8 @@ class AudioDocument(QWidget):
 
         self._build_ui()
 
-        self.player = QMediaPlayer()
-        self.audio_out = QAudioOutput()
+        self.player = QMediaPlayer(self)
+        self.audio_out = QAudioOutput(self)
         self.player.setAudioOutput(self.audio_out)
         bind_audio_output_monitoring(self.audio_out, self.player, context="WaveEditor")
         self.player.positionChanged.connect(self._on_position)
@@ -282,8 +309,8 @@ class AudioDocument(QWidget):
             self.addAction(a)
             return a
 
-        self.act_new = mk("New", lambda: self.load_blank(), _IC["new"], QKeySequence.New)
-        self.act_open = mk("Open", self.open_file, _IC["open"], QKeySequence.Open)
+        self.act_new = mk("New", lambda: self.load_blank(), _IC["new"])
+        self.act_open = mk("Open", self.open_file, _IC["open"])
         self.act_save = mk("Save", self.save, _IC["save"], QKeySequence("Ctrl+S"))
         self.act_save_as = mk("Save As", self.save_as, _IC["save_as"])
         self.act_play = mk("Play", self.toggle_play, _IC["play"],
@@ -494,8 +521,14 @@ class AudioDocument(QWidget):
         except Exception as error:
             QMessageBox.critical(self, "Load failed", str(error))
             return
+        if sr <= 0 or len(samples) == 0:
+            QMessageBox.critical(self, "Load failed", "Audio file has no playable samples.")
+            return
+        if samples.ndim == 1:
+            samples = samples.reshape(-1, 1)
         self.stop()
         self.samples, self.sr, self.path = samples, sr, path
+        self._clipboard = None
         self._undo.clear()
         self._redo.clear()
         self._set_dirty(False)
@@ -517,6 +550,7 @@ class AudioDocument(QWidget):
         self.samples = np.zeros((n_samples, channels), dtype=np.float32)
         self.sr = sr
         self.path = None
+        self._clipboard = None
         self._undo.clear()
         self._redo.clear()
         self._set_dirty(False)
@@ -528,7 +562,11 @@ class AudioDocument(QWidget):
         self.status.setText(f"Untitled  |  {duration_s:.2f}s  |  {sr} Hz  |  {channels} ch  |  Blank")
 
     def _mono(self):
-        return self.samples.mean(axis=1) if self.samples.ndim > 1 else self.samples
+        if self.samples.ndim <= 1 or self.samples.shape[1] == 1:
+            return self.samples.ravel()
+        # Pick the loudest channel per sample so out-of-phase stereo doesn't cancel
+        idx = np.abs(self.samples).argmax(axis=1)
+        return self.samples[np.arange(len(self.samples)), idx]
 
     def _refresh_plot(self):
         if self.samples is None:
@@ -666,7 +704,8 @@ class AudioDocument(QWidget):
         self._markers = []
 
     def _marker_samples(self):
-        return sorted(max(0, int(m.value() * self.sr)) for m in self._markers)
+        limit = len(self.samples) if self.samples is not None else 0
+        return sorted(max(0, min(limit, int(m.value() * self.sr))) for m in self._markers)
 
     # saving
     def save(self):
@@ -701,6 +740,8 @@ class AudioDocument(QWidget):
 
     # ---- playback ----
     def _render_temp(self):
+        self.player.stop()
+        self.player.setSource(QUrl())
         if self._temp_wav is None:
             tf = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
             tf.close()
@@ -713,11 +754,14 @@ class AudioDocument(QWidget):
         if self.player.playbackState() == QMediaPlayer.PlayingState:
             self.player.pause()
             return
-        if self.samples is None:
+        if self.samples is None or len(self.samples) == 0:
             return
+        seek_ms = int(self.playhead.value() * 1000)
         if self._render_dirty:
             self._render_temp()
             self.player.setSource(QUrl.fromLocalFile(self._temp_wav))
+            if seek_ms > 0:
+                self.player.setPosition(seek_ms)
         ensure_valid_audio_output(self.audio_out, context="WaveEditor")
         log_audio_playback(self.audio_out, context="WaveEditor")
         self.player.play()
@@ -726,8 +770,22 @@ class AudioDocument(QWidget):
     def stop(self):
         self.player.stop()
         self._vu_timer.stop()
-        self.vu.set_level(0.0)
+        self.vu.reset()
         self.playhead.setValue(0)
+
+    def cleanup(self):
+        self.stop()
+        self.player.setSource(QUrl())
+        if self._temp_wav and os.path.exists(self._temp_wav):
+            try:
+                os.unlink(self._temp_wav)
+            except OSError:
+                pass
+            self._temp_wav = None
+
+    def closeEvent(self, event):
+        self.cleanup()
+        super().closeEvent(event)
 
     def _on_position(self, ms):
         self.playhead.setValue(ms / 1000.0)
@@ -738,7 +796,7 @@ class AudioDocument(QWidget):
         self.act_play.setIcon(QIcon(_IC["pause"] if playing else _IC["play"]))
         if state != QMediaPlayer.PlayingState:
             self._vu_timer.stop()
-            self.vu.set_level(0.0)
+            self.vu.reset()
 
     def _update_vu(self):
         if self._env is None or self._env_dur <= 0:
@@ -905,7 +963,9 @@ class AudioEditor(QMainWindow):
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
         ex = self.explorer
+        ex.addon = get_addon_name()
         ex.tree_directory = path
+        ex.filter_proxy_model.set_root_directory(path)
         ex.model.setRootPath(path)
         ex.tree.setRootIndex(ex.filter_proxy_model.mapFromSource(ex.model.index(path)))
 
@@ -966,7 +1026,7 @@ class AudioEditor(QMainWindow):
                 if widget._dirty:  # save cancelled or failed → abort close
                     return
         try:
-            widget.stop()
+            widget.cleanup()
         except Exception:
             pass
         self.tabs.removeTab(index)

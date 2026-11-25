@@ -43,7 +43,7 @@ class ZebraMenu(QMenu):
         painter.end()
         super().paintEvent(event)
 
-audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
+audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
 generic_extensions = ['vpost', 'rect', 'keybindings', 'kv3']
 model_extensions = ['obj', 'fbx', 'dmx']
@@ -811,15 +811,20 @@ class Explorer(QMainWindow):
             self.play_audio_file(current_path)
 
     def play_audio_file(self, file_path):
-        if file_path.endswith(tuple(audio_extensions)):
+        ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+        if ext in audio_extensions:
             if self.use_internal_player:
                 self.play_sound.emit(file_path)
             else:
                 try:
                     if self.audio_player is not None:
+                        self.audio_player.stop()
+                        self.audio_player.setSource(QUrl())
                         self.audio_player.deleteLater()
-                    self.audio_player = QMediaPlayer()
-                    self.audio_output = QAudioOutput()
+                    if getattr(self, "audio_output", None) is not None:
+                        self.audio_output.deleteLater()
+                    self.audio_player = QMediaPlayer(self)
+                    self.audio_output = QAudioOutput(self)
                     self.audio_player.setAudioOutput(self.audio_output)
                     from gui.other.audio_device import bind_audio_output_monitoring, ensure_valid_audio_output, log_audio_playback
                     bind_audio_output_monitoring(self.audio_output, self.audio_player, context="Explorer")
@@ -1631,6 +1636,9 @@ class Explorer(QMainWindow):
             return None
 
     def closeEvent(self, event):
+        if getattr(self, "audio_player", None) is not None:
+            self.audio_player.stop()
+            self.audio_player.setSource(QUrl())
         tree_state = self.tree.header().saveState()
         set_settings_value(self.editor_name + '_tree_state', self.addon, tree_state)
         event.accept()

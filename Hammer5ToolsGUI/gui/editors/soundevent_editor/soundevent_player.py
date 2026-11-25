@@ -37,10 +37,13 @@ def play_soundevent(event_name: str) -> bool:
     """
     if not event_name or not isinstance(event_name, str):
         return False
+    clean_name = event_name.strip().replace("\r", "").replace("\n", "")
+    if not clean_name:
+        return False
     if not require_cs2("play a soundevent"):
         return False
     ok1 = CS2Netcon.send("snd_sos_stop_all_soundevents")
-    ok2 = CS2Netcon.send(f"snd_sos_start_soundevent {event_name}")
+    ok2 = CS2Netcon.send(f"snd_sos_start_soundevent {clean_name}")
     return ok1 and ok2
 
 

@@ -259,12 +259,13 @@ def exception_handler(func):
             error_details = traceback.format_exc()
             error(error_message)
 
-            # Ensure the dialog is executed in the main thread
+            # Ensure the dialog is only executed on the main Qt GUI thread
+            from PySide6.QtCore import QThread
             app = QApplication.instance()
-            if app is not None:
+            if app is not None and QThread.currentThread() == app.thread():
                 ErrorInfo(text=error_message, details=error_details).exec_()
             else:
-                log.error("Error: QApplication instance is not available.")
+                log.error("Unhandled exception in %s (off-thread or no QApplication): %s", func.__name__, error_details)
 
             # Return None or a default value
             return None

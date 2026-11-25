@@ -416,14 +416,19 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Make ``frame`` the row that copy/delete and the context menu act on."""
         if frame is self._selected_frame:
             return
-        for target, selected in ((self._selected_frame, False), (frame, True)):
-            if target is None:
-                continue
+        if self._selected_frame is not None:
             try:
-                target.set_selected(selected)
+                self._selected_frame.set_selected(False)
+            except RuntimeError:
+                pass
+        if frame is not None:
+            try:
+                frame.set_selected(True)
+                self._selected_frame = frame
+                return
             except RuntimeError:
                 pass  # already destroyed
-        self._selected_frame = frame
+        self._selected_frame = None
 
     def _owns(self, widget) -> bool:
         """True for a property row of this window.
@@ -458,7 +463,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         except RuntimeError:
             return  # a widget was destroyed mid-walk
         if frame is not None:
-            QTimer.singleShot(0, lambda: self.select_frame(frame))
+            QTimer.singleShot(0, self, lambda f=frame: self.select_frame(f))
 
     def _ordered_frames(self) -> list:
         """Visible property rows, in the order they are shown."""
@@ -996,11 +1001,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                         widget.setEnabled(not self.readonly_mode)
                     except Exception:
                         pass
-            # Play button always enabled
-            try:
-                self.play_button.setEnabled(True)
-            except Exception:
-                pass
             self._apply_toggle_dependencies()
         except Exception:
             pass
@@ -1020,29 +1020,28 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Ensure any UI-changing logic we perform does not push undo entries
         self._undo_enabled = False
         self._populating = True        # ← block on_update mid-populate
+        self.readonly_mode = False
+        try:
+            if item is None:
+                self.properties_clear()
+                self.properties_groups_hide()
+                return
 
-        if item is None:
-            self.properties_clear()
-            self.properties_groups_hide()
+            # Try to get a dict value for the item
+            try:
+                data = self._data_for_item(item)
+                if not isinstance(data, dict):
+                    data = {}
+            except Exception:
+                data = {}
+
+            self.properties_groups_show()
+            self.populate_properties(data)
+        finally:
+            # Re-enable undo pushes and notify listeners
+            self._populating = False       # ← clear BEFORE re-enabling undo
             self._undo_enabled = True
             self.edited.emit()
-            return
-
-        # Try to get a dict value for the item
-        try:
-            data = self._data_for_item(item)
-            if not isinstance(data, dict):
-                data = {}
-        except Exception:
-            data = {}
-
-        self.properties_groups_show()
-        self.populate_properties(data)
-
-        # Re-enable undo pushes and notify listeners
-        self._populating = False       # ← clear BEFORE re-enabling undo
-        self._undo_enabled = True
-        self.edited.emit()
 
     def find_tree_item_by_element_key(self, key):
         """Public helper to find a tree item by element key (m_nElementID or name)."""

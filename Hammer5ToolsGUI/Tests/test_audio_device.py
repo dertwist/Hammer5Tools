@@ -242,3 +242,57 @@ def test_log_current_system_audio_devices(caplog):
 
     assert "Default audio output device:" in caplog.text
 
+
+def test_ensure_valid_audio_output_handles_empty_outputs_list():
+    fake_dev = MagicMock()
+    fake_dev.isNull.return_value = False
+    fake_dev.id.return_value = b"unplugged"
+    fake_dev.description.return_value = "Unplugged Headphones"
+
+    null_default = MagicMock()
+    null_default.isNull.return_value = True
+
+    fake_out = MagicMock()
+    fake_out.device.return_value = fake_dev
+    fake_out.isMuted.return_value = False
+    fake_out.volume.return_value = 1.0
+
+    with patch.object(audio_device.QMediaDevices, "audioOutputs", return_value=[]), \
+         patch.object(audio_device.QMediaDevices, "defaultAudioOutput", return_value=null_default):
+        switched = audio_device.ensure_valid_audio_output(fake_out, context="Test")
+
+    assert switched is True
+    fake_out.setDevice.assert_called_once_with(null_default)
+
+
+def test_zero_volume_not_treated_as_100_percent():
+    fake_info = {
+        "master_volume_pct": 0,
+        "master_volume_db": -65.0,
+        "master_volume_min_db": -65.0,
+        "master_volume_max_db": 0.0,
+        "master_muted": False,
+        "channel_count": 0,
+        "channel_volumes": [],
+        "app_mixer_volume_pct": 0,
+        "app_mixer_muted": True,
+        "hardware_peak_level": None,
+    }
+    fake_dev = MagicMock()
+    fake_dev.isNull.return_value = False
+    fake_dev.id.return_value = b"dev1"
+    fake_out = MagicMock()
+    fake_out.device.return_value = fake_dev
+    fake_out.isMuted.return_value = False
+    fake_out.volume.return_value = 1.0
+
+    with patch.object(audio_device, "get_system_volume_info", return_value=fake_info):
+        lines = audio_device.describe_system_volume(fake_out)
+    assert "Effective Volume Level: 0.0% (Master 0% x Mixer 0% x Player 100%)" in "\n".join(lines)
+
+    with patch.object(audio_device.QMediaDevices, "audioOutputs", return_value=[fake_dev]), \
+         patch.object(audio_device, "get_system_volume_info", return_value=fake_info), \
+         patch.object(audio_device, "set_windows_mixer_volume") as mock_set_mixer:
+        audio_device.ensure_valid_audio_output(fake_out, context="Test")
+    mock_set_mixer.assert_called_once_with(level=0.0)
+

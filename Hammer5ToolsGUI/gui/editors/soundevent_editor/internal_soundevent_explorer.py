@@ -25,7 +25,20 @@ from gui.editors.soundevent_editor.thread_parking import park
 #  Lazy path helpers
 
 def _get_vpk_path() -> str:
-    return os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+    cs2 = get_cs2_path()
+    if not cs2:
+        return ''
+    return os.path.join(cs2, 'game', 'csgo', 'pak01_dir.vpk')
+
+
+def _cache_rel_path(inner_path: str) -> str:
+    """Preserve VPK subpath under soundevents_cache so identically named files don't collide."""
+    rel = inner_path.replace('\\', '/').lstrip('/')
+    if rel.endswith('_c'):
+        rel = rel[:-2]
+    if not rel.endswith('.vsndevts'):
+        rel = os.path.splitext(rel)[0] + '.vsndevts'
+    return os.path.normpath(rel)
 
 def _get_soundevents_cache_path() -> str:
     return os.path.join(SoundEventEditor_path, 'soundevents_cache')
@@ -69,13 +82,8 @@ def extract_vsndevts_file(
         return kv3_text
 
     assert output_folder, "output_folder required when export=True"
-    os.makedirs(output_folder, exist_ok=True)
-    base = os.path.basename(inner_path)
-    if base.endswith("_c"):
-        base = base[:-2]
-    if not base.endswith(".vsndevts"):
-        base = os.path.splitext(base)[0] + ".vsndevts"
-    out_path = os.path.join(output_folder, base)
+    out_path = os.path.join(output_folder, _cache_rel_path(inner_path))
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(kv3_text)
     return out_path
@@ -159,14 +167,10 @@ class SoundEventLoaderThread(QThread):
         os.makedirs(cache, exist_ok=True)
 
         for idx, inner in enumerate(vpaths, 1):
-            if self._stopped:
+            if self._stopped or self.isInterruptionRequested():
                 break
-            base = os.path.basename(inner)
-            if base.endswith("_c"):
-                base = base[:-2]
-            if not base.endswith(".vsndevts"):
-                base = os.path.splitext(base)[0] + ".vsndevts"
-            cached = os.path.join(cache, base)
+            cached = os.path.join(cache, _cache_rel_path(inner))
+            base = os.path.basename(cached)
 
             if not os.path.isfile(cached):
                 self.progress.emit(f"Decompiling {base} ({idx}/{total})")
@@ -174,7 +178,7 @@ class SoundEventLoaderThread(QThread):
                     cached = extract_vsndevts_file(inner, export=True, output_folder=cache)
                     if not cached:
                         continue
-                except Exception as e:
+                except Exception:
                     continue
             else:
                 self.progress.emit(f"Loading {base} ({idx}/{total})")
@@ -187,10 +191,14 @@ class SoundEventLoaderThread(QThread):
     def _load_from_disk(self) -> Dict[str, str]:
         name_to_file: Dict[str, str] = {}
         for root in self.disk_roots:
-            if self._stopped or not os.path.isdir(root):
+            if self._stopped or self.isInterruptionRequested() or not os.path.isdir(root):
                 continue
             for dirpath, _, filenames in os.walk(root):
+                if self._stopped or self.isInterruptionRequested():
+                    return name_to_file
                 for fn in filenames:
+                    if self._stopped or self.isInterruptionRequested():
+                        return name_to_file
                     if fn.lower().endswith(".vsndevts"):
                         fpath = os.path.join(dirpath, fn)
                         self.progress.emit(f"Override: {fn}")
@@ -307,11 +315,18 @@ class InternalSoundEventExplorer(QWidget):
         if _EVENTS_CACHE is not None:
             self._on_events_loaded(dict(_EVENTS_CACHE))
             return
-        if self.loader and self.loader.isRunning():
-            self.loader.stop()
-            self.loader.wait(1000)
+        if self.loader:
+            try:
+                self.loader.events_loaded.disconnect(self._on_events_loaded)
+            except (RuntimeError, TypeError):
+                pass
+            if self.loader.isRunning():
+                self.loader.stop()
+                self.loader.requestInterruption()
+                self.loader.wait(1000)
+        cs2_path = get_cs2_path()
         disk_roots = [
-            p for p in [os.path.join(get_cs2_path(), 'game', 'csgo', 'soundevents')]
+            p for p in ([os.path.join(cs2_path, 'game', 'csgo', 'soundevents')] if cs2_path else [])
             if os.path.isdir(p)
         ]
         # Unparented and parked: an addon switch deletes this widget while the

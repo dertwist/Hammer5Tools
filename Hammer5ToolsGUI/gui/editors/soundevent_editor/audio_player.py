@@ -101,6 +101,12 @@ class VUMeter(QWidget):
         self._peak = 0.0
         self._peak_decay = 0.0
 
+    def reset(self):
+        self._level = 0.0
+        self._peak = 0.0
+        self._peak_decay = 0.0
+        self.update()
+
     def set_level(self, level):
         level = max(0.0, min(1.0, level))
         # fast attack, slow release — classic VU ballistics
@@ -278,8 +284,8 @@ class AudioPlayer(QWidget):
         self.setProperty("h5Component", "soundeventAudioPlayerRoot")
         self.ui.content.setProperty("h5Component", "soundeventAudioPlayerContent")
 
-        self.audio_player = QMediaPlayer()
-        self.audio_output = QAudioOutput()
+        self.audio_player = QMediaPlayer(self)
+        self.audio_output = QAudioOutput(self)
         self.audio_player.setAudioOutput(self.audio_output)
         bind_audio_output_monitoring(self.audio_output, self.audio_player, context="AudioPlayer")
 
@@ -368,9 +374,6 @@ class AudioPlayer(QWidget):
             self.info_overlay.show()
 
     def init_ui(self):
-        self.current_time_label = QLabel("00:00")
-        self.total_time_label = QLabel("00:00")
-
         self.loop_enabled = get_settings_bool('SoundEventEditor', 'AudioPlayerLoop', default=False)
         self.ui.loop_checkbox.setChecked(self.loop_enabled)
 
@@ -386,8 +389,15 @@ class AudioPlayer(QWidget):
         self.audio_player.positionChanged.connect(self.update_position)
         self.audio_player.durationChanged.connect(self.update_duration)
         self.audio_player.mediaStatusChanged.connect(self.handle_media_status)
-        self.audio_player.playbackStateChanged.connect(self.update_play_button_icon)
+        self.audio_player.playbackStateChanged.connect(self._on_playback_state_changed)
         self.timer.timeout.connect(self.update_time_labels)
+
+    def _on_playback_state_changed(self, state):
+        self.update_play_button_icon()
+        if state == QMediaPlayer.StoppedState and not self.loop_enabled:
+            self.timer.stop()
+            self.vu_timer.stop()
+            self.vu_meter.reset()
 
     def toggle_play_pause(self):
         if self.audio_player.playbackState() == QMediaPlayer.PlayingState:
@@ -406,7 +416,7 @@ class AudioPlayer(QWidget):
         self.audio_player.pause()
         self.timer.stop()
         self.vu_timer.stop()
-        self.vu_meter.set_level(0.0)
+        self.vu_meter.reset()
 
     def _update_vu(self):
         """Sample the precomputed envelope at the current playback position."""
@@ -432,13 +442,23 @@ class AudioPlayer(QWidget):
     def set_audio_bytes(self, data: bytes, ext: str = 'wav'):
         try:
             self.audio_player.stop()
-            self.audio_player.setSourceDevice(None)
-            if hasattr(self, '_buffer') and self._buffer is not None:
-                self._buffer.close()
+            self.timer.stop()
+            self.vu_timer.stop()
+            self.vu_meter.reset()
+            self.audio_player.setSource(QUrl())
+            old_buf = getattr(self, '_buffer', None)
+            if old_buf is not None:
+                old_buf.close()
+                old_buf.deleteLater()
                 self._buffer = None
 
+            self.waveform_widget.set_position(0)
+            self.waveform_widget.set_duration(0)
+            self.duration = "00:00"
+            self.ui.time.setText("00:00 : 00:00")
+
             self._byte_array = QByteArray(data)
-            self._buffer = QBuffer(self._byte_array)
+            self._buffer = QBuffer(self._byte_array, self)
             self._buffer.open(QIODevice.ReadOnly)
 
             self.audio_player.setSourceDevice(self._buffer, QUrl(f"audio.{ext}"))
@@ -473,6 +493,8 @@ class AudioPlayer(QWidget):
         def _done(samples, rate, error):
             if decoder is not self._env_decoder:
                 return  # another file was loaded meanwhile
+            self._env_decoder = None
+            decoder.deleteLater()
             if error:
                 log.warning(f"Could not decode audio for the level meter: {error}")
                 return
@@ -525,16 +547,29 @@ class AudioPlayer(QWidget):
                 self.audio_player.play()
             else:
                 self.update_play_button_icon()
+                self.timer.stop()
                 self.vu_timer.stop()
-                self.vu_meter.set_level(0.0)
+                self.vu_meter.reset()
 
     def format_time(self, ms):
         seconds = (ms // 1000) % 60
         minutes = (ms // (1000 * 60)) % 60
         return f"{minutes:02}:{seconds:02}"
 
-    def closeEvent(self, event):
-        self.pause_sound()
+    def cleanup(self):
+        self.audio_player.stop()
+        self.timer.stop()
+        self.vu_timer.stop()
+        self.vu_meter.reset()
+        self._decode_envelope(None)
+        self.audio_player.setSource(QUrl())
+        if hasattr(self, '_buffer') and self._buffer is not None:
+            self._buffer.close()
+            self._buffer.deleteLater()
+            self._buffer = None
         if self.info_overlay:
             self.info_overlay.close()
+
+    def closeEvent(self, event):
+        self.cleanup()
         super().closeEvent(event)

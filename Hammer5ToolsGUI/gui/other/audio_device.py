@@ -162,14 +162,20 @@ def get_system_volume_info() -> dict[str, Any]:
     if sys.platform != "win32":
         return info
 
+    ole32 = None
+    co_initialized = False
+    enumerator = None
+    device = None
     try:
         ole32 = ctypes.windll.ole32
-        ole32.CoInitialize(None)
+        hr_init = ole32.CoInitialize(None)
+        co_initialized = hr_init in (0, 1)
 
         enumerator = c_void_p()
         if ole32.CoCreateInstance(
             byref(_CLSID_MMDeviceEnumerator), None, 1, byref(_IID_IMMDeviceEnumerator), byref(enumerator)
         ) != 0:
+            enumerator = None
             return info
 
         enum_vtbl = ctypes.cast(
@@ -179,7 +185,7 @@ def get_system_volume_info() -> dict[str, Any]:
         device = c_void_p()
         # 0 = eRender, 0 = eConsole (multimedia/communications)
         if enum_vtbl.GetDefaultAudioEndpoint(enumerator, 0, 0, byref(device)) != 0:
-            _release_com_ptr(enumerator)
+            device = None
             return info
 
         dev_vtbl = ctypes.cast(
@@ -190,80 +196,90 @@ def get_system_volume_info() -> dict[str, Any]:
         endpoint_volume = c_void_p()
         CLSCTX_ALL = 23
         if dev_vtbl.Activate(device, byref(_IID_IAudioEndpointVolume), CLSCTX_ALL, None, byref(endpoint_volume)) == 0:
-            vol_vtbl = ctypes.cast(
-                ctypes.cast(endpoint_volume, POINTER(c_void_p)).contents, POINTER(_IAudioEndpointVolumeVtbl)
-            ).contents
+            try:
+                vol_vtbl = ctypes.cast(
+                    ctypes.cast(endpoint_volume, POINTER(c_void_p)).contents, POINTER(_IAudioEndpointVolumeVtbl)
+                ).contents
 
-            vol_scalar = c_float()
-            if vol_vtbl.GetMasterVolumeLevelScalar(endpoint_volume, byref(vol_scalar)) == 0:
-                info["master_volume_pct"] = int(round(vol_scalar.value * 100))
+                vol_scalar = c_float()
+                if vol_vtbl.GetMasterVolumeLevelScalar(endpoint_volume, byref(vol_scalar)) == 0:
+                    info["master_volume_pct"] = int(round(vol_scalar.value * 100))
 
-            vol_db = c_float()
-            if vol_vtbl.GetMasterVolumeLevel(endpoint_volume, byref(vol_db)) == 0:
-                info["master_volume_db"] = round(vol_db.value, 1)
+                vol_db = c_float()
+                if vol_vtbl.GetMasterVolumeLevel(endpoint_volume, byref(vol_db)) == 0:
+                    info["master_volume_db"] = round(vol_db.value, 1)
 
-            min_db = c_float()
-            max_db = c_float()
-            step_db = c_float()
-            if vol_vtbl.GetVolumeRange(endpoint_volume, byref(min_db), byref(max_db), byref(step_db)) == 0:
-                info["master_volume_min_db"] = round(min_db.value, 1)
-                info["master_volume_max_db"] = round(max_db.value, 1)
+                min_db = c_float()
+                max_db = c_float()
+                step_db = c_float()
+                if vol_vtbl.GetVolumeRange(endpoint_volume, byref(min_db), byref(max_db), byref(step_db)) == 0:
+                    info["master_volume_min_db"] = round(min_db.value, 1)
+                    info["master_volume_max_db"] = round(max_db.value, 1)
 
-            mute = wintypes.BOOL()
-            if vol_vtbl.GetMute(endpoint_volume, byref(mute)) == 0:
-                info["master_muted"] = bool(mute.value)
+                mute = wintypes.BOOL()
+                if vol_vtbl.GetMute(endpoint_volume, byref(mute)) == 0:
+                    info["master_muted"] = bool(mute.value)
 
-            ch_count = c_uint()
-            if vol_vtbl.GetChannelCount(endpoint_volume, byref(ch_count)) == 0:
-                info["channel_count"] = ch_count.value
-                ch_vols = []
-                for ch in range(ch_count.value):
-                    cv = c_float()
-                    if vol_vtbl.GetChannelVolumeLevelScalar(endpoint_volume, ch, byref(cv)) == 0:
-                        ch_vols.append(int(round(cv.value * 100)))
-                info["channel_volumes"] = ch_vols
-
-            _release_com_ptr(endpoint_volume)
+                ch_count = c_uint()
+                if vol_vtbl.GetChannelCount(endpoint_volume, byref(ch_count)) == 0:
+                    info["channel_count"] = ch_count.value
+                    ch_vols = []
+                    for ch in range(ch_count.value):
+                        cv = c_float()
+                        if vol_vtbl.GetChannelVolumeLevelScalar(endpoint_volume, ch, byref(cv)) == 0:
+                            ch_vols.append(int(round(cv.value * 100)))
+                    info["channel_volumes"] = ch_vols
+            finally:
+                _release_com_ptr(endpoint_volume)
 
         # 2. Windows Volume Mixer app-session volume (ISimpleAudioVolume)
         session_mgr = c_void_p()
         if dev_vtbl.Activate(device, byref(_IID_IAudioSessionManager), CLSCTX_ALL, None, byref(session_mgr)) == 0:
-            mgr_vtbl = ctypes.cast(
-                ctypes.cast(session_mgr, POINTER(c_void_p)).contents, POINTER(_IAudioSessionManagerVtbl)
-            ).contents
-
-            simple_vol = c_void_p()
-            if mgr_vtbl.GetSimpleAudioVolume(session_mgr, None, 0, byref(simple_vol)) == 0:
-                sav_vtbl = ctypes.cast(
-                    ctypes.cast(simple_vol, POINTER(c_void_p)).contents, POINTER(_ISimpleAudioVolumeVtbl)
+            try:
+                mgr_vtbl = ctypes.cast(
+                    ctypes.cast(session_mgr, POINTER(c_void_p)).contents, POINTER(_IAudioSessionManagerVtbl)
                 ).contents
 
-                app_vol = c_float()
-                if sav_vtbl.GetMasterVolume(simple_vol, byref(app_vol)) == 0:
-                    info["app_mixer_volume_pct"] = int(round(app_vol.value * 100))
+                simple_vol = c_void_p()
+                if mgr_vtbl.GetSimpleAudioVolume(session_mgr, None, 0, byref(simple_vol)) == 0:
+                    try:
+                        sav_vtbl = ctypes.cast(
+                            ctypes.cast(simple_vol, POINTER(c_void_p)).contents, POINTER(_ISimpleAudioVolumeVtbl)
+                        ).contents
 
-                app_mute = wintypes.BOOL()
-                if sav_vtbl.GetMute(simple_vol, byref(app_mute)) == 0:
-                    info["app_mixer_muted"] = bool(app_mute.value)
+                        app_vol = c_float()
+                        if sav_vtbl.GetMasterVolume(simple_vol, byref(app_vol)) == 0:
+                            info["app_mixer_volume_pct"] = int(round(app_vol.value * 100))
 
-                _release_com_ptr(simple_vol)
-            _release_com_ptr(session_mgr)
+                        app_mute = wintypes.BOOL()
+                        if sav_vtbl.GetMute(simple_vol, byref(app_mute)) == 0:
+                            info["app_mixer_muted"] = bool(app_mute.value)
+                    finally:
+                        _release_com_ptr(simple_vol)
+            finally:
+                _release_com_ptr(session_mgr)
 
         # 3. Hardware Peak Meter (IAudioMeterInformation)
         meter = c_void_p()
         if dev_vtbl.Activate(device, byref(_IID_IAudioMeterInformation), CLSCTX_ALL, None, byref(meter)) == 0:
-            meter_vtbl = ctypes.cast(
-                ctypes.cast(meter, POINTER(c_void_p)).contents, POINTER(_IAudioMeterInformationVtbl)
-            ).contents
-            peak = c_float()
-            if meter_vtbl.GetPeakValue(meter, byref(peak)) == 0:
-                info["hardware_peak_level"] = round(peak.value, 3)
-            _release_com_ptr(meter)
-
-        _release_com_ptr(device)
-        _release_com_ptr(enumerator)
+            try:
+                meter_vtbl = ctypes.cast(
+                    ctypes.cast(meter, POINTER(c_void_p)).contents, POINTER(_IAudioMeterInformationVtbl)
+                ).contents
+                peak = c_float()
+                if meter_vtbl.GetPeakValue(meter, byref(peak)) == 0:
+                    info["hardware_peak_level"] = round(peak.value, 3)
+            finally:
+                _release_com_ptr(meter)
     except Exception as exc:
         log.debug("WASAPI volume query error: %s", exc)
+    finally:
+        if device is not None:
+            _release_com_ptr(device)
+        if enumerator is not None:
+            _release_com_ptr(enumerator)
+        if co_initialized and ole32 is not None:
+            ole32.CoUninitialize()
 
     return info
 
@@ -272,26 +288,33 @@ def set_windows_mixer_volume(level: float = 1.0) -> bool:
     """Set this application's volume in the Windows Volume Mixer (0.0 to 1.0) and unmute it."""
     if sys.platform != "win32":
         return False
+    ole32 = None
+    co_initialized = False
+    enumerator = None
+    device = None
+    session_mgr = None
+    simple_vol = None
     try:
         ole32 = ctypes.windll.ole32
-        ole32.CoInitialize(None)
+        hr_init = ole32.CoInitialize(None)
+        co_initialized = hr_init in (0, 1)
         enumerator = c_void_p()
         if ole32.CoCreateInstance(
             byref(_CLSID_MMDeviceEnumerator), None, 1, byref(_IID_IMMDeviceEnumerator), byref(enumerator)
         ) != 0:
+            enumerator = None
             return False
         enum_vtbl = ctypes.cast(
             ctypes.cast(enumerator, POINTER(c_void_p)).contents, POINTER(_IMMDeviceEnumeratorVtbl)
         ).contents
         device = c_void_p()
         if enum_vtbl.GetDefaultAudioEndpoint(enumerator, 0, 0, byref(device)) != 0:
-            _release_com_ptr(enumerator)
+            device = None
             return False
         dev_vtbl = ctypes.cast(ctypes.cast(device, POINTER(c_void_p)).contents, POINTER(_IMMDeviceVtbl)).contents
         session_mgr = c_void_p()
         if dev_vtbl.Activate(device, byref(_IID_IAudioSessionManager), 23, None, byref(session_mgr)) != 0:
-            _release_com_ptr(device)
-            _release_com_ptr(enumerator)
+            session_mgr = None
             return False
         mgr_vtbl = ctypes.cast(
             ctypes.cast(session_mgr, POINTER(c_void_p)).contents, POINTER(_IAudioSessionManagerVtbl)
@@ -306,14 +329,23 @@ def set_windows_mixer_volume(level: float = 1.0) -> bool:
             hr_vol = sav_vtbl.SetMasterVolume(simple_vol, c_float(clamped), None)
             hr_mute = sav_vtbl.SetMute(simple_vol, wintypes.BOOL(False), None)
             success = hr_vol == 0 and hr_mute == 0
-            _release_com_ptr(simple_vol)
-        _release_com_ptr(session_mgr)
-        _release_com_ptr(device)
-        _release_com_ptr(enumerator)
+        else:
+            simple_vol = None
         return success
     except Exception as exc:
         log.warning("Could not set Windows mixer volume: %s", exc)
         return False
+    finally:
+        if simple_vol is not None:
+            _release_com_ptr(simple_vol)
+        if session_mgr is not None:
+            _release_com_ptr(session_mgr)
+        if device is not None:
+            _release_com_ptr(device)
+        if enumerator is not None:
+            _release_com_ptr(enumerator)
+        if co_initialized and ole32 is not None:
+            ole32.CoUninitialize()
 
 
 # ---------------------------------------------------------------------------
@@ -328,7 +360,11 @@ def channel_config_name(config: QAudioFormat.ChannelConfig) -> str:
         "Mono": "Mono",
         "Stereo": "Stereo",
         "2Dot1": "2.1 Surround",
+        "3Dot0": "3.0 Surround",
+        "3Dot1": "3.1 Surround",
+        "Surround5Dot0": "5.0 Surround",
         "Surround5Dot1": "5.1 Surround",
+        "Surround7Dot0": "7.0 Surround",
         "Surround7Dot1": "7.1 Surround",
     }
     return mapping.get(clean, clean)
@@ -390,9 +426,11 @@ def describe_system_volume(audio_output: Optional[QAudioOutput] = None) -> list[
         qt_mute = "MUTED" if audio_output.isMuted() else "Unmuted"
         lines.append(f"Internal Player Volume: {qt_vol}% [{qt_mute}]")
 
-        # Effective Volume calculation
-        master = (sys_vol.get("master_volume_pct") or 100) / 100.0
-        mixer = (sys_vol.get("app_mixer_volume_pct") or 100) / 100.0
+        # Effective Volume calculation (preserve explicit 0%)
+        master_pct = sys_vol.get("master_volume_pct")
+        mixer_pct = sys_vol.get("app_mixer_volume_pct")
+        master = (master_pct if master_pct is not None else 100) / 100.0
+        mixer = (mixer_pct if mixer_pct is not None else 100) / 100.0
         player = audio_output.volume()
         effective_pct = round(master * mixer * player * 100, 1)
         lines.append(f"Effective Volume Level: {effective_pct}% (Master {int(master*100)}% x Mixer {int(mixer*100)}% x Player {int(player*100)}%)")
@@ -438,16 +476,17 @@ def ensure_valid_audio_output(audio_output: QAudioOutput, context: str = "") -> 
         available_ids = []
 
     switched = False
-    if dev.isNull() or (available_ids and dev.id() not in available_ids):
+    if dev.isNull() or dev.id() not in available_ids:
         default_dev = QMediaDevices.defaultAudioOutput()
-        log.warning(
-            "%sAudio output device '%s' is unavailable/disconnected. Re-routing to default: %s",
-            f"[{context}] " if context else "",
-            dev.description() if not dev.isNull() else "None",
-            describe_audio_device(default_dev),
-        )
-        audio_output.setDevice(default_dev)
-        switched = True
+        if not (dev.isNull() and default_dev.isNull()):
+            log.warning(
+                "%sAudio output device '%s' is unavailable/disconnected. Re-routing to default: %s",
+                f"[{context}] " if context else "",
+                dev.description() if not dev.isNull() else "None",
+                describe_audio_device(default_dev),
+            )
+            audio_output.setDevice(default_dev)
+            switched = True
 
     # Unmute Qt player if accidentally muted
     if audio_output.isMuted():
@@ -465,7 +504,8 @@ def ensure_valid_audio_output(audio_output: QAudioOutput, context: str = "") -> 
             "%sHammer 5 Tools is MUTED in Windows Volume Mixer! Unmuting in Windows mixer...",
             f"[{context}] " if context else "",
         )
-        set_windows_mixer_volume(level=(sys_vol.get("app_mixer_volume_pct") or 100) / 100.0)
+        app_pct = sys_vol.get("app_mixer_volume_pct")
+        set_windows_mixer_volume(level=(app_pct if app_pct is not None else 100) / 100.0)
 
     app_mixer_vol = sys_vol.get("app_mixer_volume_pct")
     if app_mixer_vol is not None and app_mixer_vol <= 5:
@@ -509,6 +549,9 @@ def log_audio_playback(audio_output: QAudioOutput, context: str = "") -> None:
         )
 
 
+_monitored_players: list[weakref.ref[QMediaPlayer]] = []
+
+
 def bind_audio_output_monitoring(
     audio_output: QAudioOutput,
     player: Optional[QMediaPlayer] = None,
@@ -519,34 +562,44 @@ def bind_audio_output_monitoring(
 
     if _media_devices_monitor is None:
         try:
-            _media_devices_monitor = QMediaDevices()
+            from PySide6.QtCore import QCoreApplication
+            app = QCoreApplication.instance()
+            _media_devices_monitor = QMediaDevices(app)
             _media_devices_monitor.audioOutputsChanged.connect(_on_audio_outputs_changed)
         except Exception as exc:
             log.warning("Could not initialize QMediaDevices monitor: %s", exc)
 
-    existing_refs = [r() for r in _monitored_outputs if r() is not None]
-    if audio_output not in existing_refs:
-        _monitored_outputs.append(weakref.ref(audio_output))
+    _monitored_outputs[:] = [r for r in _monitored_outputs if r() is not None]
+    if audio_output not in [r() for r in _monitored_outputs]:
+        out_ref = weakref.ref(audio_output)
+        _monitored_outputs.append(out_ref)
 
-        def _on_device_changed():
+        def _on_device_changed(ref=out_ref, ctx=context):
+            out = ref()
+            if out is None:
+                return
             log.info(
                 "%sAudio output device changed to: %s",
-                f"[{context}] " if context else "",
-                describe_audio_output(audio_output),
+                f"[{ctx}] " if ctx else "",
+                describe_audio_output(out),
             )
 
         audio_output.deviceChanged.connect(_on_device_changed)
 
     if player is not None:
-        def _on_error(error, error_string):
-            log.error(
-                "%sPlayer error (%s): %s",
-                f"[{context}] " if context else "",
-                error,
-                error_string,
-            )
+        _monitored_players[:] = [r for r in _monitored_players if r() is not None]
+        if player not in [r() for r in _monitored_players]:
+            _monitored_players.append(weakref.ref(player))
 
-        player.errorOccurred.connect(_on_error)
+            def _on_error(error, error_string, ctx=context):
+                log.error(
+                    "%sPlayer error (%s): %s",
+                    f"[{ctx}] " if ctx else "",
+                    error,
+                    error_string,
+                )
+
+            player.errorOccurred.connect(_on_error)
 
 
 def _on_audio_outputs_changed() -> None:
@@ -565,7 +618,7 @@ def _on_audio_outputs_changed() -> None:
             active_refs.append(ref)
             try:
                 ensure_valid_audio_output(out, context="DeviceChange")
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Failed to validate audio output on device change: %s", exc)
 
     _monitored_outputs[:] = active_refs

@@ -14,6 +14,8 @@ namespace Hammer5Tools.Core;
 internal static unsafe class ResourcesApi
 {
     private static readonly ConcurrentDictionary<long, VpkIndex> VpkHandles = new();
+    private static readonly ConcurrentDictionary<string, VpkIndex> CachedReadVpkIndices = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Lock CachedReadVpkLock = new();
     // One lazy reader belongs to the active addon so its material and texture caches are
     // shared by every caller. The reader leases a loader per read, so concurrent reads run
     // in parallel; this lock only guards swapping the reader when the addon changes.
@@ -33,8 +35,15 @@ internal static unsafe class ResourcesApi
     [UnmanagedCallersOnly(EntryPoint = "h5t_vpk_close", CallConvs = [typeof(CallConvCdecl)])]
     public static void VpkClose(long handle)
     {
-        if (VpkHandles.TryRemove(handle, out var index))
-            index.Dispose();
+        try
+        {
+            if (VpkHandles.TryRemove(handle, out var index))
+                index.Dispose();
+        }
+        catch
+        {
+            // Never let exceptions escape an UnmanagedCallersOnly boundary.
+        }
     }
 
     [UnmanagedCallersOnly(EntryPoint = "h5t_vpk_mount", CallConvs = [typeof(CallConvCdecl)])]
@@ -231,17 +240,17 @@ internal static unsafe class ResourcesApi
             return buffer.WrittenSpan.ToArray();
         });
 
-    /// <summary>Request: {vpkPath, resourcePath, soundEvents?}. Mounts a scratch VpkIndex for one read.</summary>
+    /// <summary>Request: {vpkPath, resourcePath, soundEvents?}. Reuses a cached mounted VpkIndex per vpkPath.</summary>
     [UnmanagedCallersOnly(EntryPoint = "h5t_compiled_resource_read_json", CallConvs = [typeof(CallConvCdecl)])]
     public static int CompiledResourceReadJson(byte* request, int requestLength, byte** output, int* outputLength) =>
         NativeInterop.Invoke(output, outputLength, () =>
         {
             var root = JsonDocument.Parse(NativeInterop.ReadUtf8(request, requestLength)).RootElement;
+            var vpkPath = Path.GetFullPath(root.GetProperty("vpkPath").GetString()!);
             var resourcePath = root.GetProperty("resourcePath").GetString()!;
             var soundEvents = GetBoolean(root, "soundEvents", false);
 
-            using var index = new VpkIndex();
-            index.MountVpk(root.GetProperty("vpkPath").GetString()!);
+            var index = GetOrMountReadVpkIndex(vpkPath);
             var reader = new CompiledResourceReader(index);
             var result = soundEvents ? reader.ReadSoundEvents(resourcePath) : reader.ReadSound(resourcePath);
 
@@ -446,6 +455,21 @@ internal static unsafe class ResourcesApi
 
     private static bool GetBoolean(JsonElement root, string propertyName, bool defaultValue) =>
         root.TryGetProperty(propertyName, out var property) ? property.GetBoolean() : defaultValue;
+
+    private static VpkIndex GetOrMountReadVpkIndex(string vpkPath)
+    {
+        if (CachedReadVpkIndices.TryGetValue(vpkPath, out var existing))
+            return existing;
+        lock (CachedReadVpkLock)
+        {
+            if (CachedReadVpkIndices.TryGetValue(vpkPath, out existing))
+                return existing;
+            var created = new VpkIndex();
+            created.MountVpk(vpkPath);
+            CachedReadVpkIndices[vpkPath] = created;
+            return created;
+        }
+    }
 
     private readonly record struct ModelReaderKey(string GameDirectory, string ActiveAddon);
 }
